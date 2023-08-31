@@ -78,12 +78,12 @@ static herr_t H5E__close_stack(H5E_stack_t *err_stack, void **request);
 /* Package Variables */
 /*********************/
 
-#ifndef H5_HAVE_THREADSAFE
+#if !defined(H5_HAVE_THREADSAFE) && !defined(H5_HAVE_MULTITHREAD)
 /*
  * The current error stack.
  */
 H5E_stack_t H5E_stack_g[1];
-#endif /* H5_HAVE_THREADSAFE */
+#endif /* H5_HAVE_THREADSAFE or H5_HAVE_MULTITHREAD */
 
 /* Declare a free list to manage the H5E_stack_t struct */
 H5FL_DEFINE(H5E_stack_t);
@@ -187,9 +187,9 @@ H5E_init(void)
     if (H5I_register_type(H5I_ERRSTK_CLS) < 0)
         HGOTO_ERROR(H5E_ID, H5E_CANTINIT, FAIL, "unable to initialize ID group");
 
-#ifndef H5_HAVE_THREADSAFE
+#if !defined(H5_HAVE_THREADSAFE) && !defined(H5_HAVE_MULTITHREAD)
     H5E__set_default_auto(H5E_stack_g);
-#endif /* H5_HAVE_THREADSAFE */
+#endif /* H5_HAVE_THREADSAFE or H5_HAVE_MULTITHREAD */
 
     /* Register the HDF5 error class */
     if ((H5E_ERR_CLS_g = H5I_register(H5I_ERROR_CLASS, &H5E_err_cls_s, false)) < 0)
@@ -280,7 +280,7 @@ H5E_term_package(void)
     FUNC_LEAVE_NOAPI(n)
 } /* end H5E_term_package() */
 
-#ifdef H5_HAVE_THREADSAFE
+#if defined(H5_HAVE_THREADSAFE) || defined(H5_HAVE_MULTITHREAD)
 /*-------------------------------------------------------------------------
  * Function:    H5E__get_stack
  *
@@ -328,7 +328,7 @@ H5E__get_stack(void)
     /* Set return value */
     FUNC_LEAVE_NOAPI(estack)
 } /* end H5E__get_stack() */
-#endif /* H5_HAVE_THREADSAFE */
+#endif /* H5_HAVE_THREADSAFE or H5_HAVE_MULTITHREAD */
 
 /*-------------------------------------------------------------------------
  * Function:    H5E__free_class
