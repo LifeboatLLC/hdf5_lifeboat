@@ -80,6 +80,8 @@ create_chunked_dataset(const char *filename, int chunk_factor, write_type write_
 
     /* Only MAINPROCESS should create the file.  Others just wait. */
     if (MAINPROCESS) {
+        bool vol_is_native;
+
         nchunks = chunk_factor * mpi_size;
         dims[0] = (hsize_t)(nchunks * CHUNK_SIZE);
         /* Create the data space with unlimited dimensions. */
@@ -92,6 +94,9 @@ create_chunked_dataset(const char *filename, int chunk_factor, write_type write_
         /* Create a new file. If file exists its contents will be overwritten. */
         file_id = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
         VRFY((file_id >= 0), "H5Fcreate");
+
+        /* Check if native VOL is being used */
+        VRFY((h5_using_native_vol(H5P_DEFAULT, file_id, &vol_is_native) >= 0), "h5_using_native_vol");
 
         /* Modify dataset creation properties, i.e. enable chunking  */
         cparms = H5Pcreate(H5P_DATASET_CREATE);
@@ -142,10 +147,12 @@ create_chunked_dataset(const char *filename, int chunk_factor, write_type write_
         VRFY((hrc >= 0), "");
         file_id = -1;
 
-        /* verify file size */
-        filesize     = get_filesize(filename);
-        est_filesize = (MPI_Offset)nchunks * (MPI_Offset)CHUNK_SIZE * (MPI_Offset)sizeof(unsigned char);
-        VRFY((filesize >= est_filesize), "file size check");
+        if (vol_is_native) {
+            /* verify file size */
+            filesize     = get_filesize(filename);
+            est_filesize = (MPI_Offset)nchunks * (MPI_Offset)CHUNK_SIZE * (MPI_Offset)sizeof(unsigned char);
+            VRFY((filesize >= est_filesize), "file size check");
+        }
     }
 
     /* Make sure all processes are done before exiting this routine.  Otherwise,
@@ -188,6 +195,8 @@ parallel_access_dataset(const char *filename, int chunk_factor, access_type acti
     MPI_Offset filesize, /* actual file size */
         est_filesize;    /* estimated file size */
 
+    bool vol_is_native;
+
     /* Initialize MPI */
     MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
     MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
@@ -207,11 +216,19 @@ parallel_access_dataset(const char *filename, int chunk_factor, access_type acti
         VRFY((*file_id >= 0), "");
     }
 
+    /* Check if native VOL is being used */
+    VRFY((h5_using_native_vol(H5P_DEFAULT, *file_id, &vol_is_native) >= 0), "h5_using_native_vol");
+
     /* Open dataset*/
     if (*dataset < 0) {
         *dataset = H5Dopen2(*file_id, DSET_NAME, H5P_DEFAULT);
         VRFY((*dataset >= 0), "");
     }
+
+    /* Make sure all processes are done before continuing.  Otherwise, one
+     * process could change the dataset extent before another finishes opening
+     * it, resulting in only some of the processes calling H5Dset_extent(). */
+    MPI_Barrier(MPI_COMM_WORLD);
 
     memspace = H5Screate_simple(1, chunk_dims, NULL);
     VRFY((memspace >= 0), "");
@@ -278,10 +295,12 @@ parallel_access_dataset(const char *filename, int chunk_factor, access_type acti
     VRFY((hrc >= 0), "");
     *file_id = -1;
 
-    /* verify file size */
-    filesize     = get_filesize(filename);
-    est_filesize = (MPI_Offset)nchunks * (MPI_Offset)CHUNK_SIZE * (MPI_Offset)sizeof(unsigned char);
-    VRFY((filesize >= est_filesize), "file size check");
+    if (vol_is_native) {
+        /* verify file size */
+        filesize     = get_filesize(filename);
+        est_filesize = (MPI_Offset)nchunks * (MPI_Offset)CHUNK_SIZE * (MPI_Offset)sizeof(unsigned char);
+        VRFY((filesize >= est_filesize), "file size check");
+    }
 
     /* Can close some plists */
     hrc = H5Pclose(access_plist);
@@ -449,6 +468,19 @@ test_chunk_alloc(void)
     /* Initialize MPI */
     MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
     MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
+
+    /* Make sure the connector supports the API functions being tested */
+    if (!(vol_cap_flags_g & H5VL_CAP_FLAG_FILE_BASIC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_DATASET_BASIC) ||
+        !(vol_cap_flags_g & H5VL_CAP_FLAG_DATASET_MORE)) {
+        if (MAINPROCESS) {
+            puts("SKIPPED");
+            printf("    API functions for basic file, dataset, or dataset more aren't supported with this "
+                   "connector\n");
+            fflush(stdout);
+        }
+
+        return;
+    }
 
     filename = (const char *)GetTestParameters();
     if (VERBOSE_MED)

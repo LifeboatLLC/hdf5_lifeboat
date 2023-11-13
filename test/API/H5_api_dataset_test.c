@@ -10723,8 +10723,8 @@ test_read_partial_chunk_point_selection(void)
 
     return;
 }
-#undef FIXED_DIMSIZE
-#undef FIXED_CHUNK_DIMSIZE
+/* #undef FIXED_DIMSIZE */
+/* #undef FIXED_CHUNK_DIMSIZE */
 
 /*
  * A test to verify that H5Dvlen_get_buf_size returns
