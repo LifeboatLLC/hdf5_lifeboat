@@ -10,12 +10,14 @@ this option requires the presence of Pthread library and the Atomic header (stda
 it requires the presence of Pthread and Atomic libraries and the Atomic header.  Missing any of these
 requirements will cause configure to fail. Using the multithread feature requires disabling the high-level
 API, C++, Fortran, Java interfaces, and thread safe. This feature currently only works with debugging
-mode (--enable-build-mode=debug), not the production mode.
+mode (--enable-build-mode=debug), not the production mode (we are still working on it).
 
 The following command is an example to enable the multithread support:
     > configure --enable-multithread --enable-build-mode=debug --disable-hl
 
-The only test program to check the correctness of multithread support is hdf5/test/mt_id_test.c.
+The only test program to check the correctness of multithread support is hdf5/test/mt_id_test.c.  During
+the build of the library and the test program, there are multiple warnings related to the atomic issues
+that we're investigating and fixing.
 
 -------------
 
