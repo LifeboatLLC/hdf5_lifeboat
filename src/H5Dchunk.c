@@ -1401,7 +1401,11 @@ H5D__chunk_mem_xfree(void *chk, const void *pline)
 void
 H5D__chunk_mem_free(void *chk, void *pline)
 {
+    FUNC_ENTER_NOAPI_NAMECHECK_ONLY
+
     (void)H5D__chunk_mem_xfree(chk, pline);
+
+    FUNC_LEAVE_NOAPI_VOID_NAMECHECK_ONLY
 }
 
 /*-------------------------------------------------------------------------
@@ -8145,15 +8149,19 @@ H5D__chunk_iter_cb(const H5D_chunk_rec_t *chunk_rec, void *udata)
     hsize_t                    offset[H5O_LAYOUT_NDIMS];
     unsigned                   ii; /* Match H5O_layout_chunk_t.ndims */
 
+    FUNC_ENTER_PACKAGE_NOERR
+
     /* Similar to H5D__get_chunk_info */
     for (ii = 0; ii < chunk->ndims; ii++)
         offset[ii] = chunk_rec->scaled[ii] * chunk->dim[ii];
 
-    FUNC_ENTER_PACKAGE_NOERR
+    /* Prepare & restore library for user callback */
+    H5_BEFORE_USER_CB_NOERR(FAIL) {
+        ret_value = (data->op)(offset, (unsigned)chunk_rec->filter_mask, chunk_rec->chunk_addr, (hsize_t)chunk_rec->nbytes, data->op_data);
+    } H5_AFTER_USER_CB_NOERR(FAIL)
 
     /* Check for callback failure and pass along return value */
-    if ((ret_value = (data->op)(offset, (unsigned)chunk_rec->filter_mask, chunk_rec->chunk_addr,
-                                (hsize_t)chunk_rec->nbytes, data->op_data)) < 0)
+    if (ret_value < 0)
         HERROR(H5E_DATASET, H5E_CANTNEXT, "iteration operator failed");
 
     FUNC_LEAVE_NOAPI(ret_value)
