@@ -20,8 +20,8 @@
 /*
  * Definitions for the testing structure.
  */
-#define MAXTESTNAME 16
-#define MAXTESTDESC 64
+#define MAXTESTNAME 64
+#define MAXTESTDESC 128
 
 typedef struct TestStruct {
     int  NumErrors;
@@ -166,7 +166,7 @@ TestUsage(void)
     print_func("verbose   controls the amount of information displayed\n");
     print_func("exclude   to exclude tests by name\n");
     print_func("only      to name tests which should be run\n");
-    print_func("begin     start at the name of the test givin\n");
+    print_func("begin     start at the name of the test given\n");
     print_func("summary   prints a summary of test results at the end\n");
     print_func("cleanoff  does not delete *.hdf files after execution of tests\n");
     print_func("help      print out this information\n");
@@ -180,7 +180,7 @@ TestUsage(void)
     print_func("%16s %s\n", "----", "-----------");
 
     for (i = 0; i < Index; i++)
-        print_func("%16s %s\n", Test[i].Name, Test[i].Description);
+        print_func("%16s -- %s\n", Test[i].Name, Test[i].Description);
 
     print_func("\n\n");
 }
@@ -316,12 +316,12 @@ PerformTests(void)
         }
 
     Test_parameters = NULL; /* clear it. */
-    MESSAGE(2, ("\n\n"));
 
+    MESSAGE(2, ("\n\n"));
     if (num_errs)
-        print_func("!!! %d Error(s) were detected !!!\n\n", (int)num_errs);
+        MESSAGE(VERBO_NONE, ("!!! %d Error(s) were detected !!!\n\n", (int)num_errs));
     else
-        print_func("All tests were successful. \n\n");
+        MESSAGE(VERBO_NONE, ("All tests were successful. \n\n"));
 }
 
 /*

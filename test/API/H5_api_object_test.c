@@ -12,36 +12,37 @@
 
 #include "H5_api_object_test.h"
 
-static int test_open_object(void);
-static int test_open_object_invalid_params(void);
-static int test_object_exists(void);
-static int test_object_exists_invalid_params(void);
-static int test_get_object_info(void);
-static int test_get_object_info_invalid_params(void);
-static int test_link_object(void);
-static int test_link_object_invalid_params(void);
-static int test_incr_decr_object_refcount(void);
-static int test_incr_decr_object_refcount_invalid_params(void);
-static int test_object_copy_basic(void);
-static int test_object_copy_already_existing(void);
-static int test_object_copy_shallow_group_copy(void);
-static int test_object_copy_no_attributes(void);
-static int test_object_copy_by_soft_link(void);
-static int test_object_copy_group_with_soft_links(void);
-static int test_object_copy_between_files(void);
-static int test_object_copy_invalid_params(void);
-static int test_object_comments(void);
-static int test_object_comments_invalid_params(void);
-static int test_object_visit(void);
-static int test_object_visit_soft_link(void);
-static int test_object_visit_invalid_params(void);
-static int test_close_object(void);
-static int test_close_object_invalid_params(void);
-static int test_close_invalid_objects(void);
-static int test_flush_object(void);
-static int test_flush_object_invalid_params(void);
-static int test_refresh_object(void);
-static int test_refresh_object_invalid_params(void);
+static void print_object_test_header(void);
+static void test_open_object(void);
+static void test_open_object_invalid_params(void);
+static void test_object_exists(void);
+static void test_object_exists_invalid_params(void);
+static void test_get_object_info(void);
+static void test_get_object_info_invalid_params(void);
+static void test_link_object(void);
+static void test_link_object_invalid_params(void);
+static void test_incr_decr_object_refcount(void);
+static void test_incr_decr_object_refcount_invalid_params(void);
+static void test_object_copy_basic(void);
+static void test_object_copy_already_existing(void);
+static void test_object_copy_shallow_group_copy(void);
+static void test_object_copy_no_attributes(void);
+static void test_object_copy_by_soft_link(void);
+static void test_object_copy_group_with_soft_links(void);
+static void test_object_copy_between_files(void);
+static void test_object_copy_invalid_params(void);
+static void test_object_comments(void);
+static void test_object_comments_invalid_params(void);
+static void test_object_visit(void);
+static void test_object_visit_soft_link(void);
+static void test_object_visit_invalid_params(void);
+static void test_close_object(void);
+static void test_close_object_invalid_params(void);
+static void test_close_invalid_objects(void);
+static void test_flush_object(void);
+static void test_flush_object_invalid_params(void);
+static void test_refresh_object(void);
+static void test_refresh_object_invalid_params(void);
 
 static herr_t object_copy_attribute_iter_callback(hid_t location_id, const char *attr_name,
                                                   const H5A_info_t *ainfo, void *op_data);
@@ -60,41 +61,16 @@ static herr_t object_visit_soft_link_callback(hid_t o_id, const char *name, cons
 static herr_t object_visit_noop_callback(hid_t o_id, const char *name, const H5O_info2_t *object_info,
                                          void *op_data);
 
-/*
- * The array of object tests to be performed.
- */
-static int (*object_tests[])(void) = {
-    test_open_object,
-    test_open_object_invalid_params,
-    test_object_exists,
-    test_object_exists_invalid_params,
-    test_get_object_info,
-    test_get_object_info_invalid_params,
-    test_link_object,
-    test_link_object_invalid_params,
-    test_incr_decr_object_refcount,
-    test_incr_decr_object_refcount_invalid_params,
-    test_object_copy_basic,
-    test_object_copy_already_existing,
-    test_object_copy_shallow_group_copy,
-    test_object_copy_no_attributes,
-    test_object_copy_by_soft_link,
-    test_object_copy_group_with_soft_links,
-    test_object_copy_between_files,
-    test_object_copy_invalid_params,
-    test_object_comments,
-    test_object_comments_invalid_params,
-    test_object_visit,
-    test_object_visit_soft_link,
-    test_object_visit_invalid_params,
-    test_close_object,
-    test_close_object_invalid_params,
-    test_close_invalid_objects,
-    test_flush_object,
-    test_flush_object_invalid_params,
-    test_refresh_object,
-    test_refresh_object_invalid_params,
-};
+static void
+print_object_test_header(void)
+{
+    printf("\n");
+    printf("**********************************************\n");
+    printf("*                                            *\n");
+    printf("*              API Object Tests              *\n");
+    printf("*                                            *\n");
+    printf("**********************************************\n\n");
+}
 
 /*
  * A test to check that various objects (group, dataset, datatype)
@@ -106,7 +82,7 @@ static int (*object_tests[])(void) = {
  *
  * XXX: test opening through dangling and resolving soft links.
  */
-static int
+static void
 test_open_object(void)
 {
     hid_t file_id         = H5I_INVALID_HID;
@@ -128,7 +104,7 @@ test_open_object(void)
         SKIPPED();
         printf("    API functions for basic file, group, object, dataset, or stored datatype aren't "
                "supported with this connector\n");
-        return 0;
+        return;
     }
 
     if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
@@ -396,7 +372,7 @@ test_open_object(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -412,7 +388,7 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 
 /*
@@ -420,7 +396,7 @@ error:
  * can't be opened when H5Oopen, H5Oopen_by_idx and H5Oopen_by_addr
  * are passed invalid parameters.
  */
-static int
+static void
 test_open_object_invalid_params(void)
 {
     hid_t file_id         = H5I_INVALID_HID;
@@ -436,7 +412,7 @@ test_open_object_invalid_params(void)
         SKIPPED();
         printf("    API functions for basic file, group, or object aren't supported with "
                "this connector\n");
-        return 0;
+        return;
     }
 
     TESTING_2("test setup");
@@ -771,7 +747,7 @@ test_open_object_invalid_params(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -784,13 +760,13 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 
 /*
  * A test for H5Oexists_by_name.
  */
-static int
+static void
 test_object_exists(void)
 {
     htri_t object_exists;
@@ -812,7 +788,7 @@ test_object_exists(void)
         SKIPPED();
         printf("    API functions for basic file, group, object, dataset, stored datatype or soft link "
                "aren't supported with this connector\n");
-        return 0;
+        return;
     }
 
     TESTING_2("test setup");
@@ -1033,7 +1009,7 @@ test_object_exists(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -1049,14 +1025,14 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 
 /*
  * A test to check that H5Oexists_by_name fails
  * when it is passed invalid parameters.
  */
-static int
+static void
 test_object_exists_invalid_params(void)
 {
     htri_t object_exists;
@@ -1071,7 +1047,7 @@ test_object_exists_invalid_params(void)
         !(vol_cap_flags_g & H5VL_CAP_FLAG_OBJECT_BASIC)) {
         SKIPPED();
         printf("    API functions for basic file, group, or object aren't supported with this connector\n");
-        return 0;
+        return;
     }
 
     TESTING_2("test setup");
@@ -1197,7 +1173,7 @@ test_object_exists_invalid_params(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -1209,20 +1185,20 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 
 /*
  * A test for H5Oget_info(_by_name/_by_idx).
  */
-static int
+static void
 test_get_object_info(void)
 {
     TESTING("object info retrieval");
 
     SKIPPED();
 
-    return 0;
+    return;
 }
 
 /*
@@ -1230,20 +1206,20 @@ test_get_object_info(void)
  * when H5Oget_info(_by_name/_by_idx) are passed invalid
  * parameters.
  */
-static int
+static void
 test_get_object_info_invalid_params(void)
 {
     TESTING("object info retrieval with invalid parameters");
 
     SKIPPED();
 
-    return 0;
+    return;
 }
 
 /*
  * A test for H5Olink.
  */
-static int
+static void
 test_link_object(void)
 {
     hid_t file_id         = H5I_INVALID_HID;
@@ -1263,7 +1239,7 @@ test_link_object(void)
         SKIPPED();
         printf("    API functions for basic file, group, object, dataset, or stored datatype aren't "
                "supported with this connector\n");
-        return 0;
+        return;
     }
 
     TESTING_2("test setup");
@@ -1378,7 +1354,7 @@ test_link_object(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -1394,7 +1370,7 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 
 /*
@@ -1402,7 +1378,7 @@ error:
  * the file structure when H5Olink is passed invalid
  * parameters.
  */
-static int
+static void
 test_link_object_invalid_params(void)
 {
     hid_t  file_id         = H5I_INVALID_HID;
@@ -1417,7 +1393,7 @@ test_link_object_invalid_params(void)
         !(vol_cap_flags_g & H5VL_CAP_FLAG_OBJECT_BASIC)) {
         SKIPPED();
         printf("    API functions for basic file, group, or object aren't supported with this connector\n");
-        return 0;
+        return;
     }
 
     TESTING_2("test setup");
@@ -1582,7 +1558,7 @@ test_link_object_invalid_params(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -1594,13 +1570,13 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 
 /*
  * A test for H5Oincr_refcount/H5Odecr_refcount.
  */
-static int
+static void
 test_incr_decr_object_refcount(void)
 {
     H5O_info2_t oinfo; /* Object info struct */
@@ -1621,7 +1597,7 @@ test_incr_decr_object_refcount(void)
         SKIPPED();
         printf("    API functions for basic file, group, dataset, stored datatype, or object  "
                "aren't supported with this connector\n");
-        return 0;
+        return;
     }
 
     TESTING_2("test setup");
@@ -1877,7 +1853,7 @@ test_incr_decr_object_refcount(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -1892,14 +1868,14 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 } /* test_incr_decr_object_refcount */
 
 /*
  * A test to check that H5Oincr_refcount/H5Odecr_refcount
  * fail when passed invalid parameters.
  */
-static int
+static void
 test_incr_decr_object_refcount_invalid_params(void)
 {
     herr_t status;
@@ -1910,7 +1886,7 @@ test_incr_decr_object_refcount_invalid_params(void)
     if (!(vol_cap_flags_g & H5VL_CAP_FLAG_OBJECT_MORE)) {
         SKIPPED();
         printf("    API functions for more object aren't supported with this connector\n");
-        return 0;
+        return;
     }
 
     BEGIN_MULTIPART
@@ -1957,16 +1933,16 @@ test_incr_decr_object_refcount_invalid_params(void)
     }
     END_MULTIPART;
 
-    return 0;
+    return;
 
 error:
-    return 1;
+    return;
 }
 
 /*
  * Basic tests for H5Ocopy.
  */
-static int
+static void
 test_object_copy_basic(void)
 {
     H5O_info2_t object_info;
@@ -1998,7 +1974,7 @@ test_object_copy_basic(void)
         SKIPPED();
         printf("    API functions for basic file, group, object, link, dataset, attribute, iterate, or "
                "stored datatype aren't supported with this connector\n");
-        return 0;
+        return;
     }
 
     TESTING_2("test setup");
@@ -2515,7 +2491,7 @@ test_object_copy_basic(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -2536,14 +2512,14 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 
 /*
  * Tests to ensure that H5Ocopy fails when attempting to copy
  * an object to a destination where the object already exists.
  */
-static int
+static void
 test_object_copy_already_existing(void)
 {
     herr_t err_ret;
@@ -2566,7 +2542,7 @@ test_object_copy_already_existing(void)
         SKIPPED();
         printf("    API functions for basic file, group, object, dataset, or stored datatype aren't "
                "supported with this connector\n");
-        return 0;
+        return;
     }
 
     TESTING_2("test setup");
@@ -2718,7 +2694,7 @@ test_object_copy_already_existing(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -2734,14 +2710,14 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 
 /*
  * A test to exercise the H5O_COPY_SHALLOW_HIERARCHY_FLAG flag
  * for H5Ocopy.
  */
-static int
+static void
 test_object_copy_shallow_group_copy(void)
 {
     H5G_info_t group_info;
@@ -2763,7 +2739,7 @@ test_object_copy_shallow_group_copy(void)
         SKIPPED();
         printf("    API functions for basic file, group, object, or link aren't supported with this "
                "connector\n");
-        return 0;
+        return;
     }
 
     if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
@@ -2947,7 +2923,7 @@ test_object_copy_shallow_group_copy(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -2961,14 +2937,14 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 
 /*
  * Tests to exercise the H5O_COPY_WITHOUT_ATTR_FLAG flag
  * of H5Ocopy.
  */
-static int
+static void
 test_object_copy_no_attributes(void)
 {
     H5O_info2_t object_info;
@@ -3000,7 +2976,7 @@ test_object_copy_no_attributes(void)
         SKIPPED();
         printf("    API functions for basic file, group, object, link, dataset, attribute, or stored "
                "datatype aren't supported with this connector\n");
-        return 0;
+        return;
     }
 
     TESTING_2("test setup");
@@ -3452,7 +3428,7 @@ test_object_copy_no_attributes(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -3474,14 +3450,14 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 
 /*
  * Tests to exercise the behavior of H5Ocopy when the source
  * object specified is a soft link or dangling soft link.
  */
-static int
+static void
 test_object_copy_by_soft_link(void)
 {
     H5O_info2_t object_info;
@@ -3508,7 +3484,7 @@ test_object_copy_by_soft_link(void)
         SKIPPED();
         printf("    API functions for basic file, group, object, link, dataset, attribute, iterate, or "
                "soft link aren't supported with this connector\n");
-        return 0;
+        return;
     }
 
     TESTING_2("test setup");
@@ -3791,7 +3767,7 @@ test_object_copy_by_soft_link(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -3806,7 +3782,7 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 
 /*
@@ -3814,7 +3790,7 @@ error:
  * H5Ocopy. Also tested is the H5O_COPY_EXPAND_SOFT_LINK_FLAG
  * flag.
  */
-static int
+static void
 test_object_copy_group_with_soft_links(void)
 {
     H5G_info_t group_info;
@@ -3838,7 +3814,7 @@ test_object_copy_group_with_soft_links(void)
         printf("    API functions for basic file, group, object, link, iterate, or soft link aren't "
                "supported with "
                "this connector\n");
-        return 0;
+        return;
     }
 
     TESTING_2("test setup");
@@ -4151,7 +4127,7 @@ test_object_copy_group_with_soft_links(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -4165,14 +4141,14 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 
 /*
  * Tests for copying objects between two different files using
  * H5Ocopy.
  */
-static int
+static void
 test_object_copy_between_files(void)
 {
     H5O_info2_t object_info;
@@ -4207,7 +4183,7 @@ test_object_copy_between_files(void)
         SKIPPED();
         printf("    API functions for basic file, group, object, link, dataset, attribute, stored "
                "datatype, or iterate aren't supported with this connector\n");
-        return 0;
+        return;
     }
 
     TESTING_2("test setup");
@@ -4748,9 +4724,12 @@ test_object_copy_between_files(void)
     if (H5Fclose(file_id) < 0)
         TEST_ERROR;
 
+    if (remove_test_file(NULL, OBJECT_COPY_BETWEEN_FILES_TEST_FILE_NAME) < 0)
+        TEST_ERROR;
+
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -4770,17 +4749,18 @@ error:
         H5Gclose(container_group);
         H5Fclose(file_id2);
         H5Fclose(file_id);
+        remove_test_file(NULL, OBJECT_COPY_BETWEEN_FILES_TEST_FILE_NAME);
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 
 /*
  * A test to check that H5Ocopy fails when it
  * is passed invalid parameters.
  */
-static int
+static void
 test_object_copy_invalid_params(void)
 {
     herr_t err_ret         = -1;
@@ -4795,7 +4775,7 @@ test_object_copy_invalid_params(void)
         !(vol_cap_flags_g & H5VL_CAP_FLAG_OBJECT_MORE)) {
         SKIPPED();
         printf("    API functions for basic file, group, or object aren't supported with this connector\n");
-        return 0;
+        return;
     }
 
     TESTING_2("test setup");
@@ -4998,7 +4978,7 @@ test_object_copy_invalid_params(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -5010,34 +4990,34 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 
 /*
  * A test for H5Oset_comment(_by_name)/H5Oget_comment(_by_name).
  */
-static int
+static void
 test_object_comments(void)
 {
     TESTING("object comments");
 
     SKIPPED();
 
-    return 0;
+    return;
 }
 
 /*
  * A test to check that H5Oset_comment(_by_name)/H5Oget_comment(_by_name)
  * fail when passed invalid parameters.
  */
-static int
+static void
 test_object_comments_invalid_params(void)
 {
-    TESTING("object comment ");
+    TESTING("object comments with invalid parameters");
 
     SKIPPED();
 
-    return 0;
+    return;
 }
 
 /*
@@ -5045,7 +5025,7 @@ test_object_comments_invalid_params(void)
  *
  * XXX: Should have test for checking nested object's names/paths.
  */
-static int
+static void
 test_object_visit(void)
 {
     size_t i;
@@ -5068,7 +5048,7 @@ test_object_visit(void)
         SKIPPED();
         printf("    API functions for basic file, group, object, dataset, attribute, stored datatype, or "
                "iterate aren't supported with this connector\n");
-        return 0;
+        return;
     }
 
     TESTING_2("test setup");
@@ -5544,7 +5524,7 @@ test_object_visit(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -5561,7 +5541,7 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 
 /*
@@ -5573,7 +5553,7 @@ error:
  * the links to ensure that the objects in the other group
  * do not get visited.
  */
-static int
+static void
 test_object_visit_soft_link(void)
 {
     size_t i;
@@ -5592,7 +5572,7 @@ test_object_visit_soft_link(void)
         SKIPPED();
         printf("    API functions for basic file, group, object, soft link, or iterate "
                "aren't supported with this connector\n");
-        return 0;
+        return;
     }
 
     TESTING_2("test setup");
@@ -6036,7 +6016,7 @@ test_object_visit_soft_link(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -6051,14 +6031,14 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 
 /*
  * A test to check that H5Ovisit(_by_name) fails when
  * it is passed invalid parameters.
  */
-static int
+static void
 test_object_visit_invalid_params(void)
 {
     herr_t err_ret         = -1;
@@ -6073,7 +6053,7 @@ test_object_visit_invalid_params(void)
         !(vol_cap_flags_g & H5VL_CAP_FLAG_ITERATE)) {
         SKIPPED();
         printf("    API functions for basic file, group, or iterate aren't supported with this connector\n");
-        return 0;
+        return;
     }
 
     TESTING_2("test setup");
@@ -6357,7 +6337,7 @@ test_object_visit_invalid_params(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -6369,13 +6349,13 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 
 /*
  * A test for H5Oclose.
  */
-static int
+static void
 test_close_object(void)
 {
     hid_t file_id         = H5I_INVALID_HID;
@@ -6396,7 +6376,7 @@ test_close_object(void)
         SKIPPED();
         printf("    API functions for basic file, group, object, dataset, attribute, or stored datatype "
                "aren't supported with this connector\n");
-        return 0;
+        return;
     }
 
     TESTING_2("test setup");
@@ -6552,7 +6532,7 @@ test_close_object(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -6568,14 +6548,14 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 
 /*
  * A test to check that H5Oclose fails when it
  * is passed invalid parameters.
  */
-static int
+static void
 test_close_object_invalid_params(void)
 {
     herr_t err_ret = -1;
@@ -6587,7 +6567,7 @@ test_close_object_invalid_params(void)
     if (!(vol_cap_flags_g & (H5VL_CAP_FLAG_FILE_BASIC)) || !(vol_cap_flags_g & H5VL_CAP_FLAG_OBJECT_BASIC)) {
         SKIPPED();
         printf("    API functions for basic file or object aren't supported with this connector\n");
-        return 0;
+        return;
     }
 
     if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
@@ -6613,7 +6593,7 @@ test_close_object_invalid_params(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -6622,14 +6602,14 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 
 /*
  * A test to check that various objects (file, dataspace, property list,
  * and attribute) can't be closed with H5Oclose.
  */
-static int
+static void
 test_close_invalid_objects(void)
 {
     hid_t  file_id         = H5I_INVALID_HID;
@@ -6648,7 +6628,7 @@ test_close_invalid_objects(void)
         SKIPPED();
         printf("    API functions for basic file, group, or object "
                "aren't supported with this connector\n");
-        return 0;
+        return;
     }
 
     TESTING_2("test setup");
@@ -6791,7 +6771,7 @@ test_close_invalid_objects(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -6806,61 +6786,61 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 } /* test_close_invalid_objects */
 
 /*
  * A test for H5Oflush.
  */
-static int
+static void
 test_flush_object(void)
 {
     TESTING("H5Oflush");
 
     SKIPPED();
 
-    return 0;
+    return;
 }
 
 /*
  * A test to check that H5Oflush fails when
  * it is passed invalid parameters.
  */
-static int
+static void
 test_flush_object_invalid_params(void)
 {
     TESTING("H5Oflush with invalid parameters");
 
     SKIPPED();
 
-    return 0;
+    return;
 }
 
 /*
  * A test for H5Orefresh.
  */
-static int
+static void
 test_refresh_object(void)
 {
     TESTING("H5Orefresh");
 
     SKIPPED();
 
-    return 0;
+    return;
 }
 
 /*
  * A test to check that H5Orefresh fails when
  * it is passed invalid parameters.
  */
-static int
+static void
 test_refresh_object_invalid_params(void)
 {
     TESTING("H5Orefresh with invalid parameters");
 
     SKIPPED();
 
-    return 0;
+    return;
 }
 
 /*
@@ -7160,35 +7140,40 @@ object_visit_noop_callback(hid_t o_id, const char *name, const H5O_info2_t *obje
     return 0;
 }
 
-/*
- * Cleanup temporary test files
- */
-static void
-cleanup_files(void)
+void
+H5_api_object_test_add(void)
 {
-    H5Fdelete(OBJECT_COPY_BETWEEN_FILES_TEST_FILE_NAME, H5P_DEFAULT);
-}
+    /* Add a fake test to print out a header to distinguish different test interfaces */
+    AddTest("print_object_test_header", print_object_test_header, NULL, "Prints header for object tests", NULL);
 
-int
-H5_api_object_test(void)
-{
-    size_t i;
-    int    nerrors;
-
-    printf("**********************************************\n");
-    printf("*                                            *\n");
-    printf("*              API Object Tests              *\n");
-    printf("*                                            *\n");
-    printf("**********************************************\n\n");
-
-    for (i = 0, nerrors = 0; i < ARRAY_LENGTH(object_tests); i++) {
-        nerrors += (*object_tests[i])() ? 1 : 0;
-    }
-
-    printf("\n");
-
-    printf("Cleaning up testing files\n");
-    cleanup_files();
-
-    return nerrors;
+    AddTest("test_open_object", test_open_object, NULL, "object opening", NULL);
+    AddTest("test_open_object_invalid_params", test_open_object_invalid_params, NULL, "object opening with invalid parameters", NULL);
+    AddTest("test_object_exists", test_object_exists, NULL, "object existence", NULL);
+    AddTest("test_object_exists_invalid_params", test_object_exists_invalid_params, NULL, "object existence with invalid parameters", NULL);
+    AddTest("test_get_object_info", test_get_object_info, NULL, "object info retrieval", NULL);
+    AddTest("test_get_object_info_invalid_params", test_get_object_info_invalid_params, NULL, "object info retrieval with invalid parameters", NULL);
+    AddTest("test_link_object", test_link_object, NULL, "object linking", NULL);
+    AddTest("test_link_object_invalid_params", test_link_object_invalid_params, NULL, "object linking with invalid parameters", NULL);
+    AddTest("test_incr_decr_object_refcount", test_incr_decr_object_refcount, NULL, "increment/decrement the reference count of object", NULL);
+    AddTest("test_incr_decr_object_refcount_invalid_params", test_incr_decr_object_refcount_invalid_params, NULL, "object reference count incr./decr. with an invalid parameter", NULL);
+    AddTest("test_object_copy_basic", test_object_copy_basic, NULL, "basic object copying", NULL);
+    AddTest("test_object_copy_already_existing", test_object_copy_already_existing, NULL, "object copying to location where objects already exist", NULL);
+    AddTest("test_object_copy_shallow_group_copy", test_object_copy_shallow_group_copy, NULL, "object copying with H5O_COPY_SHALLOW_HIERARCHY_FLAG flag", NULL);
+    AddTest("test_object_copy_no_attributes", test_object_copy_no_attributes, NULL, "object copying with H5O_COPY_WITHOUT_ATTR_FLAG flag", NULL);
+    AddTest("test_object_copy_by_soft_link", test_object_copy_by_soft_link, NULL, "object copying through use of soft links", NULL);
+    AddTest("test_object_copy_group_with_soft_links", test_object_copy_group_with_soft_links, NULL, "group copying when group contains soft links", NULL);
+    AddTest("test_object_copy_between_files", test_object_copy_between_files, NULL, "object copying between files", NULL);
+    AddTest("test_object_copy_invalid_params", test_object_copy_invalid_params, NULL, "object copying with invalid parameters", NULL);
+    AddTest("test_object_comments", test_object_comments, NULL, "object comments", NULL);
+    AddTest("test_object_comments_invalid_params", test_object_comments_invalid_params, NULL, "object comments with invalid parameters", NULL);
+    AddTest("test_object_visit", test_object_visit, NULL, "object visiting", NULL);
+    AddTest("test_object_visit_soft_link", test_object_visit_soft_link, NULL, "object visiting with soft links", NULL);
+    AddTest("test_object_visit_invalid_params", test_object_visit_invalid_params, NULL, "object visiting with invalid parameters", NULL);
+    AddTest("test_close_object", test_close_object, NULL, "H5Oclose", NULL);
+    AddTest("test_close_object_invalid_params", test_close_object_invalid_params, NULL, "H5Oclose with an invalid object ID", NULL);
+    AddTest("test_close_invalid_objects", test_close_invalid_objects, NULL, "H5Oclose invalid objects", NULL);
+    AddTest("test_flush_object", test_flush_object, NULL, "H5Oflush", NULL);
+    AddTest("test_flush_object_invalid_params", test_flush_object_invalid_params, NULL, "H5Oflush with invalid parameters", NULL);
+    AddTest("test_refresh_object", test_refresh_object, NULL, "H5Orefresh", NULL);
+    AddTest("test_refresh_object_invalid_params", test_refresh_object_invalid_params, NULL, "H5Orefresh with invalid parameters", NULL);
 }

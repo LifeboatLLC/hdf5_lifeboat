@@ -16,147 +16,91 @@
  * XXX: H5Dread_chunk/H5Dwrite_chunk, H5Dfill/scatter/gather
  */
 
-static int test_create_dataset_under_root(void);
-static int test_create_dataset_under_existing_group(void);
-static int test_create_dataset_invalid_params(void);
-static int test_create_anonymous_dataset(void);
-static int test_create_anonymous_dataset_invalid_params(void);
-static int test_create_dataset_null_space(void);
-static int test_create_dataset_scalar_space(void);
-static int test_create_zero_dim_dset(void);
-static int test_create_dataset_random_shapes(void);
-static int test_create_dataset_predefined_types(void);
-static int test_create_dataset_string_types(void);
-static int test_create_dataset_compound_types(void);
-static int test_create_dataset_enum_types(void);
-static int test_create_dataset_array_types(void);
-static int test_create_dataset_creation_properties(void);
-static int test_create_many_dataset(void);
-static int test_open_dataset(void);
-static int test_open_dataset_invalid_params(void);
-static int test_close_dataset_invalid_params(void);
-static int test_get_dataset_space_and_type(void);
-static int test_get_dataset_space_and_type_invalid_params(void);
-static int test_get_dataset_space_status(void);
-static int test_get_dataset_space_status_invalid_params(void);
-static int test_dataset_property_lists(void);
-static int test_get_dataset_storage_size(void);
-static int test_get_dataset_storage_size_invalid_params(void);
-static int test_get_dataset_chunk_storage_size(void);
-static int test_get_dataset_chunk_storage_size_invalid_params(void);
-static int test_get_dataset_offset(void);
-static int test_get_dataset_offset_invalid_params(void);
-static int test_read_dataset_small_all(void);
-static int test_read_dataset_small_hyperslab(void);
-static int test_read_dataset_small_point_selection(void);
-static int test_dataset_io_point_selections(void);
-static int test_read_dataset_invalid_params(void);
-static int test_write_dataset_small_all(void);
-static int test_write_dataset_small_hyperslab(void);
-static int test_write_dataset_small_point_selection(void);
-static int test_write_dataset_data_verification(void);
-static int test_write_dataset_invalid_params(void);
-static int test_dataset_builtin_type_conversion(void);
-static int test_dataset_compound_partial_io(void);
-static int test_dataset_set_extent_chunked_unlimited(void);
-static int test_dataset_set_extent_chunked_fixed(void);
-static int test_dataset_set_extent_data(void);
-static int test_dataset_set_extent_double_handles(void);
-static int test_dataset_set_extent_invalid_params(void);
-static int test_flush_dataset(void);
-static int test_flush_dataset_invalid_params(void);
-static int test_refresh_dataset(void);
-static int test_refresh_dataset_invalid_params(void);
+static void print_dataset_test_header(void);
+static void test_create_dataset_under_root(void);
+static void test_create_dataset_under_existing_group(void);
+static void test_create_dataset_invalid_params(void);
+static void test_create_anonymous_dataset(void);
+static void test_create_anonymous_dataset_invalid_params(void);
+static void test_create_dataset_null_space(void);
+static void test_create_dataset_scalar_space(void);
+static void test_create_zero_dim_dset(void);
+static void test_create_dataset_random_shapes(void);
+static void test_create_dataset_predefined_types(void);
+static void test_create_dataset_string_types(void);
+static void test_create_dataset_compound_types(void);
+static void test_create_dataset_enum_types(void);
+static void test_create_dataset_array_types(void);
+static void test_create_dataset_creation_properties(void);
+static void test_create_many_dataset(void);
+static void test_open_dataset(void);
+static void test_open_dataset_invalid_params(void);
+static void test_close_dataset_invalid_params(void);
+static void test_get_dataset_space_and_type(void);
+static void test_get_dataset_space_and_type_invalid_params(void);
+static void test_get_dataset_space_status(void);
+static void test_get_dataset_space_status_invalid_params(void);
+static void test_dataset_property_lists(void);
+static void test_get_dataset_storage_size(void);
+static void test_get_dataset_storage_size_invalid_params(void);
+static void test_get_dataset_chunk_storage_size(void);
+static void test_get_dataset_chunk_storage_size_invalid_params(void);
+static void test_get_dataset_offset(void);
+static void test_get_dataset_offset_invalid_params(void);
+static void test_read_dataset_small_all(void);
+static void test_read_dataset_small_hyperslab(void);
+static void test_read_dataset_small_point_selection(void);
+static void test_dataset_io_point_selections(void);
+static void test_read_dataset_invalid_params(void);
+static void test_write_dataset_small_all(void);
+static void test_write_dataset_small_hyperslab(void);
+static void test_write_dataset_small_point_selection(void);
+static void test_write_dataset_data_verification(void);
+static void test_write_dataset_invalid_params(void);
+static void test_dataset_builtin_type_conversion(void);
+static void test_dataset_compound_partial_io(void);
+static void test_dataset_set_extent_chunked_unlimited(void);
+static void test_dataset_set_extent_chunked_fixed(void);
+static void test_dataset_set_extent_data(void);
+static void test_dataset_set_extent_double_handles(void);
+static void test_dataset_set_extent_invalid_params(void);
+static void test_flush_dataset(void);
+static void test_flush_dataset_invalid_params(void);
+static void test_refresh_dataset(void);
+static void test_refresh_dataset_invalid_params(void);
 
 /*
  * Chunking tests
  */
-static int test_create_single_chunk_dataset(void);
-static int test_write_single_chunk_dataset(void);
-static int test_create_multi_chunk_dataset(void);
-static int test_write_multi_chunk_dataset_same_shape_read(void);
-static int test_write_multi_chunk_dataset_diff_shape_read(void);
-static int test_overwrite_multi_chunk_dataset_same_shape_read(void);
-static int test_overwrite_multi_chunk_dataset_diff_shape_read(void);
-static int test_read_partial_chunk_all_selection(void);
-static int test_read_partial_chunk_hyperslab_selection(void);
-static int test_read_partial_chunk_point_selection(void);
+static void test_create_single_chunk_dataset(void);
+static void test_write_single_chunk_dataset(void);
+static void test_create_multi_chunk_dataset(void);
+static void test_write_multi_chunk_dataset_same_shape_read(void);
+static void test_write_multi_chunk_dataset_diff_shape_read(void);
+static void test_overwrite_multi_chunk_dataset_same_shape_read(void);
+static void test_overwrite_multi_chunk_dataset_diff_shape_read(void);
+static void test_read_partial_chunk_all_selection(void);
+static void test_read_partial_chunk_hyperslab_selection(void);
+static void test_read_partial_chunk_point_selection(void);
 
-static int test_get_vlen_buf_size(void);
+static void test_get_vlen_buf_size(void);
 
-/*
- * The array of dataset tests to be performed.
- */
-static int (*dataset_tests[])(void) = {
-    test_create_dataset_under_root,
-    test_create_dataset_under_existing_group,
-    test_create_dataset_invalid_params,
-    test_create_anonymous_dataset,
-    test_create_anonymous_dataset_invalid_params,
-    test_create_dataset_null_space,
-    test_create_dataset_scalar_space,
-    test_create_zero_dim_dset,
-    test_create_dataset_random_shapes,
-    test_create_dataset_predefined_types,
-    test_create_dataset_string_types,
-    test_create_dataset_compound_types,
-    test_create_dataset_enum_types,
-    test_create_dataset_array_types,
-    test_create_dataset_creation_properties,
-    test_create_many_dataset,
-    test_open_dataset,
-    test_open_dataset_invalid_params,
-    test_close_dataset_invalid_params,
-    test_get_dataset_space_and_type,
-    test_get_dataset_space_and_type_invalid_params,
-    test_get_dataset_space_status,
-    test_get_dataset_space_status_invalid_params,
-    test_dataset_property_lists,
-    test_get_dataset_storage_size,
-    test_get_dataset_storage_size_invalid_params,
-    test_get_dataset_chunk_storage_size,
-    test_get_dataset_chunk_storage_size_invalid_params,
-    test_get_dataset_offset,
-    test_get_dataset_offset_invalid_params,
-    test_read_dataset_small_all,
-    test_read_dataset_small_hyperslab,
-    test_read_dataset_small_point_selection,
-    test_dataset_io_point_selections,
-    test_read_dataset_invalid_params,
-    test_write_dataset_small_all,
-    test_write_dataset_small_hyperslab,
-    test_write_dataset_small_point_selection,
-    test_write_dataset_data_verification,
-    test_write_dataset_invalid_params,
-    test_dataset_builtin_type_conversion,
-    test_dataset_compound_partial_io,
-    test_dataset_set_extent_chunked_unlimited,
-    test_dataset_set_extent_chunked_fixed,
-    test_dataset_set_extent_data,
-    test_dataset_set_extent_double_handles,
-    test_dataset_set_extent_invalid_params,
-    test_flush_dataset,
-    test_flush_dataset_invalid_params,
-    test_refresh_dataset,
-    test_refresh_dataset_invalid_params,
-    test_create_single_chunk_dataset,
-    test_write_single_chunk_dataset,
-    test_create_multi_chunk_dataset,
-    test_write_multi_chunk_dataset_same_shape_read,
-    test_write_multi_chunk_dataset_diff_shape_read,
-    test_overwrite_multi_chunk_dataset_same_shape_read,
-    test_overwrite_multi_chunk_dataset_diff_shape_read,
-    test_read_partial_chunk_all_selection,
-    test_read_partial_chunk_hyperslab_selection,
-    test_read_partial_chunk_point_selection,
-    test_get_vlen_buf_size,
-};
+static void
+print_dataset_test_header(void)
+{
+    printf("\n");
+    printf("**********************************************\n");
+    printf("*                                            *\n");
+    printf("*             API Dataset Tests              *\n");
+    printf("*                                            *\n");
+    printf("**********************************************\n\n");
+}
 
 /*
  * A test to check that a dataset can be
  * created under the root group.
  */
-static int
+static void
 test_create_dataset_under_root(void)
 {
     hid_t file_id    = H5I_INVALID_HID;
@@ -170,7 +114,7 @@ test_create_dataset_under_root(void)
     if (!(vol_cap_flags_g & H5VL_CAP_FLAG_FILE_BASIC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_DATASET_BASIC)) {
         SKIPPED();
         printf("    API functions for basic file or dataset aren't supported with this connector\n");
-        return 0;
+        return;
     }
 
     if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
@@ -204,7 +148,7 @@ test_create_dataset_under_root(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -216,14 +160,14 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 
 /*
  * A test to check that a dataset can be created
  * under a group that is not the root group.
  */
-static int
+static void
 test_create_dataset_under_existing_group(void)
 {
     hid_t file_id         = H5I_INVALID_HID;
@@ -239,7 +183,7 @@ test_create_dataset_under_existing_group(void)
         !(vol_cap_flags_g & H5VL_CAP_FLAG_DATASET_BASIC)) {
         SKIPPED();
         printf("    API functions for basic file, group, or dataset aren't supported with this connector\n");
-        return 0;
+        return;
     }
 
     if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
@@ -290,7 +234,7 @@ test_create_dataset_under_existing_group(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -304,14 +248,14 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 
 /*
  * A test to check that a dataset can't be created
  * when H5Dcreate is passed invalid parameters.
  */
-static int
+static void
 test_create_dataset_invalid_params(void)
 {
     hid_t file_id         = H5I_INVALID_HID;
@@ -327,7 +271,7 @@ test_create_dataset_invalid_params(void)
         !(vol_cap_flags_g & H5VL_CAP_FLAG_DATASET_BASIC)) {
         SKIPPED();
         printf("    API functions for basic file, group, or dataset aren't supported with this connector\n");
-        return 0;
+        return;
     }
 
     TESTING_2("test setup");
@@ -547,7 +491,7 @@ test_create_dataset_invalid_params(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -561,13 +505,13 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 
 /*
  * A test to check that an anonymous dataset can be created.
  */
-static int
+static void
 test_create_anonymous_dataset(void)
 {
     hid_t file_id         = H5I_INVALID_HID;
@@ -583,7 +527,7 @@ test_create_anonymous_dataset(void)
         !(vol_cap_flags_g & H5VL_CAP_FLAG_DATASET_BASIC)) {
         SKIPPED();
         printf("    API functions for basic file, group, or dataset aren't supported with this connector\n");
-        return 0;
+        return;
     }
 
     if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
@@ -632,7 +576,7 @@ test_create_anonymous_dataset(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -646,7 +590,7 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 
 /*
@@ -654,7 +598,7 @@ error:
  * be created when H5Dcreate_anon is passed invalid
  * parameters.
  */
-static int
+static void
 test_create_anonymous_dataset_invalid_params(void)
 {
     hid_t file_id         = H5I_INVALID_HID;
@@ -670,7 +614,7 @@ test_create_anonymous_dataset_invalid_params(void)
         !(vol_cap_flags_g & H5VL_CAP_FLAG_DATASET_BASIC)) {
         SKIPPED();
         printf("    API functions for basic file, group, or dataset aren't supported with this connector\n");
-        return 0;
+        return;
     }
 
     TESTING_2("test setup");
@@ -828,7 +772,7 @@ test_create_anonymous_dataset_invalid_params(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -842,14 +786,14 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 
 /*
  * A test to check that creating a dataset with a NULL
  * dataspace is not problematic.
  */
-static int
+static void
 test_create_dataset_null_space(void)
 {
     hid_t file_id         = H5I_INVALID_HID;
@@ -865,7 +809,7 @@ test_create_dataset_null_space(void)
         !(vol_cap_flags_g & H5VL_CAP_FLAG_DATASET_BASIC)) {
         SKIPPED();
         printf("    API functions for basic file, group, or dataset aren't supported with this connector\n");
-        return 0;
+        return;
     }
 
     if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
@@ -925,7 +869,7 @@ test_create_dataset_null_space(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -939,14 +883,14 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 
 /*
  * A test to check that creating a dataset with a scalar
  * dataspace is not problematic.
  */
-static int
+static void
 test_create_dataset_scalar_space(void)
 {
     hid_t file_id         = H5I_INVALID_HID;
@@ -962,7 +906,7 @@ test_create_dataset_scalar_space(void)
         !(vol_cap_flags_g & H5VL_CAP_FLAG_DATASET_BASIC)) {
         SKIPPED();
         printf("    API functions for basic file, group, or dataset aren't supported with this connector\n");
-        return 0;
+        return;
     }
 
     if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
@@ -1022,7 +966,7 @@ test_create_dataset_scalar_space(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -1036,14 +980,14 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 
 /*
  * A test to check that creating a dataset with a dataspace
  * which contains a 0-sized dimension is not problematic.
  */
-static int
+static void
 test_create_zero_dim_dset(void)
 {
     hsize_t dims[ZERO_DIM_DSET_TEST_SPACE_RANK] = {0};
@@ -1061,7 +1005,7 @@ test_create_zero_dim_dset(void)
         !(vol_cap_flags_g & H5VL_CAP_FLAG_DATASET_BASIC)) {
         SKIPPED();
         printf("    API functions for basic file, group, or dataset aren't supported with this connector\n");
-        return 0;
+        return;
     }
 
     if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
@@ -1126,7 +1070,7 @@ test_create_zero_dim_dset(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -1139,14 +1083,14 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 
 /*
  * A test to check that a dataset can be created with
  * a variety of different dataspace shapes.
  */
-static int
+static void
 test_create_dataset_random_shapes(void)
 {
     size_t i;
@@ -1162,7 +1106,7 @@ test_create_dataset_random_shapes(void)
         !(vol_cap_flags_g & H5VL_CAP_FLAG_DATASET_BASIC)) {
         SKIPPED();
         printf("    API functions for basic file, group, or dataset aren't supported with this connector\n");
-        return 0;
+        return;
     }
 
     if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
@@ -1223,7 +1167,7 @@ test_create_dataset_random_shapes(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -1237,7 +1181,7 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 
 /*
@@ -1245,7 +1189,7 @@ error:
  * each of the predefined integer and floating-point
  * datatypes.
  */
-static int
+static void
 test_create_dataset_predefined_types(void)
 {
     size_t i;
@@ -1266,7 +1210,7 @@ test_create_dataset_predefined_types(void)
         !(vol_cap_flags_g & H5VL_CAP_FLAG_DATASET_BASIC)) {
         SKIPPED();
         printf("    API functions for basic file, group, or dataset aren't supported with this connector\n");
-        return 0;
+        return;
     }
 
     if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
@@ -1328,7 +1272,7 @@ test_create_dataset_predefined_types(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -1341,14 +1285,14 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 
 /*
  * A test to check that a dataset can be created using
  * string datatypes.
  */
-static int
+static void
 test_create_dataset_string_types(void)
 {
     hid_t file_id         = H5I_INVALID_HID;
@@ -1364,7 +1308,7 @@ test_create_dataset_string_types(void)
         !(vol_cap_flags_g & H5VL_CAP_FLAG_DATASET_BASIC)) {
         SKIPPED();
         printf("    API functions for basic file, group, or dataset aren't supported with this connector\n");
-        return 0;
+        return;
     }
 
     TESTING_2("test setup");
@@ -1494,7 +1438,7 @@ test_create_dataset_string_types(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -1510,14 +1454,14 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 
 /*
  * A test to check that a dataset can be created using
  * a variety of compound datatypes.
  */
-static int
+static void
 test_create_dataset_compound_types(void)
 {
     size_t i, j;
@@ -1536,7 +1480,7 @@ test_create_dataset_compound_types(void)
         !(vol_cap_flags_g & H5VL_CAP_FLAG_DATASET_BASIC)) {
         SKIPPED();
         printf("    API functions for basic file, group, or dataset aren't supported with this connector\n");
-        return 0;
+        return;
     }
 
     /*
@@ -1664,7 +1608,7 @@ test_create_dataset_compound_types(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -1680,14 +1624,14 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 
 /*
  * A test to check that a dataset can be created with
  * enum datatypes.
  */
-static int
+static void
 test_create_dataset_enum_types(void)
 {
     size_t      i;
@@ -1706,7 +1650,7 @@ test_create_dataset_enum_types(void)
         !(vol_cap_flags_g & H5VL_CAP_FLAG_DATASET_BASIC)) {
         SKIPPED();
         printf("    API functions for basic file, group, or dataset aren't supported with this connector\n");
-        return 0;
+        return;
     }
 
     if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
@@ -1806,7 +1750,7 @@ test_create_dataset_enum_types(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -1822,14 +1766,14 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 
 /*
  * A test to check that a dataset can be created using
  * array datatypes.
  */
-static int
+static void
 test_create_dataset_array_types(void)
 {
     hsize_t array_dims1[DATASET_ARRAY_TYPE_TEST_RANK1];
@@ -1853,7 +1797,7 @@ test_create_dataset_array_types(void)
         !(vol_cap_flags_g & H5VL_CAP_FLAG_DATASET_BASIC)) {
         SKIPPED();
         printf("    API functions for basic file, group, or dataset aren't supported with this connector\n");
-        return 0;
+        return;
     }
 
     if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
@@ -2002,7 +1946,7 @@ test_create_dataset_array_types(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -2024,24 +1968,24 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 
 /*
  * A test to check the functionality of the different
  * dataset creation properties.
  */
-static int
+static void
 test_create_dataset_creation_properties(void)
 {
-    hsize_t dims[DATASET_CREATION_PROPERTIES_TEST_SHAPE_RANK];
-    hsize_t chunk_dims[DATASET_CREATION_PROPERTIES_TEST_SHAPE_RANK];
-    size_t  i;
-    hid_t   file_id         = H5I_INVALID_HID;
-    hid_t   container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
-    hid_t   dset_id = H5I_INVALID_HID, dcpl_id = H5I_INVALID_HID;
-    hid_t   dset_dtype = H5I_INVALID_HID, compact_dtype = H5I_INVALID_HID;
-    hid_t   fspace_id = H5I_INVALID_HID, compact_fspace_id = H5I_INVALID_HID;
+    hsize_t      dims[DATASET_CREATION_PROPERTIES_TEST_SHAPE_RANK];
+    hsize_t      chunk_dims[DATASET_CREATION_PROPERTIES_TEST_SHAPE_RANK];
+    size_t       i;
+    hid_t        file_id         = H5I_INVALID_HID;
+    hid_t        container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
+    hid_t        dset_id = H5I_INVALID_HID, dcpl_id = H5I_INVALID_HID;
+    hid_t        dset_dtype = H5I_INVALID_HID, compact_dtype = H5I_INVALID_HID;
+    hid_t        fspace_id = H5I_INVALID_HID, compact_fspace_id = H5I_INVALID_HID;
 
     TESTING_MULTIPART("dataset creation properties");
 
@@ -2051,7 +1995,7 @@ test_create_dataset_creation_properties(void)
         SKIPPED();
         printf("    API functions for basic file, group, or dataset "
                "aren't supported with this connector\n");
-        return 0;
+        return;
     }
 
     TESTING_2("test setup");
@@ -2692,7 +2636,7 @@ test_create_dataset_creation_properties(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -2709,13 +2653,13 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 
 /*
  * A test to create many small datasets (100,000)
  */
-static int
+static void
 test_create_many_dataset(void)
 {
     hid_t         file_id         = H5I_INVALID_HID;
@@ -2733,7 +2677,7 @@ test_create_many_dataset(void)
         !(vol_cap_flags_g & H5VL_CAP_FLAG_DATASET_BASIC)) {
         SKIPPED();
         printf("    API functions for basic file, group, or dataset aren't supported with this connector\n");
-        return 0;
+        return;
     }
 
     if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
@@ -2798,7 +2742,7 @@ test_create_many_dataset(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -2811,28 +2755,28 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 
 /*
  * A test to check that re-opening a dataset with
  * H5Dopen succeeds.
  */
-static int
+static void
 test_open_dataset(void)
 {
     TESTING("H5Dopen");
 
     SKIPPED();
 
-    return 0;
+    return;
 }
 
 /*
  * A test to check that H5Dopen fails when it is
  * passed invalid parameters.
  */
-static int
+static void
 test_open_dataset_invalid_params(void)
 {
     hid_t file_id         = H5I_INVALID_HID;
@@ -2848,7 +2792,7 @@ test_open_dataset_invalid_params(void)
         !(vol_cap_flags_g & H5VL_CAP_FLAG_DATASET_BASIC)) {
         SKIPPED();
         printf("    API functions for basic file, group, or dataset aren't supported with this connector\n");
-        return 0;
+        return;
     }
 
     TESTING_2("test setup");
@@ -2986,7 +2930,7 @@ test_open_dataset_invalid_params(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -3000,14 +2944,14 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 
 /*
  * A test to check that H5Dclose fails when it is
  * passed an invalid dataset ID.
  */
-static int
+static void
 test_close_dataset_invalid_params(void)
 {
     herr_t err_ret = -1;
@@ -3019,7 +2963,7 @@ test_close_dataset_invalid_params(void)
     if (!(vol_cap_flags_g & H5VL_CAP_FLAG_FILE_BASIC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_DATASET_BASIC)) {
         SKIPPED();
         printf("    API functions for basic file or dataset aren't supported with this connector\n");
-        return 0;
+        return;
     }
 
     if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
@@ -3045,7 +2989,7 @@ test_close_dataset_invalid_params(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -3054,7 +2998,7 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 
 /*
@@ -3062,7 +3006,7 @@ error:
  * and datatype can be retrieved with H5Dget_space and
  * H5Dget_type, respectively.
  */
-static int
+static void
 test_get_dataset_space_and_type(void)
 {
     hsize_t dset_dims[DATASET_GET_SPACE_TYPE_TEST_SPACE_RANK];
@@ -3083,7 +3027,7 @@ test_get_dataset_space_and_type(void)
         !(vol_cap_flags_g & H5VL_CAP_FLAG_DATASET_BASIC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_DATASET_MORE)) {
         SKIPPED();
         printf("    API functions for basic file, group, or dataset aren't supported with this connector\n");
-        return 0;
+        return;
     }
 
     TESTING_2("test setup");
@@ -3328,7 +3272,7 @@ test_get_dataset_space_and_type(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -3344,7 +3288,7 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 
 /*
@@ -3352,7 +3296,7 @@ error:
  * can't be retrieved when H5Dget_space and H5Dget_type are passed
  * invalid parameters, respectively.
  */
-static int
+static void
 test_get_dataset_space_and_type_invalid_params(void)
 {
     hid_t file_id         = H5I_INVALID_HID;
@@ -3371,7 +3315,7 @@ test_get_dataset_space_and_type_invalid_params(void)
         !(vol_cap_flags_g & H5VL_CAP_FLAG_DATASET_BASIC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_DATASET_MORE)) {
         SKIPPED();
         printf("    API functions for basic file, group, or dataset aren't supported with this connector\n");
-        return 0;
+        return;
     }
 
     TESTING_2("test setup");
@@ -3473,7 +3417,7 @@ test_get_dataset_space_and_type_invalid_params(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -3489,20 +3433,20 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 
 /*
  * A test for H5Dget_space_status.
  */
-static int
+static void
 test_get_dataset_space_status(void)
 {
     TESTING("H5Dget_space_status");
 
     SKIPPED();
 
-    return 0;
+    return;
 }
 
 /*
@@ -3510,14 +3454,14 @@ test_get_dataset_space_status(void)
  * status can't be retrieved with H5Dget_space_status when
  * it is passed invalid parameters.
  */
-static int
+static void
 test_get_dataset_space_status_invalid_params(void)
 {
     TESTING("H5Dget_space_status with invalid parameters");
 
     SKIPPED();
 
-    return 0;
+    return;
 }
 
 /*
@@ -3527,14 +3471,13 @@ test_get_dataset_space_status_invalid_params(void)
  * Also tests that a valid copy of a DAPL used for dataset
  * access can be retrieved with a call to H5Dget_access_plist.
  */
-static int
+static void
 test_dataset_property_lists(void)
 {
     const char *path_prefix = "/test_prefix";
     hsize_t     dims[DATASET_PROPERTY_LIST_TEST_SPACE_RANK];
     hsize_t     chunk_dims[DATASET_PROPERTY_LIST_TEST_SPACE_RANK];
     size_t      i;
-    herr_t      err_ret         = -1;
     hid_t       file_id         = H5I_INVALID_HID;
     hid_t       container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
     hid_t       dset_id1 = H5I_INVALID_HID, dset_id2 = H5I_INVALID_HID, dset_id3 = H5I_INVALID_HID,
@@ -3545,7 +3488,6 @@ test_dataset_property_lists(void)
           dset_dtype4 = H5I_INVALID_HID;
     hid_t space_id    = H5I_INVALID_HID;
     char *tmp_prefix  = NULL;
-    char  vol_name[5];
 
     TESTING_MULTIPART("dataset property list operations");
 
@@ -3555,7 +3497,7 @@ test_dataset_property_lists(void)
         SKIPPED();
         printf("    API functions for basic file, group, dataset, or get property list aren't supported "
                "with this connector\n");
-        return 0;
+        return;
     }
 
     TESTING_2("test setup");
@@ -3563,13 +3505,6 @@ test_dataset_property_lists(void)
     if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
         printf("    couldn't open file '%s'\n", H5_api_test_filename);
-        goto error;
-    }
-
-    /** for DAOS VOL, this test is problematic since auto chunking can be selected, so skip for now */
-    if (H5VLget_connector_name(file_id, vol_name, 5) < 0) {
-        H5_FAILED();
-        printf("    couldn't get VOL connector name\n");
         goto error;
     }
 
@@ -3670,20 +3605,6 @@ test_dataset_property_lists(void)
                         printf("    DCPL property values were incorrect\n");
                         PART_ERROR(H5Dget_create_plist);
                     }
-
-                H5E_BEGIN_TRY
-                {
-                    err_ret = H5Pget_chunk(dcpl_id2, DATASET_PROPERTY_LIST_TEST_SPACE_RANK, tmp_chunk_dims);
-                }
-                H5E_END_TRY
-
-                /* DAOS VOL can auto chunk, so don't fail */
-                if (err_ret >= 0 && strcmp(vol_name, "daos") != 0) {
-                    H5_FAILED();
-                    printf("    property list 2 shouldn't have had chunk dimensionality set (not a chunked "
-                           "layout)\n");
-                    PART_ERROR(H5Dget_create_plist);
-                }
             }
 
             PASSED();
@@ -3872,20 +3793,6 @@ test_dataset_property_lists(void)
                         printf("    DCPL property values were incorrect\n");
                         PART_ERROR(H5Dget_create_plist_reopened);
                     }
-
-                H5E_BEGIN_TRY
-                {
-                    err_ret = H5Pget_chunk(dcpl_id2, DATASET_PROPERTY_LIST_TEST_SPACE_RANK, tmp_chunk_dims);
-                }
-                H5E_END_TRY
-
-                /* DAOS VOL can auto chunk, so don't fail */
-                if (err_ret >= 0 && strcmp(vol_name, "daos") != 0) {
-                    H5_FAILED();
-                    printf("    property list 2 shouldn't have had chunk dimensionality set (not a chunked "
-                           "layout)\n");
-                    PART_ERROR(H5Dget_create_plist_reopened);
-                }
             }
 
             PASSED();
@@ -3936,7 +3843,7 @@ test_dataset_property_lists(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -3962,20 +3869,20 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 
 /*
  * A test for H5Dget_storage_size.
  */
-static int
+static void
 test_get_dataset_storage_size(void)
 {
     TESTING("H5Dget_storage_size");
 
     SKIPPED();
 
-    return 0;
+    return;
 }
 
 /*
@@ -3983,27 +3890,27 @@ test_get_dataset_storage_size(void)
  * be retrieved when H5Dget_storage_size is passed
  * invalid parameters.
  */
-static int
+static void
 test_get_dataset_storage_size_invalid_params(void)
 {
     TESTING("H5Dget_storage_size with invalid parameters");
 
     SKIPPED();
 
-    return 0;
+    return;
 }
 
 /*
  * A test for H5Dget_chunk_storage_size.
  */
-static int
+static void
 test_get_dataset_chunk_storage_size(void)
 {
     TESTING("H5Dget_chunk_storage_size");
 
     SKIPPED();
 
-    return 0;
+    return;
 }
 
 /*
@@ -4011,27 +3918,27 @@ test_get_dataset_chunk_storage_size(void)
  * a dataset can't be retrieved when H5Dget_chunk_storage_size
  * is passed invalid parameters.
  */
-static int
+static void
 test_get_dataset_chunk_storage_size_invalid_params(void)
 {
     TESTING("H5Dget_chunk_storage_size with invalid parameters");
 
     SKIPPED();
 
-    return 0;
+    return;
 }
 
 /*
  * A test for H5Dget_offset.
  */
-static int
+static void
 test_get_dataset_offset(void)
 {
     TESTING("H5Dget_offset");
 
     SKIPPED();
 
-    return 0;
+    return;
 }
 
 /*
@@ -4039,21 +3946,21 @@ test_get_dataset_offset(void)
  * retrieved when H5Dget_offset is passed invalid
  * parameters.
  */
-static int
+static void
 test_get_dataset_offset_invalid_params(void)
 {
     TESTING("H5Dget_offset with invalid parameters");
 
     SKIPPED();
 
-    return 0;
+    return;
 }
 
 /*
  * A test to check that a small amount of data can be
  * read back from a dataset using an H5S_ALL selection.
  */
-static int
+static void
 test_read_dataset_small_all(void)
 {
     hsize_t dims[DATASET_SMALL_READ_TEST_ALL_DSET_SPACE_RANK] = {10, 5, 3};
@@ -4071,7 +3978,7 @@ test_read_dataset_small_all(void)
         !(vol_cap_flags_g & H5VL_CAP_FLAG_DATASET_BASIC)) {
         SKIPPED();
         printf("    API functions for basic file, group, or dataset aren't supported with this connector\n");
-        return 0;
+        return;
     }
 
     if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
@@ -4136,7 +4043,7 @@ test_read_dataset_small_all(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -4151,14 +4058,14 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 
 /*
  * A test to check that a small amount of data can be
  * read back from a dataset using a hyperslab selection.
  */
-static int
+static void
 test_read_dataset_small_hyperslab(void)
 {
     hsize_t start[DATASET_SMALL_READ_TEST_HYPERSLAB_DSET_SPACE_RANK];
@@ -4180,7 +4087,7 @@ test_read_dataset_small_hyperslab(void)
         !(vol_cap_flags_g & H5VL_CAP_FLAG_DATASET_BASIC)) {
         SKIPPED();
         printf("    API functions for basic file, group, or dataset aren't supported with this connector\n");
-        return 0;
+        return;
     }
 
     if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
@@ -4262,7 +4169,7 @@ test_read_dataset_small_hyperslab(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -4278,14 +4185,14 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 
 /*
  * A test to check that a small amount of data can be
  * read back from a dataset using a point selection.
  */
-static int
+static void
 test_read_dataset_small_point_selection(void)
 {
     hsize_t points[DATASET_SMALL_READ_TEST_POINT_SELECTION_NUM_POINTS *
@@ -4307,7 +4214,7 @@ test_read_dataset_small_point_selection(void)
         !(vol_cap_flags_g & H5VL_CAP_FLAG_DATASET_BASIC)) {
         SKIPPED();
         printf("    API functions for basic file, group, or dataset aren't supported with this connector\n");
-        return 0;
+        return;
     }
 
     if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
@@ -4391,7 +4298,7 @@ test_read_dataset_small_point_selection(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -4407,7 +4314,7 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 
 /*
@@ -4430,7 +4337,7 @@ error:
                     ;                                                                                        \
             } while ((J) < (I));                                                                             \
     }
-static int
+static void
 test_dataset_io_point_selections(void)
 {
     hid_t   file_id         = H5I_INVALID_HID;
@@ -4461,7 +4368,7 @@ test_dataset_io_point_selections(void)
         !(vol_cap_flags_g & H5VL_CAP_FLAG_DATASET_BASIC)) {
         SKIPPED();
         printf("    API functions for basic file, group, or dataset aren't supported with this connector\n");
-        return 0;
+        return;
     }
 
     /* Create dataspaces and DCPL */
@@ -4888,7 +4795,7 @@ test_dataset_io_point_selections(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -4904,14 +4811,14 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 } /* end test_dataset_io_point_selections() */
 
 /*
  * A test to check that data can't be read from a
  * dataset when H5Dread is passed invalid parameters.
  */
-static int
+static void
 test_read_dataset_invalid_params(void)
 {
     hsize_t dims[DATASET_READ_INVALID_PARAMS_TEST_DSET_SPACE_RANK] = {10, 5, 3};
@@ -4930,7 +4837,7 @@ test_read_dataset_invalid_params(void)
         !(vol_cap_flags_g & H5VL_CAP_FLAG_DATASET_BASIC)) {
         SKIPPED();
         printf("    API functions for basic file, group, or dataset aren't supported with this connector\n");
-        return 0;
+        return;
     }
 
     TESTING_2("test setup");
@@ -5123,7 +5030,7 @@ test_read_dataset_invalid_params(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -5138,14 +5045,14 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 
 /*
  * A test to check that a small write can be
  * made to a dataset using an H5S_ALL selection.
  */
-static int
+static void
 test_write_dataset_small_all(void)
 {
     hssize_t space_npoints;
@@ -5164,7 +5071,7 @@ test_write_dataset_small_all(void)
         !(vol_cap_flags_g & H5VL_CAP_FLAG_DATASET_BASIC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_DATASET_MORE)) {
         SKIPPED();
         printf("    API functions for basic file, group, or dataset aren't supported with this connector\n");
-        return 0;
+        return;
     }
 
     if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
@@ -5251,7 +5158,7 @@ test_write_dataset_small_all(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -5266,14 +5173,14 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 
 /*
  * A test to check that a small write can be made
  * to a dataset using a hyperslab selection.
  */
-static int
+static void
 test_write_dataset_small_hyperslab(void)
 {
     hsize_t start[DATASET_SMALL_WRITE_TEST_HYPERSLAB_DSET_SPACE_RANK];
@@ -5295,7 +5202,7 @@ test_write_dataset_small_hyperslab(void)
         !(vol_cap_flags_g & H5VL_CAP_FLAG_DATASET_BASIC)) {
         SKIPPED();
         printf("    API functions for basic file, group, or dataset aren't supported with this connector\n");
-        return 0;
+        return;
     }
 
     if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
@@ -5381,7 +5288,7 @@ test_write_dataset_small_hyperslab(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -5397,14 +5304,14 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 
 /*
  * A test to check that a small write can be made
  * to a dataset using a point selection.
  */
-static int
+static void
 test_write_dataset_small_point_selection(void)
 {
     hsize_t points[DATASET_SMALL_WRITE_TEST_POINT_SELECTION_NUM_POINTS *
@@ -5426,7 +5333,7 @@ test_write_dataset_small_point_selection(void)
         !(vol_cap_flags_g & H5VL_CAP_FLAG_DATASET_BASIC)) {
         SKIPPED();
         printf("    API functions for basic file, group, or dataset aren't supported with this connector\n");
-        return 0;
+        return;
     }
 
     if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
@@ -5513,7 +5420,7 @@ test_write_dataset_small_point_selection(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -5529,14 +5436,14 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 
 /*
  * A test to ensure that data is read back correctly from
  * a dataset after it has been written.
  */
-static int
+static void
 test_write_dataset_data_verification(void)
 {
     hssize_t space_npoints;
@@ -5565,7 +5472,7 @@ test_write_dataset_data_verification(void)
         SKIPPED();
         printf("    API functions for basic file, group, basic or more dataset aren't supported with this "
                "connector\n");
-        return 0;
+        return;
     }
 
     TESTING_2("test setup");
@@ -6024,7 +5931,7 @@ test_write_dataset_data_verification(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -6044,14 +5951,14 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 
 /*
  * A test to check that a dataset can't be written to
  * when H5Dwrite is passed invalid parameters.
  */
-static int
+static void
 test_write_dataset_invalid_params(void)
 {
     hssize_t space_npoints;
@@ -6071,7 +5978,7 @@ test_write_dataset_invalid_params(void)
         !(vol_cap_flags_g & H5VL_CAP_FLAG_DATASET_BASIC)) {
         SKIPPED();
         printf("    API functions for basic file, group, or dataset aren't supported with this connector\n");
-        return 0;
+        return;
     }
 
     TESTING_2("test setup");
@@ -6270,7 +6177,7 @@ test_write_dataset_invalid_params(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -6285,14 +6192,14 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 
 /*
  * A test to ensure that data is read back correctly from a dataset after it has
  * been written, using type conversion with builtin types.
  */
-static int
+static void
 test_dataset_builtin_type_conversion(void)
 {
     hssize_t    space_npoints;
@@ -6324,7 +6231,7 @@ test_dataset_builtin_type_conversion(void)
         SKIPPED();
         printf("    API functions for basic file, group, basic or more dataset aren't supported with this "
                "connector\n");
-        return 0;
+        return;
     }
 
     TESTING_2("test setup");
@@ -6803,7 +6710,7 @@ test_dataset_builtin_type_conversion(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -6823,7 +6730,7 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 
 /*
@@ -6835,7 +6742,7 @@ typedef struct dataset_compount_partial_io_t {
     int b;
 } dataset_compount_partial_io_t;
 
-static int
+static void
 test_dataset_compound_partial_io(void)
 {
     hsize_t                       dims[1] = {DATASET_COMPOUND_PARTIAL_IO_DSET_DIMS};
@@ -6860,7 +6767,7 @@ test_dataset_compound_partial_io(void)
         !(vol_cap_flags_g & H5VL_CAP_FLAG_DATASET_BASIC)) {
         SKIPPED();
         printf("    API functions for basic file, group, or dataset aren't supported with this connector\n");
-        return 0;
+        return;
     }
 
     TESTING_2("test setup");
@@ -7069,7 +6976,7 @@ test_dataset_compound_partial_io(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -7085,7 +6992,7 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 
 /*
@@ -7094,7 +7001,7 @@ error:
  * dimensions for the dataset, so the dimensionality of the
  * dataset may both shrink and grow.
  */
-static int
+static void
 test_dataset_set_extent_chunked_unlimited(void)
 {
     hsize_t dims[DATASET_SET_EXTENT_CHUNKED_UNLIMITED_TEST_SPACE_RANK];
@@ -7117,7 +7024,7 @@ test_dataset_set_extent_chunked_unlimited(void)
         SKIPPED();
         printf("    API functions for basic file, group, basic or more dataset aren't supported with this "
                "connector\n");
-        return 0;
+        return;
     }
 
     if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
@@ -7302,7 +7209,7 @@ test_dataset_set_extent_chunked_unlimited(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -7317,7 +7224,7 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 
 /*
@@ -7326,7 +7233,7 @@ error:
  * dimensions for the dataset, so the dimensionality of the
  * dataset may only shrink.
  */
-static int
+static void
 test_dataset_set_extent_chunked_fixed(void)
 {
     hsize_t dims[DATASET_SET_EXTENT_CHUNKED_FIXED_TEST_SPACE_RANK];
@@ -7349,7 +7256,7 @@ test_dataset_set_extent_chunked_fixed(void)
         SKIPPED();
         printf("    API functions for basic file, group, basic or more dataset aren't supported with this "
                "connector\n");
-        return 0;
+        return;
     }
 
     if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
@@ -7580,7 +7487,7 @@ test_dataset_set_extent_chunked_fixed(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -7597,14 +7504,14 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 
 /*
  * A test to check the data is correct after expanding
  * and shrinking the dataset with H5Dset_extent
  */
-static int
+static void
 test_dataset_set_extent_data(void)
 {
     hsize_t dims_origin[DATASET_SET_EXTENT_DATA_TEST_SPACE_RANK] = {DATASET_SET_EXTENT_DATA_TEST_SPACE_DIM,
@@ -7638,7 +7545,7 @@ test_dataset_set_extent_data(void)
         SKIPPED();
         printf("    API functions for basic file, group, basic or more dataset aren't supported with this "
                "connector\n");
-        return 0;
+        return;
     }
 
     TESTING_2("test setup");
@@ -7921,7 +7828,7 @@ test_dataset_set_extent_data(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -7936,7 +7843,7 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 } /* test_dataset_set_extent_data */
 
 /*
@@ -7944,7 +7851,7 @@ error:
  * used to extend the dataset, then the other handle should
  * return the new size when queried.
  */
-static int
+static void
 test_dataset_set_extent_double_handles(void)
 {
     hsize_t dims_origin[DATASET_SET_EXTENT_DOUBLE_HANDLES_TEST_SPACE_RANK] = {
@@ -7972,7 +7879,7 @@ test_dataset_set_extent_double_handles(void)
         SKIPPED();
         printf("    API functions for basic file, group, basic or more dataset aren't supported with this "
                "connector\n");
-        return 0;
+        return;
     }
 
     if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
@@ -8062,7 +7969,7 @@ test_dataset_set_extent_double_handles(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -8078,14 +7985,14 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 } /* test_dataset_set_extent_double_handles */
 
 /*
  * A test to check that a dataset's extent can't be
  * changed when H5Dset_extent is passed invalid parameters.
  */
-static int
+static void
 test_dataset_set_extent_invalid_params(void)
 {
     hsize_t dims[DATASET_SET_EXTENT_INVALID_PARAMS_TEST_SPACE_RANK];
@@ -8102,7 +8009,6 @@ test_dataset_set_extent_invalid_params(void)
     hid_t chunked_dcpl_id = H5I_INVALID_HID, compact_dcpl_id = H5I_INVALID_HID,
           contiguous_dcpl_id = H5I_INVALID_HID;
     hid_t fspace_id = H5I_INVALID_HID, compact_fspace_id = H5I_INVALID_HID;
-    char  vol_name[5];
 
     TESTING_MULTIPART("H5Dset_extent with invalid parameters");
 
@@ -8112,7 +8018,7 @@ test_dataset_set_extent_invalid_params(void)
         SKIPPED();
         printf("    API functions for basic file, group, basic or more dataset aren't supported with this "
                "connector\n");
-        return 0;
+        return;
     }
 
     TESTING_2("test setup");
@@ -8121,19 +8027,6 @@ test_dataset_set_extent_invalid_params(void)
         H5_FAILED();
         printf("    couldn't open file '%s'\n", H5_api_test_filename);
         goto error;
-    }
-
-    /** for DAOS VOL, this test is problematic since auto chunking can be selected, so skip for now */
-    if (H5VLget_connector_name(file_id, vol_name, 5) < 0) {
-        H5_FAILED();
-        printf("    couldn't get VOL connector name\n");
-        goto error;
-    }
-    if (strcmp(vol_name, "daos") == 0) {
-        if (H5Fclose(file_id) < 0)
-            TEST_ERROR;
-        SKIPPED();
-        return 0;
     }
 
     if ((container_group = H5Gopen2(file_id, DATASET_TEST_GROUP_NAME, H5P_DEFAULT)) < 0) {
@@ -8335,7 +8228,7 @@ test_dataset_set_extent_invalid_params(void)
 
     PASSED();
 
-    return 0;
+  return;
 
 error:
     H5E_BEGIN_TRY
@@ -8355,67 +8248,67 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 } /* test_dataset_set_extent_invalid_params */
 
 /*
  * A test for H5Dflush.
  */
-static int
+static void
 test_flush_dataset(void)
 {
     TESTING("H5Dflush");
 
     SKIPPED();
 
-    return 0;
+    return;
 }
 
 /*
  * A test to check that H5Dflush fails when it is
  * passed invalid parameters.
  */
-static int
+static void
 test_flush_dataset_invalid_params(void)
 {
     TESTING("H5Dflush with invalid parameters");
 
     SKIPPED();
 
-    return 0;
+    return;
 }
 
 /*
  * A test for H5Drefresh.
  */
-static int
+static void
 test_refresh_dataset(void)
 {
     TESTING("H5Drefresh");
 
     SKIPPED();
 
-    return 0;
+    return;
 }
 
 /*
  * A test to check that H5Drefresh fails when it is
  * passed invalid parameters.
  */
-static int
+static void
 test_refresh_dataset_invalid_params(void)
 {
-    TESTING("H5Drefresh");
+    TESTING("H5Drefresh with invalid parameters");
 
     SKIPPED();
 
-    return 0;
+    return;
 }
 
 /*
  * A test to create a dataset composed of a single chunk.
  */
-static int
+static void
 test_create_single_chunk_dataset(void)
 {
     hsize_t dims[DATASET_SINGLE_CHUNK_TEST_SPACE_RANK];
@@ -8436,7 +8329,7 @@ test_create_single_chunk_dataset(void)
         SKIPPED();
         printf("    API functions for basic file, group, dataset, or get property list aren't supported "
                "with this connector\n");
-        return 0;
+        return;
     }
 
     if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
@@ -8571,7 +8464,7 @@ test_create_single_chunk_dataset(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -8586,14 +8479,14 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 
 /*
  * A test to check that a single-chunk dataset can be written
  * and read correctly.
  */
-static int
+static void
 test_write_single_chunk_dataset(void)
 {
     hssize_t space_npoints;
@@ -8617,7 +8510,7 @@ test_write_single_chunk_dataset(void)
         SKIPPED();
         printf("    API functions for basic file, group, dataset, or get property list aren't supported "
                "with this connector\n");
-        return 0;
+        return;
     }
 
     if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
@@ -8789,7 +8682,7 @@ test_write_single_chunk_dataset(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -8807,13 +8700,13 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 
 /*
  * A test to create a dataset composed of multiple chunks.
  */
-static int
+static void
 test_create_multi_chunk_dataset(void)
 {
     hsize_t dims[DATASET_MULTI_CHUNK_TEST_SPACE_RANK]       = {100, 100};
@@ -8835,7 +8728,7 @@ test_create_multi_chunk_dataset(void)
         SKIPPED();
         printf("    API functions for basic file, group, dataset, or get property list aren't supported "
                "with this connector\n");
-        return 0;
+        return;
     }
 
     if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
@@ -8970,7 +8863,7 @@ test_create_multi_chunk_dataset(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -8985,7 +8878,7 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 
 /*
@@ -8994,7 +8887,7 @@ error:
  * chunks of the dataset, the file dataspace and memory dataspace
  * used are the same shape.
  */
-static int
+static void
 test_write_multi_chunk_dataset_same_shape_read(void)
 {
     hsize_t dims[DATASET_MULTI_CHUNK_WRITE_SAME_SPACE_READ_TEST_DSET_SPACE_RANK]       = {100, 100};
@@ -9021,7 +8914,7 @@ test_write_multi_chunk_dataset_same_shape_read(void)
         SKIPPED();
         printf("    API functions for basic file, group, dataset, or get property list aren't supported "
                "with this connector\n");
-        return 0;
+        return;
     }
 
     if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
@@ -9295,7 +9188,7 @@ test_write_multi_chunk_dataset_same_shape_read(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -9312,7 +9205,7 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 
 /*
@@ -9321,7 +9214,7 @@ error:
  * chunks of the dataset, the file dataspace and memory dataspace
  * used are differently shaped.
  */
-static int
+static void
 test_write_multi_chunk_dataset_diff_shape_read(void)
 {
     hsize_t dims[DATASET_MULTI_CHUNK_WRITE_DIFF_SPACE_READ_TEST_DSET_SPACE_RANK]       = {100, 100};
@@ -9347,7 +9240,7 @@ test_write_multi_chunk_dataset_diff_shape_read(void)
         SKIPPED();
         printf("    API functions for basic file, group, dataset, or get property list aren't supported "
                "with this connector\n");
-        return 0;
+        return;
     }
 
     if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
@@ -9630,7 +9523,7 @@ test_write_multi_chunk_dataset_diff_shape_read(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -9649,7 +9542,7 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 
 /*
@@ -9658,7 +9551,7 @@ error:
  * When reading back the chunks of the dataset, the file
  * dataspace and memory dataspace used are the same shape.
  */
-static int
+static void
 test_overwrite_multi_chunk_dataset_same_shape_read(void)
 {
     hsize_t dims[DATASET_MULTI_CHUNK_OVERWRITE_SAME_SPACE_READ_TEST_DSET_SPACE_RANK]       = {100, 100};
@@ -9685,7 +9578,7 @@ test_overwrite_multi_chunk_dataset_same_shape_read(void)
         SKIPPED();
         printf("    API functions for basic file, group, dataset, or get property list aren't supported "
                "with this connector\n");
-        return 0;
+        return;
     }
 
     if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
@@ -9967,7 +9860,7 @@ test_overwrite_multi_chunk_dataset_same_shape_read(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -9984,7 +9877,7 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 
 /*
@@ -9993,7 +9886,7 @@ error:
  * When reading back the chunks of the dataset, the file
  * dataspace and memory dataspace used are differently shaped.
  */
-static int
+static void
 test_overwrite_multi_chunk_dataset_diff_shape_read(void)
 {
     hsize_t dims[DATASET_MULTI_CHUNK_OVERWRITE_DIFF_SPACE_READ_TEST_DSET_SPACE_RANK]       = {100, 100};
@@ -10020,7 +9913,7 @@ test_overwrite_multi_chunk_dataset_diff_shape_read(void)
         SKIPPED();
         printf("    API functions for basic file, group, dataset, or get property list aren't supported "
                "with this connector\n");
-        return 0;
+        return;
     }
 
     if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
@@ -10312,7 +10205,7 @@ test_overwrite_multi_chunk_dataset_diff_shape_read(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -10331,7 +10224,7 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 
 /*
@@ -10341,7 +10234,7 @@ error:
  */
 #define FIXED_DIMSIZE       25
 #define FIXED_CHUNK_DIMSIZE 10
-static int
+static void
 test_read_partial_chunk_all_selection(void)
 {
     DATASET_PARTIAL_CHUNK_READ_ALL_SEL_TEST_DSET_CTYPE write_buf[FIXED_DIMSIZE][FIXED_DIMSIZE];
@@ -10365,7 +10258,7 @@ test_read_partial_chunk_all_selection(void)
         SKIPPED();
         printf("    API functions for basic file, group, dataset, or get property list aren't supported "
                "with this connector\n");
-        return 0;
+        return;
     }
 
     if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
@@ -10500,7 +10393,7 @@ test_read_partial_chunk_all_selection(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -10514,7 +10407,7 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 #undef FIXED_DIMSIZE
 #undef FIXED_CHUNK_DIMSIZE
@@ -10527,7 +10420,7 @@ error:
 #define FIXED_DIMSIZE       25
 #define FIXED_CHUNK_DIMSIZE 10
 #define FIXED_NCHUNKS       9 /* For convenience - make sure to adjust this as necessary */
-static int
+static void
 test_read_partial_chunk_hyperslab_selection(void)
 {
     DATASET_PARTIAL_CHUNK_READ_HYPER_SEL_TEST_DSET_CTYPE write_buf[FIXED_CHUNK_DIMSIZE][FIXED_CHUNK_DIMSIZE];
@@ -10552,7 +10445,7 @@ test_read_partial_chunk_hyperslab_selection(void)
         SKIPPED();
         printf("    API functions for basic file, group, dataset, or get property list aren't supported "
                "with this connector\n");
-        return 0;
+        return;
     }
 
     if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
@@ -10655,6 +10548,7 @@ test_read_partial_chunk_hyperslab_selection(void)
     /*
      * Write and read each chunk in the dataset.
      */
+    printf("\n");
     for (i = 0; i < FIXED_NCHUNKS; i++) {
         hsize_t start[DATASET_PARTIAL_CHUNK_READ_HYPER_SEL_TEST_DSET_SPACE_RANK];
         hsize_t count[DATASET_PARTIAL_CHUNK_READ_HYPER_SEL_TEST_DSET_SPACE_RANK];
@@ -10791,7 +10685,7 @@ test_read_partial_chunk_hyperslab_selection(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -10806,7 +10700,7 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 }
 #undef FIXED_DIMSIZE
 #undef FIXED_CHUNK_DIMSIZE
@@ -10817,15 +10711,15 @@ error:
  * then read correctly when the selection used in a chunked
  * dataset's file dataspace is a point selection.
  */
-#define FIXED_DIMSIZE       25
-#define FIXED_CHUNK_DIMSIZE 10
-static int
+/* #define FIXED_DIMSIZE       25 */
+/* #define FIXED_CHUNK_DIMSIZE 10 */
+static void
 test_read_partial_chunk_point_selection(void)
 {
     TESTING("reading a partial chunk using a point selection in file dataspace");
     SKIPPED();
 
-    return 1;
+    return;
 }
 #undef FIXED_DIMSIZE
 #undef FIXED_CHUNK_DIMSIZE
@@ -10834,7 +10728,7 @@ test_read_partial_chunk_point_selection(void)
  * A test to verify that H5Dvlen_get_buf_size returns
  * correct size
  */
-static int
+static void
 test_get_vlen_buf_size(void)
 {
     hvl_t    wdata[DATASET_GET_VLEN_BUF_SIZE_DSET_SPACE_DIM]; /* Information to write */
@@ -10857,7 +10751,7 @@ test_get_vlen_buf_size(void)
         SKIPPED();
         printf("    API functions for basic file, group, or dataset aren't supported with this "
                "connector\n");
-        return 0;
+        return;
     }
 
     /* Allocate and initialize VL data to write */
@@ -10946,7 +10840,7 @@ test_get_vlen_buf_size(void)
 
     PASSED();
 
-    return 0;
+    return;
 
 error:
     H5E_BEGIN_TRY
@@ -10962,26 +10856,75 @@ error:
     }
     H5E_END_TRY
 
-    return 1;
+    return;
 } /* end test_get_vlen_buf_size() */
 
-int
-H5_api_dataset_test(void)
+void
+H5_api_dataset_test_add(void)
 {
-    size_t i;
-    int    nerrors;
+    /* Add a fake test to print out a header to distinguish different test interfaces */
+    AddTest("print_dataset_test_header", print_dataset_test_header, NULL, "Prints header for dataset tests", NULL);
 
-    printf("**********************************************\n");
-    printf("*                                            *\n");
-    printf("*             API Dataset Tests              *\n");
-    printf("*                                            *\n");
-    printf("**********************************************\n\n");
-
-    for (i = 0, nerrors = 0; i < ARRAY_LENGTH(dataset_tests); i++) {
-        nerrors += (*dataset_tests[i])() ? 1 : 0;
-    }
-
-    printf("\n");
-
-    return nerrors;
+    AddTest("test_create_dataset_under_root", test_create_dataset_under_root, NULL, "dataset creation under root group", NULL);
+    AddTest("test_create_dataset_under_existing_group", test_create_dataset_under_existing_group, NULL, "dataset creation under an existing group", NULL);
+    AddTest("test_create_dataset_invalid_params", test_create_dataset_invalid_params, NULL, "H5Dcreate with invalid parameters", NULL);
+    AddTest("test_create_anonymous_dataset", test_create_anonymous_dataset, NULL, "anonymous dataset creation", NULL);
+    AddTest("test_create_anonymous_dataset_invalid_params", test_create_anonymous_dataset_invalid_params, NULL, "anonymous dataset creation with invalid parameters", NULL);
+    AddTest("test_create_dataset_null_space", test_create_dataset_null_space, NULL, "dataset creation with a NULL dataspace", NULL);
+    AddTest("test_create_dataset_scalar_space", test_create_dataset_scalar_space, NULL, "dataset creation with a SCALAR dataspace", NULL);
+    AddTest("test_create_zero_dim_dset", test_create_zero_dim_dset, NULL, "creation of 0-sized dataset", NULL);
+    AddTest("test_create_dataset_random_shapes", test_create_dataset_random_shapes, NULL, "dataset creation with random dimension sizes", NULL);
+    AddTest("test_create_dataset_predefined_types", test_create_dataset_predefined_types, NULL, "dataset creation with predefined datatypes", NULL);
+    AddTest("test_create_dataset_string_types", test_create_dataset_string_types, NULL, "dataset creation with string types", NULL);
+    AddTest("test_create_dataset_compound_types", test_create_dataset_compound_types, NULL, "dataset creation with compound datatypes", NULL);
+    AddTest("test_create_dataset_enum_types", test_create_dataset_enum_types, NULL, "dataset creation with enum types", NULL);
+    AddTest("test_create_dataset_array_types", test_create_dataset_array_types, NULL, "dataset creation with array types", NULL);
+    AddTest("test_create_dataset_creation_properties", test_create_dataset_creation_properties, NULL, "dataset creation properties", NULL);
+    AddTest("test_create_many_dataset", test_create_many_dataset, NULL, "creating many datasets", NULL);
+    AddTest("test_open_dataset", test_open_dataset, NULL, "H5Dopen", NULL);
+    AddTest("test_open_dataset_invalid_params", test_open_dataset_invalid_params, NULL, "H5Dopen with invalid parameters", NULL);
+    AddTest("test_close_dataset_invalid_params", test_close_dataset_invalid_params, NULL, "H5Dclose with an invalid dataset ID", NULL);
+    AddTest("test_get_dataset_space_and_type", test_get_dataset_space_and_type, NULL, "retrieval of a dataset's dataspace and datatype", NULL);
+    AddTest("test_get_dataset_space_and_type_invalid_params", test_get_dataset_space_and_type_invalid_params, NULL, "H5Dget_type/H5Dget_space with invalid parameters", NULL);
+    AddTest("test_get_dataset_space_status", test_get_dataset_space_status, NULL, "H5Dget_space_status", NULL);
+    AddTest("test_get_dataset_space_status_invalid_params", test_get_dataset_space_status_invalid_params, NULL, "H5Dget_space_status with invalid parameters", NULL);
+    AddTest("test_dataset_property_lists", test_dataset_property_lists, NULL, "dataset property list operations", NULL);
+    AddTest("test_get_dataset_storage_size", test_get_dataset_storage_size, NULL, "H5Dget_storage_size", NULL);
+    AddTest("test_get_dataset_storage_size_invalid_params", test_get_dataset_storage_size_invalid_params, NULL, "H5Dget_storage_size with invalid parameters", NULL);
+    AddTest("test_get_dataset_chunk_storage_size", test_get_dataset_chunk_storage_size, NULL, "H5Dget_chunk_storage_size", NULL);
+    AddTest("test_get_dataset_chunk_storage_size_invalid_params", test_get_dataset_chunk_storage_size_invalid_params, NULL, "H5Dget_chunk_storage_size with invalid parameters", NULL);
+    AddTest("test_get_dataset_offset", test_get_dataset_offset, NULL, "H5Dget_offset", NULL);
+    AddTest("test_get_dataset_offset_invalid_params", test_get_dataset_offset_invalid_params, NULL, "H5Dget_offset with invalid parameters", NULL);
+    AddTest("test_read_dataset_small_all", test_read_dataset_small_all, NULL, "small read from dataset with H5S_ALL", NULL);
+    AddTest("test_read_dataset_small_hyperslab", test_read_dataset_small_hyperslab, NULL, "small read from dataset with a hyperslab selection", NULL);
+    AddTest("test_read_dataset_small_point_selection", test_read_dataset_small_point_selection, NULL, "small read from dataset with a point selection", NULL);
+    AddTest("test_dataset_io_point_selections", test_dataset_io_point_selections, NULL, "point selection I/O with all selection in memory and points in file", NULL);
+    AddTest("test_read_dataset_invalid_params", test_read_dataset_invalid_params, NULL, "H5Dread with invalid parameters", NULL);
+    AddTest("test_write_dataset_small_all", test_write_dataset_small_all, NULL, "small write to dataset with H5S_ALL", NULL);
+    AddTest("test_write_dataset_small_hyperslab", test_write_dataset_small_hyperslab, NULL, "small write to dataset with a hyperslab selection", NULL);
+    AddTest("test_write_dataset_small_point_selection", test_write_dataset_small_point_selection, NULL, "small write to dataset with a point selection", NULL);
+    AddTest("test_write_dataset_data_verification", test_write_dataset_data_verification, NULL, "verification of dataset data using H5Dwrite then H5Dread", NULL);
+    AddTest("test_write_dataset_invalid_params", test_write_dataset_invalid_params, NULL, "H5Dwrite with invalid parameters", NULL);
+    AddTest("test_dataset_builtin_type_conversion", test_dataset_builtin_type_conversion, NULL, "verification of dataset data using H5Dwrite then H5Dread with type conversion of builtin types", NULL);
+    AddTest("test_dataset_compound_partial_io", test_dataset_compound_partial_io, NULL, "verification of dataset data using H5Dwrite then H5Dread with partial element compound type I/O", NULL);
+    AddTest("test_dataset_set_extent_chunked_unlimited", test_dataset_set_extent_chunked_unlimited, NULL, "H5Dset_extent on chunked dataset with unlimited dimensions", NULL);
+    AddTest("test_dataset_set_extent_chunked_fixed", test_dataset_set_extent_chunked_fixed, NULL, "H5Dset_extent on chunked dataset with fixed dimensions", NULL);
+    AddTest("test_dataset_set_extent_data", test_dataset_set_extent_data, NULL, "H5Dset_extent on data correctness", NULL);
+    AddTest("test_dataset_set_extent_double_handles", test_dataset_set_extent_double_handles, NULL, "H5Dset_extent on double dataset handles", NULL);
+    AddTest("test_dataset_set_extent_invalid_params", test_dataset_set_extent_invalid_params, NULL, "H5Dset_extent with invalid parameters", NULL);
+    AddTest("test_flush_dataset", test_flush_dataset, NULL, "H5Dflush", NULL);
+    AddTest("test_flush_dataset_invalid_params", test_flush_dataset_invalid_params, NULL, "H5Dflush with invalid parameters", NULL);
+    AddTest("test_refresh_dataset", test_refresh_dataset, NULL, "H5Drefresh", NULL);
+    AddTest("test_refresh_dataset_invalid_params", test_refresh_dataset_invalid_params, NULL, "H5Drefresh with invalid parameters", NULL);
+    AddTest("test_create_single_chunk_dataset", test_create_single_chunk_dataset, NULL, "creation of dataset with single chunk", NULL);
+    AddTest("test_write_single_chunk_dataset", test_write_single_chunk_dataset, NULL, "write to dataset with single chunk", NULL);
+    AddTest("test_create_multi_chunk_dataset", test_create_multi_chunk_dataset, NULL, "creation of dataset with multiple chunks", NULL);
+    AddTest("test_write_multi_chunk_dataset_same_shape_read", test_write_multi_chunk_dataset_same_shape_read, NULL, "write to dataset with multiple chunks using same shaped dataspaces", NULL);
+    AddTest("test_write_multi_chunk_dataset_diff_shape_read", test_write_multi_chunk_dataset_diff_shape_read, NULL, "write to dataset with multiple chunks using differently shaped dataspaces", NULL);
+    AddTest("test_overwrite_multi_chunk_dataset_same_shape_read", test_overwrite_multi_chunk_dataset_same_shape_read, NULL, "several overwrites to dataset with multiple chunks using same shaped dataspaces", NULL);
+    AddTest("test_overwrite_multi_chunk_dataset_diff_shape_read", test_overwrite_multi_chunk_dataset_diff_shape_read, NULL, "several overwrites to dataset with multiple chunks using differently shaped dataspaces", NULL);
+    AddTest("test_read_partial_chunk_all_selection", test_read_partial_chunk_all_selection, NULL, "reading a partial chunk using H5S_ALL for file dataspace", NULL);
+    AddTest("test_read_partial_chunk_hyperslab_selection", test_read_partial_chunk_hyperslab_selection, NULL, "reading a partial chunk using a hyperslab selection in file dataspace", NULL);
+    AddTest("test_read_partial_chunk_point_selection", test_read_partial_chunk_point_selection, NULL, "reading a partial chunk using a point selection in file dataspace", NULL);
+    AddTest("test_get_vlen_buf_size", test_get_vlen_buf_size, NULL, "H5Dvlen_get_buf_size", NULL);
 }
