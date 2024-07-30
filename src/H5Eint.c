@@ -69,7 +69,9 @@ static herr_t H5E__set_stack_entry(H5E_error2_t *err_entry, const char *file, co
                                    hid_t cls_id, hid_t maj_id, hid_t min_id, const char *desc, va_list *ap);
 static herr_t H5E__clear_entries(H5E_stack_t *estack, size_t nentries);
 static herr_t H5E__unregister_class(H5E_cls_t *cls, void **request);
+#ifndef H5_HAVE_MULTITHREAD
 static int    H5E__close_msg_cb(void *obj_ptr, hid_t obj_id, void *udata);
+#endif /* NOT H5_HAVE_MULTITHREAD */
 static void   H5E__free_msg(H5E_msg_t *msg);
 static herr_t H5E__close_msg(H5E_msg_t *err, void **request);
 static herr_t H5E__close_stack(H5E_stack_t *err_stack, void **request);
@@ -85,6 +87,8 @@ static herr_t H5E__close_stack(H5E_stack_t *err_stack, void **request);
 H5E_stack_t H5E_stack_g[1];
 #endif /* H5_HAVE_THREADSAFE or H5_HAVE_MULTITHREAD */
 
+#ifndef H5_HAVE_MULTITHREAD
+
 /* Declare a free list to manage the H5E_stack_t struct */
 H5FL_DEFINE(H5E_stack_t);
 
@@ -93,6 +97,8 @@ H5FL_DEFINE_STATIC(H5E_cls_t);
 
 /* Declare a free list to manage the H5E_msg_t struct */
 H5FL_DEFINE_STATIC(H5E_msg_t);
+
+#endif /* H5_HAVE_MULTITHREAD */
 
 /*****************************/
 /* Library Private Variables */
@@ -171,9 +177,27 @@ static const H5E_cls_t H5E_err_cls_s = {false, H5E_CLS_NAME, H5E_CLS_LIB_NAME, H
 herr_t
 H5E_init(void)
 {
+#ifdef H5_HAVE_MULTITHREAD
+    bool have_global_mutex;
+#endif /* H5_HAVE_MULTITHREAD */
     herr_t ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_NOAPI(FAIL)
+
+#ifdef H5_HAVE_MULTITHREAD
+
+    /* Verify that the have the global lock.  */
+    if ( H5TS_have_mutex(&H5_g.init_lock, &have_global_mutex) < 0 )
+
+        HGOTO_ERROR(H5E_LIB, H5E_CANTGET, FAIL, "Can't determine whether we have the global mutex");
+
+    assert(have_global_mutex);
+
+    if ( ! have_global_mutex )
+
+        HGOTO_ERROR(H5E_LIB, H5E_SYSTEM, FAIL, "Don't have global mutex on entry.");
+
+#endif /* H5_HAVE_MULTITHREAD */
 
     /* Initialize the ID group for the error class IDs */
     if (H5I_register_type(H5I_ERRCLS_CLS) < 0)
@@ -218,10 +242,21 @@ int
 H5E_term_package(void)
 {
     int n = 0;
+#ifdef H5_HAVE_MULTITHREAD
+    bool have_global_mutex;
+#endif /* H5_HAVE_MULTITHREAD */
 
     FUNC_ENTER_NOAPI_NOINIT_NOERR
 
     int64_t ncls, nmsg, nstk;
+
+#ifdef H5_HAVE_MULTITHREAD
+
+    /* Verify that the have the global lock.  */
+    assert( 0 >= H5TS_have_mutex(&H5_g.init_lock, &have_global_mutex) );
+    assert(have_global_mutex);
+
+#endif /* H5_HAVE_MULTITHREAD */
 
     /* Check if there are any open error stacks, classes or messages */
     ncls = H5I_nmembers(H5I_ERROR_CLASS);
@@ -349,11 +384,33 @@ H5E__free_class(H5E_cls_t *cls)
 
     /* Free resources, if application registered this class */
     if (cls->app_cls) {
+#ifdef H5_HAVE_MULTITHREAD
+        /* don't need to verify that we have the global mutext, as all
+         * calls to this function come from functions where this has
+         * already been verified.
+         */
+
+        /* Free error class structure */
+
+        free((void *)cls->cls_name);
+        cls->cls_name = NULL;
+
+        free((void *)cls->lib_name);
+        cls->lib_name = NULL;
+
+        free((void *)cls->lib_vers);
+        cls->lib_vers = NULL;
+
+        free((void *)cls);
+        cls = NULL;
+#else /* H5_HAVE_MULTITHREAD */
+
         /* Free error class structure */
         cls->cls_name = H5MM_xfree_const(cls->cls_name);
         cls->lib_name = H5MM_xfree_const(cls->lib_name);
         cls->lib_vers = H5MM_xfree_const(cls->lib_vers);
         cls           = H5FL_FREE(H5E_cls_t, cls);
+#endif /* H5_HAVE_MULTITHREAD */
     }
 
     FUNC_LEAVE_NOAPI(SUCCEED)
@@ -382,9 +439,24 @@ H5E__register_class(const char *cls_name, const char *lib_name, const char *vers
     assert(lib_name);
     assert(version);
 
+#ifdef H5_HAVE_MULTITHREAD
+
+    /* Don't need to verify that we have the global mutex, as this is done
+     * by all callers.
+     */
+
+    /* Allocate space for new error class */
+
+    if (NULL == (cls = (H5E_cls_t *)calloc(1, sizeof(H5E_cls_t))))
+        HGOTO_ERROR(H5E_RESOURCE, H5E_NOSPACE, NULL, "memory allocation failed");
+
+#else /* H5_HAVE_MULTITHREAD */
+
     /* Allocate space for new error class */
     if (NULL == (cls = H5FL_CALLOC(H5E_cls_t)))
         HGOTO_ERROR(H5E_RESOURCE, H5E_NOSPACE, NULL, "memory allocation failed");
+
+#endif /* H5_HAVE_MULTITHREAD */
 
     /* Application registered class */
     cls->app_cls = true;
@@ -432,6 +504,7 @@ done:
 static herr_t
 H5E__unregister_class(H5E_cls_t *cls, void H5_ATTR_UNUSED **request)
 {
+    hbool_t have_global_mutex; /* whether the global mutex is held by this thread */
     hid_t target_id;
     void * object;
     H5E_msg_t *err_msg;
@@ -442,8 +515,19 @@ H5E__unregister_class(H5E_cls_t *cls, void H5_ATTR_UNUSED **request)
     /* Check arguments */
     assert(cls);
 
+    /* Verify that the have the global lock.  */
+    if ( H5TS_have_mutex(&H5_g.init_lock, &have_global_mutex) < 0 )
+
+        HGOTO_ERROR(H5E_LIB, H5E_CANTGET, FAIL, "Can't determine whether we have the global mutex");
+
+    assert(have_global_mutex);
+
+    if ( ! have_global_mutex )
+
+        HGOTO_ERROR(H5E_LIB, H5E_SYSTEM, FAIL, "Don't have global mutex on entry.");
+
     /* Iterate over all the messages and delete those in this error class */
-    if ( H5I_get_first(H5I_ERROR_MSG, &target_id, &object) < 0 )
+    if ( H5I_get_first(H5I_ERROR_MSG, &target_id, &object, false) < 0 )
 
         HGOTO_ERROR(H5E_ERROR, H5E_BADITER, FAIL, "unable to get first error message");
 
@@ -466,7 +550,7 @@ H5E__unregister_class(H5E_cls_t *cls, void H5_ATTR_UNUSED **request)
 
         } /* end if */
 
-        if ( H5I_get_next(H5I_ERROR_MSG, target_id, &target_id, &object) < 0 )
+        if ( H5I_get_next(H5I_ERROR_MSG, target_id, &target_id, &object, false) < 0 )
 
             HGOTO_ERROR(H5E_ERROR, H5E_BADITER, FAIL, "unable to get next error message");
     }
@@ -534,6 +618,11 @@ H5E__get_class_name(const H5E_cls_t *cls, char *name, size_t size)
 
     FUNC_ENTER_PACKAGE_NOERR
 
+    /* This function doesn't need the global mutex, as it doesn't
+     * modify the target class.  That said, it has it anyway, as it
+     * is only called from H5Eget_class_name().
+     */
+
     /* Check arguments */
     assert(cls);
 
@@ -550,6 +639,8 @@ H5E__get_class_name(const H5E_cls_t *cls, char *name, size_t size)
     /* Return the full length */
     FUNC_LEAVE_NOAPI(len)
 } /* end H5E__get_class_name() */
+
+#ifndef H5_HAVE_MULTITHREAD
 
 /*-------------------------------------------------------------------------
  * Function:    H5E__close_msg_cb
@@ -574,6 +665,10 @@ H5E__close_msg_cb(void *obj_ptr, hid_t obj_id, void *udata)
     /* Check arguments */
     assert(err_msg);
 
+    /* H5E__close_msg() checks to see if it has the global mutex in the multi-thread
+     * case, so no need to test here in the multi-thread case.
+     */
+
     /* Close the message if it is in the class being closed */
     if (err_msg->cls == cls) {
         if (H5E__close_msg(err_msg, NULL) < 0)
@@ -585,6 +680,8 @@ H5E__close_msg_cb(void *obj_ptr, hid_t obj_id, void *udata)
 done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5E__close_msg_cb() */
+
+#endif /* NOT H5_HAVE_MULTITHREAD */
 
 /*-------------------------------------------------------------------------
  * Function:    H5E__free_msg
@@ -604,9 +701,22 @@ H5E__free_msg(H5E_msg_t *msg)
     assert(msg);
     assert(msg->app_msg);
 
+#ifdef H5_HAVE_MULTITHREAD
+
+    /* Free resources */
+    free((void *)msg->msg);
+    msg->msg = NULL;
+
+    free((void *)msg);
+    msg = NULL;
+
+#else /* H5_HAVE_MULTITHREAD */
+
     /* Free resources */
     msg->msg = H5MM_xfree_const(msg->msg);
     msg      = H5FL_FREE(H5E_msg_t, msg);
+
+#endif /* H5_HAVE_MULTITHREAD */
 
     FUNC_LEAVE_NOAPI_VOID
 } /* end H5E__free_msg() */
@@ -623,10 +733,22 @@ H5E__free_msg(H5E_msg_t *msg)
 static herr_t
 H5E__close_msg(H5E_msg_t *err, void H5_ATTR_UNUSED **request)
 {
+#ifdef H5_HAVE_MULTITHREAD
+    bool have_global_mutex;
+#endif /* H5_HAVE_MULTITHREAD */
+
     FUNC_ENTER_PACKAGE_NOERR
 
     /* Check arguments */
     assert(err);
+
+#ifdef H5_HAVE_MULTITHREAD
+
+    /* Verify that the have the global lock.  */
+    assert( 0 >= H5TS_have_mutex(&H5_g.init_lock, &have_global_mutex) );
+    assert(have_global_mutex);
+
+#endif /* H5_HAVE_MULTITHREAD */
 
     /* Free resources, if application registered this message */
     if (err->app_msg)
@@ -659,9 +781,21 @@ H5E__create_msg(H5E_cls_t *cls, H5E_type_t msg_type, const char *msg_str)
     assert(msg_type == H5E_MAJOR || msg_type == H5E_MINOR);
     assert(msg_str);
 
+#ifdef H5_HAVE_MULTITHREAD
+
+    /* Don't need global lock here, since all activites in this function are thread local */
+
+    /* Allocate new message object */
+    if (NULL == (msg = (H5E_msg_t *)malloc(sizeof(H5E_msg_t))))
+        HGOTO_ERROR(H5E_RESOURCE, H5E_NOSPACE, NULL, "memory allocation failed");
+
+#else /* H5_HAVE_MULTITHREAD */
+
     /* Allocate new message object */
     if (NULL == (msg = H5FL_CALLOC(H5E_msg_t)))
         HGOTO_ERROR(H5E_ERROR, H5E_CANTALLOC, NULL, "memory allocation failed");
+
+#endif /* H5_HAVE_MULTITHREAD */
 
     /* Fill new message object */
     msg->app_msg = true;
@@ -706,8 +840,21 @@ H5E__get_current_stack(void)
         HGOTO_ERROR(H5E_ERROR, H5E_CANTGET, NULL, "can't get current error stack");
 
     /* Allocate a new error stack */
+#ifdef H5_HAVE_MULTITHREAD
+
+    /* Don't need to verify that we have the global mutex, as the only place
+     * this function is called is H5Eget_current_stack()
+     */
+
+    if (NULL == (estack_copy = (H5E_stack_t *)calloc(1, sizeof(H5E_stack_t))))
+        HGOTO_ERROR(H5E_RESOURCE, H5E_NOSPACE, NULL, "memory allocation failed");
+
+#else /* H5_HAVE_MULTITHREAD */
+
     if (NULL == (estack_copy = H5FL_CALLOC(H5E_stack_t)))
         HGOTO_ERROR(H5E_RESOURCE, H5E_NOSPACE, NULL, "memory allocation failed");
+
+#endif /* H5_HAVE_MULTITHREAD */
 
     /* Make a copy of current error stack */
     estack_copy->nused = current_stack->nused;
@@ -727,8 +874,21 @@ H5E__get_current_stack(void)
 
 done:
     if (ret_value == NULL)
+
+#ifdef H5_HAVE_MULTITHREAD
+
+        if (estack_copy) {
+
+            free(estack_copy);
+            estack_copy = NULL;
+        }
+
+#else /* H5_HAVE_MULTITHREAD */
+
         if (estack_copy)
             estack_copy = H5FL_FREE(H5E_stack_t, estack_copy);
+
+#endif /* H5_HAVE_MULTITHREAD */
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5E__get_current_stack() */
@@ -753,6 +913,10 @@ H5E__set_current_stack(H5E_stack_t *estack)
 
     /* Sanity check */
     assert(estack);
+
+    /* Don't need to verify that we have the global mutex in the multi-thread case, as the only place
+     * this function is called is H5Eset_current_stack()
+     */
 
     /* Get a pointer to the current error stack */
     if (NULL == (current_stack = H5E__get_my_stack()))
@@ -792,7 +956,17 @@ H5E__close_stack(H5E_stack_t *estack, void H5_ATTR_UNUSED **request)
     H5E__clear_stack(estack);
 
     /* Free the stack structure */
+
+#ifdef H5_HAVE_MULTITHREAD
+
+    free(estack);
+    estack = NULL;
+
+#else /* H5_HAVE_MULTITHREAD */
+
     estack = H5FL_FREE(H5E_stack_t, estack);
+
+#endif /* H5_HAVE_MULTITHREAD */
 
     FUNC_LEAVE_NOAPI(SUCCEED)
 } /* end H5E__close_stack() */
@@ -840,6 +1014,29 @@ H5E__print2(hid_t err_stack, FILE *stream)
             HGOTO_ERROR(H5E_ERROR, H5E_CANTGET, FAIL, "can't get current error stack");
     } /* end if */
     else {
+
+#ifdef H5_HAVE_MULTITHREAD
+
+        /* If estack is not NULL, the target stack is in the H5I_ERROR_STACK
+         * index, and thus accessible to all threads.  Since a failure of mutual
+         * exclusion is possible here, verify that we hold the global mutex in
+         * this case.
+         */
+        bool have_global_mutex;
+
+        /* Verify that the have the global lock.  */
+        if ( H5TS_have_mutex(&H5_g.init_lock, &have_global_mutex) < 0 )
+
+            HGOTO_ERROR(H5E_LIB, H5E_CANTGET, FAIL, "Can't determine whether we have the global mutex");
+
+        assert(have_global_mutex);
+
+        if ( ! have_global_mutex )
+
+            HGOTO_ERROR(H5E_LIB, H5E_SYSTEM, FAIL, "Don't have global mutex on entry.");
+
+#endif /* H5_HAVE_MULTITHREAD */
+
         /* Only clear the error stack if it's not the default stack */
         H5E_clear_stack();
 
@@ -1441,6 +1638,22 @@ H5E__set_auto(H5E_stack_t *estack, const H5E_auto_op_t *op, void *client_data)
 
     assert(estack);
 
+#ifdef H5_HAVE_MULTITHREAD
+
+    /* review of the code indicates that this function call only be 
+     * called when the global lock is held in the multithread case.
+     * Verify this.
+     */
+    {
+        bool have_global_mutex;
+
+        assert( 0 >= H5TS_have_mutex(&H5_g.init_lock, &have_global_mutex) );
+        assert(have_global_mutex);
+    }
+
+#endif /* H5_HAVE_MULTITHREAD */
+    
+
     /* Set the automatic error reporting info */
     estack->auto_op   = *op;
     estack->auto_data = client_data;
@@ -1727,12 +1940,23 @@ H5E__clear_entries(H5E_stack_t *estack, size_t nentries)
          * compiler) and are not allocated, so there's no need to free them.
          */
         if (error->app_entry) {
+#ifdef H5_HAVE_MULTITHREAD
+            free((void *)((uintptr_t)(error->err.file_name)));
+            free((void *)((uintptr_t)(error->err.func_name)));
+#else
             H5MM_xfree_const(error->err.file_name);
             H5MM_xfree_const(error->err.func_name);
+#endif
         }
         error->err.file_name = NULL;
         error->err.func_name = NULL;
-        error->err.desc      = (const char *)H5MM_xfree_const(error->err.desc);
+
+#ifdef H5_HAVE_MULTITHREAD
+        free((void *)((uintptr_t)(error->err.desc)));
+        error->err.desc = NULL;
+#else
+        error->err.desc = (const char *)H5MM_xfree_const(error->err.desc);
+#endif
     }
 
     /* Decrement number of errors on stack */
@@ -1788,10 +2012,50 @@ H5E__clear_stack(H5E_stack_t *estack)
 
     FUNC_ENTER_PACKAGE
 
+#ifdef H5_HAVE_MULTITHREAD
+    /* In the multi-thread case, we don't need to worry about mutual exclusion
+     * if extack is NULL, since that implies that we are operating on the thread
+     * local error stack.
+     *
+     * However, if estack is not NULL, the target stack is in the H5I_ERROR_STACK
+     * index, and thus accessible to all threads.  Since a failure of mutual 
+     * exclusion is possible here, verify that we hold the global mutex in 
+     * this case.
+     */
+
+    if (estack == NULL) {
+
+        /* Set estack to point to the default (in this case thread local) error stack */
+
+        if (NULL == (estack = H5E__get_my_stack())) /*lint !e506 !e774 Make lint 'constant value Boolean' in
+                                                       non-threaded case */
+            HGOTO_ERROR(H5E_ERROR, H5E_CANTGET, FAIL, "can't get current error stack");
+
+    } else {
+
+        bool have_global_mutex;
+        
+        /* Verify that the have the global lock.  */
+        if ( H5TS_have_mutex(&H5_g.init_lock, &have_global_mutex) < 0 )
+
+            HGOTO_ERROR(H5E_LIB, H5E_CANTGET, FAIL, "Can't determine whether we have the global mutex");
+
+        assert(have_global_mutex);
+
+        if ( ! have_global_mutex )
+
+            HGOTO_ERROR(H5E_LIB, H5E_SYSTEM, FAIL, "Don't have global mutex on entry.");
+
+    }
+
+#else /* H5_HAVE_MULTITHREAD */
+
     /* Check for 'default' error stack */
     if (estack == NULL)
         if (NULL == (estack = H5E__get_my_stack()))
             HGOTO_ERROR(H5E_ERROR, H5E_CANTGET, FAIL, "can't get current error stack");
+
+#endif /* H5_HAVE_MULTITHREAD */
 
     /* Empty the error stack */
     if (estack->nused)
