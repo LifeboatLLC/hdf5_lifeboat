@@ -110,16 +110,19 @@ const char *LIBVER_NAMES[] = {"earliest", /* H5F_LIBVER_EARLIEST = 0  */
 static H5E_auto2_t err_func = NULL;
 
 /* Global variables for testing */
-H5_ATOMIC(size_t) n_tests_run_g = 0;
-H5_ATOMIC(size_t) n_tests_passed_g = 0;
-H5_ATOMIC(size_t) n_tests_failed_g = 0;
+static int TestExpress_g            = -1; /* Whether to expedite testing. -1 means not set yet. */
+H5_ATOMIC(size_t) n_tests_run_g     = 0;
+H5_ATOMIC(size_t) n_tests_passed_g  = 0;
+H5_ATOMIC(size_t) n_tests_failed_g  = 0;
 H5_ATOMIC(size_t) n_tests_skipped_g = 0;
+uint64_t vol_cap_flags_g            = H5VL_CAP_FLAG_NONE;
 
 #ifdef H5_HAVE_MULTITHREAD
 pthread_key_t test_thread_info_key_g;
 #endif
 
-uint64_t vol_cap_flags_g   = H5VL_CAP_FLAG_NONE;
+/* Whether h5_cleanup should clean up temporary testing files */
+static bool do_test_file_cleanup_g = true;
 
 static herr_t h5_errors(hid_t estack, void *client_data);
 static char  *h5_fixname_real(const char *base_name, hid_t fapl, const char *_suffix, char *fullname,
@@ -242,7 +245,7 @@ h5_cleanup(const char *base_name[], hid_t fapl)
 {
     int retval = 0;
 
-    if (GetTestCleanup()) {
+    if (do_test_file_cleanup_g) {
         /* Clean up files in base_name, and the FAPL */
         h5_clean_files(base_name, fapl);
 
@@ -254,29 +257,6 @@ h5_cleanup(const char *base_name[], hid_t fapl)
 
     return retval;
 } /* end h5_cleanup() */
-
-/*-------------------------------------------------------------------------
- * Function:    h5_test_shutdown
- *
- * Purpose:     Performs any special test cleanup required before the test
- *              ends.
- *
- *              NOTE: This function should normally only be called once
- *              in a given test, usually just before leaving main(). It
- *              is intended for use in the single-file unit tests, not
- *              testhdf5.
- *
- * Return:      void
- *
- *-------------------------------------------------------------------------
- */
-void
-h5_test_shutdown(void)
-{
-
-    /* Restore the original error reporting routine */
-    h5_restore_err();
-} /* end h5_test_shutdown() */
 
 /*-------------------------------------------------------------------------
  * Function:    h5_restore_err
@@ -342,6 +322,9 @@ h5_test_init(void)
     assert(err_func == NULL);
     H5Eget_auto2(H5E_DEFAULT, &err_func, NULL);
     H5Eset_auto2(H5E_DEFAULT, h5_errors, NULL);
+
+    /* Retrieve the TestExpress mode */
+    TestExpress_g = h5_get_testexpress();
 } /* end h5_test_init() */
 
 /*-------------------------------------------------------------------------
@@ -526,12 +509,12 @@ h5_fixname_real(const char *base_name, hid_t fapl, const char *_suffix, char *fu
     if (isppdriver) {
 #ifdef H5_HAVE_PARALLEL
         if (getenv_all(MPI_COMM_WORLD, 0, HDF5_NOCLEANUP))
-            SetTestNoCleanup();
+            do_test_file_cleanup_g = false;
 #endif /* H5_HAVE_PARALLEL */
     }
     else {
-        if (HDgetenv(HDF5_NOCLEANUP))
-            SetTestNoCleanup();
+        if (getenv(HDF5_NOCLEANUP))
+            do_test_file_cleanup_g = false;
     }
 
     /* Check what prefix to use for test files. Process HDF5_PARAPREFIX and
@@ -829,6 +812,81 @@ done:
 error:
     return -1;
 } /* end h5_get_libver_fapl() */
+
+/*
+ * Returns the current TestExpress functionality setting.
+ * Valid values returned are as follows:
+ *
+ *   0: Exhaustive run
+ *      Tests should take as long as necessary
+ *   1: Full run. Default value if H5_TEST_EXPRESS_LEVEL_DEFAULT
+ *      and the HDF5TestExpress environment variable are not defined
+ *      Tests should take no more than 30 minutes
+ *   2: Quick run
+ *      Tests should take no more than 10 minutes
+ *   3: Smoke test.
+ *      Default if the HDF5TestExpress environment variable is set to
+ *      a value other than 0-3
+ *      Tests should take less than 1 minute
+ *
+ * If the value returned is > 1, then test programs should
+ * skip some tests so that they complete sooner.
+ */
+int
+h5_get_testexpress(void)
+{
+    char *env_val;
+    int   express_val = TestExpress_g;
+
+    /* TestExpress_g is uninitialized if it has a negative value */
+    if (express_val < 0) {
+        /* Default to level 1 if not overridden */
+        express_val = 1;
+
+        /* Check if a default test express level is defined (e.g., by build system) */
+#ifdef H5_TEST_EXPRESS_LEVEL_DEFAULT
+        express_val = H5_TEST_EXPRESS_LEVEL_DEFAULT;
+        if (express_val < 0)
+            express_val = 1; /* Reset to default */
+        else if (express_val > 3)
+            express_val = 3;
+#endif
+    }
+
+    /* Check if the HDF5TestExpress environment variable is set to
+     * override the default level
+     */
+    env_val = getenv("HDF5TestExpress");
+    if (env_val) {
+        if (strcmp(env_val, "0") == 0)
+            express_val = 0;
+        else if (strcmp(env_val, "1") == 0)
+            express_val = 1;
+        else if (strcmp(env_val, "2") == 0)
+            express_val = 2;
+        else
+            express_val = 3;
+    }
+
+    return express_val;
+}
+
+/*
+ * Sets the level of express testing to the given value. Negative
+ * values are set to the default TestExpress setting (1). Values
+ * larger than the highest TestExpress setting (3) are set to the
+ * highest TestExpress setting.
+ */
+void
+h5_set_testexpress(int new_val)
+{
+    if (new_val < 0)
+        new_val = 1; /* Reset to default */
+    else if (new_val > 3)
+        new_val = 3;
+
+    TestExpress_g = new_val;
+}
 
 /*-------------------------------------------------------------------------
  * Function:  h5_no_hwconv
@@ -1206,24 +1264,6 @@ h5_get_file_size(const char *filename, hid_t fapl)
     return (-1);
 } /* end get_file_size() */
 H5_GCC_CLANG_DIAG_ON("format-nonliteral")
-
-/*
- * This routine is designed to provide equivalent functionality to 'printf'
- * and allow easy replacement for environments which don't have stdin/stdout
- * available. (i.e. Windows & the Mac)
- */
-H5_ATTR_FORMAT(printf, 1, 2)
-int
-print_func(const char *format, ...)
-{
-    va_list arglist;
-    int     ret_value;
-
-    va_start(arglist, format);
-    ret_value = HDvprintf(format, arglist);
-    va_end(arglist);
-    return ret_value;
-}
 
 #ifdef H5_HAVE_FILTER_SZIP
 
@@ -2298,6 +2338,10 @@ h5_driver_uses_multiple_files(const char *drv_name, unsigned flags)
 
     return ret_val;
 }
+
+/* Allow up to 3-digit thread indexes (0-999)*/
+#define MAX_THREAD_IDX 999
+#define MAX_THREAD_IDX_LEN
 
 /* Generate a heap-allocated filename of the form <prefix><thread_idx><filename> */
 char *generate_threadlocal_filename(const char *prefix, int thread_idx, const char *filename) {

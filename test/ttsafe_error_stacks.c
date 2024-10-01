@@ -78,7 +78,7 @@ generate_user_error(void H5_ATTR_UNUSED *arg)
 **********************************************************************
 */
 void
-tts_errstk(void)
+tts_errstk(const void H5_ATTR_UNUSED *params)
 {
     H5TS_thread_t threads[2];
     herr_t        status     = FAIL;
@@ -109,4 +109,4 @@ tts_errstk(void)
     H5close();
 }
 
-#endif /* H5_HAVE_PTHREAD_H */
+#endif

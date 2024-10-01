@@ -12,37 +12,37 @@
 
 #include "H5_api_object_test.h"
 
-static void print_object_test_header(void);
-static void test_open_object(void);
-static void test_open_object_invalid_params(void);
-static void test_object_exists(void);
-static void test_object_exists_invalid_params(void);
-static void test_get_object_info(void);
-static void test_get_object_info_invalid_params(void);
-static void test_link_object(void);
-static void test_link_object_invalid_params(void);
-static void test_incr_decr_object_refcount(void);
-static void test_incr_decr_object_refcount_invalid_params(void);
-static void test_object_copy_basic(void);
-static void test_object_copy_already_existing(void);
-static void test_object_copy_shallow_group_copy(void);
-static void test_object_copy_no_attributes(void);
-static void test_object_copy_by_soft_link(void);
-static void test_object_copy_group_with_soft_links(void);
-static void test_object_copy_between_files(void);
-static void test_object_copy_invalid_params(void);
-static void test_object_comments(void);
-static void test_object_comments_invalid_params(void);
-static void test_object_visit(void);
-static void test_object_visit_soft_link(void);
-static void test_object_visit_invalid_params(void);
-static void test_close_object(void);
-static void test_close_object_invalid_params(void);
-static void test_close_invalid_objects(void);
-static void test_flush_object(void);
-static void test_flush_object_invalid_params(void);
-static void test_refresh_object(void);
-static void test_refresh_object_invalid_params(void);
+static void print_object_test_header(const void *params);
+static void test_open_object(const void *params);
+static void test_open_object_invalid_params(const void *params);
+static void test_object_exists(const void *params);
+static void test_object_exists_invalid_params(const void *params);
+static void test_get_object_info(const void *params);
+static void test_get_object_info_invalid_params(const void *params);
+static void test_link_object(const void *params);
+static void test_link_object_invalid_params(const void *params);
+static void test_incr_decr_object_refcount(const void *params);
+static void test_incr_decr_object_refcount_invalid_params(const void *params);
+static void test_object_copy_basic(const void *params);
+static void test_object_copy_already_existing(const void *params);
+static void test_object_copy_shallow_group_copy(const void *params);
+static void test_object_copy_no_attributes(const void *params);
+static void test_object_copy_by_soft_link(const void *params);
+static void test_object_copy_group_with_soft_links(const void *params);
+static void test_object_copy_between_files(const void *params);
+static void test_object_copy_invalid_params(const void *params);
+static void test_object_comments(const void *params);
+static void test_object_comments_invalid_params(const void *params);
+static void test_object_visit(const void *params);
+static void test_object_visit_soft_link(const void *params);
+static void test_object_visit_invalid_params(const void *params);
+static void test_close_object(const void *params);
+static void test_close_object_invalid_params(const void *params);
+static void test_close_invalid_objects(const void *params);
+static void test_flush_object(const void *params);
+static void test_flush_object_invalid_params(const void *params);
+static void test_refresh_object(const void *params);
+static void test_refresh_object_invalid_params(const void *params);
 
 static herr_t object_copy_attribute_iter_callback(hid_t location_id, const char *attr_name,
                                                   const H5A_info_t *ainfo, void *op_data);
@@ -64,7 +64,7 @@ static herr_t object_visit_noop_callback(hid_t o_id, const char *name, const H5O
                                          void *op_data);
 
 static void
-print_object_test_header(void)
+print_object_test_header(const void H5_ATTR_UNUSED *params)
 {
     printf("\n");
     printf("**********************************************\n");
@@ -85,7 +85,7 @@ print_object_test_header(void)
  * XXX: test opening through dangling and resolving soft links.
  */
 static void
-test_open_object(void)
+test_open_object(const void H5_ATTR_UNUSED *params)
 {
     hid_t file_id         = H5I_INVALID_HID;
     hid_t container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
@@ -128,10 +128,10 @@ test_open_object(void)
         goto error;
     }
 
-    if ((fspace_id = generate_random_dataspace(OBJECT_OPEN_TEST_SPACE_RANK, NULL, NULL, FALSE)) < 0)
+    if ((fspace_id = generate_random_dataspace(OBJECT_OPEN_TEST_SPACE_RANK, NULL, NULL, false)) < 0)
         TEST_ERROR;
 
-    if ((dset_dtype = generate_random_datatype(H5T_NO_CLASS, FALSE)) < 0)
+    if ((dset_dtype = generate_random_datatype(H5T_NO_CLASS, false)) < 0)
         TEST_ERROR;
 
     PASSED();
@@ -220,7 +220,7 @@ test_open_object(void)
         {
             TESTING_2("H5Oopen on a committed datatype");
 
-            if ((type_id = generate_random_datatype(H5T_NO_CLASS, FALSE)) < 0) {
+            if ((type_id = generate_random_datatype(H5T_NO_CLASS, false)) < 0) {
                 H5_FAILED();
                 printf("    couldn't create datatype '%s'\n", OBJECT_OPEN_TEST_TYPE_NAME);
                 PART_ERROR(H5Oopen_dtype);
@@ -399,7 +399,7 @@ error:
  * are passed invalid parameters.
  */
 static void
-test_open_object_invalid_params(void)
+test_open_object_invalid_params(const void H5_ATTR_UNUSED *params)
 {
     hid_t file_id         = H5I_INVALID_HID;
     hid_t container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
@@ -769,7 +769,7 @@ error:
  * A test for H5Oexists_by_name.
  */
 static void
-test_object_exists(void)
+test_object_exists(const void H5_ATTR_UNUSED *params)
 {
     htri_t object_exists;
     hid_t  file_id         = H5I_INVALID_HID;
@@ -814,10 +814,10 @@ test_object_exists(void)
         goto error;
     }
 
-    if ((fspace_id = generate_random_dataspace(OBJECT_EXISTS_TEST_DSET_SPACE_RANK, NULL, NULL, FALSE)) < 0)
+    if ((fspace_id = generate_random_dataspace(OBJECT_EXISTS_TEST_DSET_SPACE_RANK, NULL, NULL, false)) < 0)
         TEST_ERROR;
 
-    if ((dset_dtype = generate_random_datatype(H5T_NO_CLASS, FALSE)) < 0)
+    if ((dset_dtype = generate_random_datatype(H5T_NO_CLASS, false)) < 0)
         TEST_ERROR;
 
     PASSED();
@@ -899,7 +899,7 @@ test_object_exists(void)
         {
             TESTING_2("H5Oexists_by_name on a committed datatype");
 
-            if ((dtype_id = generate_random_datatype(H5T_NO_CLASS, FALSE)) < 0) {
+            if ((dtype_id = generate_random_datatype(H5T_NO_CLASS, false)) < 0) {
                 H5_FAILED();
                 printf("    couldn't create datatype '%s'\n", OBJECT_EXISTS_TEST_TYPE_NAME);
                 PART_ERROR(H5Oexists_by_name_dtype);
@@ -1035,7 +1035,7 @@ error:
  * when it is passed invalid parameters.
  */
 static void
-test_object_exists_invalid_params(void)
+test_object_exists_invalid_params(const void H5_ATTR_UNUSED *params)
 {
     htri_t object_exists;
     hid_t  file_id         = H5I_INVALID_HID;
@@ -1194,7 +1194,7 @@ error:
  * A test for H5Oget_info(_by_name/_by_idx).
  */
 static void
-test_get_object_info(void)
+test_get_object_info(const void H5_ATTR_UNUSED *params)
 {
     TESTING("object info retrieval");
 
@@ -1209,7 +1209,7 @@ test_get_object_info(void)
  * parameters.
  */
 static void
-test_get_object_info_invalid_params(void)
+test_get_object_info_invalid_params(const void H5_ATTR_UNUSED *params)
 {
     TESTING("object info retrieval with invalid parameters");
 
@@ -1222,7 +1222,7 @@ test_get_object_info_invalid_params(void)
  * A test for H5Olink.
  */
 static void
-test_link_object(void)
+test_link_object(const void H5_ATTR_UNUSED *params)
 {
     hid_t file_id         = H5I_INVALID_HID;
     hid_t container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
@@ -1265,10 +1265,10 @@ test_link_object(void)
         goto error;
     }
 
-    if ((fspace_id = generate_random_dataspace(OBJECT_LINK_TEST_SPACE_RANK, NULL, NULL, FALSE)) < 0)
+    if ((fspace_id = generate_random_dataspace(OBJECT_LINK_TEST_SPACE_RANK, NULL, NULL, false)) < 0)
         TEST_ERROR;
 
-    if ((dset_dtype = generate_random_datatype(H5T_NO_CLASS, FALSE)) < 0)
+    if ((dset_dtype = generate_random_datatype(H5T_NO_CLASS, false)) < 0)
         TEST_ERROR;
 
     PASSED();
@@ -1381,7 +1381,7 @@ error:
  * parameters.
  */
 static void
-test_link_object_invalid_params(void)
+test_link_object_invalid_params(const void H5_ATTR_UNUSED *params)
 {
     hid_t  file_id         = H5I_INVALID_HID;
     hid_t  container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
@@ -1579,7 +1579,7 @@ error:
  * A test for H5Oincr_refcount/H5Odecr_refcount.
  */
 static void
-test_incr_decr_object_refcount(void)
+test_incr_decr_object_refcount(const void H5_ATTR_UNUSED *params)
 {
     H5O_info2_t oinfo; /* Object info struct */
     hid_t       file_id         = H5I_INVALID_HID;
@@ -1623,10 +1623,10 @@ test_incr_decr_object_refcount(void)
         goto error;
     }
 
-    if ((fspace_id = generate_random_dataspace(OBJECT_REF_COUNT_TEST_DSET_SPACE_RANK, NULL, NULL, FALSE)) < 0)
+    if ((fspace_id = generate_random_dataspace(OBJECT_REF_COUNT_TEST_DSET_SPACE_RANK, NULL, NULL, false)) < 0)
         TEST_ERROR;
 
-    if ((dset_dtype = generate_random_datatype(H5T_NO_CLASS, FALSE)) < 0)
+    if ((dset_dtype = generate_random_datatype(H5T_NO_CLASS, false)) < 0)
         TEST_ERROR;
 
     PASSED();
@@ -1878,7 +1878,7 @@ error:
  * fail when passed invalid parameters.
  */
 static void
-test_incr_decr_object_refcount_invalid_params(void)
+test_incr_decr_object_refcount_invalid_params(const void H5_ATTR_UNUSED *params)
 {
     herr_t status;
 
@@ -1945,7 +1945,7 @@ error:
  * Basic tests for H5Ocopy.
  */
 static void
-test_object_copy_basic(void)
+test_object_copy_basic(const void H5_ATTR_UNUSED *params)
 {
     H5O_info2_t object_info;
     H5G_info_t  group_info;
@@ -2000,12 +2000,12 @@ test_object_copy_basic(void)
         goto error;
     }
 
-    if ((space_id = generate_random_dataspace(OBJECT_COPY_BASIC_TEST_SPACE_RANK, NULL, NULL, FALSE)) < 0)
+    if ((space_id = generate_random_dataspace(OBJECT_COPY_BASIC_TEST_SPACE_RANK, NULL, NULL, false)) < 0)
         TEST_ERROR;
-    if ((attr_space_id = generate_random_dataspace(OBJECT_COPY_BASIC_TEST_SPACE_RANK, NULL, NULL, TRUE)) < 0)
+    if ((attr_space_id = generate_random_dataspace(OBJECT_COPY_BASIC_TEST_SPACE_RANK, NULL, NULL, true)) < 0)
         TEST_ERROR;
 
-    if ((dset_dtype = generate_random_datatype(H5T_NO_CLASS, FALSE)) < 0)
+    if ((dset_dtype = generate_random_datatype(H5T_NO_CLASS, false)) < 0)
         TEST_ERROR;
 
     /* Create the test group object, along with its nested members and the attributes attached to it. */
@@ -2095,7 +2095,7 @@ test_object_copy_basic(void)
     }
 
     /* Create the test committed datatype object, along with the attributes attached to it. */
-    if ((dtype_id = generate_random_datatype(H5T_NO_CLASS, FALSE)) < 0) {
+    if ((dtype_id = generate_random_datatype(H5T_NO_CLASS, false)) < 0) {
         H5_FAILED();
         printf("    couldn't create datatype\n");
         goto error;
@@ -2522,7 +2522,7 @@ error:
  * an object to a destination where the object already exists.
  */
 static void
-test_object_copy_already_existing(void)
+test_object_copy_already_existing(const void H5_ATTR_UNUSED *params)
 {
     herr_t err_ret;
     hid_t  file_id         = H5I_INVALID_HID;
@@ -2570,9 +2570,9 @@ test_object_copy_already_existing(void)
     }
 
     if ((space_id =
-             generate_random_dataspace(OBJECT_COPY_ALREADY_EXISTING_TEST_SPACE_RANK, NULL, NULL, FALSE)) < 0)
+             generate_random_dataspace(OBJECT_COPY_ALREADY_EXISTING_TEST_SPACE_RANK, NULL, NULL, false)) < 0)
         TEST_ERROR;
-    if ((dset_dtype = generate_random_datatype(H5T_NO_CLASS, FALSE)) < 0)
+    if ((dset_dtype = generate_random_datatype(H5T_NO_CLASS, false)) < 0)
         TEST_ERROR;
 
     /* Create the test group object */
@@ -2592,7 +2592,7 @@ test_object_copy_already_existing(void)
     }
 
     /* Create the test committed datatype object */
-    if ((dtype_id = generate_random_datatype(H5T_NO_CLASS, FALSE)) < 0) {
+    if ((dtype_id = generate_random_datatype(H5T_NO_CLASS, false)) < 0) {
         H5_FAILED();
         printf("    couldn't create datatype\n");
         goto error;
@@ -2720,7 +2720,7 @@ error:
  * for H5Ocopy.
  */
 static void
-test_object_copy_shallow_group_copy(void)
+test_object_copy_shallow_group_copy(const void H5_ATTR_UNUSED *params)
 {
     H5G_info_t group_info;
     htri_t     object_link_exists;
@@ -2947,7 +2947,7 @@ error:
  * of H5Ocopy.
  */
 static void
-test_object_copy_no_attributes(void)
+test_object_copy_no_attributes(const void H5_ATTR_UNUSED *params)
 {
     H5O_info2_t object_info;
     htri_t      object_link_exists;
@@ -3002,13 +3002,13 @@ test_object_copy_no_attributes(void)
         goto error;
     }
 
-    if ((space_id = generate_random_dataspace(OBJECT_COPY_NO_ATTRS_TEST_SPACE_RANK, NULL, NULL, FALSE)) < 0)
+    if ((space_id = generate_random_dataspace(OBJECT_COPY_NO_ATTRS_TEST_SPACE_RANK, NULL, NULL, false)) < 0)
         TEST_ERROR;
-    if ((attr_space_id = generate_random_dataspace(OBJECT_COPY_NO_ATTRS_TEST_SPACE_RANK, NULL, NULL, TRUE)) <
+    if ((attr_space_id = generate_random_dataspace(OBJECT_COPY_NO_ATTRS_TEST_SPACE_RANK, NULL, NULL, true)) <
         0)
         TEST_ERROR;
 
-    if ((dset_dtype = generate_random_datatype(H5T_NO_CLASS, FALSE)) < 0)
+    if ((dset_dtype = generate_random_datatype(H5T_NO_CLASS, false)) < 0)
         TEST_ERROR;
 
     /* Create the test group object, along with the attributes attached to it. */
@@ -3068,7 +3068,7 @@ test_object_copy_no_attributes(void)
     }
 
     /* Create the test committed datatype object, along with the attributes attached to it. */
-    if ((dtype_id = generate_random_datatype(H5T_NO_CLASS, FALSE)) < 0) {
+    if ((dtype_id = generate_random_datatype(H5T_NO_CLASS, false)) < 0) {
         H5_FAILED();
         printf("    couldn't create datatype\n");
         goto error;
@@ -3460,7 +3460,7 @@ error:
  * object specified is a soft link or dangling soft link.
  */
 static void
-test_object_copy_by_soft_link(void)
+test_object_copy_by_soft_link(const void H5_ATTR_UNUSED *params)
 {
     H5O_info2_t object_info;
     H5G_info_t  group_info;
@@ -3510,7 +3510,7 @@ test_object_copy_by_soft_link(void)
         goto error;
     }
 
-    if ((attr_space_id = generate_random_dataspace(OBJECT_COPY_SOFT_LINK_TEST_SPACE_RANK, NULL, NULL, TRUE)) <
+    if ((attr_space_id = generate_random_dataspace(OBJECT_COPY_SOFT_LINK_TEST_SPACE_RANK, NULL, NULL, true)) <
         0)
         TEST_ERROR;
 
@@ -3793,7 +3793,7 @@ error:
  * flag.
  */
 static void
-test_object_copy_group_with_soft_links(void)
+test_object_copy_group_with_soft_links(const void H5_ATTR_UNUSED *params)
 {
     H5G_info_t group_info;
     htri_t     object_link_exists;
@@ -4151,7 +4151,7 @@ error:
  * H5Ocopy.
  */
 static void
-test_object_copy_between_files(void)
+test_object_copy_between_files(const void H5_ATTR_UNUSED *params)
 {
     H5O_info2_t object_info;
     H5G_info_t  group_info;
@@ -4225,14 +4225,14 @@ test_object_copy_between_files(void)
         goto error;
     }
 
-    if ((space_id = generate_random_dataspace(OBJECT_COPY_BETWEEN_FILES_TEST_SPACE_RANK, NULL, NULL, FALSE)) <
+    if ((space_id = generate_random_dataspace(OBJECT_COPY_BETWEEN_FILES_TEST_SPACE_RANK, NULL, NULL, false)) <
         0)
         TEST_ERROR;
     if ((attr_space_id =
-             generate_random_dataspace(OBJECT_COPY_BETWEEN_FILES_TEST_SPACE_RANK, NULL, NULL, TRUE)) < 0)
+             generate_random_dataspace(OBJECT_COPY_BETWEEN_FILES_TEST_SPACE_RANK, NULL, NULL, true)) < 0)
         TEST_ERROR;
 
-    if ((dset_dtype = generate_random_datatype(H5T_NO_CLASS, FALSE)) < 0)
+    if ((dset_dtype = generate_random_datatype(H5T_NO_CLASS, false)) < 0)
         TEST_ERROR;
 
     /* Create the test group object, along with its nested members and the attributes attached to it. */
@@ -4322,7 +4322,7 @@ test_object_copy_between_files(void)
     }
 
     /* Create the test committed datatype object, along with the attributes attached to it. */
-    if ((dtype_id = generate_random_datatype(H5T_NO_CLASS, FALSE)) < 0) {
+    if ((dtype_id = generate_random_datatype(H5T_NO_CLASS, false)) < 0) {
         H5_FAILED();
         printf("    couldn't create datatype\n");
         goto error;
@@ -4766,7 +4766,7 @@ error:
  * is passed invalid parameters.
  */
 static void
-test_object_copy_invalid_params(void)
+test_object_copy_invalid_params(const void H5_ATTR_UNUSED *params)
 {
     herr_t err_ret         = -1;
     hid_t  file_id         = H5I_INVALID_HID;
@@ -5002,7 +5002,7 @@ error:
  * A test for H5Oset_comment(_by_name)/H5Oget_comment(_by_name).
  */
 static void
-test_object_comments(void)
+test_object_comments(const void H5_ATTR_UNUSED *params)
 {
     TESTING("object comments");
 
@@ -5016,7 +5016,7 @@ test_object_comments(void)
  * fail when passed invalid parameters.
  */
 static void
-test_object_comments_invalid_params(void)
+test_object_comments_invalid_params(const void H5_ATTR_UNUSED *params)
 {
     TESTING("object comments with invalid parameters");
 
@@ -5031,7 +5031,7 @@ test_object_comments_invalid_params(void)
  * XXX: Should have test for checking nested object's names/paths.
  */
 static void
-test_object_visit(void)
+test_object_visit(const void H5_ATTR_UNUSED *params)
 {
     size_t   i;
     hid_t    file_id         = H5I_INVALID_HID;
@@ -5116,11 +5116,11 @@ test_object_visit(void)
         if (dset_dtype != H5I_INVALID_HID)
             H5Tclose(dset_dtype);
 
-        if ((fspace_id = generate_random_dataspace(OBJECT_VISIT_TEST_SPACE_RANK, NULL, NULL, FALSE)) < 0) {
+        if ((fspace_id = generate_random_dataspace(OBJECT_VISIT_TEST_SPACE_RANK, NULL, NULL, false)) < 0) {
             TEST_ERROR;
         }
 
-        if ((dset_dtype = generate_random_datatype(H5T_NO_CLASS, FALSE)) < 0) {
+        if ((dset_dtype = generate_random_datatype(H5T_NO_CLASS, false)) < 0) {
             TEST_ERROR;
         }
 
@@ -5132,7 +5132,7 @@ test_object_visit(void)
 
     } while (((long unsigned int)num_elems * elem_size) > OBJECT_VISIT_TEST_TOTAL_DATA_SIZE_LIMIT);
 
-    if ((type_id = generate_random_datatype(H5T_NO_CLASS, FALSE)) < 0) {
+    if ((type_id = generate_random_datatype(H5T_NO_CLASS, false)) < 0) {
         H5_FAILED();
         printf("    couldn't create datatype '%s'\n", OBJECT_VISIT_TEST_TYPE_NAME);
         goto error;
@@ -5732,7 +5732,7 @@ error:
  * do not get visited.
  */
 static void
-test_object_visit_soft_link(void)
+test_object_visit_soft_link(const void H5_ATTR_UNUSED *params)
 {
     size_t i;
     hid_t  file_id         = H5I_INVALID_HID;
@@ -6217,7 +6217,7 @@ error:
  * it is passed invalid parameters.
  */
 static void
-test_object_visit_invalid_params(void)
+test_object_visit_invalid_params(const void H5_ATTR_UNUSED *params)
 {
     herr_t err_ret         = -1;
     hid_t  file_id         = H5I_INVALID_HID;
@@ -6534,7 +6534,7 @@ error:
  * A test for H5Oclose.
  */
 static void
-test_close_object(void)
+test_close_object(const void H5_ATTR_UNUSED *params)
 {
     hid_t file_id         = H5I_INVALID_HID;
     hid_t container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
@@ -6578,10 +6578,10 @@ test_close_object(void)
         goto error;
     }
 
-    if ((fspace_id = generate_random_dataspace(OBJECT_CLOSE_TEST_SPACE_RANK, NULL, NULL, FALSE)) < 0)
+    if ((fspace_id = generate_random_dataspace(OBJECT_CLOSE_TEST_SPACE_RANK, NULL, NULL, false)) < 0)
         TEST_ERROR;
 
-    if ((dset_dtype = generate_random_datatype(H5T_NO_CLASS, FALSE)) < 0)
+    if ((dset_dtype = generate_random_datatype(H5T_NO_CLASS, false)) < 0)
         TEST_ERROR;
 
     PASSED();
@@ -6658,7 +6658,7 @@ test_close_object(void)
         {
             TESTING_2("H5Oclose on a committed datatype");
 
-            if ((dtype_id = generate_random_datatype(H5T_NO_CLASS, FALSE)) < 0) {
+            if ((dtype_id = generate_random_datatype(H5T_NO_CLASS, false)) < 0) {
                 H5_FAILED();
                 printf("    couldn't create datatype '%s'\n", OBJECT_CLOSE_TEST_TYPE_NAME);
                 PART_ERROR(H5Oclose_dtype);
@@ -6734,7 +6734,7 @@ error:
  * is passed invalid parameters.
  */
 static void
-test_close_object_invalid_params(void)
+test_close_object_invalid_params(const void H5_ATTR_UNUSED *params)
 {
     herr_t err_ret = -1;
     hid_t  file_id = H5I_INVALID_HID;
@@ -6788,7 +6788,7 @@ error:
  * and attribute) can't be closed with H5Oclose.
  */
 static void
-test_close_invalid_objects(void)
+test_close_invalid_objects(const void H5_ATTR_UNUSED *params)
 {
     hid_t  file_id         = H5I_INVALID_HID;
     hid_t  container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
@@ -6833,11 +6833,11 @@ test_close_invalid_objects(void)
         goto error;
     }
 
-    if ((attr_space_id = generate_random_dataspace(OBJECT_CLOSE_INVALID_TEST_SPACE_RANK, NULL, NULL, TRUE)) <
+    if ((attr_space_id = generate_random_dataspace(OBJECT_CLOSE_INVALID_TEST_SPACE_RANK, NULL, NULL, true)) <
         0)
         TEST_ERROR;
 
-    if ((attr_dtype = generate_random_datatype(H5T_NO_CLASS, TRUE)) < 0)
+    if ((attr_dtype = generate_random_datatype(H5T_NO_CLASS, true)) < 0)
         TEST_ERROR;
 
     if ((attr_id = H5Acreate2(group_id, OBJECT_CLOSE_INVALID_TEST_ATTRIBUTE_NAME, attr_dtype, attr_space_id,
@@ -6971,7 +6971,7 @@ error:
  * A test for H5Oflush.
  */
 static void
-test_flush_object(void)
+test_flush_object(const void H5_ATTR_UNUSED *params)
 {
     TESTING("H5Oflush");
 
@@ -6985,7 +6985,7 @@ test_flush_object(void)
  * it is passed invalid parameters.
  */
 static void
-test_flush_object_invalid_params(void)
+test_flush_object_invalid_params(const void H5_ATTR_UNUSED *params)
 {
     TESTING("H5Oflush with invalid parameters");
 
@@ -6998,7 +6998,7 @@ test_flush_object_invalid_params(void)
  * A test for H5Orefresh.
  */
 static void
-test_refresh_object(void)
+test_refresh_object(const void H5_ATTR_UNUSED *params)
 {
     TESTING("H5Orefresh");
 
@@ -7012,7 +7012,7 @@ test_refresh_object(void)
  * it is passed invalid parameters.
  */
 static void
-test_refresh_object_invalid_params(void)
+test_refresh_object_invalid_params(const void H5_ATTR_UNUSED *params)
 {
     TESTING("H5Orefresh with invalid parameters");
 
@@ -7041,7 +7041,7 @@ object_copy_attribute_iter_callback(hid_t location_id, const char *attr_name, co
 
     snprintf(expected_name, 256, "attr%d", (int)(*counter));
 
-    if (HDstrncmp(attr_name, expected_name, 256)) {
+    if (strncmp(attr_name, expected_name, 256)) {
         printf("    attribute name '%s' did not match expected name '%s'\n", attr_name, expected_name);
         ret_value = H5_ITER_ERROR;
         goto done;
@@ -7121,7 +7121,7 @@ object_copy_soft_link_non_expand_callback(hid_t group, const char *name, const H
              "/" OBJECT_TEST_GROUP_NAME "/" OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_SUBGROUP_NAME "/grp%d",
              (int)(*counter));
 
-    if (HDstrncmp(link_val_buf, expected_link_val, OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_BUF_SIZE)) {
+    if (strncmp(link_val_buf, expected_link_val, OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_BUF_SIZE)) {
         printf("    value '%s' for link '%s' did not match expected value '%s'\n", (char *)link_val_buf, name,
                expected_link_val);
         ret_value = H5_ITER_ERROR;
@@ -7161,7 +7161,7 @@ object_copy_soft_link_expand_callback(hid_t group, const char *name, const H5L_i
     /* Ensure that the link's name still follows the 'link1', 'link2', etc. pattern */
     snprintf(expected_link_name, OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_BUF_SIZE, "link%d", (int)(*counter));
 
-    if (HDstrncmp(name, expected_link_name, OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_BUF_SIZE)) {
+    if (strncmp(name, expected_link_name, OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_BUF_SIZE)) {
         printf("    link name '%s' did not match expected name '%s'\n", name, expected_link_name);
         ret_value = H5_ITER_ERROR;
         goto done;
@@ -7186,28 +7186,28 @@ object_visit_callback(hid_t o_id, const char *name, const H5O_info2_t *object_in
 
     UNUSED(o_id);
 
-    if (!HDstrncmp(name, ".", strlen(".") + 1) &&
+    if (!strncmp(name, ".", strlen(".") + 1) &&
         (counter_val == 0 || counter_val == 4 || counter_val == 8 || counter_val == 12)) {
         if (H5O_TYPE_GROUP == object_info->type)
             goto done;
         else
             printf("    type for object '%s' was not H5O_TYPE_GROUP\n", name);
     }
-    else if (!HDstrncmp(name, OBJECT_VISIT_TEST_GROUP_NAME, strlen(OBJECT_VISIT_TEST_GROUP_NAME) + 1) &&
+    else if (!strncmp(name, OBJECT_VISIT_TEST_GROUP_NAME, strlen(OBJECT_VISIT_TEST_GROUP_NAME) + 1) &&
              (counter_val == 2 || counter_val == 6 || counter_val == 9 || counter_val == 15)) {
         if (H5O_TYPE_GROUP == object_info->type)
             goto done;
         else
             printf("    type for object '%s' was not H5O_TYPE_GROUP\n", name);
     }
-    else if (!HDstrncmp(name, OBJECT_VISIT_TEST_DSET_NAME, strlen(OBJECT_VISIT_TEST_DSET_NAME) + 1) &&
+    else if (!strncmp(name, OBJECT_VISIT_TEST_DSET_NAME, strlen(OBJECT_VISIT_TEST_DSET_NAME) + 1) &&
              (counter_val == 1 || counter_val == 7 || counter_val == 10 || counter_val == 14)) {
         if (H5O_TYPE_DATASET == object_info->type)
             goto done;
         else
             printf("    type for object '%s' was not H5O_TYPE_DATASET\n", name);
     }
-    else if (!HDstrncmp(name, OBJECT_VISIT_TEST_TYPE_NAME, strlen(OBJECT_VISIT_TEST_TYPE_NAME) + 1) &&
+    else if (!strncmp(name, OBJECT_VISIT_TEST_TYPE_NAME, strlen(OBJECT_VISIT_TEST_TYPE_NAME) + 1) &&
              (counter_val == 3 || counter_val == 5 || counter_val == 11 || counter_val == 13)) {
         if (H5O_TYPE_NAMED_DATATYPE == object_info->type)
             goto done;
@@ -7259,7 +7259,7 @@ object_visit_dset_callback(hid_t o_id, const char *name, const H5O_info2_t *obje
     UNUSED(o_id);
     UNUSED(op_data);
 
-    if (HDstrncmp(name, ".", strlen(".") + 1)) {
+    if (strncmp(name, ".", strlen(".") + 1)) {
         printf("    object '%s' didn't match known names\n", name);
         return -1;
     }
@@ -7283,7 +7283,7 @@ object_visit_dtype_callback(hid_t o_id, const char *name, const H5O_info2_t *obj
     UNUSED(o_id);
     UNUSED(op_data);
 
-    if (HDstrncmp(name, ".", strlen(".") + 1)) {
+    if (strncmp(name, ".", strlen(".") + 1)) {
         printf("    object '%s' didn't match known names\n", name);
         return -1;
     }
@@ -7355,56 +7355,67 @@ H5_api_object_test_add(void)
     int64_t testframe_flags = ALLOW_MULTITHREAD;
 
     /* Add a fake test to print out a header to distinguish different test interfaces */
-    AddTest("print_object_test_header", print_object_test_header, NULL, "Prints header for object tests",
-            NULL, 0);
+    AddTest("print_object_test_header", print_object_test_header, NULL, NULL, NULL, 0,
+            0, "Prints header for object tests");
 
-    AddTest("test_open_object",  test_open_object,  NULL,  "object opening",  NULL, testframe_flags);
-    AddTest("test_open_object_invalid_params", test_open_object_invalid_params, NULL,
-            "object opening with invalid parameters", NULL, testframe_flags);
-    AddTest("test_object_exists",  test_object_exists,  NULL,  "object existence",  NULL, testframe_flags);
-    AddTest("test_object_exists_invalid_params", test_object_exists_invalid_params, NULL,
-            "object existence with invalid parameters", NULL, testframe_flags);
-    AddTest("test_get_object_info",  test_get_object_info,  NULL,  "object info retrieval",  NULL, testframe_flags);
-    AddTest("test_get_object_info_invalid_params", test_get_object_info_invalid_params, NULL,
-            "object info retrieval with invalid parameters", NULL, testframe_flags);
-    AddTest("test_link_object",  test_link_object,  NULL,  "object linking",  NULL, testframe_flags);
-    AddTest("test_link_object_invalid_params", test_link_object_invalid_params, NULL,
-            "object linking with invalid parameters", NULL, testframe_flags);
-    AddTest("test_incr_decr_object_refcount", test_incr_decr_object_refcount, NULL,
-            "increment/decrement the reference count of object", NULL, testframe_flags);
+    AddTest("test_open_object", test_open_object, NULL, NULL, NULL, 0,
+            testframe_flags, "object opening");
+    AddTest("test_open_object_invalid_params", test_open_object_invalid_params, NULL, NULL, NULL, 0,
+            testframe_flags, "object opening with invalid parameters");
+    AddTest("test_object_exists", test_object_exists, NULL, NULL, NULL, 0,
+            testframe_flags, "object existence");
+    AddTest("test_object_exists_invalid_params", test_object_exists_invalid_params, NULL, NULL, NULL, 0,
+            testframe_flags, "object existence with invalid parameters");
+    AddTest("test_get_object_info", test_get_object_info, NULL, NULL, NULL, 0,
+            testframe_flags, "object info retrieval");
+    AddTest("test_get_object_info_invalid_params", test_get_object_info_invalid_params, NULL, NULL, NULL, 0,
+            testframe_flags, "object info retrieval with invalid parameters");
+    AddTest("test_link_object", test_link_object, NULL, NULL, NULL, 0,
+            testframe_flags, "object linking");
+    AddTest("test_link_object_invalid_params", test_link_object_invalid_params, NULL, NULL, NULL, 0,
+            testframe_flags, "object linking with invalid parameters");
+    AddTest("test_incr_decr_object_refcount", test_incr_decr_object_refcount, NULL, NULL, NULL, 0,
+            testframe_flags, "increment/decrement the reference count of object");
     AddTest("test_incr_decr_object_refcount_invalid_params", test_incr_decr_object_refcount_invalid_params,
-            NULL, "object reference count incr./decr. with an invalid parameter", NULL, testframe_flags);
-    AddTest("test_object_copy_basic",  test_object_copy_basic,  NULL,  "basic object copying",  NULL, testframe_flags);
-    AddTest("test_object_copy_already_existing", test_object_copy_already_existing, NULL,
-            "object copying to location where objects already exist", NULL, testframe_flags);
-    AddTest("test_object_copy_shallow_group_copy", test_object_copy_shallow_group_copy, NULL,
-            "object copying with H5O_COPY_SHALLOW_HIERARCHY_FLAG flag", NULL, testframe_flags);
-    AddTest("test_object_copy_no_attributes", test_object_copy_no_attributes, NULL,
-            "object copying with H5O_COPY_WITHOUT_ATTR_FLAG flag", NULL, testframe_flags);
-    AddTest("test_object_copy_by_soft_link", test_object_copy_by_soft_link, NULL,
-            "object copying through use of soft links", NULL, testframe_flags);
-    AddTest("test_object_copy_group_with_soft_links", test_object_copy_group_with_soft_links, NULL,
-            "group copying when group contains soft links", NULL, testframe_flags);
-    AddTest("test_object_copy_between_files", test_object_copy_between_files, NULL,
-            "object copying between files", NULL, testframe_flags);
-    AddTest("test_object_copy_invalid_params", test_object_copy_invalid_params, NULL,
-            "object copying with invalid parameters", NULL, testframe_flags);
-    AddTest("test_object_comments",  test_object_comments,  NULL,  "object comments",  NULL, testframe_flags);
-    AddTest("test_object_comments_invalid_params", test_object_comments_invalid_params, NULL,
-            "object comments with invalid parameters", NULL, testframe_flags);
-    AddTest("test_object_visit",  test_object_visit,  NULL,  "object visiting",  NULL, testframe_flags);
-    AddTest("test_object_visit_soft_link", test_object_visit_soft_link, NULL,
-            "object visiting with soft links", NULL, testframe_flags);
-    AddTest("test_object_visit_invalid_params", test_object_visit_invalid_params, NULL,
-            "object visiting with invalid parameters", NULL, testframe_flags);
-    AddTest("test_close_object",  test_close_object,  NULL,  "H5Oclose",  NULL, testframe_flags);
-    AddTest("test_close_object_invalid_params", test_close_object_invalid_params, NULL,
-            "H5Oclose with an invalid object ID", NULL, testframe_flags);
-    AddTest("test_close_invalid_objects",  test_close_invalid_objects,  NULL,  "H5Oclose invalid objects",  NULL, testframe_flags);
-    AddTest("test_flush_object",  test_flush_object,  NULL,  "H5Oflush",  NULL, testframe_flags);
-    AddTest("test_flush_object_invalid_params", test_flush_object_invalid_params, NULL,
-            "H5Oflush with invalid parameters", NULL, testframe_flags);
-    AddTest("test_refresh_object",  test_refresh_object,  NULL,  "H5Orefresh",  NULL, testframe_flags);
-    AddTest("test_refresh_object_invalid_params", test_refresh_object_invalid_params, NULL,
-            "H5Orefresh with invalid parameters", NULL, testframe_flags);
+            NULL, NULL, NULL, 0, testframe_flags, "object reference count incr./decr. with an invalid parameter");
+    AddTest("test_object_copy_basic", test_object_copy_basic, NULL, NULL, NULL, 0,
+            testframe_flags, "basic object copying");
+    AddTest("test_object_copy_already_existing", test_object_copy_already_existing, NULL, NULL, NULL, 0,
+            testframe_flags, "object copying to location where objects already exist");
+    AddTest("test_object_copy_shallow_group_copy", test_object_copy_shallow_group_copy, NULL, NULL, NULL, 0,
+            testframe_flags, "object copying with H5O_COPY_SHALLOW_HIERARCHY_FLAG flag");
+    AddTest("test_object_copy_no_attributes", test_object_copy_no_attributes, NULL, NULL, NULL, 0,
+            testframe_flags, "object copying with H5O_COPY_WITHOUT_ATTR_FLAG flag");
+    AddTest("test_object_copy_by_soft_link", test_object_copy_by_soft_link, NULL, NULL, NULL, 0,
+            testframe_flags, "object copying through use of soft links");
+    AddTest("test_object_copy_group_with_soft_links", test_object_copy_group_with_soft_links, NULL, NULL,
+            NULL, 0, testframe_flags, "group copying when group contains soft links");
+    AddTest("test_object_copy_between_files", test_object_copy_between_files, NULL, NULL, NULL, 0,
+            testframe_flags, "object copying between files");
+    AddTest("test_object_copy_invalid_params", test_object_copy_invalid_params, NULL, NULL, NULL, 0,
+            testframe_flags, "object copying with invalid parameters");
+    AddTest("test_object_comments", test_object_comments, NULL, NULL, NULL, 0,
+            testframe_flags, "object comments");
+    AddTest("test_object_comments_invalid_params", test_object_comments_invalid_params, NULL, NULL, NULL, 0,
+            testframe_flags, "object comments with invalid parameters");
+    AddTest("test_object_visit", test_object_visit, NULL, NULL, NULL, 0,
+            testframe_flags, "object visiting");
+    AddTest("test_object_visit_soft_link", test_object_visit_soft_link, NULL, NULL, NULL, 0,
+            testframe_flags, "object visiting with soft links");
+    AddTest("test_object_visit_invalid_params", test_object_visit_invalid_params, NULL, NULL, NULL, 0,
+            testframe_flags, "object visiting with invalid parameters");
+    AddTest("test_close_object", test_close_object, NULL, NULL, NULL, 0,
+            testframe_flags, "H5Oclose");
+    AddTest("test_close_object_invalid_params", test_close_object_invalid_params, NULL, NULL, NULL, 0,
+            testframe_flags, "H5Oclose with an invalid object ID");
+    AddTest("test_close_invalid_objects", test_close_invalid_objects, NULL, NULL, NULL, 0,
+            testframe_flags, "H5Oclose invalid objects");
+    AddTest("test_flush_object", test_flush_object, NULL, NULL, NULL, 0,
+            testframe_flags, "H5Oflush");
+    AddTest("test_flush_object_invalid_params", test_flush_object_invalid_params, NULL, NULL, NULL, 0,
+            testframe_flags, "H5Oflush with invalid parameters");
+    AddTest("test_refresh_object", test_refresh_object, NULL, NULL, NULL, 0,
+            testframe_flags, "H5Orefresh");
+    AddTest("test_refresh_object_invalid_params", test_refresh_object_invalid_params, NULL, NULL, NULL, 0,
+            testframe_flags, "H5Orefresh with invalid parameters");
 }

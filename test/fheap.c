@@ -15973,8 +15973,7 @@ main(void)
     /* Reset library */
     h5_reset();
 
-    def_fapl    = h5_fileaccess();
-    ExpressMode = GetTestExpress();
+    def_fapl = h5_fileaccess();
 
     /*
      * Caution when turning on ExpressMode 0:
@@ -15986,8 +15985,9 @@ main(void)
      *      Activate full testing when this feature is re-enabled
      *      in the future for parallel build.
      */
-    if (ExpressMode > 1)
-        printf("***Express test mode on.  Some tests may be skipped\n");
+    ExpressMode = h5_get_testexpress();
+    if (ExpressMode > 0)
+        printf("***Express test mode %d.  Some tests may be skipped\n", ExpressMode);
     else if (ExpressMode == 0) {
 #ifdef H5_HAVE_PARALLEL
         num_pb_fs = NUM_PB_FS - 2;

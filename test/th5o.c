@@ -1868,7 +1868,7 @@ test_h5o_getinfo_visit(void)
 **
 ****************************************************************/
 void
-test_h5o(void)
+test_h5o(const void H5_ATTR_UNUSED *params)
 {
     /* Output message about test being performed */
     MESSAGE(5, ("Testing Objects\n"));
@@ -1901,14 +1901,16 @@ test_h5o(void)
  *-------------------------------------------------------------------------
  */
 void
-cleanup_h5o(void)
+cleanup_h5o(void H5_ATTR_UNUSED *params)
 {
-    char filename[1024];
+    if (GetTestCleanup()) {
+        char filename[1024];
 
-    H5E_BEGIN_TRY
-    {
-        h5_fixname(TEST_FILENAME, H5P_DEFAULT, filename, sizeof filename);
-        H5Fdelete(filename, H5P_DEFAULT);
+        H5E_BEGIN_TRY
+        {
+            h5_fixname(TEST_FILENAME, H5P_DEFAULT, filename, sizeof filename);
+            H5Fdelete(filename, H5P_DEFAULT);
+        }
+        H5E_END_TRY
     }
-    H5E_END_TRY
 }

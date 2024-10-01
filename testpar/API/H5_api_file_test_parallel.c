@@ -12,13 +12,13 @@
 
 #include "H5_api_file_test_parallel.h"
 
-static void print_file_test_header(void);
-static void test_create_file(void);
-static void test_open_file(void);
-static void test_split_comm_file_access(void);
+static void print_file_test_header(const void *params);
+static void test_create_file(const void *params);
+static void test_open_file(const void *params);
+static void test_split_comm_file_access(const void *params);
 
 static void
-print_file_test_header(void)
+print_file_test_header(const void H5_ATTR_UNUSED *params)
 {
     if (MAINPROCESS) {
         printf("\n");
@@ -35,7 +35,7 @@ print_file_test_header(void)
  */
 #define FILE_CREATE_TEST_FILENAME "test_file_parallel.h5"
 static void
-test_create_file(void)
+test_create_file(const void H5_ATTR_UNUSED *params)
 {
     hid_t file_id = H5I_INVALID_HID;
     hid_t fapl_id = H5I_INVALID_HID;
@@ -49,7 +49,7 @@ test_create_file(void)
         return;
     }
 
-    if ((fapl_id = create_mpi_fapl(MPI_COMM_WORLD, MPI_INFO_NULL, TRUE)) < 0)
+    if ((fapl_id = create_mpi_fapl(MPI_COMM_WORLD, MPI_INFO_NULL, true)) < 0)
         TEST_ERROR;
 
     if ((file_id = H5Fcreate(FILE_CREATE_TEST_FILENAME, H5F_ACC_TRUNC, H5P_DEFAULT, fapl_id)) < 0) {
@@ -60,7 +60,7 @@ test_create_file(void)
 
     if (H5Fclose(file_id) < 0)
         TEST_ERROR;
-    if (H5Fdelete(FILE_CREATE_TEST_FILENAME, fapl_id) < 0)
+    if (GetTestCleanup() && H5Fdelete(FILE_CREATE_TEST_FILENAME, fapl_id) < 0)
         TEST_ERROR;
     if (H5Pclose(fapl_id) < 0)
         TEST_ERROR;
@@ -73,7 +73,8 @@ error:
     H5E_BEGIN_TRY
     {
         H5Fclose(file_id);
-        H5Fdelete(FILE_CREATE_TEST_FILENAME, fapl_id);
+        if (GetTestCleanup())
+            H5Fdelete(FILE_CREATE_TEST_FILENAME, fapl_id);
         H5Pclose(fapl_id);
     }
     H5E_END_TRY
@@ -85,7 +86,7 @@ error:
  * A test to ensure that a file can be opened in parallel.
  */
 static void
-test_open_file(void)
+test_open_file(const void H5_ATTR_UNUSED *params)
 {
     hid_t file_id = H5I_INVALID_HID;
     hid_t fapl_id = H5I_INVALID_HID;
@@ -101,7 +102,7 @@ test_open_file(void)
 
     TESTING_2("test setup");
 
-    if ((fapl_id = create_mpi_fapl(MPI_COMM_WORLD, MPI_INFO_NULL, TRUE)) < 0)
+    if ((fapl_id = create_mpi_fapl(MPI_COMM_WORLD, MPI_INFO_NULL, true)) < 0)
         TEST_ERROR;
 
     PASSED();
@@ -194,7 +195,7 @@ error:
  */
 #define SPLIT_FILE_COMM_TEST_FILE_NAME "split_comm_file.h5"
 static void
-test_split_comm_file_access(void)
+test_split_comm_file_access(const void H5_ATTR_UNUSED *params)
 {
     MPI_Comm comm;
     MPI_Info info    = MPI_INFO_NULL;
@@ -237,7 +238,7 @@ test_split_comm_file_access(void)
         MPI_Comm_rank(comm, &sub_mpi_rank);
 
         /* setup file access template */
-        if ((fapl_id = create_mpi_fapl(comm, info, TRUE)) < 0) {
+        if ((fapl_id = create_mpi_fapl(comm, info, true)) < 0) {
             err_occurred = 1;
             goto access_end;
         }
@@ -259,7 +260,7 @@ test_split_comm_file_access(void)
         }
 
         /* delete the test file */
-        if (H5Fdelete(SPLIT_FILE_COMM_TEST_FILE_NAME, fapl_id) < 0) {
+        if (GetTestCleanup() && H5Fdelete(SPLIT_FILE_COMM_TEST_FILE_NAME, fapl_id) < 0) {
             H5_FAILED();
             printf("    failed to delete file '%s'\n", SPLIT_FILE_COMM_TEST_FILE_NAME);
             err_occurred = 1;
@@ -308,7 +309,8 @@ error:
     H5E_BEGIN_TRY
     {
         H5Fclose(file_id);
-        H5Fdelete(SPLIT_FILE_COMM_TEST_FILE_NAME, fapl_id);
+        if (GetTestCleanup())
+            H5Fdelete(SPLIT_FILE_COMM_TEST_FILE_NAME, fapl_id);
         H5Pclose(fapl_id);
     }
     H5E_END_TRY
@@ -320,10 +322,11 @@ void
 H5_api_file_test_parallel_add(void)
 {
     /* Add a fake test to print out a header to distinguish different test interfaces */
-    AddTest("print_file_test_header", print_file_test_header, NULL, "Prints header for file tests", NULL, 0);
+    AddTest("print_file_test_header", print_file_test_header, NULL, NULL, NULL, 0,
+            0, "Prints header for file tests");
 
-    AddTest("test_create_file", test_create_file, NULL, "H5Fcreate", NULL, 0);
-    AddTest("test_open_file", test_open_file, NULL, "H5Fopen", NULL, 0);
-    AddTest("test_split_comm_file_access", test_split_comm_file_access, NULL, "file access with a split communicator", NULL, 0);
-
+    AddTest("test_create_file", test_create_file, NULL, NULL, NULL, 0, 0, "H5Fcreate");
+    AddTest("test_open_file", test_open_file, NULL, NULL, NULL, 0, 0, "H5Fopen");
+    AddTest("test_split_comm_file_access", test_split_comm_file_access, NULL, NULL, NULL, 0,
+            0, "file access with a split communicator");
 }

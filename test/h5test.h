@@ -26,56 +26,13 @@
 
 #ifdef H5_HAVE_MULTITHREAD
 #include <stdatomic.h>
+
+/* TODO: This is a hack to work around the fact that multi-thread
+ * builds mix the h5test and testframe frameworks together and must
+ * eventually be resolved
+ */
+#include "testframe.h"
 #endif
-
-/*
- * Predefined test verbosity levels.
- *
- * Convention:
- *
- * The higher the verbosity value, the more information printed.
- * So, output for higher verbosity also include output of all lower
- * verbosity.
- *
- *  Value     Description
- *  0         None:   No informational message.
- *  1                 "All tests passed"
- *  2                 Header of overall test
- *  3         Default: header and results of individual test
- *  4
- *  5         Low:    Major category of tests.
- *  6
- *  7         Medium: Minor category of tests such as functions called.
- *  8
- *  9         High:   Highest level.  All information.
- */
-#define VERBO_NONE 0 /* None    */
-#define VERBO_DEF  3 /* Default */
-#define VERBO_LO   5 /* Low     */
-#define VERBO_MED  7 /* Medium  */
-#define VERBO_HI   9 /* High    */
-
-/*
- * Verbose queries
- * Only None needs an exact match.  The rest are at least as much.
- */
-
-/* A macro version of HDGetTestVerbosity(). */
-/* Should be used internally by the libtest.a only. */
-#define HDGetTestVerbosity() (TestVerbosity)
-
-#define VERBOSE_NONE (HDGetTestVerbosity() == VERBO_NONE)
-#define VERBOSE_DEF  (HDGetTestVerbosity() >= VERBO_DEF)
-#define VERBOSE_LO   (HDGetTestVerbosity() >= VERBO_LO)
-#define VERBOSE_MED  (HDGetTestVerbosity() >= VERBO_MED)
-#define VERBOSE_HI   (HDGetTestVerbosity() >= VERBO_HI)
-
-/*
- * Test controls definitions.
- */
-#define SKIPTEST  1 /* Skip this test */
-#define ONLYTEST  2 /* Do only this test */
-#define BEGINTEST 3 /* Skip all tests before this test */
 
 /*
  * This contains the filename prefix specified as command line option for
@@ -87,10 +44,6 @@ H5TEST_DLLVAR MPI_Info h5_io_info_g; /* MPI INFO object for IO */
 #endif
 
 #define H5_API_TEST_FILENAME_MAX_LENGTH 1024
-
-#define API_TEST_PASS 1
-#define API_TEST_FAIL 0
-#define API_TEST_ERROR -1
 
 /* Information for an individual thread running the API tests */
 typedef struct thread_info_t {
@@ -291,10 +244,6 @@ extern pthread_key_t test_thread_info_key_g;
         goto part_##part_name##_end;                                                                         \
     } while (0)
 
-
-/* Number of seconds to wait before killing a test (requires alarm(2)) */
-#define H5_ALARM_SEC 1200 /* default is 20 minutes */
-
 /* Flags for h5_fileaccess_flags() */
 #define H5_FILEACCESS_LIBVER 0x01
 
@@ -347,7 +296,6 @@ H5TEST_DLL void        h5_reset(void);
 H5TEST_DLL void        h5_restore_err(void);
 H5TEST_DLL void        h5_show_hostname(void);
 H5TEST_DLL h5_stat_size_t h5_get_file_size(const char *filename, hid_t fapl);
-H5TEST_DLL int            print_func(const char *format, ...) H5_ATTR_FORMAT(printf, 1, 2);
 H5TEST_DLL int            h5_make_local_copy(const char *origfilename, const char *local_copy_name);
 H5TEST_DLL herr_t         h5_verify_cached_stabs(const char *base_name[], hid_t fapl);
 H5TEST_DLL H5FD_class_t  *h5_get_dummy_vfd_class(void);
@@ -372,47 +320,9 @@ H5TEST_DLL void h5_delete_all_test_files(const char *base_name[], hid_t fapl);
 /* h5_reset() replacement */
 H5TEST_DLL void h5_test_init(void);
 
-/* h5_cleanup() replacement */
-H5TEST_DLL void h5_test_shutdown(void);
-
-/* Routines for operating on the list of tests (for the "all in one" tests) */
-H5TEST_DLL void        TestUsage(void);
-H5TEST_DLL void        AddTest(const char *TheName, void (*TheCall)(void), void (*Cleanup)(void),
-                               const char *TheDescr, const void *TestParameters, const int64_t TestFrameworkFlags);
-H5TEST_DLL void        TestInfo(const char *ProgName);
-H5TEST_DLL void        TestParseCmdLine(int argc, char *argv[]);
-H5TEST_DLL void        PerformTests(void);
-H5TEST_DLL void        TestSummary(void);
-H5TEST_DLL void        TestCleanup(void);
-H5TEST_DLL void        TestShutdown(void);
-H5TEST_DLL void        TestInit(const char *ProgName, void (*private_usage)(void),
-                                int (*private_parser)(int ac, char *av[]));
-H5TEST_DLL int         GetTestVerbosity(void);
-H5TEST_DLL int         SetTestVerbosity(int newval);
-H5TEST_DLL int         GetTestSummary(void);
-H5TEST_DLL int         GetTestCleanup(void);
-H5TEST_DLL int         SetTestNoCleanup(void);
-H5TEST_DLL int         GetTestExpress(void);
-H5TEST_DLL int         SetTestExpress(int newval);
-H5TEST_DLL void        ParseTestVerbosity(char *argv);
-H5TEST_DLL int         GetTestNumErrs(void);
-H5TEST_DLL void        IncTestNumErrs(void);
-H5TEST_DLL const void *GetTestParameters(void);
-H5TEST_DLL int         TestErrPrintf(const char *format, ...) H5_ATTR_FORMAT(printf, 1, 2);
-H5TEST_DLL void        SetTest(const char *testname, int action);
-H5TEST_DLL void        TestAlarmOn(void);
-H5TEST_DLL void        TestAlarmOff(void);
-
-#ifdef H5_HAVE_MULTITHREAD
-H5TEST_DLL void*       ThreadTestWrapper(void *test);
-H5TEST_DLL int         H5_mt_test_global_setup(void);
-H5TEST_DLL int         H5_mt_test_thread_setup(int thread_idx);
-H5TEST_DLL void        H5_test_thread_info_key_destructor(void *value);
-#endif
-
-/* Allow up to 3-digit thread indexes (0-999)*/
-#define MAX_THREAD_IDX 999
-#define MAX_THREAD_IDX_LEN
+/* Functions that deal with expediting testing */
+H5TEST_DLL int  h5_get_testexpress(void);
+H5TEST_DLL void h5_set_testexpress(int new_val);
 
 /* Generate a heap-allocated filename of the form <prefix><thread_idx><filename> */
 char *generate_threadlocal_filename(const char *prefix, int thread_idx, const char *filename);
@@ -426,9 +336,6 @@ char *generate_threadlocal_filename(const char *prefix, int thread_idx, const ch
 /* Prefix to use for filepaths in API tests */
 extern const char *test_path_prefix;
 
-H5TEST_DLL int  GetTestMaxNumThreads(void);
-H5TEST_DLL void SetTestMaxNumThreads(int num_threads);
-
 #ifdef H5_HAVE_FILTER_SZIP
 H5TEST_DLL int h5_szip_can_encode(void);
 #endif /* H5_HAVE_FILTER_SZIP */
@@ -440,8 +347,6 @@ H5TEST_DLL char *getenv_all(MPI_Comm comm, int root, const char *name);
 #endif
 
 /* Extern global variables */
-H5TEST_DLLVAR int      TestVerbosity;
-/* Global variables for testing */
 H5TEST_DLLVAR  H5_ATOMIC(size_t) n_tests_run_g;
 H5TEST_DLLVAR  H5_ATOMIC(size_t) n_tests_passed_g;
 H5TEST_DLLVAR  H5_ATOMIC(size_t) n_tests_failed_g;

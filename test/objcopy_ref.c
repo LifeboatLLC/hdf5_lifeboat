@@ -14,7 +14,7 @@
  * Purpose:    Test H5Ocopy() for references.
  */
 
-#include "testhdf5.h"
+#include "h5test.h"
 
 #define H5F_FRIEND /*suppress error about including H5Fpkg */
 #define H5F_TESTING
@@ -1817,15 +1817,10 @@ main(void)
     hid_t    fcpl_shared, ocpl;
     unsigned max_compact, min_dense;
     int      configuration; /* Configuration of tests. */
-    int      ExpressMode;
 
     /* Setup */
     h5_reset();
     fapl = h5_fileaccess();
-
-    ExpressMode = GetTestExpress();
-    if (ExpressMode > 1)
-        printf("***Express test mode on.  Some tests may be skipped\n");
 
     /* Copy the file access property list */
     if ((fapl2 = H5Pcopy(fapl)) < 0)

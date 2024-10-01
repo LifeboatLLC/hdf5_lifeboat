@@ -29,10 +29,10 @@ char H5_api_test_parallel_filename[H5_API_TEST_FILENAME_MAX_LENGTH];
 
 const char *test_path_prefix;
 
-size_t n_tests_run_g;
-size_t n_tests_passed_g;
-size_t n_tests_failed_g;
-size_t n_tests_skipped_g;
+H5_ATOMIC(size_t) n_tests_run_g     = 0;
+H5_ATOMIC(size_t) n_tests_passed_g  = 0;
+H5_ATOMIC(size_t) n_tests_failed_g  = 0;
+H5_ATOMIC(size_t) n_tests_skipped_g = 0;
 
 int mpi_size;
 int mpi_rank;
@@ -105,7 +105,7 @@ H5_api_test_add(void)
 }
 
 hid_t
-create_mpi_fapl(MPI_Comm comm, MPI_Info info, hbool_t coll_md_read)
+create_mpi_fapl(MPI_Comm comm, MPI_Info info, bool coll_md_read)
 {
     hid_t ret_pl = H5I_INVALID_HID;
 
@@ -118,7 +118,7 @@ create_mpi_fapl(MPI_Comm comm, MPI_Info info, hbool_t coll_md_read)
         goto error;
     if (H5Pset_all_coll_metadata_ops(ret_pl, coll_md_read) < 0)
         goto error;
-    if (H5Pset_coll_metadata_write(ret_pl, TRUE) < 0)
+    if (H5Pset_coll_metadata_write(ret_pl, true) < 0)
         goto error;
 
     return ret_pl;
@@ -186,17 +186,102 @@ parse_command_line(int argc, char **argv)
 }
 
 static void
-usage(void)
+usage(FILE *stream)
 {
-    print_func("file        run only the file interface tests\n");
-    print_func("group       run only the group interface tests\n");
-    print_func("dataset     run only the dataset interface tests\n");
-    print_func("attribute   run only the attribute interface tests\n");
-    print_func("datatype    run only the datatype interface tests\n");
-    print_func("link        run only the link interface tests\n");
-    print_func("object      run only the object interface tests\n");
-    print_func("misc        run only the miscellaneous tests\n");
-    print_func("async       run only the async interface tests\n");
+    fprintf(stream, "file        run only the file interface tests\n");
+    fprintf(stream, "group       run only the group interface tests\n");
+    fprintf(stream, "dataset     run only the dataset interface tests\n");
+    fprintf(stream, "attribute   run only the attribute interface tests\n");
+    fprintf(stream, "datatype    run only the datatype interface tests\n");
+    fprintf(stream, "link        run only the link interface tests\n");
+    fprintf(stream, "object      run only the object interface tests\n");
+    fprintf(stream, "misc        run only the miscellaneous tests\n");
+    fprintf(stream, "async       run only the async interface tests\n");
+}
+
+static int
+create_test_container(char *filename, uint64_t vol_cap_flags)
+{
+    hid_t file_id  = H5I_INVALID_HID;
+    hid_t group_id = H5I_INVALID_HID;
+
+    printf("Creating container file for tests\n");
+
+    if (!(vol_cap_flags & H5VL_CAP_FLAG_FILE_BASIC)) {
+        printf("   VOL connector doesn't support file creation\n");
+        goto error;
+    }
+
+    if ((file_id = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
+        printf("    couldn't create testing container file '%s'\n", filename);
+        goto error;
+    }
+
+    printf("    created container file\n");
+
+    if (vol_cap_flags & H5VL_CAP_FLAG_GROUP_BASIC) {
+        /* Create container groups for each of the test interfaces
+         * (group, attribute, dataset, etc.).
+         */
+        if ((group_id = H5Gcreate2(file_id, GROUP_TEST_GROUP_NAME, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) >=
+            0) {
+            printf("    created container group for Group tests\n");
+            H5Gclose(group_id);
+        }
+
+        if ((group_id = H5Gcreate2(file_id, ATTRIBUTE_TEST_GROUP_NAME, H5P_DEFAULT, H5P_DEFAULT,
+                                   H5P_DEFAULT)) >= 0) {
+            printf("    created container group for Attribute tests\n");
+            H5Gclose(group_id);
+        }
+
+        if ((group_id =
+                 H5Gcreate2(file_id, DATASET_TEST_GROUP_NAME, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) >= 0) {
+            printf("    created container group for Dataset tests\n");
+            H5Gclose(group_id);
+        }
+
+        if ((group_id =
+                 H5Gcreate2(file_id, DATATYPE_TEST_GROUP_NAME, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) >= 0) {
+            printf("    created container group for Datatype tests\n");
+            H5Gclose(group_id);
+        }
+
+        if ((group_id = H5Gcreate2(file_id, LINK_TEST_GROUP_NAME, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) >=
+            0) {
+            printf("    created container group for Link tests\n");
+            H5Gclose(group_id);
+        }
+
+        if ((group_id = H5Gcreate2(file_id, OBJECT_TEST_GROUP_NAME, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) >=
+            0) {
+            printf("    created container group for Object tests\n");
+            H5Gclose(group_id);
+        }
+
+        if ((group_id = H5Gcreate2(file_id, MISCELLANEOUS_TEST_GROUP_NAME, H5P_DEFAULT, H5P_DEFAULT,
+                                   H5P_DEFAULT)) >= 0) {
+            printf("    created container group for Miscellaneous tests\n");
+            H5Gclose(group_id);
+        }
+    }
+
+    if (H5Fclose(file_id) < 0) {
+        printf("    failed to close testing container\n");
+        goto error;
+    }
+
+    return 0;
+
+error:
+    H5E_BEGIN_TRY
+    {
+        H5Gclose(group_id);
+        H5Fclose(file_id);
+    }
+    H5E_END_TRY
+
+    return -1;
 }
 
 int
@@ -227,8 +312,6 @@ main(int argc, char **argv)
     MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
 
-    mpi_rank_framework_g = mpi_rank;
-
     if (provided < required) {
         if (MAINPROCESS)
             printf("** INFO: couldn't initialize with MPI_THREAD_MULTIPLE threading support **\n");
@@ -245,7 +328,11 @@ main(int argc, char **argv)
     H5Eget_auto2(H5E_DEFAULT, &default_err_func, &default_err_data);
 
     /* Initialize testing framework */
-    TestInit(argv[0], usage, NULL);
+    if (TestInit(argv[0], usage, NULL, mpi_rank) < 0) {
+        if (MAINPROCESS)
+            fprintf(stderr, "Couldn't initialize testing framework\n");
+        goto error;
+    }
 
     /* Reset error stack printing function */
     H5Eset_auto2(H5E_DEFAULT, default_err_func, default_err_data);
@@ -265,10 +352,14 @@ main(int argc, char **argv)
     H5_api_test_add();
 
     /* Display testing information */
-    TestInfo(argv[0]);
+    TestInfo(stdout);
 
     /* Parse command line arguments */
-    TestParseCmdLine(argc, argv);
+    if (TestParseCmdLine(argc, argv) < 0) {
+        if (MAINPROCESS)
+            fprintf(stderr, "Couldn't parse command-line arguments\n");
+        goto error;
+    }
 
     n_tests_run_g     = 0;
     n_tests_passed_g  = 0;
@@ -276,7 +367,7 @@ main(int argc, char **argv)
     n_tests_skipped_g = 0;
 
     if (MAINPROCESS) {
-        seed = (unsigned)HDtime(NULL);
+        seed = (unsigned)time(NULL);
     }
 
     if (mpi_size > 1) {
@@ -289,13 +380,13 @@ main(int argc, char **argv)
 
     srand(seed);
 
-    if (NULL == (test_path_prefix = HDgetenv(HDF5_API_TEST_PATH_PREFIX)))
+    if (NULL == (test_path_prefix = getenv(HDF5_API_TEST_PATH_PREFIX)))
         test_path_prefix = "";
 
-    HDsnprintf(H5_api_test_parallel_filename, H5_API_TEST_FILENAME_MAX_LENGTH, "%s%s", test_path_prefix,
-               PARALLEL_TEST_FILE_NAME);
+    snprintf(H5_api_test_parallel_filename, H5_API_TEST_FILENAME_MAX_LENGTH, "%s%s", test_path_prefix,
+             PARALLEL_TEST_FILE_NAME);
 
-    if (NULL == (vol_connector_string = HDgetenv(HDF5_VOL_CONNECTOR))) {
+    if (NULL == (vol_connector_string = getenv(HDF5_VOL_CONNECTOR))) {
         if (MAINPROCESS)
             printf("No VOL connector selected; using native VOL connector\n");
         vol_connector_name = "native";
@@ -306,7 +397,7 @@ main(int argc, char **argv)
 
         BEGIN_INDEPENDENT_OP(copy_connector_string)
         {
-            if (NULL == (vol_connector_string_copy = HDstrdup(vol_connector_string))) {
+            if (NULL == (vol_connector_string_copy = strdup(vol_connector_string))) {
                 if (MAINPROCESS)
                     fprintf(stderr, "Unable to copy VOL connector string\n");
                 INDEPENDENT_OP_ERROR(copy_connector_string);
@@ -316,7 +407,7 @@ main(int argc, char **argv)
 
         BEGIN_INDEPENDENT_OP(get_connector_name)
         {
-            if (NULL == (token = HDstrtok(vol_connector_string_copy, " "))) {
+            if (NULL == (token = strtok(vol_connector_string_copy, " "))) {
                 if (MAINPROCESS)
                     fprintf(stderr, "Error while parsing VOL connector string\n");
                 INDEPENDENT_OP_ERROR(get_connector_name);
@@ -326,7 +417,7 @@ main(int argc, char **argv)
 
         vol_connector_name = token;
 
-        if (NULL != (token = HDstrtok(NULL, " "))) {
+        if (NULL != (token = strtok(NULL, " "))) {
             vol_connector_info = token;
         }
     }
@@ -343,7 +434,7 @@ main(int argc, char **argv)
 
     BEGIN_INDEPENDENT_OP(create_fapl)
     {
-        if ((fapl_id = create_mpi_fapl(MPI_COMM_WORLD, MPI_INFO_NULL, FALSE)) < 0) {
+        if ((fapl_id = create_mpi_fapl(MPI_COMM_WORLD, MPI_INFO_NULL, false)) < 0) {
             if (MAINPROCESS)
                 fprintf(stderr, "Unable to create FAPL\n");
             INDEPENDENT_OP_ERROR(create_fapl);
@@ -360,7 +451,7 @@ main(int argc, char **argv)
          * Otherwise, HDF5 will default to running the tests
          * with the native connector, which could be misleading.
          */
-        if (0 != HDstrcmp(vol_connector_name, "native")) {
+        if (0 != strcmp(vol_connector_name, "native")) {
             htri_t is_registered;
 
             if ((is_registered = H5VLis_connector_registered_by_name(vol_connector_name)) < 0) {
@@ -425,11 +516,11 @@ main(int argc, char **argv)
     BEGIN_INDEPENDENT_OP(create_test_container)
     {
         if (MAINPROCESS) {
-            if (create_test_container((const char *)(H5_api_test_parallel_filename), vol_cap_flags_g) < 0) {
+            if (create_test_container(H5_api_test_parallel_filename, vol_cap_flags_g) < 0) {
                 fprintf(stderr, "    failed to create testing container file '%s'\n",
                         H5_api_test_parallel_filename);
                 INDEPENDENT_OP_ERROR(create_test_container);
-                }
+            }
         }
     }
     END_INDEPENDENT_OP(create_test_container);
@@ -445,7 +536,7 @@ main(int argc, char **argv)
     if (MAINPROCESS) {
         /* Display test summary, if requested */
         if (GetTestSummary())
-            TestSummary();
+            TestSummary(stdout);
 
         /* Clean up test files, if allowed */
         if (GetTestCleanup() && !getenv(HDF5_NOCLEANUP))
@@ -454,7 +545,8 @@ main(int argc, char **argv)
         printf("Deleting container file for tests\n\n");
     }
 
-    H5Fdelete(H5_api_test_parallel_filename, fapl_id);
+    if (GetTestCleanup())
+        H5Fdelete(H5_api_test_parallel_filename, fapl_id);
 
     if (n_tests_run_g > 0) {
         if (MAINPROCESS)

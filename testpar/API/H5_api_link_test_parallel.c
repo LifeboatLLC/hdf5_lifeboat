@@ -12,10 +12,10 @@
 
 #include "H5_api_link_test_parallel.h"
 
-static void print_link_test_header(void);
+static void print_link_test_header(const void *params);
 
 static void
-print_link_test_header(void)
+print_link_test_header(const void H5_ATTR_UNUSED *params)
 {
     if (MAINPROCESS) {
         printf("\n");
@@ -31,7 +31,8 @@ void
 H5_api_link_test_parallel_add(void)
 {
     /* Add a fake test to print out a header to distinguish different test interfaces */
-    AddTest("print_link_test_header", print_link_test_header, NULL, "Prints header for link tests", NULL);
+    AddTest("print_link_test_header", print_link_test_header, NULL, NULL, NULL, 0,
+            0, "Prints header for link tests");
 
     /* No tests yet */
 }

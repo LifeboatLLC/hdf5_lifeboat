@@ -9923,9 +9923,9 @@ main(void)
         envval = "nomatch";
 
     /* Reset library */
-    h5_reset();
+    h5_test_init();
     fapl        = h5_fileaccess();
-    ExpressMode = GetTestExpress();
+    ExpressMode = h5_get_testexpress();
 
     /* For the Direct I/O driver, skip intensive tests due to poor performance */
     if (!HDstrcmp(envval, "direct"))

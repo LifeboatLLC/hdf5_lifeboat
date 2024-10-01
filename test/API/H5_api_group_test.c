@@ -12,29 +12,29 @@
 
 #include "H5_api_group_test.h"
 
-static void print_group_test_header(void);
-static void test_create_group_under_root(void);
-static void test_create_group_under_existing_group(void);
-static void test_create_many_groups(void);
-static void test_create_deep_groups(void);
-static void test_create_intermediate_group(void);
-static void test_create_group_invalid_params(void);
-static void test_create_anonymous_group(void);
-static void test_create_anonymous_group_invalid_params(void);
-static void test_open_nonexistent_group(void);
-static void test_open_group_invalid_params(void);
-static void test_close_group_invalid_id(void);
-static void test_group_property_lists(void);
-static void test_get_group_info(void);
-static void test_get_group_info_invalid_params(void);
-static void test_flush_group(void);
-static void test_flush_group_invalid_params(void);
-static void test_refresh_group(void);
-static void test_refresh_group_invalid_params(void);
-static int create_group_recursive(hid_t parent_gid, unsigned counter);
+static void print_group_test_header(const void *params);
+static void test_create_group_under_root(const void *params);
+static void test_create_group_under_existing_group(const void *params);
+static void test_create_many_groups(const void *params);
+static void test_create_deep_groups(const void *params);
+static void test_create_intermediate_group(const void *params);
+static void test_create_group_invalid_params(const void *params);
+static void test_create_anonymous_group(const void *params);
+static void test_create_anonymous_group_invalid_params(const void *params);
+static void test_open_nonexistent_group(const void *params);
+static void test_open_group_invalid_params(const void *params);
+static void test_close_group_invalid_id(const void *params);
+static void test_group_property_lists(const void *params);
+static void test_get_group_info(const void *params);
+static void test_get_group_info_invalid_params(const void *params);
+static void test_flush_group(const void *params);
+static void test_flush_group_invalid_params(const void *params);
+static void test_refresh_group(const void *params);
+static void test_refresh_group_invalid_params(const void *params);
+static int  create_group_recursive(hid_t parent_gid, unsigned counter);
 
 static void
-print_group_test_header(void)
+print_group_test_header(const void H5_ATTR_UNUSED *params)
 {
     printf("\n");
     printf("**********************************************\n");
@@ -48,7 +48,7 @@ print_group_test_header(void)
  * A test to check that a group can be created under the root group.
  */
 static void
-test_create_group_under_root(void)
+test_create_group_under_root(const void H5_ATTR_UNUSED *params)
 {
     hid_t file_id    = H5I_INVALID_HID;
     hid_t parent_gid = H5I_INVALID_HID;
@@ -101,7 +101,7 @@ error:
  * group which is not the root group.
  */
 static void
-test_create_group_under_existing_group(void)
+test_create_group_under_existing_group(const void H5_ATTR_UNUSED *params)
 {
     hid_t file_id         = H5I_INVALID_HID;
     hid_t parent_group_id = H5I_INVALID_HID, child_group_id = H5I_INVALID_HID,
@@ -177,7 +177,7 @@ error:
  * A test to create many (one million) groups
  */
 static void
-test_create_many_groups(void)
+test_create_many_groups(const void H5_ATTR_UNUSED *params)
 {
     hid_t    file_id         = H5I_INVALID_HID;
     hid_t    container_group = H5I_INVALID_HID;
@@ -217,7 +217,7 @@ test_create_many_groups(void)
     printf("\n");
     for (i = 0; i < GROUP_NUMB_MANY; i++) {
         printf("\r %u/%u", i + 1, GROUP_NUMB_MANY);
-        sprintf(group_name, "group %02u", i);
+        snprintf(group_name, sizeof(group_name), "group %02u", i);
         if ((child_group_id =
                  H5Gcreate2(parent_group_id, group_name, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
             H5_FAILED();
@@ -257,7 +257,7 @@ error:
  * A test to create groups of the depth GROUP_DEPTH.
  */
 static void
-test_create_deep_groups(void)
+test_create_deep_groups(const void H5_ATTR_UNUSED *params)
 {
     hid_t file_id         = H5I_INVALID_HID;
     hid_t container_group = H5I_INVALID_HID;
@@ -330,11 +330,11 @@ create_group_recursive(hid_t parent_gid, unsigned counter)
 
     printf("\r %u/%u", counter, GROUP_DEPTH);
     if (counter == 1)
-        sprintf(gname, "2nd_child_group");
+        snprintf(gname, sizeof(gname), "2nd_child_group");
     else if (counter == 2)
-        sprintf(gname, "3rd_child_group");
+        snprintf(gname, sizeof(gname), "3rd_child_group");
     else
-        sprintf(gname, "%dth_child_group", counter + 1);
+        snprintf(gname, sizeof(gname), "%dth_child_group", counter + 1);
     if ((child_gid = H5Gcreate2(parent_gid, gname, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
         H5_FAILED();
         printf("    couldn't create group '%s'\n", gname);
@@ -365,7 +365,7 @@ error:
  * A test to create groups automatically using H5Pset_create_intermediate_group
  */
 static void
-test_create_intermediate_group(void)
+test_create_intermediate_group(const void H5_ATTR_UNUSED *params)
 {
     hid_t file_id           = H5I_INVALID_HID;
     hid_t container_group   = H5I_INVALID_HID;
@@ -396,7 +396,7 @@ test_create_intermediate_group(void)
     /* Set up plist for creating intermediate groups */
     if ((crt_intmd_lcpl_id = H5Pcreate(H5P_LINK_CREATE)) < 0)
         TEST_ERROR;
-    if (H5Pset_create_intermediate_group(crt_intmd_lcpl_id, TRUE) < 0)
+    if (H5Pset_create_intermediate_group(crt_intmd_lcpl_id, true) < 0)
         TEST_ERROR;
 
     /* Create an intermediate group using a relative path */
@@ -514,7 +514,7 @@ error:
  * is passed invalid parameters.
  */
 static void
-test_create_group_invalid_params(void)
+test_create_group_invalid_params(const void H5_ATTR_UNUSED *params)
 {
     hid_t file_id  = H5I_INVALID_HID;
     hid_t group_id = H5I_INVALID_HID;
@@ -689,7 +689,7 @@ error:
  * H5Gcreate_anon.
  */
 static void
-test_create_anonymous_group(void)
+test_create_anonymous_group(const void H5_ATTR_UNUSED *params)
 {
     hid_t file_id         = H5I_INVALID_HID;
     hid_t container_group = H5I_INVALID_HID, new_group_id = H5I_INVALID_HID;
@@ -749,7 +749,7 @@ error:
  * when H5Gcreate_anon is passed invalid parameters.
  */
 static void
-test_create_anonymous_group_invalid_params(void)
+test_create_anonymous_group_invalid_params(const void H5_ATTR_UNUSED *params)
 {
     hid_t file_id         = H5I_INVALID_HID;
     hid_t container_group = H5I_INVALID_HID, new_group_id = H5I_INVALID_HID;
@@ -874,7 +874,7 @@ error:
  * be opened.
  */
 static void
-test_open_nonexistent_group(void)
+test_open_nonexistent_group(const void H5_ATTR_UNUSED *params)
 {
     hid_t file_id  = H5I_INVALID_HID;
     hid_t group_id = H5I_INVALID_HID;
@@ -929,7 +929,7 @@ error:
  * is passed invalid parameters.
  */
 static void
-test_open_group_invalid_params(void)
+test_open_group_invalid_params(const void H5_ATTR_UNUSED *params)
 {
     hid_t file_id  = H5I_INVALID_HID;
     hid_t group_id = H5I_INVALID_HID;
@@ -1058,7 +1058,7 @@ error:
  * invalid group ID.
  */
 static void
-test_close_group_invalid_id(void)
+test_close_group_invalid_id(const void H5_ATTR_UNUSED *params)
 {
     herr_t err_ret = -1;
 
@@ -1097,7 +1097,7 @@ error:
  * retrieved later with a call to H5Gget_create_plist.
  */
 static void
-test_group_property_lists(void)
+test_group_property_lists(const void H5_ATTR_UNUSED *params)
 {
     unsigned dummy_prop_val  = GROUP_PROPERTY_LIST_TEST_DUMMY_VAL;
     hid_t    file_id         = H5I_INVALID_HID;
@@ -1367,7 +1367,7 @@ error:
  * A test for the functionality of H5Gget_info(_by_idx).
  */
 static void
-test_get_group_info(void)
+test_get_group_info(const void H5_ATTR_UNUSED *params)
 {
     H5G_info_t group_info;
     unsigned   i;
@@ -1425,8 +1425,7 @@ test_get_group_info(void)
     /* Create multiple groups under the parent group */
     for (i = 0; i < GROUP_GET_INFO_TEST_GROUP_NUMB; i++) {
         /* Create the groups with a reverse-ordering naming scheme to test creation order */
-        HDsnprintf(group_name, NAME_BUF_SIZE, "group %02u",
-                   (unsigned)(GROUP_GET_INFO_TEST_GROUP_NUMB - i - 1));
+        snprintf(group_name, NAME_BUF_SIZE, "group %02u", (unsigned)(GROUP_GET_INFO_TEST_GROUP_NUMB - i - 1));
 
         if ((group_id = H5Gcreate2(parent_group_id, group_name, H5P_DEFAULT, gcpl_id, H5P_DEFAULT)) < 0) {
             H5_FAILED();
@@ -1485,10 +1484,10 @@ test_get_group_info(void)
                 PART_ERROR(H5Gget_info);
             }
 
-            /* Assume that mounted should be FALSE in this case */
-            if (group_info.mounted != FALSE) {
+            /* Assume that mounted should be false in this case */
+            if (group_info.mounted != false) {
                 H5_FAILED();
-                printf("    group info's 'mounted' field was TRUE when it should have been FALSE\n");
+                printf("    group info's 'mounted' field was true when it should have been false\n");
                 PART_ERROR(H5Gget_info);
             }
 
@@ -1540,10 +1539,10 @@ test_get_group_info(void)
                 PART_ERROR(H5Gget_info_by_name);
             }
 
-            /* Assume that mounted should be FALSE in this case */
-            if (group_info.mounted != FALSE) {
+            /* Assume that mounted should be false in this case */
+            if (group_info.mounted != false) {
                 H5_FAILED();
-                printf("    group info's 'mounted' field was TRUE when it should have been FALSE\n");
+                printf("    group info's 'mounted' field was true when it should have been false\n");
                 PART_ERROR(H5Gget_info_by_name);
             }
 
@@ -1596,10 +1595,10 @@ test_get_group_info(void)
                     PART_ERROR(H5Gget_info_by_idx_crt_order_increasing);
                 }
 
-                /* Assume that mounted should be FALSE in this case */
-                if (group_info.mounted != FALSE) {
+                /* Assume that mounted should be false in this case */
+                if (group_info.mounted != false) {
                     H5_FAILED();
-                    printf("    group info's 'mounted' field was TRUE when it should have been FALSE\n");
+                    printf("    group info's 'mounted' field was true when it should have been false\n");
                     PART_ERROR(H5Gget_info_by_idx_crt_order_increasing);
                 }
             }
@@ -1653,10 +1652,10 @@ test_get_group_info(void)
                     PART_ERROR(H5Gget_info_by_idx_crt_order_decreasing);
                 }
 
-                /* Assume that mounted should be FALSE in this case */
-                if (group_info.mounted != FALSE) {
+                /* Assume that mounted should be false in this case */
+                if (group_info.mounted != false) {
                     H5_FAILED();
-                    printf("    group info's 'mounted' field was TRUE when it should have been FALSE\n");
+                    printf("    group info's 'mounted' field was true when it should have been false\n");
                     PART_ERROR(H5Gget_info_by_idx_crt_order_decreasing);
                 }
             }
@@ -1704,10 +1703,10 @@ test_get_group_info(void)
                     PART_ERROR(H5Gget_info_by_idx_name_order_increasing);
                 }
 
-                /* Assume that mounted should be FALSE in this case */
-                if (group_info.mounted != FALSE) {
+                /* Assume that mounted should be false in this case */
+                if (group_info.mounted != false) {
                     H5_FAILED();
-                    printf("    group info's 'mounted' field was TRUE when it should have been FALSE\n");
+                    printf("    group info's 'mounted' field was true when it should have been false\n");
                     PART_ERROR(H5Gget_info_by_idx_name_order_increasing);
                 }
             }
@@ -1755,10 +1754,10 @@ test_get_group_info(void)
                     PART_ERROR(H5Gget_info_by_idx_name_order_decreasing);
                 }
 
-                /* Assume that mounted should be FALSE in this case */
-                if (group_info.mounted != FALSE) {
+                /* Assume that mounted should be false in this case */
+                if (group_info.mounted != false) {
                     H5_FAILED();
-                    printf("    group info's 'mounted' field was TRUE when it should have been FALSE\n");
+                    printf("    group info's 'mounted' field was true when it should have been false\n");
                     PART_ERROR(H5Gget_info_by_idx_name_order_decreasing);
                 }
             }
@@ -1803,7 +1802,7 @@ error:
  * H5Gget_info(_by_name/_by_idx) is passed invalid parameters.
  */
 static void
-test_get_group_info_invalid_params(void)
+test_get_group_info_invalid_params(const void H5_ATTR_UNUSED *params)
 {
     H5G_info_t group_info;
     herr_t     err_ret = -1;
@@ -2159,7 +2158,7 @@ error:
  * A test for H5Gflush.
  */
 static void
-test_flush_group(void)
+test_flush_group(const void H5_ATTR_UNUSED *params)
 {
     hid_t file_id         = H5I_INVALID_HID;
     hid_t container_group = H5I_INVALID_HID;
@@ -2230,7 +2229,7 @@ error:
  * is passed invalid parameters.
  */
 static void
-test_flush_group_invalid_params(void)
+test_flush_group_invalid_params(const void H5_ATTR_UNUSED *params)
 {
     herr_t status;
 
@@ -2267,7 +2266,7 @@ error:
  * A test for H5Grefresh.
  */
 static void
-test_refresh_group(void)
+test_refresh_group(const void H5_ATTR_UNUSED *params)
 {
     hid_t file_id         = H5I_INVALID_HID;
     hid_t container_group = H5I_INVALID_HID;
@@ -2338,7 +2337,7 @@ error:
  * is passed invalid parameters.
  */
 static void
-test_refresh_group_invalid_params(void)
+test_refresh_group_invalid_params(const void H5_ATTR_UNUSED *params)
 {
     herr_t status;
 
@@ -2377,38 +2376,43 @@ H5_api_group_test_add(void)
     int64_t testframe_flags = ALLOW_MULTITHREAD;
 
     /* Add a fake test to print out a header to distinguish different test interfaces */
-    AddTest("print_group_test_header",  print_group_test_header,  NULL,  "Prints header for group tests",  NULL, 0);
+    AddTest("print_group_test_header", print_group_test_header, NULL, NULL, NULL, 0, 0,
+            "Prints header for group tests");
 
-    AddTest("test_create_group_under_root", test_create_group_under_root, NULL,
-            "creation of group under the root group", NULL, testframe_flags);
-    AddTest("test_create_group_under_existing_group", test_create_group_under_existing_group, NULL,
-            "creation of group under existing group using a relative path", NULL, testframe_flags);
-    AddTest("test_create_many_groups",  test_create_many_groups,  NULL,  "H5Gcreate many groups",  NULL, testframe_flags);
-    AddTest("test_create_deep_groups", test_create_deep_groups, NULL, "H5Gcreate groups of great depths",
-            NULL, testframe_flags);
-    AddTest("test_create_intermediate_group", test_create_intermediate_group, NULL,
-            "H5Gcreate group with intermediate group creation", NULL, testframe_flags);
-    AddTest("test_create_group_invalid_params", test_create_group_invalid_params, NULL,
-            "H5Gcreate with invalid parameters", NULL, testframe_flags);
-    AddTest("test_create_anonymous_group", test_create_anonymous_group, NULL, "creation of anonymous group",
-            NULL, testframe_flags);
+    AddTest("test_create_group_under_root", test_create_group_under_root, NULL, NULL, NULL, 0,
+            testframe_flags, "creation of group under the root group");
+    AddTest("test_create_group_under_existing_group", test_create_group_under_existing_group, NULL, NULL,
+            NULL, 0, testframe_flags, "creation of group under existing group using a relative path");
+    AddTest("test_create_many_groups", test_create_many_groups, NULL, NULL, NULL, 0,
+            testframe_flags, "H5Gcreate many groups");
+    AddTest("test_create_deep_groups", test_create_deep_groups, NULL, NULL, NULL, 0,
+            testframe_flags, "H5Gcreate groups of great depths");
+    AddTest("test_create_intermediate_group", test_create_intermediate_group, NULL, NULL, NULL, 0,
+            testframe_flags, "H5Gcreate group with intermediate group creation");
+    AddTest("test_create_group_invalid_params", test_create_group_invalid_params, NULL, NULL, NULL, 0,
+            testframe_flags, "H5Gcreate with invalid parameters");
+    AddTest("test_create_anonymous_group", test_create_anonymous_group, NULL, NULL, NULL, 0,
+            testframe_flags, "creation of anonymous group");
     AddTest("test_create_anonymous_group_invalid_params", test_create_anonymous_group_invalid_params, NULL,
-            "H5Gcreate_anon with invalid parameters", NULL, testframe_flags);
-    AddTest("test_open_nonexistent_group", test_open_nonexistent_group, NULL,
-            "for invalid opening of a nonexistent group", NULL, testframe_flags);
-    AddTest("test_open_group_invalid_params", test_open_group_invalid_params, NULL,
-            "H5Gopen with invalid parameters", NULL, testframe_flags);
-    AddTest("test_close_group_invalid_id", test_close_group_invalid_id, NULL,
-            "H5Gclose with an invalid group ID", NULL, testframe_flags);
-    AddTest("test_group_property_lists", test_group_property_lists, NULL, "group property list operations",
-            NULL, testframe_flags);
-    AddTest("test_get_group_info",  test_get_group_info,  NULL,  "retrieval of group info",  NULL, testframe_flags);
-    AddTest("test_get_group_info_invalid_params", test_get_group_info_invalid_params, NULL,
-            "retrieval of group info with invalid parameters", NULL, testframe_flags);
-    AddTest("test_flush_group",  test_flush_group,  NULL,  "H5Gflush",  NULL, testframe_flags);
-    AddTest("test_flush_group_invalid_params", test_flush_group_invalid_params, NULL,
-            "H5Gflush with invalid parameters", NULL, testframe_flags);
-    AddTest("test_refresh_group",  test_refresh_group,  NULL,  "H5Grefresh",  NULL, testframe_flags);
-    AddTest("test_refresh_group_invalid_params", test_refresh_group_invalid_params, NULL,
-            "H5Grefresh with invalid parameters", NULL, testframe_flags);
+            NULL, NULL, 0, testframe_flags, "H5Gcreate_anon with invalid parameters");
+    AddTest("test_open_nonexistent_group", test_open_nonexistent_group, NULL, NULL, NULL, 0,
+            testframe_flags, "for invalid opening of a nonexistent group");
+    AddTest("test_open_group_invalid_params", test_open_group_invalid_params, NULL, NULL, NULL, 0,
+            testframe_flags, "H5Gopen with invalid parameters");
+    AddTest("test_close_group_invalid_id", test_close_group_invalid_id, NULL, NULL, NULL, 0,
+            testframe_flags, "H5Gclose with an invalid group ID");
+    AddTest("test_group_property_lists", test_group_property_lists, NULL, NULL, NULL, 0,
+            testframe_flags, "group property list operations");
+    AddTest("test_get_group_info", test_get_group_info, NULL, NULL, NULL, 0,
+            testframe_flags, "retrieval of group info");
+    AddTest("test_get_group_info_invalid_params", test_get_group_info_invalid_params, NULL, NULL, NULL, 0,
+            testframe_flags, "retrieval of group info with invalid parameters");
+    AddTest("test_flush_group", test_flush_group, NULL, NULL, NULL, 0,
+            testframe_flags, "H5Gflush");
+    AddTest("test_flush_group_invalid_params", test_flush_group_invalid_params, NULL, NULL, NULL, 0,
+            testframe_flags, "H5Gflush with invalid parameters");
+    AddTest("test_refresh_group", test_refresh_group, NULL, NULL, NULL, 0,
+            testframe_flags, "H5Grefresh");
+    AddTest("test_refresh_group_invalid_params", test_refresh_group_invalid_params, NULL, NULL, NULL, 0,
+            testframe_flags, "H5Grefresh with invalid parameters");
 }

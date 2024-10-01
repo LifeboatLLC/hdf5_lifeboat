@@ -2298,15 +2298,11 @@ main(void)
     hid_t               fapl    = -1;           /* File access property list for data files */
     unsigned            nerrors = 0;            /* Cumulative error count */
     time_t              curr_time;              /* Current time, for seeding random number generator */
-    int                 ExpressMode;            /* Test express value */
     hbool_t             api_ctx_pushed = FALSE; /* Whether API context pushed */
 
     /* Reset library */
-    h5_reset();
-    fapl        = h5_fileaccess();
-    ExpressMode = GetTestExpress();
-    if (ExpressMode > 1)
-        printf("***Express test mode on.  Some tests may be skipped\n");
+    h5_test_init();
+    fapl = h5_fileaccess();
 
     /* Set the filename to use for this test (dependent on fapl) */
     h5_fixname(FILENAME[0], fapl, filename_g, sizeof(filename_g));

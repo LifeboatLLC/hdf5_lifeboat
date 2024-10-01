@@ -335,7 +335,7 @@ done:
 }
 
 static hid_t
-generate_random_datatype_string(H5T_class_t H5_ATTR_UNUSED parent_class, hbool_t H5_ATTR_UNUSED is_compact,
+generate_random_datatype_string(H5T_class_t H5_ATTR_UNUSED parent_class, bool H5_ATTR_UNUSED is_compact,
                                 H5_ATTR_UNUSED size_t depth)
 {
     hid_t datatype  = H5I_INVALID_HID;
@@ -393,7 +393,7 @@ done:
 }
 
 static hid_t
-generate_random_datatype_compound(H5T_class_t H5_ATTR_UNUSED parent_class, hbool_t is_compact, size_t depth)
+generate_random_datatype_compound(H5T_class_t H5_ATTR_UNUSED parent_class, bool is_compact, size_t depth)
 {
     size_t num_members   = 0;
     size_t next_offset   = 0;
@@ -416,7 +416,7 @@ generate_random_datatype_compound(H5T_class_t H5_ATTR_UNUSED parent_class, hbool
         size_t member_size;
         char   member_name[256];
 
-        HDsnprintf(member_name, 256, "compound_member%zu", i);
+        snprintf(member_name, 256, "compound_member%zu", i);
 
         if ((compound_members[i] = generate_random_datatype_internal(H5T_COMPOUND, is_compact, depth)) < 0) {
             printf("    couldn't create compound datatype member %zu\n", i);
@@ -461,7 +461,7 @@ done:
 }
 
 static hid_t
-generate_random_datatype_reference(H5T_class_t H5_ATTR_UNUSED parent_class, hbool_t H5_ATTR_UNUSED is_compact,
+generate_random_datatype_reference(H5T_class_t H5_ATTR_UNUSED parent_class, bool H5_ATTR_UNUSED is_compact,
                                    H5_ATTR_UNUSED size_t depth)
 {
     hid_t datatype  = H5I_INVALID_HID;
@@ -497,7 +497,7 @@ done:
 }
 
 static hid_t
-generate_random_datatype_enum(H5T_class_t H5_ATTR_UNUSED parent_class, hbool_t H5_ATTR_UNUSED is_compact,
+generate_random_datatype_enum(H5T_class_t H5_ATTR_UNUSED parent_class, bool H5_ATTR_UNUSED is_compact,
                               H5_ATTR_UNUSED size_t depth)
 {
     size_t num_members      = 0;
@@ -518,20 +518,20 @@ generate_random_datatype_enum(H5T_class_t H5_ATTR_UNUSED parent_class, hbool_t H
     }
 
     for (size_t i = 0; i < num_members; i++) {
-        hbool_t unique;
-        char    name[ENUM_TYPE_MAX_MEMBER_NAME_LENGTH];
-        int     enum_val;
+        bool unique;
+        char name[ENUM_TYPE_MAX_MEMBER_NAME_LENGTH];
+        int  enum_val;
 
-        HDsnprintf(name, ENUM_TYPE_MAX_MEMBER_NAME_LENGTH, "enum_val%zu", i);
+        snprintf(name, ENUM_TYPE_MAX_MEMBER_NAME_LENGTH, "enum_val%zu", i);
 
         do {
             enum_val = rand();
 
             /* Check for uniqueness of enum member */
-            unique = TRUE;
+            unique = true;
             for (size_t j = 0; j < i; j++)
                 if (enum_val == enum_member_vals[j])
-                    unique = FALSE;
+                    unique = false;
         } while (!unique);
 
         enum_member_vals[i] = enum_val;
@@ -556,7 +556,7 @@ done:
 }
 
 static hid_t
-generate_random_datatype_array(H5T_class_t H5_ATTR_UNUSED parent_class, hbool_t is_compact, size_t depth)
+generate_random_datatype_array(H5T_class_t H5_ATTR_UNUSED parent_class, bool is_compact, size_t depth)
 {
     unsigned ndims         = 0;
     hsize_t *array_dims    = NULL;
@@ -607,7 +607,7 @@ done:
  * test support for dataspaces.
  */
 hid_t
-generate_random_dataspace(int rank, const hsize_t *max_dims, hsize_t *dims_out, hbool_t is_compact)
+generate_random_dataspace(int rank, const hsize_t *max_dims, hsize_t *dims_out, bool is_compact)
 {
     hsize_t dataspace_dims[H5S_MAX_RANK];
     size_t  i;
@@ -740,6 +740,9 @@ remove_test_file(const char *prefix, const char *filename)
     char       *prefixed_filename = NULL;
     herr_t      ret_value         = SUCCEED;
 
+    if (!GetTestCleanup())
+        goto done;
+
     if (prefix) {
         if (prefix_filename(prefix, filename, &prefixed_filename) < 0) {
             printf("    couldn't prefix filename\n");
@@ -752,16 +755,20 @@ remove_test_file(const char *prefix, const char *filename)
     else
         test_file = filename;
 
-    if (H5Fdelete(test_file, H5P_DEFAULT) < 0) {
-        printf("    couldn't remove file '%s'\n", test_file);
-        ret_value = FAIL;
-        goto done;
+    H5E_BEGIN_TRY
+    {
+        if (H5Fis_accessible(test_file, H5P_DEFAULT) > 0) {
+            if (H5Fdelete(test_file, H5P_DEFAULT) < 0) {
+                printf("    couldn't remove file '%s'\n", test_file);
+                ret_value = FAIL;
+                goto done;
+            }
+        }
     }
+    H5E_END_TRY
 
 done:
     free(prefixed_filename);
 
     return ret_value;
 }
-
-

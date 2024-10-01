@@ -58,7 +58,7 @@
  * arbitrary number (0 was chosen).
  */
 void
-test_partial_no_selection_coll_md_read(void)
+test_partial_no_selection_coll_md_read(const void *params)
 {
     const char *filename;
     hsize_t    *dataset_dims = NULL;
@@ -97,7 +97,7 @@ test_partial_no_selection_coll_md_read(void)
         return;
     }
 
-    filename = GetTestParameters();
+    filename = ((const H5Ptest_param_t *)params)->name;
 
     fapl_id = create_faccess_plist(MPI_COMM_WORLD, MPI_INFO_NULL, facc_type);
     VRFY((fapl_id >= 0), "create_faccess_plist succeeded");
@@ -257,7 +257,7 @@ test_partial_no_selection_coll_md_read(void)
  *
  */
 void
-test_multi_chunk_io_addrmap_issue(void)
+test_multi_chunk_io_addrmap_issue(const void *params)
 {
     const char *filename;
     hsize_t     start[MULTI_CHUNK_IO_ADDRMAP_ISSUE_DIMS];
@@ -292,7 +292,7 @@ test_multi_chunk_io_addrmap_issue(void)
         return;
     }
 
-    filename = GetTestParameters();
+    filename = ((const H5Ptest_param_t *)params)->name;
 
     fapl_id = create_faccess_plist(MPI_COMM_WORLD, MPI_INFO_NULL, facc_type);
     VRFY((fapl_id >= 0), "create_faccess_plist succeeded");
@@ -385,7 +385,7 @@ test_multi_chunk_io_addrmap_issue(void)
  *2096 but expected 320000 major: Internal error (too specific to document in detail) minor: MPI Error String
  */
 void
-test_link_chunk_io_sort_chunk_issue(void)
+test_link_chunk_io_sort_chunk_issue(const void *params)
 {
     const char *filename;
     hsize_t     dataset_dims[LINK_CHUNK_IO_SORT_CHUNK_ISSUE_DIMS];
@@ -422,7 +422,7 @@ test_link_chunk_io_sort_chunk_issue(void)
         return;
     }
 
-    filename = GetTestParameters();
+    filename = ((const H5Ptest_param_t *)params)->name;
 
     fapl_id = create_faccess_plist(MPI_COMM_WORLD, MPI_INFO_NULL, facc_type);
     VRFY((fapl_id >= 0), "create_faccess_plist succeeded");
@@ -549,7 +549,7 @@ test_link_chunk_io_sort_chunk_issue(void)
  * heap data is not correctly mapped as raw data.
  */
 void
-test_collective_global_heap_write(void)
+test_collective_global_heap_write(const void *params)
 {
     const char *filename;
     hsize_t     attr_dims[COLL_GHEAP_WRITE_ATTR_DIMS];
@@ -578,7 +578,7 @@ test_collective_global_heap_write(void)
         return;
     }
 
-    filename = GetTestParameters();
+    filename = ((const H5Ptest_param_t *)params)->name;
 
     fapl_id = create_faccess_plist(MPI_COMM_WORLD, MPI_INFO_NULL, facc_type);
     VRFY((fapl_id >= 0), "create_faccess_plist succeeded");

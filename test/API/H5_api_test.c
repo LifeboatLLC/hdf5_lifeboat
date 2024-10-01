@@ -134,17 +134,17 @@ parse_command_line(int argc, char **argv)
 }
 
 static void
-usage(void)
+usage(FILE *stream)
 {
-    print_func("file        run only the file interface tests\n");
-    print_func("group       run only the group interface tests\n");
-    print_func("dataset     run only the dataset interface tests\n");
-    print_func("attribute   run only the attribute interface tests\n");
-    print_func("datatype    run only the datatype interface tests\n");
-    print_func("link        run only the link interface tests\n");
-    print_func("object      run only the object interface tests\n");
-    print_func("misc        run only the miscellaneous tests\n");
-    print_func("async       run only the async interface tests\n");
+    fprintf(stream, "file        run only the file interface tests\n");
+    fprintf(stream, "group       run only the group interface tests\n");
+    fprintf(stream, "dataset     run only the dataset interface tests\n");
+    fprintf(stream, "attribute   run only the attribute interface tests\n");
+    fprintf(stream, "datatype    run only the datatype interface tests\n");
+    fprintf(stream, "link        run only the link interface tests\n");
+    fprintf(stream, "object      run only the object interface tests\n");
+    fprintf(stream, "misc        run only the miscellaneous tests\n");
+    fprintf(stream, "async       run only the async interface tests\n");
 }
 
 int
@@ -161,11 +161,7 @@ main(int argc, char **argv)
     char       *vol_connector_info        = NULL;
     void       *default_err_data          = NULL;
     bool        err_occurred              = false;
-    int         chars_written              = 0;
-    int         testExpress                = 0;
-
-    /* TBD */
-    UNUSED(testExpress);
+    int         chars_written             = 0;
 
     H5open();
 
@@ -173,7 +169,11 @@ main(int argc, char **argv)
     H5Eget_auto2(H5E_DEFAULT, &default_err_func, &default_err_data);
 
     /* Initialize testing framework */
-    TestInit(argv[0], usage, NULL);
+    if (TestInit(argv[0], usage, NULL, 0) < 0) {
+        fprintf(stderr, "Unable to initialize testing framework\n");
+        err_occurred = true;
+        goto done;
+    }
 
     /* Reset error stack printing function */
     H5Eset_auto2(H5E_DEFAULT, default_err_func, default_err_data);
@@ -193,10 +193,14 @@ main(int argc, char **argv)
     H5_api_test_add();
 
     /* Display testing information */
-    TestInfo(argv[0]);
+    TestInfo(stdout);
 
     /* Parse command line arguments */
-    TestParseCmdLine(argc, argv);
+    if (TestParseCmdLine(argc, argv) < 0) {
+        fprintf(stderr, "Unable to parse command-line arguments\n");
+        err_occurred = true;
+        goto done;
+    }
 
     n_tests_run_g     = 0;
     n_tests_passed_g  = 0;
@@ -206,8 +210,8 @@ main(int argc, char **argv)
     seed = (unsigned)HDtime(NULL);
     srand(seed);
 
-    if (NULL == (test_path_prefix = HDgetenv(HDF5_API_TEST_PATH_PREFIX)))
-        test_path_prefix = (const char *)"";
+    if (NULL == (test_path_prefix = getenv(HDF5_API_TEST_PATH_PREFIX)))
+        test_path_prefix = "";
 
 #ifndef H5_HAVE_MULTITHREAD
     if (GetTestMaxNumThreads() > 1) {
@@ -237,7 +241,7 @@ main(int argc, char **argv)
         }
     }
 
-    if (NULL == (vol_connector_string = HDgetenv(HDF5_VOL_CONNECTOR))) {
+    if (NULL == (vol_connector_string = getenv(HDF5_VOL_CONNECTOR))) {
         printf("No VOL connector selected; using native VOL connector\n");
         vol_connector_name = "native";
         vol_connector_info = NULL;
@@ -247,19 +251,19 @@ main(int argc, char **argv)
 
         if (NULL == (vol_connector_string_copy = HDstrdup(vol_connector_string))) {
             fprintf(stderr, "Unable to copy VOL connector string\n");
-            err_occurred = TRUE;
+            err_occurred = true;
             goto done;
         }
 
-        if (NULL == (token = HDstrtok(vol_connector_string_copy, " "))) {
+        if (NULL == (token = strtok(vol_connector_string_copy, " "))) {
             fprintf(stderr, "Error while parsing VOL connector string\n");
-            err_occurred = TRUE;
+            err_occurred = true;
             goto done;
         }
 
         vol_connector_name = token;
 
-        if (NULL != (token = HDstrtok(NULL, " "))) {
+        if (NULL != (token = strtok(NULL, " "))) {
             vol_connector_info = token;
         }
     }
@@ -273,7 +277,7 @@ main(int argc, char **argv)
 
     if ((fapl_id = H5Pcreate(H5P_FILE_ACCESS)) < 0) {
         fprintf(stderr, "Unable to create FAPL\n");
-        err_occurred = TRUE;
+        err_occurred = true;
         goto done;
     }
 
@@ -284,19 +288,19 @@ main(int argc, char **argv)
      * Otherwise, HDF5 will default to running the tests
      * with the native connector, which could be misleading.
      */
-    if (0 != HDstrcmp(vol_connector_name, "native")) {
+    if (0 != strcmp(vol_connector_name, "native")) {
         htri_t is_registered;
 
         if ((is_registered = H5VLis_connector_registered_by_name(vol_connector_name)) < 0) {
             fprintf(stderr, "Unable to determine if VOL connector is registered\n");
-            err_occurred = TRUE;
+            err_occurred = true;
             goto done;
         }
 
         if (!is_registered) {
             fprintf(stderr, "Specified VOL connector '%s' wasn't correctly registered!\n",
                     vol_connector_name);
-            err_occurred = TRUE;
+            err_occurred = true;
             goto done;
         }
         else {
@@ -307,19 +311,19 @@ main(int argc, char **argv)
              */
             if (H5Pget_vol_id(fapl_id, &default_con_id) < 0) {
                 fprintf(stderr, "Couldn't retrieve ID of VOL connector set on default FAPL\n");
-                err_occurred = TRUE;
+                err_occurred = true;
                 goto done;
             }
 
             if ((registered_con_id = H5VLget_connector_id_by_name(vol_connector_name)) < 0) {
                 fprintf(stderr, "Couldn't retrieve ID of registered VOL connector\n");
-                err_occurred = TRUE;
+                err_occurred = true;
                 goto done;
             }
 
             if (default_con_id != registered_con_id) {
                 fprintf(stderr, "VOL connector set on default FAPL didn't match specified VOL connector\n");
-                err_occurred = TRUE;
+                err_occurred = true;
                 goto done;
             }
         }
@@ -331,7 +335,7 @@ main(int argc, char **argv)
     vol_cap_flags_g = H5VL_CAP_FLAG_NONE;
     if (H5Pget_vol_cap_flags(fapl_id, &vol_cap_flags_g) < 0) {
         fprintf(stderr, "Unable to retrieve VOL connector capability flags\n");
-        err_occurred = TRUE;
+        err_occurred = true;
         goto done;
     }
 
@@ -339,7 +343,7 @@ main(int argc, char **argv)
      * except for those which test file creation.*/
     if (H5_api_test_create_containers(TEST_FILE_NAME, vol_cap_flags_g) < 0) {
         fprintf(stderr, "Unable to create testing container file with basename '%s'\n", TEST_FILE_NAME);
-        err_occurred = TRUE;
+        err_occurred = true;
         goto done;
     }
 
@@ -350,18 +354,16 @@ main(int argc, char **argv)
 
     /* Display test summary, if requested */
     if (GetTestSummary())
-        TestSummary();
-
-    /* Clean up test files, if allowed */
-    if (GetTestCleanup() && !getenv(HDF5_NOCLEANUP))
-        TestCleanup();
+        TestSummary(stdout);
 
     printf("Deleting container file(s) for tests\n\n");
 
-    if (H5_api_test_destroy_container_files() < 0) {
-        fprintf(stderr, "Error cleaning up global API test info\n");
-        err_occurred = true;
-        goto done;
+    if (GetTestCleanup()) {
+        if (H5_api_test_destroy_container_files() < 0) {
+            fprintf(stderr, "Error cleaning up global API test info\n");
+            err_occurred = true;
+            goto done;
+        }
     }
 
     if (n_tests_run_g > 0) {
@@ -379,17 +381,17 @@ done:
 
     if (default_con_id >= 0 && H5VLclose(default_con_id) < 0) {
         fprintf(stderr, "Unable to close VOL connector ID\n");
-        err_occurred = TRUE;
+        err_occurred = true;
     }
 
     if (registered_con_id >= 0 && H5VLclose(registered_con_id) < 0) {
         fprintf(stderr, "Unable to close VOL connector ID\n");
-        err_occurred = TRUE;
+        err_occurred = true;
     }
 
     if (fapl_id >= 0 && H5Pclose(fapl_id) < 0) {
         fprintf(stderr, "Unable to close FAPL\n");
-        err_occurred = TRUE;
+        err_occurred = true;
     }
 
     if (GetTestNumErrs() > 0)
