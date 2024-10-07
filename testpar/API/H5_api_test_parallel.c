@@ -328,7 +328,7 @@ main(int argc, char **argv)
     H5Eget_auto2(H5E_DEFAULT, &default_err_func, &default_err_data);
 
     /* Initialize testing framework */
-    if (TestInit(argv[0], usage, NULL, mpi_rank) < 0) {
+    if (TestInit(argv[0], usage, NULL, NULL, NULL, mpi_rank) < 0) {
         if (MAINPROCESS)
             fprintf(stderr, "Couldn't initialize testing framework\n");
         goto error;
@@ -537,10 +537,6 @@ main(int argc, char **argv)
         /* Display test summary, if requested */
         if (GetTestSummary())
             TestSummary(stdout);
-
-        /* Clean up test files, if allowed */
-        if (GetTestCleanup() && !getenv(HDF5_NOCLEANUP))
-            TestCleanup();
 
         printf("Deleting container file for tests\n\n");
     }

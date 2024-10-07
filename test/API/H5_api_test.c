@@ -169,7 +169,7 @@ main(int argc, char **argv)
     H5Eget_auto2(H5E_DEFAULT, &default_err_func, &default_err_data);
 
     /* Initialize testing framework */
-    if (TestInit(argv[0], usage, NULL, 0) < 0) {
+    if (TestInit(argv[0], usage, NULL, NULL, NULL, 0) < 0) {
         fprintf(stderr, "Unable to initialize testing framework\n");
         err_occurred = true;
         goto done;
