@@ -1,0 +1,61 @@
+name: Lifeboat hdf5 dev autotools CI
+
+# Triggers the workflow on a call from another workflow
+on:
+  workflow_call:
+    inputs:
+      build_mode:
+        description: "release vs. debug build"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+
+  build_and_test:
+    name: "GCC-${{ inputs.build_mode }}"
+
+    # Don't run the action if the commit message says to skip CI
+    if: "!contains(github.event.head_commit.message, 'skip-ci')"
+
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Restrict runtime to 60 minutes in case test hangs
+    timeout-minutes: 60
+
+    steps:
+      - name: Install Linux Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install build-essential libtool libtool-bin
+
+      # Check out repository under $GITHUB_WORKSPACE
+      - name: Get Sources
+        uses: actions/checkout@v4.1.7
+        with:
+          ref: 1_14_2_multithread
+
+      - name: Autotools Configure
+        run: |
+          cd $GITHUB_WORKSPACE
+          sh ./autogen.sh
+          mkdir "$GITHUB_WORKSPACE/build"
+          cd "$GITHUB_WORKSPACE/build"
+          ../configure \
+            --enable-build-mode=${{ inputs.build_mode }} \
+            --enable-shared \
+            --enable-static \
+            --enable-multithread \
+            --disable-hl
+        shell: bash
+
+      - name: Autotools Build
+        run: make -j3
+        working-directory: ${{ github.workspace }}/build
+
+      - name: Autotools Run Tests
+        run: make check -j2
+        working-directory: ${{ github.workspace }}/build
