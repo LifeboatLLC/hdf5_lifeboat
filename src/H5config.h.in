@@ -233,6 +233,9 @@
 /* Define if MPI_Info_c2f and MPI_Info_f2c exist */
 #undef HAVE_MPI_MULTI_LANG_Info
 
+/* Define if we have multithread support */
+#undef HAVE_MULTITHREAD
+
 /* Define to 1 if you have the <netdb.h> header file. */
 #undef HAVE_NETDB_H
 
@@ -419,8 +422,7 @@
    with special algorithm. */
 #undef LONG_TO_LDOUBLE_SPECIAL
 
-/* Define to the sub-directory in which libtool stores uninstalled libraries.
-   */
+/* Define to the sub-directory where libtool stores uninstalled libraries. */
 #undef LT_OBJDIR
 
 /* Define MPI Fortran KIND of LOGICAL */
