@@ -742,7 +742,8 @@ timer_LDADD = $(LDADD)
 timer_DEPENDENCIES = libh5test.la $(LIBHDF5)
 am_ttsafe_OBJECTS = ttsafe.$(OBJEXT) ttsafe_dcreate.$(OBJEXT) \
 	ttsafe_error.$(OBJEXT) ttsafe_cancel.$(OBJEXT) \
-	ttsafe_acreate.$(OBJEXT) ttsafe_attr_vlen.$(OBJEXT)
+	ttsafe_acreate.$(OBJEXT) ttsafe_attr_vlen.$(OBJEXT) \
+	ttsafe_error_stacks.$(OBJEXT)
 ttsafe_OBJECTS = $(am_ttsafe_OBJECTS)
 ttsafe_LDADD = $(LDADD)
 ttsafe_DEPENDENCIES = libh5test.la $(LIBHDF5)
@@ -910,10 +911,11 @@ am__depfiles_remade = ./$(DEPDIR)/accum.Po \
 	./$(DEPDIR)/ttime.Po ./$(DEPDIR)/ttsafe.Po \
 	./$(DEPDIR)/ttsafe_acreate.Po ./$(DEPDIR)/ttsafe_attr_vlen.Po \
 	./$(DEPDIR)/ttsafe_cancel.Po ./$(DEPDIR)/ttsafe_dcreate.Po \
-	./$(DEPDIR)/ttsafe_error.Po ./$(DEPDIR)/tunicode.Po \
-	./$(DEPDIR)/tvlstr.Po ./$(DEPDIR)/tvltypes.Po \
-	./$(DEPDIR)/twriteorder.Po ./$(DEPDIR)/unlink.Po \
-	./$(DEPDIR)/unregister.Po ./$(DEPDIR)/use_append_chunk.Po \
+	./$(DEPDIR)/ttsafe_error.Po ./$(DEPDIR)/ttsafe_error_stacks.Po \
+	./$(DEPDIR)/tunicode.Po ./$(DEPDIR)/tvlstr.Po \
+	./$(DEPDIR)/tvltypes.Po ./$(DEPDIR)/twriteorder.Po \
+	./$(DEPDIR)/unlink.Po ./$(DEPDIR)/unregister.Po \
+	./$(DEPDIR)/use_append_chunk.Po \
 	./$(DEPDIR)/use_append_chunk_mirror.Po \
 	./$(DEPDIR)/use_append_mchunks.Po ./$(DEPDIR)/use_common.Po \
 	./$(DEPDIR)/use_disable_mdc_flushes.Po ./$(DEPDIR)/vds.Po \
@@ -1801,7 +1803,7 @@ LDADD = libh5test.la $(LIBHDF5)
 
 # List the source files for tests that have more than one
 ttsafe_SOURCES = ttsafe.c ttsafe_dcreate.c ttsafe_error.c ttsafe_cancel.c       \
-               ttsafe_acreate.c ttsafe_attr_vlen.c
+               ttsafe_acreate.c ttsafe_attr_vlen.c ttsafe_error_stacks.c
 
 cache_image_SOURCES = cache_image.c genall5.c
 mirror_vfd_SOURCES = mirror_vfd.c genall5.c
@@ -2633,6 +2635,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ttsafe_cancel.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ttsafe_dcreate.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ttsafe_error.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ttsafe_error_stacks.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tunicode.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tvlstr.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tvltypes.Po@am__quote@ # am--include-marker
@@ -3625,6 +3628,7 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/ttsafe_cancel.Po
 	-rm -f ./$(DEPDIR)/ttsafe_dcreate.Po
 	-rm -f ./$(DEPDIR)/ttsafe_error.Po
+	-rm -f ./$(DEPDIR)/ttsafe_error_stacks.Po
 	-rm -f ./$(DEPDIR)/tunicode.Po
 	-rm -f ./$(DEPDIR)/tvlstr.Po
 	-rm -f ./$(DEPDIR)/tvltypes.Po
@@ -3839,6 +3843,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/ttsafe_cancel.Po
 	-rm -f ./$(DEPDIR)/ttsafe_dcreate.Po
 	-rm -f ./$(DEPDIR)/ttsafe_error.Po
+	-rm -f ./$(DEPDIR)/ttsafe_error_stacks.Po
 	-rm -f ./$(DEPDIR)/tunicode.Po
 	-rm -f ./$(DEPDIR)/tvlstr.Po
 	-rm -f ./$(DEPDIR)/tvltypes.Po
