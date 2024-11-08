@@ -29,8 +29,10 @@
 /* Headers */
 /***********/
 #include "H5private.h"   /* Generic Functions                        */
-#include "H5Eprivate.h"  /* Error handling                           */
 #include "H5MMprivate.h" /* Memory management                        */
+
+#define H5E_FRIEND     /* suppress error about including H5Epkg  */
+#include "H5Epkg.h"
 
 #if defined(H5_HAVE_THREADSAFE) || defined(H5_HAVE_MULTITHREAD)
 
@@ -163,13 +165,13 @@ H5TS__key_destructor(void *_key_val)
 
         switch(key_val->type) {
             case H5TS_ERRSTK: {
-                H5E_t *estack = (H5E_t *)key_val->value;
+                H5E_stack_t *estack = (H5E_stack_t *)key_val->value;
 
                 /* Clear this thread's local error stack if it exists */
                 if (estack) {
                     /* Temporarily re-publish threadlocal key for use by H5E_clear_stack */
                     H5TS_set_thread_local_value(H5TS_errstk_key_g, (void*)key_val);
-                    H5E_clear_stack(NULL);
+                    H5E_clear_stack();
                     H5TS_set_thread_local_value(H5TS_errstk_key_g, NULL);
                 }
 
