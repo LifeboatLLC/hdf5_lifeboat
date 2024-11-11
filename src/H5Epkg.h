@@ -37,7 +37,7 @@
 /* Number of entries in an error stack */
 #define H5E_MAX_ENTRIES 32
 
-#ifdef H5_HAVE_THREADSAFE
+#if defined(H5_HAVE_THREADSAFE) || defined(H5_HAVE_MULTITHREAD)
 /*
  * The per-thread error stack. pthread_once() initializes a special
  * key that will be used by all threads to create a stack specific to
@@ -48,12 +48,12 @@
  * by "H5E_stack_t *estack =".
  */
 #define H5E__get_my_stack() H5E__get_stack()
-#else /* H5_HAVE_THREADSAFE */
+#else /* H5_HAVE_THREADSAFE or H5_HAVE_MULTITHREAD */
 /*
  * The current error stack.
  */
 #define H5E__get_my_stack() (H5E_stack_g + 0)
-#endif /* H5_HAVE_THREADSAFE */
+#endif /* H5_HAVE_THREADSAFE or H5_HAVE_MULTITHREAD */
 
 /****************************/
 /* Package Private Typedefs */
@@ -121,12 +121,12 @@ typedef struct H5E_stack_t {
 /* Package Private Variables */
 /*****************************/
 
-#ifndef H5_HAVE_THREADSAFE
+#if !defined(H5_HAVE_THREADSAFE) && !defined(H5_HAVE_MULTITHREAD)
 /*
  * The current error stack.
  */
 H5_DLLVAR H5E_stack_t H5E_stack_g[1];
-#endif
+#endif /* H5_HAVE_THREADSAFE or H5_HAVE_MULTITHREAD */
 
 /* First & last major and minor error codes registered by the library */
 H5_DLLVAR hid_t H5E_first_maj_id_g;
@@ -137,9 +137,9 @@ H5_DLLVAR hid_t H5E_last_min_id_g;
 /******************************/
 /* Package Private Prototypes */
 /******************************/
-#ifdef H5_HAVE_THREADSAFE
+#if defined(H5_HAVE_THREADSAFE) || defined(H5_HAVE_MULTITHREAD)
 H5_DLL H5E_stack_t *H5E__get_stack(void);
-#endif /* H5_HAVE_THREADSAFE */
+#endif /* H5_HAVE_THREADSAFE or H5_HAVE_MULTITHREAD */
 H5_DLL H5E_cls_t   *H5E__register_class(const char *cls_name, const char *lib_name, const char *version);
 H5_DLL ssize_t      H5E__get_class_name(const H5E_cls_t *cls, char *name, size_t size);
 H5_DLL H5E_msg_t   *H5E__create_msg(H5E_cls_t *cls, H5E_type_t msg_type, const char *msg);

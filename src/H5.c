@@ -25,6 +25,7 @@
 #include "H5Eprivate.h"  /* Error handling                           */
 #include "H5FLprivate.h" /* Free lists                               */
 #include "H5FSprivate.h" /* File free space                          */
+#include "H5Iprivate.h"  /* Index                                    */
 #include "H5Lprivate.h"  /* Links                                    */
 #include "H5MMprivate.h" /* Memory management                        */
 #include "H5Pprivate.h"  /* Property lists                           */
@@ -75,7 +76,7 @@ static const unsigned VERS_RELEASE_EXCEPTIONS_SIZE = 0;
 
 /* statically initialize block for pthread_once call used in initializing */
 /* the first global mutex                                                 */
-#ifdef H5_HAVE_THREADSAFE
+#if defined(H5_HAVE_THREADSAFE) || defined(H5_HAVE_MULTITHREAD)
 H5_api_t H5_g;
 #else
 bool H5_libinit_g = false; /* Library hasn't been initialized */
@@ -249,7 +250,12 @@ H5_init_library(void)
             herr_t (*func)(void);
             const char *descr;
         } initializer[] = {
+#ifdef H5_HAVE_MULTITHREAD
+            {H5I_init, "index"}
+        ,   {H5E_init, "error"}
+#else /* H5_HAVE_MULTITHREAD */
             {H5E_init, "error"}
+#endif /* H5_HAVE_MULTITHREAD */
         ,   {H5VL_init_phase1, "VOL"}
         ,   {H5SL_init, "skip lists"}
         ,   {H5FD_init, "VFD"}
@@ -302,11 +308,11 @@ H5_term_library(void)
     int         nprinted;
     H5E_auto2_t func;
 
-#ifdef H5_HAVE_THREADSAFE
+#if defined(H5_HAVE_THREADSAFE) || defined(H5_HAVE_MULTITHREAD)
     /* explicit locking of the API */
     H5_FIRST_THREAD_INIT
     H5_API_LOCK
-#endif
+#endif /* H5_HAVE_THREADSAFE or H5_HAVE_MULTITHREAD */
 
     /* Don't do anything if the library is already closed */
     if (!(H5_INIT_GLOBAL))
@@ -506,9 +512,9 @@ H5_term_library(void)
     /* Don't pop the API context (i.e. H5CX_pop), since it's been shut down already */
 
 done:
-#ifdef H5_HAVE_THREADSAFE
+#if defined(H5_HAVE_THREADSAFE) || defined(H5_HAVE_MULTITHREAD)
     H5_API_UNLOCK
-#endif /* H5_HAVE_THREADSAFE */
+#endif /* H5_HAVE_THREADSAFE or H5_HAVE_MULTITHREAD */
 
     return;
 } /* end H5_term_library() */

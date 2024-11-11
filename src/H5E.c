@@ -38,6 +38,49 @@
  *
  */
 
+/*
+ * Mult-Thread Support -- Initial Implementation:
+ *
+ *              H5E must be thread safe in the multi-thread build, and idealy,
+ *              it should be lock free as well.  
+ *
+ *              While we may reach this goal eventually, for now it should be 
+ *              sufficient to make the typical case lock free, and allow the
+ *              use of locks elsewhere.
+ *
+ *              To do this, we make use of the existing thread safe support,
+ *              that creates a separate error stack for each thread, combined
+ *              with the fundamentally lock free nature of H5I to allow 
+ *              thread safe / lock free operation in the typical, internal 
+ *              error reporting.
+ *
+ *              To allow this, we must keep the error message and error class
+ *              indexes maintained by H5I constant during operations on error 
+ *              stacks.  For HDF5 proper is easy enough, as the HDF5 library 
+ *              initializes these indexes on startup and does not modify them 
+ *              until shutdown.  
+ *
+ *              Unfortunately, this is not as easy for external users of H5E's 
+ *              error reporting facility.  While it is easy enough to make
+ *              the API calls for setting up and taking down error messages
+ *              and error classes require the global mutex -- this does not 
+ *              mean that other threads can't refer to error messages or 
+ *              classes that are in the process of creation or deletion.
+ *              Until this issue is dealt with, external users of H5E must
+ *              ensure that all error messages and classes are created before
+ *              any errors can be reported, and remain in place until the 
+ *              tail end of shutdown.
+ *
+ *              There is also the matter of operations on error stacks that 
+ *              have been registered with H5I -- and thus are accessible 
+ *              to multiple threads.  Here, retaining the requirement that
+ *              API calls operating on such error stacks obtain the global 
+ *              mutex seems sufficient.
+ *
+ *                                                     JRM -- 02/14/24
+ *              
+ */
+
 /****************/
 /* Module Setup */
 /****************/
@@ -297,8 +340,18 @@ H5Ecreate_stack(void)
     FUNC_ENTER_API(H5I_INVALID_HID)
 
     /* Allocate a new error stack */
+
+#ifdef H5_HAVE_MULTITHREAD
+
+    if (NULL == (stk = (H5E_stack_t *)calloc(1, sizeof(H5E_stack_t))))
+        HGOTO_ERROR(H5E_RESOURCE, H5E_NOSPACE, H5I_INVALID_HID, "memory allocation failed");
+
+#else /* H5_HAVE_MULTITHREAD */
+
     if (NULL == (stk = H5FL_CALLOC(H5E_stack_t)))
         HGOTO_ERROR(H5E_RESOURCE, H5E_NOSPACE, H5I_INVALID_HID, "memory allocation failed");
+
+#endif /* H5_HAVE_MULTITHREAD */
 
     /* Set the "automatic" error reporting info to the library default */
     H5E__set_default_auto(stk);

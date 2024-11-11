@@ -21,7 +21,7 @@
 #ifndef H5TSprivate_H_
 #define H5TSprivate_H_
 
-#ifdef H5_HAVE_THREADSAFE
+#if defined(H5_HAVE_THREADSAFE) || defined(H5_HAVE_MULTITHREAD)
 /* Include package's public headers */
 #include "H5TSdevelop.h"
 
@@ -69,6 +69,25 @@ H5_DLL herr_t        H5TS_win32_thread_exit(void);
 #else /* H5_HAVE_WIN_THREADS */
 
 /* Library level data structures */
+
+/* The types of threadlocal keys *
+ * TBD: May be replaced upon integration of multi-threading with main library */
+typedef enum H5TS_tl_type_t {
+	H5TS_INVALID,
+	H5TS_CTX,
+	H5TS_ERRSTK,
+	H5TS_FUNCSTK,
+	H5TS_THREAD_ID,
+	H5TS_CANCEL
+} H5TS_tl_type_t;
+
+/* Common structure for the values of thread-local keys.
+ * Necessary to handle cleanup of specific types at thread exit.
+ * TBD: May be replaced upon integration of multi-threading with main library */
+typedef struct H5TS_tl_value_t {
+	H5TS_tl_type_t type;
+	void *value;
+} H5TS_tl_value_t;
 
 /* Mutexes, Threads, and Attributes */
 typedef struct H5TS_mutex_struct {
@@ -124,14 +143,16 @@ H5_DLL herr_t H5TS_mutex_lock(H5TS_mutex_t *mutex);
 H5_DLL herr_t H5TS_mutex_unlock(H5TS_mutex_t *mutex);
 H5_DLL herr_t H5TS_cancel_count_inc(void);
 H5_DLL herr_t H5TS_cancel_count_dec(void);
+/* (Only used in the multi-thread build) */
+H5_DLL herr_t H5TS_have_mutex(H5TS_mutex_t *mutex, bool *have_mutex_ptr);
 
 /* Testing routines */
 H5_DLL H5TS_thread_t H5TS_create_thread(void *(*func)(void *), H5TS_attr_t *attr, void *udata);
 
-#else /* H5_HAVE_THREADSAFE */
+#else /* H5_HAVE_THREADSAFE or H5_HAVE_MULTITHREAD */
 
 #define H5TS_thread_id() ((uint64_t)0)
 
-#endif /* H5_HAVE_THREADSAFE */
+#endif /* H5_HAVE_THREADSAFE or H5_HAVE_MULTITHREAD */
 
 #endif /* H5TSprivate_H_ */

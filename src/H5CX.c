@@ -40,7 +40,7 @@
 /* Local Macros */
 /****************/
 
-#ifdef H5_HAVE_THREADSAFE
+#if defined(H5_HAVE_THREADSAFE) || defined(H5_HAVE_MULTITHREAD)
 /*
  * The per-thread API context. pthread_once() initializes a special
  * key that will be used by all threads to create a stack specific to
@@ -51,12 +51,12 @@
  * by "H5CX_node_t **ctx =".
  */
 #define H5CX_get_my_context() H5CX__get_context()
-#else /* H5_HAVE_THREADSAFE */
+#else /* H5_HAVE_THREADSAFE or H5_HAVE_MULTITHREAD */
 /*
  * The current API context.
  */
 #define H5CX_get_my_context() (&H5CX_head_g)
-#endif /* H5_HAVE_THREADSAFE */
+#endif /* H5_HAVE_THREADSAFE or H5_HAVE_MULTITHREAD */
 
 /* Common macro for the retrieving the pointer to a property list */
 #define H5CX_RETRIEVE_PLIST(PL, FAILVAL)                                                                     \
@@ -445,9 +445,9 @@ typedef struct H5CX_fapl_cache_t {
 /********************/
 /* Local Prototypes */
 /********************/
-#ifdef H5_HAVE_THREADSAFE
+#if defined(H5_HAVE_THREADSAFE) || defined(H5_HAVE_MULTITHREAD)
 static H5CX_node_t **H5CX__get_context(void);
-#endif /* H5_HAVE_THREADSAFE */
+#endif /* H5_HAVE_THREADSAFE or H5_HAVE_MULTITHREAD */
 static void         H5CX__push_common(H5CX_node_t *cnode);
 static H5CX_node_t *H5CX__pop_common(bool update_dxpl_props);
 
@@ -459,9 +459,9 @@ static H5CX_node_t *H5CX__pop_common(bool update_dxpl_props);
 /* Local Variables */
 /*******************/
 
-#ifndef H5_HAVE_THREADSAFE
+#if !defined(H5_HAVE_THREADSAFE) && !defined(H5_HAVE_MULTITHREAD)
 static H5CX_node_t *H5CX_head_g = NULL; /* Pointer to head of context stack */
-#endif                                  /* H5_HAVE_THREADSAFE */
+#endif /* H5_HAVE_THREADSAFE or H5_HAVE_MULTITHREAD */
 
 /* Define a "default" dataset transfer property list cache structure to use for default DXPLs */
 static H5CX_dxpl_cache_t H5CX_def_dxpl_cache;
@@ -721,14 +721,14 @@ H5CX_term_package(void)
     /* (Allocated with malloc() in H5CX_push_special() ) */
     free(cnode);
 
-#ifndef H5_HAVE_THREADSAFE
+#if !defined(H5_HAVE_THREADSAFE) && !defined(H5_HAVE_MULTITHREAD)
     H5CX_head_g = NULL;
-#endif /* H5_HAVE_THREADSAFE */
+#endif /* H5_HAVE_THREADSAFE or H5_HAVE_MULTITHREAD */
 
     FUNC_LEAVE_NOAPI(0)
 } /* end H5CX_term_package() */
 
-#ifdef H5_HAVE_THREADSAFE
+#if defined(H5_HAVE_THREADSAFE) || defined(H5_HAVE_MULTITHREAD)
 /*-------------------------------------------------------------------------
  * Function:	H5CX__get_context
  *
@@ -743,13 +743,14 @@ H5CX_term_package(void)
 static H5CX_node_t **
 H5CX__get_context(void)
 {
+    H5TS_tl_value_t *tl_value = NULL;
     H5CX_node_t **ctx = NULL;
 
     FUNC_ENTER_PACKAGE_NOERR
 
-    ctx = (H5CX_node_t **)H5TS_get_thread_local_value(H5TS_apictx_key_g);
+    tl_value = (H5TS_tl_value_t*)H5TS_get_thread_local_value(H5TS_apictx_key_g);
 
-    if (!ctx) {
+    if (!tl_value) {
         /* No associated value with current thread - create one */
 #ifdef H5_HAVE_WIN_THREADS
         /* Win32 has to use LocalAlloc to match the LocalFree in DllMain */
@@ -765,17 +766,26 @@ H5CX__get_context(void)
         /* Reset the thread-specific info */
         *ctx = NULL;
 
+        /* Set up threadlocal wrapper */
+        tl_value = malloc(sizeof(H5TS_tl_value_t));
+        assert(tl_value);
+
+        tl_value->type = H5TS_CTX;
+        tl_value->value = ctx;
         /* (It's not necessary to release this in this API, it is
          *      released by the "key destructor" set up in the H5TS
          *      routines.  See calls to pthread_key_create() in H5TS.c -QAK)
          */
-        H5TS_set_thread_local_value(H5TS_apictx_key_g, (void *)ctx);
-    } /* end if */
+        H5TS_set_thread_local_value(H5TS_apictx_key_g, (void *) tl_value);
+    } else {
+        ctx = (H5CX_node_t **)tl_value->value;
+        assert(ctx);
+    }
 
     /* Set return value */
     FUNC_LEAVE_NOAPI(ctx)
 } /* end H5CX__get_context() */
-#endif /* H5_HAVE_THREADSAFE */
+#endif /* H5_HAVE_THREADSAFE or H5_HAVE_MULTITHREAD */
 
 /*-------------------------------------------------------------------------
  * Function:    H5CX_pushed
