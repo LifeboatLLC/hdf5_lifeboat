@@ -903,6 +903,71 @@ if (HDF5_ENABLE_THREADSAFE)
 endif ()
 
 #-----------------------------------------------------------------------------
+# Option to enable multi-thread capable library
+#-----------------------------------------------------------------------------
+option (HDF5_ENABLE_MULTITHREAD "Enable multi-thread library" OFF)
+if (HDF5_ENABLE_MULTITHREAD)
+  if (HDF5_BUILD_FORTRAN)
+    if (NOT ALLOW_UNSUPPORTED)
+      message (FATAL_ERROR " **** Fortran and multi-thread options are not supported, override with ALLOW_UNSUPPORTED option **** ")
+    else ()
+      message (VERBOSE " **** Allowing unsupported Fortran and multi-thread options **** ")
+    endif ()
+  endif ()
+  if (HDF5_BUILD_CPP_LIB)
+    if (NOT ALLOW_UNSUPPORTED)
+      message (FATAL_ERROR " **** C++ and multi-thread options are not supported, override with ALLOW_UNSUPPORTED option **** ")
+    else ()
+      message (VERBOSE " **** Allowing unsupported C++ and multi-thread options **** ")
+    endif ()
+  endif ()
+  if (HDF5_BUILD_HL_LIB)
+    if (NOT ALLOW_UNSUPPORTED)
+      message (FATAL_ERROR " **** HL and multi-thread options are not supported, override with ALLOW_UNSUPPORTED option **** ")
+    else ()
+      message (VERBOSE " **** Allowing unsupported HL and multi-thread options **** ")
+    endif ()
+  endif ()
+  if (HDF5_BUILD_JAVA)
+    if (NOT ALLOW_UNSUPPORTED)
+      message (FATAL_ERROR " **** Java and multi-thread options are not supported, override with ALLOW_UNSUPPORTED option **** ")
+    else ()
+      message (VERBOSE " **** Allowing unsupported Java and multi-thread options **** ")
+    endif ()
+  endif ()
+
+  # Only allow one of multi-thread or threadsafe, but not both, unless
+  # overridden with ALLOW_UNSUPPORTED
+  if (HDF5_ENABLE_THREADSAFE)
+    if (NOT ALLOW_UNSUPPORTED)
+      message (FATAL_ERROR " **** Multi-thread and threadsafe options are not supported, override with ALLOW_UNSUPPORTED option **** ")
+    else ()
+      message (VERBOSE " **** Allowing unsupported multi-thread and threadsafe options **** ")
+    endif ()
+  endif ()
+
+  if (NOT DEFINED Threads_FOUND)
+    set (THREADS_PREFER_PTHREAD_FLAG ON)
+    find_package (Threads REQUIRED)
+  endif ()
+
+  # For now, make sure we're using pthreads. Once multi-thread support
+  # can be adapted for Windows, we should allow Win32 threads as well
+  if (NOT ${Threads_FOUND} OR NOT ${CMAKE_USE_PTHREADS_INIT})
+    message (FATAL_ERROR "Multi-thread requires pthreads for system thread library")
+  endif ()
+
+  CHECK_INCLUDE_FILE("stdatomic.h" HAVE_STDATOMIC_H)
+  if (NOT HAVE_STDATOMIC_H)
+    message (FATAL_ERROR "Multi-thread feature requires atomic operations support. C11 stdatomic.h NOT available.")
+  else()
+    set (H5_HAVE_STDATOMIC_H 1)
+  endif()
+
+  set (H5_HAVE_MULTITHREAD 1)
+endif ()
+
+#-----------------------------------------------------------------------------
 # Option to build the map API
 #-----------------------------------------------------------------------------
 option (HDF5_ENABLE_MAP_API "Build the map API" OFF)

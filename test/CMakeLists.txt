@@ -583,12 +583,16 @@ if (NOT BUILD_SHARED_LIBS)
   target_link_libraries (ttsafe PRIVATE ${HDF5_TEST_LIB_TARGET})
   if (NOT WIN32)
     target_link_libraries (ttsafe
-      PRIVATE "$<$<BOOL:${HDF5_ENABLE_THREADSAFE}>:Threads::Threads>"
+      PRIVATE "$<$<OR:$<BOOL:${HDF5_ENABLE_THREADSAFE}>,$<BOOL:${HDF5_ENABLE_MULTITHREAD}>>:Threads::Threads>"
     )
   endif ()
 else ()
   TARGET_C_PROPERTIES (ttsafe SHARED)
-  target_link_libraries (ttsafe PRIVATE ${HDF5_TEST_LIBSH_TARGET} "$<$<BOOL:${HDF5_ENABLE_THREADSAFE}>:Threads::Threads>")
+  target_link_libraries (ttsafe
+    PRIVATE
+      ${HDF5_TEST_LIBSH_TARGET}
+      "$<$<OR:$<BOOL:${HDF5_ENABLE_THREADSAFE}>,$<BOOL:${HDF5_ENABLE_MULTITHREAD}>>:Threads::Threads>"
+  )
 endif ()
 set_target_properties (ttsafe PROPERTIES FOLDER test)
 
@@ -613,14 +617,54 @@ if (NOT BUILD_SHARED_LIBS)
   target_link_libraries (thread_id PRIVATE ${HDF5_TEST_LIB_TARGET})
   if (NOT WIN32)
     target_link_libraries (thread_id
-      PRIVATE "$<$<BOOL:${HDF5_ENABLE_THREADSAFE}>:Threads::Threads>"
+      PRIVATE "$<$<OR:$<BOOL:${HDF5_ENABLE_THREADSAFE}>,$<BOOL:${HDF5_ENABLE_MULTITHREAD}>>:Threads::Threads>"
     )
   endif ()
 else ()
   TARGET_C_PROPERTIES (thread_id SHARED)
-  target_link_libraries (thread_id PRIVATE ${HDF5_TEST_LIBSH_TARGET} "$<$<BOOL:${HDF5_ENABLE_THREADSAFE}>:Threads::Threads>")
+  target_link_libraries (thread_id
+    PRIVATE
+      ${HDF5_TEST_LIBSH_TARGET}
+      "$<$<OR:$<BOOL:${HDF5_ENABLE_THREADSAFE}>,$<BOOL:${HDF5_ENABLE_MULTITHREAD}>>:Threads::Threads>"
+  )
 endif ()
 set_target_properties (thread_id PROPERTIES FOLDER test)
+
+#-- Adding test for mt_id_test
+add_executable (mt_id_test ${HDF5_TEST_SOURCE_DIR}/mt_id_test.c)
+target_compile_options(mt_id_test PRIVATE "${HDF5_CMAKE_C_FLAGS}")
+target_compile_definitions(mt_id_test
+    PRIVATE
+        "$<$<CONFIG:Developer>:${HDF5_DEVELOPER_DEFS}>"
+)
+target_include_directories (mt_id_test PRIVATE "${HDF5_SRC_INCLUDE_DIRS};${HDF5_SRC_BINARY_DIR};$<$<BOOL:${HDF5_ENABLE_PARALLEL}>:${MPI_C_INCLUDE_DIRS}>")
+if (NOT BUILD_SHARED_LIBS)
+  TARGET_C_PROPERTIES (mt_id_test STATIC)
+  target_link_libraries (mt_id_test PRIVATE ${HDF5_TEST_LIB_TARGET})
+  if (NOT WIN32)
+    target_link_libraries (mt_id_test
+      PRIVATE
+        "$<$<OR:$<BOOL:${HDF5_ENABLE_THREADSAFE}>,$<BOOL:${HDF5_ENABLE_MULTITHREAD}>>:Threads::Threads>"
+        "$<$<BOOL:${HDF5_ENABLE_MULTITHREAD}>:atomic>"
+    )
+  endif ()
+else ()
+  TARGET_C_PROPERTIES (mt_id_test SHARED)
+  target_link_libraries (mt_id_test
+    PRIVATE
+      ${HDF5_TEST_LIBSH_TARGET}
+      "$<$<OR:$<BOOL:${HDF5_ENABLE_THREADSAFE}>,$<BOOL:${HDF5_ENABLE_MULTITHREAD}>>:Threads::Threads>"
+      "$<$<BOOL:${HDF5_ENABLE_MULTITHREAD}>:atomic>"
+  )
+endif ()
+set_target_properties (mt_id_test PROPERTIES FOLDER test)
+
+#-----------------------------------------------------------------------------
+# Add Target to clang-format
+#-----------------------------------------------------------------------------
+if (HDF5_ENABLE_FORMATTERS)
+  clang_format (HDF5_TEST_mt_id_test_FORMAT mt_id_test)
+endif ()
 
 #-----------------------------------------------------------------------------
 # Add Target to clang-format
