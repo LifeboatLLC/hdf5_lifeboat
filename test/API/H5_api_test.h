@@ -37,9 +37,17 @@
 
 /* The name of the file that all of the tests will operate on */
 #define TEST_FILE_NAME "H5_api_test.h5"
+
 extern char H5_api_test_filename[];
 
+#ifdef H5_HAVE_MULTITHREAD
+#define H5_API_TEST_FILENAME ((char*) ((thread_info_t*) pthread_getspecific(thread_info_key_g))->H5_api_test_filename)
+#else
+#define H5_API_TEST_FILENAME H5_api_test_filename
+#endif
+
 extern const char *test_path_prefix;
+extern size_t active_thread_ct;
 
 /*
  * Environment variable specifying a prefix string to add to
@@ -61,8 +69,6 @@ extern const char *test_path_prefix;
 #define ARRAY_LENGTH(array) sizeof(array) / sizeof(array[0])
 
 #define UNUSED(o) (void)(o);
-
-#define H5_API_TEST_FILENAME_MAX_LENGTH 1024
 
 /* The maximum size of a dimension in an HDF5 dataspace as allowed
  * for this testing suite so as not to try to create too large

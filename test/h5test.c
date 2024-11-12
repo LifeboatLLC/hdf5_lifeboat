@@ -110,10 +110,22 @@ const char *LIBVER_NAMES[] = {"earliest", /* H5F_LIBVER_EARLIEST = 0  */
 static H5E_auto2_t err_func = NULL;
 
 /* Global variables for testing */
-size_t   n_tests_run_g     = 0;
-size_t   n_tests_passed_g  = 0;
-size_t   n_tests_failed_g  = 0;
-size_t   n_tests_skipped_g = 0;
+#ifdef H5_HAVE_MULTITHREAD
+_Atomic size_t n_tests_run_g = 0;
+_Atomic size_t n_tests_passed_g = 0;
+_Atomic size_t n_tests_failed_g = 0;
+_Atomic size_t n_tests_skipped_g = 0;
+#else
+size_t n_tests_run_g = 0;
+size_t n_tests_passed_g = 0;
+size_t n_tests_failed_g = 0;
+size_t n_tests_skipped_g = 0;
+#endif /* H5_HAVE_MULTITHREAD */
+
+#ifdef H5_HAVE_MULTITHREAD
+pthread_key_t thread_info_key_g;
+#endif
+
 uint64_t vol_cap_flags_g   = H5VL_CAP_FLAG_NONE;
 
 static herr_t h5_errors(hid_t estack, void *client_data);

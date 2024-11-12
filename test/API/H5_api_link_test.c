@@ -190,9 +190,9 @@ test_create_hard_link(void)
         return 0;
     }
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -277,9 +277,9 @@ test_create_hard_link_long_name(void)
         return 0;
     }
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -387,9 +387,9 @@ test_create_hard_link_many(void)
         return 0;
     }
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -480,9 +480,9 @@ test_create_hard_link_many(void)
         TEST_ERROR;
 
     /* Reopen the file and group and verify the hard link */
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -568,9 +568,9 @@ test_create_hard_link_same_loc(void)
 
     TESTING_2("test setup");
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -686,8 +686,8 @@ test_create_hard_link_invalid_params(void)
     htri_t link_exists;
     hid_t  file_id         = H5I_INVALID_HID;
     hid_t  container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
-    char   ext_link_filename[H5_API_TEST_FILENAME_MAX_LENGTH];
-    hid_t  ext_file_id = H5I_INVALID_HID;
+    char  *ext_link_filename = NULL;
+    hid_t  ext_file_id       = H5I_INVALID_HID;
 
     TESTING_MULTIPART("hard link creation with invalid parameters");
 
@@ -702,9 +702,9 @@ test_create_hard_link_invalid_params(void)
 
     TESTING_2("test setup");
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -900,8 +900,11 @@ test_create_hard_link_invalid_params(void)
         {
             TESTING_2("H5Lcreate_hard across files");
 
-            HDsnprintf(ext_link_filename, H5_API_TEST_FILENAME_MAX_LENGTH, "%s",
-                       EXTERNAL_LINK_TEST_FILE_NAME);
+            if (prefix_filename(test_path_prefix, EXTERNAL_LINK_TEST_FILE_NAME, &ext_link_filename) < 0) {
+                H5_FAILED();
+                printf("    couldn't create external link test file name\n");
+                PART_ERROR(H5Lcreate_hard_across_files);
+            }
 
             if ((ext_file_id = H5Fcreate(ext_link_filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
                 H5_FAILED();
@@ -974,6 +977,7 @@ test_create_hard_link_invalid_params(void)
         TEST_ERROR;
     if (H5Fclose(file_id) < 0)
         TEST_ERROR;
+    free(ext_link_filename);
 
     PASSED();
 
@@ -986,6 +990,7 @@ error:
         H5Gclose(container_group);
         H5Fclose(ext_file_id);
         H5Fclose(file_id);
+        free(ext_link_filename);
     }
     H5E_END_TRY
 
@@ -1015,9 +1020,9 @@ test_create_soft_link_existing_relative(void)
         return 0;
     }
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -1121,9 +1126,9 @@ test_create_soft_link_existing_absolute(void)
         return 0;
     }
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -1218,9 +1223,9 @@ test_create_soft_link_dangling_relative(void)
         return 0;
     }
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -1339,9 +1344,9 @@ test_create_soft_link_dangling_absolute(void)
         return 0;
     }
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -1463,9 +1468,9 @@ test_create_soft_link_long_name(void)
         return 0;
     }
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -1574,9 +1579,9 @@ test_create_soft_link_many(void)
         return 0;
     }
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -1649,9 +1654,9 @@ test_create_soft_link_many(void)
         TEST_ERROR;
 
     /* Reopen the file and group and verify the hard link */
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -1767,9 +1772,9 @@ test_create_soft_link_invalid_params(void)
 
     TESTING_2("test setup");
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -1986,8 +1991,8 @@ test_create_external_link(void)
     htri_t link_exists;
     hid_t  file_id         = H5I_INVALID_HID;
     hid_t  container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
-    hid_t  root_id = H5I_INVALID_HID;
-    char   ext_link_filename[H5_API_TEST_FILENAME_MAX_LENGTH];
+    hid_t  root_id           = H5I_INVALID_HID;
+    char  *ext_link_filename = NULL;
 
     TESTING("external link creation to existing object");
 
@@ -2000,7 +2005,11 @@ test_create_external_link(void)
         return 0;
     }
 
-    HDsnprintf(ext_link_filename, H5_API_TEST_FILENAME_MAX_LENGTH, "%s", EXTERNAL_LINK_TEST_FILE_NAME);
+    if (prefix_filename(test_path_prefix, EXTERNAL_LINK_TEST_FILE_NAME, &ext_link_filename) < 0) {
+        H5_FAILED();
+        printf("    couldn't create external link filename\n");
+        goto error;
+    }
 
     if ((file_id = H5Fcreate(ext_link_filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
         H5_FAILED();
@@ -2011,9 +2020,9 @@ test_create_external_link(void)
     if (H5Fclose(file_id) < 0)
         TEST_ERROR;
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -2065,6 +2074,7 @@ test_create_external_link(void)
         TEST_ERROR;
     if (H5Fclose(file_id) < 0)
         TEST_ERROR;
+    free(ext_link_filename);
 
     PASSED();
 
@@ -2077,6 +2087,7 @@ error:
         H5Gclose(group_id);
         H5Gclose(container_group);
         H5Fclose(file_id);
+        free(ext_link_filename);
     }
     H5E_END_TRY
 
@@ -2094,8 +2105,8 @@ test_create_external_link_dangling(void)
     htri_t link_exists;
     hid_t  file_id = H5I_INVALID_HID, ext_file_id = H5I_INVALID_HID;
     hid_t  container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
-    hid_t  object_id = H5I_INVALID_HID;
-    char   ext_link_filename[H5_API_TEST_FILENAME_MAX_LENGTH];
+    hid_t  object_id         = H5I_INVALID_HID;
+    char  *ext_link_filename = NULL;
 
     TESTING("dangling external link creation");
 
@@ -2108,7 +2119,11 @@ test_create_external_link_dangling(void)
         return 0;
     }
 
-    HDsnprintf(ext_link_filename, H5_API_TEST_FILENAME_MAX_LENGTH, "%s", EXTERNAL_LINK_TEST_FILE_NAME);
+    if (prefix_filename(test_path_prefix, EXTERNAL_LINK_TEST_FILE_NAME, &ext_link_filename) < 0) {
+        H5_FAILED();
+        printf("    couldn't create external link filename\n");
+        goto error;
+    }
 
     if ((ext_file_id = H5Fcreate(ext_link_filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
         H5_FAILED();
@@ -2116,9 +2131,9 @@ test_create_external_link_dangling(void)
         goto error;
     }
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -2197,6 +2212,7 @@ test_create_external_link_dangling(void)
         TEST_ERROR;
     if (H5Fclose(ext_file_id) < 0)
         TEST_ERROR;
+    free(ext_link_filename);
 
     PASSED();
 
@@ -2210,6 +2226,7 @@ error:
         H5Gclose(container_group);
         H5Fclose(file_id);
         H5Fclose(ext_file_id);
+        free(ext_link_filename);
     }
     H5E_END_TRY
 
@@ -2226,10 +2243,10 @@ test_create_external_link_multi(void)
     hid_t file_id         = H5I_INVALID_HID;
     hid_t container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
     hid_t group_id2 = H5I_INVALID_HID, group_id3 = H5I_INVALID_HID;
-    hid_t root_id = H5I_INVALID_HID;
-    char  ext_link_filename1[H5_API_TEST_FILENAME_MAX_LENGTH];
-    char  ext_link_filename2[H5_API_TEST_FILENAME_MAX_LENGTH];
-    char  ext_link_filename3[H5_API_TEST_FILENAME_MAX_LENGTH];
+    hid_t root_id            = H5I_INVALID_HID;
+    char *ext_link_filename1 = NULL;
+    char *ext_link_filename2 = NULL;
+    char *ext_link_filename3 = NULL;
     char  objname[EXTERNAL_LINK_TEST_MULTI_NAME_BUF_SIZE];
 
     TESTING_MULTIPART("external link creation to an object across several files");
@@ -2249,8 +2266,11 @@ test_create_external_link_multi(void)
         {
             TESTING_2("Create the first external file to be pointed to");
 
-            HDsnprintf(ext_link_filename1, H5_API_TEST_FILENAME_MAX_LENGTH, "%s",
-                       EXTERNAL_LINK_TEST_FILE_NAME);
+            if (prefix_filename(test_path_prefix, EXTERNAL_LINK_TEST_FILE_NAME, &ext_link_filename1) < 0) {
+                H5_FAILED();
+                printf("    couldn't create external link filename\n");
+                PART_ERROR(H5Lcreate_external_first_file);
+            }
 
             if ((file_id = H5Fcreate(ext_link_filename1, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
                 H5_FAILED();
@@ -2310,8 +2330,11 @@ test_create_external_link_multi(void)
         {
             TESTING_2("Create the second external file to be pointed to");
 
-            HDsnprintf(ext_link_filename2, H5_API_TEST_FILENAME_MAX_LENGTH, "%s",
-                       EXTERNAL_LINK_TEST_FILE_NAME2);
+            if (prefix_filename(test_path_prefix, EXTERNAL_LINK_TEST_FILE_NAME2, &ext_link_filename2) < 0) {
+                H5_FAILED();
+                printf("    couldn't create external link filename\n");
+                PART_ERROR(H5Lcreate_external_second_file);
+            }
 
             if ((file_id = H5Fcreate(ext_link_filename2, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
                 H5_FAILED();
@@ -2367,8 +2390,11 @@ test_create_external_link_multi(void)
         {
             TESTING_2("Create the third external file to be pointed to");
 
-            HDsnprintf(ext_link_filename3, H5_API_TEST_FILENAME_MAX_LENGTH, "%s",
-                       EXTERNAL_LINK_TEST_FILE_NAME3);
+            if (prefix_filename(test_path_prefix, EXTERNAL_LINK_TEST_FILE_NAME3, &ext_link_filename3) < 0) {
+                H5_FAILED();
+                printf("    couldn't create external link filename\n");
+                PART_ERROR(H5Lcreate_external_third_file);
+            }
 
             if ((file_id = H5Fcreate(ext_link_filename3, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
                 H5_FAILED();
@@ -2424,9 +2450,9 @@ test_create_external_link_multi(void)
         {
             TESTING_2("Open the file and create the final external link");
 
-            if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+            if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
                 H5_FAILED();
-                printf("    couldn't open file '%s'\n", H5_api_test_filename);
+                printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
                 PART_ERROR(H5Lcreate_external_final_file);
             }
 
@@ -2558,6 +2584,9 @@ test_create_external_link_multi(void)
     }
     END_MULTIPART;
 
+    free(ext_link_filename1);
+    free(ext_link_filename2);
+    free(ext_link_filename3);
     return 0;
 
 error:
@@ -2569,6 +2598,9 @@ error:
         H5Gclose(group_id3);
         H5Gclose(container_group);
         H5Fclose(file_id);
+        free(ext_link_filename1);
+        free(ext_link_filename2);
+        free(ext_link_filename3);
     }
     H5E_END_TRY
 
@@ -2589,11 +2621,11 @@ error:
 static int
 test_create_external_link_ping_pong(void)
 {
-    hid_t file_id   = H5I_INVALID_HID;
-    hid_t group_id  = H5I_INVALID_HID;
-    hid_t group_id2 = H5I_INVALID_HID;
-    char  ext_link_filename1[H5_API_TEST_FILENAME_MAX_LENGTH];
-    char  ext_link_filename2[H5_API_TEST_FILENAME_MAX_LENGTH];
+    hid_t file_id            = H5I_INVALID_HID;
+    hid_t group_id           = H5I_INVALID_HID;
+    hid_t group_id2          = H5I_INVALID_HID;
+    char *ext_link_filename1 = NULL;
+    char *ext_link_filename2 = NULL;
     char  objname[EXTERNAL_LINK_TEST_MULTI_NAME_BUF_SIZE];
 
     TESTING_MULTIPART("external link creation to an object in ping pong style");
@@ -2607,8 +2639,17 @@ test_create_external_link_ping_pong(void)
         return 0;
     }
 
-    HDsnprintf(ext_link_filename1, H5_API_TEST_FILENAME_MAX_LENGTH, "%s", EXTERNAL_LINK_TEST_PING_PONG_NAME1);
-    HDsnprintf(ext_link_filename2, H5_API_TEST_FILENAME_MAX_LENGTH, "%s", EXTERNAL_LINK_TEST_PING_PONG_NAME2);
+    if (prefix_filename(test_path_prefix, EXTERNAL_LINK_TEST_PING_PONG_NAME1, &ext_link_filename1) < 0) {
+        H5_FAILED();
+        printf("    couldn't create external link filename\n");
+        goto error;
+    }
+
+    if (prefix_filename(test_path_prefix, EXTERNAL_LINK_TEST_PING_PONG_NAME2, &ext_link_filename2) < 0) {
+        H5_FAILED();
+        printf("    couldn't create external link filename\n");
+        goto error;
+    }
 
     BEGIN_MULTIPART
     {
@@ -2822,6 +2863,9 @@ test_create_external_link_ping_pong(void)
     }
     END_MULTIPART;
 
+    free(ext_link_filename1);
+    free(ext_link_filename2);
+
     return 0;
 
 error:
@@ -2830,6 +2874,8 @@ error:
         H5Gclose(group_id);
         H5Gclose(group_id2);
         H5Fclose(file_id);
+        free(ext_link_filename1);
+        free(ext_link_filename2);
     }
     H5E_END_TRY
 
@@ -2847,7 +2893,7 @@ test_create_external_link_invalid_params(void)
     htri_t link_exists;
     hid_t  file_id         = H5I_INVALID_HID;
     hid_t  container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
-    char   ext_link_filename[H5_API_TEST_FILENAME_MAX_LENGTH];
+    char  *ext_link_filename = NULL;
 
     TESTING_MULTIPART("H5Lcreate_external with invalid parameters");
 
@@ -2862,8 +2908,12 @@ test_create_external_link_invalid_params(void)
 
     TESTING_2("test setup");
 
-    HDsnprintf(ext_link_filename, H5_API_TEST_FILENAME_MAX_LENGTH, "%s",
-               EXTERNAL_LINK_INVALID_PARAMS_TEST_FILE_NAME);
+    if (prefix_filename(test_path_prefix, EXTERNAL_LINK_INVALID_PARAMS_TEST_FILE_NAME, &ext_link_filename) <
+        0) {
+        H5_FAILED();
+        printf("    couldn't create filename for external link test\n");
+        goto error;
+    }
 
     if ((file_id = H5Fcreate(ext_link_filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
         H5_FAILED();
@@ -2874,9 +2924,9 @@ test_create_external_link_invalid_params(void)
     if (H5Fclose(file_id) < 0)
         TEST_ERROR;
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -3108,7 +3158,7 @@ test_create_external_link_invalid_params(void)
         TEST_ERROR;
     if (H5Fclose(file_id) < 0)
         TEST_ERROR;
-
+    free(ext_link_filename);
     PASSED();
 
     return 0;
@@ -3119,6 +3169,7 @@ error:
         H5Gclose(group_id);
         H5Gclose(container_group);
         H5Fclose(file_id);
+        free(ext_link_filename);
     }
     H5E_END_TRY
 
@@ -3149,9 +3200,9 @@ test_create_user_defined_link(void)
         return 0;
     }
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -3241,9 +3292,9 @@ test_create_user_defined_link_invalid_params(void)
 
     TESTING_2("test setup");
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -3472,10 +3523,10 @@ test_delete_link(void)
     htri_t link_exists;
     hid_t  file_id = H5I_INVALID_HID, ext_file_id = H5I_INVALID_HID;
     hid_t  container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
-    hid_t  subgroup_id   = H5I_INVALID_HID;
-    hid_t  nested_grp_id = H5I_INVALID_HID;
-    hid_t  gcpl_id       = H5I_INVALID_HID;
-    char   ext_link_filename[H5_API_TEST_FILENAME_MAX_LENGTH];
+    hid_t  subgroup_id       = H5I_INVALID_HID;
+    hid_t  nested_grp_id     = H5I_INVALID_HID;
+    hid_t  gcpl_id           = H5I_INVALID_HID;
+    char  *ext_link_filename = NULL;
 
     TESTING_MULTIPART("link deletion");
 
@@ -3492,9 +3543,9 @@ test_delete_link(void)
 
     TESTING_2("test setup");
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -3753,8 +3804,11 @@ test_delete_link(void)
         {
             TESTING_2("H5Ldelete on external link");
 
-            HDsnprintf(ext_link_filename, H5_API_TEST_FILENAME_MAX_LENGTH, "%s",
-                       EXTERNAL_LINK_TEST_FILE_NAME);
+            if (prefix_filename(test_path_prefix, EXTERNAL_LINK_TEST_FILE_NAME, &ext_link_filename) < 0) {
+                H5_FAILED();
+                printf("    couldn't create external link filename\n");
+                PART_ERROR(H5Ldelete_external);
+            }
 
             if ((ext_file_id = H5Fcreate(ext_link_filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
                 H5_FAILED();
@@ -5717,9 +5771,6 @@ test_delete_link(void)
             }
 
             /* Create file for external link to reference */
-            HDsnprintf(ext_link_filename, H5_API_TEST_FILENAME_MAX_LENGTH, "%s",
-                       EXTERNAL_LINK_TEST_FILE_NAME);
-
             if ((ext_file_id = H5Fcreate(ext_link_filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
                 H5_FAILED();
                 printf("    couldn't create file '%s' for external link to reference\n", ext_link_filename);
@@ -5999,9 +6050,6 @@ test_delete_link(void)
             }
 
             /* Create file for external link to reference */
-            HDsnprintf(ext_link_filename, H5_API_TEST_FILENAME_MAX_LENGTH, "%s",
-                       EXTERNAL_LINK_TEST_FILE_NAME);
-
             if ((ext_file_id = H5Fcreate(ext_link_filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
                 H5_FAILED();
                 printf("    couldn't create file '%s' for external link to reference\n", ext_link_filename);
@@ -6275,9 +6323,6 @@ test_delete_link(void)
             TESTING_2("H5Ldelete_by_idx on external link by alphabetical order in increasing order");
 
             /* Create file for external link to reference */
-            HDsnprintf(ext_link_filename, H5_API_TEST_FILENAME_MAX_LENGTH, "%s",
-                       EXTERNAL_LINK_TEST_FILE_NAME);
-
             if ((ext_file_id = H5Fcreate(ext_link_filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
                 H5_FAILED();
                 printf("    couldn't create file '%s' for external link to reference\n", ext_link_filename);
@@ -6551,9 +6596,6 @@ test_delete_link(void)
             TESTING_2("H5Ldelete_by_idx on external link by alphabetical order in decreasing order");
 
             /* Create file for external link to reference */
-            HDsnprintf(ext_link_filename, H5_API_TEST_FILENAME_MAX_LENGTH, "%s",
-                       EXTERNAL_LINK_TEST_FILE_NAME);
-
             if ((ext_file_id = H5Fcreate(ext_link_filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
                 H5_FAILED();
                 printf("    couldn't create file '%s' for external link to reference\n", ext_link_filename);
@@ -6906,7 +6948,7 @@ test_delete_link(void)
         TEST_ERROR;
     if (H5Fclose(file_id) < 0)
         TEST_ERROR;
-
+    free(ext_link_filename);
     PASSED();
 
     return 0;
@@ -6920,6 +6962,7 @@ error:
         H5Gclose(container_group);
         H5Fclose(ext_file_id);
         H5Fclose(file_id);
+        free(ext_link_filename);
     }
     H5E_END_TRY
 
@@ -6956,9 +6999,9 @@ test_delete_link_reset_grp_max_crt_order(void)
 
     TESTING_2("test setup");
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -7204,9 +7247,9 @@ test_delete_link_invalid_params(void)
 
     TESTING_2("test setup");
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -7519,7 +7562,7 @@ test_copy_link(void)
     hid_t  file_id = H5I_INVALID_HID, ext_file_id = H5I_INVALID_HID;
     hid_t  container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
     hid_t  src_grp_id = H5I_INVALID_HID, dst_grp_id = H5I_INVALID_HID;
-    char   ext_link_filename[H5_API_TEST_FILENAME_MAX_LENGTH];
+    char  *ext_link_filename = NULL;
 
     TESTING_MULTIPART("link copying");
 
@@ -7536,9 +7579,9 @@ test_copy_link(void)
 
     TESTING_2("test setup");
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s\n", H5_api_test_filename);
+        printf("    couldn't open file '%s\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -8260,8 +8303,11 @@ test_copy_link(void)
         {
             TESTING_2("H5Lcopy on external link (copied link's properties not checked)");
 
-            HDsnprintf(ext_link_filename, H5_API_TEST_FILENAME_MAX_LENGTH, "%s",
-                       EXTERNAL_LINK_TEST_FILE_NAME);
+            if (prefix_filename(test_path_prefix, EXTERNAL_LINK_TEST_FILE_NAME, &ext_link_filename) < 0) {
+                H5_FAILED();
+                printf("    couldn't create external link filename\n");
+                PART_ERROR(H5Lcopy_external_no_check);
+            }
 
             if ((ext_file_id = H5Fcreate(ext_link_filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
                 H5_FAILED();
@@ -8368,10 +8414,6 @@ test_copy_link(void)
             char        new_link_val[COPY_LINK_TEST_LINK_VAL_BUF_SIZE];
 
             TESTING_2("H5Lcopy on external link (copied link's properties checked)");
-
-            HDsnprintf(ext_link_filename, H5_API_TEST_FILENAME_MAX_LENGTH, "%s",
-                       EXTERNAL_LINK_TEST_FILE_NAME);
-
             if ((ext_file_id = H5Fcreate(ext_link_filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
                 H5_FAILED();
                 printf("    couldn't create file '%s' for external link to reference\n", ext_link_filename);
@@ -8572,10 +8614,6 @@ test_copy_link(void)
         PART_BEGIN(H5Lcopy_external_same_loc)
         {
             TESTING_2("H5Lcopy on external link using H5L_SAME_LOC");
-
-            HDsnprintf(ext_link_filename, H5_API_TEST_FILENAME_MAX_LENGTH, "%s",
-                       EXTERNAL_LINK_TEST_FILE_NAME);
-
             if ((ext_file_id = H5Fcreate(ext_link_filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
                 H5_FAILED();
                 printf("    couldn't create file '%s' for external link to reference\n", ext_link_filename);
@@ -8759,7 +8797,7 @@ test_copy_link(void)
         TEST_ERROR;
     if (H5Fclose(file_id) < 0)
         TEST_ERROR;
-
+    free(ext_link_filename);
     PASSED();
 
     return 0;
@@ -8773,6 +8811,7 @@ error:
         H5Gclose(container_group);
         H5Fclose(ext_file_id);
         H5Fclose(file_id);
+        free(ext_link_filename);
     }
     H5E_END_TRY
 
@@ -8831,8 +8870,8 @@ test_copy_link_invalid_params(void)
     hid_t  file_id         = H5I_INVALID_HID;
     hid_t  container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
     hid_t  src_grp_id = H5I_INVALID_HID, dst_grp_id = H5I_INVALID_HID;
-    char   ext_link_filename[H5_API_TEST_FILENAME_MAX_LENGTH];
-    hid_t  ext_file_id = H5I_INVALID_HID;
+    char  *ext_link_filename = NULL;
+    hid_t  ext_file_id       = H5I_INVALID_HID;
 
     TESTING_MULTIPART("H5Lcopy with invalid parameters");
 
@@ -8848,9 +8887,9 @@ test_copy_link_invalid_params(void)
 
     TESTING_2("test setup");
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s\n", H5_api_test_filename);
+        printf("    couldn't open file '%s\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -9091,8 +9130,11 @@ test_copy_link_invalid_params(void)
         {
             TESTING_2("H5Lcopy invalid across files");
 
-            HDsnprintf(ext_link_filename, H5_API_TEST_FILENAME_MAX_LENGTH, "%s",
-                       EXTERNAL_LINK_TEST_FILE_NAME);
+            if (prefix_filename(test_path_prefix, EXTERNAL_LINK_TEST_FILE_NAME, &ext_link_filename) < 0) {
+                H5_FAILED();
+                printf("    couldn't create external link filename\n");
+                PART_ERROR(H5Lcopy_invalid_across_files);
+            }
 
             if ((ext_file_id = H5Fcreate(ext_link_filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
                 H5_FAILED();
@@ -9138,7 +9180,7 @@ test_copy_link_invalid_params(void)
         TEST_ERROR;
     if (H5Fclose(file_id) < 0)
         TEST_ERROR;
-
+    free(ext_link_filename);
     PASSED();
 
     return 0;
@@ -9152,6 +9194,7 @@ error:
         H5Gclose(container_group);
         H5Fclose(ext_file_id);
         H5Fclose(file_id);
+        free(ext_link_filename);
     }
     H5E_END_TRY
 
@@ -9168,8 +9211,8 @@ test_move_link(void)
     hid_t  file_id         = H5I_INVALID_HID;
     hid_t  container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
     hid_t  src_grp_id = H5I_INVALID_HID, dst_grp_id = H5I_INVALID_HID;
-    char   ext_link_filename[H5_API_TEST_FILENAME_MAX_LENGTH];
-    hid_t  ext_file_id = H5I_INVALID_HID;
+    char  *ext_link_filename = NULL;
+    hid_t  ext_file_id       = H5I_INVALID_HID;
 
     TESTING_MULTIPART("link moving");
 
@@ -9186,11 +9229,15 @@ test_move_link(void)
 
     TESTING_2("test setup");
 
-    HDsnprintf(ext_link_filename, H5_API_TEST_FILENAME_MAX_LENGTH, "%s", EXTERNAL_LINK_TEST_FILE_NAME);
-
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if (prefix_filename(test_path_prefix, EXTERNAL_LINK_TEST_FILE_NAME, &ext_link_filename) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't create external link filename\n");
+        goto error;
+    }
+
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+        H5_FAILED();
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -10066,10 +10113,6 @@ test_move_link(void)
         PART_BEGIN(H5Lmove_external_no_check)
         {
             TESTING_2("H5Lmove on external link (moved link's properties not checked)");
-
-            HDsnprintf(ext_link_filename, H5_API_TEST_FILENAME_MAX_LENGTH, "%s",
-                       EXTERNAL_LINK_TEST_FILE_NAME);
-
             if ((ext_file_id = H5Fcreate(ext_link_filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
                 H5_FAILED();
                 printf("    couldn't create file '%s' for external link to reference\n", ext_link_filename);
@@ -10175,10 +10218,6 @@ test_move_link(void)
             char        new_link_val[MOVE_LINK_TEST_LINK_VAL_BUF_SIZE];
 
             TESTING_2("H5Lmove on external link (moved link's properties checked)");
-
-            HDsnprintf(ext_link_filename, H5_API_TEST_FILENAME_MAX_LENGTH, "%s",
-                       EXTERNAL_LINK_TEST_FILE_NAME);
-
             if ((ext_file_id = H5Fcreate(ext_link_filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
                 H5_FAILED();
                 printf("    couldn't create file '%s' for external link to reference\n", ext_link_filename);
@@ -10379,10 +10418,6 @@ test_move_link(void)
         PART_BEGIN(H5Lmove_external_same_loc)
         {
             TESTING_2("H5Lmove on external link using H5L_SAME_LOC");
-
-            HDsnprintf(ext_link_filename, H5_API_TEST_FILENAME_MAX_LENGTH, "%s",
-                       EXTERNAL_LINK_TEST_FILE_NAME);
-
             if ((ext_file_id = H5Fcreate(ext_link_filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
                 H5_FAILED();
                 printf("    couldn't create file '%s' for external link to reference\n", ext_link_filename);
@@ -10518,10 +10553,6 @@ test_move_link(void)
         PART_BEGIN(H5Lmove_external_rename)
         {
             TESTING_2("H5Lmove to rename external link without moving it");
-
-            HDsnprintf(ext_link_filename, H5_API_TEST_FILENAME_MAX_LENGTH, "%s",
-                       EXTERNAL_LINK_TEST_FILE_NAME);
-
             if ((ext_file_id = H5Fcreate(ext_link_filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
                 H5_FAILED();
                 printf("    couldn't create file '%s' for external link to reference\n", ext_link_filename);
@@ -10675,7 +10706,7 @@ test_move_link(void)
         TEST_ERROR;
     if (H5Fclose(file_id) < 0)
         TEST_ERROR;
-
+    free(ext_link_filename);
     PASSED();
 
     return 0;
@@ -10689,6 +10720,7 @@ error:
         H5Gclose(container_group);
         H5Fclose(file_id);
         H5Fclose(ext_file_id);
+        free(ext_link_filename);
     }
     H5E_END_TRY
 
@@ -10727,9 +10759,9 @@ test_move_links_into_group_with_links(void)
         return 0;
     }
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -10930,9 +10962,9 @@ test_move_link_reset_grp_max_crt_order(void)
         return 0;
     }
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -11098,8 +11130,8 @@ test_move_link_invalid_params(void)
     hid_t  file_id         = H5I_INVALID_HID;
     hid_t  container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
     hid_t  src_grp_id = H5I_INVALID_HID, dst_grp_id = H5I_INVALID_HID;
-    char   ext_link_filename[H5_API_TEST_FILENAME_MAX_LENGTH];
-    hid_t  ext_file_id = H5I_INVALID_HID;
+    char  *ext_link_filename = NULL;
+    hid_t  ext_file_id       = H5I_INVALID_HID;
 
     TESTING_MULTIPART("H5Lmove with invalid parameters");
 
@@ -11114,9 +11146,9 @@ test_move_link_invalid_params(void)
 
     TESTING_2("test setup");
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -11404,8 +11436,11 @@ test_move_link_invalid_params(void)
         {
             TESTING_2("H5Lmove into another file");
 
-            HDsnprintf(ext_link_filename, H5_API_TEST_FILENAME_MAX_LENGTH, "%s",
-                       EXTERNAL_LINK_TEST_FILE_NAME);
+            if (prefix_filename(test_path_prefix, EXTERNAL_LINK_TEST_FILE_NAME, &ext_link_filename) < 0) {
+                H5_FAILED();
+                printf("    couldn't create external link filename\n");
+                PART_ERROR(H5Lmove_across_files);
+            }
 
             if ((ext_file_id = H5Fcreate(ext_link_filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
                 H5_FAILED();
@@ -11467,7 +11502,7 @@ test_move_link_invalid_params(void)
         TEST_ERROR;
     if (H5Fclose(file_id) < 0)
         TEST_ERROR;
-
+    free(ext_link_filename);
     PASSED();
 
     return 0;
@@ -11481,6 +11516,7 @@ error:
         H5Gclose(container_group);
         H5Fclose(ext_file_id);
         H5Fclose(file_id);
+        free(ext_link_filename);
     }
     H5E_END_TRY
 
@@ -11503,9 +11539,9 @@ test_get_link_val(void)
     char        link_val_buf[GET_LINK_VAL_TEST_LINK_VAL_BUF_SIZE];
     hid_t       file_id = H5I_INVALID_HID, ext_file_id = H5I_INVALID_HID;
     hid_t       container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
-    hid_t       subgroup_id = H5I_INVALID_HID;
-    hid_t       gcpl_id     = H5I_INVALID_HID;
-    char        ext_link_filename[H5_API_TEST_FILENAME_MAX_LENGTH];
+    hid_t       subgroup_id       = H5I_INVALID_HID;
+    hid_t       gcpl_id           = H5I_INVALID_HID;
+    char       *ext_link_filename = NULL;
 
     TESTING_MULTIPART("link value retrieval");
 
@@ -11521,9 +11557,9 @@ test_get_link_val(void)
 
     TESTING_2("test setup");
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -11551,6 +11587,12 @@ test_get_link_val(void)
                                H5P_DEFAULT)) < 0) {
         H5_FAILED();
         printf("    couldn't create container subgroup '%s'\n", GET_LINK_VAL_TEST_SUBGROUP_NAME);
+        goto error;
+    }
+
+    if (prefix_filename(test_path_prefix, EXTERNAL_LINK_TEST_FILE_NAME, &ext_link_filename) < 0) {
+        H5_FAILED();
+        printf("    couldn't create external link filename\n");
         goto error;
     }
 
@@ -11643,9 +11685,6 @@ test_get_link_val(void)
             TESTING_2("H5Lget_val on external link");
 
             memset(&link_info, 0, sizeof(link_info));
-
-            HDsnprintf(ext_link_filename, H5_API_TEST_FILENAME_MAX_LENGTH, "%s",
-                       EXTERNAL_LINK_TEST_FILE_NAME);
 
             if ((ext_file_id = H5Fcreate(ext_link_filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
                 H5_FAILED();
@@ -12543,9 +12582,6 @@ test_get_link_val(void)
                 PART_EMPTY(H5Lget_val_by_idx_external_crt_order_increasing);
             }
 
-            HDsnprintf(ext_link_filename, H5_API_TEST_FILENAME_MAX_LENGTH, "%s",
-                       EXTERNAL_LINK_TEST_FILE_NAME);
-
             if ((ext_file_id = H5Fcreate(ext_link_filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
                 H5_FAILED();
                 printf("    couldn't create file '%s' for external link to reference\n", ext_link_filename);
@@ -12793,9 +12829,6 @@ test_get_link_val(void)
                 PART_EMPTY(H5Lget_val_by_idx_external_crt_order_decreasing);
             }
 
-            HDsnprintf(ext_link_filename, H5_API_TEST_FILENAME_MAX_LENGTH, "%s",
-                       EXTERNAL_LINK_TEST_FILE_NAME);
-
             if ((ext_file_id = H5Fcreate(ext_link_filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
                 H5_FAILED();
                 printf("    couldn't create file '%s' for external link to reference\n", ext_link_filename);
@@ -13037,9 +13070,6 @@ test_get_link_val(void)
 
             TESTING_2("H5Lget_val_by_idx on external link by alphabetical order in increasing order");
 
-            HDsnprintf(ext_link_filename, H5_API_TEST_FILENAME_MAX_LENGTH, "%s",
-                       EXTERNAL_LINK_TEST_FILE_NAME);
-
             if ((ext_file_id = H5Fcreate(ext_link_filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
                 H5_FAILED();
                 printf("    couldn't create file '%s' for external link to reference\n", ext_link_filename);
@@ -13280,9 +13310,6 @@ test_get_link_val(void)
             const char *ext_obj_name_c = "/C";
 
             TESTING_2("H5Lget_val_by_idx on external link by alphabetical order in decreasing order");
-
-            HDsnprintf(ext_link_filename, H5_API_TEST_FILENAME_MAX_LENGTH, "%s",
-                       EXTERNAL_LINK_TEST_FILE_NAME);
 
             if ((ext_file_id = H5Fcreate(ext_link_filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
                 H5_FAILED();
@@ -13593,7 +13620,7 @@ test_get_link_val(void)
         TEST_ERROR;
     if (H5Fclose(file_id) < 0)
         TEST_ERROR;
-
+    free(ext_link_filename);
     PASSED();
 
     return 0;
@@ -13607,6 +13634,7 @@ error:
         H5Gclose(container_group);
         H5Fclose(ext_file_id);
         H5Fclose(file_id);
+        free(ext_link_filename);
     }
     H5E_END_TRY
 
@@ -13643,9 +13671,9 @@ test_get_link_val_invalid_params(void)
 
     TESTING_2("test setup");
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -13973,9 +14001,9 @@ test_get_link_info(void)
     size_t      link_val_size;
     hid_t       file_id = H5I_INVALID_HID, ext_file_id = H5I_INVALID_HID;
     hid_t       container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
-    hid_t       subgroup_id = H5I_INVALID_HID;
-    hid_t       gcpl_id     = H5I_INVALID_HID;
-    char        ext_link_filename[H5_API_TEST_FILENAME_MAX_LENGTH];
+    hid_t       subgroup_id       = H5I_INVALID_HID;
+    hid_t       gcpl_id           = H5I_INVALID_HID;
+    char       *ext_link_filename = NULL;
 
     TESTING_MULTIPART("link info retrieval");
 
@@ -13992,9 +14020,9 @@ test_get_link_info(void)
 
     TESTING_2("test setup");
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -14022,6 +14050,12 @@ test_get_link_info(void)
                                H5P_DEFAULT)) < 0) {
         H5_FAILED();
         printf("    couldn't create container subgroup '%s'\n", GET_LINK_INFO_TEST_GROUP_NAME);
+        goto error;
+    }
+
+    if (prefix_filename(test_path_prefix, EXTERNAL_LINK_TEST_FILE_NAME, &ext_link_filename) < 0) {
+        H5_FAILED();
+        printf("    couldn't create external link target filename\n");
         goto error;
     }
 
@@ -14188,9 +14222,6 @@ test_get_link_info(void)
             TESTING_2("H5Lget_info2 on external link");
 
             memset(&link_info, 0, sizeof(link_info));
-
-            HDsnprintf(ext_link_filename, H5_API_TEST_FILENAME_MAX_LENGTH, "%s",
-                       EXTERNAL_LINK_TEST_FILE_NAME);
 
             if ((ext_file_id = H5Fcreate(ext_link_filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
                 H5_FAILED();
@@ -15755,9 +15786,6 @@ test_get_link_info(void)
                 PART_EMPTY(H5Lget_info_by_idx_external_crt_order_increasing);
             }
 
-            HDsnprintf(ext_link_filename, H5_API_TEST_FILENAME_MAX_LENGTH, "%s",
-                       EXTERNAL_LINK_TEST_FILE_NAME);
-
             if ((ext_file_id = H5Fcreate(ext_link_filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
                 H5_FAILED();
                 printf("    couldn't create file '%s' for external link to reference\n", ext_link_filename);
@@ -15959,9 +15987,6 @@ test_get_link_info(void)
                 PART_EMPTY(H5Lget_info_by_idx_external_crt_order_decreasing);
             }
 
-            HDsnprintf(ext_link_filename, H5_API_TEST_FILENAME_MAX_LENGTH, "%s",
-                       EXTERNAL_LINK_TEST_FILE_NAME);
-
             if ((ext_file_id = H5Fcreate(ext_link_filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
                 H5_FAILED();
                 printf("    couldn't create file '%s' for external link to reference\n", ext_link_filename);
@@ -16156,9 +16181,6 @@ test_get_link_info(void)
         PART_BEGIN(H5Lget_info_by_idx_external_name_order_increasing)
         {
             TESTING_2("H5Lget_info_by_idx2 on external link by alphabetical order in increasing order");
-
-            HDsnprintf(ext_link_filename, H5_API_TEST_FILENAME_MAX_LENGTH, "%s",
-                       EXTERNAL_LINK_TEST_FILE_NAME);
 
             if ((ext_file_id = H5Fcreate(ext_link_filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
                 H5_FAILED();
@@ -16360,9 +16382,6 @@ test_get_link_info(void)
         PART_BEGIN(H5Lget_info_by_idx_external_name_order_decreasing)
         {
             TESTING_2("H5Lget_info_by_idx2 on external link by alphabetical order in decreasing order");
-
-            HDsnprintf(ext_link_filename, H5_API_TEST_FILENAME_MAX_LENGTH, "%s",
-                       EXTERNAL_LINK_TEST_FILE_NAME);
 
             if ((ext_file_id = H5Fcreate(ext_link_filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
                 H5_FAILED();
@@ -16637,7 +16656,7 @@ test_get_link_info(void)
         TEST_ERROR;
     if (H5Fclose(file_id) < 0)
         TEST_ERROR;
-
+    free(ext_link_filename);
     PASSED();
 
     return 0;
@@ -16651,6 +16670,7 @@ error:
         H5Gclose(container_group);
         H5Fclose(ext_file_id);
         H5Fclose(file_id);
+        free(ext_link_filename);
     }
     H5E_END_TRY
 
@@ -16685,9 +16705,9 @@ test_get_link_info_invalid_params(void)
 
     TESTING_2("test setup");
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -17003,7 +17023,7 @@ test_get_link_name(void)
     hid_t   subgroup_id = H5I_INVALID_HID;
     hid_t   gcpl_id     = H5I_INVALID_HID;
     char    link_name_buf[GET_LINK_NAME_TEST_BUF_SIZE];
-    char    ext_link_filename[H5_API_TEST_FILENAME_MAX_LENGTH];
+    char   *ext_link_filename = NULL;
 
     TESTING_MULTIPART("link name retrieval");
 
@@ -17020,9 +17040,9 @@ test_get_link_name(void)
 
     TESTING_2("test setup");
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -17050,6 +17070,12 @@ test_get_link_name(void)
                                H5P_DEFAULT)) < 0) {
         H5_FAILED();
         printf("    couldn't create container subgroup '%s'\n", GET_LINK_NAME_TEST_GROUP_NAME);
+        goto error;
+    }
+
+    if (prefix_filename(test_path_prefix, EXTERNAL_LINK_TEST_FILE_NAME, &ext_link_filename) < 0) {
+        H5_FAILED();
+        printf("    couldn't create external link filename\n");
         goto error;
     }
 
@@ -18388,9 +18414,6 @@ test_get_link_name(void)
             }
 
             /* Create file for external link to reference */
-            HDsnprintf(ext_link_filename, H5_API_TEST_FILENAME_MAX_LENGTH, "%s",
-                       EXTERNAL_LINK_TEST_FILE_NAME);
-
             if ((ext_file_id = H5Fcreate(ext_link_filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
                 H5_FAILED();
                 printf("    couldn't create file '%s' for external link to reference\n", ext_link_filename);
@@ -18577,9 +18600,6 @@ test_get_link_name(void)
             }
 
             /* Create file for external link to reference */
-            HDsnprintf(ext_link_filename, H5_API_TEST_FILENAME_MAX_LENGTH, "%s",
-                       EXTERNAL_LINK_TEST_FILE_NAME);
-
             if ((ext_file_id = H5Fcreate(ext_link_filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
                 H5_FAILED();
                 printf("    couldn't create file '%s' for external link to reference\n", ext_link_filename);
@@ -18760,9 +18780,6 @@ test_get_link_name(void)
             TESTING_2("H5Lget_name_by_idx on external link by alphabetical order in increasing order");
 
             /* Create file for external link to reference */
-            HDsnprintf(ext_link_filename, H5_API_TEST_FILENAME_MAX_LENGTH, "%s",
-                       EXTERNAL_LINK_TEST_FILE_NAME);
-
             if ((ext_file_id = H5Fcreate(ext_link_filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
                 H5_FAILED();
                 printf("    couldn't create file '%s' for external link to reference\n", ext_link_filename);
@@ -18943,9 +18960,6 @@ test_get_link_name(void)
             TESTING_2("H5Lget_name_by_idx on external link by alphabetical order in decreasing order");
 
             /* Create file for external link to reference */
-            HDsnprintf(ext_link_filename, H5_API_TEST_FILENAME_MAX_LENGTH, "%s",
-                       EXTERNAL_LINK_TEST_FILE_NAME);
-
             if ((ext_file_id = H5Fcreate(ext_link_filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
                 H5_FAILED();
                 printf("    couldn't create file '%s' for external link to reference\n", ext_link_filename);
@@ -19205,7 +19219,7 @@ test_get_link_name(void)
         TEST_ERROR;
     if (H5Fclose(file_id) < 0)
         TEST_ERROR;
-
+    free(ext_link_filename);
     PASSED();
 
     return 0;
@@ -19219,6 +19233,7 @@ error:
         H5Gclose(container_group);
         H5Fclose(ext_file_id);
         H5Fclose(file_id);
+        free(ext_link_filename);
     }
     H5E_END_TRY
 
@@ -19255,9 +19270,9 @@ test_get_link_name_invalid_params(void)
 
     TESTING_2("test setup");
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -19521,9 +19536,9 @@ test_link_iterate_hard_links(void)
 
     TESTING_2("test setup");
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -19891,9 +19906,9 @@ test_link_iterate_soft_links(void)
 
     TESTING_2("test setup");
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -20228,8 +20243,8 @@ test_link_iterate_external_links(void)
     htri_t link_exists;
     hid_t  file_id         = H5I_INVALID_HID;
     hid_t  container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
-    hid_t  gcpl_id = H5I_INVALID_HID;
-    char   ext_link_filename[H5_API_TEST_FILENAME_MAX_LENGTH];
+    hid_t  gcpl_id           = H5I_INVALID_HID;
+    char  *ext_link_filename = NULL;
 
     TESTING_MULTIPART("link iteration (only external links)");
 
@@ -20245,7 +20260,11 @@ test_link_iterate_external_links(void)
 
     TESTING_2("test setup");
 
-    HDsnprintf(ext_link_filename, H5_API_TEST_FILENAME_MAX_LENGTH, "%s", EXTERNAL_LINK_TEST_FILE_NAME);
+    if (prefix_filename(test_path_prefix, EXTERNAL_LINK_TEST_FILE_NAME, &ext_link_filename) < 0) {
+        H5_FAILED();
+        printf("    couldn't create external link filename\n");
+        goto error;
+    }
 
     if ((file_id = H5Fcreate(ext_link_filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
         H5_FAILED();
@@ -20256,9 +20275,9 @@ test_link_iterate_external_links(void)
     if (H5Fclose(file_id) < 0)
         TEST_ERROR;
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -20561,7 +20580,7 @@ test_link_iterate_external_links(void)
         TEST_ERROR;
     if (H5Fclose(file_id) < 0)
         TEST_ERROR;
-
+    free(ext_link_filename);
     PASSED();
 
     return 0;
@@ -20573,6 +20592,7 @@ error:
         H5Gclose(group_id);
         H5Gclose(container_group);
         H5Fclose(file_id);
+        free(ext_link_filename);
     }
     H5E_END_TRY
 
@@ -20626,7 +20646,7 @@ test_link_iterate_mixed_links(void)
     hid_t   dset_dtype  = H5I_INVALID_HID;
     hid_t   dset_dspace = H5I_INVALID_HID;
     int     halted;
-    char    ext_link_filename[H5_API_TEST_FILENAME_MAX_LENGTH];
+    char   *ext_link_filename = NULL;
 
     TESTING_MULTIPART("link iteration (mixed link types)");
 
@@ -20642,7 +20662,11 @@ test_link_iterate_mixed_links(void)
 
     TESTING_2("test setup");
 
-    HDsnprintf(ext_link_filename, H5_API_TEST_FILENAME_MAX_LENGTH, "%s", EXTERNAL_LINK_TEST_FILE_NAME);
+    if (prefix_filename(test_path_prefix, EXTERNAL_LINK_TEST_FILE_NAME, &ext_link_filename) < 0) {
+        H5_FAILED();
+        printf("    couldn't create external link filename\n");
+        goto error;
+    }
 
     if ((file_id = H5Fcreate(ext_link_filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
         H5_FAILED();
@@ -20653,9 +20677,9 @@ test_link_iterate_mixed_links(void)
     if (H5Fclose(file_id) < 0)
         TEST_ERROR;
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -21074,7 +21098,7 @@ test_link_iterate_mixed_links(void)
         TEST_ERROR;
     if (H5Fclose(file_id) < 0)
         TEST_ERROR;
-
+    free(ext_link_filename);
     PASSED();
 
     return 0;
@@ -21089,6 +21113,7 @@ error:
         H5Gclose(group_id);
         H5Gclose(container_group);
         H5Fclose(file_id);
+        free(ext_link_filename);
     }
     H5E_END_TRY
 
@@ -21105,13 +21130,13 @@ test_link_iterate_invalid_params(void)
     herr_t err_ret = -1;
     size_t i;
     htri_t link_exists;
-    hid_t  file_id         = H5I_INVALID_HID;
-    hid_t  container_group = H5I_INVALID_HID;
-    hid_t  group_id        = H5I_INVALID_HID;
-    hid_t  dset_id         = H5I_INVALID_HID;
-    hid_t  dset_dtype      = H5I_INVALID_HID;
-    hid_t  dset_dspace     = H5I_INVALID_HID;
-    char   ext_link_filename[H5_API_TEST_FILENAME_MAX_LENGTH];
+    hid_t  file_id           = H5I_INVALID_HID;
+    hid_t  container_group   = H5I_INVALID_HID;
+    hid_t  group_id          = H5I_INVALID_HID;
+    hid_t  dset_id           = H5I_INVALID_HID;
+    hid_t  dset_dtype        = H5I_INVALID_HID;
+    hid_t  dset_dspace       = H5I_INVALID_HID;
+    char  *ext_link_filename = NULL;
 
     TESTING_MULTIPART("link iteration with invalid parameters");
 
@@ -21128,7 +21153,11 @@ test_link_iterate_invalid_params(void)
 
     TESTING_2("test setup");
 
-    HDsnprintf(ext_link_filename, H5_API_TEST_FILENAME_MAX_LENGTH, "%s", EXTERNAL_LINK_TEST_FILE_NAME);
+    if (prefix_filename(test_path_prefix, EXTERNAL_LINK_TEST_FILE_NAME, &ext_link_filename) < 0) {
+        H5_FAILED();
+        printf("    couldn't create external link filename\n");
+        goto error;
+    }
 
     if ((file_id = H5Fcreate(ext_link_filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
         H5_FAILED();
@@ -21139,9 +21168,9 @@ test_link_iterate_invalid_params(void)
     if (H5Fclose(file_id) < 0)
         TEST_ERROR;
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -21484,7 +21513,7 @@ test_link_iterate_invalid_params(void)
         TEST_ERROR;
     if (H5Fclose(file_id) < 0)
         TEST_ERROR;
-
+    free(ext_link_filename);
     PASSED();
 
     return 0;
@@ -21498,6 +21527,7 @@ error:
         H5Gclose(group_id);
         H5Gclose(container_group);
         H5Fclose(file_id);
+        free(ext_link_filename);
     }
     H5E_END_TRY
 
@@ -21528,9 +21558,9 @@ test_link_iterate_0_links(void)
 
     TESTING_2("test setup");
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -21776,9 +21806,9 @@ test_link_visit_hard_links_no_cycles(void)
 
     TESTING_2("test setup");
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -22174,9 +22204,9 @@ test_link_visit_soft_links_no_cycles(void)
 
     TESTING_2("test setup");
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -22537,9 +22567,9 @@ test_link_visit_external_links_no_cycles(void)
     htri_t link_exists;
     hid_t  file_id         = H5I_INVALID_HID;
     hid_t  container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
-    hid_t  subgroup_id = H5I_INVALID_HID;
-    hid_t  gcpl_id     = H5I_INVALID_HID;
-    char   ext_link_filename[H5_API_TEST_FILENAME_MAX_LENGTH];
+    hid_t  subgroup_id       = H5I_INVALID_HID;
+    hid_t  gcpl_id           = H5I_INVALID_HID;
+    char  *ext_link_filename = NULL;
 
     TESTING_MULTIPART("link visiting without cycles (only external links)");
 
@@ -22555,7 +22585,11 @@ test_link_visit_external_links_no_cycles(void)
 
     TESTING_2("test setup");
 
-    HDsnprintf(ext_link_filename, H5_API_TEST_FILENAME_MAX_LENGTH, "%s", EXTERNAL_LINK_TEST_FILE_NAME);
+    if (prefix_filename(test_path_prefix, EXTERNAL_LINK_TEST_FILE_NAME, &ext_link_filename) < 0) {
+        H5_FAILED();
+        printf("    couldn't create external link filename\n");
+        goto error;
+    }
 
     if ((file_id = H5Fcreate(ext_link_filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
         H5_FAILED();
@@ -22566,9 +22600,9 @@ test_link_visit_external_links_no_cycles(void)
     if (H5Fclose(file_id) < 0)
         TEST_ERROR;
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -22897,7 +22931,7 @@ test_link_visit_external_links_no_cycles(void)
         TEST_ERROR;
     if (H5Fclose(file_id) < 0)
         TEST_ERROR;
-
+    free(ext_link_filename);
     PASSED();
 
     return 0;
@@ -22910,6 +22944,7 @@ error:
         H5Gclose(group_id);
         H5Gclose(container_group);
         H5Fclose(file_id);
+        free(ext_link_filename);
     }
     H5E_END_TRY
 
@@ -22960,11 +22995,11 @@ test_link_visit_mixed_links_no_cycles(void)
     hid_t  file_id         = H5I_INVALID_HID;
     hid_t  container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
     hid_t  subgroup1 = H5I_INVALID_HID, subgroup2 = H5I_INVALID_HID;
-    hid_t  gcpl_id    = H5I_INVALID_HID;
-    hid_t  dset_id    = H5I_INVALID_HID;
-    hid_t  dset_dtype = H5I_INVALID_HID;
-    hid_t  fspace_id  = H5I_INVALID_HID;
-    char   ext_link_filename[H5_API_TEST_FILENAME_MAX_LENGTH];
+    hid_t  gcpl_id           = H5I_INVALID_HID;
+    hid_t  dset_id           = H5I_INVALID_HID;
+    hid_t  dset_dtype        = H5I_INVALID_HID;
+    hid_t  fspace_id         = H5I_INVALID_HID;
+    char  *ext_link_filename = NULL;
 
     TESTING_MULTIPART("link visiting without cycles (mixed link types)");
 
@@ -22983,7 +23018,11 @@ test_link_visit_mixed_links_no_cycles(void)
 
     TESTING_2("test setup");
 
-    HDsnprintf(ext_link_filename, H5_API_TEST_FILENAME_MAX_LENGTH, "%s", EXTERNAL_LINK_TEST_FILE_NAME);
+    if (prefix_filename(test_path_prefix, EXTERNAL_LINK_TEST_FILE_NAME, &ext_link_filename) < 0) {
+        H5_FAILED();
+        printf("    couldn't create external link filename\n");
+        goto error;
+    }
 
     if ((file_id = H5Fcreate(ext_link_filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
         H5_FAILED();
@@ -22994,9 +23033,9 @@ test_link_visit_mixed_links_no_cycles(void)
     if (H5Fclose(file_id) < 0)
         TEST_ERROR;
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -23406,7 +23445,7 @@ test_link_visit_mixed_links_no_cycles(void)
         TEST_ERROR;
     if (H5Fclose(file_id) < 0)
         TEST_ERROR;
-
+    free(ext_link_filename);
     PASSED();
 
     return 0;
@@ -23423,6 +23462,7 @@ error:
         H5Gclose(group_id);
         H5Gclose(container_group);
         H5Fclose(file_id);
+        free(ext_link_filename);
     }
     H5E_END_TRY
 
@@ -23460,9 +23500,9 @@ test_link_visit_hard_links_cycles(void)
 
     TESTING_2("test setup");
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -23833,9 +23873,9 @@ test_link_visit_soft_links_cycles(void)
 
     TESTING_2("test setup");
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -24213,9 +24253,9 @@ test_link_visit_external_links_cycles(void)
 
     TESTING_2("test setup");
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -24275,7 +24315,7 @@ test_link_visit_external_links_cycles(void)
                        "/" LINK_TEST_GROUP_NAME "/" LINK_VISIT_EXT_LINKS_CYCLE_TEST_SUBGROUP_NAME "/%s",
                        grp_name);
 
-            if (H5Lcreate_external(H5_api_test_filename, link_target_obj, subgroup_id, link_name, H5P_DEFAULT,
+            if (H5Lcreate_external(H5_API_TEST_FILENAME, link_target_obj, subgroup_id, link_name, H5P_DEFAULT,
                                    H5P_DEFAULT) < 0) {
                 H5_FAILED();
                 printf("    couldn't create external link '%s'\n", link_name);
@@ -24605,9 +24645,8 @@ test_link_visit_mixed_links_cycles(void)
     hid_t  file_id         = H5I_INVALID_HID;
     hid_t  container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
     hid_t  subgroup1 = H5I_INVALID_HID, subgroup2 = H5I_INVALID_HID;
-    hid_t  gcpl_id = H5I_INVALID_HID;
-    char   ext_link_filename[H5_API_TEST_FILENAME_MAX_LENGTH];
-
+    hid_t  gcpl_id           = H5I_INVALID_HID;
+    char  *ext_link_filename = NULL;
     TESTING_MULTIPART("link visiting with cycles (mixed link types)");
 
     /* Make sure the connector supports the API functions being tested */
@@ -24623,7 +24662,11 @@ test_link_visit_mixed_links_cycles(void)
 
     TESTING_2("test setup");
 
-    HDsnprintf(ext_link_filename, H5_API_TEST_FILENAME_MAX_LENGTH, "%s", EXTERNAL_LINK_TEST_FILE_NAME);
+    if (prefix_filename(test_path_prefix, EXTERNAL_LINK_TEST_FILE_NAME, &ext_link_filename) < 0) {
+        H5_FAILED();
+        printf("    couldn't create external link test file name\n");
+        goto error;
+    }
 
     if ((file_id = H5Fcreate(ext_link_filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
         H5_FAILED();
@@ -24634,9 +24677,9 @@ test_link_visit_mixed_links_cycles(void)
     if (H5Fclose(file_id) < 0)
         TEST_ERROR;
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -25009,7 +25052,7 @@ test_link_visit_mixed_links_cycles(void)
         TEST_ERROR;
     if (H5Fclose(file_id) < 0)
         TEST_ERROR;
-
+    free(ext_link_filename);
     PASSED();
 
     return 0;
@@ -25023,6 +25066,7 @@ error:
         H5Gclose(group_id);
         H5Gclose(container_group);
         H5Fclose(file_id);
+        free(ext_link_filename);
     }
     H5E_END_TRY
 
@@ -25041,10 +25085,10 @@ test_link_visit_invalid_params(void)
     hid_t  file_id         = H5I_INVALID_HID;
     hid_t  container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
     hid_t  subgroup1 = H5I_INVALID_HID, subgroup2 = H5I_INVALID_HID;
-    hid_t  dset_id    = H5I_INVALID_HID;
-    hid_t  dset_dtype = H5I_INVALID_HID;
-    hid_t  fspace_id  = H5I_INVALID_HID;
-    char   ext_link_filename[H5_API_TEST_FILENAME_MAX_LENGTH];
+    hid_t  dset_id           = H5I_INVALID_HID;
+    hid_t  dset_dtype        = H5I_INVALID_HID;
+    hid_t  fspace_id         = H5I_INVALID_HID;
+    char  *ext_link_filename = NULL;
 
     TESTING_MULTIPART("link visiting with invalid parameters");
 
@@ -25060,7 +25104,11 @@ test_link_visit_invalid_params(void)
 
     TESTING_2("test setup");
 
-    HDsnprintf(ext_link_filename, H5_API_TEST_FILENAME_MAX_LENGTH, "%s", EXTERNAL_LINK_TEST_FILE_NAME);
+    if (prefix_filename(test_path_prefix, EXTERNAL_LINK_TEST_FILE_NAME, &ext_link_filename) < 0) {
+        H5_FAILED();
+        printf("    couldn't create external link test file name\n");
+        goto error;
+    }
 
     if ((file_id = H5Fcreate(ext_link_filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
         H5_FAILED();
@@ -25071,9 +25119,9 @@ test_link_visit_invalid_params(void)
     if (H5Fclose(file_id) < 0)
         TEST_ERROR;
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -25468,7 +25516,7 @@ test_link_visit_invalid_params(void)
         TEST_ERROR;
     if (H5Fclose(file_id) < 0)
         TEST_ERROR;
-
+    free(ext_link_filename);
     PASSED();
 
     return 0;
@@ -25484,6 +25532,7 @@ error:
         H5Gclose(group_id);
         H5Gclose(container_group);
         H5Fclose(file_id);
+        free(ext_link_filename);
     }
     H5E_END_TRY
 
@@ -25515,9 +25564,9 @@ test_link_visit_0_links(void)
 
     TESTING_2("test setup");
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -27042,8 +27091,18 @@ link_visit_0_links_cb(hid_t group_id, const char *name, const H5L_info2_t *info,
 static void
 cleanup_files(void)
 {
-    H5Fdelete(EXTERNAL_LINK_TEST_FILE_NAME, H5P_DEFAULT);
-    H5Fdelete(EXTERNAL_LINK_INVALID_PARAMS_TEST_FILE_NAME, H5P_DEFAULT);
+    char *ext_link_filename = NULL;
+
+    prefix_filename(test_path_prefix, EXTERNAL_LINK_TEST_FILE_NAME, &ext_link_filename);
+    H5Fdelete(ext_link_filename, H5P_DEFAULT);
+
+    free(ext_link_filename);
+    ext_link_filename = NULL;
+
+    prefix_filename(test_path_prefix, EXTERNAL_LINK_INVALID_PARAMS_TEST_FILE_NAME, &ext_link_filename);
+    H5Fdelete(ext_link_filename, H5P_DEFAULT);
+
+    free(ext_link_filename);
 }
 
 int

@@ -131,9 +131,9 @@ test_open_object(void)
         return 0;
     }
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -441,9 +441,9 @@ test_open_object_invalid_params(void)
 
     TESTING_2("test setup");
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -817,9 +817,9 @@ test_object_exists(void)
 
     TESTING_2("test setup");
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -1076,9 +1076,9 @@ test_object_exists_invalid_params(void)
 
     TESTING_2("test setup");
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -1268,9 +1268,9 @@ test_link_object(void)
 
     TESTING_2("test setup");
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -1422,9 +1422,9 @@ test_link_object_invalid_params(void)
 
     TESTING_2("test setup");
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -1626,9 +1626,9 @@ test_incr_decr_object_refcount(void)
 
     TESTING_2("test setup");
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -2003,9 +2003,9 @@ test_object_copy_basic(void)
 
     TESTING_2("test setup");
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -2571,9 +2571,9 @@ test_object_copy_already_existing(void)
 
     TESTING_2("test setup");
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -2766,9 +2766,9 @@ test_object_copy_shallow_group_copy(void)
         return 0;
     }
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -3005,9 +3005,9 @@ test_object_copy_no_attributes(void)
 
     TESTING_2("test setup");
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -3513,9 +3513,9 @@ test_object_copy_by_soft_link(void)
 
     TESTING_2("test setup");
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -3843,9 +3843,9 @@ test_object_copy_group_with_soft_links(void)
 
     TESTING_2("test setup");
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -4179,21 +4179,22 @@ test_object_copy_between_files(void)
     H5G_info_t  group_info;
     htri_t      object_link_exists;
     size_t      i;
-    hid_t       file_id         = H5I_INVALID_HID;
-    hid_t       file_id2        = H5I_INVALID_HID;
-    hid_t       container_group = H5I_INVALID_HID;
-    hid_t       group_id        = H5I_INVALID_HID;
-    hid_t       group_id2       = H5I_INVALID_HID;
-    hid_t       tmp_group_id    = H5I_INVALID_HID;
-    hid_t       dset_id         = H5I_INVALID_HID;
-    hid_t       tmp_dset_id     = H5I_INVALID_HID;
-    hid_t       dset_dtype      = H5I_INVALID_HID;
-    hid_t       dtype_id        = H5I_INVALID_HID;
-    hid_t       tmp_dtype_id    = H5I_INVALID_HID;
-    hid_t       attr_id         = H5I_INVALID_HID;
-    hid_t       attr_space_id   = H5I_INVALID_HID;
-    hid_t       space_id        = H5I_INVALID_HID;
-    hid_t       ocpypl_id       = H5I_INVALID_HID;
+    hid_t       file_id           = H5I_INVALID_HID;
+    hid_t       file_id2          = H5I_INVALID_HID;
+    hid_t       container_group   = H5I_INVALID_HID;
+    hid_t       group_id          = H5I_INVALID_HID;
+    hid_t       group_id2         = H5I_INVALID_HID;
+    hid_t       tmp_group_id      = H5I_INVALID_HID;
+    hid_t       dset_id           = H5I_INVALID_HID;
+    hid_t       tmp_dset_id       = H5I_INVALID_HID;
+    hid_t       dset_dtype        = H5I_INVALID_HID;
+    hid_t       dtype_id          = H5I_INVALID_HID;
+    hid_t       tmp_dtype_id      = H5I_INVALID_HID;
+    hid_t       attr_id           = H5I_INVALID_HID;
+    hid_t       attr_space_id     = H5I_INVALID_HID;
+    hid_t       space_id          = H5I_INVALID_HID;
+    hid_t       ocpypl_id         = H5I_INVALID_HID;
+    char       *obj_copy_filename = NULL;
 
     TESTING_MULTIPART("object copying between files");
 
@@ -4215,16 +4216,21 @@ test_object_copy_between_files(void)
     /*
      * Create the second file for the between file copying tests.
      */
-    if ((file_id2 = H5Fcreate(OBJECT_COPY_BETWEEN_FILES_TEST_FILE_NAME, H5F_ACC_TRUNC, H5P_DEFAULT,
-                              H5P_DEFAULT)) < 0) {
+    if (prefix_filename(test_path_prefix, OBJECT_COPY_BETWEEN_FILES_TEST_FILE_NAME, &obj_copy_filename) < 0) {
         H5_FAILED();
-        printf("    couldn't create file '%s'\n", H5_api_test_filename);
+        printf("    couldn't create filename for object copy test file\n");
         goto error;
     }
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id2 = H5Fcreate(obj_copy_filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't create file '%s'\n", H5_API_TEST_FILENAME);
+        goto error;
+    }
+
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+        H5_FAILED();
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -4399,8 +4405,7 @@ test_object_copy_between_files(void)
             if (!object_link_exists) {
                 H5_FAILED();
                 printf("    link '%s' to copied group in second file '%s' didn't exist!\n",
-                       OBJECT_COPY_BETWEEN_FILES_TEST_NEW_GROUP_NAME,
-                       OBJECT_COPY_BETWEEN_FILES_TEST_FILE_NAME);
+                       OBJECT_COPY_BETWEEN_FILES_TEST_NEW_GROUP_NAME, obj_copy_filename);
                 PART_ERROR(H5Ocopy_group_between_files);
             }
 
@@ -4558,8 +4563,7 @@ test_object_copy_between_files(void)
             if (!object_link_exists) {
                 H5_FAILED();
                 printf("    link '%s' to copied dataset in second file '%s' didn't exist!\n",
-                       OBJECT_COPY_BETWEEN_FILES_TEST_NEW_DSET_NAME,
-                       OBJECT_COPY_BETWEEN_FILES_TEST_FILE_NAME);
+                       OBJECT_COPY_BETWEEN_FILES_TEST_NEW_DSET_NAME, obj_copy_filename);
                 PART_ERROR(H5Ocopy_dset_between_files);
             }
 
@@ -4652,8 +4656,7 @@ test_object_copy_between_files(void)
             if (!object_link_exists) {
                 H5_FAILED();
                 printf("    link '%s' to copied committed datatype in second file '%s' didn't exist!\n",
-                       OBJECT_COPY_BETWEEN_FILES_TEST_NEW_DTYPE_NAME,
-                       OBJECT_COPY_BETWEEN_FILES_TEST_FILE_NAME);
+                       OBJECT_COPY_BETWEEN_FILES_TEST_NEW_DTYPE_NAME, obj_copy_filename);
                 PART_ERROR(H5Ocopy_dtype_between_files);
             }
 
@@ -4747,7 +4750,7 @@ test_object_copy_between_files(void)
         TEST_ERROR;
     if (H5Fclose(file_id) < 0)
         TEST_ERROR;
-
+    free(obj_copy_filename);
     PASSED();
 
     return 0;
@@ -4770,6 +4773,7 @@ error:
         H5Gclose(container_group);
         H5Fclose(file_id2);
         H5Fclose(file_id);
+        free(obj_copy_filename);
     }
     H5E_END_TRY
 
@@ -4800,9 +4804,9 @@ test_object_copy_invalid_params(void)
 
     TESTING_2("test setup");
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -5073,9 +5077,9 @@ test_object_visit(void)
 
     TESTING_2("test setup");
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -5597,9 +5601,9 @@ test_object_visit_soft_link(void)
 
     TESTING_2("test setup");
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -6078,9 +6082,9 @@ test_object_visit_invalid_params(void)
 
     TESTING_2("test setup");
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -6401,9 +6405,9 @@ test_close_object(void)
 
     TESTING_2("test setup");
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -6590,9 +6594,9 @@ test_close_object_invalid_params(void)
         return 0;
     }
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -6656,9 +6660,9 @@ test_close_invalid_objects(void)
     if ((fapl_id = H5Pcreate(H5P_FILE_ACCESS)) < 0)
         TEST_ERROR;
 
-    if ((file_id = H5Fopen(H5_api_test_filename, H5F_ACC_RDWR, fapl_id)) < 0) {
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, fapl_id)) < 0) {
         H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_api_test_filename);
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
         goto error;
     }
 
@@ -7166,7 +7170,12 @@ object_visit_noop_callback(hid_t o_id, const char *name, const H5O_info2_t *obje
 static void
 cleanup_files(void)
 {
-    H5Fdelete(OBJECT_COPY_BETWEEN_FILES_TEST_FILE_NAME, H5P_DEFAULT);
+    char *obj_copy_filename = NULL;
+
+    prefix_filename(test_path_prefix, OBJECT_COPY_BETWEEN_FILES_TEST_FILE_NAME, &obj_copy_filename);
+
+    H5Fdelete(obj_copy_filename, H5P_DEFAULT);
+    free(obj_copy_filename);
 }
 
 int
