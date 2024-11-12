@@ -2118,65 +2118,48 @@ if test "X$MULTITHREAD" = "Xyes"; then
 
     case "$host_cpu-$host_vendor-$host_os" in
       *linux*)
-	# Replace C99 with C11 standard to support atomic datatype
-	H5_CFLAGS=$(echo $H5_CFLAGS | sed -e "s/-std=c99/-std=c11/g")
+        HAVE_STDATOMIC_H="yes"
 
-        # Remove the flag -Wc99-c11-compat to supress compiler warnings
-        # No need of the warnings for the features not in C99 because we
-        # have to use C11
-        H5_CFLAGS=$(echo $H5_CFLAGS | sed -e "s/-Wc99-c11-compat//g")
+        # Check the presence of stdatomic.h for atomic data type
+        AC_CHECK_HEADERS([stdatomic.h],,[HAVE_STDATOMIC_H="no"])
 
-	# Propagate the change to CFLAGS, too
-	CFLAGS="$H5_CFLAGS $AM_CFLAGS $CFLAGS"
+        # Check the presence of atomic library
+        if test "x$HAVE_STDATOMIC_H" = "xyes"; then
+          HAVE_LIBATOMIC="yes"
+          AC_CHECK_LIB([atomic], [__atomic_compare_exchange_16],,[HAVE_LIBATOMIC="no"])
+        fi
 
-	HAVE_STDATOMIC_H="yes"
+        # Define HAVE_MULTITHREAD on if stdatomic.h and atomic and pthread libraries are present
+        AC_MSG_CHECKING([for multithread support (pthread and atomic libraries)])
 
-	# Check the presence of stdatomic.h for atomic data type
-	AC_CHECK_HEADERS([stdatomic.h],,[HAVE_STDATOMIC_H="no"])
-
-	# Check the presence of atomic library
-	if test "x$HAVE_STDATOMIC_H" = "xyes"; then
-	  HAVE_LIBATOMIC="yes"
-	  AC_CHECK_LIB([atomic], [__atomic_compare_exchange_16],,[HAVE_LIBATOMIC="no"])
-	fi
-
-	# Define HAVE_MULTITHREAD on if stdatomic.h and atomic and pthread libraries are present
-	AC_MSG_CHECKING([for multithread support (pthread and atomic libraries)])
-
-	# Define HAVE_MULTITHREAD only if stdatomic.h, atomic library, and pthread library are present
-	if [ test "x$HAVE_STDATOMIC_H" = "xyes" ] &&  [ test "x$HAVE_LIBATOMIC" = "xyes" ] && [ test "x$HAVE_PTHREAD" = "xyes" ]; then
-	  AC_MSG_RESULT([yes])
-	  AC_DEFINE([HAVE_MULTITHREAD], [1], [Define if we have multithread support (pthread and atomic libraries)])
-	else
-	  AC_MSG_RESULT([no])
-	  AC_MSG_ERROR([Must use Pthread and atomic library and header with multithread])
-	fi
-	;;
+        # Define HAVE_MULTITHREAD only if stdatomic.h, atomic library, and pthread library are present
+        if [ test "x$HAVE_STDATOMIC_H" = "xyes" ] &&  [ test "x$HAVE_LIBATOMIC" = "xyes" ] && [ test "x$HAVE_PTHREAD" = "xyes" ]; then
+          AC_MSG_RESULT([yes])
+          AC_DEFINE([HAVE_MULTITHREAD], [1], [Define if we have multithread support (pthread and atomic libraries)])
+        else
+          AC_MSG_RESULT([no])
+          AC_MSG_ERROR([Must use Pthread and atomic library and header with multithread])
+        fi
+        ;;
 
       *apple*)
-	# Replace C99 with C11 standard to support atomic datatype
-	H5_CFLAGS=$(echo $H5_CFLAGS | sed -e "s/-std=c99/-std=c11/g")
+        # Check the presence of stdatomic.h for atomic data type.  Unlike GCC on Linux, clang on Mac OS doesn't need
+        # to link to the atomic library (-latomic)
+        HAVE_STDATOMIC_H="yes"
 
-	# Propagate the change to CFLAGS, too
-	CFLAGS="$H5_CFLAGS $AM_CFLAGS $CFLAGS"
+        AC_CHECK_HEADERS([stdatomic.h],,[HAVE_STDATOMIC_H="no"])
 
-	# Check the presence of stdatomic.h for atomic data type.  Unlike GCC on Linux, clang on Mac OS doesn't need
-	# to link to the atomic library (-latomic)
-	HAVE_STDATOMIC_H="yes"
+        # Define HAVE_MULTITHREAD on if stdatomic.h and pthread are present
+        AC_MSG_CHECKING([for multithread support (pthread library and atomic header)])
 
-	AC_CHECK_HEADERS([stdatomic.h],,[HAVE_STDATOMIC_H="no"])
-
-	# Define HAVE_MULTITHREAD on if stdatomic.h and pthread are present
-	AC_MSG_CHECKING([for multithread support (pthread library and atomic header)])
-
-	if [ test "x$HAVE_STDATOMIC_H" = "xyes" ] && [ test "x$HAVE_PTHREAD" = "xyes" ]; then
-	  AC_MSG_RESULT([yes])
-	  AC_DEFINE([HAVE_MULTITHREAD], [1], [Define if we have multithread support (pthread and atomic header)])
-	else
-	  AC_MSG_RESULT([no])
-	  AC_MSG_ERROR([Must use Pthread and atomic header with multithread])
-	fi
-	;;
+        if [ test "x$HAVE_STDATOMIC_H" = "xyes" ] && [ test "x$HAVE_PTHREAD" = "xyes" ]; then
+          AC_MSG_RESULT([yes])
+          AC_DEFINE([HAVE_MULTITHREAD], [1], [Define if we have multithread support (pthread and atomic header)])
+        else
+          AC_MSG_RESULT([no])
+          AC_MSG_ERROR([Must use Pthread and atomic header with multithread])
+        fi
+        ;;
     esac
 fi
 

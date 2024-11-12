@@ -48,8 +48,8 @@ if test "X-cce" = "X-$cc_vendor"; then
     #esac
 
     # General
-    # Default to C99 standard.
-    H5_CFLAGS="${H5_CFLAGS:--hc99 $arch}"
+    # Default to C11 standard.
+    H5_CFLAGS="${H5_CFLAGS:--hc11 $arch}"
 
     # Production
     PROD_CFLAGS=
