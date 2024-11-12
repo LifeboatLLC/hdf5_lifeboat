@@ -5,15 +5,24 @@ prototype changes for multi-threaded support before creating PRs to the HDF5 dev
 branch. This is for Lifeboat's internal use only but anyone is welcome to watch our
 progress.
 
-One must use the --enable-multithread option for configure to enable the multithread
-support. On Mac OS, this option requires the presence of the Pthread library and the
-Atomic header (stdatomic.h). On Linux, it requires the presence of the Pthread and
-Atomic libraries and the Atomic header.  Missing any of these requirements will cause
-configure to fail. Using the multithread feature requires disabling the high-level
-API, C++, Fortran, Java interfaces, and thread safe.
+For autotools builds, one must use the `--enable-multithread` option for configure
+to enable the multithread support. For CMake builds, one must use the
+`HDF5_ENABLE_MULTITHREAD=ON` option to enable the multithread support.
+On Mac OS, this requires the presence of the Pthread library and the Atomic header
+(stdatomic.h). On Linux, it requires the presence of the Pthread and Atomic libraries
+and the Atomic header.  Missing any of these requirements will cause configuration to
+fail. Using the multithread feature requires disabling the high-level API, C++, Fortran,
+Java interfaces, and thread safe.
 
-The following command is an example to enable the multithread support:
-    > configure --enable-multithread --enable-build-mode=debug --disable-hl
+The following commands are examples to enable the multithread support:
+
+## Autotools
+
+    > configure --enable-build-mode=debug --enable-multithread --disable-hl
+
+## CMake
+
+    > cmake -DCMAKE_BUILD_TYPE=Debug -DHDF5_ENABLE_MULTITHREAD=ON -DHDF5_BUILD_HL_LIB=OFF ..
 
 Currently, the only test program to check the correctness of multithread support is
 test/mt_id_test.c.  During the build of the library and the test program, there are
