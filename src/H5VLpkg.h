@@ -26,6 +26,10 @@
 /* Get package's private header */
 #include "H5VLprivate.h" /* Generic Functions                    */
 
+#ifdef H5_HAVE_MULTITHREAD
+#include <stdatomic.h>
+#endif
+
 /* Other private headers needed by this file */
 
 /**************************/
