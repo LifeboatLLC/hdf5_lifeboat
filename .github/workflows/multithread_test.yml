@@ -89,13 +89,13 @@ jobs:
             - name: MT VL Tests (Single thread)
               working-directory: ${{github.workspace}}/test/
               run: |
-                valgrind ./test/testmthdf5 -maxthreads 1
+                valgrind ./threads/testmthdf5 -maxthreads 1
             
             - name: MT VL Tests (Multi thread)
               if: matrix.multi_thread == '--enable-multithread --disable-hl'
               working-directory: ${{github.workspace}}/test/
               run: |
-                valgrind ./test/testmthdf5 -maxthreads 16
+                valgrind ./threads/testmthdf5 -maxthreads 16
 
             - name: Other HDF5 Tests
               working-directory: ${{github.workspace}}
