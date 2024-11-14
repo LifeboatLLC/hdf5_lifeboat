@@ -111,14 +111,14 @@ static H5E_auto2_t err_func = NULL;
 
 /* Global variables for testing */
 #ifdef H5_HAVE_MULTITHREAD
-_Atomic size_t n_tests_run_g = 0;
-_Atomic size_t n_tests_passed_g = 0;
-_Atomic size_t n_tests_failed_g = 0;
+_Atomic size_t n_tests_run_g     = 0;
+_Atomic size_t n_tests_passed_g  = 0;
+_Atomic size_t n_tests_failed_g  = 0;
 _Atomic size_t n_tests_skipped_g = 0;
 #else
-size_t n_tests_run_g = 0;
-size_t n_tests_passed_g = 0;
-size_t n_tests_failed_g = 0;
+size_t n_tests_run_g     = 0;
+size_t n_tests_passed_g  = 0;
+size_t n_tests_failed_g  = 0;
 size_t n_tests_skipped_g = 0;
 #endif /* H5_HAVE_MULTITHREAD */
 
@@ -129,7 +129,7 @@ int reg_opt_curr_op_val = 0;
 pthread_key_t thread_info_key_g;
 #endif
 
-uint64_t vol_cap_flags_g   = H5VL_CAP_FLAG_NONE;
+uint64_t vol_cap_flags_g = H5VL_CAP_FLAG_NONE;
 
 static herr_t h5_errors(hid_t estack, void *client_data);
 static char  *h5_fixname_real(const char *base_name, hid_t fapl, const char *_suffix, char *fullname,
@@ -2393,7 +2393,6 @@ reg_opt_op_optional_verify(void *obj, H5VL_optional_args_t *args)
 
     return 0;
 } /* end reg_opt_op_optional_verify() */
-
 
 /*-------------------------------------------------------------------------
  * Function:    reg_opt_op_optional

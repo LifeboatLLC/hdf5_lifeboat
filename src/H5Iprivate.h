@@ -36,9 +36,10 @@
 
 /* Flags for ID class */
 #define H5I_CLASS_IS_APPLICATION 0x01
-#define H5I_CLASS_IS_MT_SAFE     0x02 /* set only if all callbacks associated with the class can
-                                       * be executed safely by multiple threads simultaneeously.
-                                       */
+#define H5I_CLASS_IS_MT_SAFE                                                                                 \
+    0x02 /* set only if all callbacks associated with the class can                                          \
+          * be executed safely by multiple threads simultaneeously.                                          \
+          */
 
 /****************************/
 /* Library Private Typedefs */
@@ -82,10 +83,9 @@ H5_DLL herr_t     H5I_find_id(const void *object, H5I_type_t type, hid_t *id /*o
 
 #ifdef H5_HAVE_MULTITHREAD
 /* External iterator for use in the multi-thread case */
-H5_DLL herr_t H5I_get_first(H5I_type_t type, hid_t *id_ptr, void ** object_ptr, 
-                            hbool_t called_from_H5I);
-H5_DLL herr_t H5I_get_next(H5I_type_t type, hid_t last_id, hid_t *next_id_ptr, 
-                           void ** next_object_ptr, hbool_t called_from_H5I);
+H5_DLL herr_t H5I_get_first(H5I_type_t type, hid_t *id_ptr, void **object_ptr, hbool_t called_from_H5I);
+H5_DLL herr_t H5I_get_next(H5I_type_t type, hid_t last_id, hid_t *next_id_ptr, void **next_object_ptr,
+                           hbool_t called_from_H5I);
 #endif /* H5_HAVE_MULTITHREAD */
 
 /* NOTE:    The object and ID functions below deal in non-VOL objects (i.e.;
@@ -111,8 +111,8 @@ H5_DLL herr_t H5I_register_using_existing_id(H5I_type_t type, void *object, hboo
                                              hid_t existing_id);
 
 /* Debugging functions */
-H5_DLL void   H5I_dump_stats(FILE * file_ptr);
-H5_DLL void   H5I_dump_nz_stats(FILE * file_ptr, const char * tag);
+H5_DLL void   H5I_dump_stats(FILE *file_ptr);
+H5_DLL void   H5I_dump_nz_stats(FILE *file_ptr, const char *tag);
 H5_DLL void   H5I_clear_stats(void);
 H5_DLL herr_t H5I_dump_ids_for_type(H5I_type_t type);
 

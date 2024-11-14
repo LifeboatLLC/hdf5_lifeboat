@@ -150,13 +150,12 @@ usage(void)
     print_func("async       run only the async interface tests\n");
 }
 
-
 int
 main(int argc, char **argv)
 {
     H5E_auto2_t default_err_func;
-    void       *default_err_data          = NULL;
-    bool        err_occurred              = false;
+    void       *default_err_data = NULL;
+    bool        err_occurred     = false;
 
     int testExpress = 0;
 
@@ -179,7 +178,7 @@ main(int argc, char **argv)
      * are going to be run.
      */
     parse_command_line(argc, argv);
-    
+
     testExpress = GetTestExpress();
 
     // TODO
@@ -236,7 +235,7 @@ main(int argc, char **argv)
     /* Display test summary, if requested */
     if (GetTestSummary())
         TestSummary();
-    
+
     /* Clean up test files, if allowed */
     if (GetTestCleanup() && !HDgetenv(HDF5_NOCLEANUP))
         TestCleanup();
@@ -265,7 +264,8 @@ done:
 
     if (err_occurred || n_tests_failed_g > 0) {
         exit(EXIT_FAILURE);
-    } else {
+    }
+    else {
         exit(EXIT_SUCCESS);
     }
 }

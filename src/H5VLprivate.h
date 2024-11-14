@@ -49,7 +49,7 @@ typedef struct H5VL_object_t {
 #ifdef H5_HAVE_MULTITHREAD
     _Atomic size_t rc; /* Reference count                                      */
 #else
-    size_t  rc;        /* Reference count                                      */
+    size_t  rc;    /* Reference count                                      */
 #endif
 
 } H5VL_object_t;

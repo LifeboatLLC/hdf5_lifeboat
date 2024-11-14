@@ -278,14 +278,15 @@ TestParseCmdLine(int argc, char *argv[])
         }
         else if ((HDstrcmp(*argv, "-cleanoff") == 0) || (HDstrcmp(*argv, "-c") == 0)) {
             SetTestNoCleanup();
-        } else if ((strcmp(*argv, "-maxthreads") == 0) || (strcmp(*argv, "-t") == 0)) {
+        }
+        else if ((strcmp(*argv, "-maxthreads") == 0) || (strcmp(*argv, "-t") == 0)) {
             if (argc > 0) {
                 long max_threads;
 
                 --argc;
                 ++argv;
 
-                errno       = 0;
+                errno = 0;
 
                 if (*argv == NULL) {
                     TestUsage();
@@ -295,12 +296,14 @@ TestParseCmdLine(int argc, char *argv[])
                 max_threads = strtol(*argv, NULL, 10);
 
                 if (errno != 0 || max_threads <= 0 || max_threads > (long)INT_MAX) {
-                    fprintf(stderr, "invalid value (%ld) specified for maximum number of threads\n", max_threads);
+                    fprintf(stderr, "invalid value (%ld) specified for maximum number of threads\n",
+                            max_threads);
                     exit(EXIT_FAILURE);
                 }
 
                 SetTestMaxNumThreads((int)max_threads);
-            } else {
+            }
+            else {
                 TestUsage();
                 exit(EXIT_FAILURE);
             }

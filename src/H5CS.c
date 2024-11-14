@@ -77,7 +77,7 @@ static H5CS_t *
 H5CS__get_stack(void)
 {
     H5TS_tl_value_t *tl_value = NULL;
-    H5CS_t *fstack;
+    H5CS_t          *fstack;
 
     FUNC_ENTER_PACKAGE_NOERR_NOFS
 
@@ -108,7 +108,8 @@ H5CS__get_stack(void)
          *      routines.  See calls to pthread_key_create() in H5TS.c -QAK)
          */
         H5TS_set_thread_local_value(H5TS_funcstk_key_g, (void *)tl_value);
-    } else {
+    }
+    else {
         fstack = (H5CS_t *)tl_value->value;
         assert(fstack);
     }

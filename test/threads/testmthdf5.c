@@ -13,7 +13,7 @@
 /*
  * FILE
  * testm5hdf5.c - HDF5 multi-threaded testing framework main file
- * 
+ *
  * REMARKS
  * General test wrapper for HDF5 library multi-threaded safety test programs
  *
@@ -25,7 +25,7 @@
  * base functionality testing.
  * Each test module should include testm5hdf5.h and define a unique set of
  * names for the test files they create.
- * 
+ *
  * BUGS/LIMITATIONS
  */
 
@@ -39,12 +39,13 @@
 /* Parameter to determine extent of stress testing */
 #define NUM_ITERS 100
 
-int main(int argc, char *argv[]) 
+int
+main(int argc, char *argv[])
 {
-    unsigned runtime;           /* Maximum run-time for test (in seconds) */
-    unsigned num_subtests = 11;
-    int testExpress;
-    int num_errs_occurred = 0;
+    unsigned       runtime; /* Maximum run-time for test (in seconds) */
+    unsigned       num_subtests = 11;
+    int            testExpress;
+    int            num_errs_occurred = 0;
     mt_test_params params;
 
     /* Initialize testing framework */
@@ -54,11 +55,14 @@ int main(int argc, char *argv[])
 
     if (testExpress == 0) {
         runtime = 0; /* Run with no timeout  */
-    } else if (testExpress == 1) {
+    }
+    else if (testExpress == 1) {
         runtime = 1800; /* 30 minute timeout */
-    } else if (testExpress == 2) {
+    }
+    else if (testExpress == 2) {
         runtime = 600; /* 10 minute timeout */
-    } else {
+    }
+    else {
         runtime = 60; /* 1 minute timeout */
     }
 
@@ -66,47 +70,43 @@ int main(int argc, char *argv[])
 
     if (testExpress > 0) {
         params.subtest_timeout = (runtime - MT_VL_TEST_MARGIN) / num_subtests;
-    } else {
+    }
+    else {
         params.subtest_timeout = 0;
     }
 
 #ifdef H5_HAVE_MULTITHREAD
     /* H5VL Tests */
-    AddTest("mt_reg_unreg", mt_test_registration,
-        NULL, "MT reg/unreg of a single connector", &params);
+    AddTest("mt_reg_unreg", mt_test_registration, NULL, "MT reg/unreg of a single connector", &params);
 
-    AddTest("mt_reg_by_name", mt_test_registration_by_name,
-        NULL, "MT reg/unreg of a single connector by name", &params);
+    AddTest("mt_reg_by_name", mt_test_registration_by_name, NULL,
+            "MT reg/unreg of a single connector by name", &params);
 
-    AddTest("mt_reg_by_val", mt_test_registration_by_value,
-        NULL, "MT reg/unreg of a single connector by value", &params);
+    AddTest("mt_reg_by_val", mt_test_registration_by_value, NULL,
+            "MT reg/unreg of a single connector by value", &params);
 
-    AddTest("mt_dyn_op_reg", mt_test_dyn_op_registration,
-        NULL, "MT reg/unreg of dynamic optional VOL operations", &params);
+    AddTest("mt_dyn_op_reg", mt_test_dyn_op_registration, NULL,
+            "MT reg/unreg of dynamic optional VOL operations", &params);
 
-    AddTest("mt_reg_op", mt_test_registration_operation,
-        mt_test_registration_operation_cleanup,
-        "MT reg/unreg of a connector and usage of its routines", &params);
+    AddTest("mt_reg_op", mt_test_registration_operation, mt_test_registration_operation_cleanup,
+            "MT reg/unreg of a connector and usage of its routines", &params);
 
-    AddTest("mt_fopen_fail", mt_test_file_open_failure_registration,
-        NULL, "MT dynamic VOL loading on file open failure", &params);
+    AddTest("mt_fopen_fail", mt_test_file_open_failure_registration, NULL,
+            "MT dynamic VOL loading on file open failure", &params);
 
-    AddTest("mt_prop_copy", mt_test_vol_property_copy,
-        NULL, "MT VOL property copying", &params);
+    AddTest("mt_prop_copy", mt_test_vol_property_copy, NULL, "MT VOL property copying", &params);
 
-    AddTest("mt_lib_state", mt_test_lib_state_ops,
-        NULL, "MT usage of library state routines", &params);
+    AddTest("mt_lib_state", mt_test_lib_state_ops, NULL, "MT usage of library state routines", &params);
 
-    AddTest("mp_vol_wrp_ctx", mt_test_vol_wrap_ctx,
-        mt_test_vol_wrap_ctx_cleanup, "MT usage of VOL wrap context routines", &params);
+    AddTest("mp_vol_wrp_ctx", mt_test_vol_wrap_ctx, mt_test_vol_wrap_ctx_cleanup,
+            "MT usage of VOL wrap context routines", &params);
 
-    AddTest("mt_vol_info", mt_test_vol_info,
-        NULL, "MT usage of VOL info routines", &params);
+    AddTest("mt_vol_info", mt_test_vol_info, NULL, "MT usage of VOL info routines", &params);
 
-    AddTest("mt_reg_search", mt_test_register_and_search,
-        NULL, "MT reg/unreg of connectors while searching for connector", &params);
+    AddTest("mt_reg_search", mt_test_register_and_search, NULL,
+            "MT reg/unreg of connectors while searching for connector", &params);
 
-#else /* H5_HAVE_MULTITHREAD */
+#else  /* H5_HAVE_MULTITHREAD */
     /* Silence compiler warning */
     (void)params;
 #endif /* H5_HAVE_MULTITHREAD */
@@ -143,7 +143,8 @@ int main(int argc, char *argv[])
 
     if (num_errs_occurred > 0) {
         exit(EXIT_FAILURE);
-    } else {
+    }
+    else {
         exit(EXIT_SUCCESS);
     }
 }

@@ -161,14 +161,14 @@ H5TS__key_destructor(void *_key_val)
     if (key_val != NULL) {
         assert(key_val->type != H5TS_INVALID);
 
-        switch(key_val->type) {
+        switch (key_val->type) {
             case H5TS_ERRSTK: {
                 H5E_t *estack = (H5E_t *)key_val->value;
 
                 /* Clear this thread's local error stack if it exists */
                 if (estack) {
                     /* Temporarily re-publish threadlocal key for use by H5E_clear_stack */
-                    H5TS_set_thread_local_value(H5TS_errstk_key_g, (void*)key_val);
+                    H5TS_set_thread_local_value(H5TS_errstk_key_g, (void *)key_val);
                     H5E_clear_stack(NULL);
                     H5TS_set_thread_local_value(H5TS_errstk_key_g, NULL);
                 }
@@ -188,7 +188,7 @@ H5TS__key_destructor(void *_key_val)
                 break;
             }
         }
-        
+
         /* Free the value struct itself */
         free(key_val);
     }
@@ -276,8 +276,8 @@ uint64_t
 H5TS_thread_id(void)
 {
     H5TS_tl_value_t *tl_value = NULL;
-    H5TS_tid_t *tid = NULL; 
-    H5TS_tid_t  proto_tid;
+    H5TS_tid_t      *tid      = NULL;
+    H5TS_tid_t       proto_tid;
 
     /* If value exists, an ID is already assigned */
     tl_value = pthread_getspecific(H5TS_tid_key);
@@ -323,9 +323,9 @@ H5TS_thread_id(void)
     }
 
     tl_value->type  = H5TS_THREAD_ID;
-    tl_value->value = (void*) tid;
+    tl_value->value = (void *)tid;
 
-    if (pthread_setspecific(H5TS_tid_key, (void*) tl_value) != 0) {
+    if (pthread_setspecific(H5TS_tid_key, (void *)tl_value) != 0) {
         H5TS_tid_destructor(tid);
         return 0;
     }
@@ -537,8 +537,8 @@ done:
 /*--------------------------------------------------------------------------
  * Function:    H5TS_have_mutex
  *
- * Purpose:     Determine whether the current thread holds the supplied 
- *              mutex.  If it does, set *have_mutex_ptr to TRUE.  If not, 
+ * Purpose:     Determine whether the current thread holds the supplied
+ *              mutex.  If it does, set *have_mutex_ptr to TRUE.  If not,
  *              set *have_mutex_ptr to FALSE.  On failure, *have_mutex_ptr
  *              is undefined.
  *
@@ -551,10 +551,10 @@ done:
  */
 herr_t
 H5TS_have_mutex(H5TS_mutex_t *mutex, bool *have_mutex_ptr)
-{   
-    bool have_mutex = FALSE;
-    herr_t ret_value = SUCCEED;
-    
+{
+    bool   have_mutex = FALSE;
+    herr_t ret_value  = SUCCEED;
+
     FUNC_ENTER_NOAPI_NAMECHECK_ONLY
 
     assert(mutex);
@@ -570,33 +570,34 @@ H5TS_have_mutex(H5TS_mutex_t *mutex, bool *have_mutex_ptr)
     if (0 == pthread_mutex_lock(&mutex->atomic_lock)) {
 
         pthread_t my_thread_id = pthread_self();
-        
+
         /* Check if the mutex is locked  */
-        if ( mutex->lock_count > 0 ) {
+        if (mutex->lock_count > 0) {
 
             /* Check for this thread already owns the lock */
 
-            if ( pthread_equal(my_thread_id, mutex->owner_thread) ) {
+            if (pthread_equal(my_thread_id, mutex->owner_thread)) {
 
                 have_mutex = true;
             }
         }
-        
-        if ( 0 != pthread_mutex_unlock(&mutex->atomic_lock) ) {
+
+        if (0 != pthread_mutex_unlock(&mutex->atomic_lock)) {
 
             ret_value = -1;
         }
-    } else {
+    }
+    else {
 
         ret_value = -1;
     }
 #endif /* H5_HAVE_WIN_THREADS */
 
-    if ( ret_value == SUCCEED ) {
+    if (ret_value == SUCCEED) {
 
         *have_mutex_ptr = have_mutex;
     }
-    
+
     FUNC_LEAVE_NOAPI_NAMECHECK_ONLY(ret_value)
 
 } /* end H5TS_have_mutex() */
@@ -795,7 +796,7 @@ H5TS_cancel_count_inc(void)
 {
 #ifndef H5_HAVE_WIN_THREADS
     H5TS_tl_value_t *tl_value = NULL;
-    H5TS_cancel_t *cancel_counter;
+    H5TS_cancel_t   *cancel_counter;
 #endif /* H5_HAVE_WIN_THREADS */
     herr_t ret_value = SUCCEED;
 
@@ -830,12 +831,13 @@ H5TS_cancel_count_inc(void)
         tl_value->value = (void *)cancel_counter;
 
         /* Set the thread's cancellation counter with the new object */
-        ret_value = pthread_setspecific(H5TS_cancel_key_s, (void*) tl_value);
+        ret_value = pthread_setspecific(H5TS_cancel_key_s, (void *)tl_value);
         if (ret_value) {
             free(cancel_counter);
             HGOTO_DONE(FAIL);
         }
-    } else {
+    }
+    else {
         cancel_counter = (H5TS_cancel_t *)tl_value->value;
         if (!cancel_counter)
             HGOTO_DONE(FAIL);
@@ -883,7 +885,7 @@ H5TS_cancel_count_dec(void)
 {
 #ifndef H5_HAVE_WIN_THREADS
     H5TS_tl_value_t *tl_value = NULL;
-    H5TS_cancel_t *cancel_counter;
+    H5TS_cancel_t   *cancel_counter;
 #endif /* H5_HAVE_WIN_THREADS */
     herr_t ret_value = SUCCEED;
 

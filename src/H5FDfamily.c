@@ -480,14 +480,14 @@ H5FD__family_fapl_copy(const void *_old_fa)
             HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, NULL, "not a file access property list");
         new_fa->memb_fapl_id = H5P_copy_plist(plist, FALSE);
 #if 1 /* JRM */
-        /* failure to increment the ref count on new_fa->memb_fapl_id was always a bug, but 
-         * it was not exposed until we ceased itterating through index entries in creation 
+        /* failure to increment the ref count on new_fa->memb_fapl_id was always a bug, but
+         * it was not exposed until we ceased itterating through index entries in creation
          * order.
          */
         if (H5I_inc_ref(new_fa->memb_fapl_id, FALSE) < 0)
             HGOTO_ERROR(H5E_VFL, H5E_CANTINC, NULL, "unable to increment ref count on VFL driver");
 #endif /* JRM */
-    } /* end else */
+    }  /* end else */
 
     /* Set return value */
     ret_value = new_fa;

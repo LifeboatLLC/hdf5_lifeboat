@@ -1287,9 +1287,10 @@ test_create_dataset_predefined_types(void)
     hid_t  fspace_id                    = H5I_INVALID_HID;
     hid_t  dset_id                      = H5I_INVALID_HID;
     hid_t  predefined_type_test_table[] = {
-        H5T_STD_U8LE,   H5T_STD_U8BE,   H5T_STD_I8LE,   H5T_STD_I8BE,  H5T_STD_U16LE,  H5T_STD_U16BE,
-        H5T_STD_I16LE,  H5T_STD_I16BE,  H5T_STD_U32LE,  H5T_STD_U32BE, H5T_STD_I32LE,  H5T_STD_I32BE,
-        H5T_STD_U64LE,  H5T_STD_U64BE,  H5T_STD_I64LE,  H5T_STD_I64BE, // H5T_IEEE_F16LE, H5T_IEEE_F16BE, Not present in 1.14.2
+        H5T_STD_U8LE,   H5T_STD_U8BE,   H5T_STD_I8LE,   H5T_STD_I8BE,  H5T_STD_U16LE, H5T_STD_U16BE,
+        H5T_STD_I16LE,  H5T_STD_I16BE,  H5T_STD_U32LE,  H5T_STD_U32BE, H5T_STD_I32LE, H5T_STD_I32BE,
+        H5T_STD_U64LE,  H5T_STD_U64BE,  H5T_STD_I64LE,  H5T_STD_I64BE, // H5T_IEEE_F16LE, H5T_IEEE_F16BE, Not
+                                                                       // present in 1.14.2
         H5T_IEEE_F32LE, H5T_IEEE_F32BE, H5T_IEEE_F64LE, H5T_IEEE_F64BE};
 
     TESTING("dataset creation with predefined datatypes");
@@ -14335,150 +14336,184 @@ void
 H5_api_dataset_test_add(void)
 {
     /* Add a fake test to print out a header to distinguish different test interfaces */
-    AddTest("print_dataset_test_header", print_dataset_test_header, NULL, "Prints header for dataset tests", NULL);
+    AddTest("print_dataset_test_header", print_dataset_test_header, NULL, "Prints header for dataset tests",
+            NULL);
     AddTest("test_create_dataset_under_root", MT_API_TEST_FUNC_OUTER(test_create_dataset_under_root), NULL,
             "dataset creation under root group", NULL);
-    AddTest("test_create_dataset_under_existing_group", MT_API_TEST_FUNC_OUTER(test_create_dataset_under_existing_group), NULL,
+    AddTest("test_create_dataset_under_existing_group",
+            MT_API_TEST_FUNC_OUTER(test_create_dataset_under_existing_group), NULL,
             "dataset creation under an existing group", NULL);
-    AddTest("test_create_dataset_invalid_params", MT_API_TEST_FUNC_OUTER(test_create_dataset_invalid_params), NULL,
-            "H5Dcreate with invalid parameters", NULL);
+    AddTest("test_create_dataset_invalid_params", MT_API_TEST_FUNC_OUTER(test_create_dataset_invalid_params),
+            NULL, "H5Dcreate with invalid parameters", NULL);
     AddTest("test_create_anonymous_dataset", MT_API_TEST_FUNC_OUTER(test_create_anonymous_dataset), NULL,
             "anonymous dataset creation", NULL);
-    AddTest("test_create_anonymous_dataset_invalid_params", MT_API_TEST_FUNC_OUTER(test_create_anonymous_dataset_invalid_params),
-            NULL, "anonymous dataset creation with invalid parameters", NULL);
+    AddTest("test_create_anonymous_dataset_invalid_params",
+            MT_API_TEST_FUNC_OUTER(test_create_anonymous_dataset_invalid_params), NULL,
+            "anonymous dataset creation with invalid parameters", NULL);
     AddTest("test_create_dataset_null_space", MT_API_TEST_FUNC_OUTER(test_create_dataset_null_space), NULL,
             "dataset creation with a NULL dataspace", NULL);
-    AddTest("test_create_dataset_scalar_space", MT_API_TEST_FUNC_OUTER(test_create_dataset_scalar_space), NULL,
-            "dataset creation with a SCALAR dataspace", NULL);
-    AddTest("test_create_zero_dim_dset", MT_API_TEST_FUNC_OUTER(test_create_zero_dim_dset), NULL, "creation of 0-sized dataset",
-            NULL);
-    AddTest("test_create_dataset_random_shapes", MT_API_TEST_FUNC_OUTER(test_create_dataset_random_shapes), NULL,
-            "dataset creation with random dimension sizes", NULL);
-    AddTest("test_create_dataset_predefined_types", MT_API_TEST_FUNC_OUTER(test_create_dataset_predefined_types), NULL,
+    AddTest("test_create_dataset_scalar_space", MT_API_TEST_FUNC_OUTER(test_create_dataset_scalar_space),
+            NULL, "dataset creation with a SCALAR dataspace", NULL);
+    AddTest("test_create_zero_dim_dset", MT_API_TEST_FUNC_OUTER(test_create_zero_dim_dset), NULL,
+            "creation of 0-sized dataset", NULL);
+    AddTest("test_create_dataset_random_shapes", MT_API_TEST_FUNC_OUTER(test_create_dataset_random_shapes),
+            NULL, "dataset creation with random dimension sizes", NULL);
+    AddTest("test_create_dataset_predefined_types",
+            MT_API_TEST_FUNC_OUTER(test_create_dataset_predefined_types), NULL,
             "dataset creation with predefined datatypes", NULL);
-    AddTest("test_create_dataset_string_types", MT_API_TEST_FUNC_OUTER(test_create_dataset_string_types), NULL,
-            "dataset creation with string types", NULL);
-    AddTest("test_create_dataset_compound_types", MT_API_TEST_FUNC_OUTER(test_create_dataset_compound_types), NULL,
-            "dataset creation with compound datatypes", NULL);
+    AddTest("test_create_dataset_string_types", MT_API_TEST_FUNC_OUTER(test_create_dataset_string_types),
+            NULL, "dataset creation with string types", NULL);
+    AddTest("test_create_dataset_compound_types", MT_API_TEST_FUNC_OUTER(test_create_dataset_compound_types),
+            NULL, "dataset creation with compound datatypes", NULL);
     AddTest("test_create_dataset_enum_types", MT_API_TEST_FUNC_OUTER(test_create_dataset_enum_types), NULL,
             "dataset creation with enum types", NULL);
     AddTest("test_create_dataset_array_types", MT_API_TEST_FUNC_OUTER(test_create_dataset_array_types), NULL,
             "dataset creation with array types", NULL);
-    AddTest("test_create_dataset_creation_properties", MT_API_TEST_FUNC_OUTER(test_create_dataset_creation_properties), NULL,
+    AddTest("test_create_dataset_creation_properties",
+            MT_API_TEST_FUNC_OUTER(test_create_dataset_creation_properties), NULL,
             "dataset creation properties", NULL);
-    AddTest("test_create_many_dataset", MT_API_TEST_FUNC_OUTER(test_create_many_dataset), NULL, "creating many datasets", NULL);
+    AddTest("test_create_many_dataset", MT_API_TEST_FUNC_OUTER(test_create_many_dataset), NULL,
+            "creating many datasets", NULL);
     AddTest("test_open_dataset", MT_API_TEST_FUNC_OUTER(test_open_dataset), NULL, "H5Dopen", NULL);
-    AddTest("test_open_dataset_invalid_params", MT_API_TEST_FUNC_OUTER(test_open_dataset_invalid_params), NULL,
-            "H5Dopen with invalid parameters", NULL);
-    AddTest("test_close_dataset_invalid_params", MT_API_TEST_FUNC_OUTER(test_close_dataset_invalid_params), NULL,
-            "H5Dclose with an invalid dataset ID", NULL);
+    AddTest("test_open_dataset_invalid_params", MT_API_TEST_FUNC_OUTER(test_open_dataset_invalid_params),
+            NULL, "H5Dopen with invalid parameters", NULL);
+    AddTest("test_close_dataset_invalid_params", MT_API_TEST_FUNC_OUTER(test_close_dataset_invalid_params),
+            NULL, "H5Dclose with an invalid dataset ID", NULL);
     AddTest("test_get_dataset_space_and_type", MT_API_TEST_FUNC_OUTER(test_get_dataset_space_and_type), NULL,
             "retrieval of a dataset's dataspace and datatype", NULL);
-    AddTest("test_get_dataset_space_and_type_invalid_params", MT_API_TEST_FUNC_OUTER(test_get_dataset_space_and_type_invalid_params),
-            NULL, "H5Dget_type/H5Dget_space with invalid parameters", NULL);
-    AddTest("test_get_dataset_space_status", MT_API_TEST_FUNC_OUTER(test_get_dataset_space_status), NULL, "H5Dget_space_status",
-            NULL);
-    AddTest("test_get_dataset_space_status_invalid_params", MT_API_TEST_FUNC_OUTER(test_get_dataset_space_status_invalid_params),
-            NULL, "H5Dget_space_status with invalid parameters", NULL);
+    AddTest("test_get_dataset_space_and_type_invalid_params",
+            MT_API_TEST_FUNC_OUTER(test_get_dataset_space_and_type_invalid_params), NULL,
+            "H5Dget_type/H5Dget_space with invalid parameters", NULL);
+    AddTest("test_get_dataset_space_status", MT_API_TEST_FUNC_OUTER(test_get_dataset_space_status), NULL,
+            "H5Dget_space_status", NULL);
+    AddTest("test_get_dataset_space_status_invalid_params",
+            MT_API_TEST_FUNC_OUTER(test_get_dataset_space_status_invalid_params), NULL,
+            "H5Dget_space_status with invalid parameters", NULL);
     AddTest("test_dataset_property_lists", MT_API_TEST_FUNC_OUTER(test_dataset_property_lists), NULL,
             "dataset property list operations", NULL);
-    AddTest("test_get_dataset_storage_size", MT_API_TEST_FUNC_OUTER(test_get_dataset_storage_size), NULL, "H5Dget_storage_size",
+    AddTest("test_get_dataset_storage_size", MT_API_TEST_FUNC_OUTER(test_get_dataset_storage_size), NULL,
+            "H5Dget_storage_size", NULL);
+    AddTest("test_get_dataset_storage_size_invalid_params",
+            MT_API_TEST_FUNC_OUTER(test_get_dataset_storage_size_invalid_params), NULL,
+            "H5Dget_storage_size with invalid parameters", NULL);
+    AddTest("test_get_dataset_chunk_storage_size",
+            MT_API_TEST_FUNC_OUTER(test_get_dataset_chunk_storage_size), NULL, "H5Dget_chunk_storage_size",
             NULL);
-    AddTest("test_get_dataset_storage_size_invalid_params", MT_API_TEST_FUNC_OUTER(test_get_dataset_storage_size_invalid_params),
-            NULL, "H5Dget_storage_size with invalid parameters", NULL);
-    AddTest("test_get_dataset_chunk_storage_size", MT_API_TEST_FUNC_OUTER(test_get_dataset_chunk_storage_size), NULL,
-            "H5Dget_chunk_storage_size", NULL);
     AddTest("test_get_dataset_chunk_storage_size_invalid_params",
             test_get_dataset_chunk_storage_size_invalid_params, NULL,
             "H5Dget_chunk_storage_size with invalid parameters", NULL);
-    AddTest("test_get_dataset_offset", MT_API_TEST_FUNC_OUTER(test_get_dataset_offset), NULL, "H5Dget_offset", NULL);
-    AddTest("test_get_dataset_offset_invalid_params", MT_API_TEST_FUNC_OUTER(test_get_dataset_offset_invalid_params), NULL,
+    AddTest("test_get_dataset_offset", MT_API_TEST_FUNC_OUTER(test_get_dataset_offset), NULL, "H5Dget_offset",
+            NULL);
+    AddTest("test_get_dataset_offset_invalid_params",
+            MT_API_TEST_FUNC_OUTER(test_get_dataset_offset_invalid_params), NULL,
             "H5Dget_offset with invalid parameters", NULL);
     AddTest("test_read_dataset_small_all", MT_API_TEST_FUNC_OUTER(test_read_dataset_small_all), NULL,
             "small read from dataset with H5S_ALL", NULL);
-    AddTest("test_read_dataset_small_hyperslab", MT_API_TEST_FUNC_OUTER(test_read_dataset_small_hyperslab), NULL,
-            "small read from dataset with a hyperslab selection", NULL);
-    AddTest("test_read_dataset_small_point_selection", MT_API_TEST_FUNC_OUTER(test_read_dataset_small_point_selection), NULL,
+    AddTest("test_read_dataset_small_hyperslab", MT_API_TEST_FUNC_OUTER(test_read_dataset_small_hyperslab),
+            NULL, "small read from dataset with a hyperslab selection", NULL);
+    AddTest("test_read_dataset_small_point_selection",
+            MT_API_TEST_FUNC_OUTER(test_read_dataset_small_point_selection), NULL,
             "small read from dataset with a point selection", NULL);
-    AddTest("test_read_multi_dataset_small_all", MT_API_TEST_FUNC_OUTER(test_read_multi_dataset_small_all), NULL,
-            "small multi read from datasets with H5S_ALL", NULL);
-    AddTest("test_read_multi_dataset_small_hyperslab", MT_API_TEST_FUNC_OUTER(test_read_multi_dataset_small_hyperslab), NULL,
+    AddTest("test_read_multi_dataset_small_all", MT_API_TEST_FUNC_OUTER(test_read_multi_dataset_small_all),
+            NULL, "small multi read from datasets with H5S_ALL", NULL);
+    AddTest("test_read_multi_dataset_small_hyperslab",
+            MT_API_TEST_FUNC_OUTER(test_read_multi_dataset_small_hyperslab), NULL,
             "small multi read from datasets with a hyperslab selection", NULL);
-    AddTest("test_read_multi_dataset_small_point_selection", MT_API_TEST_FUNC_OUTER(test_read_multi_dataset_small_point_selection),
-            NULL, "small multi read from datasets with point selections", NULL);
-    AddTest("test_dataset_io_point_selections", MT_API_TEST_FUNC_OUTER(test_dataset_io_point_selections), NULL,
-            "point selection I/O with all selection in memory and points in file", NULL);
-    AddTest("test_read_dataset_invalid_params", MT_API_TEST_FUNC_OUTER(test_read_dataset_invalid_params), NULL,
-            "H5Dread with invalid parameters", NULL);
+    AddTest("test_read_multi_dataset_small_point_selection",
+            MT_API_TEST_FUNC_OUTER(test_read_multi_dataset_small_point_selection), NULL,
+            "small multi read from datasets with point selections", NULL);
+    AddTest("test_dataset_io_point_selections", MT_API_TEST_FUNC_OUTER(test_dataset_io_point_selections),
+            NULL, "point selection I/O with all selection in memory and points in file", NULL);
+    AddTest("test_read_dataset_invalid_params", MT_API_TEST_FUNC_OUTER(test_read_dataset_invalid_params),
+            NULL, "H5Dread with invalid parameters", NULL);
     AddTest("test_dataset_string_encodings", MT_API_TEST_FUNC_OUTER(test_dataset_string_encodings), NULL,
             "string encoding read/write correctness on datasets", NULL);
     AddTest("test_write_dataset_small_all", MT_API_TEST_FUNC_OUTER(test_write_dataset_small_all), NULL,
             "small write to dataset with H5S_ALL", NULL);
-    AddTest("test_write_dataset_small_hyperslab", MT_API_TEST_FUNC_OUTER(test_write_dataset_small_hyperslab), NULL,
-            "small write to dataset with a hyperslab selection", NULL);
-    AddTest("test_write_dataset_small_point_selection", MT_API_TEST_FUNC_OUTER(test_write_dataset_small_point_selection), NULL,
+    AddTest("test_write_dataset_small_hyperslab", MT_API_TEST_FUNC_OUTER(test_write_dataset_small_hyperslab),
+            NULL, "small write to dataset with a hyperslab selection", NULL);
+    AddTest("test_write_dataset_small_point_selection",
+            MT_API_TEST_FUNC_OUTER(test_write_dataset_small_point_selection), NULL,
             "small write to dataset with a point selection", NULL);
-    AddTest("test_write_dataset_data_verification", MT_API_TEST_FUNC_OUTER(test_write_dataset_data_verification), NULL,
+    AddTest("test_write_dataset_data_verification",
+            MT_API_TEST_FUNC_OUTER(test_write_dataset_data_verification), NULL,
             "verification of dataset data using H5Dwrite then H5Dread", NULL);
-    AddTest("test_write_multi_dataset_small_all", MT_API_TEST_FUNC_OUTER(test_write_multi_dataset_small_all), NULL,
-            "small multi write to datasets with H5S_ALL", NULL);
-    AddTest("test_write_multi_dataset_small_hyperslab", MT_API_TEST_FUNC_OUTER(test_write_multi_dataset_small_hyperslab), NULL,
+    AddTest("test_write_multi_dataset_small_all", MT_API_TEST_FUNC_OUTER(test_write_multi_dataset_small_all),
+            NULL, "small multi write to datasets with H5S_ALL", NULL);
+    AddTest("test_write_multi_dataset_small_hyperslab",
+            MT_API_TEST_FUNC_OUTER(test_write_multi_dataset_small_hyperslab), NULL,
             "small multi write to datasets with hyperslab selections", NULL);
-    AddTest("test_write_multi_dataset_small_point_selection", MT_API_TEST_FUNC_OUTER(test_write_multi_dataset_small_point_selection),
-            NULL, "small multi write to datasets with point selections", NULL);
-    AddTest("test_write_multi_dataset_data_verification", MT_API_TEST_FUNC_OUTER(test_write_multi_dataset_data_verification), NULL,
+    AddTest("test_write_multi_dataset_small_point_selection",
+            MT_API_TEST_FUNC_OUTER(test_write_multi_dataset_small_point_selection), NULL,
+            "small multi write to datasets with point selections", NULL);
+    AddTest("test_write_multi_dataset_data_verification",
+            MT_API_TEST_FUNC_OUTER(test_write_multi_dataset_data_verification), NULL,
             "verification of datasets' data using H5Dwrite_multi then H5Dread_multi", NULL);
-    AddTest("test_write_dataset_invalid_params", MT_API_TEST_FUNC_OUTER(test_write_dataset_invalid_params), NULL,
-            "H5Dwrite with invalid parameters", NULL);
-    AddTest("test_dataset_builtin_type_conversion", MT_API_TEST_FUNC_OUTER(test_dataset_builtin_type_conversion), NULL,
+    AddTest("test_write_dataset_invalid_params", MT_API_TEST_FUNC_OUTER(test_write_dataset_invalid_params),
+            NULL, "H5Dwrite with invalid parameters", NULL);
+    AddTest("test_dataset_builtin_type_conversion",
+            MT_API_TEST_FUNC_OUTER(test_dataset_builtin_type_conversion), NULL,
             "verification of dataset data using H5Dwrite then H5Dread with type conversion of builtin types",
             NULL);
-    AddTest("test_dataset_real_to_int_conversion", MT_API_TEST_FUNC_OUTER(test_dataset_real_to_int_conversion), NULL,
+    AddTest("test_dataset_real_to_int_conversion",
+            MT_API_TEST_FUNC_OUTER(test_dataset_real_to_int_conversion), NULL,
             "verification of dataset data using H5Dwrite then H5Dread with real <-> integer type conversion",
             NULL);
-    AddTest("test_dataset_compound_partial_io", MT_API_TEST_FUNC_OUTER(test_dataset_compound_partial_io), NULL,
+    AddTest("test_dataset_compound_partial_io", MT_API_TEST_FUNC_OUTER(test_dataset_compound_partial_io),
+            NULL,
             "verification of dataset data using H5Dwrite then H5Dread with partial element compound type I/O",
             NULL);
     AddTest("test_dataset_vlen_io", MT_API_TEST_FUNC_OUTER(test_dataset_vlen_io), NULL,
             "verification of dataset data with H5Dwrite and then H5D read with variable length sequence data",
             NULL);
-    AddTest("test_dataset_set_extent_chunked_unlimited", MT_API_TEST_FUNC_OUTER(test_dataset_set_extent_chunked_unlimited), NULL,
+    AddTest("test_dataset_set_extent_chunked_unlimited",
+            MT_API_TEST_FUNC_OUTER(test_dataset_set_extent_chunked_unlimited), NULL,
             "H5Dset_extent on chunked dataset with unlimited dimensions", NULL);
-    AddTest("test_dataset_set_extent_chunked_fixed", MT_API_TEST_FUNC_OUTER(test_dataset_set_extent_chunked_fixed), NULL,
+    AddTest("test_dataset_set_extent_chunked_fixed",
+            MT_API_TEST_FUNC_OUTER(test_dataset_set_extent_chunked_fixed), NULL,
             "H5Dset_extent on chunked dataset with fixed dimensions", NULL);
     AddTest("test_dataset_set_extent_data", MT_API_TEST_FUNC_OUTER(test_dataset_set_extent_data), NULL,
             "H5Dset_extent on data correctness", NULL);
-    AddTest("test_dataset_set_extent_double_handles", MT_API_TEST_FUNC_OUTER(test_dataset_set_extent_double_handles), NULL,
+    AddTest("test_dataset_set_extent_double_handles",
+            MT_API_TEST_FUNC_OUTER(test_dataset_set_extent_double_handles), NULL,
             "H5Dset_extent on double dataset handles", NULL);
-    AddTest("test_dataset_set_extent_invalid_params", MT_API_TEST_FUNC_OUTER(test_dataset_set_extent_invalid_params), NULL,
+    AddTest("test_dataset_set_extent_invalid_params",
+            MT_API_TEST_FUNC_OUTER(test_dataset_set_extent_invalid_params), NULL,
             "H5Dset_extent with invalid parameters", NULL);
     AddTest("test_flush_dataset", MT_API_TEST_FUNC_OUTER(test_flush_dataset), NULL, "H5Dflush", NULL);
-    AddTest("test_flush_dataset_invalid_params", MT_API_TEST_FUNC_OUTER(test_flush_dataset_invalid_params), NULL,
-            "H5Dflush with invalid parameters", NULL);
+    AddTest("test_flush_dataset_invalid_params", MT_API_TEST_FUNC_OUTER(test_flush_dataset_invalid_params),
+            NULL, "H5Dflush with invalid parameters", NULL);
     AddTest("test_refresh_dataset", MT_API_TEST_FUNC_OUTER(test_refresh_dataset), NULL, "H5Drefresh", NULL);
-    AddTest("test_refresh_dataset_invalid_params", MT_API_TEST_FUNC_OUTER(test_refresh_dataset_invalid_params), NULL,
+    AddTest("test_refresh_dataset_invalid_params",
+            MT_API_TEST_FUNC_OUTER(test_refresh_dataset_invalid_params), NULL,
             "H5Drefresh with invalid parameters", NULL);
-    AddTest("test_create_single_chunk_dataset", MT_API_TEST_FUNC_OUTER(test_create_single_chunk_dataset), NULL,
-            "creation of dataset with single chunk", NULL);
+    AddTest("test_create_single_chunk_dataset", MT_API_TEST_FUNC_OUTER(test_create_single_chunk_dataset),
+            NULL, "creation of dataset with single chunk", NULL);
     AddTest("test_write_single_chunk_dataset", MT_API_TEST_FUNC_OUTER(test_write_single_chunk_dataset), NULL,
             "write to dataset with single chunk", NULL);
     AddTest("test_create_multi_chunk_dataset", MT_API_TEST_FUNC_OUTER(test_create_multi_chunk_dataset), NULL,
             "creation of dataset with multiple chunks", NULL);
-    AddTest("test_write_multi_chunk_dataset_same_shape_read", MT_API_TEST_FUNC_OUTER(test_write_multi_chunk_dataset_same_shape_read),
-            NULL, "write to dataset with multiple chunks using same shaped dataspaces", NULL);
-    AddTest("test_write_multi_chunk_dataset_diff_shape_read", MT_API_TEST_FUNC_OUTER(test_write_multi_chunk_dataset_diff_shape_read),
-            NULL, "write to dataset with multiple chunks using differently shaped dataspaces", NULL);
+    AddTest("test_write_multi_chunk_dataset_same_shape_read",
+            MT_API_TEST_FUNC_OUTER(test_write_multi_chunk_dataset_same_shape_read), NULL,
+            "write to dataset with multiple chunks using same shaped dataspaces", NULL);
+    AddTest("test_write_multi_chunk_dataset_diff_shape_read",
+            MT_API_TEST_FUNC_OUTER(test_write_multi_chunk_dataset_diff_shape_read), NULL,
+            "write to dataset with multiple chunks using differently shaped dataspaces", NULL);
     AddTest("test_overwrite_multi_chunk_dataset_same_shape_read",
             MT_API_TEST_FUNC_OUTER(test_overwrite_multi_chunk_dataset_same_shape_read), NULL,
             "several overwrites to dataset with multiple chunks using same shaped dataspaces", NULL);
     AddTest("test_overwrite_multi_chunk_dataset_diff_shape_read",
             MT_API_TEST_FUNC_OUTER(test_overwrite_multi_chunk_dataset_diff_shape_read), NULL,
             "several overwrites to dataset with multiple chunks using differently shaped dataspaces", NULL);
-    AddTest("test_read_partial_chunk_all_selection", MT_API_TEST_FUNC_OUTER(test_read_partial_chunk_all_selection), NULL,
+    AddTest("test_read_partial_chunk_all_selection",
+            MT_API_TEST_FUNC_OUTER(test_read_partial_chunk_all_selection), NULL,
             "reading a partial chunk using H5S_ALL for file dataspace", NULL);
-    AddTest("test_read_partial_chunk_hyperslab_selection", MT_API_TEST_FUNC_OUTER(test_read_partial_chunk_hyperslab_selection), NULL,
+    AddTest("test_read_partial_chunk_hyperslab_selection",
+            MT_API_TEST_FUNC_OUTER(test_read_partial_chunk_hyperslab_selection), NULL,
             "reading a partial chunk using a hyperslab selection in file dataspace", NULL);
-    AddTest("test_read_partial_chunk_point_selection", MT_API_TEST_FUNC_OUTER(test_read_partial_chunk_point_selection), NULL,
+    AddTest("test_read_partial_chunk_point_selection",
+            MT_API_TEST_FUNC_OUTER(test_read_partial_chunk_point_selection), NULL,
             "reading a partial chunk using a point selection in file dataspace", NULL);
-    AddTest("test_get_vlen_buf_size", MT_API_TEST_FUNC_OUTER(test_get_vlen_buf_size), NULL, "H5Dvlen_get_buf_size", NULL);
+    AddTest("test_get_vlen_buf_size", MT_API_TEST_FUNC_OUTER(test_get_vlen_buf_size), NULL,
+            "H5Dvlen_get_buf_size", NULL);
 }

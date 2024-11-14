@@ -307,8 +307,6 @@ static const H5VL_class_t fake_async_vol_g = {
     NULL /* optional     */
 };
 
-
-
 /*-------------------------------------------------------------------------
  * Function:    fake_vol_info_to_str
  *

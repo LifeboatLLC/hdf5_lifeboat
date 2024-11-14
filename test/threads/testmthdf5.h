@@ -21,7 +21,7 @@
 
 /* Prototypes for the test routines */
 typedef struct mt_test_params {
-    size_t num_repetitions;
+    size_t   num_repetitions;
     unsigned subtest_timeout;
 } mt_test_params;
 

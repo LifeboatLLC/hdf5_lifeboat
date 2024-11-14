@@ -2397,18 +2397,21 @@ H5_api_group_test_add(void)
 
     AddTest("test_create_group_under_root", MT_API_TEST_FUNC_OUTER(test_create_group_under_root), NULL,
             "creation of group under the root group", NULL);
-    AddTest("test_create_group_under_existing_group", MT_API_TEST_FUNC_OUTER(test_create_group_under_existing_group), NULL,
+    AddTest("test_create_group_under_existing_group",
+            MT_API_TEST_FUNC_OUTER(test_create_group_under_existing_group), NULL,
             "creation of group under existing group using a relative path", NULL);
-    AddTest("test_create_many_groups", MT_API_TEST_FUNC_OUTER(test_create_many_groups), NULL, "H5Gcreate many groups", NULL);
-    AddTest("test_create_deep_groups", MT_API_TEST_FUNC_OUTER(test_create_deep_groups), NULL, "H5Gcreate groups of great depths",
-            NULL);
+    AddTest("test_create_many_groups", MT_API_TEST_FUNC_OUTER(test_create_many_groups), NULL,
+            "H5Gcreate many groups", NULL);
+    AddTest("test_create_deep_groups", MT_API_TEST_FUNC_OUTER(test_create_deep_groups), NULL,
+            "H5Gcreate groups of great depths", NULL);
     AddTest("test_create_intermediate_group", MT_API_TEST_FUNC_OUTER(test_create_intermediate_group), NULL,
             "H5Gcreate group with intermediate group creation", NULL);
-    AddTest("test_create_group_invalid_params", MT_API_TEST_FUNC_OUTER(test_create_group_invalid_params), NULL,
-            "H5Gcreate with invalid parameters", NULL);
-    AddTest("test_create_anonymous_group", MT_API_TEST_FUNC_OUTER(test_create_anonymous_group), NULL, "creation of anonymous group",
-            NULL);
-    AddTest("test_create_anonymous_group_invalid_params", MT_API_TEST_FUNC_OUTER(test_create_anonymous_group_invalid_params), NULL,
+    AddTest("test_create_group_invalid_params", MT_API_TEST_FUNC_OUTER(test_create_group_invalid_params),
+            NULL, "H5Gcreate with invalid parameters", NULL);
+    AddTest("test_create_anonymous_group", MT_API_TEST_FUNC_OUTER(test_create_anonymous_group), NULL,
+            "creation of anonymous group", NULL);
+    AddTest("test_create_anonymous_group_invalid_params",
+            MT_API_TEST_FUNC_OUTER(test_create_anonymous_group_invalid_params), NULL,
             "H5Gcreate_anon with invalid parameters", NULL);
     AddTest("test_open_nonexistent_group", MT_API_TEST_FUNC_OUTER(test_open_nonexistent_group), NULL,
             "for invalid opening of a nonexistent group", NULL);
@@ -2416,15 +2419,16 @@ H5_api_group_test_add(void)
             "H5Gopen with invalid parameters", NULL);
     AddTest("test_close_group_invalid_id", MT_API_TEST_FUNC_OUTER(test_close_group_invalid_id), NULL,
             "H5Gclose with an invalid group ID", NULL);
-    AddTest("test_group_property_lists", MT_API_TEST_FUNC_OUTER(test_group_property_lists), NULL, "group property list operations",
-            NULL);
-    AddTest("test_get_group_info", MT_API_TEST_FUNC_OUTER(test_get_group_info), NULL, "retrieval of group info", NULL);
-    AddTest("test_get_group_info_invalid_params", MT_API_TEST_FUNC_OUTER(test_get_group_info_invalid_params), NULL,
-            "retrieval of group info with invalid parameters", NULL);
+    AddTest("test_group_property_lists", MT_API_TEST_FUNC_OUTER(test_group_property_lists), NULL,
+            "group property list operations", NULL);
+    AddTest("test_get_group_info", MT_API_TEST_FUNC_OUTER(test_get_group_info), NULL,
+            "retrieval of group info", NULL);
+    AddTest("test_get_group_info_invalid_params", MT_API_TEST_FUNC_OUTER(test_get_group_info_invalid_params),
+            NULL, "retrieval of group info with invalid parameters", NULL);
     AddTest("test_flush_group", MT_API_TEST_FUNC_OUTER(test_flush_group), NULL, "H5Gflush", NULL);
     AddTest("test_flush_group_invalid_params", MT_API_TEST_FUNC_OUTER(test_flush_group_invalid_params), NULL,
             "H5Gflush with invalid parameters", NULL);
     AddTest("test_refresh_group", MT_API_TEST_FUNC_OUTER(test_refresh_group), NULL, "H5Grefresh", NULL);
-    AddTest("test_refresh_group_invalid_params", MT_API_TEST_FUNC_OUTER(test_refresh_group_invalid_params), NULL,
-            "H5Grefresh with invalid parameters", NULL);
+    AddTest("test_refresh_group_invalid_params", MT_API_TEST_FUNC_OUTER(test_refresh_group_invalid_params),
+            NULL, "H5Grefresh with invalid parameters", NULL);
 }

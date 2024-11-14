@@ -1053,15 +1053,19 @@ H5_api_misc_test_add(void)
     AddTest("print_misc_test_header", print_misc_test_header, NULL, "Prints header for miscellaneous tests",
             NULL);
 
-    AddTest("test_open_link_without_leading_slash", MT_API_TEST_FUNC_OUTER(test_open_link_without_leading_slash), NULL,
+    AddTest("test_open_link_without_leading_slash",
+            MT_API_TEST_FUNC_OUTER(test_open_link_without_leading_slash), NULL,
             "opening a link without a leading slash", NULL);
-    AddTest("test_object_creation_by_absolute_path", MT_API_TEST_FUNC_OUTER(test_object_creation_by_absolute_path), NULL,
+    AddTest("test_object_creation_by_absolute_path",
+            MT_API_TEST_FUNC_OUTER(test_object_creation_by_absolute_path), NULL,
             "object creation by absolute path", NULL);
     AddTest("test_absolute_vs_relative_path", MT_API_TEST_FUNC_OUTER(test_absolute_vs_relative_path), NULL,
             "absolute vs. relative pathnames", NULL);
     AddTest("test_dot_for_object_name", MT_API_TEST_FUNC_OUTER(test_dot_for_object_name), NULL,
             "creating objects with \".\" as the name", NULL);
-    AddTest("test_symbols_in_compound_field_name", MT_API_TEST_FUNC_OUTER(test_symbols_in_compound_field_name), NULL,
+    AddTest("test_symbols_in_compound_field_name",
+            MT_API_TEST_FUNC_OUTER(test_symbols_in_compound_field_name), NULL,
             "usage of '{', '}' and '\\\"' symbols in compound field name", NULL);
-    AddTest("test_double_init_term", MT_API_TEST_FUNC_OUTER(test_double_init_term), NULL, "double init/term correctness", NULL);
+    AddTest("test_double_init_term", MT_API_TEST_FUNC_OUTER(test_double_init_term), NULL,
+            "double init/term correctness", NULL);
 }

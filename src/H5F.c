@@ -262,7 +262,7 @@ H5Fget_obj_count(hid_t file_id, unsigned types)
      */
     else {
         H5F_trav_obj_cnt_t udata;
-        herr_t iter_result = SUCCEED;
+        herr_t             iter_result = SUCCEED;
 
         /* Set up callback context */
         udata.types     = types | H5F_OBJ_LOCAL;
@@ -390,7 +390,7 @@ H5Fget_obj_ids(hid_t file_id, unsigned types, size_t max_objs, hid_t *oid_list /
      */
     else {
         H5F_trav_obj_ids_t udata;
-        herr_t iter_result = SUCCEED;
+        herr_t             iter_result = SUCCEED;
 
         /* Set up callback context */
         udata.max_objs  = max_objs;
@@ -528,7 +528,7 @@ H5F__post_open_api_common(H5VL_object_t *vol_obj, void **token_ptr)
     herr_t   ret_value = SUCCEED; /* Return value     */
 
     FUNC_ENTER_PACKAGE
-    
+
     /* Check for 'post open' callback */
     supported = 0;
     if (H5VL_introspect_opt_query(vol_obj, H5VL_SUBCLS_FILE, H5VL_NATIVE_FILE_POST_OPEN, &supported) < 0)
@@ -690,11 +690,11 @@ hid_t
 H5Fcreate_async(const char *app_file, const char *app_func, unsigned app_line, const char *filename,
                 unsigned flags, hid_t fcpl_id, hid_t fapl_id, hid_t es_id)
 {
-    H5VL_object_t *vol_obj   = NULL;            /* File object */
-    void          *token     = NULL;            /* Request token for async operation        */
-    void         **token_ptr = H5_REQUEST_NULL; /* Pointer to request token for async operation        */
-    hid_t          ret_value = H5I_INVALID_HID; /* Return value */
-    int dec_ref_ret = 0;                        /* Ref count decrement return value */
+    H5VL_object_t *vol_obj     = NULL;            /* File object */
+    void          *token       = NULL;            /* Request token for async operation        */
+    void         **token_ptr   = H5_REQUEST_NULL; /* Pointer to request token for async operation        */
+    hid_t          ret_value   = H5I_INVALID_HID; /* Return value */
+    int            dec_ref_ret = 0;               /* Ref count decrement return value */
 
     FUNC_ENTER_API_NO_MUTEX(H5I_INVALID_HID)
     H5TRACE8("i", "*s*sIu*sIuiii", app_file, app_func, app_line, filename, flags, fcpl_id, fapl_id, es_id);
@@ -874,11 +874,11 @@ hid_t
 H5Fopen_async(const char *app_file, const char *app_func, unsigned app_line, const char *filename,
               unsigned flags, hid_t fapl_id, hid_t es_id)
 {
-    H5VL_object_t *vol_obj   = NULL;            /* File object */
-    void          *token     = NULL;            /* Request token for async operation        */
-    void         **token_ptr = H5_REQUEST_NULL; /* Pointer to request token for async operation        */
-    hid_t          ret_value = H5I_INVALID_HID; /* Return value */
-    int dec_ref_ret = 0;                        /* Ref count decrement return value */
+    H5VL_object_t *vol_obj     = NULL;            /* File object */
+    void          *token       = NULL;            /* Request token for async operation        */
+    void         **token_ptr   = H5_REQUEST_NULL; /* Pointer to request token for async operation        */
+    hid_t          ret_value   = H5I_INVALID_HID; /* Return value */
+    int            dec_ref_ret = 0;               /* Ref count decrement return value */
 
     FUNC_ENTER_API_NO_MUTEX(H5I_INVALID_HID)
     H5TRACE7("i", "*s*sIu*sIuii", app_file, app_func, app_line, filename, flags, fapl_id, es_id);
@@ -1062,8 +1062,8 @@ done:
 herr_t
 H5Fclose(hid_t file_id)
 {
-    herr_t ret_value = SUCCEED; /* Return value */
-    int dec_ref_ret = 0;        /* Ref count decrement return value */
+    herr_t ret_value   = SUCCEED; /* Return value */
+    int    dec_ref_ret = 0;       /* Ref count decrement return value */
 
     FUNC_ENTER_API_NO_MUTEX(FAIL)
     H5TRACE1("e", "i", file_id);
@@ -1100,12 +1100,12 @@ done:
 herr_t
 H5Fclose_async(const char *app_file, const char *app_func, unsigned app_line, hid_t file_id, hid_t es_id)
 {
-    H5VL_object_t *vol_obj   = NULL;            /* Object for loc_id */
-    H5VL_t        *connector = NULL;            /* VOL connector */
-    void          *token     = NULL;            /* Request token for async operation        */
-    void         **token_ptr = H5_REQUEST_NULL; /* Pointer to request token for async operation        */
-    herr_t         ret_value = SUCCEED;         /* Return value */
-    int dec_ref_ret = 0;                        /* Ref count decrement return value */
+    H5VL_object_t *vol_obj     = NULL;            /* Object for loc_id */
+    H5VL_t        *connector   = NULL;            /* VOL connector */
+    void          *token       = NULL;            /* Request token for async operation        */
+    void         **token_ptr   = H5_REQUEST_NULL; /* Pointer to request token for async operation        */
+    herr_t         ret_value   = SUCCEED;         /* Return value */
+    int            dec_ref_ret = 0;               /* Ref count decrement return value */
 
     FUNC_ENTER_API_NO_MUTEX(FAIL)
     H5TRACE5("e", "*s*sIuii", app_file, app_func, app_line, file_id, es_id);
@@ -1535,7 +1535,7 @@ H5Freopen_async(const char *app_file, const char *app_func, unsigned app_line, h
     void          *token     = NULL;            /* Request token for async operation        */
     void         **token_ptr = H5_REQUEST_NULL; /* Pointer to request token for async operation        */
     hid_t          ret_value;                   /* Return value */
-    int dec_ref_ret = 0;                        /* Ref count decrement return value */
+    int            dec_ref_ret = 0;             /* Ref count decrement return value */
 
     FUNC_ENTER_API_NO_MUTEX(H5I_INVALID_HID)
     H5TRACE5("i", "*s*sIuii", app_file, app_func, app_line, file_id, es_id);

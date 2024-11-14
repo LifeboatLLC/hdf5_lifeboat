@@ -705,8 +705,8 @@ test_create_hard_link_invalid_params(void)
     htri_t link_exists;
     hid_t  file_id         = H5I_INVALID_HID;
     hid_t  container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
-    char   *ext_link_filename = NULL;
-    hid_t  ext_file_id                                        = H5I_INVALID_HID;
+    char  *ext_link_filename = NULL;
+    hid_t  ext_file_id       = H5I_INVALID_HID;
 
     TESTING_MULTIPART("hard link creation with invalid parameters");
 
@@ -2024,8 +2024,8 @@ test_create_external_link(void)
     htri_t link_exists;
     hid_t  file_id         = H5I_INVALID_HID;
     hid_t  container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
-    hid_t  root_id                                            = H5I_INVALID_HID;
-    char   *ext_link_filename = NULL;
+    hid_t  root_id           = H5I_INVALID_HID;
+    char  *ext_link_filename = NULL;
 
     TESTING("external link creation to existing object");
 
@@ -2141,8 +2141,8 @@ test_create_external_link_dangling(void)
     htri_t link_exists;
     hid_t  file_id = H5I_INVALID_HID, ext_file_id = H5I_INVALID_HID;
     hid_t  container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
-    hid_t  object_id                                          = H5I_INVALID_HID;
-    char   *ext_link_filename = NULL;
+    hid_t  object_id         = H5I_INVALID_HID;
+    char  *ext_link_filename = NULL;
 
     TESTING("dangling external link creation");
 
@@ -2281,10 +2281,10 @@ test_create_external_link_multi(void)
     hid_t file_id         = H5I_INVALID_HID;
     hid_t container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
     hid_t group_id2 = H5I_INVALID_HID, group_id3 = H5I_INVALID_HID;
-    hid_t root_id                                             = H5I_INVALID_HID;
-    char  *ext_link_filename1 = NULL;
-    char  *ext_link_filename2 = NULL;
-    char  *ext_link_filename3 = NULL;
+    hid_t root_id            = H5I_INVALID_HID;
+    char *ext_link_filename1 = NULL;
+    char *ext_link_filename2 = NULL;
+    char *ext_link_filename3 = NULL;
     char  objname[EXTERNAL_LINK_TEST_MULTI_NAME_BUF_SIZE];
 
     TESTING_MULTIPART("external link creation to an object across several files");
@@ -2675,12 +2675,12 @@ error:
 static void
 test_create_external_link_ping_pong(void)
 {
-    hid_t file_id                                             = H5I_INVALID_HID;
-    hid_t group_id                                            = H5I_INVALID_HID;
-    hid_t group_id2                                           = H5I_INVALID_HID;
-    bool  valid_name_matched                                  = false;
-    char  *ext_link_filename1 = NULL;
-    char  *ext_link_filename2 = NULL;
+    hid_t file_id            = H5I_INVALID_HID;
+    hid_t group_id           = H5I_INVALID_HID;
+    hid_t group_id2          = H5I_INVALID_HID;
+    bool  valid_name_matched = false;
+    char *ext_link_filename1 = NULL;
+    char *ext_link_filename2 = NULL;
     char  objname[EXTERNAL_LINK_TEST_MULTI_NAME_BUF_SIZE];
 
     TESTING_MULTIPART("external link creation to an object in ping pong style");
@@ -3610,10 +3610,10 @@ test_delete_link(void)
     htri_t link_exists;
     hid_t  file_id = H5I_INVALID_HID, ext_file_id = H5I_INVALID_HID;
     hid_t  container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
-    hid_t  subgroup_id                                        = H5I_INVALID_HID;
-    hid_t  nested_grp_id                                      = H5I_INVALID_HID;
-    hid_t  gcpl_id                                            = H5I_INVALID_HID;
-    char   *ext_link_filename = NULL;
+    hid_t  subgroup_id       = H5I_INVALID_HID;
+    hid_t  nested_grp_id     = H5I_INVALID_HID;
+    hid_t  gcpl_id           = H5I_INVALID_HID;
+    char  *ext_link_filename = NULL;
 
     TESTING_MULTIPART("link deletion");
 
@@ -7658,7 +7658,7 @@ test_copy_link(void)
     hid_t  file_id = H5I_INVALID_HID, ext_file_id = H5I_INVALID_HID;
     hid_t  container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
     hid_t  src_grp_id = H5I_INVALID_HID, dst_grp_id = H5I_INVALID_HID;
-    char   *ext_link_filename = NULL;
+    char  *ext_link_filename = NULL;
 
     TESTING_MULTIPART("link copying");
 
@@ -8921,8 +8921,8 @@ test_copy_link_invalid_params(void)
     hid_t  file_id         = H5I_INVALID_HID;
     hid_t  container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
     hid_t  src_grp_id = H5I_INVALID_HID, dst_grp_id = H5I_INVALID_HID;
-    char   *ext_link_filename = NULL;
-    hid_t  ext_file_id                                        = H5I_INVALID_HID;
+    char  *ext_link_filename = NULL;
+    hid_t  ext_file_id       = H5I_INVALID_HID;
 
     TESTING_MULTIPART("H5Lcopy with invalid parameters");
 
@@ -9259,8 +9259,8 @@ test_move_link(void)
     hid_t  file_id         = H5I_INVALID_HID;
     hid_t  container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
     hid_t  src_grp_id = H5I_INVALID_HID, dst_grp_id = H5I_INVALID_HID;
-    char   *ext_link_filename = NULL;
-    hid_t  ext_file_id                                        = H5I_INVALID_HID;
+    char  *ext_link_filename = NULL;
+    hid_t  ext_file_id       = H5I_INVALID_HID;
 
     TESTING_MULTIPART("link moving");
 
@@ -11115,8 +11115,8 @@ test_move_link_invalid_params(void)
     hid_t  file_id         = H5I_INVALID_HID;
     hid_t  container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
     hid_t  src_grp_id = H5I_INVALID_HID, dst_grp_id = H5I_INVALID_HID;
-    char   *ext_link_filename = NULL;
-    hid_t  ext_file_id                                        = H5I_INVALID_HID;
+    char  *ext_link_filename = NULL;
+    hid_t  ext_file_id       = H5I_INVALID_HID;
 
     TESTING_MULTIPART("H5Lmove with invalid parameters");
 
@@ -11212,7 +11212,7 @@ test_move_link_invalid_params(void)
         printf("    couldn't create file '%s' for external link to reference\n", ext_link_filename);
         goto error;
     }
-    
+
     PASSED();
 
     BEGIN_MULTIPART
@@ -11522,9 +11522,9 @@ test_get_link_val(void)
     char        link_val_buf[GET_LINK_VAL_TEST_LINK_VAL_BUF_SIZE];
     hid_t       file_id = H5I_INVALID_HID, ext_file_id = H5I_INVALID_HID;
     hid_t       container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
-    hid_t       subgroup_id                                        = H5I_INVALID_HID;
-    hid_t       gcpl_id                                            = H5I_INVALID_HID;
-    char        *ext_link_filename = NULL;
+    hid_t       subgroup_id       = H5I_INVALID_HID;
+    hid_t       gcpl_id           = H5I_INVALID_HID;
+    char       *ext_link_filename = NULL;
 
     TESTING_MULTIPART("link value retrieval");
 
@@ -13923,9 +13923,9 @@ test_get_link_info(void)
     size_t      link_val_size;
     hid_t       file_id = H5I_INVALID_HID, ext_file_id = H5I_INVALID_HID;
     hid_t       container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
-    hid_t       subgroup_id                                        = H5I_INVALID_HID;
-    hid_t       gcpl_id                                            = H5I_INVALID_HID;
-    char        *ext_link_filename = NULL;
+    hid_t       subgroup_id       = H5I_INVALID_HID;
+    hid_t       gcpl_id           = H5I_INVALID_HID;
+    char       *ext_link_filename = NULL;
 
     TESTING_MULTIPART("link info retrieval");
 
@@ -16894,7 +16894,7 @@ test_get_link_name(void)
     hid_t   subgroup_id = H5I_INVALID_HID;
     hid_t   gcpl_id     = H5I_INVALID_HID;
     char    link_name_buf[GET_LINK_NAME_TEST_BUF_SIZE];
-    char    *ext_link_filename = NULL;
+    char   *ext_link_filename = NULL;
 
     TESTING_MULTIPART("link name retrieval");
 
@@ -20078,8 +20078,8 @@ test_link_iterate_external_links(void)
     htri_t link_exists;
     hid_t  file_id         = H5I_INVALID_HID;
     hid_t  container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
-    hid_t  gcpl_id                                            = H5I_INVALID_HID;
-    char   *ext_link_filename = NULL;
+    hid_t  gcpl_id           = H5I_INVALID_HID;
+    char  *ext_link_filename = NULL;
 
     TESTING_MULTIPART("link iteration (only external links)");
 
@@ -20517,7 +20517,7 @@ test_link_iterate_mixed_links(void)
     hid_t   dset_dtype  = H5I_INVALID_HID;
     hid_t   dset_dspace = H5I_INVALID_HID;
     int     halted;
-    char    *ext_link_filename = NULL;
+    char   *ext_link_filename = NULL;
 
     TESTING_MULTIPART("link iteration (mixed link types)");
 
@@ -21052,13 +21052,13 @@ test_link_iterate_invalid_params(void)
     herr_t err_ret = -1;
     size_t i;
     htri_t link_exists;
-    hid_t  file_id                                            = H5I_INVALID_HID;
-    hid_t  container_group                                    = H5I_INVALID_HID;
-    hid_t  group_id                                           = H5I_INVALID_HID;
-    hid_t  dset_id                                            = H5I_INVALID_HID;
-    hid_t  dset_dtype                                         = H5I_INVALID_HID;
-    hid_t  dset_dspace                                        = H5I_INVALID_HID;
-    char   *ext_link_filename = NULL;
+    hid_t  file_id           = H5I_INVALID_HID;
+    hid_t  container_group   = H5I_INVALID_HID;
+    hid_t  group_id          = H5I_INVALID_HID;
+    hid_t  dset_id           = H5I_INVALID_HID;
+    hid_t  dset_dtype        = H5I_INVALID_HID;
+    hid_t  dset_dspace       = H5I_INVALID_HID;
+    char  *ext_link_filename = NULL;
 
     TESTING_MULTIPART("link iteration with invalid parameters");
 
@@ -22492,9 +22492,9 @@ test_link_visit_external_links_no_cycles(void)
     htri_t link_exists;
     hid_t  file_id         = H5I_INVALID_HID;
     hid_t  container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
-    hid_t  subgroup_id                                        = H5I_INVALID_HID;
-    hid_t  gcpl_id                                            = H5I_INVALID_HID;
-    char   *ext_link_filename = NULL;
+    hid_t  subgroup_id       = H5I_INVALID_HID;
+    hid_t  gcpl_id           = H5I_INVALID_HID;
+    char  *ext_link_filename = NULL;
 
     TESTING_MULTIPART("link visiting without cycles (only external links)");
 
@@ -22923,11 +22923,11 @@ test_link_visit_mixed_links_no_cycles(void)
     hid_t  file_id         = H5I_INVALID_HID;
     hid_t  container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
     hid_t  subgroup1 = H5I_INVALID_HID, subgroup2 = H5I_INVALID_HID;
-    hid_t  gcpl_id                                            = H5I_INVALID_HID;
-    hid_t  dset_id                                            = H5I_INVALID_HID;
-    hid_t  dset_dtype                                         = H5I_INVALID_HID;
-    hid_t  fspace_id                                          = H5I_INVALID_HID;
-    char   *ext_link_filename = NULL;
+    hid_t  gcpl_id           = H5I_INVALID_HID;
+    hid_t  dset_id           = H5I_INVALID_HID;
+    hid_t  dset_dtype        = H5I_INVALID_HID;
+    hid_t  fspace_id         = H5I_INVALID_HID;
+    char  *ext_link_filename = NULL;
 
     TESTING_MULTIPART("link visiting without cycles (mixed link types)");
 
@@ -24576,8 +24576,8 @@ test_link_visit_mixed_links_cycles(void)
     hid_t  file_id         = H5I_INVALID_HID;
     hid_t  container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
     hid_t  subgroup1 = H5I_INVALID_HID, subgroup2 = H5I_INVALID_HID;
-    hid_t  gcpl_id                                            = H5I_INVALID_HID;
-    char   *ext_link_filename = NULL;
+    hid_t  gcpl_id           = H5I_INVALID_HID;
+    char  *ext_link_filename = NULL;
 
     TESTING_MULTIPART("link visiting with cycles (mixed link types)");
 
@@ -25020,10 +25020,10 @@ test_link_visit_invalid_params(void)
     hid_t  file_id         = H5I_INVALID_HID;
     hid_t  container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
     hid_t  subgroup1 = H5I_INVALID_HID, subgroup2 = H5I_INVALID_HID;
-    hid_t  dset_id                                            = H5I_INVALID_HID;
-    hid_t  dset_dtype                                         = H5I_INVALID_HID;
-    hid_t  fspace_id                                          = H5I_INVALID_HID;
-    char   *ext_link_filename = NULL;
+    hid_t  dset_id           = H5I_INVALID_HID;
+    hid_t  dset_dtype        = H5I_INVALID_HID;
+    hid_t  fspace_id         = H5I_INVALID_HID;
+    char  *ext_link_filename = NULL;
 
     TESTING_MULTIPART("link visiting with invalid parameters");
 
@@ -27025,107 +27025,129 @@ H5_api_link_test_add(void)
 {
     /* Add a fake test to print out a header to distinguish different test interfaces */
     AddTest("print_link_test_header", print_link_test_header, NULL, "Prints header for link tests", NULL);
-    AddTest("test_create_hard_link", MT_API_TEST_FUNC_OUTER(test_create_hard_link), NULL, "hard link creation", NULL);
+    AddTest("test_create_hard_link", MT_API_TEST_FUNC_OUTER(test_create_hard_link), NULL,
+            "hard link creation", NULL);
     AddTest("test_create_hard_link_long_name", MT_API_TEST_FUNC_OUTER(test_create_hard_link_long_name), NULL,
             "hard link creation with a long name", NULL);
     AddTest("test_create_hard_link_many", MT_API_TEST_FUNC_OUTER(test_create_hard_link_many), NULL,
             "hard link creation of many links", NULL);
     AddTest("test_create_hard_link_same_loc", MT_API_TEST_FUNC_OUTER(test_create_hard_link_same_loc), NULL,
             "hard link creation with H5L_SAME_LOC", NULL);
-    AddTest("test_create_hard_link_invalid_params", MT_API_TEST_FUNC_OUTER(test_create_hard_link_invalid_params), NULL,
+    AddTest("test_create_hard_link_invalid_params",
+            MT_API_TEST_FUNC_OUTER(test_create_hard_link_invalid_params), NULL,
             "hard link creation with invalid parameters", NULL);
-    AddTest("test_create_soft_link_existing_relative", MT_API_TEST_FUNC_OUTER(test_create_soft_link_existing_relative), NULL,
+    AddTest("test_create_soft_link_existing_relative",
+            MT_API_TEST_FUNC_OUTER(test_create_soft_link_existing_relative), NULL,
             "soft link creation to existing object by relative path", NULL);
-    AddTest("test_create_soft_link_existing_absolute", MT_API_TEST_FUNC_OUTER(test_create_soft_link_existing_absolute), NULL,
+    AddTest("test_create_soft_link_existing_absolute",
+            MT_API_TEST_FUNC_OUTER(test_create_soft_link_existing_absolute), NULL,
             "soft link creation to existing object by absolute path", NULL);
-    AddTest("test_create_soft_link_dangling_relative", MT_API_TEST_FUNC_OUTER(test_create_soft_link_dangling_relative), NULL,
+    AddTest("test_create_soft_link_dangling_relative",
+            MT_API_TEST_FUNC_OUTER(test_create_soft_link_dangling_relative), NULL,
             "dangling soft link creation to object by relative path", NULL);
-    AddTest("test_create_soft_link_dangling_absolute", MT_API_TEST_FUNC_OUTER(test_create_soft_link_dangling_absolute), NULL,
+    AddTest("test_create_soft_link_dangling_absolute",
+            MT_API_TEST_FUNC_OUTER(test_create_soft_link_dangling_absolute), NULL,
             "dangling soft link creation to object by absolute path", NULL);
     AddTest("test_create_soft_link_long_name", MT_API_TEST_FUNC_OUTER(test_create_soft_link_long_name), NULL,
             "soft link creation with a long name", NULL);
     AddTest("test_create_soft_link_many", MT_API_TEST_FUNC_OUTER(test_create_soft_link_many), NULL,
             "soft link creation of many links", NULL);
-    AddTest("test_create_soft_link_invalid_params", MT_API_TEST_FUNC_OUTER(test_create_soft_link_invalid_params), NULL,
+    AddTest("test_create_soft_link_invalid_params",
+            MT_API_TEST_FUNC_OUTER(test_create_soft_link_invalid_params), NULL,
             "soft link creation with invalid parameters", NULL);
     AddTest("test_create_external_link", MT_API_TEST_FUNC_OUTER(test_create_external_link), NULL,
             "external link creation to existing object", NULL);
-    AddTest("test_create_external_link_dangling", MT_API_TEST_FUNC_OUTER(test_create_external_link_dangling), NULL,
-            "dangling external link creation", NULL);
+    AddTest("test_create_external_link_dangling", MT_API_TEST_FUNC_OUTER(test_create_external_link_dangling),
+            NULL, "dangling external link creation", NULL);
     AddTest("test_create_external_link_multi", MT_API_TEST_FUNC_OUTER(test_create_external_link_multi), NULL,
             "external link creation to an object across several files", NULL);
-    AddTest("test_create_external_link_ping_pong", MT_API_TEST_FUNC_OUTER(test_create_external_link_ping_pong), NULL,
+    AddTest("test_create_external_link_ping_pong",
+            MT_API_TEST_FUNC_OUTER(test_create_external_link_ping_pong), NULL,
             "external link creation to an object in ping pong style", NULL);
-    AddTest("test_create_external_link_invalid_params", MT_API_TEST_FUNC_OUTER(test_create_external_link_invalid_params), NULL,
+    AddTest("test_create_external_link_invalid_params",
+            MT_API_TEST_FUNC_OUTER(test_create_external_link_invalid_params), NULL,
             "H5Lcreate_external with invalid parameters", NULL);
     AddTest("test_create_user_defined_link", MT_API_TEST_FUNC_OUTER(test_create_user_defined_link), NULL,
             "user-defined link creation", NULL);
-    AddTest("test_create_user_defined_link_invalid_params", MT_API_TEST_FUNC_OUTER(test_create_user_defined_link_invalid_params),
-            NULL, "H5Lcreate_ud with invalid parameters", NULL);
+    AddTest("test_create_user_defined_link_invalid_params",
+            MT_API_TEST_FUNC_OUTER(test_create_user_defined_link_invalid_params), NULL,
+            "H5Lcreate_ud with invalid parameters", NULL);
     AddTest("test_delete_link", MT_API_TEST_FUNC_OUTER(test_delete_link), NULL, "link deletion", NULL);
-    AddTest("test_delete_link_reset_grp_max_crt_order", MT_API_TEST_FUNC_OUTER(test_delete_link_reset_grp_max_crt_order), NULL,
+    AddTest("test_delete_link_reset_grp_max_crt_order",
+            MT_API_TEST_FUNC_OUTER(test_delete_link_reset_grp_max_crt_order), NULL,
             "H5Ldelete of all links in group resets group's maximum link creation order value", NULL);
     AddTest("test_delete_link_invalid_params", MT_API_TEST_FUNC_OUTER(test_delete_link_invalid_params), NULL,
             "H5Ldelete with invalid parameters", NULL);
     AddTest("test_copy_link", MT_API_TEST_FUNC_OUTER(test_copy_link), NULL, "link copying", NULL);
-    AddTest("test_copy_links_into_group_with_links", MT_API_TEST_FUNC_OUTER(test_copy_links_into_group_with_links), NULL,
+    AddTest("test_copy_links_into_group_with_links",
+            MT_API_TEST_FUNC_OUTER(test_copy_links_into_group_with_links), NULL,
             "H5Lcopy adjusting creation order values for copied links", NULL);
-    AddTest("test_copy_link_across_files", MT_API_TEST_FUNC_OUTER(test_copy_link_across_files), NULL, "link copying across files",
-            NULL);
+    AddTest("test_copy_link_across_files", MT_API_TEST_FUNC_OUTER(test_copy_link_across_files), NULL,
+            "link copying across files", NULL);
     AddTest("test_copy_link_invalid_params", MT_API_TEST_FUNC_OUTER(test_copy_link_invalid_params), NULL,
             "H5Lcopy with invalid parameters", NULL);
     AddTest("test_move_link", MT_API_TEST_FUNC_OUTER(test_move_link), NULL, "link moving", NULL);
-    AddTest("test_move_links_into_group_with_links", MT_API_TEST_FUNC_OUTER(test_move_links_into_group_with_links), NULL,
+    AddTest("test_move_links_into_group_with_links",
+            MT_API_TEST_FUNC_OUTER(test_move_links_into_group_with_links), NULL,
             "H5Lmove adjusting creation order values for moved links", NULL);
-    AddTest("test_move_link_across_files", MT_API_TEST_FUNC_OUTER(test_move_link_across_files), NULL, "link moving across files",
-            NULL);
-    AddTest("test_move_link_reset_grp_max_crt_order", MT_API_TEST_FUNC_OUTER(test_move_link_reset_grp_max_crt_order), NULL,
+    AddTest("test_move_link_across_files", MT_API_TEST_FUNC_OUTER(test_move_link_across_files), NULL,
+            "link moving across files", NULL);
+    AddTest("test_move_link_reset_grp_max_crt_order",
+            MT_API_TEST_FUNC_OUTER(test_move_link_reset_grp_max_crt_order), NULL,
             "H5Lmove of all links out of group resets group's maximum link creation order value", NULL);
     AddTest("test_move_link_invalid_params", MT_API_TEST_FUNC_OUTER(test_move_link_invalid_params), NULL,
             "H5Lmove with invalid parameters", NULL);
-    AddTest("test_get_link_val", MT_API_TEST_FUNC_OUTER(test_get_link_val), NULL, "link value retrieval", NULL);
-    AddTest("test_get_link_val_invalid_params", MT_API_TEST_FUNC_OUTER(test_get_link_val_invalid_params), NULL,
-            "link value retrieval with invalid parameters", NULL);
-    AddTest("test_get_link_info", MT_API_TEST_FUNC_OUTER(test_get_link_info), NULL, "link info retrieval", NULL);
-    AddTest("test_get_link_info_invalid_params", MT_API_TEST_FUNC_OUTER(test_get_link_info_invalid_params), NULL,
-            "link info retrieval with invalid parameters", NULL);
-    AddTest("test_get_link_name", MT_API_TEST_FUNC_OUTER(test_get_link_name), NULL, "link name retrieval", NULL);
-    AddTest("test_get_link_name_invalid_params", MT_API_TEST_FUNC_OUTER(test_get_link_name_invalid_params), NULL,
-            "link name retrieval with invalid parameters", NULL);
+    AddTest("test_get_link_val", MT_API_TEST_FUNC_OUTER(test_get_link_val), NULL, "link value retrieval",
+            NULL);
+    AddTest("test_get_link_val_invalid_params", MT_API_TEST_FUNC_OUTER(test_get_link_val_invalid_params),
+            NULL, "link value retrieval with invalid parameters", NULL);
+    AddTest("test_get_link_info", MT_API_TEST_FUNC_OUTER(test_get_link_info), NULL, "link info retrieval",
+            NULL);
+    AddTest("test_get_link_info_invalid_params", MT_API_TEST_FUNC_OUTER(test_get_link_info_invalid_params),
+            NULL, "link info retrieval with invalid parameters", NULL);
+    AddTest("test_get_link_name", MT_API_TEST_FUNC_OUTER(test_get_link_name), NULL, "link name retrieval",
+            NULL);
+    AddTest("test_get_link_name_invalid_params", MT_API_TEST_FUNC_OUTER(test_get_link_name_invalid_params),
+            NULL, "link name retrieval with invalid parameters", NULL);
     AddTest("test_link_iterate_hard_links", MT_API_TEST_FUNC_OUTER(test_link_iterate_hard_links), NULL,
             "link iteration (only hard links)", NULL);
     AddTest("test_link_iterate_soft_links", MT_API_TEST_FUNC_OUTER(test_link_iterate_soft_links), NULL,
             "link iteration (only soft links)", NULL);
-    AddTest("test_link_iterate_external_links", MT_API_TEST_FUNC_OUTER(test_link_iterate_external_links), NULL,
-            "link iteration (only external links)", NULL);
+    AddTest("test_link_iterate_external_links", MT_API_TEST_FUNC_OUTER(test_link_iterate_external_links),
+            NULL, "link iteration (only external links)", NULL);
     AddTest("test_link_iterate_ud_links", MT_API_TEST_FUNC_OUTER(test_link_iterate_ud_links), NULL,
             "link iteration (only user-defined links)", NULL);
     AddTest("test_link_iterate_mixed_links", MT_API_TEST_FUNC_OUTER(test_link_iterate_mixed_links), NULL,
             "link iteration (mixed link types)", NULL);
-    AddTest("test_link_iterate_invalid_params", MT_API_TEST_FUNC_OUTER(test_link_iterate_invalid_params), NULL,
-            "link iteration with invalid parameters", NULL);
+    AddTest("test_link_iterate_invalid_params", MT_API_TEST_FUNC_OUTER(test_link_iterate_invalid_params),
+            NULL, "link iteration with invalid parameters", NULL);
     AddTest("test_link_iterate_0_links", MT_API_TEST_FUNC_OUTER(test_link_iterate_0_links), NULL,
             "link iteration on group with 0 links", NULL);
-    AddTest("test_link_visit_hard_links_no_cycles", MT_API_TEST_FUNC_OUTER(test_link_visit_hard_links_no_cycles), NULL,
+    AddTest("test_link_visit_hard_links_no_cycles",
+            MT_API_TEST_FUNC_OUTER(test_link_visit_hard_links_no_cycles), NULL,
             "link visiting without cycles (only hard links)", NULL);
-    AddTest("test_link_visit_soft_links_no_cycles", MT_API_TEST_FUNC_OUTER(test_link_visit_soft_links_no_cycles), NULL,
+    AddTest("test_link_visit_soft_links_no_cycles",
+            MT_API_TEST_FUNC_OUTER(test_link_visit_soft_links_no_cycles), NULL,
             "link visiting without cycles (only soft links)", NULL);
-    AddTest("test_link_visit_external_links_no_cycles", MT_API_TEST_FUNC_OUTER(test_link_visit_external_links_no_cycles), NULL,
+    AddTest("test_link_visit_external_links_no_cycles",
+            MT_API_TEST_FUNC_OUTER(test_link_visit_external_links_no_cycles), NULL,
             "link visiting without cycles (only external links)", NULL);
-    AddTest("test_link_visit_ud_links_no_cycles", MT_API_TEST_FUNC_OUTER(test_link_visit_ud_links_no_cycles), NULL,
-            "link visiting without cycles (only user-defined links)", NULL);
-    AddTest("test_link_visit_mixed_links_no_cycles", MT_API_TEST_FUNC_OUTER(test_link_visit_mixed_links_no_cycles), NULL,
+    AddTest("test_link_visit_ud_links_no_cycles", MT_API_TEST_FUNC_OUTER(test_link_visit_ud_links_no_cycles),
+            NULL, "link visiting without cycles (only user-defined links)", NULL);
+    AddTest("test_link_visit_mixed_links_no_cycles",
+            MT_API_TEST_FUNC_OUTER(test_link_visit_mixed_links_no_cycles), NULL,
             "link visiting without cycles (mixed link types)", NULL);
-    AddTest("test_link_visit_hard_links_cycles", MT_API_TEST_FUNC_OUTER(test_link_visit_hard_links_cycles), NULL,
-            "link visiting with cycles (only hard links)", NULL);
-    AddTest("test_link_visit_soft_links_cycles", MT_API_TEST_FUNC_OUTER(test_link_visit_soft_links_cycles), NULL,
-            "link visiting with cycles (only soft links)", NULL);
-    AddTest("test_link_visit_external_links_cycles", MT_API_TEST_FUNC_OUTER(test_link_visit_external_links_cycles), NULL,
+    AddTest("test_link_visit_hard_links_cycles", MT_API_TEST_FUNC_OUTER(test_link_visit_hard_links_cycles),
+            NULL, "link visiting with cycles (only hard links)", NULL);
+    AddTest("test_link_visit_soft_links_cycles", MT_API_TEST_FUNC_OUTER(test_link_visit_soft_links_cycles),
+            NULL, "link visiting with cycles (only soft links)", NULL);
+    AddTest("test_link_visit_external_links_cycles",
+            MT_API_TEST_FUNC_OUTER(test_link_visit_external_links_cycles), NULL,
             "link visiting with cycles (only external links)", NULL);
     AddTest("test_link_visit_ud_links_cycles", MT_API_TEST_FUNC_OUTER(test_link_visit_ud_links_cycles), NULL,
             "link visiting with cycles (only user-defined links)", NULL);
-    AddTest("test_link_visit_mixed_links_cycles", MT_API_TEST_FUNC_OUTER(test_link_visit_mixed_links_cycles), NULL,
-            "link visiting with cycles (mixed link types)", NULL);
+    AddTest("test_link_visit_mixed_links_cycles", MT_API_TEST_FUNC_OUTER(test_link_visit_mixed_links_cycles),
+            NULL, "link visiting with cycles (mixed link types)", NULL);
     AddTest("test_link_visit_invalid_params", MT_API_TEST_FUNC_OUTER(test_link_visit_invalid_params), NULL,
             "link visiting with invalid parameters", NULL);
     AddTest("test_link_visit_0_links", MT_API_TEST_FUNC_OUTER(test_link_visit_0_links), NULL,

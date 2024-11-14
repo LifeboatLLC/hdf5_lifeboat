@@ -71,21 +71,20 @@ static void H5VL__release_dyn_op(H5VL_dyn_op_t *dyn_op);
 /* Initialize in H5VL_init_opt_operation_table() */
 static _Atomic(int) H5VL_opt_vals_g[H5VL_SUBCLS_TOKEN + 1];
 #else
-static int     H5VL_opt_vals_g[H5VL_SUBCLS_TOKEN + 1] =
-    {
-        H5VL_RESERVED_NATIVE_OPTIONAL, /* H5VL_SUBCLS_NONE */
-        H5VL_RESERVED_NATIVE_OPTIONAL, /* H5VL_SUBCLS_INFO */
-        H5VL_RESERVED_NATIVE_OPTIONAL, /* H5VL_SUBCLS_WRAP */
-        H5VL_RESERVED_NATIVE_OPTIONAL, /* H5VL_SUBCLS_ATTR */
-        H5VL_RESERVED_NATIVE_OPTIONAL, /* H5VL_SUBCLS_DATASET */
-        H5VL_RESERVED_NATIVE_OPTIONAL, /* H5VL_SUBCLS_DATATYPE */
-        H5VL_RESERVED_NATIVE_OPTIONAL, /* H5VL_SUBCLS_FILE */
-        H5VL_RESERVED_NATIVE_OPTIONAL, /* H5VL_SUBCLS_GROUP */
-        H5VL_RESERVED_NATIVE_OPTIONAL, /* H5VL_SUBCLS_LINK */
-        H5VL_RESERVED_NATIVE_OPTIONAL, /* H5VL_SUBCLS_OBJECT */
-        H5VL_RESERVED_NATIVE_OPTIONAL, /* H5VL_SUBCLS_REQUEST */
-        H5VL_RESERVED_NATIVE_OPTIONAL, /* H5VL_SUBCLS_BLOB */
-        H5VL_RESERVED_NATIVE_OPTIONAL  /* H5VL_SUBCLS_TOKEN */
+static int H5VL_opt_vals_g[H5VL_SUBCLS_TOKEN + 1] = {
+    H5VL_RESERVED_NATIVE_OPTIONAL, /* H5VL_SUBCLS_NONE */
+    H5VL_RESERVED_NATIVE_OPTIONAL, /* H5VL_SUBCLS_INFO */
+    H5VL_RESERVED_NATIVE_OPTIONAL, /* H5VL_SUBCLS_WRAP */
+    H5VL_RESERVED_NATIVE_OPTIONAL, /* H5VL_SUBCLS_ATTR */
+    H5VL_RESERVED_NATIVE_OPTIONAL, /* H5VL_SUBCLS_DATASET */
+    H5VL_RESERVED_NATIVE_OPTIONAL, /* H5VL_SUBCLS_DATATYPE */
+    H5VL_RESERVED_NATIVE_OPTIONAL, /* H5VL_SUBCLS_FILE */
+    H5VL_RESERVED_NATIVE_OPTIONAL, /* H5VL_SUBCLS_GROUP */
+    H5VL_RESERVED_NATIVE_OPTIONAL, /* H5VL_SUBCLS_LINK */
+    H5VL_RESERVED_NATIVE_OPTIONAL, /* H5VL_SUBCLS_OBJECT */
+    H5VL_RESERVED_NATIVE_OPTIONAL, /* H5VL_SUBCLS_REQUEST */
+    H5VL_RESERVED_NATIVE_OPTIONAL, /* H5VL_SUBCLS_BLOB */
+    H5VL_RESERVED_NATIVE_OPTIONAL  /* H5VL_SUBCLS_TOKEN */
 };
 #endif
 
@@ -109,7 +108,7 @@ static H5SL_t *H5VL_opt_ops_g[H5VL_SUBCLS_TOKEN + 1] =
         NULL, /* H5VL_SUBCLS_REQUEST */
         NULL, /* H5VL_SUBCLS_BLOB */
         NULL  /* H5VL_SUBCLS_TOKEN */
-    };
+};
 
 /* Declare a free list to manage the H5VL_class_t struct */
 H5FL_DEFINE_STATIC(H5VL_dyn_op_t);
@@ -198,7 +197,8 @@ H5VL__term_opt_operation(void)
  *---------------------------------------------------------------------------
  */
 void
-H5VL__init_opt_operation_table(void) {
+H5VL__init_opt_operation_table(void)
+{
     size_t subcls = 0; /* Index over the elements of operation array */
 
     FUNC_ENTER_PACKAGE_NOERR
@@ -302,7 +302,7 @@ done:
 
     if (new_op_list && !new_list_inserted)
         H5SL_close(new_op_list);
-    
+
     H5_API_UNLOCK
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5VL__register_opt_operation() */

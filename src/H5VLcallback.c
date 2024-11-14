@@ -45,16 +45,18 @@
 /* Acquire global mutex before entering connector callback, if connector is not threadsafe */
 #define VOL_CONN_LOCK(cls)                                                                                   \
     do {                                                                                                     \
-        if (cls && !(cls->cap_flags & H5VL_CAP_FLAG_THREADSAFE)) {                                          \
+        if (cls && !(cls->cap_flags & H5VL_CAP_FLAG_THREADSAFE)) {                                           \
             H5_API_LOCK;                                                                                     \
         }
 
 /* Release global mutex after finishing connector callback, if connector is not threadsafe */
 #define VOL_CONN_UNLOCK(cls)                                                                                 \
-    if (cls && !(cls->cap_flags & H5VL_CAP_FLAG_THREADSAFE)) {                                              \
+    if (cls && !(cls->cap_flags & H5VL_CAP_FLAG_THREADSAFE)) {                                               \
         H5_API_UNLOCK;                                                                                       \
-    }\
-    } while (0);
+    }                                                                                                        \
+    }                                                                                                        \
+    while (0)                                                                                                \
+        ;
 
 /******************/
 /* Local Typedefs */
@@ -231,7 +233,7 @@ static herr_t H5VL__optional(void *obj, const H5VL_class_t *cls, H5VL_optional_a
 herr_t
 H5VLinitialize(hid_t connector_id, hid_t vipl_id)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL;    /* VOL connector's class struct */
     herr_t        ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -265,7 +267,7 @@ done:
 herr_t
 H5VLterminate(hid_t connector_id)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL;    /* VOL connector's class struct */
     herr_t        ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -299,7 +301,7 @@ done:
 herr_t
 H5VLget_cap_flags(hid_t connector_id, uint64_t *cap_flags /*out*/)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL;    /* VOL connector's class struct */
     herr_t        ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -330,7 +332,7 @@ done:
 herr_t
 H5VLget_value(hid_t connector_id, H5VL_class_value_t *value /*out*/)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL;    /* VOL connector's class struct */
     herr_t        ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -449,7 +451,7 @@ done:
 herr_t
 H5VLcopy_connector_info(hid_t connector_id, void **dst_vol_info, const void *src_vol_info)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL;    /* VOL connector's class struct */
     herr_t        ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -540,7 +542,7 @@ done:
 herr_t
 H5VLcmp_connector_info(int *cmp, hid_t connector_id, const void *info1, const void *info2)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL;    /* VOL connector's class struct */
     herr_t        ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX(FAIL)
@@ -571,7 +573,7 @@ done:
 herr_t
 H5VL_free_connector_info(hid_t connector_id, const void *info)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL;    /* VOL connector's class struct */
     herr_t        ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_NOAPI(FAIL)
@@ -642,7 +644,7 @@ herr_t
 H5VLconnector_info_to_str(const void *info, hid_t connector_id, char **str)
 {
     herr_t        ret_value = SUCCEED; /* Return value */
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL;    /* VOL connector's class struct */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
     H5TRACE3("e", "*xi**s", info, connector_id, str);
@@ -710,7 +712,7 @@ done:
 void *
 H5VLget_object(void *obj, hid_t connector_id)
 {
-    H5VL_class_t *cls = NULL;              /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL; /* VOL connector's class struct */
     void         *ret_value = NULL; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -786,7 +788,7 @@ done:
 herr_t
 H5VLget_wrap_ctx(void *obj, hid_t connector_id, void **wrap_ctx /*out*/)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL;    /* VOL connector's class struct */
     herr_t        ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -854,7 +856,7 @@ done:
 void *
 H5VLwrap_object(void *obj, H5I_type_t obj_type, hid_t connector_id, void *wrap_ctx)
 {
-    H5VL_class_t *cls = NULL;              /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL; /* VOL connector's class struct */
     void         *ret_value = NULL; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -921,7 +923,7 @@ done:
 void *
 H5VLunwrap_object(void *obj, hid_t connector_id)
 {
-    H5VL_class_t *cls = NULL;              /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL; /* VOL connector's class struct */
     void         *ret_value = NULL; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -985,7 +987,7 @@ done:
 herr_t
 H5VLfree_wrap_ctx(void *wrap_ctx, hid_t connector_id)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL;    /* VOL connector's class struct */
     herr_t        ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -1088,7 +1090,7 @@ H5VLattr_create(void *obj, const H5VL_loc_params_t *loc_params, hid_t connector_
                 hid_t type_id, hid_t space_id, hid_t acpl_id, hid_t aapl_id, hid_t dxpl_id,
                 void **req /*out*/)
 {
-    H5VL_class_t *cls = NULL;              /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL; /* VOL connector's class struct */
     void         *ret_value = NULL; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -1193,7 +1195,7 @@ void *
 H5VLattr_open(void *obj, const H5VL_loc_params_t *loc_params, hid_t connector_id, const char *name,
               hid_t aapl_id, hid_t dxpl_id, void **req /*out*/)
 {
-    H5VL_class_t *cls = NULL;              /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL; /* VOL connector's class struct */
     void         *ret_value = NULL; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -1292,7 +1294,7 @@ done:
 herr_t
 H5VLattr_read(void *obj, hid_t connector_id, hid_t mem_type_id, void *buf, hid_t dxpl_id, void **req /*out*/)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL;    /* VOL connector's class struct */
     herr_t        ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -1330,7 +1332,7 @@ H5VL__attr_write(void *obj, const H5VL_class_t *cls, hid_t mem_type_id, const vo
 
     FUNC_ENTER_PACKAGE
     VOL_CONN_LOCK(cls)
-    
+
     /* Check if the corresponding VOL callback exists */
     if (NULL == cls->attr_cls.write)
         HGOTO_ERROR(H5E_VOL, H5E_UNSUPPORTED, FAIL, "VOL connector has no 'attr write' method");
@@ -1393,7 +1395,7 @@ herr_t
 H5VLattr_write(void *obj, hid_t connector_id, hid_t mem_type_id, const void *buf, hid_t dxpl_id,
                void **req /*out*/)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL;    /* VOL connector's class struct */
     herr_t        ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -1492,7 +1494,7 @@ done:
 herr_t
 H5VLattr_get(void *obj, hid_t connector_id, H5VL_attr_get_args_t *args, hid_t dxpl_id, void **req /*out*/)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL;    /* VOL connector's class struct */
     herr_t        ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -1599,7 +1601,7 @@ herr_t
 H5VLattr_specific(void *obj, const H5VL_loc_params_t *loc_params, hid_t connector_id,
                   H5VL_attr_specific_args_t *args, hid_t dxpl_id, void **req /*out*/)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL;    /* VOL connector's class struct */
     herr_t        ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -1702,7 +1704,7 @@ herr_t
 H5VLattr_optional(void *obj, hid_t connector_id, H5VL_optional_args_t *args, hid_t dxpl_id,
                   void **req /*out*/)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL;    /* VOL connector's class struct */
     herr_t        ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -1838,7 +1840,7 @@ done:
 herr_t
 H5VLattr_close(void *obj, hid_t connector_id, hid_t dxpl_id, void **req /*out*/)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL;    /* VOL connector's class struct */
     herr_t        ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -1946,7 +1948,7 @@ H5VLdataset_create(void *obj, const H5VL_loc_params_t *loc_params, hid_t connect
                    hid_t lcpl_id, hid_t type_id, hid_t space_id, hid_t dcpl_id, hid_t dapl_id, hid_t dxpl_id,
                    void **req /*out*/)
 {
-    H5VL_class_t *cls = NULL;              /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL; /* VOL connector's class struct */
     void         *ret_value = NULL; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -2051,7 +2053,7 @@ void *
 H5VLdataset_open(void *obj, const H5VL_loc_params_t *loc_params, hid_t connector_id, const char *name,
                  hid_t dapl_id, hid_t dxpl_id, void **req /*out*/)
 {
-    H5VL_class_t *cls = NULL;              /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL; /* VOL connector's class struct */
     void         *ret_value = NULL; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -2234,7 +2236,7 @@ herr_t
 H5VLdataset_read(size_t count, void *obj[], hid_t connector_id, hid_t mem_type_id[], hid_t mem_space_id[],
                  hid_t file_space_id[], hid_t dxpl_id, void *buf[], void **req /*out*/)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls = NULL;          /* VOL connector's class struct */
     size_t        i;                   /* Local index variable */
     herr_t        ret_value = SUCCEED; /* Return value */
 
@@ -2431,7 +2433,7 @@ herr_t
 H5VLdataset_write(size_t count, void *obj[], hid_t connector_id, hid_t mem_type_id[], hid_t mem_space_id[],
                   hid_t file_space_id[], hid_t dxpl_id, const void *buf[], void **req /*out*/)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls = NULL;          /* VOL connector's class struct */
     size_t        i;                   /* Local index variable */
     herr_t        ret_value = SUCCEED; /* Return value */
 
@@ -2545,7 +2547,7 @@ herr_t
 H5VLdataset_get(void *obj, hid_t connector_id, H5VL_dataset_get_args_t *args, hid_t dxpl_id,
                 void **req /*out*/)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL;    /* VOL connector's class struct */
     herr_t        ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -2647,7 +2649,7 @@ herr_t
 H5VLdataset_specific(void *obj, hid_t connector_id, H5VL_dataset_specific_args_t *args, hid_t dxpl_id,
                      void **req /*out*/)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL;    /* VOL connector's class struct */
     herr_t        ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -2685,7 +2687,7 @@ H5VL__dataset_optional(void *obj, const H5VL_class_t *cls, H5VL_optional_args_t 
 
     FUNC_ENTER_PACKAGE
     VOL_CONN_LOCK(cls)
-    
+
     /* Check if the corresponding VOL callback exists */
     if (NULL == cls->dataset_cls.optional)
         HGOTO_ERROR(H5E_VOL, H5E_UNSUPPORTED, FAIL, "VOL connector has no 'dataset optional' method");
@@ -2748,7 +2750,7 @@ herr_t
 H5VLdataset_optional(void *obj, hid_t connector_id, H5VL_optional_args_t *args, hid_t dxpl_id,
                      void **req /*out*/)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL;    /* VOL connector's class struct */
     herr_t        ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -2900,7 +2902,7 @@ done:
 herr_t
 H5VLdataset_close(void *obj, hid_t connector_id, hid_t dxpl_id, void **req /*out*/)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL;    /* VOL connector's class struct */
     herr_t        ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -3006,7 +3008,7 @@ H5VLdatatype_commit(void *obj, const H5VL_loc_params_t *loc_params, hid_t connec
                     hid_t type_id, hid_t lcpl_id, hid_t tcpl_id, hid_t tapl_id, hid_t dxpl_id,
                     void **req /*out*/)
 {
-    H5VL_class_t *cls = NULL;              /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL; /* VOL connector's class struct */
     void         *ret_value = NULL; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -3111,7 +3113,7 @@ void *
 H5VLdatatype_open(void *obj, const H5VL_loc_params_t *loc_params, hid_t connector_id, const char *name,
                   hid_t tapl_id, hid_t dxpl_id, void **req /*out*/)
 {
-    H5VL_class_t *cls = NULL;              /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL; /* VOL connector's class struct */
     void         *ret_value = NULL; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -3212,7 +3214,7 @@ herr_t
 H5VLdatatype_get(void *obj, hid_t connector_id, H5VL_datatype_get_args_t *args, hid_t dxpl_id,
                  void **req /*out*/)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL;    /* VOL connector's class struct */
     herr_t        ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -3314,7 +3316,7 @@ herr_t
 H5VLdatatype_specific(void *obj, hid_t connector_id, H5VL_datatype_specific_args_t *args, hid_t dxpl_id,
                       void **req /*out*/)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL;    /* VOL connector's class struct */
     herr_t        ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -3459,7 +3461,7 @@ herr_t
 H5VLdatatype_optional(void *obj, hid_t connector_id, H5VL_optional_args_t *args, hid_t dxpl_id,
                       void **req /*out*/)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL;    /* VOL connector's class struct */
     herr_t        ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -3605,7 +3607,7 @@ done:
 herr_t
 H5VLdatatype_close(void *obj, hid_t connector_id, hid_t dxpl_id, void **req /*out*/)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL;    /* VOL connector's class struct */
     herr_t        ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -3677,7 +3679,7 @@ void *
 H5VL_file_create(const H5VL_connector_prop_t *connector_prop, const char *name, unsigned flags, hid_t fcpl_id,
                  hid_t fapl_id, hid_t dxpl_id, void **req)
 {
-    H5VL_class_t *cls = NULL;              /* VOL Class structure for callback info    */
+    H5VL_class_t *cls       = NULL; /* VOL Class structure for callback info    */
     void         *ret_value = NULL; /* Return value */
 
     FUNC_ENTER_NOAPI(NULL)
@@ -3710,7 +3712,7 @@ H5VLfile_create(const char *name, unsigned flags, hid_t fcpl_id, hid_t fapl_id, 
 {
     H5P_genplist_t       *plist;            /* Property list pointer */
     H5VL_connector_prop_t connector_prop;   /* Property for VOL connector ID & info */
-    H5VL_class_t         *cls = NULL;              /* VOL connector's class struct */
+    H5VL_class_t         *cls       = NULL; /* VOL connector's class struct */
     void                 *ret_value = NULL; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -3797,7 +3799,7 @@ H5VL__file_open_find_connector_cb(H5PL_type_t plugin_type, const void *plugin_in
     hid_t                            connector_id = H5I_INVALID_HID;
     hid_t                            fapl_id      = H5I_INVALID_HID;
     herr_t                           ret_value    = H5_ITER_CONT;
-    int dec_ref_ret = 0; /* Return value from H5I_dec_(app_)ref */
+    int                              dec_ref_ret  = 0; /* Return value from H5I_dec_(app_)ref */
     FUNC_ENTER_PACKAGE
 
     assert(udata);
@@ -3907,7 +3909,7 @@ void *
 H5VL_file_open(H5VL_connector_prop_t *connector_prop, const char *name, unsigned flags, hid_t fapl_id,
                hid_t dxpl_id, void **req)
 {
-    H5VL_class_t *cls = NULL;              /* VOL Class structure for callback info    */
+    H5VL_class_t *cls       = NULL; /* VOL Class structure for callback info    */
     void         *ret_value = NULL; /* Return value */
 
     FUNC_ENTER_NOAPI(NULL)
@@ -3982,7 +3984,7 @@ H5VLfile_open(const char *name, unsigned flags, hid_t fapl_id, hid_t dxpl_id, vo
 {
     H5P_genplist_t       *plist;            /* Property list pointer */
     H5VL_connector_prop_t connector_prop;   /* Property for VOL connector ID & info */
-    H5VL_class_t         *cls = NULL;              /* VOL connector's class struct */
+    H5VL_class_t         *cls       = NULL; /* VOL connector's class struct */
     void                 *ret_value = NULL; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -4085,7 +4087,7 @@ done:
 herr_t
 H5VLfile_get(void *obj, hid_t connector_id, H5VL_file_get_args_t *args, hid_t dxpl_id, void **req /*out*/)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL;    /* VOL connector's class struct */
     herr_t        ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -4150,7 +4152,7 @@ done:
 herr_t
 H5VL_file_specific(const H5VL_object_t *vol_obj, H5VL_file_specific_args_t *args, hid_t dxpl_id, void **req)
 {
-    const H5VL_class_t *cls = NULL;                       /* VOL connector's class struct */
+    const H5VL_class_t *cls             = NULL;    /* VOL connector's class struct */
     hbool_t             vol_wrapper_set = FALSE;   /* Whether the VOL object wrapping context was set up */
     herr_t              ret_value       = SUCCEED; /* Return value */
 
@@ -4222,7 +4224,7 @@ herr_t
 H5VLfile_specific(void *obj, hid_t connector_id, H5VL_file_specific_args_t *args, hid_t dxpl_id,
                   void **req /*out*/)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL;    /* VOL connector's class struct */
     herr_t        ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -4320,7 +4322,7 @@ herr_t
 H5VLfile_optional(void *obj, hid_t connector_id, H5VL_optional_args_t *args, hid_t dxpl_id,
                   void **req /*out*/)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL;    /* VOL connector's class struct */
     herr_t        ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -4466,7 +4468,7 @@ done:
 herr_t
 H5VLfile_close(void *obj, hid_t connector_id, hid_t dxpl_id, void **req /*out*/)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL;    /* VOL connector's class struct */
     herr_t        ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -4570,7 +4572,7 @@ void *
 H5VLgroup_create(void *obj, const H5VL_loc_params_t *loc_params, hid_t connector_id, const char *name,
                  hid_t lcpl_id, hid_t gcpl_id, hid_t gapl_id, hid_t dxpl_id, void **req /*out*/)
 {
-    H5VL_class_t *cls = NULL;              /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL; /* VOL connector's class struct */
     void         *ret_value = NULL; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -4675,7 +4677,7 @@ void *
 H5VLgroup_open(void *obj, const H5VL_loc_params_t *loc_params, hid_t connector_id, const char *name,
                hid_t gapl_id, hid_t dxpl_id, void **req /*out*/)
 {
-    H5VL_class_t *cls = NULL;              /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL; /* VOL connector's class struct */
     void         *ret_value = NULL; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -4774,7 +4776,7 @@ done:
 herr_t
 H5VLgroup_get(void *obj, hid_t connector_id, H5VL_group_get_args_t *args, hid_t dxpl_id, void **req /*out*/)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL;    /* VOL connector's class struct */
     herr_t        ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -4875,7 +4877,7 @@ herr_t
 H5VLgroup_specific(void *obj, hid_t connector_id, H5VL_group_specific_args_t *args, hid_t dxpl_id,
                    void **req /*out*/)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL;    /* VOL connector's class struct */
     herr_t        ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -4978,7 +4980,7 @@ herr_t
 H5VLgroup_optional(void *obj, hid_t connector_id, H5VL_optional_args_t *args, hid_t dxpl_id,
                    void **req /*out*/)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL;    /* VOL connector's class struct */
     herr_t        ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -5125,7 +5127,7 @@ done:
 herr_t
 H5VLgroup_close(void *obj, hid_t connector_id, hid_t dxpl_id, void **req /*out*/)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL;    /* VOL connector's class struct */
     herr_t        ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -5242,7 +5244,7 @@ herr_t
 H5VLlink_create(H5VL_link_create_args_t *args, void *obj, const H5VL_loc_params_t *loc_params,
                 hid_t connector_id, hid_t lcpl_id, hid_t lapl_id, hid_t dxpl_id, void **req /*out*/)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL;    /* VOL connector's class struct */
     herr_t        ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -5350,7 +5352,7 @@ H5VLlink_copy(void *src_obj, const H5VL_loc_params_t *loc_params1, void *dst_obj
               const H5VL_loc_params_t *loc_params2, hid_t connector_id, hid_t lcpl_id, hid_t lapl_id,
               hid_t dxpl_id, void **req /*out*/)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL;    /* VOL connector's class struct */
     herr_t        ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -5459,7 +5461,7 @@ H5VLlink_move(void *src_obj, const H5VL_loc_params_t *loc_params1, void *dst_obj
               const H5VL_loc_params_t *loc_params2, hid_t connector_id, hid_t lcpl_id, hid_t lapl_id,
               hid_t dxpl_id, void **req /*out*/)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL;    /* VOL connector's class struct */
     herr_t        ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -5560,7 +5562,7 @@ herr_t
 H5VLlink_get(void *obj, const H5VL_loc_params_t *loc_params, hid_t connector_id, H5VL_link_get_args_t *args,
              hid_t dxpl_id, void **req /*out*/)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL;    /* VOL connector's class struct */
     herr_t        ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -5665,7 +5667,7 @@ herr_t
 H5VLlink_specific(void *obj, const H5VL_loc_params_t *loc_params, hid_t connector_id,
                   H5VL_link_specific_args_t *args, hid_t dxpl_id, void **req /*out*/)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL;    /* VOL connector's class struct */
     herr_t        ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -5768,7 +5770,7 @@ herr_t
 H5VLlink_optional(void *obj, const H5VL_loc_params_t *loc_params, hid_t connector_id,
                   H5VL_optional_args_t *args, hid_t dxpl_id, void **req /*out*/)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL;    /* VOL connector's class struct */
     herr_t        ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -5932,7 +5934,7 @@ void *
 H5VLobject_open(void *obj, const H5VL_loc_params_t *params, hid_t connector_id, H5I_type_t *opened_type,
                 hid_t dxpl_id, void **req /*out*/)
 {
-    H5VL_class_t *cls = NULL;              /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL; /* VOL connector's class struct */
     void         *ret_value = NULL; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -6044,7 +6046,7 @@ H5VLobject_copy(void *src_obj, const H5VL_loc_params_t *src_loc_params, const ch
                 const H5VL_loc_params_t *dst_loc_params, const char *dst_name, hid_t connector_id,
                 hid_t ocpypl_id, hid_t lcpl_id, hid_t dxpl_id, void **req /*out*/)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL;    /* VOL connector's class struct */
     herr_t        ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -6148,7 +6150,7 @@ herr_t
 H5VLobject_get(void *obj, const H5VL_loc_params_t *loc_params, hid_t connector_id,
                H5VL_object_get_args_t *args, hid_t dxpl_id, void **req /*out*/)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL;    /* VOL connector's class struct */
     herr_t        ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -6186,7 +6188,7 @@ H5VL__object_specific(void *obj, const H5VL_loc_params_t *loc_params, const H5VL
 
     FUNC_ENTER_PACKAGE
     VOL_CONN_LOCK(cls)
-    
+
     /* Check if the corresponding VOL callback exists */
     if (NULL == cls->object_cls.specific)
         HGOTO_ERROR(H5E_VOL, H5E_UNSUPPORTED, FAIL, "VOL connector has no 'object specific' method");
@@ -6253,7 +6255,7 @@ herr_t
 H5VLobject_specific(void *obj, const H5VL_loc_params_t *loc_params, hid_t connector_id,
                     H5VL_object_specific_args_t *args, hid_t dxpl_id, void **req /*out*/)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL;    /* VOL connector's class struct */
     herr_t        ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -6358,7 +6360,7 @@ herr_t
 H5VLobject_optional(void *obj, const H5VL_loc_params_t *loc_params, hid_t connector_id,
                     H5VL_optional_args_t *args, hid_t dxpl_id, void **req /*out*/)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL;    /* VOL connector's class struct */
     herr_t        ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -6531,7 +6533,7 @@ herr_t
 H5VLintrospect_get_conn_cls(void *obj, hid_t connector_id, H5VL_get_conn_lvl_t lvl,
                             const H5VL_class_t **conn_cls /*out*/)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL;    /* VOL connector's class struct */
     herr_t        ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -6605,7 +6607,7 @@ done:
 herr_t
 H5VLintrospect_get_cap_flags(const void *info, hid_t connector_id, uint64_t *cap_flags /*out*/)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL;    /* VOL connector's class struct */
     herr_t        ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -6711,7 +6713,7 @@ herr_t
 H5VLintrospect_opt_query(void *obj, hid_t connector_id, H5VL_subclass_t subcls, int opt_type,
                          uint64_t *flags /*out*/)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL;    /* VOL connector's class struct */
     herr_t        ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -6816,7 +6818,7 @@ done:
 herr_t
 H5VLrequest_wait(void *req, hid_t connector_id, uint64_t timeout, H5VL_request_status_t *status /*out*/)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL;    /* VOL connector's class struct */
     herr_t        ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -6923,7 +6925,7 @@ done:
 herr_t
 H5VLrequest_notify(void *req, hid_t connector_id, H5VL_request_notify_t cb, void *ctx)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL;    /* VOL connector's class struct */
     herr_t        ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -7027,7 +7029,7 @@ done:
 herr_t
 H5VLrequest_cancel(void *req, hid_t connector_id, H5VL_request_status_t *status /*out*/)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL;    /* VOL connector's class struct */
     herr_t        ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -7133,7 +7135,7 @@ done:
 herr_t
 H5VLrequest_specific(void *req, hid_t connector_id, H5VL_request_specific_args_t *args)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL;    /* VOL connector's class struct */
     herr_t        ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -7240,7 +7242,7 @@ done:
 herr_t
 H5VLrequest_optional(void *req, hid_t connector_id, H5VL_optional_args_t *args)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL;    /* VOL connector's class struct */
     herr_t        ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -7272,7 +7274,7 @@ done:
 herr_t
 H5VLrequest_optional_op(void *req, hid_t connector_id, H5VL_optional_args_t *args)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL;    /* VOL connector's class struct */
     herr_t        ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX(FAIL)
@@ -7382,7 +7384,7 @@ done:
 herr_t
 H5VLrequest_free(void *req, hid_t connector_id)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL;    /* VOL connector's class struct */
     herr_t        ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -7477,7 +7479,7 @@ done:
 herr_t
 H5VLblob_put(void *obj, hid_t connector_id, const void *buf, size_t size, void *blob_id, void *ctx)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL;    /* VOL connector's class struct */
     herr_t        ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -7574,7 +7576,7 @@ done:
 herr_t
 H5VLblob_get(void *obj, hid_t connector_id, const void *blob_id, void *buf /*out*/, size_t size, void *ctx)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL;    /* VOL connector's class struct */
     herr_t        ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -7670,7 +7672,7 @@ done:
 herr_t
 H5VLblob_specific(void *obj, hid_t connector_id, void *blob_id, H5VL_blob_specific_args_t *args)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL;    /* VOL connector's class struct */
     herr_t        ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -7766,7 +7768,7 @@ done:
 herr_t
 H5VLblob_optional(void *obj, hid_t connector_id, void *blob_id, H5VL_optional_args_t *args)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL;    /* VOL connector's class struct */
     herr_t        ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -7895,7 +7897,7 @@ herr_t
 H5VLtoken_cmp(void *obj, hid_t connector_id, const H5O_token_t *token1, const H5O_token_t *token2,
               int *cmp_value)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL;    /* VOL connector's class struct */
     herr_t        ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -8002,7 +8004,7 @@ herr_t
 H5VLtoken_to_str(void *obj, H5I_type_t obj_type, hid_t connector_id, const H5O_token_t *token,
                  char **token_str)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL;    /* VOL connector's class struct */
     herr_t        ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -8111,7 +8113,7 @@ herr_t
 H5VLtoken_from_str(void *obj, H5I_type_t obj_type, hid_t connector_id, const char *token_str,
                    H5O_token_t *token)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL;    /* VOL connector's class struct */
     herr_t        ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
@@ -8214,7 +8216,7 @@ done:
 herr_t
 H5VLoptional(void *obj, hid_t connector_id, H5VL_optional_args_t *args, hid_t dxpl_id, void **req /*out*/)
 {
-    H5VL_class_t *cls = NULL;                 /* VOL connector's class struct */
+    H5VL_class_t *cls       = NULL;    /* VOL connector's class struct */
     herr_t        ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX_NOINIT

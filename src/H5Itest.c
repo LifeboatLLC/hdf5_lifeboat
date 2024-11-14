@@ -50,15 +50,15 @@
 /* Local Variables */
 /*******************/
 
-#ifdef H5_HAVE_MULTITHREAD 
+#ifdef H5_HAVE_MULTITHREAD
 
 /*-------------------------------------------------------------------------
  * Function:    H5I__get_name_test
  *
  * Purpose:     Testing version of H5Iget_name()
  *
- *              Updated for MT by testing to see if the global mutex is 
- *              currently held, and grabbing it fot the duration of the 
+ *              Updated for MT by testing to see if the global mutex is
+ *              currently held, and grabbing it fot the duration of the
  *              call if it is not.
  *
  * Return:      Success: The length of name.
@@ -82,13 +82,13 @@ H5I__get_name_test(hid_t id, char *name /*out*/, size_t size, hbool_t *cached)
 
 #if defined(H5_HAVE_THREADSAFE) || defined(H5_HAVE_MULTITHREAD)
 
-    if ( H5TS_have_mutex(&H5_g.init_lock, &have_global_mutex) < 0 )
+    if (H5TS_have_mutex(&H5_g.init_lock, &have_global_mutex) < 0)
 
         HGOTO_ERROR(H5E_LIB, H5E_CANTGET, (-1), "Can't determine whether we have the global mutex");
 
 #endif /* defined(H5_HAVE_THREADSAFE) || defined(H5_HAVE_MULTITHREAD) */
 
-    if ( ! have_global_mutex ) {
+    if (!have_global_mutex) {
 
         H5_API_LOCK
         drop_global_mutex = TRUE;
@@ -127,14 +127,13 @@ done:
     if (api_ctx_pushed && H5CX_pop(FALSE) < 0)
         HDONE_ERROR(H5E_SYM, H5E_CANTRESET, (-1), "can't reset API context");
 
-    if ( drop_global_mutex ) {
+    if (drop_global_mutex) {
 
         H5_API_UNLOCK
     }
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5I__get_name_test() */
-
 
 #else /* H5_HAVE_MULTITHREAD */
 

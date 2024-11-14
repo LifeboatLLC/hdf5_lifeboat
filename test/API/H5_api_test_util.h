@@ -17,19 +17,19 @@
 
 #include "hdf5.h"
 
-hid_t  generate_random_datatype(H5T_class_t parent_class, hbool_t is_compact);
-hid_t  generate_random_dataspace(int rank, const hsize_t *max_dims, hsize_t *dims_out, hbool_t is_compact);
-int    H5_api_test_global_setup(void);
-int    H5_api_test_destroy_container_files(void);
-int H5_api_test_display_information(void);
-void H5_api_test_display_results(void);
-int H5_api_check_vol_registration(void);
+hid_t generate_random_datatype(H5T_class_t parent_class, hbool_t is_compact);
+hid_t generate_random_dataspace(int rank, const hsize_t *max_dims, hsize_t *dims_out, hbool_t is_compact);
+int   H5_api_test_global_setup(void);
+int   H5_api_test_destroy_container_files(void);
+int   H5_api_test_display_information(void);
+void  H5_api_test_display_results(void);
+int   H5_api_check_vol_registration(void);
 
 herr_t prefix_filename(const char *prefix, const char *filename, char **filename_out);
 herr_t remove_test_file(const char *prefix, const char *filename);
 
 #ifdef H5_HAVE_MULTITHREAD
-int    H5_api_test_thread_setup(int thread_idx);
+int H5_api_test_thread_setup(int thread_idx);
 #endif
 
 #endif /* H5_API_TEST_UTIL_H_ */
