@@ -104,6 +104,7 @@ H5T__commit_api_common(hid_t loc_id, const char *name, hid_t type_id, hid_t lcpl
         (_vol_obj_ptr ? _vol_obj_ptr : &tmp_vol_obj); /* Ptr to object ptr for loc_id */
     H5VL_loc_params_t loc_params;                     /* Location parameters */
     herr_t            ret_value = SUCCEED;            /* Return value */
+    htri_t            ret      = FALSE;              /* Generic return value */
 
     FUNC_ENTER_PACKAGE
 
@@ -114,23 +115,38 @@ H5T__commit_api_common(hid_t loc_id, const char *name, hid_t type_id, hid_t lcpl
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "name parameter cannot be an empty string");
     if (NULL == (dt = (H5T_t *)H5I_object_verify(type_id, H5I_DATATYPE)))
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a datatype");
+
     if (H5T_is_named(dt))
         HGOTO_ERROR(H5E_ARGS, H5E_CANTSET, FAIL, "datatype is already committed");
 
     /* Get correct property list */
     if (H5P_DEFAULT == lcpl_id)
         lcpl_id = H5P_LINK_CREATE_DEFAULT;
-    else if (TRUE != H5P_isa_class(lcpl_id, H5P_LINK_CREATE))
-        HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not link creation property list");
+    else {
+        H5_API_LOCK
+        ret = H5P_isa_class(lcpl_id, H5P_LINK_CREATE);
+        H5_API_UNLOCK
+
+        if (TRUE != ret)
+            HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not link creation property list");
+    }
 
     /* Get correct property list */
     if (H5P_DEFAULT == tcpl_id)
         tcpl_id = H5P_DATATYPE_CREATE_DEFAULT;
-    else if (TRUE != H5P_isa_class(tcpl_id, H5P_DATATYPE_CREATE))
-        HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not datatype creation property list");
+    else {
+        H5_API_LOCK
+        ret = H5P_isa_class(tcpl_id, H5P_DATATYPE_CREATE);
+        H5_API_UNLOCK
+
+        if (TRUE != ret)
+            HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not datatype creation property list");
+    }
 
     /* Set the LCPL for the API context */
+    H5_API_LOCK
     H5CX_set_lcpl(lcpl_id);
+    H5_API_UNLOCK
 
     /* Set up object access arguments */
     if (H5VL_setup_acc_args(loc_id, H5P_CLS_TACC, TRUE, &tapl_id, vol_obj_ptr, &loc_params) < 0)
@@ -167,7 +183,7 @@ H5Tcommit2(hid_t loc_id, const char *name, hid_t type_id, hid_t lcpl_id, hid_t t
 {
     herr_t ret_value = SUCCEED; /* Return value */
 
-    FUNC_ENTER_API(FAIL)
+    FUNC_ENTER_API_NO_MUTEX(FAIL, loc_id, type_id, lcpl_id, tcpl_id, tapl_id)
     H5TRACE6("e", "i*siiii", loc_id, name, type_id, lcpl_id, tcpl_id, tapl_id);
 
     /* Commit the dataset synchronously */
@@ -176,7 +192,7 @@ H5Tcommit2(hid_t loc_id, const char *name, hid_t type_id, hid_t lcpl_id, hid_t t
         HGOTO_ERROR(H5E_DATATYPE, H5E_CANTOPENOBJ, FAIL, "unable to commit datatype synchronously");
 
 done:
-    FUNC_LEAVE_API(ret_value)
+    FUNC_LEAVE_API_NO_MUTEX(ret_value, loc_id, type_id, lcpl_id, tcpl_id, tapl_id)
 } /* end H5Tcommit2() */
 
 /*-------------------------------------------------------------------------
@@ -197,7 +213,7 @@ H5Tcommit_async(const char *app_file, const char *app_func, unsigned app_line, h
     void         **token_ptr = H5_REQUEST_NULL; /* Pointer to request token for async operation        */
     herr_t         ret_value = SUCCEED;         /* Return value */
 
-    FUNC_ENTER_API(FAIL)
+    FUNC_ENTER_API_NO_MUTEX(FAIL, loc_id, type_id, lcpl_id, tcpl_id, tapl_id, es_id)
     H5TRACE10("e", "*s*sIui*siiiii", app_file, app_func, app_line, loc_id, name, type_id, lcpl_id, tcpl_id,
               tapl_id, es_id);
 
@@ -219,7 +235,7 @@ H5Tcommit_async(const char *app_file, const char *app_func, unsigned app_line, h
             HGOTO_ERROR(H5E_DATATYPE, H5E_CANTINSERT, FAIL, "can't insert token into event set");
 
 done:
-    FUNC_LEAVE_API(ret_value)
+    FUNC_LEAVE_API_NO_MUTEX(ret_value, loc_id, type_id, lcpl_id, tcpl_id, tapl_id, es_id)
 } /* end H5Tcommit_async() */
 
 /*-------------------------------------------------------------------------
@@ -323,8 +339,9 @@ H5Tcommit_anon(hid_t loc_id, hid_t type_id, hid_t tcpl_id, hid_t tapl_id)
     H5VL_object_t    *vol_obj = NULL; /* object of loc_id */
     H5VL_loc_params_t loc_params;
     herr_t            ret_value = SUCCEED; /* Return value */
+    htri_t            ret      = FALSE;   /* Generic return value */
 
-    FUNC_ENTER_API(FAIL)
+    FUNC_ENTER_API_NO_MUTEX(FAIL, loc_id, type_id, tcpl_id, tapl_id)
     H5TRACE4("e", "iiii", loc_id, type_id, tcpl_id, tapl_id);
 
     /* Check arguments */
@@ -336,16 +353,32 @@ H5Tcommit_anon(hid_t loc_id, hid_t type_id, hid_t tcpl_id, hid_t tapl_id)
     /* Get correct property list */
     if (H5P_DEFAULT == tcpl_id)
         tcpl_id = H5P_DATATYPE_CREATE_DEFAULT;
-    else if (TRUE != H5P_isa_class(tcpl_id, H5P_DATATYPE_CREATE))
-        HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not datatype creation property list");
+    else {
+        H5_API_LOCK
+        ret = H5P_isa_class(tcpl_id, H5P_DATATYPE_CREATE);
+        H5_API_UNLOCK
+
+        if (TRUE != ret)
+            HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not datatype creation property list");
+    }
 
     if (H5P_DEFAULT == tapl_id)
         tapl_id = H5P_DATATYPE_ACCESS_DEFAULT;
-    else if (TRUE != H5P_isa_class(tapl_id, H5P_DATATYPE_ACCESS))
-        HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not datatype access property list");
+    else {
+        H5_API_LOCK
+        ret = H5P_isa_class(tapl_id, H5P_DATATYPE_ACCESS);
+        H5_API_UNLOCK
+
+        if (TRUE != ret)
+            HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not datatype access property list");
+    }
 
     /* Verify access property list and set up collective metadata if appropriate */
-    if (H5CX_set_apl(&tapl_id, H5P_CLS_TACC, loc_id, TRUE) < 0)
+    H5_API_LOCK
+    ret_value = H5CX_set_apl(&tapl_id, H5P_CLS_TACC, loc_id, TRUE);
+    H5_API_UNLOCK
+
+    if (ret_value < 0)
         HGOTO_ERROR(H5E_DATATYPE, H5E_CANTSET, FAIL, "can't set access property list info");
 
     /* Fill in location struct fields */
@@ -369,7 +402,7 @@ H5Tcommit_anon(hid_t loc_id, hid_t type_id, hid_t tcpl_id, hid_t tapl_id)
     type->vol_obj = new_obj;
 
 done:
-    FUNC_LEAVE_API(ret_value)
+    FUNC_LEAVE_API_NO_MUTEX(ret_value, loc_id, type_id, tcpl_id, tapl_id)
 } /* end H5Tcommit_anon() */
 
 /*-------------------------------------------------------------------------
@@ -547,7 +580,7 @@ H5Tcommitted(hid_t type_id)
     H5T_t *type;      /* Datatype to query */
     htri_t ret_value; /* Return value */
 
-    FUNC_ENTER_API(FAIL)
+    FUNC_ENTER_API_NO_MUTEX(FAIL, type_id)
     H5TRACE1("t", "i", type_id);
 
     /* Check arguments */
@@ -558,7 +591,7 @@ H5Tcommitted(hid_t type_id)
     ret_value = H5T_is_named(type);
 
 done:
-    FUNC_LEAVE_API(ret_value)
+    FUNC_LEAVE_API_NO_MUTEX(ret_value, type_id)
 } /* end H5Tcommitted() */
 
 /*-------------------------------------------------------------------------
@@ -659,7 +692,7 @@ H5Topen2(hid_t loc_id, const char *name, hid_t tapl_id)
 {
     hid_t ret_value = H5I_INVALID_HID; /* Return value */
 
-    FUNC_ENTER_API(H5I_INVALID_HID)
+    FUNC_ENTER_API_NO_MUTEX(H5I_INVALID_HID, loc_id, tapl_id)
     H5TRACE3("i", "i*si", loc_id, name, tapl_id);
 
     /* Open the datatype synchronously */
@@ -667,7 +700,7 @@ H5Topen2(hid_t loc_id, const char *name, hid_t tapl_id)
         HGOTO_ERROR(H5E_DATATYPE, H5E_CANTOPENOBJ, H5I_INVALID_HID,
                     "unable to open named datatype synchronously");
 done:
-    FUNC_LEAVE_API(ret_value)
+    FUNC_LEAVE_API_NO_MUTEX(ret_value, loc_id, tapl_id)
 } /* end H5Topen2() */
 
 /*-------------------------------------------------------------------------
@@ -689,8 +722,9 @@ H5Topen_async(const char *app_file, const char *app_func, unsigned app_line, hid
     void          *token     = NULL;            /* Request token for async operation */
     void         **token_ptr = H5_REQUEST_NULL; /* Pointer to request token for async operation */
     hid_t          ret_value = H5I_INVALID_HID; /* Return value */
+    int            dec_ref_ret = 0;             /* Ref count decrement return value */
 
-    FUNC_ENTER_API(H5I_INVALID_HID)
+    FUNC_ENTER_API_NO_MUTEX(H5I_INVALID_HID, loc_id, tapl_id, es_id)
     H5TRACE7("i", "*s*sIui*sii", app_file, app_func, app_line, loc_id, name, tapl_id, es_id);
 
     /* Set up request token pointer for asynchronous operation */
@@ -708,14 +742,20 @@ H5Topen_async(const char *app_file, const char *app_func, unsigned app_line, hid
         if (H5ES_insert(es_id, vol_obj->connector, token,
                         H5ARG_TRACE7(__func__, "*s*sIui*sii", app_file, app_func, app_line, loc_id, name, tapl_id, es_id)) < 0) {
             /* clang-format on */
-            if (H5I_dec_app_ref_always_close(ret_value) < 0)
+            /* TBD: Retain lock to protect ID iteration */
+            H5_API_LOCK
+            dec_ref_ret = H5I_dec_app_ref_always_close(ret_value);
+            H5_API_UNLOCK
+
+            if (dec_ref_ret < 0)
                 HGOTO_ERROR(H5E_DATATYPE, H5E_CANTDEC, H5I_INVALID_HID,
                             "can't decrement count on datatype ID");
+
             HGOTO_ERROR(H5E_DATATYPE, H5E_CANTINSERT, H5I_INVALID_HID, "can't insert token into event set");
         } /* end if */
 
 done:
-    FUNC_LEAVE_API(ret_value)
+    FUNC_LEAVE_API_NO_MUTEX(ret_value, loc_id, tapl_id, es_id)
 } /* end H5Topen_async() */
 
 /*-------------------------------------------------------------------------
@@ -741,7 +781,7 @@ H5Tget_create_plist(hid_t dtype_id)
     htri_t is_named  = FAIL;            /* Is the datatype named? */
     hid_t  ret_value = H5I_INVALID_HID; /* Return value */
 
-    FUNC_ENTER_API(H5I_INVALID_HID)
+    FUNC_ENTER_API_NO_MUTEX(H5I_INVALID_HID, dtype_id)
     H5TRACE1("i", "i", dtype_id);
 
     /* Check arguments */
@@ -761,7 +801,12 @@ H5Tget_create_plist(hid_t dtype_id)
         /* Copy the default datatype creation property list */
         if (NULL == (tcpl_plist = (H5P_genplist_t *)H5I_object(H5P_LST_DATATYPE_CREATE_ID_g)))
             HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5I_INVALID_HID, "can't get default creation property list");
-        if ((ret_value = H5P_copy_plist(tcpl_plist, TRUE)) < 0)
+        
+        H5_API_LOCK
+        ret_value = H5P_copy_plist(tcpl_plist, TRUE);
+        H5_API_UNLOCK
+
+        if (ret_value < 0)
             HGOTO_ERROR(H5E_DATATYPE, H5E_CANTGET, H5I_INVALID_HID,
                         "unable to copy the creation property list");
     } /* end if */
@@ -783,7 +828,7 @@ H5Tget_create_plist(hid_t dtype_id)
     } /* end else */
 
 done:
-    FUNC_LEAVE_API(ret_value)
+    FUNC_LEAVE_API_NO_MUTEX(ret_value, dtype_id)
 } /* end H5Tget_create_plist() */
 
 /*-------------------------------------------------------------------------
@@ -801,7 +846,7 @@ H5Tflush(hid_t type_id)
     H5T_t *dt;                  /* Datatype for this operation */
     herr_t ret_value = SUCCEED; /* Return value */
 
-    FUNC_ENTER_API(FAIL)
+    FUNC_ENTER_API_NO_MUTEX(FAIL, type_id)
     H5TRACE1("e", "i", type_id);
 
     /* Check args */
@@ -815,7 +860,11 @@ H5Tflush(hid_t type_id)
         H5VL_datatype_specific_args_t vol_cb_args; /* Arguments to VOL callback */
 
         /* Set up collective metadata if appropriate */
-        if (H5CX_set_loc(type_id) < 0)
+        H5_API_LOCK
+        ret_value = H5CX_set_loc(type_id);
+        H5_API_UNLOCK
+
+        if (ret_value < 0)
             HGOTO_ERROR(H5E_DATATYPE, H5E_CANTSET, FAIL, "can't set access property list info");
 
         /* Set up VOL callback arguments */
@@ -827,7 +876,7 @@ H5Tflush(hid_t type_id)
     }
 
 done:
-    FUNC_LEAVE_API(ret_value)
+    FUNC_LEAVE_API_NO_MUTEX(ret_value, type_id)
 } /* H5Tflush */
 
 /*-------------------------------------------------------------------------
@@ -845,7 +894,7 @@ H5Trefresh(hid_t type_id)
     H5T_t *dt;                  /* Datatype for this operation */
     herr_t ret_value = SUCCEED; /* Return value */
 
-    FUNC_ENTER_API(FAIL)
+    FUNC_ENTER_API_NO_MUTEX(FAIL, type_id)
     H5TRACE1("e", "i", type_id);
 
     /* Check args */
@@ -859,7 +908,11 @@ H5Trefresh(hid_t type_id)
         H5VL_datatype_specific_args_t vol_cb_args; /* Arguments to VOL callback */
 
         /* Set up collective metadata if appropriate */
-        if (H5CX_set_loc(type_id) < 0)
+        H5_API_LOCK
+        ret_value = H5CX_set_loc(type_id);
+        H5_API_UNLOCK
+
+        if (ret_value < 0)
             HGOTO_ERROR(H5E_DATATYPE, H5E_CANTSET, FAIL, "can't set access property list info");
 
         /* Set up VOL callback arguments */
@@ -871,7 +924,7 @@ H5Trefresh(hid_t type_id)
     }
 
 done:
-    FUNC_LEAVE_API(ret_value)
+    FUNC_LEAVE_API_NO_MUTEX(ret_value, type_id)
 } /* H5Trefresh */
 
 /*-------------------------------------------------------------------------
@@ -906,7 +959,12 @@ H5T__get_create_plist(const H5T_t *type)
     /* Copy the default datatype creation property list */
     if (NULL == (tcpl_plist = (H5P_genplist_t *)H5I_object(H5P_LST_DATATYPE_CREATE_ID_g)))
         HGOTO_ERROR(H5E_DATATYPE, H5E_BADTYPE, H5I_INVALID_HID, "can't get default creation property list");
-    if ((new_tcpl_id = H5P_copy_plist(tcpl_plist, TRUE)) < 0)
+    
+    H5_API_LOCK
+    new_tcpl_id = H5P_copy_plist(tcpl_plist, TRUE);
+    H5_API_UNLOCK
+
+    if (new_tcpl_id < 0)
         HGOTO_ERROR(H5E_DATATYPE, H5E_CANTGET, H5I_INVALID_HID, "unable to copy the creation property list");
 
     /* Get property list object for new TCPL */

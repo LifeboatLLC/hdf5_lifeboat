@@ -1992,6 +1992,7 @@ AC_SUBST([MULTITHREAD])
 ## Default is no multithread
 MULTITHREAD=no
 
+
 AC_MSG_CHECKING([for multithread configure option])
 AC_ARG_ENABLE([multithread],
               [AS_HELP_STRING([--enable-multithread],
@@ -2175,6 +2176,15 @@ if test "X$MULTITHREAD" = "Xyes"; then
         fi
         ;;
     esac
+fi
+
+AC_SUBST([VIRTUAL_LOCK])
+VIRTUAL_LOCK=NO
+
+if test "X$MULTITHREAD" = "Xyes" -a "X$BUILD_MODE" = "Xdebug"; then
+  AC_DEFINE([HAVE_VIRTUAL_LOCK], [1], [Define if we enable the virtual lock])
+else
+  AC_DEFINE([HAVE_VIRTUAL_LOCK], [0], [Define if we enable the virtual lock])
 fi
 
 ## ----------------------------------------------------------------------
