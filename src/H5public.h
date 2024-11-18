@@ -408,6 +408,21 @@ typedef void (*H5_atclose_func_t)(void *ctx);
 extern "C" {
 #endif
 
+/**
+ * Macros that paper over differences between single-threaded and 
+ * multi-threaded builds of the library.
+ */
+#ifdef H5_HAVE_MULTITHREAD
+#define H5_ATOMIC(type) _Atomic type
+#define H5_ATOMIC_SPECIFIER(type) _Atomic(type)
+#define H5_ATOMIC_VAR_INIT(value) ATOMIC_VAR_INIT(value)
+#else
+#define H5_ATOMIC(type) type
+#define H5_ATOMIC_SPECIFIER(type) type
+#define H5_ATOMIC_VAR_INIT(value) value
+#endif
+
+
 /* Functions in H5.c */
 /**
  * \ingroup H5

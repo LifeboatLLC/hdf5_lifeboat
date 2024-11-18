@@ -413,17 +413,10 @@ H5TEST_DLL char *getenv_all(MPI_Comm comm, int root, const char *name);
 /* Extern global variables */
 H5TEST_DLLVAR int      TestVerbosity;
 /* Global variables for testing */
-#ifdef H5_HAVE_MULTITHREAD
-H5TEST_DLLVAR  _Atomic size_t n_tests_run_g;
-H5TEST_DLLVAR  _Atomic size_t n_tests_passed_g;
-H5TEST_DLLVAR  _Atomic size_t n_tests_failed_g;
-H5TEST_DLLVAR  _Atomic size_t n_tests_skipped_g;
-#else
-H5TEST_DLLVAR size_t   n_tests_run_g;
-H5TEST_DLLVAR size_t   n_tests_passed_g;
-H5TEST_DLLVAR size_t   n_tests_failed_g;
-H5TEST_DLLVAR size_t   n_tests_skipped_g;
-#endif
+H5TEST_DLLVAR  H5_ATOMIC(size_t) n_tests_run_g;
+H5TEST_DLLVAR  H5_ATOMIC(size_t) n_tests_passed_g;
+H5TEST_DLLVAR  H5_ATOMIC(size_t) n_tests_failed_g;
+H5TEST_DLLVAR  H5_ATOMIC(size_t) n_tests_skipped_g;
 
 H5TEST_DLLVAR uint64_t vol_cap_flags_g;
 

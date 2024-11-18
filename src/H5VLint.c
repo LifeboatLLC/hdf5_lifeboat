@@ -57,11 +57,7 @@
 
 /* Object wrapping context info */
 typedef struct H5VL_wrap_ctx_t {
-#ifdef H5_HAVE_MULTITHREAD
-    _Atomic unsigned rc;
-#else
-    unsigned rc;           /* Ref. count for the # of times the context was set / reset */
-#endif
+    H5_ATOMIC(unsigned) rc; /* Ref. count for the # of times the context was set / reset */
     H5VL_t  *connector;    /* VOL connector for "outermost" class to start wrap */
     void    *obj_wrap_ctx; /* "wrap context" for outermost connector */
 } H5VL_wrap_ctx_t;
@@ -239,10 +235,6 @@ H5VL_init_phase2(void)
     if (H5VL__set_def_conn() < 0)
         HGOTO_ERROR(H5E_VOL, H5E_CANTSET, FAIL, "unable to set default VOL connector");
 
-#ifdef H5_HAVE_MULTITHREAD
-    /* Initialize the atomic dynamic optional operation table */
-    H5VL__init_opt_operation_table();
-#endif
 done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5VL_init_phase2() */
