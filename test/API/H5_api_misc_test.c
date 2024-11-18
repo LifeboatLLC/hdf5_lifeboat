@@ -1051,17 +1051,17 @@ H5_api_misc_test_add(void)
 {
     /* Add a fake test to print out a header to distinguish different test interfaces */
     AddTest("print_misc_test_header", print_misc_test_header, NULL, "Prints header for miscellaneous tests",
-            NULL);
+            NULL, 0);
 
     AddTest("test_open_link_without_leading_slash", MT_API_TEST_FUNC_OUTER(test_open_link_without_leading_slash), NULL,
-            "opening a link without a leading slash", NULL);
+            "opening a link without a leading slash", NULL, 0);
     AddTest("test_object_creation_by_absolute_path", MT_API_TEST_FUNC_OUTER(test_object_creation_by_absolute_path), NULL,
-            "object creation by absolute path", NULL);
+            "object creation by absolute path", NULL, 0);
     AddTest("test_absolute_vs_relative_path", MT_API_TEST_FUNC_OUTER(test_absolute_vs_relative_path), NULL,
-            "absolute vs. relative pathnames", NULL);
+            "absolute vs. relative pathnames", NULL, 0);
     AddTest("test_dot_for_object_name", MT_API_TEST_FUNC_OUTER(test_dot_for_object_name), NULL,
-            "creating objects with \".\" as the name", NULL);
+            "creating objects with \".\" as the name", NULL, 0);
     AddTest("test_symbols_in_compound_field_name", MT_API_TEST_FUNC_OUTER(test_symbols_in_compound_field_name), NULL,
-            "usage of '{', '}' and '\\\"' symbols in compound field name", NULL);
-    AddTest("test_double_init_term", MT_API_TEST_FUNC_OUTER(test_double_init_term), NULL, "double init/term correctness", NULL);
+            "usage of '{', '}' and '\\\"' symbols in compound field name", NULL, 0);
+    AddTest("test_double_init_term", MT_API_TEST_FUNC_OUTER(test_double_init_term), NULL, "double init/term correctness", NULL, 0);
 }

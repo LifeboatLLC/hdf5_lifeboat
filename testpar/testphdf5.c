@@ -346,41 +346,41 @@ main(int argc, char **argv)
     TestInit(argv[0], usage, parse_options);
 
     /* Tests are generally arranged from least to most complexity... */
-    AddTest("mpiodup", test_fapl_mpio_dup, NULL, "fapl_mpio duplicate", NULL);
+    AddTest("mpiodup",  test_fapl_mpio_dup,  NULL,  "fapl_mpio duplicate",  NULL, 0);
 
-    AddTest("split", test_split_comm_access, NULL, "dataset using split communicators", PARATESTFILE);
-    AddTest("h5oflusherror", test_oflush, NULL, "H5Oflush failure", PARATESTFILE);
+    AddTest("split",  test_split_comm_access,  NULL,  "dataset using split communicators",  PARATESTFILE, 0);
+    AddTest("h5oflusherror",  test_oflush,  NULL,  "H5Oflush failure",  PARATESTFILE, 0);
 
 #ifdef PB_OUT /* temporary: disable page buffering when parallel */
-    AddTest("page_buffer", test_page_buffer_access, NULL, "page buffer usage in parallel", PARATESTFILE);
+    AddTest("page_buffer",  test_page_buffer_access,  NULL,  "page buffer usage in parallel",  PARATESTFILE, 0);
 #endif
 
-    AddTest("props", test_file_properties, NULL, "Coll Metadata file property settings", PARATESTFILE);
+    AddTest("props",  test_file_properties,  NULL,  "Coll Metadata file property settings",  PARATESTFILE, 0);
 
-    AddTest("delete", test_delete, NULL, "MPI-IO VFD file delete", PARATESTFILE);
+    AddTest("delete",  test_delete,  NULL,  "MPI-IO VFD file delete",  PARATESTFILE, 0);
 
-    AddTest("idsetw", dataset_writeInd, NULL, "dataset independent write", PARATESTFILE);
-    AddTest("idsetr", dataset_readInd, NULL, "dataset independent read", PARATESTFILE);
+    AddTest("idsetw",  dataset_writeInd,  NULL,  "dataset independent write",  PARATESTFILE, 0);
+    AddTest("idsetr",  dataset_readInd,  NULL,  "dataset independent read",  PARATESTFILE, 0);
 
-    AddTest("cdsetw", dataset_writeAll, NULL, "dataset collective write", PARATESTFILE);
-    AddTest("cdsetr", dataset_readAll, NULL, "dataset collective read", PARATESTFILE);
+    AddTest("cdsetw",  dataset_writeAll,  NULL,  "dataset collective write",  PARATESTFILE, 0);
+    AddTest("cdsetr",  dataset_readAll,  NULL,  "dataset collective read",  PARATESTFILE, 0);
 
-    AddTest("eidsetw", extend_writeInd, NULL, "extendible dataset independent write", PARATESTFILE);
-    AddTest("eidsetr", extend_readInd, NULL, "extendible dataset independent read", PARATESTFILE);
-    AddTest("ecdsetw", extend_writeAll, NULL, "extendible dataset collective write", PARATESTFILE);
-    AddTest("ecdsetr", extend_readAll, NULL, "extendible dataset collective read", PARATESTFILE);
-    AddTest("eidsetw2", extend_writeInd2, NULL, "extendible dataset independent write #2", PARATESTFILE);
-    AddTest("selnone", none_selection_chunk, NULL, "chunked dataset with none-selection", PARATESTFILE);
+    AddTest("eidsetw",  extend_writeInd,  NULL,  "extendible dataset independent write",  PARATESTFILE, 0);
+    AddTest("eidsetr",  extend_readInd,  NULL,  "extendible dataset independent read",  PARATESTFILE, 0);
+    AddTest("ecdsetw",  extend_writeAll,  NULL,  "extendible dataset collective write",  PARATESTFILE, 0);
+    AddTest("ecdsetr",  extend_readAll,  NULL,  "extendible dataset collective read",  PARATESTFILE, 0);
+    AddTest("eidsetw2", extend_writeInd2, NULL, "extendible dataset independent write #2", PARATESTFILE, 0);
+    AddTest("selnone",  none_selection_chunk,  NULL,  "chunked dataset with none-selection",  PARATESTFILE, 0);
     AddTest("calloc", test_chunk_alloc, NULL, "parallel extend Chunked allocation on serial file",
-            PARATESTFILE);
+            PARATESTFILE, 0);
     AddTest("fltread", test_filter_read, NULL, "parallel read of dataset written serially with filters",
-            PARATESTFILE);
+            PARATESTFILE, 0);
 
 #ifdef H5_HAVE_FILTER_DEFLATE
-    AddTest("cmpdsetr", compress_readAll, NULL, "compressed dataset collective read", PARATESTFILE);
+    AddTest("cmpdsetr",  compress_readAll,  NULL,  "compressed dataset collective read",  PARATESTFILE, 0);
 #endif /* H5_HAVE_FILTER_DEFLATE */
 
-    AddTest("zerodsetr", zero_dim_dset, NULL, "zero dim dset", PARATESTFILE);
+    AddTest("zerodsetr",  zero_dim_dset,  NULL,  "zero dim dset",  PARATESTFILE, 0);
 
     ndsets_params.name  = PARATESTFILE;
     ndsets_params.count = ndatasets;
@@ -391,7 +391,7 @@ main(int argc, char **argv)
     AddTest("ngrpw", multiple_group_write, NULL, "multiple groups write", &ngroups_params);
     AddTest("ngrpr", multiple_group_read, NULL, "multiple groups read", &ngroups_params);
 
-    AddTest("compact", compact_dataset, NULL, "compact dataset test", PARATESTFILE);
+    AddTest("compact",  compact_dataset,  NULL,  "compact dataset test",  PARATESTFILE, 0);
 
     collngroups_params.name  = PARATESTFILE;
     collngroups_params.count = ngroups;
@@ -399,16 +399,16 @@ main(int argc, char **argv)
     AddTest("cngrpw-ingrpr", collective_group_write_independent_group_read, NULL,
             "collective grp/dset write - independent grp/dset read", &collngroups_params);
 #ifndef H5_HAVE_WIN32_API
-    AddTest("bigdset", big_dataset, NULL, "big dataset test", PARATESTFILE);
+    AddTest("bigdset",  big_dataset,  NULL,  "big dataset test",  PARATESTFILE, 0);
 #else
     printf("big dataset test will be skipped on Windows (JIRA HDDFV-8064)\n");
 #endif
-    AddTest("fill", dataset_fillvalue, NULL, "dataset fill value", PARATESTFILE);
+    AddTest("fill",  dataset_fillvalue,  NULL,  "dataset fill value",  PARATESTFILE, 0);
 
-    AddTest("cchunk1", coll_chunk1, NULL, "simple collective chunk io", PARATESTFILE);
-    AddTest("cchunk2", coll_chunk2, NULL, "noncontiguous collective chunk io", PARATESTFILE);
-    AddTest("cchunk3", coll_chunk3, NULL, "multi-chunk collective chunk io", PARATESTFILE);
-    AddTest("cchunk4", coll_chunk4, NULL, "collective chunk io with partial non-selection ", PARATESTFILE);
+    AddTest("cchunk1",  coll_chunk1,  NULL,  "simple collective chunk io",  PARATESTFILE, 0);
+    AddTest("cchunk2",  coll_chunk2,  NULL,  "noncontiguous collective chunk io",  PARATESTFILE, 0);
+    AddTest("cchunk3",  coll_chunk3,  NULL,  "multi-chunk collective chunk io",  PARATESTFILE, 0);
+    AddTest("cchunk4",  coll_chunk4,  NULL,  "collective chunk io with partial non-selection ",  PARATESTFILE, 0);
 
     if ((mpi_size < 3) && MAINPROCESS) {
         printf("Collective chunk IO optimization APIs ");
@@ -416,31 +416,31 @@ main(int argc, char **argv)
         printf("Collective chunk IO API tests will be skipped \n");
     }
     AddTest((mpi_size < 3) ? "-cchunk5" : "cchunk5", coll_chunk5, NULL,
-            "linked chunk collective IO without optimization", PARATESTFILE);
+            "linked chunk collective IO without optimization", PARATESTFILE, 0);
     AddTest((mpi_size < 3) ? "-cchunk6" : "cchunk6", coll_chunk6, NULL,
-            "multi-chunk collective IO with direct request", PARATESTFILE);
+            "multi-chunk collective IO with direct request", PARATESTFILE, 0);
     AddTest((mpi_size < 3) ? "-cchunk7" : "cchunk7", coll_chunk7, NULL,
-            "linked chunk collective IO with optimization", PARATESTFILE);
+            "linked chunk collective IO with optimization", PARATESTFILE, 0);
     AddTest((mpi_size < 3) ? "-cchunk8" : "cchunk8", coll_chunk8, NULL,
-            "linked chunk collective IO transferring to multi-chunk", PARATESTFILE);
+            "linked chunk collective IO transferring to multi-chunk", PARATESTFILE, 0);
     AddTest((mpi_size < 3) ? "-cchunk9" : "cchunk9", coll_chunk9, NULL,
-            "multiple chunk collective IO with optimization", PARATESTFILE);
+            "multiple chunk collective IO with optimization", PARATESTFILE, 0);
     AddTest((mpi_size < 3) ? "-cchunk10" : "cchunk10", coll_chunk10, NULL,
-            "multiple chunk collective IO transferring to independent IO", PARATESTFILE);
+            "multiple chunk collective IO transferring to independent IO", PARATESTFILE, 0);
 
     /* irregular collective IO tests*/
-    AddTest("ccontw", coll_irregular_cont_write, NULL, "collective irregular contiguous write", PARATESTFILE);
-    AddTest("ccontr", coll_irregular_cont_read, NULL, "collective irregular contiguous read", PARATESTFILE);
+    AddTest("ccontw",  coll_irregular_cont_write,  NULL,  "collective irregular contiguous write",  PARATESTFILE, 0);
+    AddTest("ccontr",  coll_irregular_cont_read,  NULL,  "collective irregular contiguous read",  PARATESTFILE, 0);
     AddTest("cschunkw", coll_irregular_simple_chunk_write, NULL, "collective irregular simple chunk write",
-            PARATESTFILE);
+            PARATESTFILE, 0);
     AddTest("cschunkr", coll_irregular_simple_chunk_read, NULL, "collective irregular simple chunk read",
-            PARATESTFILE);
+            PARATESTFILE, 0);
     AddTest("ccchunkw", coll_irregular_complex_chunk_write, NULL, "collective irregular complex chunk write",
-            PARATESTFILE);
+            PARATESTFILE, 0);
     AddTest("ccchunkr", coll_irregular_complex_chunk_read, NULL, "collective irregular complex chunk read",
-            PARATESTFILE);
+            PARATESTFILE, 0);
 
-    AddTest("null", null_dataset, NULL, "null dataset test", PARATESTFILE);
+    AddTest("null",  null_dataset,  NULL,  "null dataset test",  PARATESTFILE, 0);
 
     io_mode_confusion_params.name  = PARATESTFILE;
     io_mode_confusion_params.count = 0; /* value not used */
@@ -459,21 +459,21 @@ main(int argc, char **argv)
                 "round robin object header flush confusion test", &rr_obj_flush_confusion_params);
     }
 
-    AddTest("alnbg1", chunk_align_bug_1, NULL, "Chunk allocation with alignment bug.", PARATESTFILE);
+    AddTest("alnbg1", chunk_align_bug_1, NULL, "Chunk allocation with alignment bug.", PARATESTFILE, 0);
 
     AddTest("tldsc", lower_dim_size_comp_test, NULL,
-            "test lower dim size comp in span tree to mpi derived type", PARATESTFILE);
+            "test lower dim size comp in span tree to mpi derived type", PARATESTFILE, 0);
 
-    AddTest("lccio", link_chunk_collective_io_test, NULL, "test mpi derived type management", PARATESTFILE);
+    AddTest("lccio",  link_chunk_collective_io_test,  NULL,  "test mpi derived type management",  PARATESTFILE, 0);
 
-    AddTest("actualio", actual_io_mode_tests, NULL, "test actual io mode proprerty", PARATESTFILE);
+    AddTest("actualio",  actual_io_mode_tests,  NULL,  "test actual io mode proprerty",  PARATESTFILE, 0);
 
     AddTest("nocolcause", no_collective_cause_tests, NULL, "test cause for broken collective io",
-            PARATESTFILE);
+            PARATESTFILE, 0);
 
     AddTest("edpl", test_plist_ed, NULL, "encode/decode Property Lists", NULL);
 
-    AddTest("extlink", external_links, NULL, "test external links", NULL);
+    AddTest("extlink",  external_links,  NULL,  "test external links",  NULL, 0);
 
     if ((mpi_size < 2) && MAINPROCESS) {
         printf("File Image Ops daisy chain test needs at least 2 processes.\n");
@@ -490,19 +490,19 @@ main(int argc, char **argv)
         printf("Atomicity tests will not work with a non MPIO VFD\n");
     }
     else if (mpi_size >= 2 && facc_type == FACC_MPIO) {
-        AddTest("atomicity", dataset_atomicity, NULL, "dataset atomic updates", PARATESTFILE);
+        AddTest("atomicity",  dataset_atomicity,  NULL,  "dataset atomic updates",  PARATESTFILE, 0);
     }
 
-    AddTest("denseattr", test_dense_attr, NULL, "Store Dense Attributes", PARATESTFILE);
+    AddTest("denseattr",  test_dense_attr,  NULL,  "Store Dense Attributes",  PARATESTFILE, 0);
 
     AddTest("noselcollmdread", test_partial_no_selection_coll_md_read, NULL,
-            "Collective Metadata read with some ranks having no selection", PARATESTFILE);
+            "Collective Metadata read with some ranks having no selection", PARATESTFILE, 0);
     AddTest("MC_coll_MD_read", test_multi_chunk_io_addrmap_issue, NULL,
-            "Collective MD read with multi chunk I/O (H5D__chunk_addrmap)", PARATESTFILE);
+            "Collective MD read with multi chunk I/O (H5D__chunk_addrmap)", PARATESTFILE, 0);
     AddTest("LC_coll_MD_read", test_link_chunk_io_sort_chunk_issue, NULL,
-            "Collective MD read with link chunk I/O (H5D__sort_chunk)", PARATESTFILE);
+            "Collective MD read with link chunk I/O (H5D__sort_chunk)", PARATESTFILE, 0);
     AddTest("GH_coll_MD_wr", test_collective_global_heap_write, NULL,
-            "Collective MD write of global heap data", PARATESTFILE);
+            "Collective MD write of global heap data", PARATESTFILE, 0);
 
     /* Display testing information */
     TestInfo(argv[0]);

@@ -4664,20 +4664,20 @@ main(int argc, char **argv)
         /* Parse command line arguments */
         TestParseCmdLine(argc, argv);
 
-        AddTest("idsetw", dataset_writeInd, NULL, "dataset independent write", PARATESTFILE);
+        AddTest("idsetw",  dataset_writeInd,  NULL,  "dataset independent write",  PARATESTFILE, 0);
 
-        AddTest("idsetr", dataset_readInd, NULL, "dataset independent read", PARATESTFILE);
+        AddTest("idsetr",  dataset_readInd,  NULL,  "dataset independent read",  PARATESTFILE, 0);
 
-        AddTest("cdsetw", dataset_writeAll, NULL, "dataset collective write", PARATESTFILE);
+        AddTest("cdsetw",  dataset_writeAll,  NULL,  "dataset collective write",  PARATESTFILE, 0);
 
-        AddTest("cdsetr", dataset_readAll, NULL, "dataset collective read", PARATESTFILE);
+        AddTest("cdsetr",  dataset_readAll,  NULL,  "dataset collective read",  PARATESTFILE, 0);
 
-        AddTest("eidsetw2", extend_writeInd2, NULL, "extendible dataset independent write #2", PARATESTFILE);
+        AddTest("eidsetw2", extend_writeInd2, NULL, "extendible dataset independent write #2", PARATESTFILE, 0);
 
-        AddTest("selnone", none_selection_chunk, NULL, "chunked dataset with none-selection", PARATESTFILE);
+        AddTest("selnone",  none_selection_chunk,  NULL,  "chunked dataset with none-selection",  PARATESTFILE, 0);
 
 #ifdef H5_HAVE_FILTER_DEFLATE
-        AddTest("cmpdsetr", compress_readAll, NULL, "compressed dataset collective read", PARATESTFILE);
+        AddTest("cmpdsetr",  compress_readAll,  NULL,  "compressed dataset collective read",  PARATESTFILE, 0);
 #endif /* H5_HAVE_FILTER_DEFLATE */
 
         /* Display testing information */

@@ -2578,32 +2578,32 @@ void
 H5_api_file_test_add(void)
 {
     /* Add a fake test to print out a header to distinguish different test interfaces */
-    AddTest("print_file_test_header", print_file_test_header, NULL, "Prints header for file tests", NULL);
+    AddTest("print_file_test_header",  print_file_test_header,  NULL,  "Prints header for file tests",  NULL, 0);
 
-    AddTest("test_create_file", MT_API_TEST_FUNC_OUTER(test_create_file), NULL, "H5Fcreate", NULL);
+    AddTest("test_create_file",  MT_API_TEST_FUNC_OUTER(test_create_file),  NULL,  "H5Fcreate",  NULL, 0);
     AddTest("test_create_file_invalid_params", MT_API_TEST_FUNC_OUTER(test_create_file_invalid_params), NULL,
-            "H5Fcreate with invalid parameters", NULL);
+            "H5Fcreate with invalid parameters", NULL, 0);
     AddTest("test_create_file_excl", MT_API_TEST_FUNC_OUTER(test_create_file_excl), NULL,
-            "H5Fcreate with H5F_ACC_EXCL/H5F_ACC_TRUNC flag", NULL);
-    AddTest("test_open_file", MT_API_TEST_FUNC_OUTER(test_open_file), NULL, "H5Fopen", NULL);
+            "H5Fcreate with H5F_ACC_EXCL/H5F_ACC_TRUNC flag", NULL, 0);
+    AddTest("test_open_file",  MT_API_TEST_FUNC_OUTER(test_open_file),  NULL,  "H5Fopen",  NULL, 0);
     AddTest("test_open_file_invalid_params", MT_API_TEST_FUNC_OUTER(test_open_file_invalid_params), NULL,
-            "H5Fopen with invalid parameters", NULL);
+            "H5Fopen with invalid parameters", NULL, 0);
     AddTest("test_open_nonexistent_file", MT_API_TEST_FUNC_OUTER(test_open_nonexistent_file), NULL,
-            "for invalid opening of a non-existent file", NULL);
-    AddTest("test_file_open_overlap", MT_API_TEST_FUNC_OUTER(test_file_open_overlap), NULL, "overlapping file opens", NULL);
+            "for invalid opening of a non-existent file", NULL, 0);
+    AddTest("test_file_open_overlap",  MT_API_TEST_FUNC_OUTER(test_file_open_overlap),  NULL,  "overlapping file opens",  NULL, 0);
     AddTest("test_file_permission", MT_API_TEST_FUNC_OUTER(test_file_permission), NULL,
-            "file permissions (invalid creation of objects in read-only file)", NULL);
-    AddTest("test_reopen_file", MT_API_TEST_FUNC_OUTER(test_reopen_file), NULL, "re-open of a file with H5Freopen", NULL);
+            "file permissions (invalid creation of objects in read-only file)", NULL, 0);
+    AddTest("test_reopen_file",  MT_API_TEST_FUNC_OUTER(test_reopen_file),  NULL,  "re-open of a file with H5Freopen",  NULL, 0);
     AddTest("test_close_file_invalid_id", MT_API_TEST_FUNC_OUTER(test_close_file_invalid_id), NULL, "H5Fclose with an invalid ID",
-            NULL);
-    AddTest("test_flush_file", MT_API_TEST_FUNC_OUTER(test_flush_file), NULL, "H5Fflush", NULL);
-    AddTest("test_file_is_accessible", MT_API_TEST_FUNC_OUTER(test_file_is_accessible), NULL, "H5Fis_accessible", NULL);
+            NULL, 0);
+    AddTest("test_flush_file",  MT_API_TEST_FUNC_OUTER(test_flush_file),  NULL,  "H5Fflush",  NULL, 0);
+    AddTest("test_file_is_accessible",  MT_API_TEST_FUNC_OUTER(test_file_is_accessible),  NULL,  "H5Fis_accessible",  NULL, 0);
     AddTest("test_file_property_lists", MT_API_TEST_FUNC_OUTER(test_file_property_lists), NULL, "file property list operations",
-            NULL);
+            NULL, 0);
     AddTest("test_get_file_intent", MT_API_TEST_FUNC_OUTER(test_get_file_intent), NULL, "retrieval of file intent with H5Fget_intent",
-            NULL);
+            NULL, 0);
     AddTest("test_get_file_obj_count", MT_API_TEST_FUNC_OUTER(test_get_file_obj_count), NULL,
-            "retrieval of open object number and IDs", NULL);
-    AddTest("test_file_mounts", MT_API_TEST_FUNC_OUTER(test_file_mounts), NULL, "file mounting/unmounting", NULL);
-    AddTest("test_get_file_name", MT_API_TEST_FUNC_OUTER(test_get_file_name), NULL, "retrieval of file name", NULL);
+            "retrieval of open object number and IDs", NULL, 0);
+    AddTest("test_file_mounts", MT_API_TEST_FUNC_OUTER(test_file_mounts), NULL, "file mounting/unmounting", NULL, 0);
+    AddTest("test_get_file_name",  MT_API_TEST_FUNC_OUTER(test_get_file_name),  NULL,  "retrieval of file name",  NULL, 0);
 }

@@ -100,18 +100,18 @@ main(int argc, char *argv[])
     TestInit(argv[0], NULL, NULL);
 
     /* Tests are generally arranged from least to most complexity... */
-    AddTest("is_threadsafe", tts_is_threadsafe, NULL, "library threadsafe status", NULL);
+    AddTest("is_threadsafe",  tts_is_threadsafe,  NULL,  "library threadsafe status",  NULL, 0);
 #ifdef H5_HAVE_THREADSAFE
-    AddTest("dcreate", tts_dcreate, cleanup_dcreate, "multi-dataset creation", NULL);
-    AddTest("error", tts_error, cleanup_error, "per-thread error stacks", NULL);
+    AddTest("dcreate",  tts_dcreate,  cleanup_dcreate,  "multi-dataset creation",  NULL, 0);
+    AddTest("error",  tts_error,  cleanup_error,  "per-thread error stacks",  NULL, 0);
 #ifdef H5_HAVE_PTHREAD_H
     /* TBD - Later library versions add H5TS wrapper routines for compatibility with windows threads too */
-    AddTest("tts_errstk", tts_errstk, NULL, "per-thread error stack cleanup", NULL);
+    AddTest("tts_errstk",  tts_errstk,  NULL,  "per-thread error stack cleanup",  NULL, 0);
     /* Thread cancellability only supported with pthreads ... */
-    AddTest("cancel", tts_cancel, cleanup_cancel, "thread cancellation safety test", NULL);
+    AddTest("cancel",  tts_cancel,  cleanup_cancel,  "thread cancellation safety test",  NULL, 0);
 #endif /* H5_HAVE_PTHREAD_H */
-    AddTest("acreate", tts_acreate, cleanup_acreate, "multi-attribute creation", NULL);
-    AddTest("attr_vlen", tts_attr_vlen, cleanup_attr_vlen, "multi-file-attribute-vlen read", NULL);
+    AddTest("acreate",  tts_acreate,  cleanup_acreate,  "multi-attribute creation",  NULL, 0);
+    AddTest("attr_vlen",  tts_attr_vlen,  cleanup_attr_vlen,  "multi-file-attribute-vlen read",  NULL, 0);
 
 #else /* H5_HAVE_THREADSAFE */
 

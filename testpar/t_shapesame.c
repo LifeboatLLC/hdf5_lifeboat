@@ -4294,16 +4294,16 @@ main(int argc, char **argv)
     TestInit(argv[0], usage, parse_options);
 
     /* Shape Same tests using contiguous hyperslab */
-    AddTest("sscontig1", sscontig1, NULL, "Cntg hslab, ind IO, cntg dsets", PARATESTFILE);
-    AddTest("sscontig2", sscontig2, NULL, "Cntg hslab, col IO, cntg dsets", PARATESTFILE);
-    AddTest("sscontig3", sscontig3, NULL, "Cntg hslab, ind IO, chnk dsets", PARATESTFILE);
-    AddTest("sscontig4", sscontig4, NULL, "Cntg hslab, col IO, chnk dsets", PARATESTFILE);
+    AddTest("sscontig1", sscontig1, NULL, "Cntg hslab, ind IO, cntg dsets", PARATESTFILE, 0);
+    AddTest("sscontig2", sscontig2, NULL, "Cntg hslab, col IO, cntg dsets", PARATESTFILE, 0);
+    AddTest("sscontig3", sscontig3, NULL, "Cntg hslab, ind IO, chnk dsets", PARATESTFILE, 0);
+    AddTest("sscontig4", sscontig4, NULL, "Cntg hslab, col IO, chnk dsets", PARATESTFILE, 0);
 
     /* Shape Same tests using checker board hyperslab */
-    AddTest("sschecker1", sschecker1, NULL, "Check hslab, ind IO, cntg dsets", PARATESTFILE);
-    AddTest("sschecker2", sschecker2, NULL, "Check hslab, col IO, cntg dsets", PARATESTFILE);
-    AddTest("sschecker3", sschecker3, NULL, "Check hslab, ind IO, chnk dsets", PARATESTFILE);
-    AddTest("sschecker4", sschecker4, NULL, "Check hslab, col IO, chnk dsets", PARATESTFILE);
+    AddTest("sschecker1", sschecker1, NULL, "Check hslab, ind IO, cntg dsets", PARATESTFILE, 0);
+    AddTest("sschecker2", sschecker2, NULL, "Check hslab, col IO, cntg dsets", PARATESTFILE, 0);
+    AddTest("sschecker3", sschecker3, NULL, "Check hslab, ind IO, chnk dsets", PARATESTFILE, 0);
+    AddTest("sschecker4", sschecker4, NULL, "Check hslab, col IO, chnk dsets", PARATESTFILE, 0);
 
     /* Display testing information */
     TestInfo(argv[0]);

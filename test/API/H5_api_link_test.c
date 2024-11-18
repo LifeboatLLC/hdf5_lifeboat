@@ -27024,110 +27024,110 @@ void
 H5_api_link_test_add(void)
 {
     /* Add a fake test to print out a header to distinguish different test interfaces */
-    AddTest("print_link_test_header", print_link_test_header, NULL, "Prints header for link tests", NULL);
-    AddTest("test_create_hard_link", MT_API_TEST_FUNC_OUTER(test_create_hard_link), NULL, "hard link creation", NULL);
+    AddTest("print_link_test_header",  print_link_test_header,  NULL,  "Prints header for link tests",  NULL, 0);
+    AddTest("test_create_hard_link",  MT_API_TEST_FUNC_OUTER(test_create_hard_link),  NULL,  "hard link creation",  NULL, 0);
     AddTest("test_create_hard_link_long_name", MT_API_TEST_FUNC_OUTER(test_create_hard_link_long_name), NULL,
-            "hard link creation with a long name", NULL);
+            "hard link creation with a long name", NULL, 0);
     AddTest("test_create_hard_link_many", MT_API_TEST_FUNC_OUTER(test_create_hard_link_many), NULL,
-            "hard link creation of many links", NULL);
+            "hard link creation of many links", NULL, 0);
     AddTest("test_create_hard_link_same_loc", MT_API_TEST_FUNC_OUTER(test_create_hard_link_same_loc), NULL,
-            "hard link creation with H5L_SAME_LOC", NULL);
+            "hard link creation with H5L_SAME_LOC", NULL, 0);
     AddTest("test_create_hard_link_invalid_params", MT_API_TEST_FUNC_OUTER(test_create_hard_link_invalid_params), NULL,
-            "hard link creation with invalid parameters", NULL);
+            "hard link creation with invalid parameters", NULL, 0);
     AddTest("test_create_soft_link_existing_relative", MT_API_TEST_FUNC_OUTER(test_create_soft_link_existing_relative), NULL,
-            "soft link creation to existing object by relative path", NULL);
+            "soft link creation to existing object by relative path", NULL, 0);
     AddTest("test_create_soft_link_existing_absolute", MT_API_TEST_FUNC_OUTER(test_create_soft_link_existing_absolute), NULL,
-            "soft link creation to existing object by absolute path", NULL);
+            "soft link creation to existing object by absolute path", NULL, 0);
     AddTest("test_create_soft_link_dangling_relative", MT_API_TEST_FUNC_OUTER(test_create_soft_link_dangling_relative), NULL,
-            "dangling soft link creation to object by relative path", NULL);
+            "dangling soft link creation to object by relative path", NULL, 0);
     AddTest("test_create_soft_link_dangling_absolute", MT_API_TEST_FUNC_OUTER(test_create_soft_link_dangling_absolute), NULL,
-            "dangling soft link creation to object by absolute path", NULL);
+            "dangling soft link creation to object by absolute path", NULL, 0);
     AddTest("test_create_soft_link_long_name", MT_API_TEST_FUNC_OUTER(test_create_soft_link_long_name), NULL,
-            "soft link creation with a long name", NULL);
+            "soft link creation with a long name", NULL, 0);
     AddTest("test_create_soft_link_many", MT_API_TEST_FUNC_OUTER(test_create_soft_link_many), NULL,
-            "soft link creation of many links", NULL);
+            "soft link creation of many links", NULL, 0);
     AddTest("test_create_soft_link_invalid_params", MT_API_TEST_FUNC_OUTER(test_create_soft_link_invalid_params), NULL,
-            "soft link creation with invalid parameters", NULL);
+            "soft link creation with invalid parameters", NULL, 0);
     AddTest("test_create_external_link", MT_API_TEST_FUNC_OUTER(test_create_external_link), NULL,
-            "external link creation to existing object", NULL);
+            "external link creation to existing object", NULL, 0);
     AddTest("test_create_external_link_dangling", MT_API_TEST_FUNC_OUTER(test_create_external_link_dangling), NULL,
-            "dangling external link creation", NULL);
+            "dangling external link creation", NULL, 0);
     AddTest("test_create_external_link_multi", MT_API_TEST_FUNC_OUTER(test_create_external_link_multi), NULL,
-            "external link creation to an object across several files", NULL);
+            "external link creation to an object across several files", NULL, 0);
     AddTest("test_create_external_link_ping_pong", MT_API_TEST_FUNC_OUTER(test_create_external_link_ping_pong), NULL,
-            "external link creation to an object in ping pong style", NULL);
+            "external link creation to an object in ping pong style", NULL, 0);
     AddTest("test_create_external_link_invalid_params", MT_API_TEST_FUNC_OUTER(test_create_external_link_invalid_params), NULL,
-            "H5Lcreate_external with invalid parameters", NULL);
+            "H5Lcreate_external with invalid parameters", NULL, 0);
     AddTest("test_create_user_defined_link", MT_API_TEST_FUNC_OUTER(test_create_user_defined_link), NULL,
-            "user-defined link creation", NULL);
+            "user-defined link creation", NULL, 0);
     AddTest("test_create_user_defined_link_invalid_params", MT_API_TEST_FUNC_OUTER(test_create_user_defined_link_invalid_params),
-            NULL, "H5Lcreate_ud with invalid parameters", NULL);
-    AddTest("test_delete_link", MT_API_TEST_FUNC_OUTER(test_delete_link), NULL, "link deletion", NULL);
+            NULL, "H5Lcreate_ud with invalid parameters", NULL, 0);
+    AddTest("test_delete_link",  MT_API_TEST_FUNC_OUTER(test_delete_link),  NULL,  "link deletion",  NULL, 0);
     AddTest("test_delete_link_reset_grp_max_crt_order", MT_API_TEST_FUNC_OUTER(test_delete_link_reset_grp_max_crt_order), NULL,
-            "H5Ldelete of all links in group resets group's maximum link creation order value", NULL);
+            "H5Ldelete of all links in group resets group's maximum link creation order value", NULL, 0);
     AddTest("test_delete_link_invalid_params", MT_API_TEST_FUNC_OUTER(test_delete_link_invalid_params), NULL,
-            "H5Ldelete with invalid parameters", NULL);
-    AddTest("test_copy_link", MT_API_TEST_FUNC_OUTER(test_copy_link), NULL, "link copying", NULL);
+            "H5Ldelete with invalid parameters", NULL, 0);
+    AddTest("test_copy_link",  MT_API_TEST_FUNC_OUTER(test_copy_link),  NULL,  "link copying",  NULL, 0);
     AddTest("test_copy_links_into_group_with_links", MT_API_TEST_FUNC_OUTER(test_copy_links_into_group_with_links), NULL,
-            "H5Lcopy adjusting creation order values for copied links", NULL);
+            "H5Lcopy adjusting creation order values for copied links", NULL, 0);
     AddTest("test_copy_link_across_files", MT_API_TEST_FUNC_OUTER(test_copy_link_across_files), NULL, "link copying across files",
-            NULL);
+            NULL, 0);
     AddTest("test_copy_link_invalid_params", MT_API_TEST_FUNC_OUTER(test_copy_link_invalid_params), NULL,
-            "H5Lcopy with invalid parameters", NULL);
-    AddTest("test_move_link", MT_API_TEST_FUNC_OUTER(test_move_link), NULL, "link moving", NULL);
+            "H5Lcopy with invalid parameters", NULL, 0);
+    AddTest("test_move_link",  MT_API_TEST_FUNC_OUTER(test_move_link),  NULL,  "link moving",  NULL, 0);
     AddTest("test_move_links_into_group_with_links", MT_API_TEST_FUNC_OUTER(test_move_links_into_group_with_links), NULL,
-            "H5Lmove adjusting creation order values for moved links", NULL);
+            "H5Lmove adjusting creation order values for moved links", NULL, 0);
     AddTest("test_move_link_across_files", MT_API_TEST_FUNC_OUTER(test_move_link_across_files), NULL, "link moving across files",
-            NULL);
+            NULL, 0);
     AddTest("test_move_link_reset_grp_max_crt_order", MT_API_TEST_FUNC_OUTER(test_move_link_reset_grp_max_crt_order), NULL,
-            "H5Lmove of all links out of group resets group's maximum link creation order value", NULL);
+            "H5Lmove of all links out of group resets group's maximum link creation order value", NULL, 0);
     AddTest("test_move_link_invalid_params", MT_API_TEST_FUNC_OUTER(test_move_link_invalid_params), NULL,
-            "H5Lmove with invalid parameters", NULL);
-    AddTest("test_get_link_val", MT_API_TEST_FUNC_OUTER(test_get_link_val), NULL, "link value retrieval", NULL);
+            "H5Lmove with invalid parameters", NULL, 0);
+    AddTest("test_get_link_val",  MT_API_TEST_FUNC_OUTER(test_get_link_val),  NULL,  "link value retrieval",  NULL, 0);
     AddTest("test_get_link_val_invalid_params", MT_API_TEST_FUNC_OUTER(test_get_link_val_invalid_params), NULL,
-            "link value retrieval with invalid parameters", NULL);
-    AddTest("test_get_link_info", MT_API_TEST_FUNC_OUTER(test_get_link_info), NULL, "link info retrieval", NULL);
+            "link value retrieval with invalid parameters", NULL, 0);
+    AddTest("test_get_link_info",  MT_API_TEST_FUNC_OUTER(test_get_link_info),  NULL,  "link info retrieval",  NULL, 0);
     AddTest("test_get_link_info_invalid_params", MT_API_TEST_FUNC_OUTER(test_get_link_info_invalid_params), NULL,
-            "link info retrieval with invalid parameters", NULL);
-    AddTest("test_get_link_name", MT_API_TEST_FUNC_OUTER(test_get_link_name), NULL, "link name retrieval", NULL);
+            "link info retrieval with invalid parameters", NULL, 0);
+    AddTest("test_get_link_name",  MT_API_TEST_FUNC_OUTER(test_get_link_name),  NULL,  "link name retrieval",  NULL, 0);
     AddTest("test_get_link_name_invalid_params", MT_API_TEST_FUNC_OUTER(test_get_link_name_invalid_params), NULL,
-            "link name retrieval with invalid parameters", NULL);
+            "link name retrieval with invalid parameters", NULL, 0);
     AddTest("test_link_iterate_hard_links", MT_API_TEST_FUNC_OUTER(test_link_iterate_hard_links), NULL,
-            "link iteration (only hard links)", NULL);
+            "link iteration (only hard links)", NULL, 0);
     AddTest("test_link_iterate_soft_links", MT_API_TEST_FUNC_OUTER(test_link_iterate_soft_links), NULL,
-            "link iteration (only soft links)", NULL);
+            "link iteration (only soft links)", NULL, 0);
     AddTest("test_link_iterate_external_links", MT_API_TEST_FUNC_OUTER(test_link_iterate_external_links), NULL,
-            "link iteration (only external links)", NULL);
+            "link iteration (only external links)", NULL, 0);
     AddTest("test_link_iterate_ud_links", MT_API_TEST_FUNC_OUTER(test_link_iterate_ud_links), NULL,
-            "link iteration (only user-defined links)", NULL);
+            "link iteration (only user-defined links)", NULL, 0);
     AddTest("test_link_iterate_mixed_links", MT_API_TEST_FUNC_OUTER(test_link_iterate_mixed_links), NULL,
-            "link iteration (mixed link types)", NULL);
+            "link iteration (mixed link types)", NULL, 0);
     AddTest("test_link_iterate_invalid_params", MT_API_TEST_FUNC_OUTER(test_link_iterate_invalid_params), NULL,
-            "link iteration with invalid parameters", NULL);
+            "link iteration with invalid parameters", NULL, 0);
     AddTest("test_link_iterate_0_links", MT_API_TEST_FUNC_OUTER(test_link_iterate_0_links), NULL,
-            "link iteration on group with 0 links", NULL);
+            "link iteration on group with 0 links", NULL, 0);
     AddTest("test_link_visit_hard_links_no_cycles", MT_API_TEST_FUNC_OUTER(test_link_visit_hard_links_no_cycles), NULL,
-            "link visiting without cycles (only hard links)", NULL);
+            "link visiting without cycles (only hard links)", NULL, 0);
     AddTest("test_link_visit_soft_links_no_cycles", MT_API_TEST_FUNC_OUTER(test_link_visit_soft_links_no_cycles), NULL,
-            "link visiting without cycles (only soft links)", NULL);
+            "link visiting without cycles (only soft links)", NULL, 0);
     AddTest("test_link_visit_external_links_no_cycles", MT_API_TEST_FUNC_OUTER(test_link_visit_external_links_no_cycles), NULL,
-            "link visiting without cycles (only external links)", NULL);
+            "link visiting without cycles (only external links)", NULL, 0);
     AddTest("test_link_visit_ud_links_no_cycles", MT_API_TEST_FUNC_OUTER(test_link_visit_ud_links_no_cycles), NULL,
-            "link visiting without cycles (only user-defined links)", NULL);
+            "link visiting without cycles (only user-defined links)", NULL, 0);
     AddTest("test_link_visit_mixed_links_no_cycles", MT_API_TEST_FUNC_OUTER(test_link_visit_mixed_links_no_cycles), NULL,
-            "link visiting without cycles (mixed link types)", NULL);
+            "link visiting without cycles (mixed link types)", NULL, 0);
     AddTest("test_link_visit_hard_links_cycles", MT_API_TEST_FUNC_OUTER(test_link_visit_hard_links_cycles), NULL,
-            "link visiting with cycles (only hard links)", NULL);
+            "link visiting with cycles (only hard links)", NULL, 0);
     AddTest("test_link_visit_soft_links_cycles", MT_API_TEST_FUNC_OUTER(test_link_visit_soft_links_cycles), NULL,
-            "link visiting with cycles (only soft links)", NULL);
+            "link visiting with cycles (only soft links)", NULL, 0);
     AddTest("test_link_visit_external_links_cycles", MT_API_TEST_FUNC_OUTER(test_link_visit_external_links_cycles), NULL,
-            "link visiting with cycles (only external links)", NULL);
+            "link visiting with cycles (only external links)", NULL, 0);
     AddTest("test_link_visit_ud_links_cycles", MT_API_TEST_FUNC_OUTER(test_link_visit_ud_links_cycles), NULL,
-            "link visiting with cycles (only user-defined links)", NULL);
+            "link visiting with cycles (only user-defined links)", NULL, 0);
     AddTest("test_link_visit_mixed_links_cycles", MT_API_TEST_FUNC_OUTER(test_link_visit_mixed_links_cycles), NULL,
-            "link visiting with cycles (mixed link types)", NULL);
+            "link visiting with cycles (mixed link types)", NULL, 0);
     AddTest("test_link_visit_invalid_params", MT_API_TEST_FUNC_OUTER(test_link_visit_invalid_params), NULL,
-            "link visiting with invalid parameters", NULL);
+            "link visiting with invalid parameters", NULL, 0);
     AddTest("test_link_visit_0_links", MT_API_TEST_FUNC_OUTER(test_link_visit_0_links), NULL,
-            "link visiting on group with subgroups containing 0 links", NULL);
+            "link visiting on group with subgroups containing 0 links", NULL, 0);
 }

@@ -7390,55 +7390,55 @@ H5_api_object_test_add(void)
 {
     /* Add a fake test to print out a header to distinguish different test interfaces */
     AddTest("print_object_test_header", print_object_test_header, NULL, "Prints header for object tests",
-            NULL);
+            NULL, 0);
 
-    AddTest("test_open_object", MT_API_TEST_FUNC_OUTER(test_open_object), NULL, "object opening", NULL);
+    AddTest("test_open_object",  MT_API_TEST_FUNC_OUTER(test_open_object),  NULL,  "object opening",  NULL, 0);
     AddTest("test_open_object_invalid_params", MT_API_TEST_FUNC_OUTER(test_open_object_invalid_params), NULL,
-            "object opening with invalid parameters", NULL);
-    AddTest("test_object_exists", MT_API_TEST_FUNC_OUTER(test_object_exists), NULL, "object existence", NULL);
+            "object opening with invalid parameters", NULL, 0);
+    AddTest("test_object_exists",  MT_API_TEST_FUNC_OUTER(test_object_exists),  NULL,  "object existence",  NULL, 0);
     AddTest("test_object_exists_invalid_params", MT_API_TEST_FUNC_OUTER(test_object_exists_invalid_params), NULL,
-            "object existence with invalid parameters", NULL);
-    AddTest("test_get_object_info", MT_API_TEST_FUNC_OUTER(test_get_object_info), NULL, "object info retrieval", NULL);
+            "object existence with invalid parameters", NULL, 0);
+    AddTest("test_get_object_info",  MT_API_TEST_FUNC_OUTER(test_get_object_info),  NULL,  "object info retrieval",  NULL, 0);
     AddTest("test_get_object_info_invalid_params", MT_API_TEST_FUNC_OUTER(test_get_object_info_invalid_params), NULL,
-            "object info retrieval with invalid parameters", NULL);
-    AddTest("test_link_object", MT_API_TEST_FUNC_OUTER(test_link_object), NULL, "object linking", NULL);
+            "object info retrieval with invalid parameters", NULL, 0);
+    AddTest("test_link_object",  MT_API_TEST_FUNC_OUTER(test_link_object),  NULL,  "object linking",  NULL, 0);
     AddTest("test_link_object_invalid_params", MT_API_TEST_FUNC_OUTER(test_link_object_invalid_params), NULL,
-            "object linking with invalid parameters", NULL);
+            "object linking with invalid parameters", NULL, 0);
     AddTest("test_incr_decr_object_refcount", MT_API_TEST_FUNC_OUTER(test_incr_decr_object_refcount), NULL,
-            "increment/decrement the reference count of object", NULL);
+            "increment/decrement the reference count of object", NULL, 0);
     AddTest("test_incr_decr_object_refcount_invalid_params", MT_API_TEST_FUNC_OUTER(test_incr_decr_object_refcount_invalid_params),
-            NULL, "object reference count incr./decr. with an invalid parameter", NULL);
-    AddTest("test_object_copy_basic", MT_API_TEST_FUNC_OUTER(test_object_copy_basic), NULL, "basic object copying", NULL);
+            NULL, "object reference count incr./decr. with an invalid parameter", NULL, 0);
+    AddTest("test_object_copy_basic",  MT_API_TEST_FUNC_OUTER(test_object_copy_basic),  NULL,  "basic object copying",  NULL, 0);
     AddTest("test_object_copy_already_existing", MT_API_TEST_FUNC_OUTER(test_object_copy_already_existing), NULL,
-            "object copying to location where objects already exist", NULL);
+            "object copying to location where objects already exist", NULL, 0);
     AddTest("test_object_copy_shallow_group_copy", MT_API_TEST_FUNC_OUTER(test_object_copy_shallow_group_copy), NULL,
-            "object copying with H5O_COPY_SHALLOW_HIERARCHY_FLAG flag", NULL);
+            "object copying with H5O_COPY_SHALLOW_HIERARCHY_FLAG flag", NULL, 0);
     AddTest("test_object_copy_no_attributes", MT_API_TEST_FUNC_OUTER(test_object_copy_no_attributes), NULL,
-            "object copying with H5O_COPY_WITHOUT_ATTR_FLAG flag", NULL);
+            "object copying with H5O_COPY_WITHOUT_ATTR_FLAG flag", NULL, 0);
     AddTest("test_object_copy_by_soft_link", MT_API_TEST_FUNC_OUTER(test_object_copy_by_soft_link), NULL,
-            "object copying through use of soft links", NULL);
+            "object copying through use of soft links", NULL, 0);
     AddTest("test_object_copy_group_with_soft_links", MT_API_TEST_FUNC_OUTER(test_object_copy_group_with_soft_links), NULL,
-            "group copying when group contains soft links", NULL);
+            "group copying when group contains soft links", NULL, 0);
     AddTest("test_object_copy_between_files", MT_API_TEST_FUNC_OUTER(test_object_copy_between_files), NULL,
-            "object copying between files", NULL);
+            "object copying between files", NULL, 0);
     AddTest("test_object_copy_invalid_params", MT_API_TEST_FUNC_OUTER(test_object_copy_invalid_params), NULL,
-            "object copying with invalid parameters", NULL);
-    AddTest("test_object_comments", MT_API_TEST_FUNC_OUTER(test_object_comments), NULL, "object comments", NULL);
+            "object copying with invalid parameters", NULL, 0);
+    AddTest("test_object_comments",  MT_API_TEST_FUNC_OUTER(test_object_comments),  NULL,  "object comments",  NULL, 0);
     AddTest("test_object_comments_invalid_params", MT_API_TEST_FUNC_OUTER(test_object_comments_invalid_params), NULL,
-            "object comments with invalid parameters", NULL);
-    AddTest("test_object_visit", MT_API_TEST_FUNC_OUTER(test_object_visit), NULL, "object visiting", NULL);
+            "object comments with invalid parameters", NULL, 0);
+    AddTest("test_object_visit",  MT_API_TEST_FUNC_OUTER(test_object_visit),  NULL,  "object visiting",  NULL, 0);
     AddTest("test_object_visit_soft_link", MT_API_TEST_FUNC_OUTER(test_object_visit_soft_link), NULL,
-            "object visiting with soft links", NULL);
+            "object visiting with soft links", NULL, 0);
     AddTest("test_object_visit_invalid_params", MT_API_TEST_FUNC_OUTER(test_object_visit_invalid_params), NULL,
-            "object visiting with invalid parameters", NULL);
-    AddTest("test_close_object", MT_API_TEST_FUNC_OUTER(test_close_object), NULL, "H5Oclose", NULL);
+            "object visiting with invalid parameters", NULL, 0);
+    AddTest("test_close_object",  MT_API_TEST_FUNC_OUTER(test_close_object),  NULL,  "H5Oclose",  NULL, 0);
     AddTest("test_close_object_invalid_params", MT_API_TEST_FUNC_OUTER(test_close_object_invalid_params), NULL,
-            "H5Oclose with an invalid object ID", NULL);
-    AddTest("test_close_invalid_objects", MT_API_TEST_FUNC_OUTER(test_close_invalid_objects), NULL, "H5Oclose invalid objects", NULL);
-    AddTest("test_flush_object", MT_API_TEST_FUNC_OUTER(test_flush_object), NULL, "H5Oflush", NULL);
+            "H5Oclose with an invalid object ID", NULL, 0);
+    AddTest("test_close_invalid_objects",  MT_API_TEST_FUNC_OUTER(test_close_invalid_objects),  NULL,  "H5Oclose invalid objects",  NULL, 0);
+    AddTest("test_flush_object",  MT_API_TEST_FUNC_OUTER(test_flush_object),  NULL,  "H5Oflush",  NULL, 0);
     AddTest("test_flush_object_invalid_params", MT_API_TEST_FUNC_OUTER(test_flush_object_invalid_params), NULL,
-            "H5Oflush with invalid parameters", NULL);
-    AddTest("test_refresh_object", MT_API_TEST_FUNC_OUTER(test_refresh_object), NULL, "H5Orefresh", NULL);
+            "H5Oflush with invalid parameters", NULL, 0);
+    AddTest("test_refresh_object",  MT_API_TEST_FUNC_OUTER(test_refresh_object),  NULL,  "H5Orefresh",  NULL, 0);
     AddTest("test_refresh_object_invalid_params", MT_API_TEST_FUNC_OUTER(test_refresh_object_invalid_params), NULL,
-            "H5Orefresh with invalid parameters", NULL);
+            "H5Orefresh with invalid parameters", NULL, 0);
 }

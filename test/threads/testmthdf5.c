@@ -73,38 +73,38 @@ int main(int argc, char *argv[])
 #ifdef H5_HAVE_MULTITHREAD
     /* H5VL Tests */
     AddTest("mt_reg_unreg", mt_test_registration,
-        NULL, "MT reg/unreg of a single connector", &params);
+        NULL, "MT reg/unreg of a single connector", &params, 0);
 
     AddTest("mt_reg_by_name", mt_test_registration_by_name,
-        NULL, "MT reg/unreg of a single connector by name", &params);
+        NULL, "MT reg/unreg of a single connector by name", &params, 0);
 
     AddTest("mt_reg_by_val", mt_test_registration_by_value,
-        NULL, "MT reg/unreg of a single connector by value", &params);
+        NULL, "MT reg/unreg of a single connector by value", &params, 0);
 
     AddTest("mt_dyn_op_reg", mt_test_dyn_op_registration,
-        NULL, "MT reg/unreg of dynamic optional VOL operations", &params);
+        NULL, "MT reg/unreg of dynamic optional VOL operations", &params, 0);
 
     AddTest("mt_reg_op", mt_test_registration_operation,
         mt_test_registration_operation_cleanup,
-        "MT reg/unreg of a connector and usage of its routines", &params);
+        "MT reg/unreg of a connector and usage of its routines", &params, 0);
 
     AddTest("mt_fopen_fail", mt_test_file_open_failure_registration,
-        NULL, "MT dynamic VOL loading on file open failure", &params);
+        NULL, "MT dynamic VOL loading on file open failure", &params, 0);
 
     AddTest("mt_prop_copy", mt_test_vol_property_copy,
-        NULL, "MT VOL property copying", &params);
+        NULL, "MT VOL property copying", &params, 0);
 
     AddTest("mt_lib_state", mt_test_lib_state_ops,
-        NULL, "MT usage of library state routines", &params);
+        NULL, "MT usage of library state routines", &params, 0);
 
     AddTest("mp_vol_wrp_ctx", mt_test_vol_wrap_ctx,
-        mt_test_vol_wrap_ctx_cleanup, "MT usage of VOL wrap context routines", &params);
+        mt_test_vol_wrap_ctx_cleanup, "MT usage of VOL wrap context routines", &params, 0);
 
     AddTest("mt_vol_info", mt_test_vol_info,
-        NULL, "MT usage of VOL info routines", &params);
+        NULL, "MT usage of VOL info routines", &params, 0);
 
     AddTest("mt_reg_search", mt_test_register_and_search,
-        NULL, "MT reg/unreg of connectors while searching for connector", &params);
+        NULL, "MT reg/unreg of connectors while searching for connector", &params, 0);
 
 #else /* H5_HAVE_MULTITHREAD */
     /* Silence compiler warning */

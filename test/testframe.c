@@ -30,8 +30,12 @@ typedef struct TestStruct {
     char Name[MAXTESTNAME];
     void (*Call)(void);
     void (*Cleanup)(void);
-    const void *Parameters;
+    const void *TestParameters;
+    int64_t TestFrameworkFlags;
 } TestStruct;
+
+/* Flag values for TestFrameworkFlags */
+#define RUN_TEST_MULTITHREADED 0x00000001 /* Run the test in a multi-threaded environment */
 
 /*
  * Variables used by testing framework.
@@ -60,14 +64,16 @@ static int TestMaxNumThreads_g = -1; /* Max number of threads that can be spawne
  * TheCall--the test routine.
  * Cleanup--the cleanup routine for the test.
  * TheDescr--Long description of the test.
- * Parameters--pointer to extra parameters. Use NULL if none used.
+ * TestParameters--pointer to extra parameters for an individual test. Use NULL if none used.
  *    Since only the pointer is copied, the contents should not change.
+ * TestFrameworkFlags--flags for the test framework that control the operation of the 
+ *    individual test at a high level.
  * Return: Void
  *    exit EXIT_FAILURE if error is encountered.
  */
 void
 AddTest(const char *TheName, void (*TheCall)(void), void (*Cleanup)(void), const char *TheDescr,
-        const void *Parameters)
+        const void *TestParameters, const int64_t TestFrameworkFlags)
 {
     /* Sanity checking */
     if (HDstrlen(TheDescr) >= MAXTESTDESC) {
@@ -109,7 +115,8 @@ AddTest(const char *TheName, void (*TheCall)(void), void (*Cleanup)(void), const
     Test[Index].Call       = TheCall;
     Test[Index].Cleanup    = Cleanup;
     Test[Index].NumErrors  = -1;
-    Test[Index].Parameters = Parameters;
+    Test[Index].TestParameters = TestParameters;
+    Test[Index].TestFrameworkFlags = TestFrameworkFlags;
 
     /* Increment test count */
     Index++;
@@ -335,7 +342,7 @@ PerformTests(void)
             MESSAGE(2, ("Testing  -- %s (%s) \n", Test[Loop].Description, Test[Loop].Name));
             MESSAGE(5, ("===============================================\n"));
             Test[Loop].NumErrors = num_errs;
-            Test_parameters      = Test[Loop].Parameters;
+            Test_parameters      = Test[Loop].TestParameters;
             TestAlarmOn();
             Test[Loop].Call();
             TestAlarmOff();

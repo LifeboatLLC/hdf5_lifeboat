@@ -554,77 +554,77 @@ main(int argc, char *argv[])
     /* TestInit(argv[0], NULL, NULL); */
 
     /* Tests are generally arranged from least to most complexity... */
-    /* AddTest("config", test_configure, cleanup_configure, "Configure definitions", NULL); */
+    /* AddTest("config",  test_configure,  cleanup_configure,  "Configure definitions",  NULL, 0); */
     printf("** CONFIGURE DEFINITIONS **\n");
     test_configure();
     printf("\n");
 
     /* AddTest("metadata", test_metadata, cleanup_metadata, "Encoding/decoding metadata", NULL); */
 
-    /* AddTest("checksum", test_checksum, cleanup_checksum, "Checksum algorithm", NULL); */
+    /* AddTest("checksum",  test_checksum,  cleanup_checksum,  "Checksum algorithm",  NULL, 0); */
     printf("** CHECKSUM ALGORITHM **\n");
     test_checksum();
     printf("\n");
 
-    /* AddTest("tst", test_tst, NULL,  "Ternary Search Trees", NULL); */
+    /* AddTest("tst",  test_tst,  NULL,   "Ternary Search Trees",  NULL, 0); */
 
-    /* AddTest("heap", test_heap, NULL,  "Memory Heaps", NULL); */
+    /* AddTest("heap",  test_heap,  NULL,   "Memory Heaps",  NULL, 0); */
 
-    /* AddTest("skiplist", test_skiplist, NULL,  "Skip Lists", NULL); */
+    /* AddTest("skiplist",  test_skiplist,  NULL,   "Skip Lists",  NULL, 0); */
 
-    /* AddTest("refstr", test_refstr, NULL,  "Reference Counted Strings", NULL); */
+    /* AddTest("refstr",  test_refstr,  NULL,   "Reference Counted Strings",  NULL, 0); */
 
     /* AddTest("file", test_file, cleanup_file, "Low-Level File I/O", NULL); */
     printf("** LOW-LEVEL FILE I/O **\n");
     test_file();
     printf("\n");
 
-    /* AddTest("objects", test_h5o, cleanup_h5o, "Generic Object Functions", NULL); */
+    /* AddTest("objects",  test_h5o,  cleanup_h5o,  "Generic Object Functions",  NULL, 0); */
     printf("** GENERIC OBJECT FUNCTIONS **\n");
     test_h5o();
     printf("\n");
 
-    /* AddTest("h5s",  test_h5s,  cleanup_h5s,  "Dataspaces", NULL); */
+    /* AddTest("h5s",   test_h5s,   cleanup_h5s,   "Dataspaces",  NULL, 0); */
     printf("** DATASPACES **\n");
     test_h5s();
     printf("\n");
 
-    /* AddTest("coords",  test_coords,  cleanup_coords,  "Dataspace coordinates", NULL); */
+    /* AddTest("coords",   test_coords,   cleanup_coords,   "Dataspace coordinates",  NULL, 0); */
     printf("** DATASPACE COORDINATES **\n");
     test_coords();
     printf("\n");
 
-    /* AddTest("sohm", test_sohm, cleanup_sohm,  "Shared Object Header Messages", NULL); */
+    /* AddTest("sohm",  test_sohm,  cleanup_sohm,   "Shared Object Header Messages",  NULL, 0); */
 
-    /* AddTest("attr", test_attr, cleanup_attr,  "Attributes", NULL); */
+    /* AddTest("attr",  test_attr,  cleanup_attr,   "Attributes",  NULL, 0); */
     printf("** ATTRIBUTES **\n");
     test_attr();
     printf("\n");
 
-    /* AddTest("select", test_select, cleanup_select,  "Selections", NULL); */
+    /* AddTest("select",  test_select,  cleanup_select,   "Selections",  NULL, 0); */
     printf("** SELECTIONS **\n");
     test_select();
     printf("\n");
 
-    /* AddTest("time", test_time, cleanup_time,  "Time Datatypes", NULL); */
+    /* AddTest("time",  test_time,  cleanup_time,   "Time Datatypes",  NULL, 0); */
     printf("** TIME DATATYPES**\n");
     test_time();
     printf("\n");
 
-    /* AddTest("ref_deprec", test_reference_deprec, cleanup_reference_deprec,  "Deprecated References", NULL);
+    /* AddTest("ref_deprec",  test_reference_deprec,  cleanup_reference_deprec,   "Deprecated References",  NULL, 0);
      */
 
-    /* AddTest("ref", test_reference, cleanup_reference,  "References", NULL); */
+    /* AddTest("ref",  test_reference,  cleanup_reference,   "References",  NULL, 0); */
     printf("** REFERENCES **\n");
     test_reference();
     printf("\n");
 
-    /* AddTest("vltypes", test_vltypes, cleanup_vltypes,  "Variable-Length Datatypes", NULL); */
+    /* AddTest("vltypes",  test_vltypes,  cleanup_vltypes,   "Variable-Length Datatypes",  NULL, 0); */
     printf("** VARIABLE-LENGTH DATATYPES **\n");
     test_vltypes();
     printf("\n");
 
-    /* AddTest("vlstrings", test_vlstrings, cleanup_vlstrings,  "Variable-Length Strings", NULL); */
+    /* AddTest("vlstrings",  test_vlstrings,  cleanup_vlstrings,   "Variable-Length Strings",  NULL, 0); */
     printf("** VARIABLE-LENGTH STRINGS **\n");
     test_vlstrings();
     printf("\n");
@@ -634,27 +634,27 @@ main(int argc, char *argv[])
     test_iterate();
     printf("\n");
 
-    /* AddTest("array", test_array, cleanup_array,  "Array Datatypes", NULL); */
+    /* AddTest("array",  test_array,  cleanup_array,   "Array Datatypes",  NULL, 0); */
     printf("** ARRAY DATATYPES **\n");
     test_array();
     printf("\n");
 
-    /* AddTest("genprop", test_genprop, cleanup_genprop,  "Generic Properties", NULL); */
+    /* AddTest("genprop",  test_genprop,  cleanup_genprop,   "Generic Properties",  NULL, 0); */
     printf("** GENERIC PROPERTIES **\n");
     test_genprop();
     printf("\n");
 
-    /* AddTest("unicode", test_unicode, cleanup_unicode,  "UTF-8 Encoding", NULL); */
+    /* AddTest("unicode",  test_unicode,  cleanup_unicode,   "UTF-8 Encoding",  NULL, 0); */
     printf("** UTF-8 ENCODING **\n");
     test_unicode();
     printf("\n");
 
-    /* AddTest("id", test_ids, NULL,  "User-Created Identifiers", NULL); */
+    /* AddTest("id",  test_ids,  NULL,   "User-Created Identifiers",  NULL, 0); */
     printf("** USER-CREATED IDENTIFIERS **\n");
     test_ids();
     printf("\n");
 
-    /* AddTest("misc", test_misc, cleanup_misc,  "Miscellaneous", NULL); */
+    /* AddTest("misc",  test_misc,  cleanup_misc,   "Miscellaneous",  NULL, 0); */
     printf("** MISCELLANEOUS **\n");
     test_misc();
     printf("\n");

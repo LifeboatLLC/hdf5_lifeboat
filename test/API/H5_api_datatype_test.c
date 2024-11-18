@@ -2670,54 +2670,54 @@ H5_api_datatype_test_add(void)
 {
     /* Add a fake test to print out a header to distinguish different test interfaces */
     AddTest("print_datatype_test_header", print_datatype_test_header, NULL,
-            "Prints header for datatype tests", NULL);
+            "Prints header for datatype tests", NULL, 0);
 
     AddTest("test_create_committed_datatype", MT_API_TEST_FUNC_OUTER(test_create_committed_datatype), NULL,
-            "creation of a committed datatype", NULL);
+            "creation of a committed datatype", NULL, 0);
     AddTest("test_create_committed_datatype_invalid_params", MT_API_TEST_FUNC_OUTER(test_create_committed_datatype_invalid_params),
-            NULL, "H5Tcommit2 with invalid parameters", NULL);
+            NULL, "H5Tcommit2 with invalid parameters", NULL, 0);
     AddTest("test_create_anonymous_committed_datatype", MT_API_TEST_FUNC_OUTER(test_create_anonymous_committed_datatype), NULL,
-            "creation of anonymous committed datatype", NULL);
+            "creation of anonymous committed datatype", NULL, 0);
     AddTest("test_create_anonymous_committed_datatype_invalid_params",
             MT_API_TEST_FUNC_OUTER(test_create_anonymous_committed_datatype_invalid_params), NULL,
-            "H5Tcommit_anon with invalid parameters", NULL);
+            "H5Tcommit_anon with invalid parameters", NULL, 0);
 
 #ifndef PROBLEMATIC_TESTS
     AddTest("test_create_committed_datatype_empty_types", MT_API_TEST_FUNC_OUTER(test_create_committed_datatype_empty_types), NULL,
-            "creation of committed datatype with empty types", NULL);
+            "creation of committed datatype with empty types", NULL, 0);
 #endif
 
     AddTest("test_recommit_committed_type", MT_API_TEST_FUNC_OUTER(test_recommit_committed_type), NULL,
-            "inability to re-commit a committed datatype", NULL);
-    AddTest("test_open_committed_datatype", MT_API_TEST_FUNC_OUTER(test_open_committed_datatype), NULL, "H5Topen2", NULL);
+            "inability to re-commit a committed datatype", NULL, 0);
+    AddTest("test_open_committed_datatype",  MT_API_TEST_FUNC_OUTER(test_open_committed_datatype),  NULL,  "H5Topen2",  NULL, 0);
     AddTest("test_open_committed_datatype_invalid_params", MT_API_TEST_FUNC_OUTER(test_open_committed_datatype_invalid_params), NULL,
-            "H5Topen2 with invalid parameters", NULL);
+            "H5Topen2 with invalid parameters", NULL, 0);
     AddTest("test_reopen_committed_datatype_indirect", MT_API_TEST_FUNC_OUTER(test_reopen_committed_datatype_indirect), NULL,
-            "reopening open committed datatypes using H5Dget_type", NULL);
+            "reopening open committed datatypes using H5Dget_type", NULL, 0);
     AddTest("test_close_committed_datatype_invalid_id", MT_API_TEST_FUNC_OUTER(test_close_committed_datatype_invalid_id), NULL,
-            "H5Tclose with an invalid committed datatype ID", NULL);
+            "H5Tclose with an invalid committed datatype ID", NULL, 0);
     AddTest("test_datatype_property_lists", MT_API_TEST_FUNC_OUTER(test_datatype_property_lists), NULL,
-            "datatype property list operations", NULL);
+            "datatype property list operations", NULL, 0);
     AddTest("test_create_dataset_with_committed_type", MT_API_TEST_FUNC_OUTER(test_create_dataset_with_committed_type), NULL,
-            "dataset creation with a committed datatype", NULL);
+            "dataset creation with a committed datatype", NULL, 0);
     AddTest("test_create_attribute_with_committed_type", MT_API_TEST_FUNC_OUTER(test_create_attribute_with_committed_type), NULL,
-            "attribute creation with a committed datatype", NULL);
+            "attribute creation with a committed datatype", NULL, 0);
     AddTest("test_delete_committed_type", MT_API_TEST_FUNC_OUTER(test_delete_committed_type), NULL, "committed datatype deletion",
-            NULL);
+            NULL, 0);
     AddTest("test_resurrect_datatype", MT_API_TEST_FUNC_OUTER(test_resurrect_datatype), NULL, "resurrecting datatype after deletion",
-            NULL);
-    AddTest("test_flush_committed_datatype", MT_API_TEST_FUNC_OUTER(test_flush_committed_datatype), NULL, "H5Tflush", NULL);
+            NULL, 0);
+    AddTest("test_flush_committed_datatype",  MT_API_TEST_FUNC_OUTER(test_flush_committed_datatype),  NULL,  "H5Tflush",  NULL, 0);
     AddTest("test_flush_committed_datatype_invalid_params", MT_API_TEST_FUNC_OUTER(test_flush_committed_datatype_invalid_params),
-            NULL, "H5Tflush with invalid parameters", NULL);
-    AddTest("test_refresh_committed_datatype", MT_API_TEST_FUNC_OUTER(test_refresh_committed_datatype), NULL, "H5Trefresh", NULL);
+            NULL, "H5Tflush with invalid parameters", NULL, 0);
+    AddTest("test_refresh_committed_datatype",  MT_API_TEST_FUNC_OUTER(test_refresh_committed_datatype),  NULL,  "H5Trefresh",  NULL, 0);
     AddTest("test_refresh_committed_datatype_invalid_params", MT_API_TEST_FUNC_OUTER(test_refresh_committed_datatype_invalid_params),
-            NULL, "H5Trefresh with invalid parameters", NULL);
+            NULL, "H5Trefresh with invalid parameters", NULL, 0);
 
 #ifndef PROBLEMATIC_TESTS
     AddTest("test_cant_commit_predefined", MT_API_TEST_FUNC_OUTER(test_cant_commit_predefined), NULL,
-            "inability to commit predefined types directly", NULL);
+            "inability to commit predefined types directly", NULL, 0);
 #endif
 
     AddTest("test_cant_modify_committed_type", MT_API_TEST_FUNC_OUTER(test_cant_modify_committed_type), NULL,
-            "inability to modify a committed datatype", NULL);
+            "inability to modify a committed datatype", NULL, 0);
 }
