@@ -119,7 +119,7 @@ H5_ATOMIC(size_t) n_tests_skipped_g = 0;
 int reg_opt_curr_op_val = 0;
 
 #ifdef H5_HAVE_MULTITHREAD
-pthread_key_t thread_info_key_g;
+pthread_key_t test_thread_info_key_g;
 #endif
 
 uint64_t vol_cap_flags_g   = H5VL_CAP_FLAG_NONE;
@@ -2470,3 +2470,38 @@ reg_opt_datatype_get(void H5_ATTR_UNUSED *obj, H5VL_datatype_get_args_t *args, h
 
     return ret_value;
 } /* end reg_opt_datatype_get() */
+
+/* Generate a heap-allocated filename of the form <prefix><thread_idx><filename> */
+char *generate_threadlocal_filename(const char *prefix, int thread_idx, const char *filename) {
+    int chars_written = 0;
+    char *test_filename =  NULL;
+
+    if (thread_idx > MAX_THREAD_IDX) {
+        fprintf(stderr, "    thread index exceeded expected size\n");
+        goto error;
+    }
+
+    if (MAX_THREAD_IDX_LEN + strlen(filename) >= H5_API_TEST_FILENAME_MAX_LENGTH) {
+        fprintf(stderr, "    test file name exceeded expected size\n");
+        goto error;
+    }
+
+    if (NULL == (test_filename = (char *)calloc(1, H5_API_TEST_FILENAME_MAX_LENGTH))) {
+        fprintf(stderr, "    couldn't allocate memory for test file name\n");
+        goto error;
+    }
+
+    /* Write prefix, thread index, and filename into buffer */
+    if ((chars_written = snprintf(test_filename,
+                                  H5_API_TEST_FILENAME_MAX_LENGTH, "%s%d%s",
+                                  prefix, thread_idx, filename)) < 0) {
+        fprintf(stderr, "    couldn't create test file name\n");
+        goto error;
+    }
+
+    return test_filename;
+
+error:
+    free(test_filename);
+    return NULL;
+}

@@ -32,24 +32,6 @@ static void test_file_mounts(void);
 static void test_get_file_name(void);
 static herr_t check_open_obj_count(ssize_t obj_count, int expected);
 
-MULTI_DECLARE(test_create_file)
-MULTI_DECLARE(test_create_file_invalid_params)
-MULTI_DECLARE(test_create_file_excl)
-MULTI_DECLARE(test_open_file)
-MULTI_DECLARE(test_open_file_invalid_params)
-MULTI_DECLARE(test_open_nonexistent_file)
-MULTI_DECLARE(test_file_open_overlap)
-MULTI_DECLARE(test_file_permission)
-MULTI_DECLARE(test_reopen_file)
-MULTI_DECLARE(test_close_file_invalid_id)
-MULTI_DECLARE(test_flush_file)
-MULTI_DECLARE(test_file_is_accessible)
-MULTI_DECLARE(test_file_property_lists)
-MULTI_DECLARE(test_get_file_intent)
-MULTI_DECLARE(test_get_file_obj_count)
-MULTI_DECLARE(test_file_mounts)
-MULTI_DECLARE(test_get_file_name)
-
 static void
 print_file_test_header(void)
 {
@@ -79,7 +61,7 @@ test_create_file(void)
         return;
     }
 
-    if (prefix_filename(test_path_prefix, FILE_CREATE_TEST_FILENAME, &prefixed_filename) < 0) {
+    if (prefix_filename(test_path_prefix_g, FILE_CREATE_TEST_FILENAME, &prefixed_filename) < 0) {
         H5_FAILED();
         printf("    couldn't prefix filename\n");
         goto error;
@@ -135,7 +117,7 @@ test_create_file_invalid_params(void)
         return;
     }
 
-    if (prefix_filename(test_path_prefix, FILE_CREATE_INVALID_PARAMS_FILE_NAME, &prefixed_filename) < 0) {
+    if (prefix_filename(test_path_prefix_g, FILE_CREATE_INVALID_PARAMS_FILE_NAME, &prefixed_filename) < 0) {
         H5_FAILED();
         printf("    couldn't prefix filename\n");
         goto error;
@@ -287,7 +269,7 @@ test_create_file_excl(void)
         return;
     }
 
-    if (prefix_filename(test_path_prefix, FILE_CREATE_EXCL_FILE_NAME, &prefixed_filename) < 0) {
+    if (prefix_filename(test_path_prefix_g, FILE_CREATE_EXCL_FILE_NAME, &prefixed_filename) < 0) {
         H5_FAILED();
         printf("    couldn't prefix filename\n");
         goto error;
@@ -554,7 +536,7 @@ test_open_nonexistent_file(void)
         return;
     }
 
-    if (prefix_filename(test_path_prefix, NONEXISTENT_FILENAME, &prefixed_filename) < 0) {
+    if (prefix_filename(test_path_prefix_g, NONEXISTENT_FILENAME, &prefixed_filename) < 0) {
         H5_FAILED();
         printf("    couldn't prefix filename\n");
         goto error;
@@ -628,7 +610,7 @@ test_file_permission(void)
 
     TESTING_2("test setup");
 
-    if (prefix_filename(test_path_prefix, FILE_PERMISSION_TEST_FILENAME, &prefixed_filename) < 0) {
+    if (prefix_filename(test_path_prefix_g, FILE_PERMISSION_TEST_FILENAME, &prefixed_filename) < 0) {
         H5_FAILED();
         printf("    couldn't prefix filename\n");
         goto error;
@@ -950,7 +932,7 @@ test_flush_file(void)
 
     TESTING_2("test setup");
 
-    if (prefix_filename(test_path_prefix, FILE_FLUSH_TEST_FILENAME, &prefixed_filename) < 0) {
+    if (prefix_filename(test_path_prefix_g, FILE_FLUSH_TEST_FILENAME, &prefixed_filename) < 0) {
         H5_FAILED();
         printf("    couldn't prefix filename\n");
         goto error;
@@ -1067,7 +1049,7 @@ test_file_is_accessible(void)
         return;
     }
 
-    if (prefix_filename(test_path_prefix, fake_filename, &prefixed_filename) < 0) {
+    if (prefix_filename(test_path_prefix_g, fake_filename, &prefixed_filename) < 0) {
         H5_FAILED();
         printf("    couldn't prefix filename\n");
         goto error;
@@ -1165,12 +1147,12 @@ test_file_property_lists(void)
 
     TESTING_2("test setup");
 
-    if (prefix_filename(test_path_prefix, FILE_PROPERTY_LIST_TEST_FNAME1, &prefixed_filename1) < 0) {
+    if (prefix_filename(test_path_prefix_g, FILE_PROPERTY_LIST_TEST_FNAME1, &prefixed_filename1) < 0) {
         H5_FAILED();
         printf("    couldn't prefix filename\n");
         goto error;
     }
-    if (prefix_filename(test_path_prefix, FILE_PROPERTY_LIST_TEST_FNAME2, &prefixed_filename2) < 0) {
+    if (prefix_filename(test_path_prefix_g, FILE_PROPERTY_LIST_TEST_FNAME2, &prefixed_filename2) < 0) {
         H5_FAILED();
         printf("    couldn't prefix filename\n");
         goto error;
@@ -1465,7 +1447,7 @@ test_get_file_intent(void)
 
     TESTING_2("test setup");
 
-    if (prefix_filename(test_path_prefix, FILE_INTENT_TEST_FILENAME, &prefixed_filename) < 0) {
+    if (prefix_filename(test_path_prefix_g, FILE_INTENT_TEST_FILENAME, &prefixed_filename) < 0) {
         H5_FAILED();
         printf("    couldn't prefix filename\n");
         goto error;
@@ -1645,12 +1627,12 @@ test_get_file_obj_count(void)
 
     TESTING_2("test setup");
 
-    if (prefix_filename(test_path_prefix, GET_OBJ_COUNT_TEST_FILENAME1, &prefixed_filename1) < 0) {
+    if (prefix_filename(test_path_prefix_g, GET_OBJ_COUNT_TEST_FILENAME1, &prefixed_filename1) < 0) {
         H5_FAILED();
         printf("    couldn't prefix filename\n");
         goto error;
     }
-    if (prefix_filename(test_path_prefix, GET_OBJ_COUNT_TEST_FILENAME2, &prefixed_filename2) < 0) {
+    if (prefix_filename(test_path_prefix_g, GET_OBJ_COUNT_TEST_FILENAME2, &prefixed_filename2) < 0) {
         H5_FAILED();
         printf("    couldn't prefix filename\n");
         goto error;
@@ -1993,7 +1975,7 @@ test_file_open_overlap(void)
         return;
     }
 
-    if (prefix_filename(test_path_prefix, OVERLAPPING_FILENAME, &prefixed_filename) < 0) {
+    if (prefix_filename(test_path_prefix_g, OVERLAPPING_FILENAME, &prefixed_filename) < 0) {
         H5_FAILED();
         printf("    couldn't prefix filename\n");
         goto error;
@@ -2131,7 +2113,7 @@ test_file_mounts(void)
         return;
     }
 
-    if (prefix_filename(test_path_prefix, FILE_MOUNT_TEST_FILENAME, &prefixed_filename) < 0) {
+    if (prefix_filename(test_path_prefix_g, FILE_MOUNT_TEST_FILENAME, &prefixed_filename) < 0) {
         H5_FAILED();
         printf("    couldn't prefix filename\n");
         goto error;
@@ -2232,7 +2214,7 @@ test_get_file_name(void)
 
     TESTING_2("test setup");
 
-    if (prefix_filename(test_path_prefix, GET_FILE_NAME_TEST_FNAME, &prefixed_filename) < 0) {
+    if (prefix_filename(test_path_prefix_g, GET_FILE_NAME_TEST_FNAME, &prefixed_filename) < 0) {
         H5_FAILED();
         printf("    couldn't prefix filename\n");
         goto error;
@@ -2577,33 +2559,38 @@ check_open_obj_count(ssize_t obj_count, int expected) {
 void
 H5_api_file_test_add(void)
 {
+    int64_t testframe_flags = 0;
+
+    if (GetTestMaxNumThreads() > 1)
+        testframe_flags |= RUN_TEST_MULTITHREADED;
+
     /* Add a fake test to print out a header to distinguish different test interfaces */
     AddTest("print_file_test_header",  print_file_test_header,  NULL,  "Prints header for file tests",  NULL, 0);
 
-    AddTest("test_create_file",  MT_API_TEST_FUNC_OUTER(test_create_file),  NULL,  "H5Fcreate",  NULL, 0);
+    AddTest("test_create_file",  MT_API_TEST_FUNC_OUTER(test_create_file),  NULL,  "H5Fcreate",  NULL, testframe_flags);
     AddTest("test_create_file_invalid_params", MT_API_TEST_FUNC_OUTER(test_create_file_invalid_params), NULL,
-            "H5Fcreate with invalid parameters", NULL, 0);
+            "H5Fcreate with invalid parameters", NULL, testframe_flags);
     AddTest("test_create_file_excl", MT_API_TEST_FUNC_OUTER(test_create_file_excl), NULL,
-            "H5Fcreate with H5F_ACC_EXCL/H5F_ACC_TRUNC flag", NULL, 0);
-    AddTest("test_open_file",  MT_API_TEST_FUNC_OUTER(test_open_file),  NULL,  "H5Fopen",  NULL, 0);
+            "H5Fcreate with H5F_ACC_EXCL/H5F_ACC_TRUNC flag", NULL, testframe_flags);
+    AddTest("test_open_file",  MT_API_TEST_FUNC_OUTER(test_open_file),  NULL,  "H5Fopen",  NULL, testframe_flags);
     AddTest("test_open_file_invalid_params", MT_API_TEST_FUNC_OUTER(test_open_file_invalid_params), NULL,
-            "H5Fopen with invalid parameters", NULL, 0);
+            "H5Fopen with invalid parameters", NULL, testframe_flags);
     AddTest("test_open_nonexistent_file", MT_API_TEST_FUNC_OUTER(test_open_nonexistent_file), NULL,
-            "for invalid opening of a non-existent file", NULL, 0);
-    AddTest("test_file_open_overlap",  MT_API_TEST_FUNC_OUTER(test_file_open_overlap),  NULL,  "overlapping file opens",  NULL, 0);
+            "for invalid opening of a non-existent file", NULL, testframe_flags);
+    AddTest("test_file_open_overlap",  MT_API_TEST_FUNC_OUTER(test_file_open_overlap),  NULL,  "overlapping file opens",  NULL, testframe_flags);
     AddTest("test_file_permission", MT_API_TEST_FUNC_OUTER(test_file_permission), NULL,
-            "file permissions (invalid creation of objects in read-only file)", NULL, 0);
-    AddTest("test_reopen_file",  MT_API_TEST_FUNC_OUTER(test_reopen_file),  NULL,  "re-open of a file with H5Freopen",  NULL, 0);
+            "file permissions (invalid creation of objects in read-only file)", NULL, testframe_flags);
+    AddTest("test_reopen_file",  MT_API_TEST_FUNC_OUTER(test_reopen_file),  NULL,  "re-open of a file with H5Freopen",  NULL, testframe_flags);
     AddTest("test_close_file_invalid_id", MT_API_TEST_FUNC_OUTER(test_close_file_invalid_id), NULL, "H5Fclose with an invalid ID",
-            NULL, 0);
-    AddTest("test_flush_file",  MT_API_TEST_FUNC_OUTER(test_flush_file),  NULL,  "H5Fflush",  NULL, 0);
-    AddTest("test_file_is_accessible",  MT_API_TEST_FUNC_OUTER(test_file_is_accessible),  NULL,  "H5Fis_accessible",  NULL, 0);
+            NULL, testframe_flags);
+    AddTest("test_flush_file",  MT_API_TEST_FUNC_OUTER(test_flush_file),  NULL,  "H5Fflush",  NULL, testframe_flags);
+    AddTest("test_file_is_accessible",  MT_API_TEST_FUNC_OUTER(test_file_is_accessible),  NULL,  "H5Fis_accessible",  NULL, testframe_flags);
     AddTest("test_file_property_lists", MT_API_TEST_FUNC_OUTER(test_file_property_lists), NULL, "file property list operations",
-            NULL, 0);
+            NULL, testframe_flags);
     AddTest("test_get_file_intent", MT_API_TEST_FUNC_OUTER(test_get_file_intent), NULL, "retrieval of file intent with H5Fget_intent",
-            NULL, 0);
+            NULL, testframe_flags);
     AddTest("test_get_file_obj_count", MT_API_TEST_FUNC_OUTER(test_get_file_obj_count), NULL,
-            "retrieval of open object number and IDs", NULL, 0);
-    AddTest("test_file_mounts", MT_API_TEST_FUNC_OUTER(test_file_mounts), NULL, "file mounting/unmounting", NULL, 0);
-    AddTest("test_get_file_name",  MT_API_TEST_FUNC_OUTER(test_get_file_name),  NULL,  "retrieval of file name",  NULL, 0);
+            "retrieval of open object number and IDs", NULL, testframe_flags);
+    AddTest("test_file_mounts", MT_API_TEST_FUNC_OUTER(test_file_mounts), NULL, "file mounting/unmounting", NULL, testframe_flags);
+    AddTest("test_get_file_name",  MT_API_TEST_FUNC_OUTER(test_get_file_name),  NULL,  "retrieval of file name",  NULL, testframe_flags);
 }

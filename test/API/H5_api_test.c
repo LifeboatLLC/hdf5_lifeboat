@@ -42,11 +42,9 @@
 
 #ifdef H5_HAVE_MULTITHREAD
 #include <pthread.h>
-#else
-char H5_api_test_filename[H5_API_TEST_FILENAME_MAX_LENGTH];
 #endif
+char H5_api_test_filename_g[H5_API_TEST_FILENAME_MAX_LENGTH];
 
-const char *test_path_prefix = NULL;
 
 size_t active_thread_ct = 0;
 
@@ -157,6 +155,7 @@ main(int argc, char **argv)
     H5E_auto2_t default_err_func;
     void       *default_err_data          = NULL;
     bool        err_occurred              = false;
+    int chars_written = 0;
 
     int testExpress = 0;
 
@@ -198,17 +197,46 @@ main(int argc, char **argv)
     if (GetTestMaxNumThreads() <= 0)
         SetTestMaxNumThreads(API_TESTS_DEFAULT_NUM_THREADS);
 
-    /* API Test Specific Setup */
-    if (H5_api_test_global_setup() < 0) {
-        fprintf(stderr, "Error setting up global API test info\n");
-        return EXIT_FAILURE;
-    }
-
     /* Display VOL information */
     if (H5_api_test_display_information() < 0) {
         fprintf(stderr, "Error displaying VOL information\n");
         return EXIT_FAILURE;
     }
+
+    if (H5_api_test_setup_vol_cap_flags() < 0) {
+        fprintf(stderr, "Error setting up VOL flags\n");
+        return EXIT_FAILURE;
+    }
+
+    /* Set up test path prefix for filenames, with default being empty */
+    if (test_path_prefix_g == NULL) {
+        if ((test_path_prefix_g = HDgetenv(HDF5_API_TEST_PATH_PREFIX)) == NULL)
+            test_path_prefix_g = (const char *)"";
+    }
+
+    if (GetTestMaxNumThreads() == 1) {
+        /* Populate global test filename */
+        if ((chars_written = HDsnprintf(H5_api_test_filename_g, H5_API_TEST_FILENAME_MAX_LENGTH, "%s%s",test_path_prefix_g,
+                TEST_FILE_NAME)) < 0) {
+            fprintf(stderr, "Error while creating test file name\n");
+            return EXIT_FAILURE;
+        }
+
+        if ((size_t)chars_written >= H5_API_TEST_FILENAME_MAX_LENGTH) {
+            fprintf(stderr, "Test file name exceeded expected size\n");
+            return EXIT_FAILURE;
+        }
+    }
+
+
+    /* Create the file(s) that will be used for all of the tests,
+     * except for those which test file creation.*/
+    if (H5_api_test_create_containers(TEST_FILE_NAME, vol_cap_flags_g) < 0) {
+        fprintf(stderr, "Unable to create testing container file with basename '%s'\n", TEST_FILE_NAME);
+        return EXIT_FAILURE;
+    }
+
+    active_thread_ct = (size_t) GetTestMaxNumThreads();
 
     /* Display generic testing information */
     TestInfo(argv[0]);
@@ -256,7 +284,7 @@ done:
     TestAlarmOff();
 
     if (GetTestNumErrs() > 0)
-        n_tests_failed_g += GetTestNumErrs();
+        n_tests_failed_g += (size_t) GetTestNumErrs();
 
     /* Release test infrastructure */
     TestShutdown();

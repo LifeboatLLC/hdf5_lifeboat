@@ -416,12 +416,17 @@ extern "C" {
 #define H5_ATOMIC(type) _Atomic type
 #define H5_ATOMIC_SPECIFIER(type) _Atomic(type)
 #define H5_ATOMIC_VAR_INIT(value) ATOMIC_VAR_INIT(value)
+
+#define H5_ATOMIC_STORE(dst, value) atomic_store(&dst, value)
+#define H5_ATOMIC_LOAD(src) atomic_load(&src)
 #else
 #define H5_ATOMIC(type) type
 #define H5_ATOMIC_SPECIFIER(type) type
 #define H5_ATOMIC_VAR_INIT(value) value
-#endif
 
+#define H5_ATOMIC_STORE(dst, value) dst = value
+#define H5_ATOMIC_LOAD(src) src
+#endif
 
 /* Functions in H5.c */
 /**

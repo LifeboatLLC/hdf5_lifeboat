@@ -63,48 +63,6 @@ static void test_attribute_duplicate_id(void);
 static void test_get_number_attributes(void);
 static void test_attr_shared_dtype(void);
 
-MULTI_DECLARE(test_create_attribute_on_root)
-MULTI_DECLARE(test_create_attribute_on_dataset)
-MULTI_DECLARE(test_create_attribute_on_datatype)
-MULTI_DECLARE(test_create_attribute_with_null_space)
-MULTI_DECLARE(test_create_attribute_with_scalar_space)
-MULTI_DECLARE(test_create_attribute_with_space_in_name)
-MULTI_DECLARE(test_create_attribute_invalid_params)
-MULTI_DECLARE(test_open_attribute)
-MULTI_DECLARE(test_open_attribute_invalid_params)
-MULTI_DECLARE(test_write_attribute)
-MULTI_DECLARE(test_write_attribute_invalid_params)
-MULTI_DECLARE(test_read_attribute)
-MULTI_DECLARE(test_read_attribute_invalid_params)
-MULTI_DECLARE(test_read_empty_attribute)
-MULTI_DECLARE(test_close_attribute_invalid_id)
-MULTI_DECLARE(test_get_attribute_space_and_type)
-MULTI_DECLARE(test_get_attribute_space_and_type_invalid_params)
-MULTI_DECLARE(test_attribute_property_lists)
-MULTI_DECLARE(test_get_attribute_name)
-MULTI_DECLARE(test_get_attribute_name_invalid_params)
-MULTI_DECLARE(test_get_attribute_storage_size)
-MULTI_DECLARE(test_get_attribute_info)
-MULTI_DECLARE(test_get_attribute_info_invalid_params)
-MULTI_DECLARE(test_rename_attribute)
-MULTI_DECLARE(test_rename_attribute_invalid_params)
-MULTI_DECLARE(test_attribute_iterate_group)
-MULTI_DECLARE(test_attribute_iterate_dataset)
-MULTI_DECLARE(test_attribute_iterate_datatype)
-MULTI_DECLARE(test_attribute_iterate_index_saving)
-MULTI_DECLARE(test_attribute_iterate_invalid_params)
-MULTI_DECLARE(test_attribute_iterate_0_attributes)
-MULTI_DECLARE(test_attribute_compound_subset)
-MULTI_DECLARE(test_attribute_string_encodings)
-MULTI_DECLARE(test_delete_attribute)
-MULTI_DECLARE(test_delete_attribute_invalid_params)
-MULTI_DECLARE(test_attribute_exists)
-MULTI_DECLARE(test_attribute_exists_invalid_params)
-MULTI_DECLARE(test_attribute_many)
-MULTI_DECLARE(test_attribute_duplicate_id)
-MULTI_DECLARE(test_get_number_attributes)
-MULTI_DECLARE(test_attr_shared_dtype)
-
 static herr_t attr_iter_callback1(hid_t location_id, const char *attr_name, const H5A_info_t *ainfo,
                                   void *op_data);
 static herr_t attr_iter_callback2(hid_t location_id, const char *attr_name, const H5A_info_t *ainfo,
@@ -11596,82 +11554,86 @@ attr_iter_callback2(hid_t location_id, const char *attr_name, const H5A_info_t *
 void
 H5_api_attribute_test_add(void)
 {
+    int64_t testframe_flags = 0;
+
+    if (GetTestMaxNumThreads() > 1)
+        testframe_flags |= RUN_TEST_MULTITHREADED;
+
     /* Add a fake test to print out a header to distinguish different test interfaces */
-    // TODO
     AddTest("print_attribute_test_header", print_attribute_test_header, NULL,
     "Prints header for attribute tests", NULL, 0);
 
     AddTest("test_create_attribute_on_root", MT_API_TEST_FUNC_OUTER(test_create_attribute_on_root), NULL,
-            "attribute creation on the root group", NULL, 0);
+            "attribute creation on the root group", NULL, testframe_flags);
     AddTest("test_create_attribute_on_dataset", MT_API_TEST_FUNC_OUTER(test_create_attribute_on_dataset), NULL,
-            "attribute creation on a dataset", NULL, 0);
+            "attribute creation on a dataset", NULL, testframe_flags);
     AddTest("test_create_attribute_on_datatype", MT_API_TEST_FUNC_OUTER(test_create_attribute_on_datatype), NULL,
-            "attribute creation on a committed datatype", NULL, 0);
+            "attribute creation on a committed datatype", NULL, testframe_flags);
     AddTest("test_create_attribute_with_null_space", MT_API_TEST_FUNC_OUTER(test_create_attribute_with_null_space), NULL,
-            "attribute creation with a NULL dataspace", NULL, 0);
+            "attribute creation with a NULL dataspace", NULL, testframe_flags);
     AddTest("test_create_attribute_with_scalar_space", MT_API_TEST_FUNC_OUTER(test_create_attribute_with_scalar_space), NULL,
-            "attribute creation with a SCALAR dataspace", NULL, 0);
+            "attribute creation with a SCALAR dataspace", NULL, testframe_flags);
     AddTest("test_create_attribute_with_space_in_name", MT_API_TEST_FUNC_OUTER(test_create_attribute_with_space_in_name), NULL,
-            "attribute creation with a space in attribute's name", NULL, 0);
+            "attribute creation with a space in attribute's name", NULL, testframe_flags);
     AddTest("test_create_attribute_invalid_params", MT_API_TEST_FUNC_OUTER(test_create_attribute_invalid_params), NULL,
-            "attribute creation with invalid parameters", NULL, 0);
-    AddTest("test_open_attribute",  MT_API_TEST_FUNC_OUTER(test_open_attribute),  NULL,  "attribute opening",  NULL, 0);
+            "attribute creation with invalid parameters", NULL, testframe_flags);
+    AddTest("test_open_attribute",  MT_API_TEST_FUNC_OUTER(test_open_attribute),  NULL,  "attribute opening",  NULL, testframe_flags);
     AddTest("test_open_attribute_invalid_params", MT_API_TEST_FUNC_OUTER(test_open_attribute_invalid_params), NULL,
-            "attribute opening with invalid parameters", NULL, 0);
-    AddTest("test_write_attribute",  MT_API_TEST_FUNC_OUTER(test_write_attribute),  NULL,  "H5Awrite",  NULL, 0);
+            "attribute opening with invalid parameters", NULL, testframe_flags);
+    AddTest("test_write_attribute",  MT_API_TEST_FUNC_OUTER(test_write_attribute),  NULL,  "H5Awrite",  NULL, testframe_flags);
     AddTest("test_write_attribute_invalid_params", MT_API_TEST_FUNC_OUTER(test_write_attribute_invalid_params), NULL,
-            "H5Awrite with invalid parameters", NULL, 0);
-    AddTest("test_read_attribute",  MT_API_TEST_FUNC_OUTER(test_read_attribute),  NULL,  "H5Aread",  NULL, 0);
+            "H5Awrite with invalid parameters", NULL, testframe_flags);
+    AddTest("test_read_attribute",  MT_API_TEST_FUNC_OUTER(test_read_attribute),  NULL,  "H5Aread",  NULL, testframe_flags);
     AddTest("test_read_attribute_invalid_params", MT_API_TEST_FUNC_OUTER(test_read_attribute_invalid_params), NULL,
-            "H5Aread with invalid parameters", NULL, 0);
-    AddTest("test_read_empty_attribute",  MT_API_TEST_FUNC_OUTER(test_read_empty_attribute),  NULL,  "reading an empty attribute",  NULL, 0);
+            "H5Aread with invalid parameters", NULL, testframe_flags);
+    AddTest("test_read_empty_attribute",  MT_API_TEST_FUNC_OUTER(test_read_empty_attribute),  NULL,  "reading an empty attribute",  NULL, testframe_flags);
     AddTest("test_close_attribute_invalid_id", MT_API_TEST_FUNC_OUTER(test_close_attribute_invalid_id), NULL,
-            "H5Aclose with an invalid attribute ID", NULL, 0);
+            "H5Aclose with an invalid attribute ID", NULL, testframe_flags);
     AddTest("test_get_attribute_space_and_type", MT_API_TEST_FUNC_OUTER(test_get_attribute_space_and_type), NULL,
-            "retrieval of an attribute's dataspace and datatype", NULL, 0);
+            "retrieval of an attribute's dataspace and datatype", NULL, testframe_flags);
     AddTest("test_get_attribute_space_and_type_invalid_params",
             MT_API_TEST_FUNC_OUTER(test_get_attribute_space_and_type_invalid_params), NULL,
-            "H5Aget_type/H5Aget_space with invalid parameters", NULL, 0);
+            "H5Aget_type/H5Aget_space with invalid parameters", NULL, testframe_flags);
     AddTest("test_attribute_property_lists", MT_API_TEST_FUNC_OUTER(test_attribute_property_lists), NULL,
-            "attribute property list operations", NULL, 0);
+            "attribute property list operations", NULL, testframe_flags);
     AddTest("test_get_attribute_name", MT_API_TEST_FUNC_OUTER(test_get_attribute_name), NULL, "retrieval of an attribute's name",
-            NULL, 0);
+            NULL, testframe_flags);
     AddTest("test_get_attribute_name_invalid_params", MT_API_TEST_FUNC_OUTER(test_get_attribute_name_invalid_params), NULL,
-            "retrieval of an attribute's name with invalid parameters", NULL, 0);
+            "retrieval of an attribute's name with invalid parameters", NULL, testframe_flags);
     AddTest("test_get_attribute_storage_size", MT_API_TEST_FUNC_OUTER(test_get_attribute_storage_size), NULL, "H5Aget_storage_size",
-            NULL, 0);
-    AddTest("test_get_attribute_info",  MT_API_TEST_FUNC_OUTER(test_get_attribute_info),  NULL,  "retrieval of attribute info",  NULL, 0);
+            NULL, testframe_flags);
+    AddTest("test_get_attribute_info",  MT_API_TEST_FUNC_OUTER(test_get_attribute_info),  NULL,  "retrieval of attribute info",  NULL, testframe_flags);
     AddTest("test_get_attribute_info_invalid_params", MT_API_TEST_FUNC_OUTER(test_get_attribute_info_invalid_params), NULL,
-            "retrieval of attribute info with invalid parameters", NULL, 0);
-    AddTest("test_rename_attribute",  MT_API_TEST_FUNC_OUTER(test_rename_attribute),  NULL,  "attribute renaming",  NULL, 0);
+            "retrieval of attribute info with invalid parameters", NULL, testframe_flags);
+    AddTest("test_rename_attribute",  MT_API_TEST_FUNC_OUTER(test_rename_attribute),  NULL,  "attribute renaming",  NULL, testframe_flags);
     AddTest("test_rename_attribute_invalid_params", MT_API_TEST_FUNC_OUTER(test_rename_attribute_invalid_params), NULL,
-            "attribute renaming with invalid parameters", NULL, 0);
+            "attribute renaming with invalid parameters", NULL, testframe_flags);
     AddTest("test_attribute_iterate_group", MT_API_TEST_FUNC_OUTER(test_attribute_iterate_group), NULL,
-            "attribute iteration on a group", NULL, 0);
+            "attribute iteration on a group", NULL, testframe_flags);
     AddTest("test_attribute_iterate_dataset", MT_API_TEST_FUNC_OUTER(test_attribute_iterate_dataset), NULL,
-            "attribute iteration on a dataset", NULL, 0);
+            "attribute iteration on a dataset", NULL, testframe_flags);
     AddTest("test_attribute_iterate_datatype", MT_API_TEST_FUNC_OUTER(test_attribute_iterate_datatype), NULL,
-            "attribute iteration on a committed datatype", NULL, 0);
+            "attribute iteration on a committed datatype", NULL, testframe_flags);
     AddTest("test_attribute_iterate_index_saving", MT_API_TEST_FUNC_OUTER(test_attribute_iterate_index_saving), NULL,
-            "attribute iteration index saving capability", NULL, 0);
+            "attribute iteration index saving capability", NULL, testframe_flags);
     AddTest("test_attribute_iterate_invalid_params", MT_API_TEST_FUNC_OUTER(test_attribute_iterate_invalid_params), NULL,
-            "attribute iteration with invalid parameters", NULL, 0);
+            "attribute iteration with invalid parameters", NULL, testframe_flags);
     AddTest("test_attribute_iterate_0_attributes", MT_API_TEST_FUNC_OUTER(test_attribute_iterate_0_attributes), NULL,
-            "attribute iteration on object with 0 attributes", NULL, 0);
+            "attribute iteration on object with 0 attributes", NULL, testframe_flags);
     AddTest("test_attribute_compound_subset", MT_API_TEST_FUNC_OUTER(test_attribute_compound_subset), NULL,
-            "verification of attribute data using H5Awrite then H5Aread with compound type subsets", NULL, 0);
+            "verification of attribute data using H5Awrite then H5Aread with compound type subsets", NULL, testframe_flags);
     AddTest("test_attribute_string_encodings", MT_API_TEST_FUNC_OUTER(test_attribute_string_encodings), NULL,
-            "string encoding read/write correctness on attributes", NULL, 0);
-    AddTest("test_delete_attribute",  MT_API_TEST_FUNC_OUTER(test_delete_attribute),  NULL,  "attribute deletion",  NULL, 0);
+            "string encoding read/write correctness on attributes", NULL, testframe_flags);
+    AddTest("test_delete_attribute",  MT_API_TEST_FUNC_OUTER(test_delete_attribute),  NULL,  "attribute deletion",  NULL, testframe_flags);
     AddTest("test_delete_attribute_invalid_params", MT_API_TEST_FUNC_OUTER(test_delete_attribute_invalid_params), NULL,
-            "attribute deletion with invalid parameters", NULL, 0);
-    AddTest("test_attribute_exists",  MT_API_TEST_FUNC_OUTER(test_attribute_exists),  NULL,  "attribute existence",  NULL, 0);
+            "attribute deletion with invalid parameters", NULL, testframe_flags);
+    AddTest("test_attribute_exists",  MT_API_TEST_FUNC_OUTER(test_attribute_exists),  NULL,  "attribute existence",  NULL, testframe_flags);
     AddTest("test_attribute_exists_invalid_params", MT_API_TEST_FUNC_OUTER(test_attribute_exists_invalid_params), NULL,
-            "attribute existence with invalid parameters", NULL, 0);
+            "attribute existence with invalid parameters", NULL, testframe_flags);
     AddTest("test_attribute_duplicate_id", MT_API_TEST_FUNC_OUTER(test_attribute_duplicate_id), NULL,
-            "duplicated IDs for an attribute", NULL, 0);
-    AddTest("test_attribute_many",  MT_API_TEST_FUNC_OUTER(test_attribute_many),  NULL,  "creating many attributes",  NULL, 0);
+            "duplicated IDs for an attribute", NULL, testframe_flags);
+    AddTest("test_attribute_many",  MT_API_TEST_FUNC_OUTER(test_attribute_many),  NULL,  "creating many attributes",  NULL, testframe_flags);
     AddTest("test_get_number_attributes", MT_API_TEST_FUNC_OUTER(test_get_number_attributes), NULL,
-            "retrieval of the number of attributes on an object", NULL, 0);
-    AddTest("test_attr_shared_dtype",  MT_API_TEST_FUNC_OUTER(test_attr_shared_dtype),  NULL,  "shared datatype for attributes",  NULL, 0);
+            "retrieval of the number of attributes on an object", NULL, testframe_flags);
+    AddTest("test_attr_shared_dtype",  MT_API_TEST_FUNC_OUTER(test_attr_shared_dtype),  NULL,  "shared datatype for attributes",  NULL, testframe_flags);
 }

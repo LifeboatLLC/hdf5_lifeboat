@@ -33,25 +33,6 @@ static void test_refresh_group(void);
 static void test_refresh_group_invalid_params(void);
 static int  create_group_recursive(hid_t parent_gid, unsigned counter);
 
-MULTI_DECLARE(test_create_group_under_root)
-MULTI_DECLARE(test_create_group_under_existing_group)
-MULTI_DECLARE(test_create_many_groups)
-MULTI_DECLARE(test_create_deep_groups)
-MULTI_DECLARE(test_create_intermediate_group)
-MULTI_DECLARE(test_create_group_invalid_params)
-MULTI_DECLARE(test_create_anonymous_group)
-MULTI_DECLARE(test_create_anonymous_group_invalid_params)
-MULTI_DECLARE(test_open_nonexistent_group)
-MULTI_DECLARE(test_open_group_invalid_params)
-MULTI_DECLARE(test_close_group_invalid_id)
-MULTI_DECLARE(test_group_property_lists)
-MULTI_DECLARE(test_get_group_info)
-MULTI_DECLARE(test_get_group_info_invalid_params)
-MULTI_DECLARE(test_flush_group)
-MULTI_DECLARE(test_flush_group_invalid_params)
-MULTI_DECLARE(test_refresh_group)
-MULTI_DECLARE(test_refresh_group_invalid_params)
-
 static void
 print_group_test_header(void)
 {
@@ -2392,39 +2373,44 @@ error:
 void
 H5_api_group_test_add(void)
 {
+    int64_t testframe_flags = 0;
+
+    if (GetTestMaxNumThreads() > 1)
+        testframe_flags |= RUN_TEST_MULTITHREADED;
+
     /* Add a fake test to print out a header to distinguish different test interfaces */
     AddTest("print_group_test_header",  print_group_test_header,  NULL,  "Prints header for group tests",  NULL, 0);
 
     AddTest("test_create_group_under_root", MT_API_TEST_FUNC_OUTER(test_create_group_under_root), NULL,
-            "creation of group under the root group", NULL, 0);
+            "creation of group under the root group", NULL, testframe_flags);
     AddTest("test_create_group_under_existing_group", MT_API_TEST_FUNC_OUTER(test_create_group_under_existing_group), NULL,
-            "creation of group under existing group using a relative path", NULL, 0);
-    AddTest("test_create_many_groups",  MT_API_TEST_FUNC_OUTER(test_create_many_groups),  NULL,  "H5Gcreate many groups",  NULL, 0);
+            "creation of group under existing group using a relative path", NULL, testframe_flags);
+    AddTest("test_create_many_groups",  MT_API_TEST_FUNC_OUTER(test_create_many_groups),  NULL,  "H5Gcreate many groups",  NULL, testframe_flags);
     AddTest("test_create_deep_groups", MT_API_TEST_FUNC_OUTER(test_create_deep_groups), NULL, "H5Gcreate groups of great depths",
-            NULL, 0);
+            NULL, testframe_flags);
     AddTest("test_create_intermediate_group", MT_API_TEST_FUNC_OUTER(test_create_intermediate_group), NULL,
-            "H5Gcreate group with intermediate group creation", NULL, 0);
+            "H5Gcreate group with intermediate group creation", NULL, testframe_flags);
     AddTest("test_create_group_invalid_params", MT_API_TEST_FUNC_OUTER(test_create_group_invalid_params), NULL,
-            "H5Gcreate with invalid parameters", NULL, 0);
+            "H5Gcreate with invalid parameters", NULL, testframe_flags);
     AddTest("test_create_anonymous_group", MT_API_TEST_FUNC_OUTER(test_create_anonymous_group), NULL, "creation of anonymous group",
-            NULL, 0);
+            NULL, testframe_flags);
     AddTest("test_create_anonymous_group_invalid_params", MT_API_TEST_FUNC_OUTER(test_create_anonymous_group_invalid_params), NULL,
-            "H5Gcreate_anon with invalid parameters", NULL, 0);
+            "H5Gcreate_anon with invalid parameters", NULL, testframe_flags);
     AddTest("test_open_nonexistent_group", MT_API_TEST_FUNC_OUTER(test_open_nonexistent_group), NULL,
-            "for invalid opening of a nonexistent group", NULL, 0);
+            "for invalid opening of a nonexistent group", NULL, testframe_flags);
     AddTest("test_open_group_invalid_params", MT_API_TEST_FUNC_OUTER(test_open_group_invalid_params), NULL,
-            "H5Gopen with invalid parameters", NULL, 0);
+            "H5Gopen with invalid parameters", NULL, testframe_flags);
     AddTest("test_close_group_invalid_id", MT_API_TEST_FUNC_OUTER(test_close_group_invalid_id), NULL,
-            "H5Gclose with an invalid group ID", NULL, 0);
+            "H5Gclose with an invalid group ID", NULL, testframe_flags);
     AddTest("test_group_property_lists", MT_API_TEST_FUNC_OUTER(test_group_property_lists), NULL, "group property list operations",
-            NULL, 0);
-    AddTest("test_get_group_info",  MT_API_TEST_FUNC_OUTER(test_get_group_info),  NULL,  "retrieval of group info",  NULL, 0);
+            NULL, testframe_flags);
+    AddTest("test_get_group_info",  MT_API_TEST_FUNC_OUTER(test_get_group_info),  NULL,  "retrieval of group info",  NULL, testframe_flags);
     AddTest("test_get_group_info_invalid_params", MT_API_TEST_FUNC_OUTER(test_get_group_info_invalid_params), NULL,
-            "retrieval of group info with invalid parameters", NULL, 0);
-    AddTest("test_flush_group",  MT_API_TEST_FUNC_OUTER(test_flush_group),  NULL,  "H5Gflush",  NULL, 0);
+            "retrieval of group info with invalid parameters", NULL, testframe_flags);
+    AddTest("test_flush_group",  MT_API_TEST_FUNC_OUTER(test_flush_group),  NULL,  "H5Gflush",  NULL, testframe_flags);
     AddTest("test_flush_group_invalid_params", MT_API_TEST_FUNC_OUTER(test_flush_group_invalid_params), NULL,
-            "H5Gflush with invalid parameters", NULL, 0);
-    AddTest("test_refresh_group",  MT_API_TEST_FUNC_OUTER(test_refresh_group),  NULL,  "H5Grefresh",  NULL, 0);
+            "H5Gflush with invalid parameters", NULL, testframe_flags);
+    AddTest("test_refresh_group",  MT_API_TEST_FUNC_OUTER(test_refresh_group),  NULL,  "H5Grefresh",  NULL, testframe_flags);
     AddTest("test_refresh_group_invalid_params", MT_API_TEST_FUNC_OUTER(test_refresh_group_invalid_params), NULL,
-            "H5Grefresh with invalid parameters", NULL, 0);
+            "H5Grefresh with invalid parameters", NULL, testframe_flags);
 }
