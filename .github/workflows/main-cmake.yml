@@ -1,0 +1,41 @@
+name: Lifeboat hdf5 dev cmake CI
+
+# For now, run as a daily build at 07:00 CDT (12:00 UTC) or on
+# demand. Later on this workflow can be enabled on commits ('push')
+# or pull requests.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 12 * * *"
+#  push:
+#  pull_request:
+#    branches: [ 1_14_2_multithread ]
+#    paths-ignore:
+#      - '**.md'
+
+permissions:
+  contents: read
+
+# Using concurrency to cancel any in-progress job or run
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref && github.ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  call-debug-cmake:
+    name: "CMake Debug Workflows"
+    uses: ./.github/workflows/cmake.yml
+    with:
+      build_mode: "Debug"
+
+  call-developer-cmake:
+    name: "CMake Developer Workflows"
+    uses: ./.github/workflows/cmake.yml
+    with:
+      build_mode: "Developer"
+
+  call-release-autotools:
+    name: "CMake Release Workflows"
+    uses: ./.github/workflows/cmake.yml
+    with:
+      build_mode: "Release"

@@ -1,0 +1,62 @@
+name: Lifeboat hdf5 dev cmake CI
+
+# Triggers the workflow on a call from another workflow
+on:
+  workflow_call:
+    inputs:
+      build_mode:
+        description: "CMake build type"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+
+  build_and_test:
+    name: "GCC-${{ inputs.build_mode }}"
+
+    # Don't run the action if the commit message says to skip CI
+    if: "!contains(github.event.head_commit.message, 'skip-ci')"
+
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Restrict runtime to 60 minutes in case multiple tests hang
+    timeout-minutes: 60
+
+    steps:
+      - name: Install Linux Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install build-essential
+
+      # Check out repository under $GITHUB_WORKSPACE
+      - name: Get Sources
+        uses: actions/checkout@v4.1.7
+        with:
+          ref: 1_14_2_multithread
+
+      - name: CMake Configure
+        run: |
+          cd $GITHUB_WORKSPACE
+          mkdir "$GITHUB_WORKSPACE/build"
+          cd "$GITHUB_WORKSPACE/build"
+          cmake \
+            --log-level=VERBOSE \
+            -DCMAKE_BUILD_TYPE=${{ inputs.build_mode }} \
+            -DBUILD_SHARED_LIBS:BOOL=ON \
+            -DBUILD_STATIC_LIBS:BOOL=ON \
+            -DHDF5_ENABLE_MULITHREAD:BOOL=ON \
+            -DHDF5_BUILD_HL_LIB:BOOL=OFF \
+            ..
+        shell: bash
+
+      - name: CMake Build
+        run: cmake --build . --parallel 3 --config ${{ inputs.build_mode }}
+        working-directory: ${{ github.workspace }}/build
+
+      - name: CMake Run Tests
+        run: ctest . --parallel 2 -C ${{ inputs.build_mode }} -V
+        working-directory: ${{ github.workspace }}/build
