@@ -1,6 +1,7 @@
 # Experimental
 
 [![Lifeboat hdf5 dev autotools CI](https://github.com/LifeboatLLC/hdf5_lifeboat/actions/workflows/main-auto.yml/badge.svg)](https://github.com/LifeboatLLC/hdf5_lifeboat/actions/workflows/main-auto.yml)
+[![Lifeboat hdf5 dev cmake CI](https://github.com/LifeboatLLC/hdf5_lifeboat/actions/workflows/main-cmake.yml/badge.svg)](https://github.com/LifeboatLLC/hdf5_lifeboat/actions/workflows/main-cmake.yml)
 
 This branch contains modified source code of HDF5 r1.14.2. The code will be used to
 prototype changes for multi-threaded support before creating PRs to the HDF5 develop
