@@ -418,6 +418,7 @@ set (H5_TESTS
     cork
     swmr
     thread_id # special link
+    mt_id_test
     vol
     timer
     cmpd_dtransform
@@ -460,6 +461,7 @@ set (H5_TESTS_MULTIPLE
     cache_image
     ttsafe
     thread_id # special link
+    mt_id_test # special link
     mirror_vfd
 )
 # Only build single source tests here
