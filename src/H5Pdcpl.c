@@ -1825,7 +1825,7 @@ H5Pset_layout(hid_t plist_id, H5D_layout_t layout_type)
         HGOTO_ERROR(H5E_ARGS, H5E_BADRANGE, FAIL, "raw data layout method is not valid");
 
     /* Get the plist structure */
-    if (NULL == (plist = H5P_object_verify(plist_id, H5P_DATASET_CREATE)))
+    if (NULL == (plist = H5P_object_verify(plist_id, H5P_DATASET_CREATE, false)))
         HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
     /* Get pointer to correct default layout */
@@ -1882,7 +1882,7 @@ H5Pget_layout(hid_t plist_id)
     H5TRACE1("Dl", "i", plist_id);
 
     /* Get the plist structure */
-    if (NULL == (plist = H5P_object_verify(plist_id, H5P_DATASET_CREATE)))
+    if (NULL == (plist = H5P_object_verify(plist_id, H5P_DATASET_CREATE, true)))
         HGOTO_ERROR(H5E_ID, H5E_BADID, H5D_LAYOUT_ERROR, "can't find object for ID");
 
     /* Peek at layout property */
@@ -1946,7 +1946,7 @@ H5Pset_chunk(hid_t plist_id, int ndims, const hsize_t dim[/*ndims*/])
     }                                                   /* end for */
 
     /* Get the plist structure */
-    if (NULL == (plist = H5P_object_verify(plist_id, H5P_DATASET_CREATE)))
+    if (NULL == (plist = H5P_object_verify(plist_id, H5P_DATASET_CREATE, false)))
         HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
     /* Set chunk information in property list */
@@ -1983,7 +1983,7 @@ H5Pget_chunk(hid_t plist_id, int max_ndims, hsize_t dim[] /*out*/)
     H5TRACE3("Is", "iIsx", plist_id, max_ndims, dim);
 
     /* Get the plist structure */
-    if (NULL == (plist = H5P_object_verify(plist_id, H5P_DATASET_CREATE)))
+    if (NULL == (plist = H5P_object_verify(plist_id, H5P_DATASET_CREATE, true)))
         HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
     /* Peek at the layout property */
@@ -2056,7 +2056,7 @@ H5Pset_virtual(hid_t dcpl_id, hid_t vspace_id, const char *src_file_name, const 
         HGOTO_ERROR(H5E_PLIST, H5E_BADVALUE, FAIL, "invalid mapping selections");
 
     /* Get the plist structure */
-    if (NULL == (plist = H5P_object_verify(dcpl_id, H5P_DATASET_CREATE)))
+    if (NULL == (plist = H5P_object_verify(dcpl_id, H5P_DATASET_CREATE, false)))
         HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
     /* Get the current layout */
@@ -2207,7 +2207,7 @@ H5Pget_virtual_count(hid_t dcpl_id, size_t *count /*out*/)
 
     if (count) {
         /* Get the plist structure */
-        if (NULL == (plist = H5P_object_verify(dcpl_id, H5P_DATASET_CREATE)))
+        if (NULL == (plist = H5P_object_verify(dcpl_id, H5P_DATASET_CREATE, true)))
             HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
         /* Retrieve the layout property */
@@ -2249,7 +2249,7 @@ H5Pget_virtual_vspace(hid_t dcpl_id, size_t idx)
     H5TRACE2("i", "iz", dcpl_id, idx);
 
     /* Get the plist structure */
-    if (NULL == (plist = H5P_object_verify(dcpl_id, H5P_DATASET_CREATE)))
+    if (NULL == (plist = H5P_object_verify(dcpl_id, H5P_DATASET_CREATE, true)))
         HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
     /* Retrieve the layout property */
@@ -2303,7 +2303,7 @@ H5Pget_virtual_srcspace(hid_t dcpl_id, size_t idx)
     H5TRACE2("i", "iz", dcpl_id, idx);
 
     /* Get the plist structure */
-    if (NULL == (plist = H5P_object_verify(dcpl_id, H5P_DATASET_CREATE)))
+    if (NULL == (plist = H5P_object_verify(dcpl_id, H5P_DATASET_CREATE, true)))
         HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
     /* Retrieve the layout property */
@@ -2403,7 +2403,7 @@ H5Pget_virtual_filename(hid_t dcpl_id, size_t idx, char *name /*out*/, size_t si
     H5TRACE4("Zs", "izxz", dcpl_id, idx, name, size);
 
     /* Get the plist structure */
-    if (NULL == (plist = H5P_object_verify(dcpl_id, H5P_DATASET_CREATE)))
+    if (NULL == (plist = H5P_object_verify(dcpl_id, H5P_DATASET_CREATE, true)))
         HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
     /* Retrieve the layout property */
@@ -2461,7 +2461,7 @@ H5Pget_virtual_dsetname(hid_t dcpl_id, size_t idx, char *name /*out*/, size_t si
     H5TRACE4("Zs", "izxz", dcpl_id, idx, name, size);
 
     /* Get the plist structure */
-    if (NULL == (plist = H5P_object_verify(dcpl_id, H5P_DATASET_CREATE)))
+    if (NULL == (plist = H5P_object_verify(dcpl_id, H5P_DATASET_CREATE, true)))
         HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
     /* Retrieve the layout property */
@@ -2509,7 +2509,7 @@ H5Pset_chunk_opts(hid_t plist_id, unsigned options)
         HGOTO_ERROR(H5E_ARGS, H5E_BADRANGE, FAIL, "unknown chunk options");
 
     /* Get the plist structure */
-    if (NULL == (plist = H5P_object_verify(plist_id, H5P_DATASET_CREATE)))
+    if (NULL == (plist = H5P_object_verify(plist_id, H5P_DATASET_CREATE, false)))
         HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
     /* Retrieve the layout property */
@@ -2557,7 +2557,7 @@ H5Pget_chunk_opts(hid_t plist_id, unsigned *options /*out*/)
     H5TRACE2("e", "ix", plist_id, options);
 
     /* Get the plist structure */
-    if (NULL == (plist = H5P_object_verify(plist_id, H5P_DATASET_CREATE)))
+    if (NULL == (plist = H5P_object_verify(plist_id, H5P_DATASET_CREATE, true)))
         HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
     /* Retrieve the layout property */
@@ -2617,7 +2617,7 @@ H5Pset_external(hid_t plist_id, const char *name, off_t offset, hsize_t size)
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "negative external file offset");
 
     /* Get the plist structure */
-    if (NULL == (plist = H5P_object_verify(plist_id, H5P_DATASET_CREATE)))
+    if (NULL == (plist = H5P_object_verify(plist_id, H5P_DATASET_CREATE, false)))
         HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
     if (H5P_peek(plist, H5D_CRT_EXT_FILE_LIST_NAME, &efl) < 0)
@@ -2679,7 +2679,7 @@ H5Pget_external_count(hid_t plist_id)
     H5TRACE1("Is", "i", plist_id);
 
     /* Get the plist structure */
-    if (NULL == (plist = H5P_object_verify(plist_id, H5P_DATASET_CREATE)))
+    if (NULL == (plist = H5P_object_verify(plist_id, H5P_DATASET_CREATE, true)))
         HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
     /* Get value */
@@ -2726,7 +2726,7 @@ H5Pget_external(hid_t plist_id, unsigned idx, size_t name_size, char *name /*out
     H5TRACE6("e", "iIuzxxx", plist_id, idx, name_size, name, offset, size);
 
     /* Get the plist structure */
-    if (NULL == (plist = H5P_object_verify(plist_id, H5P_DATASET_CREATE)))
+    if (NULL == (plist = H5P_object_verify(plist_id, H5P_DATASET_CREATE, true)))
         HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
     /* Get value */
@@ -2795,7 +2795,7 @@ H5Pset_szip(hid_t plist_id, unsigned options_mask, unsigned pixels_per_block)
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "pixels_per_block is too large");
 
     /* Get the plist structure */
-    if (NULL == (plist = H5P_object_verify(plist_id, H5P_DATASET_CREATE)))
+    if (NULL == (plist = H5P_object_verify(plist_id, H5P_DATASET_CREATE, false)))
         HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
     /* Always set K13 compression (and un-set CHIP compression) */
@@ -3002,7 +3002,7 @@ H5Pset_fill_value(hid_t plist_id, hid_t type_id, const void *value)
     H5TRACE3("e", "ii*x", plist_id, type_id, value);
 
     /* Get the plist structure */
-    if (NULL == (plist = H5P_object_verify(plist_id, H5P_DATASET_CREATE)))
+    if (NULL == (plist = H5P_object_verify(plist_id, H5P_DATASET_CREATE, false)))
         HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
     /* Get the current fill value */
@@ -3185,7 +3185,7 @@ H5Pget_fill_value(hid_t plist_id, hid_t type_id, void *value /*out*/)
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "no fill value output buffer");
 
     /* Get the plist structure */
-    if (NULL == (plist = H5P_object_verify(plist_id, H5P_DATASET_CREATE)))
+    if (NULL == (plist = H5P_object_verify(plist_id, H5P_DATASET_CREATE, true)))
         HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
     /* Get the fill value */
@@ -3285,7 +3285,7 @@ H5Pfill_value_defined(hid_t plist_id, H5D_fill_value_t *status)
     assert(status);
 
     /* Get the plist structure */
-    if (NULL == (plist = H5P_object_verify(plist_id, H5P_DATASET_CREATE)))
+    if (NULL == (plist = H5P_object_verify(plist_id, H5P_DATASET_CREATE, true)))
         HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
     /* Get the fill-value status */
@@ -3323,7 +3323,7 @@ H5Pset_alloc_time(hid_t plist_id, H5D_alloc_time_t alloc_time)
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "invalid allocation time setting");
 
     /* Get the property list structure */
-    if (NULL == (plist = H5P_object_verify(plist_id, H5P_DATASET_CREATE)))
+    if (NULL == (plist = H5P_object_verify(plist_id, H5P_DATASET_CREATE, false)))
         HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
     /* Check for resetting to default for layout type */
@@ -3407,7 +3407,7 @@ H5Pget_alloc_time(hid_t plist_id, H5D_alloc_time_t *alloc_time /*out*/)
         H5O_fill_t      fill;  /* Fill value property to query */
 
         /* Get the property list structure */
-        if (NULL == (plist = H5P_object_verify(plist_id, H5P_DATASET_CREATE)))
+        if (NULL == (plist = H5P_object_verify(plist_id, H5P_DATASET_CREATE, true)))
             HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
         /* Retrieve fill value settings */
@@ -3447,7 +3447,7 @@ H5Pset_fill_time(hid_t plist_id, H5D_fill_time_t fill_time)
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "invalid fill time setting");
 
     /* Get the property list structure */
-    if (NULL == (plist = H5P_object_verify(plist_id, H5P_DATASET_CREATE)))
+    if (NULL == (plist = H5P_object_verify(plist_id, H5P_DATASET_CREATE, false)))
         HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
     /* Retrieve previous fill value settings */
@@ -3489,7 +3489,7 @@ H5Pget_fill_time(hid_t plist_id, H5D_fill_time_t *fill_time /*out*/)
         H5O_fill_t      fill;  /* Fill value property to query */
 
         /* Get the property list structure */
-        if (NULL == (plist = H5P_object_verify(plist_id, H5P_DATASET_CREATE)))
+        if (NULL == (plist = H5P_object_verify(plist_id, H5P_DATASET_CREATE, true)))
             HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
         /* Retrieve fill value settings */
@@ -3532,7 +3532,7 @@ H5Pget_dset_no_attrs_hint(hid_t dcpl_id, hbool_t *minimize /*out*/)
     if (NULL == minimize)
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "receiving pointer cannot be NULL");
 
-    plist = H5P_object_verify(dcpl_id, H5P_DATASET_CREATE);
+    plist = H5P_object_verify(dcpl_id, H5P_DATASET_CREATE, true);
     if (NULL == plist)
         HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
@@ -3570,7 +3570,7 @@ H5Pset_dset_no_attrs_hint(hid_t dcpl_id, hbool_t minimize)
     FUNC_ENTER_API(FAIL)
     H5TRACE2("e", "ib", dcpl_id, minimize);
 
-    plist = H5P_object_verify(dcpl_id, H5P_DATASET_CREATE);
+    plist = H5P_object_verify(dcpl_id, H5P_DATASET_CREATE, false);
     if (NULL == plist)
         HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 

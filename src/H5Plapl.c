@@ -259,7 +259,7 @@ H5P__lacc_elink_fapl_set(hid_t H5_ATTR_UNUSED prop_id, const char H5_ATTR_UNUSED
     if (l_fapl_id != H5P_DEFAULT) {
         H5P_genplist_t *l_fapl_plist;
 
-        if (NULL == (l_fapl_plist = (H5P_genplist_t *)H5P_object_verify(l_fapl_id, H5P_FILE_ACCESS)))
+        if (NULL == (l_fapl_plist = (H5P_genplist_t *)H5P_object_verify(l_fapl_id, H5P_FILE_ACCESS, true)))
             HGOTO_ERROR(H5E_PLIST, H5E_BADTYPE, FAIL, "can't get property list");
         if (((*(hid_t *)value) = H5P_copy_plist(l_fapl_plist, FALSE)) < 0)
             HGOTO_ERROR(H5E_PLIST, H5E_CANTCOPY, FAIL, "unable to copy file access property list");
@@ -298,7 +298,7 @@ H5P__lacc_elink_fapl_get(hid_t H5_ATTR_UNUSED prop_id, const char H5_ATTR_UNUSED
     if (l_fapl_id != H5P_DEFAULT) {
         H5P_genplist_t *l_fapl_plist;
 
-        if (NULL == (l_fapl_plist = (H5P_genplist_t *)H5P_object_verify(l_fapl_id, H5P_FILE_ACCESS)))
+        if (NULL == (l_fapl_plist = (H5P_genplist_t *)H5P_object_verify(l_fapl_id, H5P_FILE_ACCESS, true)))
             HGOTO_ERROR(H5E_PLIST, H5E_BADTYPE, FAIL, "can't get property list");
         if (((*(hid_t *)value) = H5P_copy_plist(l_fapl_plist, FALSE)) < 0)
             HGOTO_ERROR(H5E_PLIST, H5E_CANTCOPY, FAIL, "unable to copy file access property list");
@@ -334,7 +334,7 @@ H5P__lacc_elink_fapl_enc(const void *value, void **_pp, size_t *size)
 
     /* Check for non-default FAPL */
     if (*elink_fapl != H5P_DEFAULT) {
-        if (NULL == (fapl_plist = (H5P_genplist_t *)H5P_object_verify(*elink_fapl, H5P_FILE_ACCESS)))
+        if (NULL == (fapl_plist = (H5P_genplist_t *)H5P_object_verify(*elink_fapl, H5P_FILE_ACCESS, true)))
             HGOTO_ERROR(H5E_PLIST, H5E_CANTGET, FAIL, "can't get property list");
         non_default_fapl = TRUE;
     } /* end if */
@@ -492,7 +492,7 @@ H5P__lacc_elink_fapl_copy(const char H5_ATTR_UNUSED *name, size_t H5_ATTR_UNUSED
     if (l_fapl_id != H5P_DEFAULT) {
         H5P_genplist_t *l_fapl_plist;
 
-        if (NULL == (l_fapl_plist = (H5P_genplist_t *)H5P_object_verify(l_fapl_id, H5P_FILE_ACCESS)))
+        if (NULL == (l_fapl_plist = (H5P_genplist_t *)H5P_object_verify(l_fapl_id, H5P_FILE_ACCESS, true)))
             HGOTO_ERROR(H5E_PLIST, H5E_BADTYPE, FAIL, "can't get property list");
         if (((*(hid_t *)value) = H5P_copy_plist(l_fapl_plist, FALSE)) < 0)
             HGOTO_ERROR(H5E_PLIST, H5E_CANTCOPY, FAIL, "unable to copy file access property list");
@@ -862,7 +862,7 @@ H5Pset_nlinks(hid_t plist_id, size_t nlinks)
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "number of links must be positive");
 
     /* Get the plist structure */
-    if (NULL == (plist = H5P_object_verify(plist_id, H5P_LINK_ACCESS)))
+    if (NULL == (plist = H5P_object_verify(plist_id, H5P_LINK_ACCESS, false)))
         HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
     /* Set number of links */
@@ -899,7 +899,7 @@ H5Pget_nlinks(hid_t plist_id, size_t *nlinks /*out*/)
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "invalid pointer passed in");
 
     /* Get the plist structure */
-    if (NULL == (plist = H5P_object_verify(plist_id, H5P_LINK_ACCESS)))
+    if (NULL == (plist = H5P_object_verify(plist_id, H5P_LINK_ACCESS, true)))
         HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
     /* Get the current number of links */
@@ -931,7 +931,7 @@ H5Pset_elink_prefix(hid_t plist_id, const char *prefix)
     H5TRACE2("e", "i*s", plist_id, prefix);
 
     /* Get the plist structure */
-    if (NULL == (plist = H5P_object_verify(plist_id, H5P_LINK_ACCESS)))
+    if (NULL == (plist = H5P_object_verify(plist_id, H5P_LINK_ACCESS, false)))
         HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
     /* Set prefix */
@@ -967,7 +967,7 @@ H5Pget_elink_prefix(hid_t plist_id, char *prefix /*out*/, size_t size)
     H5TRACE3("Zs", "ixz", plist_id, prefix, size);
 
     /* Get the plist structure */
-    if (NULL == (plist = H5P_object_verify(plist_id, H5P_LINK_ACCESS)))
+    if (NULL == (plist = H5P_object_verify(plist_id, H5P_LINK_ACCESS, true)))
         HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
     /* Get the current prefix */
@@ -1013,7 +1013,7 @@ H5Pset_elink_fapl(hid_t lapl_id, hid_t fapl_id)
     H5TRACE2("e", "ii", lapl_id, fapl_id);
 
     /* Check arguments */
-    if (NULL == (plist = H5P_object_verify(lapl_id, H5P_LINK_ACCESS)))
+    if (NULL == (plist = H5P_object_verify(lapl_id, H5P_LINK_ACCESS, false)))
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a link access property list");
 
     /* Set the file access property list for the link access */
@@ -1044,7 +1044,7 @@ H5Pget_elink_fapl(hid_t lapl_id)
     H5TRACE1("i", "i", lapl_id);
 
     /* Get the plist structure */
-    if (NULL == (plist = H5P_object_verify(lapl_id, H5P_LINK_ACCESS)))
+    if (NULL == (plist = H5P_object_verify(lapl_id, H5P_LINK_ACCESS, true)))
         HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
     if (H5P_get(plist, H5L_ACS_ELINK_FAPL_NAME, &ret_value) < 0)
@@ -1081,7 +1081,7 @@ H5Pset_elink_acc_flags(hid_t lapl_id, unsigned flags)
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "invalid file open flags");
 
     /* Get the plist structure */
-    if (NULL == (plist = H5P_object_verify(lapl_id, H5P_LINK_ACCESS)))
+    if (NULL == (plist = H5P_object_verify(lapl_id, H5P_LINK_ACCESS, false)))
         HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
     /* Set flags */
@@ -1112,7 +1112,7 @@ H5Pget_elink_acc_flags(hid_t lapl_id, unsigned *flags /*out*/)
     H5TRACE2("e", "ix", lapl_id, flags);
 
     /* Get the plist structure */
-    if (NULL == (plist = H5P_object_verify(lapl_id, H5P_LINK_ACCESS)))
+    if (NULL == (plist = H5P_object_verify(lapl_id, H5P_LINK_ACCESS, true)))
         HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
     /* Get flags */
@@ -1151,7 +1151,7 @@ H5Pset_elink_cb(hid_t lapl_id, H5L_elink_traverse_t func, void *op_data)
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "callback is NULL while user data is not");
 
     /* Get the plist structure */
-    if (NULL == (plist = H5P_object_verify(lapl_id, H5P_LINK_ACCESS)))
+    if (NULL == (plist = H5P_object_verify(lapl_id, H5P_LINK_ACCESS, false)))
         HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
     /* Populate the callback info struct */
@@ -1187,7 +1187,7 @@ H5Pget_elink_cb(hid_t lapl_id, H5L_elink_traverse_t *func /*out*/, void **op_dat
     H5TRACE3("e", "ixx", lapl_id, func, op_data);
 
     /* Get the plist structure */
-    if (NULL == (plist = H5P_object_verify(lapl_id, H5P_LINK_ACCESS)))
+    if (NULL == (plist = H5P_object_verify(lapl_id, H5P_LINK_ACCESS, true)))
         HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
     /* Get callback_info */

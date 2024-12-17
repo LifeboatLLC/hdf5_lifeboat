@@ -328,7 +328,7 @@ H5Pset_fapl_ioc(hid_t fapl_id, H5FD_ioc_config_t *vfd_config)
 
     H5FD_IOC_LOG_CALL(__func__);
 
-    if (NULL == (plist_ptr = H5P_object_verify(fapl_id, H5P_FILE_ACCESS)))
+    if (NULL == (plist_ptr = H5P_object_verify(fapl_id, H5P_FILE_ACCESS, false)))
         H5_SUBFILING_GOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a file access property list");
 
     if (vfd_config == NULL) {
@@ -382,7 +382,7 @@ H5Pget_fapl_ioc(hid_t fapl_id, H5FD_ioc_config_t *config_out)
     if (config_out == NULL)
         H5_SUBFILING_GOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "config_out is NULL");
 
-    if (NULL == (plist_ptr = H5P_object_verify(fapl_id, H5P_FILE_ACCESS)))
+    if (NULL == (plist_ptr = H5P_object_verify(fapl_id, H5P_FILE_ACCESS, true)))
         H5_SUBFILING_GOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a file access property list");
 
     if (H5FD_IOC != H5P_peek_driver(plist_ptr))
@@ -1452,7 +1452,7 @@ H5FD__ioc_del(const char *name, hid_t fapl)
      * out of sync
      */
 
-    if (NULL == (plist = H5P_object_verify(fapl, H5P_FILE_ACCESS)))
+    if (NULL == (plist = H5P_object_verify(fapl, H5P_FILE_ACCESS, true)))
         H5_SUBFILING_GOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a file access property list");
     assert(H5FD_IOC == H5P_peek_driver(plist));
 

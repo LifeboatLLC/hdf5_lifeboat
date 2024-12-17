@@ -148,7 +148,7 @@ H5Pset_char_encoding(hid_t plist_id, H5T_cset_t encoding)
         HGOTO_ERROR(H5E_ARGS, H5E_BADRANGE, FAIL, "character encoding is not valid");
 
     /* Get the plist structure */
-    if (NULL == (plist = H5P_object_verify(plist_id, H5P_STRING_CREATE)))
+    if (NULL == (plist = H5P_object_verify(plist_id, H5P_STRING_CREATE, false)))
         HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
     /* Set the character encoding */
@@ -178,7 +178,7 @@ H5Pget_char_encoding(hid_t plist_id, H5T_cset_t *encoding /*out*/)
     H5TRACE2("e", "ix", plist_id, encoding);
 
     /* Get the plist structure */
-    if (NULL == (plist = H5P_object_verify(plist_id, H5P_STRING_CREATE)))
+    if (NULL == (plist = H5P_object_verify(plist_id, H5P_STRING_CREATE, true)))
         HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
     /* Get value */

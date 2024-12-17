@@ -454,7 +454,7 @@ H5Pset_fapl_subfiling(hid_t fapl_id, const H5FD_subfiling_config_t *vfd_config)
     if (H5FD_subfiling_init() < 0)
         H5_SUBFILING_GOTO_ERROR(H5E_VFL, H5E_CANTINIT, FAIL, "can't initialize subfiling VFD");
 
-    if (NULL == (plist = H5P_object_verify(fapl_id, H5P_FILE_ACCESS)))
+    if (NULL == (plist = H5P_object_verify(fapl_id, H5P_FILE_ACCESS, false)))
         H5_SUBFILING_GOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a file access property list");
 
     if (vfd_config == NULL) {
@@ -480,7 +480,7 @@ H5Pset_fapl_subfiling(hid_t fapl_id, const H5FD_subfiling_config_t *vfd_config)
         comm = MPI_COMM_WORLD;
 
     /* Set MPI parameters on IOC FAPL */
-    if (NULL == (ioc_plist = H5P_object_verify(vfd_config->ioc_fapl_id, H5P_FILE_ACCESS)))
+    if (NULL == (ioc_plist = H5P_object_verify(vfd_config->ioc_fapl_id, H5P_FILE_ACCESS, false)))
         H5_SUBFILING_GOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a file access property list");
     if (H5P_set(ioc_plist, H5F_ACS_MPI_PARAMS_COMM_NAME, &comm) < 0)
         H5_SUBFILING_GOTO_ERROR(H5E_PLIST, H5E_CANTSET, FAIL, "can't set MPI communicator on plist");
@@ -535,7 +535,7 @@ H5Pget_fapl_subfiling(hid_t fapl_id, H5FD_subfiling_config_t *config_out)
     if (config_out == NULL)
         H5_SUBFILING_GOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "config_out is NULL");
 
-    if (NULL == (plist = H5P_object_verify(fapl_id, H5P_FILE_ACCESS)))
+    if (NULL == (plist = H5P_object_verify(fapl_id, H5P_FILE_ACCESS, true)))
         H5_SUBFILING_GOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a file access property list");
 
     if (H5FD_SUBFILING != H5P_peek_driver(plist))
@@ -2471,7 +2471,8 @@ H5FD__subfiling_del(const char *name, hid_t fapl)
     H5P_genplist_t                *plist     = NULL;
     herr_t                         ret_value = SUCCEED;
 
-    if (NULL == (plist = H5P_object_verify(fapl, H5P_FILE_ACCESS)))
+
+    if (NULL == (plist = H5P_object_verify(fapl, H5P_FILE_ACCESS, true)))
         H5_SUBFILING_GOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a file access property list");
 
     if (H5FD_SUBFILING != H5P_peek_driver(plist))

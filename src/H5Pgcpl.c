@@ -153,7 +153,7 @@ H5Pset_local_heap_size_hint(hid_t plist_id, size_t size_hint)
     H5TRACE2("e", "iz", plist_id, size_hint);
 
     /* Get the plist structure */
-    if (NULL == (plist = H5P_object_verify(plist_id, H5P_GROUP_CREATE)))
+    if (NULL == (plist = H5P_object_verify(plist_id, H5P_GROUP_CREATE, false)))
         HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
     /* Get value */
@@ -194,7 +194,7 @@ H5Pget_local_heap_size_hint(hid_t plist_id, size_t *size_hint /*out*/)
         H5O_ginfo_t     ginfo; /* Group information structure */
 
         /* Get the plist structure */
-        if (NULL == (plist = H5P_object_verify(plist_id, H5P_GROUP_CREATE)))
+        if (NULL == (plist = H5P_object_verify(plist_id, H5P_GROUP_CREATE, true)))
             HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
         /* Get value */
@@ -243,7 +243,7 @@ H5Pset_link_phase_change(hid_t plist_id, unsigned max_compact, unsigned min_dens
         HGOTO_ERROR(H5E_ARGS, H5E_BADRANGE, FAIL, "min dense value must be < 65536");
 
     /* Get the plist structure */
-    if (NULL == (plist = H5P_object_verify(plist_id, H5P_GROUP_CREATE)))
+    if (NULL == (plist = H5P_object_verify(plist_id, H5P_GROUP_CREATE, false)))
         HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
     /* Get group info */
@@ -290,7 +290,7 @@ H5Pget_link_phase_change(hid_t plist_id, unsigned *max_compact /*out*/, unsigned
         H5O_ginfo_t     ginfo; /* Group information structure */
 
         /* Get the plist structure */
-        if (NULL == (plist = H5P_object_verify(plist_id, H5P_GROUP_CREATE)))
+        if (NULL == (plist = H5P_object_verify(plist_id, H5P_GROUP_CREATE, true)))
             HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
         /* Get group info */
@@ -341,7 +341,7 @@ H5Pset_est_link_info(hid_t plist_id, unsigned est_num_entries, unsigned est_name
         HGOTO_ERROR(H5E_ARGS, H5E_BADRANGE, FAIL, "est. name length must be < 65536");
 
     /* Get the plist structure */
-    if (NULL == (plist = H5P_object_verify(plist_id, H5P_GROUP_CREATE)))
+    if (NULL == (plist = H5P_object_verify(plist_id, H5P_GROUP_CREATE, false)))
         HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
     /* Get group info */
@@ -388,7 +388,7 @@ H5Pget_est_link_info(hid_t plist_id, unsigned *est_num_entries /*out*/, unsigned
         H5O_ginfo_t     ginfo; /* Group information structure */
 
         /* Get the plist structure */
-        if (NULL == (plist = H5P_object_verify(plist_id, H5P_GROUP_CREATE)))
+        if (NULL == (plist = H5P_object_verify(plist_id, H5P_GROUP_CREATE, true)))
             HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
         /* Get group info */
@@ -429,7 +429,7 @@ H5Pset_link_creation_order(hid_t plist_id, unsigned crt_order_flags)
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "tracking creation order is required for index");
 
     /* Get the plist structure */
-    if (NULL == (plist = H5P_object_verify(plist_id, H5P_GROUP_CREATE)))
+    if (NULL == (plist = H5P_object_verify(plist_id, H5P_GROUP_CREATE, false)))
         HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
     /* Get link info */
@@ -475,7 +475,7 @@ H5Pget_link_creation_order(hid_t plist_id, unsigned *crt_order_flags /*out*/)
         *crt_order_flags = 0;
 
         /* Get the plist structure */
-        if (NULL == (plist = H5P_object_verify(plist_id, H5P_GROUP_CREATE)))
+        if (NULL == (plist = H5P_object_verify(plist_id, H5P_GROUP_CREATE, true)))
             HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
         /* Get link info */
