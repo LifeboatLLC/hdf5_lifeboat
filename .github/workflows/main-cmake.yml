@@ -7,11 +7,11 @@ on:
   workflow_dispatch:
   schedule:
     - cron: "0 12 * * *"
-#  push:
-#  pull_request:
-#    branches: [ 1_14_2_multithread ]
-#    paths-ignore:
-#      - '**.md'
+  push:
+  pull_request:
+    branches: [ 1_14_2_multithread ]
+    paths-ignore:
+      - '**.md'
 
 permissions:
   contents: read
