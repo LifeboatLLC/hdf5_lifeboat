@@ -35,8 +35,6 @@ jobs:
       # Check out repository under $GITHUB_WORKSPACE
       - name: Get Sources
         uses: actions/checkout@v4.1.7
-        with:
-          ref: 1_14_2_multithread
 
       - name: CMake Configure
         run: |
