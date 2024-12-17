@@ -101,7 +101,7 @@ typedef struct thread_info_t {
 #ifdef H5_HAVE_MULTITHREAD
 extern pthread_key_t test_thread_info_key_g;
 
-#define IS_MAIN_TEST_THREAD ((GetTestMaxNumThreads() == 1) ||\
+#define IS_MAIN_TEST_THREAD ((GetTestMaxNumThreads() <= 1) ||\
     ((pthread_getspecific(test_thread_info_key_g)) && (((thread_info_t*)pthread_getspecific(test_thread_info_key_g))->thread_idx == 0)))
 
 #else
