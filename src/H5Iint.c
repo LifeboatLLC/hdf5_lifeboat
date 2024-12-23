@@ -270,7 +270,8 @@ H5I_init(void)
     atomic_init(&(H5I_mt_g.id_info_fl_stail), init_id_sptr);
     atomic_init(&(H5I_mt_g.id_info_fl_len), 0ULL);
     atomic_init(&(H5I_mt_g.max_desired_id_info_fl_len), H5I__MAX_DESIRED_ID_INFO_FL_LEN);
-    atomic_init(&(H5I_mt_g.num_id_info_fl_entries_reallocable), 0ULL);
+    atomic_init(&(H5I_mt_g.id_next_sn), 1ULL);
+    atomic_init(&(H5I_mt_g.id_max_realloc_sn), 0ULL);
 
     /* allocate the initial entry in the id info free list and initialize the id info free list */
     id_info_ptr = H5I__new_mt_id_info(0, 0, 0, NULL, FALSE, NULL, NULL);
@@ -278,6 +279,7 @@ H5I_init(void)
         HGOTO_ERROR(H5E_ID, H5E_CANTINIT, FAIL, "Can't initialize id info free list");
 
     atomic_store(&(id_info_ptr->on_fl), TRUE);
+    atomic_store(&(id_info_ptr->serial_num), 1ULL);
 
     id_sptr.ptr = id_info_ptr;
     id_sptr.sn = 1ULL;
@@ -285,7 +287,7 @@ H5I_init(void)
     atomic_store(&(H5I_mt_g.id_info_fl_shead), id_sptr);
     atomic_store(&(H5I_mt_g.id_info_fl_stail), id_sptr);
     atomic_store(&(H5I_mt_g.id_info_fl_len), 1ULL);
-
+    atomic_store(&(H5I_mt_g.id_next_sn), 2ULL);
 
     /* allocate the initial entry in the type info free list and initialize the type info free list */
 
@@ -293,12 +295,8 @@ H5I_init(void)
     atomic_init(&(H5I_mt_g.type_info_fl_stail), init_type_sptr);
     atomic_init(&(H5I_mt_g.type_info_fl_len), 0ULL);
     atomic_init(&(H5I_mt_g.max_desired_type_info_fl_len), H5I__MAX_DESIRED_TYPE_INFO_FL_LEN);
-#if 1
-    atomic_init(&(H5I_mt_g.num_type_info_fl_entries_reallocable), 0ULL);
-#else
-    H5I_suint64_t init_suint64 = {0ULL, 0ULL};
-    atomic_init(&(H5I_mt_g.snum_type_info_fl_entries_reallocable), init_suint64);
-#endif
+    atomic_init(&(H5I_mt_g.type_next_sn), 1ULL);
+    atomic_init(&(H5I_mt_g.type_max_realloc_sn), 0ULL);
 
     /* allocate the initial entry in the id info free list and initialize the id info free list */
     type_info_ptr = H5I__new_mt_type_info(NULL, 0);
@@ -313,6 +311,7 @@ H5I_init(void)
     atomic_store(&(type_info_ptr->lfht_cleared), TRUE);
 
     atomic_store(&(type_info_ptr->on_fl), TRUE);
+    atomic_store(&(type_info_ptr->serial_num), 1ULL);
 
     type_sptr.ptr = type_info_ptr;
     type_sptr.sn = 1ULL;
@@ -320,6 +319,7 @@ H5I_init(void)
     atomic_store(&(H5I_mt_g.type_info_fl_shead), type_sptr);
     atomic_store(&(H5I_mt_g.type_info_fl_stail), type_sptr);
     atomic_store(&(H5I_mt_g.type_info_fl_len), 1ULL);
+    atomic_store(&(H5I_mt_g.type_next_sn), 2ULL);
 
 
     /* initialize stats */
@@ -338,20 +338,24 @@ H5I_init(void)
     atomic_init(&(H5I_mt_g.num_id_info_fl_head_update_cols), 0ULL);
     atomic_init(&(H5I_mt_g.num_id_info_fl_tail_update_cols), 0ULL);
     atomic_init(&(H5I_mt_g.num_id_info_fl_append_cols), 0ULL);
-    atomic_init(&(H5I_mt_g.num_id_info_structs_marked_reallocatable), 0ULL);
     atomic_init(&(H5I_mt_g.num_id_info_fl_alloc_req_denied_due_to_empty), 0ULL);
     atomic_init(&(H5I_mt_g.num_id_info_fl_alloc_req_denied_due_to_no_reallocable_entries), 0ULL);
     atomic_init(&(H5I_mt_g.num_id_info_fl_frees_skipped_due_to_empty), 0ULL);
     atomic_init(&(H5I_mt_g.num_id_info_fl_frees_skipped_due_to_fl_too_small), 0ULL);
     atomic_init(&(H5I_mt_g.num_id_info_fl_frees_skipped_due_to_no_reallocable_entries), 0ULL);
-    atomic_init(&(H5I_mt_g.num_id_info_fl_num_reallocable_update_aborts), 0ULL);
-    atomic_init(&(H5I_mt_g.num_id_info_fl_num_reallocable_update_noops), 0ULL);
-    atomic_init(&(H5I_mt_g.num_id_info_fl_num_reallocable_update_collisions), 0ULL);
-    atomic_init(&(H5I_mt_g.num_id_info_fl_num_reallocable_updates), 0ULL);
-    atomic_init(&(H5I_mt_g.num_id_info_fl_num_reallocable_total), 0ULL);
     atomic_init(&(H5I_mt_g.H5I__discard_mt_id_info__num_calls), 0ULL);
     atomic_init(&(H5I_mt_g.H5I__new_mt_id_info__num_calls), 0ULL);
     atomic_init(&(H5I_mt_g.H5I__clear_mt_id_info_free_list__num_calls), 0ULL);
+
+    atomic_init(&(H5I_mt_g.num_id_next_sn_assigned), 0ULL);
+    atomic_init(&(H5I_mt_g.num_id_serial_num_resets), 0ULL);
+    atomic_init(&(H5I_mt_g.num_id_info_fl_head_sn_is_zero), 0ULL);
+    atomic_init(&(H5I_mt_g.num_id_info_fl_max_sn_update_noops), 0ULL);
+    atomic_init(&(H5I_mt_g.num_id_info_fl_max_sn_update_aborts), 0ULL);
+    atomic_init(&(H5I_mt_g.num_id_info_fl_max_sn_updates), 0ULL);
+    atomic_init(&(H5I_mt_g.num_id_info_fl_max_sn_update_cols), 0ULL);
+    atomic_init(&(H5I_mt_g.max_id_info_fl_max_sn_update_col_delta), 0ULL);
+    atomic_init(&(H5I_mt_g.min_id_info_fl_max_sn_update_col_delta), 0ULL);
 
 
     atomic_init(&(H5I_mt_g.max_type_info_fl_len), 1ULL);
@@ -362,20 +366,24 @@ H5I_init(void)
     atomic_init(&(H5I_mt_g.num_type_info_fl_head_update_cols), 0ULL);
     atomic_init(&(H5I_mt_g.num_type_info_fl_tail_update_cols), 0ULL);
     atomic_init(&(H5I_mt_g.num_type_info_fl_append_cols), 0ULL);
-    atomic_init(&(H5I_mt_g.num_type_info_structs_marked_reallocatable), 0ULL);
     atomic_init(&(H5I_mt_g.num_type_info_fl_alloc_req_denied_due_to_empty), 0ULL);
     atomic_init(&(H5I_mt_g.num_type_info_fl_alloc_req_denied_due_to_no_reallocable_entries), 0ULL);
     atomic_init(&(H5I_mt_g.num_type_info_fl_frees_skipped_due_to_empty), 0ULL);
     atomic_init(&(H5I_mt_g.num_type_info_fl_frees_skipped_due_to_fl_too_small), 0ULL);
     atomic_init(&(H5I_mt_g.num_type_info_fl_frees_skipped_due_to_no_reallocable_entries), 0ULL);
-    atomic_init(&(H5I_mt_g.num_type_info_fl_num_reallocable_update_aborts), 0ULL);
-    atomic_init(&(H5I_mt_g.num_type_info_fl_num_reallocable_update_noops), 0ULL);
-    atomic_init(&(H5I_mt_g.num_type_info_fl_num_reallocable_update_collisions), 0ULL);
-    atomic_init(&(H5I_mt_g.num_type_info_fl_num_reallocable_updates), 0ULL);
-    atomic_init(&(H5I_mt_g.num_type_info_fl_num_reallocable_total), 0ULL);
     atomic_init(&(H5I_mt_g.H5I__discard_mt_type_info__num_calls), 0ULL);
     atomic_init(&(H5I_mt_g.H5I__new_mt_type_info__num_calls), 0ULL);
     atomic_init(&(H5I_mt_g.H5I__clear_mt_type_info_free_list__num_calls), 0ULL);
+
+    atomic_init(&(H5I_mt_g.num_type_next_sn_assigned), 0ULL);
+    atomic_init(&(H5I_mt_g.num_type_serial_num_resets), 0ULL);
+    atomic_init(&(H5I_mt_g.num_type_info_fl_head_sn_is_zero), 0ULL);
+    atomic_init(&(H5I_mt_g.num_type_info_fl_max_sn_update_noops), 0ULL);
+    atomic_init(&(H5I_mt_g.num_type_info_fl_max_sn_update_aborts), 0ULL);
+    atomic_init(&(H5I_mt_g.num_type_info_fl_max_sn_updates), 0ULL);
+    atomic_init(&(H5I_mt_g.num_type_info_fl_max_sn_update_cols), 0ULL);
+    atomic_init(&(H5I_mt_g.max_type_info_fl_max_sn_update_col_delta), 0ULL);
+    atomic_init(&(H5I_mt_g.min_type_info_fl_max_sn_update_col_delta), 0ULL);
 
 
     atomic_init(&(H5I_mt_g.H5I__mark_node__num_calls), 0ULL);
@@ -537,12 +545,14 @@ H5I_term_package(void)
 #endif /* H5I_MT_DEBUG */
 
     H5I_mt_type_info_t *type_info_ptr = NULL; /* Pointer to ID type */
-    int              i;
+    int                 i;
 
     /* Count the number of types still in use */
 
     for (i = 0; i < atomic_load(&(H5I_mt_g.next_type)); i++) {
-        if ((type_info_ptr = atomic_load(&(H5I_mt_g.type_info_array[i]))) && ! atomic_load(&(type_info_ptr->lfht_cleared))) {
+
+        if ( ( type_info_ptr = atomic_load(&(H5I_mt_g.type_info_array[i])) ) && 
+             ( ! atomic_load(&(type_info_ptr->lfht_cleared)) ) ) {
 
             in_use++;
         }
@@ -550,18 +560,17 @@ H5I_term_package(void)
 
     /* If no types are still being used then clean up */
     if (0 == in_use) {
+
         for (i = 0; i <  atomic_load(&(H5I_mt_g.next_type)); i++) {
+
             type_info_ptr = atomic_load(&(H5I_mt_g.type_info_array[i]));
+
             if (type_info_ptr) {
-                assert(atomic_load(&(type_info_ptr->lfht_cleared)));
-#if 1 /* JRM */
+
                 H5I__discard_mt_type_info(type_info_ptr);
                 type_info_ptr = NULL;
-#else /* JRM */
-                type_info_ptr                = H5MM_xfree(type_info_ptr);
-#endif /* JRM */
+
                 atomic_store(&(H5I_mt_g.type_info_array[i]), NULL);
-                in_use++;
             }
         }
 
@@ -581,6 +590,7 @@ H5I_term_package(void)
     }
 
     FUNC_LEAVE_NOAPI(in_use)
+
 } /* end H5I_term_package() */
 
 #else /* H5_HAVE_MULTITHREAD */
@@ -665,20 +675,25 @@ H5I_clear_stats(void)
     atomic_store(&(H5I_mt_g.num_id_info_fl_head_update_cols), 0ULL);
     atomic_store(&(H5I_mt_g.num_id_info_fl_tail_update_cols), 0ULL);
     atomic_store(&(H5I_mt_g.num_id_info_fl_append_cols), 0ULL);
-    atomic_store(&(H5I_mt_g.num_id_info_structs_marked_reallocatable), 0ULL);
     atomic_store(&(H5I_mt_g.num_id_info_fl_alloc_req_denied_due_to_empty), 0ULL);
     atomic_store(&(H5I_mt_g.num_id_info_fl_alloc_req_denied_due_to_no_reallocable_entries), 0ULL);
     atomic_store(&(H5I_mt_g.num_id_info_fl_frees_skipped_due_to_empty), 0ULL);
     atomic_store(&(H5I_mt_g.num_id_info_fl_frees_skipped_due_to_fl_too_small), 0ULL);
     atomic_store(&(H5I_mt_g.num_id_info_fl_frees_skipped_due_to_no_reallocable_entries), 0ULL);
-    atomic_store(&(H5I_mt_g.num_id_info_fl_num_reallocable_update_aborts), 0ULL);
-    atomic_store(&(H5I_mt_g.num_id_info_fl_num_reallocable_update_noops), 0ULL);
-    atomic_store(&(H5I_mt_g.num_id_info_fl_num_reallocable_update_collisions), 0ULL);
-    atomic_store(&(H5I_mt_g.num_id_info_fl_num_reallocable_updates), 0ULL);
-    atomic_store(&(H5I_mt_g.num_id_info_fl_num_reallocable_total), 0ULL);
     atomic_store(&(H5I_mt_g.H5I__discard_mt_id_info__num_calls), 0ULL);
     atomic_store(&(H5I_mt_g.H5I__new_mt_id_info__num_calls), 0ULL);
     atomic_store(&(H5I_mt_g.H5I__clear_mt_id_info_free_list__num_calls), 0ULL);
+
+    atomic_store(&(H5I_mt_g.num_id_next_sn_assigned), 0ULL);
+    atomic_store(&(H5I_mt_g.num_id_serial_num_resets), 0ULL);
+    atomic_store(&(H5I_mt_g.num_id_info_fl_head_sn_is_zero), 0ULL);
+    atomic_store(&(H5I_mt_g.num_id_info_fl_max_sn_update_noops), 0ULL);
+    atomic_store(&(H5I_mt_g.num_id_info_fl_max_sn_update_aborts), 0ULL);
+    atomic_store(&(H5I_mt_g.num_id_info_fl_max_sn_updates), 0ULL);
+    atomic_store(&(H5I_mt_g.num_id_info_fl_max_sn_update_cols), 0ULL);
+    atomic_store(&(H5I_mt_g.max_id_info_fl_max_sn_update_col_delta), 0ULL);
+    atomic_store(&(H5I_mt_g.min_id_info_fl_max_sn_update_col_delta), 0ULL);
+
 
     atomic_store(&(H5I_mt_g.max_type_info_fl_len), 0ULL);
     atomic_store(&(H5I_mt_g.num_type_info_structs_alloced_from_heap), 0ULL);
@@ -688,20 +703,25 @@ H5I_clear_stats(void)
     atomic_store(&(H5I_mt_g.num_type_info_fl_head_update_cols), 0ULL);
     atomic_store(&(H5I_mt_g.num_type_info_fl_tail_update_cols), 0ULL);
     atomic_store(&(H5I_mt_g.num_type_info_fl_append_cols), 0ULL);
-    atomic_store(&(H5I_mt_g.num_type_info_structs_marked_reallocatable), 0ULL);
     atomic_store(&(H5I_mt_g.num_type_info_fl_alloc_req_denied_due_to_empty), 0ULL);
     atomic_store(&(H5I_mt_g.num_type_info_fl_alloc_req_denied_due_to_no_reallocable_entries), 0ULL);
     atomic_store(&(H5I_mt_g.num_type_info_fl_frees_skipped_due_to_empty), 0ULL);
     atomic_store(&(H5I_mt_g.num_type_info_fl_frees_skipped_due_to_fl_too_small), 0ULL);
     atomic_store(&(H5I_mt_g.num_type_info_fl_frees_skipped_due_to_no_reallocable_entries), 0ULL);
-    atomic_store(&(H5I_mt_g.num_type_info_fl_num_reallocable_update_aborts), 0ULL);
-    atomic_store(&(H5I_mt_g.num_type_info_fl_num_reallocable_update_noops), 0ULL);
-    atomic_store(&(H5I_mt_g.num_type_info_fl_num_reallocable_update_collisions), 0ULL);
-    atomic_store(&(H5I_mt_g.num_type_info_fl_num_reallocable_updates), 0ULL);
-    atomic_store(&(H5I_mt_g.num_type_info_fl_num_reallocable_total), 0ULL);
     atomic_store(&(H5I_mt_g.H5I__discard_mt_type_info__num_calls), 0ULL);
     atomic_store(&(H5I_mt_g.H5I__new_mt_type_info__num_calls), 0ULL);
     atomic_store(&(H5I_mt_g.H5I__clear_mt_type_info_free_list__num_calls), 0ULL);
+
+    atomic_store(&(H5I_mt_g.num_type_next_sn_assigned), 0ULL);
+    atomic_store(&(H5I_mt_g.num_type_serial_num_resets), 0ULL);
+    atomic_store(&(H5I_mt_g.num_type_info_fl_head_sn_is_zero), 0ULL);
+    atomic_store(&(H5I_mt_g.num_type_info_fl_max_sn_update_noops), 0ULL);
+    atomic_store(&(H5I_mt_g.num_type_info_fl_max_sn_update_aborts), 0ULL);
+    atomic_store(&(H5I_mt_g.num_type_info_fl_max_sn_updates), 0ULL);
+    atomic_store(&(H5I_mt_g.num_type_info_fl_max_sn_update_cols), 0ULL);
+    atomic_store(&(H5I_mt_g.max_type_info_fl_max_sn_update_col_delta), 0ULL);
+    atomic_store(&(H5I_mt_g.min_type_info_fl_max_sn_update_col_delta), 0ULL);
+
 
     atomic_store(&(H5I_mt_g.H5I__mark_node__num_calls), 0ULL);
     atomic_store(&(H5I_mt_g.H5I__mark_node__num_calls_with_global_mutex), 0ULL);
@@ -856,8 +876,6 @@ H5I_dump_stats(FILE * file_ptr)
 
     fprintf(file_ptr, "H5I_mt_g.id_info_fl_len                                                = %lld\n", 
             (unsigned long long)(atomic_load(&(H5I_mt_g.id_info_fl_len))));
-    fprintf(file_ptr, "H5I_mt_g.num_id_info_fl_entries_reallocable                            = %lld\n", 
-            (unsigned long long)(atomic_load(&(H5I_mt_g.num_id_info_fl_entries_reallocable))));
     fprintf(file_ptr, "H5I_mt_g.max_id_info_fl_len                                            = %lld\n", 
             (unsigned long long)(atomic_load(&(H5I_mt_g.max_id_info_fl_len))));
     fprintf(file_ptr, "H5I_mt_g.num_id_info_structs_alloced_from_heap                         = %lld\n", 
@@ -874,8 +892,6 @@ H5I_dump_stats(FILE * file_ptr)
             (unsigned long long)(atomic_load(&(H5I_mt_g.num_id_info_fl_tail_update_cols))));
     fprintf(file_ptr, "H5I_mt_g.num_id_info_fl_append_cols                                    = %lld\n", 
             (unsigned long long)(atomic_load(&(H5I_mt_g.num_id_info_fl_append_cols))));
-    fprintf(file_ptr, "H5I_mt_g.num_id_info_structs_marked_reallocatable                      = %lld\n", 
-            (unsigned long long)(atomic_load(&(H5I_mt_g.num_id_info_structs_marked_reallocatable))));
     fprintf(file_ptr, "H5I_mt_g.num_id_info_fl_alloc_req_denied_due_to_empty                  = %lld\n", 
             (unsigned long long)(atomic_load(&(H5I_mt_g.num_id_info_fl_alloc_req_denied_due_to_empty))));
     fprintf(file_ptr, "H5I_mt_g.num_id_info_fl_alloc_req_denied_due_to_no_reallocable_entries = %lld\n", 
@@ -888,16 +904,6 @@ H5I_dump_stats(FILE * file_ptr)
     fprintf(file_ptr, "H5I_mt_g.num_id_info_fl_frees_skipped_due_to_no_reallocable_entries    = %lld\n", 
             (unsigned long long) 
             (atomic_load(&(H5I_mt_g.num_id_info_fl_frees_skipped_due_to_no_reallocable_entries))));
-    fprintf(file_ptr, "H5I_mt_g.num_id_info_fl_num_reallocable_update_aborts                  = %lld\n", 
-            (unsigned long long) (atomic_load(&(H5I_mt_g.num_id_info_fl_num_reallocable_update_aborts))));
-    fprintf(file_ptr, "H5I_mt_g.num_id_info_fl_num_reallocable_update_noops                   = %lld\n", 
-            (unsigned long long) (atomic_load(&(H5I_mt_g.num_id_info_fl_num_reallocable_update_noops))));
-    fprintf(file_ptr, "H5I_mt_g.num_id_info_fl_num_reallocable_update_collisions              = %lld\n", 
-            (unsigned long long) (atomic_load(&(H5I_mt_g.num_id_info_fl_num_reallocable_update_collisions))));
-    fprintf(file_ptr, "H5I_mt_g.num_id_info_fl_num_reallocable_updates                        = %lld\n", 
-            (unsigned long long) (atomic_load(&(H5I_mt_g.num_id_info_fl_num_reallocable_updates))));
-    fprintf(file_ptr, "H5I_mt_g.num_id_info_fl_num_reallocable_total                          = %lld\n", 
-            (unsigned long long) (atomic_load(&(H5I_mt_g.num_id_info_fl_num_reallocable_total))));
     fprintf(file_ptr, "H5I_mt_g.H5I__discard_mt_id_info__num_calls                            = %lld\n", 
             (unsigned long long) (atomic_load(&(H5I_mt_g.H5I__discard_mt_id_info__num_calls))));
     fprintf(file_ptr, "H5I_mt_g.H5I__new_mt_id_info__num_calls                                = %lld\n", 
@@ -905,18 +911,28 @@ H5I_dump_stats(FILE * file_ptr)
     fprintf(file_ptr, "H5I_mt_g.H5I__clear_mt_id_info_free_list__num_calls                    = %lld\n\n", 
             (unsigned long long) (atomic_load(&(H5I_mt_g.H5I__clear_mt_id_info_free_list__num_calls))));
 
+    fprintf(file_ptr, "H5I_mt_g.num_id_next_sn_assigned                                       = %lld\n", 
+            (unsigned long long) (atomic_load(&(H5I_mt_g.num_id_next_sn_assigned))));
+    fprintf(file_ptr, "H5I_mt_g.num_id_serial_num_resets                                      = %lld\n", 
+            (unsigned long long) (atomic_load(&(H5I_mt_g.num_id_serial_num_resets))));
+    fprintf(file_ptr, "H5I_mt_g.num_id_info_fl_head_sn_is_zero                                = %lld\n", 
+            (unsigned long long) (atomic_load(&(H5I_mt_g.num_id_info_fl_head_sn_is_zero))));
+    fprintf(file_ptr, "H5I_mt_g.num_id_info_fl_max_sn_update_noops                            = %lld\n", 
+            (unsigned long long) (atomic_load(&(H5I_mt_g.num_id_info_fl_max_sn_update_noops))));
+    fprintf(file_ptr, "H5I_mt_g.num_id_info_fl_max_sn_update_aborts                           = %lld\n", 
+            (unsigned long long) (atomic_load(&(H5I_mt_g.num_id_info_fl_max_sn_update_aborts))));
+    fprintf(file_ptr, "H5I_mt_g.num_id_info_fl_max_sn_updates                                 = %lld\n", 
+            (unsigned long long) (atomic_load(&(H5I_mt_g.num_id_info_fl_max_sn_updates))));
+    fprintf(file_ptr, "H5I_mt_g.num_id_info_fl_max_sn_update_cols                             = %lld\n", 
+            (unsigned long long) (atomic_load(&(H5I_mt_g.num_id_info_fl_max_sn_update_cols))));
+    fprintf(file_ptr, "H5I_mt_g.max_id_info_fl_max_sn_update_col_delta                        = %lld\n", 
+            (unsigned long long) (atomic_load(&(H5I_mt_g.max_id_info_fl_max_sn_update_col_delta))));
+    fprintf(file_ptr, "H5I_mt_g.min_id_info_fl_max_sn_update_col_delta                        = %lld\n\n", 
+            (unsigned long long) (atomic_load(&(H5I_mt_g.min_id_info_fl_max_sn_update_col_delta))));
+
+
     fprintf(file_ptr, "H5I_mt_g.type_info_fl_len                                              = %lld\n", 
             (unsigned long long)(atomic_load(&(H5I_mt_g.type_info_fl_len))));
-#if 1
-    fprintf(file_ptr, "H5I_mt_g.num_type_info_fl_entries_reallocable                          = %lld\n", 
-            (unsigned long long)(atomic_load(&(H5I_mt_g.num_type_info_fl_entries_reallocable))));
-#else
-    H5I_suint64_t snum_type_info_fl_entries_reallocable;
-    snum_type_info_fl_entries_reallocable = atomic_load(&(H5I_mt_g.snum_type_info_fl_entries_reallocable));
-    fprintf(file_ptr, "H5I_mt_g.snum_type_info_fl_entries_reallocable                         = (%lld, %lld)\n", 
-            (unsigned long long)snum_type_info_fl_entries_reallocable.val,
-            (unsigned long long)snum_type_info_fl_entries_reallocable.sn);
-#endif
     fprintf(file_ptr, "H5I_mt_g.max_type_info_fl_len                                          = %lld\n", 
             (unsigned long long)(atomic_load(&(H5I_mt_g.max_type_info_fl_len))));
     fprintf(file_ptr, "H5I_mt_g.num_type_info_structs_alloced_from_heap                       = %lld\n", 
@@ -933,8 +949,6 @@ H5I_dump_stats(FILE * file_ptr)
             (unsigned long long)(atomic_load(&(H5I_mt_g.num_type_info_fl_tail_update_cols))));
     fprintf(file_ptr, "H5I_mt_g.num_type_info_fl_append_cols                                  = %lld\n", 
             (unsigned long long)(atomic_load(&(H5I_mt_g.num_type_info_fl_append_cols))));
-    fprintf(file_ptr, "H5I_mt_g.num_type_info_structs_marked_reallocatable                    = %lld\n", 
-            (unsigned long long)(atomic_load(&(H5I_mt_g.num_type_info_structs_marked_reallocatable))));
     fprintf(file_ptr, "H5I_mt_g.num_type_info_fl_alloc_req_denied_due_to_empty                = %lld\n", 
             (unsigned long long)(atomic_load(&(H5I_mt_g.num_type_info_fl_alloc_req_denied_due_to_empty))));
     fprintf(file_ptr, "H5I_mt_g.num_type_info_fl_alloc_req_denied_due_to_no_reallocable_entries = %lld\n", 
@@ -947,22 +961,33 @@ H5I_dump_stats(FILE * file_ptr)
     fprintf(file_ptr, "H5I_mt_g.num_type_info_fl_frees_skipped_due_to_no_reallocable_entries  = %lld\n", 
             (unsigned long long)
             (atomic_load(&(H5I_mt_g.num_type_info_fl_frees_skipped_due_to_no_reallocable_entries))));
-    fprintf(file_ptr, "H5I_mt_g.num_type_info_fl_num_reallocable_update_aborts                = %lld\n", 
-            (unsigned long long) (atomic_load(&(H5I_mt_g.num_type_info_fl_num_reallocable_update_aborts))));
-    fprintf(file_ptr, "H5I_mt_g.num_type_info_fl_num_reallocable_update_noops                 = %lld\n", 
-            (unsigned long long) (atomic_load(&(H5I_mt_g.num_type_info_fl_num_reallocable_update_noops))));
-    fprintf(file_ptr, "H5I_mt_g.num_type_info_fl_num_reallocable_update_collisions            = %lld\n", 
-            (unsigned long long) (atomic_load(&(H5I_mt_g.num_type_info_fl_num_reallocable_update_collisions))));
-    fprintf(file_ptr, "H5I_mt_g.num_type_info_fl_num_reallocable_updates                      = %lld\n", 
-            (unsigned long long) (atomic_load(&(H5I_mt_g.num_type_info_fl_num_reallocable_updates))));
-    fprintf(file_ptr, "H5I_mt_g.num_type_info_fl_num_reallocable_total                        = %lld\n", 
-            (unsigned long long) (atomic_load(&(H5I_mt_g.num_type_info_fl_num_reallocable_total))));
     fprintf(file_ptr, "H5I_mt_g.H5I__discard_type_id_info__num_calls                          = %lld\n", 
             (unsigned long long) (atomic_load(&(H5I_mt_g.H5I__discard_mt_type_info__num_calls))));
     fprintf(file_ptr, "H5I_mt_g.H5I__new_mt_type_info__num_calls                              = %lld\n", 
             (unsigned long long) (atomic_load(&(H5I_mt_g.H5I__new_mt_type_info__num_calls))));
     fprintf(file_ptr, "H5I_mt_g.H5I__clear_mt_type_info_free_list__num_calls                  = %lld\n\n", 
             (unsigned long long) (atomic_load(&(H5I_mt_g.H5I__clear_mt_type_info_free_list__num_calls))));
+
+    fprintf(file_ptr, "H5I_mt_g.num_type_next_sn_assigned                                     = %lld\n", 
+            (unsigned long long) (atomic_load(&(H5I_mt_g.num_type_next_sn_assigned))));
+    fprintf(file_ptr, "H5I_mt_g.num_type_serial_num_resets                                    = %lld\n", 
+            (unsigned long long) (atomic_load(&(H5I_mt_g.num_type_serial_num_resets))));
+    fprintf(file_ptr, "H5I_mt_g.num_type_info_fl_head_sn_is_zero                              = %lld\n", 
+            (unsigned long long) (atomic_load(&(H5I_mt_g.num_type_info_fl_head_sn_is_zero))));
+    fprintf(file_ptr, "H5I_mt_g.num_type_info_fl_max_sn_update_noops                          = %lld\n", 
+            (unsigned long long) (atomic_load(&(H5I_mt_g.num_type_info_fl_max_sn_update_noops))));
+    fprintf(file_ptr, "H5I_mt_g.num_type_info_fl_max_sn_update_aborts                         = %lld\n", 
+            (unsigned long long) (atomic_load(&(H5I_mt_g.num_type_info_fl_max_sn_update_aborts))));
+    fprintf(file_ptr, "H5I_mt_g.num_type_info_fl_max_sn_updates                               = %lld\n", 
+            (unsigned long long) (atomic_load(&(H5I_mt_g.num_type_info_fl_max_sn_updates))));
+    fprintf(file_ptr, "H5I_mt_g.num_type_info_fl_max_sn_update_cols                           = %lld\n", 
+            (unsigned long long) (atomic_load(&(H5I_mt_g.num_type_info_fl_max_sn_update_cols))));
+    fprintf(file_ptr, "H5I_mt_g.max_type_info_fl_max_sn_update_col_delta                      = %lld\n", 
+            (unsigned long long) (atomic_load(&(H5I_mt_g.max_type_info_fl_max_sn_update_col_delta))));
+    fprintf(file_ptr, "H5I_mt_g.min_type_info_fl_max_sn_update_col_delta                      = %lld\n\n", 
+            (unsigned long long) (atomic_load(&(H5I_mt_g.min_type_info_fl_max_sn_update_col_delta))));
+
+
 
     fprintf(file_ptr, "H5I_mt_g.H5I__mark_node__num_calls                                     = %lld\n", 
             (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__mark_node__num_calls))));
@@ -1279,10 +1304,6 @@ H5I_dump_nz_stats(FILE * file_ptr, const char * tag)
         fprintf(file_ptr, "H5I_mt_g.num_id_info_fl_append_cols                                    = %lld\n", 
                 (unsigned long long)(atomic_load(&(H5I_mt_g.num_id_info_fl_append_cols))));
 
-    if ( (unsigned long long)(atomic_load(&(H5I_mt_g.num_id_info_structs_marked_reallocatable))) > 0ULL )
-        fprintf(file_ptr, "H5I_mt_g.num_id_info_structs_marked_reallocatable                      = %lld\n", 
-                (unsigned long long)(atomic_load(&(H5I_mt_g.num_id_info_structs_marked_reallocatable))));
-
     if ( (unsigned long long)(atomic_load(&(H5I_mt_g.num_id_info_fl_alloc_req_denied_due_to_empty))) > 0ULL )
         fprintf(file_ptr, "H5I_mt_g.num_id_info_fl_alloc_req_denied_due_to_empty                  = %lld\n", 
                 (unsigned long long)(atomic_load(&(H5I_mt_g.num_id_info_fl_alloc_req_denied_due_to_empty))));
@@ -1307,31 +1328,6 @@ H5I_dump_nz_stats(FILE * file_ptr, const char * tag)
                 (unsigned long long)
                 (atomic_load(&(H5I_mt_g.num_id_info_fl_frees_skipped_due_to_no_reallocable_entries))));
 
-    if ( (unsigned long long) (atomic_load(&(H5I_mt_g.num_id_info_fl_num_reallocable_update_aborts))) > 0ULL )
-        fprintf(file_ptr, "H5I_mt_g.num_id_info_fl_num_reallocable_update_aborts                  = %lld\n", 
-                (unsigned long long)
-                (atomic_load(&(H5I_mt_g.num_id_info_fl_num_reallocable_update_aborts))));
-
-    if ( (unsigned long long) (atomic_load(&(H5I_mt_g.num_id_info_fl_num_reallocable_update_noops))) > 0ULL )
-        fprintf(file_ptr, "H5I_mt_g.num_id_info_fl_num_reallocable_update_noops                   = %lld\n", 
-                (unsigned long long)
-                (atomic_load(&(H5I_mt_g.num_id_info_fl_num_reallocable_update_noops))));
-
-    if ( (unsigned long long) (atomic_load(&(H5I_mt_g.num_id_info_fl_num_reallocable_update_collisions))) > 0ULL )
-        fprintf(file_ptr, "H5I_mt_g.num_id_info_fl_num_reallocable_update_collisions              = %lld\n", 
-                (unsigned long long)
-                (atomic_load(&(H5I_mt_g.num_id_info_fl_num_reallocable_update_collisions))));
-
-    if ( (unsigned long long) (atomic_load(&(H5I_mt_g.num_id_info_fl_num_reallocable_updates))) > 0ULL )
-        fprintf(file_ptr, "H5I_mt_g.num_id_info_fl_num_reallocable_updates                        = %lld\n", 
-                (unsigned long long)
-                (atomic_load(&(H5I_mt_g.num_id_info_fl_num_reallocable_updates))));
-
-    if ( (unsigned long long) (atomic_load(&(H5I_mt_g.num_id_info_fl_num_reallocable_total))) > 0ULL )
-        fprintf(file_ptr, "H5I_mt_g.num_id_info_fl_num_reallocable_total                          = %lld\n", 
-                (unsigned long long)
-                (atomic_load(&(H5I_mt_g.num_id_info_fl_num_reallocable_total))));
-
     if ( (unsigned long long) (atomic_load(&(H5I_mt_g.H5I__discard_mt_id_info__num_calls))) > 0ULL )
         fprintf(file_ptr, "H5I_mt_g.H5I__discard_mt_id_info__num_calls                            = %lld\n", 
                 (unsigned long long)
@@ -1346,6 +1342,51 @@ H5I_dump_nz_stats(FILE * file_ptr, const char * tag)
         fprintf(file_ptr, "H5I_mt_g.H5I__clear_mt_id_info_free_list__num_calls                    = %lld\n", 
                 (unsigned long long)
                 (atomic_load(&(H5I_mt_g.H5I__clear_mt_id_info_free_list__num_calls))));
+
+    if ( (unsigned long long) (atomic_load(&(H5I_mt_g.num_id_next_sn_assigned))) > 0ULL )
+        fprintf(file_ptr, "H5I_mt_g.num_id_next_sn_assigned                                       = %lld\n", 
+                (unsigned long long)
+                (atomic_load(&(H5I_mt_g.num_id_next_sn_assigned))));
+
+    if ( (unsigned long long) (atomic_load(&(H5I_mt_g.num_id_serial_num_resets))) > 0ULL )
+        fprintf(file_ptr, "H5I_mt_g.num_id_serial_num_resets                                      = %lld\n", 
+                (unsigned long long)
+                (atomic_load(&(H5I_mt_g.num_id_serial_num_resets))));
+
+    if ( (unsigned long long) (atomic_load(&(H5I_mt_g.num_id_info_fl_head_sn_is_zero))) > 0ULL )
+        fprintf(file_ptr, "H5I_mt_g.num_id_info_fl_head_sn_is_zero                                = %lld\n", 
+                (unsigned long long)
+                (atomic_load(&(H5I_mt_g.num_id_info_fl_head_sn_is_zero))));
+
+    if ( (unsigned long long) (atomic_load(&(H5I_mt_g.num_id_info_fl_max_sn_update_noops))) > 0ULL )
+        fprintf(file_ptr, "H5I_mt_g.num_id_info_fl_max_sn_update_noops                            = %lld\n", 
+                (unsigned long long)
+                (atomic_load(&(H5I_mt_g.num_id_info_fl_max_sn_update_noops))));
+
+    if ( (unsigned long long) (atomic_load(&(H5I_mt_g.num_id_info_fl_max_sn_update_aborts))) > 0ULL )
+        fprintf(file_ptr, "H5I_mt_g.num_id_info_fl_max_sn_update_aborts                           = %lld\n", 
+                (unsigned long long)
+                (atomic_load(&(H5I_mt_g.num_id_info_fl_max_sn_update_aborts))));
+
+    if ( (unsigned long long) (atomic_load(&(H5I_mt_g.num_id_info_fl_max_sn_updates))) > 0ULL )
+        fprintf(file_ptr, "H5I_mt_g.num_id_info_fl_max_sn_updates                                 = %lld\n", 
+                (unsigned long long)
+                (atomic_load(&(H5I_mt_g.num_id_info_fl_max_sn_updates))));
+
+    if ( (unsigned long long) (atomic_load(&(H5I_mt_g.num_id_info_fl_max_sn_update_cols))) > 0ULL )
+        fprintf(file_ptr, "H5I_mt_g.num_id_info_fl_max_sn_update_cols                             = %lld\n", 
+                (unsigned long long)
+                (atomic_load(&(H5I_mt_g.num_id_info_fl_max_sn_update_cols))));
+
+    if ( (unsigned long long) (atomic_load(&(H5I_mt_g.max_id_info_fl_max_sn_update_col_delta))) > 0ULL )
+        fprintf(file_ptr, "H5I_mt_g.max_id_info_fl_max_sn_update_col_delta                        = %lld\n", 
+                (unsigned long long)
+                (atomic_load(&(H5I_mt_g.max_id_info_fl_max_sn_update_col_delta))));
+
+    if ( (unsigned long long) (atomic_load(&(H5I_mt_g.min_id_info_fl_max_sn_update_col_delta))) > 0ULL )
+        fprintf(file_ptr, "H5I_mt_g.min_id_info_fl_max_sn_update_col_delta                        = %lld\n", 
+                (unsigned long long)
+                (atomic_load(&(H5I_mt_g.min_id_info_fl_max_sn_update_col_delta))));
 
 
     /* type info free list stats */
@@ -1382,10 +1423,6 @@ H5I_dump_nz_stats(FILE * file_ptr, const char * tag)
         fprintf(file_ptr, "H5I_mt_g.num_type_info_fl_append_cols                                  = %lld\n", 
                 (unsigned long long)(atomic_load(&(H5I_mt_g.num_type_info_fl_append_cols))));
 
-    if ( (unsigned long long)(atomic_load(&(H5I_mt_g.num_type_info_structs_marked_reallocatable))) > 0ULL )
-        fprintf(file_ptr, "H5I_mt_g.num_type_info_structs_marked_reallocatable                    = %lld\n", 
-                (unsigned long long)(atomic_load(&(H5I_mt_g.num_type_info_structs_marked_reallocatable))));
-
     if ( (unsigned long long)(atomic_load(&(H5I_mt_g.num_type_info_fl_alloc_req_denied_due_to_empty))) > 0ULL )
         fprintf(file_ptr, "H5I_mt_g.num_type_info_fl_alloc_req_denied_due_to_empty                = %lld\n", 
                 (unsigned long long)(atomic_load(&(H5I_mt_g.num_type_info_fl_alloc_req_denied_due_to_empty))));
@@ -1410,31 +1447,6 @@ H5I_dump_nz_stats(FILE * file_ptr, const char * tag)
                 (unsigned long long)
                 (atomic_load(&(H5I_mt_g.num_type_info_fl_frees_skipped_due_to_no_reallocable_entries))));
 
-    if ( (unsigned long long) (atomic_load(&(H5I_mt_g.num_type_info_fl_num_reallocable_update_aborts))) > 0ULL )
-        fprintf(file_ptr, "H5I_mt_g.num_type_info_fl_num_reallocable_update_aborts                = %lld\n", 
-                (unsigned long long)
-                (atomic_load(&(H5I_mt_g.num_type_info_fl_num_reallocable_update_aborts))));
-
-    if ( (unsigned long long) (atomic_load(&(H5I_mt_g.num_type_info_fl_num_reallocable_update_noops))) > 0ULL )
-        fprintf(file_ptr, "H5I_mt_g.num_type_info_fl_num_reallocable_update_noops                 = %lld\n", 
-                (unsigned long long)
-                (atomic_load(&(H5I_mt_g.num_type_info_fl_num_reallocable_update_noops))));
-
-    if ( (unsigned long long) (atomic_load(&(H5I_mt_g.num_type_info_fl_num_reallocable_update_collisions))) > 0ULL )
-        fprintf(file_ptr, "H5I_mt_g.num_type_info_fl_num_reallocable_update_collisions            = %lld\n", 
-                (unsigned long long)
-                (atomic_load(&(H5I_mt_g.num_type_info_fl_num_reallocable_update_collisions))));
-
-    if ( (unsigned long long) (atomic_load(&(H5I_mt_g.num_type_info_fl_num_reallocable_updates))) > 0ULL )
-        fprintf(file_ptr, "H5I_mt_g.num_type_info_fl_num_reallocable_updates                      = %lld\n", 
-                (unsigned long long)
-                (atomic_load(&(H5I_mt_g.num_type_info_fl_num_reallocable_updates))));
-
-    if ( (unsigned long long) (atomic_load(&(H5I_mt_g.num_type_info_fl_num_reallocable_total))) > 0ULL )
-        fprintf(file_ptr, "H5I_mt_g.num_type_info_fl_num_reallocable_total                        = %lld\n", 
-                (unsigned long long)
-                (atomic_load(&(H5I_mt_g.num_type_info_fl_num_reallocable_total))));
-
     if ( (unsigned long long) (atomic_load(&(H5I_mt_g.H5I__discard_mt_type_info__num_calls))) > 0ULL )
         fprintf(file_ptr, "H5I_mt_g.H5I__discard_mt_type_info__num_calls                          = %lld\n", 
                 (unsigned long long)
@@ -1449,6 +1461,52 @@ H5I_dump_nz_stats(FILE * file_ptr, const char * tag)
         fprintf(file_ptr, "H5I_mt_g.H5I__clear_mt_type_info_free_list__num_calls                  = %lld\n", 
                 (unsigned long long)
                 (atomic_load(&(H5I_mt_g.H5I__clear_mt_type_info_free_list__num_calls))));
+
+
+    if ( (unsigned long long) (atomic_load(&(H5I_mt_g.num_type_next_sn_assigned))) > 0ULL )
+        fprintf(file_ptr, "H5I_mt_g.num_type_next_sn_assigned                                       = %lld\n", 
+                (unsigned long long)
+                (atomic_load(&(H5I_mt_g.num_type_next_sn_assigned))));
+
+    if ( (unsigned long long) (atomic_load(&(H5I_mt_g.num_type_serial_num_resets))) > 0ULL )
+        fprintf(file_ptr, "H5I_mt_g.num_type_serial_num_resets                                      = %lld\n", 
+                (unsigned long long)
+                (atomic_load(&(H5I_mt_g.num_type_serial_num_resets))));
+
+    if ( (unsigned long long) (atomic_load(&(H5I_mt_g.num_type_info_fl_head_sn_is_zero))) > 0ULL )
+        fprintf(file_ptr, "H5I_mt_g.num_type_info_fl_head_sn_is_zero                                = %lld\n", 
+                (unsigned long long)
+                (atomic_load(&(H5I_mt_g.num_type_info_fl_head_sn_is_zero))));
+
+    if ( (unsigned long long) (atomic_load(&(H5I_mt_g.num_type_info_fl_max_sn_update_noops))) > 0ULL )
+        fprintf(file_ptr, "H5I_mt_g.num_type_info_fl_max_sn_update_noops                            = %lld\n", 
+                (unsigned long long)
+                (atomic_load(&(H5I_mt_g.num_type_info_fl_max_sn_update_noops))));
+
+    if ( (unsigned long long) (atomic_load(&(H5I_mt_g.num_type_info_fl_max_sn_update_aborts))) > 0ULL )
+        fprintf(file_ptr, "H5I_mt_g.num_type_info_fl_max_sn_update_aborts                           = %lld\n", 
+                (unsigned long long)
+                (atomic_load(&(H5I_mt_g.num_type_info_fl_max_sn_update_aborts))));
+
+    if ( (unsigned long long) (atomic_load(&(H5I_mt_g.num_type_info_fl_max_sn_updates))) > 0ULL )
+        fprintf(file_ptr, "H5I_mt_g.num_type_info_fl_max_sn_updates                                 = %lld\n", 
+                (unsigned long long)
+                (atomic_load(&(H5I_mt_g.num_type_info_fl_max_sn_updates))));
+
+    if ( (unsigned long long) (atomic_load(&(H5I_mt_g.num_type_info_fl_max_sn_update_cols))) > 0ULL )
+        fprintf(file_ptr, "H5I_mt_g.num_type_info_fl_max_sn_update_cols                             = %lld\n", 
+                (unsigned long long)
+                (atomic_load(&(H5I_mt_g.num_type_info_fl_max_sn_update_cols))));
+
+    if ( (unsigned long long) (atomic_load(&(H5I_mt_g.max_type_info_fl_max_sn_update_col_delta))) > 0ULL )
+        fprintf(file_ptr, "H5I_mt_g.max_type_info_fl_max_sn_update_col_delta                        = %lld\n", 
+                (unsigned long long)
+                (atomic_load(&(H5I_mt_g.max_type_info_fl_max_sn_update_col_delta))));
+
+    if ( (unsigned long long) (atomic_load(&(H5I_mt_g.min_type_info_fl_max_sn_update_col_delta))) > 0ULL )
+        fprintf(file_ptr, "H5I_mt_g.min_type_info_fl_max_sn_update_col_delta                        = %lld\n", 
+                (unsigned long long)
+                (atomic_load(&(H5I_mt_g.min_type_info_fl_max_sn_update_col_delta))));
 
 
 
@@ -2036,14 +2094,14 @@ H5I_register_type_internal(const H5I_class_t *cls)
 
             atomic_fetch_sub(&(type_info_ptr->init_count), 1);
 
+            /* since the type info was never installed in H5I_mt_g.type_info_array[], it can't 
+             * have any IDs -- which makes it safe to discard the lock free hash table now.
+             */
             lfht_clear(&(type_info_ptr->lfht));
             atomic_store(&(type_info_ptr->lfht_cleared), TRUE);
-#if 1
+
             result = H5I__discard_mt_type_info(type_info_ptr);
             assert(result >= 0);
-#else 
-            H5MM_free(type_info_ptr);
-#endif
 
             /* If I read the specs on atomic_compare_exchange_strong() correctly, expected_ptr should 
              * equal H5I_mt_g.type_info_array[cls->type] at this point.  Verify this.
@@ -3303,15 +3361,19 @@ H5I__destroy_type(H5I_type_t type)
     }
     H5E_END_TRY /* don't care about errors */
 
-    /* Check if we should release the ID class */
-    if (type_info_ptr->cls->flags & H5I_CLASS_IS_APPLICATION)
-        type_info_ptr->cls = H5MM_xfree_const(type_info_ptr->cls);
+    /* set type_info_ptr->init_count to zero, remove if from H5I_mt_g.type_info_array,
+     * mark the appropriate entry in H5I_mt_g.type_info_allocation_table as available,
+     * and discard the instance of H5I_mt_type_info_t to the free list.
+     *
+     * Note that we do not take down the lock free hash table or (possibly) discard 
+     * type_info->cls until we know that the instance of H5I_mt_type_info_t is 
+     * available for re-allocation or return to the heap.  Must do this since it is 
+     * possible that another thread is acting on an id in the type.  While this 
+     * operation will fail, if we fully take down the type info, this may result 
+     * in a seg fault instead of a graceful failure.
+     */
 
     atomic_store(&(type_info_ptr->init_count), 0);
-
-    lfht_clear(&(type_info_ptr->lfht));
-
-    atomic_store(&(type_info_ptr->lfht_cleared), TRUE);
 
     result = atomic_compare_exchange_strong(&(H5I_mt_g.type_info_array[type]), &type_info_ptr, NULL);
     assert(result);
@@ -5132,10 +5194,6 @@ H5I__dec_ref(hid_t id, void **request, hbool_t app)
 #if H5I_MT_DEBUG
     fprintf(stdout, "   H5I__dec_ref(0x%llx, reguest, app) called. \n", (unsigned long long)id);
 #endif /* H5I_MT_DEBUG */
-#if 0 /* JRM */
-    if (id == 0x1300000000000000 )
-        fprintf(stderr, "   H5I__dec_ref(0x%llx, reguest, app) entering. \n", (unsigned long long)id);
-#endif /* JRM */
 
     atomic_fetch_add(&(H5I_mt_g.H5I__dec_ref__num_calls), 1ULL);
 
@@ -5264,7 +5322,7 @@ H5I__dec_ref(hid_t id, void **request, hbool_t app)
                 assert( NULL == type_info_ptr->cls->free_func );
 
                 /* id_info_ptr->k.count is about to drop to zero, and as a result, the 
-                 * the ID and *id_info_ptr are about to be removed from the idex at least
+                 * the ID and *id_info_ptr are about to be removed from the index at least
                  * logically, and probably physically as well.  Since the free function 
                  * is undefined, all we need to do is setup mod_info_k accordingly and 
                  * try to replace id_info_ptr->k with mod_info_k.
@@ -5373,7 +5431,7 @@ H5I__dec_ref(hid_t id, void **request, hbool_t app)
              * Since we can't roll this action back, we need exclusive access to the 
              * kernel of the instance of H5I_mt_id_info_t associated with the ID.
              *
-             * To get this, try to set the do_not_disturb flag in the kernl.   If 
+             * To get this, try to set the do_not_disturb flag in the kernel.  If 
              * successful, this will prevent any other threads from modifying
              * id_info_ptr->k until after it is set back to FALSE.
              */
@@ -8384,7 +8442,7 @@ H5I__find_id_cb(void *_item, void H5_ATTR_UNUSED *_key, void *_udata)
     if ( ! info_k.marked ) {
 
         /* Get a pointer to the VOL connector's data */
-#if 0 
+#if 0  /* delete this eventually */
         H5_GCC_CLANG_DIAG_OFF("cast-qual")
         object = H5I__unwrap((void *)info_k.object, type); /* will hit global mutex */
         H5_GCC_CLANG_DIAG_ON("cast-qual")
@@ -8605,7 +8663,7 @@ done:
  *
  *     Note that this function assumes that no other threads are active 
  *     in H5I, and that it is therefore safe to ignore 
- *     H5I_mt_g.num_id_info_fl_entries_reallocable. 
+ *     H5I_mt_g.id_max_realloc_sn and H5I_mt_g.type_max_realloc_sn. 
  *
  *                                          JRM -- 10/24/23
  *
@@ -8654,6 +8712,7 @@ H5I__clear_mt_id_info_free_list(void)
         test_val = atomic_fetch_sub(&(H5I_mt_g.id_info_fl_len), 1ULL);
         assert( test_val > 0ULL);
     }
+
     atomic_store(&(H5I_mt_g.id_info_fl_shead), null_snext);
     atomic_store(&(H5I_mt_g.id_info_fl_stail), null_snext);
 
@@ -8663,7 +8722,6 @@ done:
 
 } /* H5I__clear_mt_id_info_free_list() */
 
-#if 0 /* old version */
 
 /************************************************************************
  *
@@ -8676,161 +8734,6 @@ done:
  *     H5I_mt_t.max_desired_id_info_fl_len, attempt the remove the node 
  *     at the head of the id info free list from the free list, and 
  *     discard it and decrement lfht_ptr->fl_len if successful.
- *     ---- skip for now ---
- *
- *                                          JRM -- 9/1/23
- *
- ************************************************************************/
-
-static herr_t 
-H5I__discard_mt_id_info(H5I_mt_id_info_t * id_info_ptr)
-{
-    hbool_t done = FALSE;
-    hbool_t on_fl = FALSE;
-    hbool_t result;
-    uint64_t fl_len;
-    uint64_t max_fl_len;
-    H5I_mt_id_info_sptr_t snext = {NULL, 0ULL};
-    H5I_mt_id_info_sptr_t new_snext;
-    H5I_mt_id_info_sptr_t fl_stail;
-    H5I_mt_id_info_sptr_t fl_snext;
-    H5I_mt_id_info_sptr_t new_fl_snext;
-    H5I_mt_id_info_sptr_t new_fl_stail;
-    H5I_mt_id_info_sptr_t test_fl_stail;
-    H5I_mt_id_info_kernel_t info_k;
-    herr_t ret_value = SUCCEED; /* Return value */
-
-    FUNC_ENTER_NOAPI_NOERR
-
-    assert(id_info_ptr);
-    assert(H5I__ID_INFO == id_info_ptr->tag);
-
-    info_k = atomic_load(&(id_info_ptr->k));
-
-    assert(0 == info_k.count);
-    assert(0 == info_k.app_count);
-    assert(NULL == info_k.object);
-    assert(TRUE == info_k.marked);
-    assert(FALSE == info_k.do_not_disturb);
-    assert(FALSE == info_k.is_future);
-    assert(FALSE == info_k.have_global_mutex);
-
-    assert(!atomic_load(&(id_info_ptr->on_fl)));
-    assert(!atomic_load(&(id_info_ptr->re_allocable)));
-
-    snext = atomic_load(&(id_info_ptr->fl_snext));
-    new_snext.ptr = NULL;
-    new_snext.sn = snext.sn + 1;
-
-    atomic_store(&(id_info_ptr->fl_snext), new_snext);
-
-    result = atomic_compare_exchange_strong(&(id_info_ptr->on_fl), &on_fl, TRUE);
-    assert( result );
-
-#if 1 /* JRM */
-    result = atomic_compare_exchange_strong(&(id_info_ptr->re_allocable), &on_fl, TRUE);
-    assert( result );
-#endif /* JRM */
-
-    while ( ! done ) {
-
-        fl_stail = atomic_load(&(H5I_mt_g.id_info_fl_stail));
-
-        assert(fl_stail.ptr);
-
-        /* it is possible that *fl_tail.ptr has passed through the free list
-         * and been re-allocated between the time we loaded it, and now.
-         * If so, fl_stail_ptr->on_fl will no longer be TRUE.
-         * This isn't a problem, but if so, the following if statement will fail.
-         */
-        // assert(atomic_load(&(fl_stail.ptr->on_fl)));
-
-        fl_snext = atomic_load(&(fl_stail.ptr->fl_snext));
-
-        test_fl_stail = atomic_load(&(H5I_mt_g.id_info_fl_stail));
-
-        if ( ( test_fl_stail.ptr == fl_stail.ptr ) && ( test_fl_stail.sn == fl_stail.sn ) ) {
-
-            if ( NULL == fl_snext.ptr ) {
-
-                /* attempt to append id_info_ptr by setting fl_tail->fl_snext.ptr to id_info_ptr.
-                 * If this succeeds, update stats and attempt to set H5I_mt_g.id_info_fl_stail.ptr
-                 * to id_info_ptr as well.  This may or may not succeed, but in either
-                 * case we are done.
-                 */
-                new_fl_snext.ptr = id_info_ptr;
-                new_fl_snext.sn  = fl_snext.sn + 1;
-                if ( atomic_compare_exchange_strong(&(fl_stail.ptr->fl_snext), &fl_snext, new_fl_snext) ) {
-
-                    atomic_fetch_add(&(H5I_mt_g.id_info_fl_len), 1);
-                    atomic_fetch_add(&(H5I_mt_g.num_id_info_structs_added_to_fl), 1);
-
-                    new_fl_stail.ptr = id_info_ptr;
-                    new_fl_stail.sn  = fl_stail.sn + 1;
-                    if ( ! atomic_compare_exchange_strong(&(H5I_mt_g.id_info_fl_stail), 
-                                                          &fl_stail, new_fl_stail) ) {
-
-                        atomic_fetch_add(&(H5I_mt_g.num_id_info_fl_head_update_cols), 1);
-                    }
-
-                    /* if appropriate, attempt to update H5I_mt_g.max_id_info_fl_len.  In the
-                     * event of a collision, just ignore it and go on, as I don't see any
-                     * reasonable way to recover.
-                     */
-                    if ( (fl_len = atomic_load(&(H5I_mt_g.id_info_fl_len))) >
-                         (max_fl_len = atomic_load(&(H5I_mt_g.max_id_info_fl_len))) ) {
-
-                        atomic_compare_exchange_strong(&(H5I_mt_g.max_id_info_fl_len), &max_fl_len, fl_len);
-                    }
-
-                    done = true;
-
-                } else {
-
-                    /* append failed -- update stats and try again */
-                    atomic_fetch_add(&(H5I_mt_g.num_id_info_fl_append_cols), 1);
-
-                }
-            } else {
-
-                // assert(LFHT_FL_NODE_ON_FL == atomic_load(&(fl_next->tag)));
-
-                /* attempt to set lfht_ptr->fl_stail to fl_next.  It doesn't
-                 * matter whether we succeed or fail, as if we fail, it
-                 * just means that some other thread beat us to it.
-                 *
-                 * that said, it doesn't hurt to collect stats
-                 */
-                new_fl_stail.ptr = fl_snext.ptr;
-                new_fl_stail.sn  = fl_stail.sn + 1;
-                if ( ! atomic_compare_exchange_strong(&(H5I_mt_g.id_info_fl_stail), &fl_stail, new_fl_stail) ) {
-
-                    atomic_fetch_add(&(H5I_mt_g.num_id_info_fl_tail_update_cols), 1);
-                }
-            }
-        }
-    }
-
-    /* don't implement frees for now -- may deal with this in H5I_mt_enter/exit() */
-
-    FUNC_LEAVE_NOAPI(ret_value)
-
-} /* H5I__discard_mt_id_info() */
-
-#else /* new version */
-
-/************************************************************************
- *
- * H5I__discard_mt_id_info
- *
- *     Append the supplied instance of H5I_mt_id_info_t on the id info
- *     free list and increment H5I_mt_t.id_info_fl_len.
- *
- *     If the free list length exceeds 
- *     H5I_mt_t.max_desired_id_info_fl_len, attempt the remove the node 
- *     at the head of the id info free list from the free list, and 
- *     discard it and decrement lfht_ptr->fl_len if successful.
- *     ---- skip for now ---
  *
  *                                          JRM -- 9/1/23
  *
@@ -8842,7 +8745,6 @@ H5I__discard_mt_id_info(H5I_mt_id_info_t * id_info_ptr)
     hbool_t done = FALSE;
     hbool_t on_fl = FALSE;
     hbool_t try_to_free_an_entry = FALSE;
-    hbool_t reallocable_entry_available = FALSE;
     hbool_t result;
     uint64_t fl_len;
     uint64_t max_fl_len;
@@ -8878,6 +8780,7 @@ H5I__discard_mt_id_info(H5I_mt_id_info_t * id_info_ptr)
     assert(FALSE == info_k.have_global_mutex);
 
     assert(!atomic_load(&(id_info_ptr->on_fl)));
+    assert(0 == atomic_load(&(id_info_ptr->serial_num)));
 
     snext = atomic_load(&(id_info_ptr->fl_snext));
     new_snext.ptr = NULL;
@@ -8888,19 +8791,16 @@ H5I__discard_mt_id_info(H5I_mt_id_info_t * id_info_ptr)
     result = atomic_compare_exchange_strong(&(id_info_ptr->on_fl), &on_fl, TRUE);
     assert( result );
 
+    atomic_store(&(id_info_ptr->serial_num), atomic_fetch_add(&(H5I_mt_g.id_next_sn), 1ULL));
+
+    /* update stats */
+    atomic_fetch_add(&(H5I_mt_g.num_id_next_sn_assigned), 1ULL);
 
     while ( ! done ) {
 
         fl_stail = atomic_load(&(H5I_mt_g.id_info_fl_stail));
 
         assert(fl_stail.ptr);
-
-        /* it is possible that *fl_tail.ptr has passed through the free list
-         * and been re-allocated between the time we loaded it, and now.
-         * If so, fl_stail_ptr->on_fl will no longer be TRUE.
-         * This isn't a problem, but if so, the following if statement will fail.
-         */
-        // assert(atomic_load(&(fl_stail.ptr->on_fl)));
 
         fl_snext = atomic_load(&(fl_stail.ptr->fl_snext));
 
@@ -8950,8 +8850,6 @@ H5I__discard_mt_id_info(H5I_mt_id_info_t * id_info_ptr)
                 }
             } else {
 
-                // assert(LFHT_FL_NODE_ON_FL == atomic_load(&(fl_next->tag)));
-
                 /* attempt to set lfht_ptr->fl_stail to fl_next.  It doesn't
                  * matter whether we succeed or fail, as if we fail, it
                  * just means that some other thread beat us to it.
@@ -8968,17 +8866,16 @@ H5I__discard_mt_id_info(H5I_mt_id_info_t * id_info_ptr)
         }
     }
 
-    /* test to see if both H5I_mt_g.id_info_fl_len and H5I_mt_g.num_id_info_fl_entries_reallocable 
-     * are greater than H5I_mt_g.max_desired_id_info_fl_len.  Check both, as while we want to 
-     * keep the free list length around H5I_mt_g.max_desired_id_info_fl_len, we also want to 
-     * have an ample supply of reallocable free list entries on hand.
+    /* Test to see if H5I_mt_g.id_info_fl_len is greater than H5I_mt_g.max_desired_id_info_fl_len.
+     *
+     * Note that this doesn't mean that there is a entry available for discard -- we will check this 
+     * later.
      */
-    assert(atomic_load(&(H5I_mt_g.num_id_info_fl_entries_reallocable)) <= 
-           atomic_load(&(H5I_mt_g.id_info_fl_len)));
 
-    if ( ( atomic_load(&(H5I_mt_g.id_info_fl_len)) > atomic_load(&(H5I_mt_g.max_desired_id_info_fl_len)) ) &&
-         ( atomic_load(&(H5I_mt_g.num_id_info_fl_entries_reallocable)) > 
-           atomic_load(&(H5I_mt_g.max_desired_id_info_fl_len)) ) ) {
+    /* must rework this assert for the possibility that these fields will wrap around */
+    assert(atomic_load(&(H5I_mt_g.id_max_realloc_sn)) <= atomic_load(&(H5I_mt_g.id_next_sn)));
+
+    if ( atomic_load(&(H5I_mt_g.id_info_fl_len)) > atomic_load(&(H5I_mt_g.max_desired_id_info_fl_len)) ) {
 
         try_to_free_an_entry = TRUE;
 
@@ -8989,139 +8886,142 @@ H5I__discard_mt_id_info(H5I_mt_id_info_t * id_info_ptr)
 
     if ( try_to_free_an_entry ) {
 
-        uint64_t num_fl_entries_reallocable;
+        uint64_t serial_num;
 
-        /* While a reallocable entry is almost certainly available, there
-         * is the possibility that other threads have snapped up all 
-         * the reallocable entries in the time since we determined that 
-         * we should try to free an entry.  Hence the following:
-         */
-        while ( ( ! reallocable_entry_available ) &&
-                ( 0 < (num_fl_entries_reallocable = atomic_load(&(H5I_mt_g.num_id_info_fl_entries_reallocable))) ) ) {
+        done = FALSE;
 
-            assert( 0 < num_fl_entries_reallocable );
+        while ( ! done ) {
 
-            if ( atomic_compare_exchange_strong(&(H5I_mt_g.num_id_info_fl_entries_reallocable),
-                                                &num_fl_entries_reallocable, (num_fl_entries_reallocable - 1)) ) {
+            fl_shead = atomic_load(&(H5I_mt_g.id_info_fl_shead));
+            fl_stail = atomic_load(&(H5I_mt_g.id_info_fl_stail));
 
-                reallocable_entry_available = TRUE;
+            assert(fl_shead.ptr);
+            assert(fl_stail.ptr);
 
-            } else {
+            fl_snext = atomic_load(&(fl_shead.ptr->fl_snext));
 
-                /* update stats */
-                atomic_fetch_add(&(H5I_mt_g.num_id_info_fl_num_reallocable_update_collisions), 1ULL);
-            }
-        } /* end while */
+            test_fl_shead = atomic_load(&(H5I_mt_g.id_info_fl_shead));
 
-        if ( ! reallocable_entry_available ) {
+            if ( ( test_fl_shead.ptr == fl_shead.ptr ) && ( test_fl_shead.sn == fl_shead.sn ) ) {
 
-            /* No reallocable entries available -- just update stats and quit */
+                if ( fl_shead.ptr == fl_stail.ptr ) {
 
-            atomic_fetch_add(&(H5I_mt_g.num_id_info_fl_frees_skipped_due_to_no_reallocable_entries), 1ULL);
+                    if ( NULL == fl_snext.ptr ) {
 
-        } else {
+                        /* the free list is empty */
+                        atomic_fetch_add(&(H5I_mt_g.num_id_info_fl_frees_skipped_due_to_empty), 1);
+                        done = TRUE;
+                        break;
+                    }
 
-            done = FALSE;
+                    /* attempt to set H5I_mt_g.id_info_fl_stail to fl_snext.  It doesn't
+                     * matter whether we succeed or fail, as if we fail, it
+                     * just means that some other thread beat us to it.
+                     *
+                     * that said, it doesn't hurt to collect stats
+                     */
+                    assert(fl_snext.ptr);
+                    new_fl_stail.ptr = fl_snext.ptr;
+                    new_fl_stail.sn  = fl_stail.sn + 1;
+                    if ( ! atomic_compare_exchange_strong(&(H5I_mt_g.id_info_fl_stail), &fl_stail, 
+                                                          new_fl_stail) ) {
 
-            while ( ! done ) {
+                        atomic_fetch_add(&(H5I_mt_g.num_id_info_fl_tail_update_cols), 1ULL);
+                    }
+                } else if ( ( 0 < (serial_num = atomic_load(&(fl_shead.ptr->serial_num))) ) &&
+                            ( serial_num >= atomic_load(&(H5I_mt_g.id_max_realloc_sn)) ) ) {
 
-                fl_shead = atomic_load(&(H5I_mt_g.id_info_fl_shead));
-                fl_stail = atomic_load(&(H5I_mt_g.id_info_fl_stail));
+                    /* if serial_num is zero, it should have already been removed from the free
+                     * list by another thread -- if so, the following attempt to remove if from
+                     * the free list will fail.  If this is not the case, we will catch the error
+                     * after we successfully remove the entry.
+                     */
 
-                assert(fl_shead.ptr);
-                assert(fl_stail.ptr);
+                    /* No reallocable entries available -- just update stats and quit */
+                    atomic_fetch_add(&(H5I_mt_g.num_id_info_fl_frees_skipped_due_to_no_reallocable_entries), 1ULL);
+                    done = TRUE; 
 
-                fl_snext = atomic_load(&(fl_shead.ptr->fl_snext));
+                } else {
 
-                test_fl_shead = atomic_load(&(H5I_mt_g.id_info_fl_shead));
+                    /* set up new_fl_shead */
+                    assert(fl_snext.ptr);
+                    new_fl_shead.ptr = fl_snext.ptr;
+                    new_fl_shead.sn  = fl_shead.sn + 1;
 
-                if ( ( test_fl_shead.ptr == fl_shead.ptr ) && ( test_fl_shead.sn == fl_shead.sn ) ) {
+                    if ( ! atomic_compare_exchange_strong(&(H5I_mt_g.id_info_fl_shead), 
+                                                          &fl_shead, new_fl_shead) ) {
 
-                    if ( fl_shead.ptr == fl_stail.ptr ) {
-
-                        if ( NULL == fl_snext.ptr ) {
-
-                            /* the free list is empty */
-                            atomic_fetch_add(&(H5I_mt_g.num_id_info_fl_frees_skipped_due_to_empty), 1);
-                            done = TRUE;
-                            break;
-                        }
-
-                        /* attempt to set H5I_mt_g.id_info_fl_stail to fl_snext.  It doesn't
-                         * matter whether we succeed or fail, as if we fail, it
-                         * just means that some other thread beat us to it.
-                         *
-                         * that said, it doesn't hurt to collect stats
+                        /* the attempt to remove the first item from the free list
+                         * failed.  Update stats and try again.
                          */
-                        new_fl_stail.ptr = fl_snext.ptr;
-                        new_fl_stail.sn  = fl_stail.sn + 1;
-                        if ( ! atomic_compare_exchange_strong(&(H5I_mt_g.id_info_fl_stail), &fl_stail, 
-                                                              new_fl_stail) ) {
+                        atomic_fetch_add(&(H5I_mt_g.num_id_info_fl_head_update_cols), 1ULL);
 
-                            atomic_fetch_add(&(H5I_mt_g.num_id_info_fl_tail_update_cols), 1ULL);
-                        }
                     } else {
 
-                        /* set up new_fl_shead */
-                        assert(fl_snext.ptr);
-                        new_fl_shead.ptr = fl_snext.ptr;
-                        new_fl_shead.sn  = fl_shead.sn + 1;
+                        H5I_mt_id_info_sptr_t null_snext = {NULL, 0ULL};
 
-                        if ( ! atomic_compare_exchange_strong(&(H5I_mt_g.id_info_fl_shead), 
-                                                              &fl_shead, new_fl_shead) ) {
+                        /* first has been removed from the free list.  Set id_info_ptr to fl_shead.ptr,
+                         * discard *id_info_ptr, update stats, and exit the loop by setting done to true.
+                         */
+                        id_info_ptr = fl_shead.ptr;
 
-                            /* the attempt to remove the first item from the free list
-                             * failed.  Update stats and try again.
-                             */
-                            atomic_fetch_add(&(H5I_mt_g.num_id_info_fl_head_update_cols), 1ULL);
+                        assert(H5I__ID_INFO == id_info_ptr->tag);
+                        assert(atomic_load(&(id_info_ptr->on_fl)));
+                        assert(0 < atomic_load(&(id_info_ptr->serial_num)));
 
-                        } else {
+                        /* the above assert only exists in production builds.  If id_info_ptr->serial_num
+                         * is zero and we get this far, increment H5I_mt_g.num_id_info_fl_head_sn_is_zero.
+                         */
+                        if ( 0 == atomic_load(&(id_info_ptr->serial_num)) ) {
 
-                            H5I_mt_id_info_sptr_t null_snext = {NULL, 0ULL};
+                            atomic_fetch_add(&(H5I_mt_g.num_id_info_fl_head_sn_is_zero), 1ULL);
 
-                            /* first has been removed from the free list.  Set id_info_ptr to fl_shead.ptr,
-                             * discard *id_info_ptr, update stats, and exit the loop by setting done to true.
-                             */
-                            id_info_ptr = fl_shead.ptr;
-
-                            assert(H5I__ID_INFO == id_info_ptr->tag);
-                            assert(id_info_ptr->on_fl);
-
-                            info_k = atomic_load(&(id_info_ptr->k));
-
-                            assert(0 == info_k.count);
-                            assert(0 == info_k.app_count);
-                            assert(NULL == info_k.object);
-
-                            /* prepare *if_info_ptr for discard */
-                            id_info_ptr->tag = H5I__ID_INFO_INVALID;
-                            id_info_ptr->id  = (hid_t)0;
-                            atomic_store(&(id_info_ptr->fl_snext), null_snext);
-                            id_info_ptr->realize_cb = NULL;
-                            id_info_ptr->discard_cb = NULL;
-
-                            free(id_info_ptr);
-
-                            /* update stats */
-                            atomic_fetch_add(&(H5I_mt_g.num_id_info_structs_freed), 1ULL);
-                            test_val = atomic_fetch_sub(&(H5I_mt_g.id_info_fl_len), 1ULL);
-                            assert( test_val > 0ULL);
-
-                            done = true;
+                            /* should we throw an error here? */
                         }
+
+                        /* Note that we don't check to see if id_info_ptr->serial_num < 
+                         * H5I_mt_g.id_max_realloc_sn.  This was already checked above.  
+                         * Further, the algorithm for maintaining H5I_mt_g.id_max_realloc_sn
+                         * allows its value to bounce around a bit -- making it possible that 
+                         * we would get a false assertion failure.
+                         */
+
+                        atomic_store(&(id_info_ptr->serial_num), 0ULL);
+
+                        info_k = atomic_load(&(id_info_ptr->k));
+
+                        assert(0 == info_k.count);
+                        assert(0 == info_k.app_count);
+                        assert(NULL == info_k.object);
+
+                        /* prepare *if_info_ptr for discard */
+                        id_info_ptr->tag = H5I__ID_INFO_INVALID;
+                        id_info_ptr->id  = (hid_t)0;
+                        atomic_store(&(id_info_ptr->fl_snext), null_snext);
+                        id_info_ptr->realize_cb = NULL;
+                        id_info_ptr->discard_cb = NULL;
+
+                        free(id_info_ptr);
+
+                        /* update stats */
+                        atomic_fetch_add(&(H5I_mt_g.num_id_info_structs_freed), 1ULL);
+
+                        test_val = atomic_fetch_sub(&(H5I_mt_g.id_info_fl_len), 1ULL);
+                        assert( test_val > 0ULL);
+
+                        atomic_fetch_add(&(H5I_mt_g.num_id_serial_num_resets), 1ULL);
+
+                        done = true;
                     }
                 }
-            } /* while ( ! done ) */
-        }
+            }
+        } /* while ( ! done ) */
     } /* if ( try_to_free_entry ) */
 
     FUNC_LEAVE_NOAPI(ret_value)
 
 } /* H5I__discard_mt_id_info() */
 
-#endif /* new version */
-
-#if 0 /* old version */
 
 /************************************************************************
  *
@@ -9149,201 +9049,11 @@ H5I__new_mt_id_info(hid_t id, unsigned count, unsigned app_count, const void * o
     hbool_t fl_search_done = FALSE;;
     hbool_t result;
     H5I_mt_id_info_t * id_info_ptr = NULL;
-    H5I_mt_id_info_sptr_t sfirst;
-    H5I_mt_id_info_sptr_t new_sfirst;
-    H5I_mt_id_info_sptr_t test_sfirst;
-    H5I_mt_id_info_sptr_t slast;
-    H5I_mt_id_info_sptr_t new_slast;
-    H5I_mt_id_info_sptr_t snext;
-    H5I_mt_id_info_sptr_t new_snext;
-    H5I_mt_id_info_kernel_t new_k = {count, app_count, object, FALSE, FALSE, is_future, FALSE};
-    H5I_mt_id_info_kernel_t old_k;
-    H5I_mt_id_info_t * ret_value = NULL; /* Return value */
-
-    FUNC_ENTER_NOAPI(NULL)
-
-    sfirst = atomic_load(&(H5I_mt_g.id_info_fl_shead));
-
-    if ( NULL == sfirst.ptr ) {
-
-        /* free list is not yet initialized */
-        fl_search_done = TRUE;
-    }
-
-    while ( ! fl_search_done ) {
-
-        sfirst = atomic_load(&(H5I_mt_g.id_info_fl_shead));
-        slast = atomic_load(&(H5I_mt_g.id_info_fl_stail));
-
-        assert(sfirst.ptr);
-        assert(slast.ptr);
-
-        snext = atomic_load(&(sfirst.ptr->fl_snext));
-
-        test_sfirst = atomic_load(&(H5I_mt_g.id_info_fl_shead));
-
-        if ( ( test_sfirst.ptr == sfirst.ptr ) && ( test_sfirst.sn == sfirst.sn ) ) {
-
-            if ( sfirst.ptr == slast.ptr ) {
-
-                if ( NULL == snext.ptr ) {
-
-                    /* the free list is empty */
-                    atomic_fetch_add(&(H5I_mt_g.num_id_info_fl_alloc_req_denied_due_to_empty), 1);
-                    fl_search_done = TRUE;
-                    break;
-                }
-
-                /* attempt to set H5I_mt_g.id_info_fl_stail to snext.  It doesn't
-                 * matter whether we succeed or fail, as if we fail, it
-                 * just means that some other thread beat us to it.
-                 *
-                 * that said, it doesn't hurt to collect stats
-                 */
-                new_slast.ptr = snext.ptr;
-                new_slast.sn  = slast.sn + 1;
-                if ( ! atomic_compare_exchange_strong(&(H5I_mt_g.id_info_fl_stail), &slast, new_slast) ) {
-
-                    atomic_fetch_add(&(H5I_mt_g.num_id_info_fl_tail_update_cols), 1ULL);
-                }
-            } else {
-
-                /* set up new_sfirst now in case we need it later.  */
-                assert(snext.ptr);
-                new_sfirst.ptr = snext.ptr;
-                new_sfirst.sn  = sfirst.sn + 1;
-
-                if ( ! atomic_load(&(sfirst.ptr->re_allocable)) ) {
-
-                    /* The entry at the head of the free list is not re allocable,
-                     * which means that there may be a pointer to it somewhere.  
-                     * Rather than take the risk, let it sit on the free list until 
-                     * is is marked as re allocable.
-                     */
-                    atomic_fetch_add(&(H5I_mt_g.num_id_info_fl_alloc_req_denied_due_to_head_not_reallocable), 1ULL);
-                    fl_search_done = true;
-
-                } else if ( ! atomic_compare_exchange_strong(&(H5I_mt_g.id_info_fl_shead), &sfirst, new_sfirst) ) {
-
-                    /* the attempt to remove the first item from the free list
-                     * failed.  Update stats and try again.
-                     */
-                    atomic_fetch_add(&(H5I_mt_g.num_id_info_fl_head_update_cols), 1ULL);
-
-                } else {
-
-                    /* first has been removed from the free list.  Set fl_node_ptr to first,
-                     * update stats, and exit the loop by setting fl_search_done to true.
-                     */
-                    id_info_ptr = sfirst.ptr;
-
-                    assert(H5I__ID_INFO == id_info_ptr->tag);
-
-                    id_info_ptr->id = id;
-
-                    assert(atomic_load(&(id_info_ptr->on_fl)));
-                    atomic_store(&(id_info_ptr->on_fl), FALSE);
-
-                    assert(atomic_load(&(id_info_ptr->re_allocable)));
-                    atomic_store(&(id_info_ptr->re_allocable), FALSE);
-
-                    new_snext.ptr = NULL;
-                    new_snext.sn  = snext.sn + 1;
-
-                    result = atomic_compare_exchange_strong(&(id_info_ptr->fl_snext), &snext, new_snext);
-                    assert(result);
-
-                    old_k = atomic_load(&(id_info_ptr->k));
-
-                    assert(0 == old_k.count);
-                    assert(0 == old_k.app_count);
-                    assert(NULL == old_k.object);
-
-                    atomic_store(&(id_info_ptr->k), new_k);
-
-                    id_info_ptr->realize_cb = realize_cb;
-                    id_info_ptr->discard_cb = discard_cb;
-
-                    atomic_fetch_sub(&(H5I_mt_g.id_info_fl_len), 1ULL);
-                    atomic_fetch_add(&(H5I_mt_g.num_id_info_structs_alloced_from_fl), 1ULL);
-
-                    fl_search_done = true;
-
-                    assert(id_info_ptr);
-                }
-            }
-        }
-    } /* while ( ! fl_search_done ) */
-
-    if ( NULL == id_info_ptr ) {
-
-        id_info_ptr = (H5I_mt_id_info_t *)malloc(sizeof(H5I_mt_id_info_t));
-
-        if ( NULL == id_info_ptr )
-            HGOTO_ERROR(H5E_ID, H5E_CANTALLOC, NULL, "ID info allocation failed");
-
-        atomic_fetch_add(&(H5I_mt_g.num_id_info_structs_alloced_from_heap), 1ULL);
-
-        id_info_ptr->tag = H5I__ID_INFO;
-        id_info_ptr->id = id;
-        atomic_init(&(id_info_ptr->k), new_k);
-        id_info_ptr->realize_cb = realize_cb;
-        id_info_ptr->discard_cb = discard_cb;
-        atomic_init(&(id_info_ptr->on_fl), FALSE);
-        atomic_init(&(id_info_ptr->re_allocable), FALSE);
-        snext.ptr = NULL;
-        snext.sn = 0ULL;
-        atomic_init(&(id_info_ptr->fl_snext), snext);
-    }
-
-    assert(id_info_ptr);
-
-    /* Set return value */
-    ret_value = id_info_ptr;
-
-    if ( ( atomic_load(
-
-done:
-
-    FUNC_LEAVE_NOAPI(ret_value)
-
-} /* H5I__new_mt_id_info() */
-
-#else /* new version */
-
-/************************************************************************
- *
- * H5I__new_mt_id_info
- *
- *     Test to see if an instance of H5I_mt_id_info_t is available on the
- *     id info free list.  If there is, remove it from the free list, 
- *     re-initialize it, and return a pointer to it.
- *
- *     Otherwise, allocate and initialize an instance of struct
- *     lfht_fl_node_t and return a pointer to the included instance of
- *     lfht_node_t to the caller.
- *
- *     Return a pointer to the new instance on success, and NULL on
- *     failure.
- *
- *                                          JRM -- 8/30/23
- *
- ************************************************************************/
-
-static H5I_mt_id_info_t * 
-H5I__new_mt_id_info(hid_t id, unsigned count, unsigned app_count, const void * object, hbool_t is_future, 
-                    H5I_future_realize_func_t realize_cb, H5I_future_discard_func_t discard_cb)
-{
-    hbool_t fl_search_done = FALSE;;
-    hbool_t result;
-    hbool_t reallocable_entry_available = FALSE;
-    uint64_t num_fl_entries_reallocable;
-    H5I_mt_id_info_t * id_info_ptr = NULL;
-    H5I_mt_id_info_sptr_t sfirst;
-    H5I_mt_id_info_sptr_t new_sfirst;
-    H5I_mt_id_info_sptr_t test_sfirst;
-    H5I_mt_id_info_sptr_t slast;
-    H5I_mt_id_info_sptr_t new_slast;
+    H5I_mt_id_info_sptr_t fl_shead;
+    H5I_mt_id_info_sptr_t new_fl_shead;;
+    H5I_mt_id_info_sptr_t test_fl_shead;
+    H5I_mt_id_info_sptr_t fl_stail;
+    H5I_mt_id_info_sptr_t new_fl_stail;
     H5I_mt_id_info_sptr_t snext;
     H5I_mt_id_info_sptr_t new_snext;
     H5I_mt_id_info_kernel_t new_k;
@@ -9362,73 +9072,36 @@ H5I__new_mt_id_info(hid_t id, unsigned count, unsigned app_count, const void * o
     new_k.have_global_mutex = FALSE;
 
 
-
     atomic_fetch_add(&(H5I_mt_g.H5I__new_mt_id_info__num_calls), 1ULL);
 
-    sfirst = atomic_load(&(H5I_mt_g.id_info_fl_shead));
+    fl_shead = atomic_load(&(H5I_mt_g.id_info_fl_shead));
 
     /* test to see if the free list has been initialized */
 
-    if ( NULL == sfirst.ptr ) {
+    if ( NULL == fl_shead.ptr ) {
 
         /* free list is not yet initialized */
         fl_search_done = TRUE;
     }
 
-    /* Test to see if there is a re-allocable entry on the free list.  Conceptually, we test to see
-     * if H5I_mt_g.num_id_info_fl_entries_reallocable  is positive, we decrement it and set entry_reallocable
-     * to TRUE.  Practically, it is a bit more complicated, as it is possible that 
-     * H5I_mt_g.num_id_info_fl_entries_reallocable between the time that we read it to see if it is 
-     * positive, and we decrement it.  To deal with this, we use an atomic compare exchange to set 
-     * the new value, and retry if there is a collision.
-     */
-    if ( ! fl_search_done ) {
-
-        while ( ( ! reallocable_entry_available ) && 
-                ( 0 < (num_fl_entries_reallocable = atomic_load(&(H5I_mt_g.num_id_info_fl_entries_reallocable))) ) ) {
-
-            assert( 0 < num_fl_entries_reallocable );
-
-            if ( atomic_compare_exchange_strong(&(H5I_mt_g.num_id_info_fl_entries_reallocable),
-                                                &num_fl_entries_reallocable, (num_fl_entries_reallocable - 1)) ) {
-
-                reallocable_entry_available = TRUE;
-            
-            } else { 
-
-                /* update stats */
-                atomic_fetch_add(&(H5I_mt_g.num_id_info_fl_num_reallocable_update_collisions), 1ULL);
-            }
-        } /* end while */
-
-        if ( ! reallocable_entry_available ) {
-
-            /* No reallocable entries available, so set fl_search_done = TRUE */
-
-            fl_search_done = TRUE;
-
-            /* update stats */
-            atomic_fetch_add(&(H5I_mt_g.num_id_info_fl_alloc_req_denied_due_to_no_reallocable_entries), 1ULL);
-
-        }
-    } /* end if ( ! fl_search_done ) */
-
 
     while ( ! fl_search_done ) {
 
-        sfirst = atomic_load(&(H5I_mt_g.id_info_fl_shead));
-        slast = atomic_load(&(H5I_mt_g.id_info_fl_stail));
+        fl_shead = atomic_load(&(H5I_mt_g.id_info_fl_shead));
+        fl_stail = atomic_load(&(H5I_mt_g.id_info_fl_stail));
 
-        assert(sfirst.ptr);
-        assert(slast.ptr);
+        assert(fl_shead.ptr);
+        assert(fl_stail.ptr);
 
-        snext = atomic_load(&(sfirst.ptr->fl_snext));
+        snext = atomic_load(&(fl_shead.ptr->fl_snext));
 
-        test_sfirst = atomic_load(&(H5I_mt_g.id_info_fl_shead));
+        test_fl_shead = atomic_load(&(H5I_mt_g.id_info_fl_shead));
 
-        if ( ( test_sfirst.ptr == sfirst.ptr ) && ( test_sfirst.sn == sfirst.sn ) ) {
+        if ( ( test_fl_shead.ptr == fl_shead.ptr ) && ( test_fl_shead.sn == fl_shead.sn ) ) {
 
-            if ( sfirst.ptr == slast.ptr ) {
+            uint64_t serial_num;
+
+            if ( fl_shead.ptr == fl_stail.ptr ) {
 
                 if ( NULL == snext.ptr ) {
 
@@ -9444,20 +9117,31 @@ H5I__new_mt_id_info(hid_t id, unsigned count, unsigned app_count, const void * o
                  *
                  * that said, it doesn't hurt to collect stats
                  */
-                new_slast.ptr = snext.ptr;
-                new_slast.sn  = slast.sn + 1;
-                if ( ! atomic_compare_exchange_strong(&(H5I_mt_g.id_info_fl_stail), &slast, new_slast) ) {
+                new_fl_stail.ptr = snext.ptr;
+                new_fl_stail.sn  = fl_stail.sn + 1;
+                if ( ! atomic_compare_exchange_strong(&(H5I_mt_g.id_info_fl_stail), &fl_stail, new_fl_stail) ) {
 
                     atomic_fetch_add(&(H5I_mt_g.num_id_info_fl_tail_update_cols), 1ULL);
                 }
+            } else if ( ( 0 < (serial_num = atomic_load(&(fl_shead.ptr->serial_num))) ) &&
+                        ( serial_num >= atomic_load(&(H5I_mt_g.id_max_realloc_sn)) ) ) {
+
+                /* if serial_num is zero, it should have already been removed from the free
+                 * list by another thread -- if so, the following attempt to remove if from
+                 * the free list will fail.  If this is not the case, we will catch the error
+                 * after we successfully remove the entry.
+                 */
+
+                /* No reallocable entries available -- just update stats and quit */
+                atomic_fetch_add(&(H5I_mt_g.num_id_info_fl_alloc_req_denied_due_to_no_reallocable_entries), 1ULL);
+                fl_search_done = TRUE; 
             } else {
 
-                /* set up new_sfirst now in case we need it later.  */
-                assert(snext.ptr);
-                new_sfirst.ptr = snext.ptr;
-                new_sfirst.sn  = sfirst.sn + 1;
+                /* set up new_fl_shead now in case we need it later.  */
+                new_fl_shead.ptr = snext.ptr;
+                new_fl_shead.sn  = fl_shead.sn + 1;
 
-                if ( ! atomic_compare_exchange_strong(&(H5I_mt_g.id_info_fl_shead), &sfirst, new_sfirst) ) {
+                if ( ! atomic_compare_exchange_strong(&(H5I_mt_g.id_info_fl_shead), &fl_shead, new_fl_shead) ) {
 
                     /* the attempt to remove the first item from the free list
                      * failed.  Update stats and try again.
@@ -9469,7 +9153,7 @@ H5I__new_mt_id_info(hid_t id, unsigned count, unsigned app_count, const void * o
                     /* first has been removed from the free list.  Set fl_node_ptr to first,
                      * update stats, and exit the loop by setting fl_search_done to true.
                      */
-                    id_info_ptr = sfirst.ptr;
+                    id_info_ptr = fl_shead.ptr;
 
                     assert(H5I__ID_INFO == id_info_ptr->tag);
 
@@ -9477,6 +9161,19 @@ H5I__new_mt_id_info(hid_t id, unsigned count, unsigned app_count, const void * o
 
                     assert(atomic_load(&(id_info_ptr->on_fl)));
                     atomic_store(&(id_info_ptr->on_fl), FALSE);
+
+                    assert( 0 < atomic_load(&(id_info_ptr->serial_num ) ) );
+
+                    /* the above assert only exists in production builds.  If id_info_ptr->serial_num
+                     * is zero and we get this far, increment H5I_mt_g.num_id_info_fl_head_sn_is_zero.
+                     */
+                    if ( 0 == atomic_load(&(id_info_ptr->serial_num)) ) {
+
+                        atomic_fetch_add(&(H5I_mt_g.num_id_info_fl_head_sn_is_zero), 1ULL);
+
+                        /* should we throw an error here? */
+                    }
+                    atomic_store(&(id_info_ptr->serial_num), 0ULL);
 
                     new_snext.ptr = NULL;
                     new_snext.sn  = snext.sn + 1;
@@ -9497,6 +9194,7 @@ H5I__new_mt_id_info(hid_t id, unsigned count, unsigned app_count, const void * o
 
                     atomic_fetch_sub(&(H5I_mt_g.id_info_fl_len), 1ULL);
                     atomic_fetch_add(&(H5I_mt_g.num_id_info_structs_alloced_from_fl), 1ULL);
+                    atomic_fetch_add(&(H5I_mt_g.num_id_serial_num_resets), 1ULL);
 
                     fl_search_done = true;
                 }
@@ -9522,6 +9220,7 @@ H5I__new_mt_id_info(hid_t id, unsigned count, unsigned app_count, const void * o
         snext.ptr = NULL;
         snext.sn = 0ULL;
         atomic_init(&(id_info_ptr->fl_snext), snext);
+        atomic_init(&(id_info_ptr->serial_num), 0ULL);
     }
 
     assert(id_info_ptr);
@@ -9535,7 +9234,6 @@ done:
 
 } /* H5I__new_mt_id_info() */
 
-#endif /* new version */
 
 /************************************************************************
  *
@@ -9579,13 +9277,25 @@ H5I__clear_mt_type_info_free_list(void)
         assert(H5I__TYPE_INFO == type_info_ptr->tag);
         assert(0 == atomic_load(&(type_info_ptr->init_count)));
         assert(0 == atomic_load(&(type_info_ptr->id_count)));
-        assert(atomic_load(&(type_info_ptr->lfht_cleared)));
+
+        if ( ( type_info_ptr->cls ) &&
+             ( type_info_ptr->cls->flags & H5I_CLASS_IS_APPLICATION ) ) {
+
+            type_info_ptr->cls = H5MM_xfree_const(type_info_ptr->cls);
+        }
+
+        if ( ! atomic_load(&(type_info_ptr->lfht_cleared)) ) {
+
+            lfht_clear(&(type_info_ptr->lfht));
+            atomic_store(&(type_info_ptr->lfht_cleared), TRUE);
+        }
+
         assert(atomic_load(&(type_info_ptr->on_fl)));
 
         fl_head = atomic_load(&(type_info_ptr->fl_snext));
         fl_head_ptr = fl_head.ptr;
 
-        /* prepare *if_info_ptr for discard */
+        /* prepare *id_info_ptr for discard */
         type_info_ptr->tag = H5I__TYPE_INFO_INVALID;
         type_info_ptr->cls = NULL;
         atomic_store(&(type_info_ptr->fl_snext), null_snext);
@@ -9605,151 +9315,6 @@ done:
 
 } /* H5I__clear_mt_type_info_free_list() */
 
-#if 0 /* old version */
-
-/************************************************************************
- *
- * H5I__discard_mt_type_info
- *
- *     Append the supplied instance of H5I_mt_type_info_t on the type info
- *     free list and increment H5I_mt_t.type_info_fl_len.
- *
- *     If the free list length exceeds 
- *     H5I_mt_t.max_desired_type_info_fl_len, attempt the remove the node 
- *     at the head of the type info free list from the free list, and 
- *     discard it and decrement lfht_ptr->fl_len if successful.
- *     ---- skip for now ---
- *
- *                                          JRM -- 9/1/23
- *
- ************************************************************************/
-
-static herr_t 
-H5I__discard_mt_type_info(H5I_mt_type_info_t * type_info_ptr)
-{
-    hbool_t done = FALSE;
-    hbool_t on_fl = FALSE;
-    hbool_t result;
-    uint64_t fl_len;
-    uint64_t max_fl_len;
-    H5I_mt_type_info_sptr_t snext = {NULL, 0ULL};
-    H5I_mt_type_info_sptr_t new_snext;
-    H5I_mt_type_info_sptr_t fl_stail;
-    H5I_mt_type_info_sptr_t fl_snext;
-    H5I_mt_type_info_sptr_t new_fl_snext;
-    H5I_mt_type_info_sptr_t new_fl_stail;
-    H5I_mt_type_info_sptr_t test_fl_stail;
-    herr_t ret_value = SUCCEED; /* Return value */
-
-    FUNC_ENTER_NOAPI_NOERR
-
-    assert(type_info_ptr);
-    assert(H5I__TYPE_INFO == type_info_ptr->tag);
-
-    assert(0 == atomic_load(&(type_info_ptr->init_count)));
-    assert(0 == atomic_load(&(type_info_ptr->id_count)));
-
-    assert(atomic_load(&(type_info_ptr->lfht_cleared)));
-
-    assert(!atomic_load(&(type_info_ptr->on_fl)));
-
-    snext = atomic_load(&(type_info_ptr->fl_snext));
-
-    new_snext.ptr = NULL;
-    new_snext.sn = snext.sn + 1;
-
-    atomic_store(&(type_info_ptr->fl_snext), new_snext);
-
-    result = atomic_compare_exchange_strong(&(type_info_ptr->on_fl), &on_fl, TRUE);
-    assert(result);
-
-
-    while ( ! done ) {
-
-        fl_stail = atomic_load(&(H5I_mt_g.type_info_fl_stail));
-
-        assert(fl_stail.ptr);
-
-        /* it is possible that *fl_tail.ptr has passed through the free list
-         * and been re-allocated between the time we loaded it, and now.
-         * If so, fl_stail_ptr->on_fl will no longer be TRUE.
-         * This isn't a problem, but if so, the following if statement will fail.
-         */
-        // assert(atomic_load(&(fl_stail.ptr->on_fl)));
-
-        fl_snext = atomic_load(&(fl_stail.ptr->fl_snext));
-
-        test_fl_stail = atomic_load(&(H5I_mt_g.type_info_fl_stail));
-
-        if ( ( test_fl_stail.ptr == fl_stail.ptr ) && ( test_fl_stail.sn == fl_stail.sn ) ) {
-
-            if ( NULL == fl_snext.ptr ) {
-
-                /* attempt to append type_info_ptr by setting fl_tail->fl_snext.ptr to type_info_ptr.
-                 * If this succeeds, update stats and attempt to set H5I_mt_g.type_info_fl_stail.ptr
-                 * to type_info_ptr as well.  This may or may not succeed, but in either
-                 * case we are done.
-                 */
-                new_fl_snext.ptr = type_info_ptr;
-                new_fl_snext.sn  = fl_snext.sn + 1;
-                if ( atomic_compare_exchange_strong(&(fl_stail.ptr->fl_snext), &fl_snext, new_fl_snext) ) {
-
-                    atomic_fetch_add(&(H5I_mt_g.type_info_fl_len), 1);
-                    atomic_fetch_add(&(H5I_mt_g.num_type_info_structs_added_to_fl), 1);
-
-                    new_fl_stail.ptr = type_info_ptr;
-                    new_fl_stail.sn  = fl_stail.sn + 1;
-                    if ( ! atomic_compare_exchange_strong(&(H5I_mt_g.type_info_fl_stail), 
-                                                          &fl_stail, new_fl_stail) ) {
-
-                        atomic_fetch_add(&(H5I_mt_g.num_type_info_fl_head_update_cols), 1);
-                    }
-
-                    /* if appropriate, attempt to update H5I_mt_g.max_type_info_fl_len.  In the
-                     * event of a collision, just ignore it and go on, as I don't see any
-                     * reasonable way to recover.
-                     */
-                    if ( (fl_len = atomic_load(&(H5I_mt_g.type_info_fl_len))) >
-                         (max_fl_len = atomic_load(&(H5I_mt_g.max_type_info_fl_len))) ) {
-
-                        atomic_compare_exchange_strong(&(H5I_mt_g.max_type_info_fl_len), &max_fl_len, fl_len);
-                    }
-
-                    done = true;
-
-                } else {
-
-                    /* append failed -- update stats and try again */
-                    atomic_fetch_add(&(H5I_mt_g.num_type_info_fl_append_cols), 1);
-
-                }
-            } else {
-
-                // assert(LFHT_FL_NODE_ON_FL == atomic_load(&(fl_next->tag)));
-
-                /* attempt to set lfht_ptr->fl_stail to fl_next.  It doesn't
-                 * matter whether we succeed or fail, as if we fail, it
-                 * just means that some other thread beat us to it.
-                 *
-                 * that satype, it doesn't hurt to collect stats
-                 */
-                new_fl_stail.ptr = fl_snext.ptr;
-                new_fl_stail.sn  = fl_stail.sn + 1;
-                if ( ! atomic_compare_exchange_strong(&(H5I_mt_g.type_info_fl_stail), &fl_stail, new_fl_stail) ) {
-
-                    atomic_fetch_add(&(H5I_mt_g.num_type_info_fl_tail_update_cols), 1);
-                }
-            }
-        }
-    }
-
-    /* don't implement frees for now -- may deal with this in H5I_mt_enter/exit() */
-
-    FUNC_LEAVE_NOAPI(ret_value)
-
-} /* H5I__discard_mt_type_info() */
-
-#else /* new version */
 
 /************************************************************************
  *
@@ -9774,7 +9339,6 @@ H5I__discard_mt_type_info(H5I_mt_type_info_t * type_info_ptr)
     hbool_t on_fl = FALSE;
     hbool_t result;
     hbool_t try_to_free_an_entry = FALSE;
-    hbool_t reallocable_entry_available = FALSE;
     uint64_t fl_len;
     uint64_t max_fl_len;
     uint64_t test_val;
@@ -9800,8 +9364,6 @@ H5I__discard_mt_type_info(H5I_mt_type_info_t * type_info_ptr)
     assert(0 == atomic_load(&(type_info_ptr->init_count)));
     assert(0 == atomic_load(&(type_info_ptr->id_count)));
 
-    assert(atomic_load(&(type_info_ptr->lfht_cleared)));
-
     assert(!atomic_load(&(type_info_ptr->on_fl)));
 
     snext = atomic_load(&(type_info_ptr->fl_snext));
@@ -9814,19 +9376,17 @@ H5I__discard_mt_type_info(H5I_mt_type_info_t * type_info_ptr)
     result = atomic_compare_exchange_strong(&(type_info_ptr->on_fl), &on_fl, TRUE);
     assert(result);
 
+    atomic_store(&(type_info_ptr->serial_num), atomic_fetch_add(&(H5I_mt_g.type_next_sn), 1ULL));
+
+    /* update stats */
+    atomic_fetch_add(&(H5I_mt_g.num_type_next_sn_assigned), 1ULL);
+
 
     while ( ! done ) {
 
         fl_stail = atomic_load(&(H5I_mt_g.type_info_fl_stail));
 
         assert(fl_stail.ptr);
-
-        /* it is possible that *fl_tail.ptr has passed through the free list
-         * and been re-allocated between the time we loaded it, and now.
-         * If so, fl_stail_ptr->on_fl will no longer be TRUE.
-         * This isn't a problem, but if so, the following if statement will fail.
-         */
-        // assert(atomic_load(&(fl_stail.ptr->on_fl)));
 
         fl_snext = atomic_load(&(fl_stail.ptr->fl_snext));
 
@@ -9876,13 +9436,11 @@ H5I__discard_mt_type_info(H5I_mt_type_info_t * type_info_ptr)
                 }
             } else {
 
-                // assert(LFHT_FL_NODE_ON_FL == atomic_load(&(fl_next->tag)));
-
                 /* attempt to set lfht_ptr->fl_stail to fl_next.  It doesn't
                  * matter whether we succeed or fail, as if we fail, it
                  * just means that some other thread beat us to it.
                  *
-                 * that satype, it doesn't hurt to collect stats
+                 * that said, it doesn't hurt to collect stats
                  */
                 new_fl_stail.ptr = fl_snext.ptr;
                 new_fl_stail.sn  = fl_stail.sn + 1;
@@ -9895,28 +9453,16 @@ H5I__discard_mt_type_info(H5I_mt_type_info_t * type_info_ptr)
     }
 
 
-    /* test to see if both H5I_mt_g.type_info_fl_len and H5I_mt_g.num_type_info_fl_entries_reallocable 
-     * are greater than H5I_mt_g.max_desired_type_info_fl_len.  Check both, as while we want to 
-     * keep the free list length around H5I_mt_g.max_desired_type_info_fl_len, we also want to 
-     * have an ample supply of reallocable free list entries on hand.
+    /* Test to see if H5I_mt_g.type_info_fl_len is greater than H5I_mt_g.max_desired_id_info_fl_len.
+     *
+     * Note that this doesn't mean that there is a entry available for discard -- we will check this
+     * later.
      */
-#if 1
-    assert(atomic_load(&(H5I_mt_g.num_type_info_fl_entries_reallocable)) <= 
-           atomic_load(&(H5I_mt_g.type_info_fl_len)));
-#else
-    assert(atomic_load(&(H5I_mt_g.snum_type_info_fl_entries_reallocable)).val <= 
-           atomic_load(&(H5I_mt_g.type_info_fl_len)));
-#endif
 
-#if 1
-    if ( ( atomic_load(&(H5I_mt_g.type_info_fl_len)) > atomic_load(&(H5I_mt_g.max_desired_type_info_fl_len)) ) &&
-         ( atomic_load(&(H5I_mt_g.num_type_info_fl_entries_reallocable)) > 
-           atomic_load(&(H5I_mt_g.max_desired_type_info_fl_len)) ) ) {
-#else
-    if ( ( atomic_load(&(H5I_mt_g.type_info_fl_len)) > atomic_load(&(H5I_mt_g.max_desired_type_info_fl_len)) ) &&
-         ( atomic_load(&(H5I_mt_g.snum_type_info_fl_entries_reallocable)).val > 
-           atomic_load(&(H5I_mt_g.max_desired_type_info_fl_len)) ) ) {
-#endif
+    /* must rework this assert for the possibility that these fields will wrap around */
+    assert(atomic_load(&(H5I_mt_g.type_max_realloc_sn)) <= atomic_load(&(H5I_mt_g.type_next_sn)));
+
+    if ( atomic_load(&(H5I_mt_g.type_info_fl_len)) > atomic_load(&(H5I_mt_g.max_desired_type_info_fl_len)) ) {
 
         try_to_free_an_entry = TRUE;
 
@@ -9925,352 +9471,163 @@ H5I__discard_mt_type_info(H5I_mt_type_info_t * type_info_ptr)
         atomic_fetch_add(&(H5I_mt_g.num_type_info_fl_frees_skipped_due_to_fl_too_small), 1ULL);
     }
 
+
     if ( try_to_free_an_entry ) {
 
-#if 1
-        uint64_t num_fl_entries_reallocable;
-#else
-        H5I_suint64_t snum_fl_entries_reallocable;
-        H5I_suint64_t new_snum_fl_entries_reallocable;
-#endif
+        uint64_t serial_num;
 
-        /* While a reallocable entry is almost certainly available, there
-         * is the possibility that other threads have snapped up all 
-         * the reallocable entries in the time since we determined that 
-         * we should try to free an entry.  Hence the following:
-         */
-#if 1
-        while ( ( ! reallocable_entry_available ) &&
-                ( 0 < (num_fl_entries_reallocable = 
-                       atomic_load(&(H5I_mt_g.num_type_info_fl_entries_reallocable))) ) ) {
+        done = FALSE;
 
-            assert( 0 < num_fl_entries_reallocable );
+        while ( ! done ) {
 
-            if ( atomic_compare_exchange_strong(&(H5I_mt_g.num_type_info_fl_entries_reallocable),
-                                                &num_fl_entries_reallocable, (num_fl_entries_reallocable - 1)) ) {
+            fl_shead = atomic_load(&(H5I_mt_g.type_info_fl_shead));
+            fl_stail = atomic_load(&(H5I_mt_g.type_info_fl_stail));
 
-                reallocable_entry_available = TRUE;
+            assert(fl_shead.ptr);
+            assert(fl_stail.ptr);
 
-            } else {
+            fl_snext = atomic_load(&(fl_shead.ptr->fl_snext));
 
-                /* update stats */
-                atomic_fetch_add(&(H5I_mt_g.num_type_info_fl_num_reallocable_update_collisions), 1ULL);
-            }
-        } /* end while */
-#else
-        while ( ( ! reallocable_entry_available ) &&
-                ( 0 < (snum_fl_entries_reallocable = 
-                       atomic_load(&(H5I_mt_g.snum_type_info_fl_entries_reallocable))).val ) ) {
+            test_fl_shead = atomic_load(&(H5I_mt_g.type_info_fl_shead));
 
-            assert( 0 < snum_fl_entries_reallocable.val );
+            if ( ( test_fl_shead.ptr == fl_shead.ptr ) && ( test_fl_shead.sn == fl_shead.sn ) ) {
 
-            new_snum_fl_entries_reallocable.val = snum_fl_entries_reallocable.val - 1;
-            new_snum_fl_entries_reallocable.sn  = snum_fl_entries_reallocable.sn + 1;
+                if ( fl_shead.ptr == fl_stail.ptr ) {
 
-            if ( atomic_compare_exchange_strong(&(H5I_mt_g.snum_type_info_fl_entries_reallocable),
-                                                &snum_fl_entries_reallocable, new_snum_fl_entries_reallocable) ) {
+                    if ( NULL == fl_snext.ptr ) {
 
-                reallocable_entry_available = TRUE;
+                        /* the free list is empty */
+                        atomic_fetch_add(&(H5I_mt_g.num_type_info_fl_frees_skipped_due_to_empty), 1);
+                        done = TRUE;
+                        break;
+                    }
 
-                fprintf(stderr, 
-                        "\ndisc: old/new snum_type_info_fl_entries_reallocable = {%lld, %lld} / {%lld, %lld}\n",
-                        (long long)snum_fl_entries_reallocable.val, 
-                        (long long)snum_fl_entries_reallocable.sn,
-                        (long long)new_snum_fl_entries_reallocable.val, 
-                        (long long)new_snum_fl_entries_reallocable.sn);
+                    /* attempt to set H5I_mt_g.type_info_fl_stail to fl_snext.  It doesn't
+                     * matter whether we succeed or fail, as if we fail, it
+                     * just means that some other thread beat us to it.
+                     *
+                     * that said, it doesn't hurt to collect stats
+                     */
+                    new_fl_stail.ptr = fl_snext.ptr;
+                    new_fl_stail.sn  = fl_stail.sn + 1;
 
-            } else {
+                    assert(new_fl_stail.ptr);
 
-                /* update stats */
-                atomic_fetch_add(&(H5I_mt_g.num_type_info_fl_num_reallocable_update_collisions), 1ULL);
-            }
-        } /* end while */
-#endif
+                    if ( ! atomic_compare_exchange_strong(&(H5I_mt_g.type_info_fl_stail), &fl_stail, new_fl_stail) ) {
 
-        if ( ! reallocable_entry_available ) {
+                        atomic_fetch_add(&(H5I_mt_g.num_type_info_fl_tail_update_cols), 1ULL);
+                    }
 
-            /* No reallocable entries available -- just update stats and quit */
+                } else if ( ( 0 < (serial_num = atomic_load(&(fl_shead.ptr->serial_num))) ) &&
+                            ( serial_num >= atomic_load(&(H5I_mt_g.type_max_realloc_sn)) ) ) {
 
-            atomic_fetch_add(&(H5I_mt_g.num_type_info_fl_frees_skipped_due_to_no_reallocable_entries), 1ULL);
+                    /* if serial_num is zero, it should have already been removed from the free
+                     * list by another thread -- if so, the following attempt to remove if from
+                     * the free list will fail.  If this is not the case, we will catch the error
+                     * after we successfully remove the entry.
+                     */
 
-        } else {
+                    /* No reallocable entries available -- just update stats and quit */
+                    atomic_fetch_add(&(H5I_mt_g.num_type_info_fl_frees_skipped_due_to_no_reallocable_entries), 1ULL);
+                    done = TRUE;
 
-            done = FALSE;
+                } else {
 
-            while ( ! done ) {
+                    /* set up new_fl_shead */
 
-                fl_shead = atomic_load(&(H5I_mt_g.type_info_fl_shead));
-                fl_stail = atomic_load(&(H5I_mt_g.type_info_fl_stail));
+                    assert(fl_snext.ptr);
 
-                assert(fl_shead.ptr);
-                assert(fl_stail.ptr);
+                    new_fl_shead.ptr = fl_snext.ptr;
+                    new_fl_shead.sn  = fl_shead.sn + 1;
 
-                fl_snext = atomic_load(&(fl_shead.ptr->fl_snext));
+                    if ( ! atomic_compare_exchange_strong(&(H5I_mt_g.type_info_fl_shead), &fl_shead, new_fl_shead) ) {
 
-                test_fl_shead = atomic_load(&(H5I_mt_g.type_info_fl_shead));
-
-                if ( ( test_fl_shead.ptr == fl_shead.ptr ) && ( test_fl_shead.sn == fl_shead.sn ) ) {
-
-                    if ( fl_shead.ptr == fl_stail.ptr ) {
-
-                        if ( NULL == fl_snext.ptr ) {
-
-                            /* the free list is empty */
-                            atomic_fetch_add(&(H5I_mt_g.num_type_info_fl_frees_skipped_due_to_empty), 1);
-                            done = TRUE;
-                            break;
-                        }
-
-                        /* attempt to set H5I_mt_g.type_info_fl_stail to fl_snext.  It doesn't
-                         * matter whether we succeed or fail, as if we fail, it
-                         * just means that some other thread beat us to it.
-                         *
-                         * that said, it doesn't hurt to collect stats
+                        /* the attempt to remove the first item from the free list
+                         * failed.  Update stats and try again.
                          */
-                        new_fl_stail.ptr = fl_snext.ptr;
-                        new_fl_stail.sn  = fl_stail.sn + 1;
-                        if ( ! atomic_compare_exchange_strong(&(H5I_mt_g.type_info_fl_stail), &fl_stail, 
-                                                              new_fl_stail) ) {
+                        atomic_fetch_add(&(H5I_mt_g.num_type_info_fl_head_update_cols), 1ULL);
 
-                            atomic_fetch_add(&(H5I_mt_g.num_type_info_fl_tail_update_cols), 1ULL);
-                        }
                     } else {
 
-                        /* set up new_fl_shead */
-                        assert(fl_snext.ptr);
-                        new_fl_shead.ptr = fl_snext.ptr;
-                        new_fl_shead.sn  = fl_shead.sn + 1;
+                        H5I_mt_type_info_sptr_t null_snext = {NULL, 0ULL};
 
-                        if ( ! atomic_compare_exchange_strong(&(H5I_mt_g.type_info_fl_shead), 
-                                                              &fl_shead, new_fl_shead) ) {
+                        /* first has been removed from the free list.  Set type_info_ptr to fl_shead.ptr,
+                         * discard *type_info_ptr, update stats, and exit the loop by setting done to true.
+                         */
+                        type_info_ptr = fl_shead.ptr;
 
-                            /* the attempt to remove the first item from the free list
-                             * failed.  Update stats and try again.
-                             */
-                            atomic_fetch_add(&(H5I_mt_g.num_type_info_fl_head_update_cols), 1ULL);
+                        assert(H5I__TYPE_INFO == type_info_ptr->tag);
+                        assert(type_info_ptr->on_fl);
+                        assert(0 < atomic_load(&(type_info_ptr->serial_num)));
 
-                        } else {
+                        /* the above assert only exists in production builds.  If type_info_ptr->serial_num
+                         * is zero and we get this far, increment H5I_mt_g.num_id_info_fl_head_sn_is_zero.
+                         */
+                        if ( 0 == atomic_load(&(type_info_ptr->serial_num)) ) {
 
-                            H5I_mt_type_info_sptr_t null_snext = {NULL, 0ULL};
+                            atomic_fetch_add(&(H5I_mt_g.num_id_info_fl_head_sn_is_zero), 1ULL);
 
-                            /* first has been removed from the free list.  Set type_info_ptr to fl_shead.ptr,
-                             * discard *type_info_ptr, update stats, and exit the loop by setting done to true.
-                             */
-                            type_info_ptr = fl_shead.ptr;
-
-                            assert(H5I__TYPE_INFO == type_info_ptr->tag);
-                            assert(type_info_ptr->on_fl);
-
-                            /* prepare *type_info_ptr for discard */
-                            type_info_ptr->tag = H5I__TYPE_INFO_INVALID;
-                            atomic_store(&(type_info_ptr->fl_snext), null_snext);
-
-                            free(type_info_ptr);
-
-                            /* update stats */
-                            atomic_fetch_add(&(H5I_mt_g.num_type_info_structs_freed), 1ULL);
-                            test_val = atomic_fetch_sub(&(H5I_mt_g.type_info_fl_len), 1ULL);
-                            assert( test_val > 0ULL);
-
-                            done = true;
+                            /* should we throw an error here? */
                         }
+
+                        /* prepare *type_info_ptr for discard */
+                        type_info_ptr->tag = H5I__TYPE_INFO_INVALID;
+                        atomic_store(&(type_info_ptr->fl_snext), null_snext);
+
+                        /* Note that we don't check to see if id_info_ptr->serial_num <
+                         * H5I_mt_g.id_max_realloc_sn.  This was already checked above.
+                         * Further, the algorithm for maintaining H5I_mt_g.id_max_realloc_sn
+                         * allows its value to bounce around a bit -- making it possible that
+                         * we would get a false assertion failure.
+                         */
+
+                        atomic_store(&(type_info_ptr->serial_num), 0ULL);
+
+                        /* because of the possibility of another thread acting on an id in 
+                         * the id type during takedown, we didn't discard the class (if a 
+                         * user type) and clear the lock free hash table.  
+                         *
+                         * Since the instance of H5I_mt_type_info_t is about to be freed,
+                         * it is now safe to do so.  
+                         *
+                         * Note that it is possible that the lock free hash table has never
+                         * been set up -- hence we must check type_info_ptr->lfht_cleared
+                         * before we attempt to do so.
+                         */
+
+                        /* Check if we should release the ID class */
+                        if ( ( type_info_ptr->cls ) &&
+                             ( type_info_ptr->cls->flags & H5I_CLASS_IS_APPLICATION ) ) {
+
+                            type_info_ptr->cls = H5MM_xfree_const(type_info_ptr->cls);
+                        }
+
+                        if ( ! atomic_load(&(type_info_ptr->lfht_cleared)) ) {
+
+                            lfht_clear(&(type_info_ptr->lfht));
+
+                            atomic_store(&(type_info_ptr->lfht_cleared), TRUE);
+                        }
+
+                        free(type_info_ptr);
+
+                        /* update stats */
+                        atomic_fetch_add(&(H5I_mt_g.num_type_info_structs_freed), 1ULL);
+                        test_val = atomic_fetch_sub(&(H5I_mt_g.type_info_fl_len), 1ULL);
+                        assert( test_val > 0ULL);
+                        atomic_fetch_add(&(H5I_mt_g.num_type_serial_num_resets), 1ULL);
+
+                        done = true;
                     }
                 }
-            } /* while ( ! done ) */
-        }
+            }
+        } /* while ( ! done ) */
     } /* if ( try_to_free_entry ) */
 
     FUNC_LEAVE_NOAPI(ret_value)
 
 } /* H5I__discard_mt_type_info() */
 
-
-#endif /* new version */
-
-#if 0 /* old version */
-
-/************************************************************************
- *
- * H5I__new_mt_type_info
- *
- *     Test to see if an instance of H5I_mt_type_info_t is available on the
- *     type info free list.  If there is, remove it from the free list, 
- *     re-initialize it, and return a pointer to it.
- *
- *     Otherwise, allocate and initialize an instance of struct
- *     lfht_fl_node_t and return a pointer to the included instance of
- *     lfht_node_t to the caller.
- *
- *     Return a pointer to the new instance on success, and NULL on
- *     failure.
- *
- *                                          JRM -- 8/30/23
- *
- ************************************************************************/
-
-static H5I_mt_type_info_t * 
-H5I__new_mt_type_info(const H5I_class_t *cls, unsigned reserved)
-{
-    hbool_t fl_search_done = FALSE;
-    hbool_t result;
-    H5I_mt_type_info_t * type_info_ptr = NULL;
-    H5I_mt_type_info_sptr_t sfirst;
-    H5I_mt_type_info_sptr_t new_sfirst;
-    H5I_mt_type_info_sptr_t test_sfirst;
-    H5I_mt_type_info_sptr_t slast;
-    H5I_mt_type_info_sptr_t new_slast;
-    H5I_mt_type_info_sptr_t snext;
-    H5I_mt_type_info_sptr_t new_snext;
-    H5I_mt_type_info_t * ret_value = NULL; /* Return value */
-
-    FUNC_ENTER_NOAPI(NULL)
-
-    sfirst = atomic_load(&(H5I_mt_g.type_info_fl_shead));
-
-    if ( NULL == sfirst.ptr ) {
-
-        /* free list is not yet initialized */
-        fl_search_done = TRUE;
-    }
-
-    while ( ! fl_search_done ) {
-
-        sfirst = atomic_load(&(H5I_mt_g.type_info_fl_shead));
-        slast = atomic_load(&(H5I_mt_g.type_info_fl_stail));
-
-        assert(sfirst.ptr);
-        assert(slast.ptr);
-
-        snext = atomic_load(&(sfirst.ptr->fl_snext));
-
-        test_sfirst = atomic_load(&(H5I_mt_g.type_info_fl_shead));
-
-        if ( ( test_sfirst.ptr == sfirst.ptr ) && ( test_sfirst.sn == sfirst.sn ) ) {
-
-            if ( sfirst.ptr == slast.ptr ) {
-
-                if ( NULL == snext.ptr ) {
-
-                    /* the free list is empty */
-                    atomic_fetch_add(&(H5I_mt_g.num_type_info_fl_alloc_req_denied_due_to_empty), 1);
-                    fl_search_done = TRUE;
-                    break;
-                }
-
-                /* attempt to set H5I_mt_g.type_info_fl_stail to snext.  It doesn't
-                 * matter whether we succeed or fail, as if we fail, it
-                 * just means that some other thread beat us to it.
-                 *
-                 * that satype, it doesn't hurt to collect stats
-                 */
-                new_slast.ptr = snext.ptr;
-                new_slast.sn  = slast.sn + 1;
-                if ( ! atomic_compare_exchange_strong(&(H5I_mt_g.type_info_fl_stail), &slast, new_slast) ) {
-
-                    atomic_fetch_add(&(H5I_mt_g.num_type_info_fl_tail_update_cols), 1ULL);
-                }
-            } else {
-
-                /* set up new_sfirst now in case we need it later.  */
-                assert(snext.ptr);
-                new_sfirst.ptr = snext.ptr;
-                new_sfirst.sn  = sfirst.sn + 1;
-
-                if ( ! atomic_load(&(sfirst.ptr->re_allocable)) ) {
-
-                    /* The entry at the head of the free list is not re allocable,
-                     * which means that there may be a pointer to it somewhere.  
-                     * Rather than take the risk, let it sit on the free list until 
-                     * is is marked as re allocable.
-                     */
-                    atomic_fetch_add(&(H5I_mt_g.num_type_info_fl_alloc_req_denied_due_to_head_not_reallocable), 1ULL);
-                    fl_search_done = TRUE;
-
-                } else if ( ! atomic_compare_exchange_strong(&(H5I_mt_g.type_info_fl_shead), &sfirst, new_sfirst) ) {
-
-                    /* the attempt to remove the first item from the free list
-                     * failed.  Update stats and try again.
-                     */
-                    atomic_fetch_add(&(H5I_mt_g.num_type_info_fl_head_update_cols), 1ULL);
-
-                } else {
-
-                    /* first has been removed from the free list.  Set fl_node_ptr to first,
-                     * update stats, and exit the loop by setting fl_search_done to true.
-                     */
-                    type_info_ptr = sfirst.ptr;
-
-                    assert(H5I__TYPE_INFO == type_info_ptr->tag);
-
-                    type_info_ptr->cls = cls;
-
-                    atomic_store(&(type_info_ptr->init_count), 0);
-                    atomic_store(&(type_info_ptr->id_count), reserved);
-                    atomic_store(&(type_info_ptr->last_id_info), NULL);
-                    atomic_store(&(type_info_ptr->lfht_cleared), FALSE);
-
-                    lfht_init(&(type_info_ptr->lfht));
-
-                    assert(atomic_load(&(type_info_ptr->on_fl)));
-                    atomic_store(&(type_info_ptr->on_fl), FALSE);
-
-                    assert(atomic_load(&(type_info_ptr->re_allocable)));
-                    atomic_store(&(type_info_ptr->on_fl), FALSE);
-
-                    assert(atomic_load(&(type_info_ptr->re_allocable)));
-                    atomic_store(&(type_info_ptr->re_allocable), FALSE);
-
-                    new_snext.ptr = NULL;
-                    new_snext.sn  = snext.sn + 1;
-
-                    result = atomic_compare_exchange_strong(&(type_info_ptr->fl_snext), &snext, new_snext);
-                    assert(result);
-
-                    atomic_fetch_sub(&(H5I_mt_g.type_info_fl_len), 1ULL);
-                    atomic_fetch_add(&(H5I_mt_g.num_type_info_structs_alloced_from_fl), 1ULL);
-
-                    fl_search_done = true;
-                }
-            }
-        }
-    } /* while ( ! fl_search_done ) */
-
-    if ( NULL == type_info_ptr ) {
-
-        type_info_ptr = (H5I_mt_type_info_t *)malloc(sizeof(H5I_mt_type_info_t));
-
-        if ( NULL == type_info_ptr )
-            HGOTO_ERROR(H5E_ID, H5E_CANTALLOC, NULL, "ID info allocation failed");
-
-        atomic_fetch_add(&(H5I_mt_g.num_type_info_structs_alloced_from_heap), 1ULL);
-
-        type_info_ptr->tag = H5I__TYPE_INFO;
-        type_info_ptr->cls = cls;
-        atomic_init(&(type_info_ptr->init_count), 0);
-        atomic_init(&(type_info_ptr->id_count), 0ULL);
-        atomic_init(&(type_info_ptr->nextid), reserved);
-        atomic_init(&(type_info_ptr->last_id_info), NULL);
-        atomic_init(&(type_info_ptr->lfht_cleared), FALSE);
-        lfht_init(&(type_info_ptr->lfht));
-        atomic_init(&(type_info_ptr->on_fl), FALSE);
-        atomic_init(&(type_info_ptr->re_allocable), FALSE);
-        snext.ptr = NULL;
-        snext.sn = 0ULL;
-        atomic_init(&(type_info_ptr->fl_snext), snext);
-    }
-
-    assert(type_info_ptr);
-
-    /* Set return value */
-    ret_value = type_info_ptr;
-
-done:
-
-    FUNC_LEAVE_NOAPI(ret_value)
-
-} /* H5I__new_mt_type_info() */
-
-#else /* new version */
 
 /************************************************************************
  *
@@ -10295,120 +9652,50 @@ H5I__new_mt_type_info(const H5I_class_t *cls, unsigned reserved)
 {
     hbool_t fl_search_done = FALSE;;
     hbool_t result;
-    hbool_t reallocable_entry_available = FALSE;
-#if 1
-    uint64_t num_fl_entries_reallocable;
-#else
-    H5I_suint64_t snum_fl_entries_reallocable;
-    H5I_suint64_t new_snum_fl_entries_reallocable;
-#endif
     H5I_mt_type_info_t * type_info_ptr = NULL;
-    H5I_mt_type_info_sptr_t sfirst;
-    H5I_mt_type_info_sptr_t new_sfirst;
-    H5I_mt_type_info_sptr_t test_sfirst;
-    H5I_mt_type_info_sptr_t slast;
-    H5I_mt_type_info_sptr_t new_slast;
+    H5I_mt_type_info_sptr_t fl_shead;
+    H5I_mt_type_info_sptr_t new_fl_shead;
+    H5I_mt_type_info_sptr_t test_fl_shead;
+    H5I_mt_type_info_sptr_t fl_stail;
+    H5I_mt_type_info_sptr_t new_fl_stail;
     H5I_mt_type_info_sptr_t snext;
     H5I_mt_type_info_sptr_t new_snext;
+    uint64_t shead_sn;
+    uint64_t current_max_sn; 
+    uint64_t test_val;
     H5I_mt_type_info_t * ret_value = NULL; /* Return value */
 
     FUNC_ENTER_NOAPI(NULL)
 
     atomic_fetch_add(&(H5I_mt_g.H5I__new_mt_type_info__num_calls), 1ULL);
 
-    sfirst = atomic_load(&(H5I_mt_g.type_info_fl_shead));
+    fl_shead = atomic_load(&(H5I_mt_g.type_info_fl_shead));
+
 
     /* test to see if the free list has been initialized */
-
-    if ( NULL == sfirst.ptr ) {
+    if ( NULL == fl_shead.ptr ) {
 
         /* free list is not yet initialized */
         fl_search_done = TRUE;
     }
 
-    /* Test to see if there is a re-allocable entry on the free list.  Conceptually, we test to see
-     * if H5I_mt_g.num_type_info_fl_entries_reallocable is positive, we decrement it and set entry_reallocable
-     * to TRUE.  Practically, it is a bit more complicated, as it is possible that 
-     * H5I_mt_g.num_type_info_fl_entries_reallocable between the time that we read it to see if it is 
-     * positive, and we decrement it.  To deal with this, we use an atomic compare exchange to set 
-     * the new value, and retry if there is a collision.
-     */
-    if ( ! fl_search_done ) {
-#if 1
-        while ( ( ! reallocable_entry_available ) && 
-                ( 0 < (num_fl_entries_reallocable = 
-                       atomic_load(&(H5I_mt_g.num_type_info_fl_entries_reallocable))) ) ) {
-
-            assert( 0 < num_fl_entries_reallocable );
-
-            if ( atomic_compare_exchange_strong(&(H5I_mt_g.num_type_info_fl_entries_reallocable),
-                                                &num_fl_entries_reallocable, (num_fl_entries_reallocable - 1)) ) {
-
-                reallocable_entry_available = TRUE;
-            
-            } else { 
-
-                /* update stats */
-                atomic_fetch_add(&(H5I_mt_g.num_type_info_fl_num_reallocable_update_collisions), 1ULL);
-            }
-        } /* end while */
-#else
-        while ( ( ! reallocable_entry_available ) && 
-                ( 0 < (snum_fl_entries_reallocable = 
-                       atomic_load(&(H5I_mt_g.snum_type_info_fl_entries_reallocable))).val ) ) {
-
-            assert( 0 < snum_fl_entries_reallocable.val);
-
-            new_snum_fl_entries_reallocable.val = snum_fl_entries_reallocable.val - 1;
-            new_snum_fl_entries_reallocable.sn  = snum_fl_entries_reallocable.sn + 1;
-
-            if ( atomic_compare_exchange_strong(&(H5I_mt_g.snum_type_info_fl_entries_reallocable),
-                                                &snum_fl_entries_reallocable, new_snum_fl_entries_reallocable) ) {
-
-                reallocable_entry_available = TRUE;
-
-                fprintf(stderr, 
-                        "\nalloc: old/new snum_type_info_fl_entries_reallocable = {%lld, %lld} / {%lld, %lld}\n",
-                        (long long)snum_fl_entries_reallocable.val, 
-                        (long long)snum_fl_entries_reallocable.sn,
-                        (long long)new_snum_fl_entries_reallocable.val, 
-                        (long long)new_snum_fl_entries_reallocable.sn);
-            
-            } else { 
-
-                /* update stats */
-                atomic_fetch_add(&(H5I_mt_g.num_type_info_fl_num_reallocable_update_collisions), 1ULL);
-            }
-        } /* end while */
-#endif
-        if ( ! reallocable_entry_available ) {
-
-            /* No reallocable entries available, so set fl_search_done = TRUE */
-
-            fl_search_done = TRUE;
-
-            /* update stats */
-            atomic_fetch_add(&(H5I_mt_g.num_type_info_fl_alloc_req_denied_due_to_no_reallocable_entries), 1ULL);
-
-        }
-    } /* end if ( ! fl_search_done ) */
-
-
     while ( ! fl_search_done ) {
 
-        sfirst = atomic_load(&(H5I_mt_g.type_info_fl_shead));
-        slast = atomic_load(&(H5I_mt_g.type_info_fl_stail));
+        fl_shead = atomic_load(&(H5I_mt_g.type_info_fl_shead));
+        fl_stail = atomic_load(&(H5I_mt_g.type_info_fl_stail));
 
-        assert(sfirst.ptr);
-        assert(slast.ptr);
+        assert(fl_shead.ptr);
+        assert(fl_stail.ptr);
 
-        snext = atomic_load(&(sfirst.ptr->fl_snext));
+        snext = atomic_load(&(fl_shead.ptr->fl_snext));
 
-        test_sfirst = atomic_load(&(H5I_mt_g.type_info_fl_shead));
+        test_fl_shead = atomic_load(&(H5I_mt_g.type_info_fl_shead));
 
-        if ( ( test_sfirst.ptr == sfirst.ptr ) && ( test_sfirst.sn == sfirst.sn ) ) {
+        if ( ( test_fl_shead.ptr == fl_shead.ptr ) && ( test_fl_shead.sn == fl_shead.sn ) ) {
 
-            if ( sfirst.ptr == slast.ptr ) {
+            uint64_t serial_num;
+
+            if ( fl_shead.ptr == fl_stail.ptr ) {
 
                 if ( NULL == snext.ptr ) {
 
@@ -10424,20 +9711,33 @@ H5I__new_mt_type_info(const H5I_class_t *cls, unsigned reserved)
                  *
                  * that said, it doesn't hurt to collect stats
                  */
-                new_slast.ptr = snext.ptr;
-                new_slast.sn  = slast.sn + 1;
-                if ( ! atomic_compare_exchange_strong(&(H5I_mt_g.type_info_fl_stail), &slast, new_slast) ) {
+                new_fl_stail.ptr = snext.ptr;
+                new_fl_stail.sn  = fl_stail.sn + 1;
+                if ( ! atomic_compare_exchange_strong(&(H5I_mt_g.type_info_fl_stail), &fl_stail, new_fl_stail) ) {
 
                     atomic_fetch_add(&(H5I_mt_g.num_type_info_fl_tail_update_cols), 1ULL);
                 }
+            } else if ( ( 0 < (serial_num = atomic_load(&(fl_shead.ptr->serial_num))) ) &&
+                        ( serial_num >= atomic_load(&(H5I_mt_g.type_max_realloc_sn)) ) ) {
+
+                /* if serial_num is zero, it should have already been removed from the free
+                 * list by another thread -- if so, the following attempt to remove if from
+                 * the free list will fail.  If this is not the case, we will catch the error
+                 * after we successfully remove the entry.
+                 */
+
+                /* No reallocable entries available -- just update stats and quit */
+                atomic_fetch_add(&(H5I_mt_g.num_type_info_fl_alloc_req_denied_due_to_no_reallocable_entries), 1ULL);
+
+                fl_search_done = TRUE;
+
             } else {
 
-                /* set up new_sfirst now in case we need it later.  */
-                assert(snext.ptr);
-                new_sfirst.ptr = snext.ptr;
-                new_sfirst.sn  = sfirst.sn + 1;
+                /* set up new_fl_shead now in case we need it later.  */
+                new_fl_shead.ptr = snext.ptr;
+                new_fl_shead.sn  = fl_shead.sn + 1;
 
-                if ( ! atomic_compare_exchange_strong(&(H5I_mt_g.type_info_fl_shead), &sfirst, new_sfirst) ) {
+                if ( ! atomic_compare_exchange_strong(&(H5I_mt_g.type_info_fl_shead), &fl_shead, new_fl_shead) ) {
 
                     /* the attempt to remove the first item from the free list
                      * failed.  Update stats and try again.
@@ -10446,12 +9746,54 @@ H5I__new_mt_type_info(const H5I_class_t *cls, unsigned reserved)
 
                 } else {
 
-                    /* first has been removed from the free list.  Set fl_node_ptr to first,
-                     * update stats, and exit the loop by setting fl_search_done to true.
+                    /* the first entry on the free list has been successfully removed.
+                     *
+                     * Perform some sanity checks, and then prepare the instance of H5I_mt_type_info_t
+                     * for reallocation.
                      */
-                    type_info_ptr = sfirst.ptr;
+                    type_info_ptr = fl_shead.ptr;
 
                     assert(H5I__TYPE_INFO == type_info_ptr->tag);
+
+                    assert(atomic_load(&(type_info_ptr->on_fl)));
+                    atomic_store(&(type_info_ptr->on_fl), FALSE);
+
+                    assert( 0 < atomic_load(&(type_info_ptr->serial_num ) ) );
+
+                    /* the above assert only exists in production builds.  If type_info_ptr->serial_num
+                     * is zero and we get this far, increment H5I_mt_g.num_id_info_fl_head_sn_is_zero.
+                     */
+                    if ( 0 == atomic_load(&(type_info_ptr->serial_num)) ) {
+
+                        atomic_fetch_add(&(H5I_mt_g.num_type_info_fl_head_sn_is_zero), 1ULL);
+
+                        /* should we throw an error here? */
+                    }
+                    atomic_store(&(type_info_ptr->serial_num), 0ULL);
+
+                    /* because of the possibility of another thread acting on an id in 
+                     * the id type during takedown, we didn't discard the class (if a 
+                     * user type) and clear the lock free hash table.  
+                     *
+                     * Since the instance of H5I_mt_type_info_t is about to be reallocated
+                     * it is now safe to do so.  
+                     */
+
+                    /* Check if we should release the ID class */
+                    if ( ( type_info_ptr->cls ) &&
+                         ( type_info_ptr->cls->flags & H5I_CLASS_IS_APPLICATION ) ) {
+
+                        type_info_ptr->cls = H5MM_xfree_const(type_info_ptr->cls);
+                    }
+
+                    if ( ! atomic_load(&(type_info_ptr->lfht_cleared)) ) {
+
+                        lfht_clear(&(type_info_ptr->lfht));
+
+                        atomic_store(&(type_info_ptr->lfht_cleared), TRUE);
+                    }
+
+                    /* Now initialize *type_info_ptr as required for reallocation */
 
                     type_info_ptr->cls = cls;
 
@@ -10462,30 +9804,34 @@ H5I__new_mt_type_info(const H5I_class_t *cls, unsigned reserved)
 
                     lfht_init(&(type_info_ptr->lfht));
 
-                    assert(atomic_load(&(type_info_ptr->on_fl)));
-                    atomic_store(&(type_info_ptr->on_fl), FALSE);
-
                     new_snext.ptr = NULL;
                     new_snext.sn  = snext.sn + 1;
 
                     result = atomic_compare_exchange_strong(&(type_info_ptr->fl_snext), &snext, new_snext);
                     assert(result);
 
-                    atomic_fetch_sub(&(H5I_mt_g.type_info_fl_len), 1ULL);
+                    /* update stats */
                     atomic_fetch_add(&(H5I_mt_g.num_type_info_structs_alloced_from_fl), 1ULL);
+                    atomic_fetch_add(&(H5I_mt_g.num_type_serial_num_resets), 1ULL);
+
+                    /* decrement the length of the type info free list */
+                    test_val = atomic_fetch_sub(&(H5I_mt_g.type_info_fl_len), 1ULL);
+                    assert(test_val > 0ULL);
 
                     fl_search_done = true;
-                }
+
+                } 
             }
-        }
-    } /* while ( ! fl_search_done ) */
+        } /* end if ( ( test_fl_sfirst.ptr == fl_sfirst.ptr ) && ( test_fl_sfirst.sn == fl_sfirst.sn ) ) */
+    }/* end while ( ! fl_search_done ) */
 
-    if ( NULL == type_info_ptr ) {
-
+    /* If an entry was not grabbed from the free list alloc and initalize a new one */
+    if ( NULL == type_info_ptr )
+    {
         type_info_ptr = (H5I_mt_type_info_t *)malloc(sizeof(H5I_mt_type_info_t));
 
         if ( NULL == type_info_ptr )
-            HGOTO_ERROR(H5E_ID, H5E_CANTALLOC, NULL, "ID info allocation failed");
+            HGOTO_ERROR(H5E_ID, H5E_CANTALLOC, NULL, "Type info allocation failed");
 
         atomic_fetch_add(&(H5I_mt_g.num_type_info_structs_alloced_from_heap), 1ULL);
 
@@ -10498,6 +9844,7 @@ H5I__new_mt_type_info(const H5I_class_t *cls, unsigned reserved)
         atomic_init(&(type_info_ptr->lfht_cleared), FALSE);
         lfht_init(&(type_info_ptr->lfht));
         atomic_init(&(type_info_ptr->on_fl), FALSE);
+        atomic_init(&(type_info_ptr->serial_num), 0ULL);
         snext.ptr = NULL;
         snext.sn = 0ULL;
         atomic_init(&(type_info_ptr->fl_snext), snext);
@@ -10512,9 +9859,8 @@ done:
 
     FUNC_LEAVE_NOAPI(ret_value)
 
-} /* H5I__new_mt_id_info() */
+} /* end H5I__new_mt_id_info() */
 
-#endif /* new version */
 
 /************************************************************************
  *
@@ -10579,170 +9925,138 @@ H5I__exit(void)
     uint64_t post_api_entries;
     uint64_t pre_internal_entries;
     uint64_t post_internal_entries;
-    uint64_t num_id_info_fl_entries_reallocable;
-    uint64_t id_info_fl_len;
-#if 1
-    uint64_t num_type_info_fl_entries_reallocable;
-#else
-    H5I_suint64_t snum_type_info_fl_entries_reallocable;
-#endif
-    uint64_t type_info_fl_len;
+    uint64_t id_next_sn;
+    uint64_t id_max_realloc_sn;
+    uint64_t type_next_sn;
+    uint64_t type_max_realloc_sn;
 
-    if ( 1ULL == atomic_fetch_sub(&(H5I_mt_g.active_threads), 1ULL) ) {
-
+    if ( 1ULL == atomic_fetch_sub(&(H5I_mt_g.active_threads), 1ULL) )
+    {
         atomic_fetch_add(&(H5I_mt_g.times_active_threads_is_zero), 1ULL);
 
-        /* This is the only entry in H5I -- since we are about to exit, the 
-         * the entire id free list must be reallocable.  Attempt to update 
-         * H5I_mt_g.num_id_info_fl_entries_reallocable accordingly.  Note 
-         * that we must verify that no thread becomes active during this 
-         * process, and abort if one does. 
+        /* This is the only thread in H5I and since we are about to exit, the
+         * entire id and type free lists must be re-allocatable. Note we must verify 
+         * that no thread becomes active during this process, and abort if one does.
          */
         pre_api_entries = atomic_load(&(H5I_mt_g.num_H5I_entries_via_public_API));
         pre_internal_entries = atomic_load(&(H5I_mt_g.num_H5I_entries_via_internal_API));
 
         active_threads = atomic_load(&(H5I_mt_g.active_threads));
 
-        num_id_info_fl_entries_reallocable = atomic_load(&(H5I_mt_g.num_id_info_fl_entries_reallocable));
-        id_info_fl_len = atomic_load(&(H5I_mt_g.id_info_fl_len));
+        id_next_sn = atomic_load(&(H5I_mt_g.id_next_sn));
+        id_max_realloc_sn = atomic_load(&(H5I_mt_g.id_max_realloc_sn));
 
-#if 1
-        num_type_info_fl_entries_reallocable = atomic_load(&(H5I_mt_g.num_type_info_fl_entries_reallocable));
-#else
-        snum_type_info_fl_entries_reallocable = atomic_load(&(H5I_mt_g.snum_type_info_fl_entries_reallocable));
-#endif
-        type_info_fl_len = atomic_load(&(H5I_mt_g.type_info_fl_len));
+        type_next_sn = atomic_load(&(H5I_mt_g.type_next_sn));
+        type_max_realloc_sn = atomic_load(&(H5I_mt_g.type_max_realloc_sn));
 
         post_api_entries = atomic_load(&(H5I_mt_g.num_H5I_entries_via_public_API));
         post_internal_entries = atomic_load(&(H5I_mt_g.num_H5I_entries_via_internal_API));
 
-        /* test to see if any threads have entered while we were collecting the 
-         * data on the free lists.  If any have, abort, as our data on the free lists
-         * may be inconsistent.
+        /* Test to see if any threads have entered while we were collecting the data
+         * on the free lists. If any have, abort, as out data on the free lists may
+         * be inconsistent.
          */
-        if ( ( active_threads != 0 ) || ( pre_api_entries != post_api_entries ) || 
-             ( pre_internal_entries != post_internal_entries ) ) {
-
-            /* one or more threads entered while we were collecting data.  Update
-             * stats and do nothing.
+        if ( ( active_threads != 0 ) || ( pre_api_entries != post_api_entries ) ||
+             ( pre_internal_entries != post_internal_entries ) )
+        {
+            /* One or more threads entered while collecting data. 
+             * Update stats and do nothing.
              */
-            atomic_fetch_add(&(H5I_mt_g.num_id_info_fl_num_reallocable_update_aborts), 1ULL);
+            atomic_fetch_add(&(H5I_mt_g.num_id_info_fl_max_sn_update_aborts), 1ULL);
+            atomic_fetch_add(&(H5I_mt_g.num_type_info_fl_max_sn_update_aborts), 1ULL);
+        }
+        else /* No new threads entered while collecting data */
+        {
+            /* Must update these assertions to account for the possibility that the 
+             * serial numbers can roll over if the library runs long enough.
+             */
+            assert( id_max_realloc_sn + 1 <= id_next_sn );
+            assert( type_max_realloc_sn + 1 <= type_next_sn );
 
-        } else {
+            if ( id_max_realloc_sn + 1 == id_next_sn ) {
 
-            assert( 0 == active_threads );
-
-            if ( id_info_fl_len == num_id_info_fl_entries_reallocable ) {
-
-                /* All entries in the id info free list are already maked as reallocable --
-                 * Nothing to do here -- just update stats
-                 */
-                atomic_fetch_add(&(H5I_mt_g.num_id_info_fl_num_reallocable_update_noops), 1ULL);
+                atomic_fetch_add(&(H5I_mt_g.num_id_info_fl_max_sn_update_noops), 1ULL);
 
             } else {
 
-                uint64_t delta;
-                uint64_t new_num_id_info_fl_entries_reallocable;
+                uint64_t saved_id_max_realloc_sn = id_max_realloc_sn;
+                
+                if ( atomic_compare_exchange_strong(&(H5I_mt_g.id_max_realloc_sn), 
+                                                    &id_max_realloc_sn, id_next_sn - 1) ) {
 
-                assert( num_id_info_fl_entries_reallocable < id_info_fl_len );
-
-                delta = id_info_fl_len - num_id_info_fl_entries_reallocable;
-
-                /* It is possible that another thread is also trying to update 
-                 * H5I_mt_g.num_id_info_fl_entries_reallocable.  To avoid duplicate
-                 * increments, update H5I_mt_g.num_id_info_fl_entries_reallocable via
-                 * a call to atomic_compare_exchange_strong().  If this fails, just 
-                 * update stats and don't attempt a re-try.
-                 */
-                new_num_id_info_fl_entries_reallocable = num_id_info_fl_entries_reallocable + delta;
-
-                if ( atomic_compare_exchange_strong(&(H5I_mt_g.num_id_info_fl_entries_reallocable),
-                                                    &num_id_info_fl_entries_reallocable,
-                                                    new_num_id_info_fl_entries_reallocable) ) {
-
-                    /* success -- update stats accordingly */
-                    atomic_fetch_add(&(H5I_mt_g.num_id_info_fl_num_reallocable_updates), 1ULL);
-                    atomic_fetch_add(&(H5I_mt_g.num_id_info_fl_num_reallocable_total), delta);
+                    atomic_fetch_add(&(H5I_mt_g.num_id_info_fl_max_sn_updates), 1ULL);
 
                 } else {
 
-                    /* failure -- update stats accordingly */
-                    atomic_fetch_add(&(H5I_mt_g.num_id_info_fl_num_reallocable_update_collisions), 1ULL);
+                    uint64_t delta;
 
+                    atomic_fetch_add(&(H5I_mt_g.num_id_info_fl_max_sn_update_cols), 1ULL);
+
+                    /* collect stats on the largest positive and negaive deltas between the 
+                     * expected and actual values of H5I_mt_g.id_max_realloc_sn.
+                     */
+                    if ( saved_id_max_realloc_sn > id_max_realloc_sn ) {
+
+                        delta = saved_id_max_realloc_sn - id_max_realloc_sn;
+
+                        if ( delta > atomic_load(&(H5I_mt_g.max_id_info_fl_max_sn_update_col_delta)) ) {
+
+                            atomic_store(&(H5I_mt_g.max_id_info_fl_max_sn_update_col_delta), delta);
+                        }
+                    } else {
+
+                        assert(saved_id_max_realloc_sn < id_max_realloc_sn);
+
+                        delta = id_max_realloc_sn - saved_id_max_realloc_sn;
+
+                        if ( delta > atomic_load(&(H5I_mt_g.min_id_info_fl_max_sn_update_col_delta)) ) {
+
+                            atomic_store(&(H5I_mt_g.min_id_info_fl_max_sn_update_col_delta), delta);
+                        }
+                    }
                 }
             }
 
-#if 1
-            if ( type_info_fl_len == num_type_info_fl_entries_reallocable ) {
-#else
-            if ( type_info_fl_len == snum_type_info_fl_entries_reallocable.val ) {
-#endif
+            if ( type_max_realloc_sn + 1 == type_next_sn ) {
 
-                /* All entries in the type info free list are already maked as reallocable --
-                 * Nothing to do here -- just update stats
-                 */
-                atomic_fetch_add(&(H5I_mt_g.num_type_info_fl_num_reallocable_update_noops), 1ULL);
+                atomic_fetch_add(&(H5I_mt_g.num_type_info_fl_max_sn_update_noops), 1ULL);
 
             } else {
 
-                uint64_t delta;
-#if 1
-                uint64_t new_num_type_info_fl_entries_reallocable;
-#else
-                H5I_suint64_t new_snum_type_info_fl_entries_reallocable;
-#endif
+                uint64_t saved_type_max_realloc_sn = id_max_realloc_sn;
+                
+                if ( atomic_compare_exchange_strong(&(H5I_mt_g.type_max_realloc_sn), 
+                                                      &type_max_realloc_sn, type_next_sn - 1) ) {
 
-#if 1
-                assert( num_type_info_fl_entries_reallocable < type_info_fl_len );
-#else
-                assert( snum_type_info_fl_entries_reallocable.val < type_info_fl_len );
-#endif
-
-#if 1
-                delta = type_info_fl_len - num_type_info_fl_entries_reallocable;
-#else
-                delta = type_info_fl_len - snum_type_info_fl_entries_reallocable.val;
-#endif
-
-                /* It is possible that another thread is also trying to update 
-                 * H5I_mt_g.num_type_info_fl_entries_reallocable.  To avoid duplicate
-                 * increments, update H5I_mt_g.num_type_info_fl_entries_reallocable via
-                 * a call to atomic_compare_exchange_strong().  If this fails, just 
-                 * update stats and don't attempt a re-try.
-                 */
-#if 1
-                new_num_type_info_fl_entries_reallocable = num_type_info_fl_entries_reallocable + delta;
-#else
-                new_snum_type_info_fl_entries_reallocable.val = snum_type_info_fl_entries_reallocable.val + delta;
-                new_snum_type_info_fl_entries_reallocable.sn  = snum_type_info_fl_entries_reallocable.sn + 1;
-#endif
-
-#if 1
-                if ( atomic_compare_exchange_strong(&(H5I_mt_g.num_type_info_fl_entries_reallocable),
-                                                    &num_type_info_fl_entries_reallocable,
-                                                    new_num_type_info_fl_entries_reallocable) ) {
-#else
-                if ( atomic_compare_exchange_strong(&(H5I_mt_g.snum_type_info_fl_entries_reallocable),
-                                                    &snum_type_info_fl_entries_reallocable,
-                                                    new_snum_type_info_fl_entries_reallocable) ) {
-
-                    fprintf(stderr, 
-                            "\nexit: old/new snum_type_info_fl_entries_reallocable = {%lld, %lld} / {%lld, %lld}\n",
-                            (long long)snum_type_info_fl_entries_reallocable.val, 
-                            (long long)snum_type_info_fl_entries_reallocable.sn,
-                            (long long)new_snum_type_info_fl_entries_reallocable.val, 
-                            (long long)new_snum_type_info_fl_entries_reallocable.sn);
-#endif
-
-                    /* success -- update stats accordingly */
-                    atomic_fetch_add(&(H5I_mt_g.num_type_info_fl_num_reallocable_updates), 1ULL);
-                    atomic_fetch_add(&(H5I_mt_g.num_type_info_fl_num_reallocable_total), delta);
+                    atomic_fetch_add(&(H5I_mt_g.num_type_info_fl_max_sn_updates), 1ULL);
 
                 } else {
+                    uint64_t delta;
 
-                    /* failure -- update stats accordingly */
-                    atomic_fetch_add(&(H5I_mt_g.num_type_info_fl_num_reallocable_update_collisions), 1ULL);
+                    atomic_fetch_add(&(H5I_mt_g.num_type_info_fl_max_sn_update_cols), 1ULL);
 
+                    /* collect stats on the largest positive and negaive deltas between the 
+                     * expected and actual values of H5I_mt_g.type_max_realloc_sn.
+                     */
+                    if ( saved_type_max_realloc_sn > type_max_realloc_sn ) {
+
+                        delta = saved_type_max_realloc_sn - type_max_realloc_sn;
+
+                        if ( delta > atomic_load(&(H5I_mt_g.max_type_info_fl_max_sn_update_col_delta) )) {
+
+                            atomic_store(&(H5I_mt_g.max_type_info_fl_max_sn_update_col_delta), delta);
+                        }
+                    } else {
+
+                        assert(saved_type_max_realloc_sn < type_max_realloc_sn);
+
+                        delta = type_max_realloc_sn - saved_type_max_realloc_sn;
+
+                        if ( delta > atomic_load(&(H5I_mt_g.min_type_info_fl_max_sn_update_col_delta)) ) {
+
+                            atomic_store(&(H5I_mt_g.min_type_info_fl_max_sn_update_col_delta), delta);
+                        }
+                    }
                 }
             }
         }
@@ -10750,7 +10064,7 @@ H5I__exit(void)
 
     return;
 
-} /* H5I__exit() */
+} /* end H5I__exit() */
 
 #endif /* H5_HAVE_MULTITHREAD */
 
