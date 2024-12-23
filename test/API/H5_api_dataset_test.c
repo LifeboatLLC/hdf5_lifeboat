@@ -8344,7 +8344,6 @@ test_dataset_string_encodings(void H5_ATTR_UNUSED *params)
         }
         PART_END(UTF8_cset);
 
-        PASSED();
     }
     END_MULTIPART;
 
