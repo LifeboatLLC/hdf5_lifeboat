@@ -6309,14 +6309,13 @@ void serial_test_1(void)
     assert( 0 == (atomic_load(&(H5I_mt_g.num_id_serial_num_resets)) -
                   atomic_load(&(H5I_mt_g.num_id_info_structs_alloced_from_fl)) -
                   atomic_load(&(H5I_mt_g.num_id_info_structs_freed))));
-#if 1
+
     assert( 0 == (atomic_load(&(H5I_mt_g.num_type_next_sn_assigned)) - 
                   atomic_load(&(H5I_mt_g.num_type_info_structs_added_to_fl))));
 
     assert( 0 == (atomic_load(&(H5I_mt_g.num_type_serial_num_resets)) -
                   atomic_load(&(H5I_mt_g.num_type_info_structs_alloced_from_fl)) -
                   atomic_load(&(H5I_mt_g.num_type_info_structs_freed))));
-#endif
 
     if ( H5close() < 0 ) {
 
@@ -7948,14 +7947,13 @@ void mt_test_fcn_1_serial_test(void)
     assert( 0 == (atomic_load(&(H5I_mt_g.num_id_serial_num_resets)) -
                   atomic_load(&(H5I_mt_g.num_id_info_structs_alloced_from_fl)) -
                   atomic_load(&(H5I_mt_g.num_id_info_structs_freed))));
-#if 1
+
     assert( 0 == (atomic_load(&(H5I_mt_g.num_type_next_sn_assigned)) - 
                   atomic_load(&(H5I_mt_g.num_type_info_structs_added_to_fl))));
 
     assert( 0 == (atomic_load(&(H5I_mt_g.num_type_serial_num_resets)) -
                   atomic_load(&(H5I_mt_g.num_type_info_structs_alloced_from_fl)) -
                   atomic_load(&(H5I_mt_g.num_type_info_structs_freed))));
-#endif
 
 
     if ( H5close() < 0 ) {
@@ -8137,14 +8135,12 @@ void mt_test_1(int num_threads)
                   atomic_load(&(H5I_mt_g.num_id_info_structs_alloced_from_fl)) -
                   atomic_load(&(H5I_mt_g.num_id_info_structs_freed))));
 
-#if 1
     assert( 0 == (atomic_load(&(H5I_mt_g.num_type_next_sn_assigned)) - 
                   atomic_load(&(H5I_mt_g.num_type_info_structs_added_to_fl))));
 
     assert( 0 == (atomic_load(&(H5I_mt_g.num_type_serial_num_resets)) -
                   atomic_load(&(H5I_mt_g.num_type_info_structs_alloced_from_fl)) -
                   atomic_load(&(H5I_mt_g.num_type_info_structs_freed))));
-#endif
 
 
     if ( H5close() < 0 ) {
@@ -8413,15 +8409,12 @@ void mt_test_2(int num_threads)
                   atomic_load(&(H5I_mt_g.num_id_info_structs_alloced_from_fl)) -
                   atomic_load(&(H5I_mt_g.num_id_info_structs_freed))));
 
-#if 1
     assert( 0 == (atomic_load(&(H5I_mt_g.num_type_next_sn_assigned)) - 
                   atomic_load(&(H5I_mt_g.num_type_info_structs_added_to_fl))));
 
     assert( 0 == (atomic_load(&(H5I_mt_g.num_type_serial_num_resets)) -
                   atomic_load(&(H5I_mt_g.num_type_info_structs_alloced_from_fl)) -
                   atomic_load(&(H5I_mt_g.num_type_info_structs_freed))));
-#endif
-
 
     if ( H5close() < 0 ) {
 
