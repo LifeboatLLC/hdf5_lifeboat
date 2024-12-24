@@ -5049,7 +5049,7 @@ test_object_visit(void)
     hid_t    group_id5  = H5I_INVALID_HID;
     hssize_t num_elems  = 0;
     size_t   elem_size  = 0;
-    char     visit_filename[H5_API_TEST_FILENAME_MAX_LENGTH];
+    char     *visit_filename = NULL;
 
     TESTING_MULTIPART("object visiting");
 
@@ -5072,8 +5072,11 @@ test_object_visit(void)
         goto error;
     }
 
-    snprintf(visit_filename, H5_API_TEST_FILENAME_MAX_LENGTH, "%s%s", test_path_prefix,
-             OBJECT_VISIT_TEST_FILE_NAME);
+    if (prefix_filename(test_path_prefix, OBJECT_VISIT_TEST_FILE_NAME, &visit_filename) < 0) {
+        H5_FAILED();
+        printf("    couldn't create filename for visiting test file\n");
+        goto error;
+    }
 
     if ((file_id2 = H5Fcreate(visit_filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
         H5_FAILED();
@@ -5693,6 +5696,7 @@ test_object_visit(void)
         TEST_ERROR;
     if (remove_test_file(NULL, visit_filename) < 0)
         TEST_ERROR;
+    free(visit_filename);
 
     PASSED();
 
@@ -5716,6 +5720,7 @@ error:
         H5Fclose(file_id);
         H5Fclose(file_id2);
         remove_test_file(NULL, visit_filename);
+        free(visit_filename);
     }
     H5E_END_TRY;
 
