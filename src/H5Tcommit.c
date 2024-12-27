@@ -78,10 +78,10 @@ static H5T_t *H5T__open_oid(const H5G_loc_t *loc);
 /*******************/
 
 /* Declare a free list to manage the H5VL_t struct */
-H5FL_EXTERN(H5VL_t);
+H5FL_EXTERN_MT(H5VL_t);
 
 /* Declare a free list to manage the H5VL_object_t struct */
-H5FL_EXTERN(H5VL_object_t);
+H5FL_EXTERN_MT(H5VL_object_t);
 
 /*-------------------------------------------------------------------------
  * Function:    H5T__commit_api_common
