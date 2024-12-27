@@ -341,7 +341,7 @@ H5O__copy_expand_ref_object2(H5O_loc_t *src_oloc, hid_t tid_src, const H5T_t *dt
     /* Use extra conversion buffer (TODO we should avoid using an extra buffer once the H5Ocopy code has been
      * reworked) */
     conv_buf_size = MAX(H5T_get_size(dt_src), H5T_get_size(dt_mem)) * ref_count;
-    if (NULL == (conv_buf = H5FL_BLK_MALLOC(type_conv, conv_buf_size)))
+    if (NULL == (conv_buf = H5FL_BLK_MALLOC_MT(type_conv, conv_buf_size)))
         HGOTO_ERROR(H5E_RESOURCE, H5E_NOSPACE, FAIL, "memory allocation failed for copy buffer");
     H5MM_memcpy(conv_buf, buf_src, nbytes_src);
 
@@ -385,7 +385,7 @@ H5O__copy_expand_ref_object2(H5O_loc_t *src_oloc, hid_t tid_src, const H5T_t *dt
     }     /* end for */
 
     /* Copy into another buffer, to reclaim memory later */
-    if (NULL == (reclaim_buf = H5FL_BLK_MALLOC(type_conv, conv_buf_size)))
+    if (NULL == (reclaim_buf = H5FL_BLK_MALLOC_MT(type_conv, conv_buf_size)))
         HGOTO_ERROR(H5E_RESOURCE, H5E_NOSPACE, FAIL, "memory allocation failed for copy buffer");
     H5MM_memcpy(reclaim_buf, conv_buf, conv_buf_size);
     if (NULL == (buf_space = H5S_create_simple((unsigned)1, buf_dim, NULL)))
@@ -411,9 +411,9 @@ done:
     if ((tid_dst > 0) && H5I_dec_ref(tid_dst) < 0)
         HDONE_ERROR(H5E_OHDR, H5E_CANTFREE, FAIL, "Can't decrement temporary datatype ID");
     if (reclaim_buf)
-        reclaim_buf = H5FL_BLK_FREE(type_conv, reclaim_buf);
+        reclaim_buf = H5FL_BLK_FREE_MT(type_conv, reclaim_buf);
     if (conv_buf)
-        conv_buf = H5FL_BLK_FREE(type_conv, conv_buf);
+        conv_buf = H5FL_BLK_FREE_MT(type_conv, conv_buf);
     if ((dst_loc_id != H5I_INVALID_HID) && (H5I_dec_ref(dst_loc_id) < 0))
         HDONE_ERROR(H5E_OHDR, H5E_CANTDEC, FAIL, "unable to decrement refcount on location id");
 

@@ -1727,16 +1727,16 @@ H5D__contig_copy(H5F_t *f_src, const H5O_storage_contig_t *storage_src, H5F_t *f
 
     /* Allocate space for copy buffer */
     assert(buf_size);
-    if (NULL == (buf = H5FL_BLK_MALLOC(type_conv, buf_size)))
+    if (NULL == (buf = H5FL_BLK_MALLOC_MT(type_conv, buf_size)))
         HGOTO_ERROR(H5E_RESOURCE, H5E_NOSPACE, FAIL, "memory allocation failed for copy buffer");
 
     /* Need extra buffer for datatype conversions, to prevent stranding/leaking memory */
     if (is_vlen || fix_ref) {
-        if (NULL == (reclaim_buf = H5FL_BLK_MALLOC(type_conv, buf_size)))
+        if (NULL == (reclaim_buf = H5FL_BLK_MALLOC_MT(type_conv, buf_size)))
             HGOTO_ERROR(H5E_RESOURCE, H5E_NOSPACE, FAIL, "memory allocation failed for copy buffer");
 
         /* allocate temporary bkg buff for data conversion */
-        if (NULL == (bkg = H5FL_BLK_MALLOC(type_conv, buf_size)))
+        if (NULL == (bkg = H5FL_BLK_MALLOC_MT(type_conv, buf_size)))
             HGOTO_ERROR(H5E_RESOURCE, H5E_NOSPACE, FAIL, "memory allocation failed for copy buffer");
     } /* end if */
 
@@ -1843,11 +1843,11 @@ done:
     if (tid_mem > 0 && H5I_dec_ref(tid_mem) < 0)
         HDONE_ERROR(H5E_DATASET, H5E_CANTFREE, FAIL, "Can't decrement temporary datatype ID");
     if (buf)
-        buf = H5FL_BLK_FREE(type_conv, buf);
+        buf = H5FL_BLK_FREE_MT(type_conv, buf);
     if (reclaim_buf)
-        reclaim_buf = H5FL_BLK_FREE(type_conv, reclaim_buf);
+        reclaim_buf = H5FL_BLK_FREE_MT(type_conv, reclaim_buf);
     if (bkg)
-        bkg = H5FL_BLK_FREE(type_conv, bkg);
+        bkg = H5FL_BLK_FREE_MT(type_conv, bkg);
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5D__contig_copy() */

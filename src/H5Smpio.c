@@ -525,7 +525,7 @@ H5S__mpio_permute_type(H5S_t *space, size_t elmt_size, hsize_t **permute, MPI_Da
         HGOTO_ERROR(H5E_RESOURCE, H5E_CANTALLOC, FAIL, "can't allocate sequence lengths array");
 
     /* Allocate a selection iterator for iterating over the dataspace */
-    if (NULL == (sel_iter = H5FL_MALLOC(H5S_sel_iter_t)))
+    if (NULL == (sel_iter = H5FL_MALLOC_MT(H5S_sel_iter_t)))
         HGOTO_ERROR(H5E_DATASPACE, H5E_CANTALLOC, FAIL, "couldn't allocate dataspace selection iterator");
 
     /* Initialize selection iterator */
@@ -604,7 +604,7 @@ done:
     if (sel_iter) {
         if (sel_iter_init && H5S_SELECT_ITER_RELEASE(sel_iter) < 0)
             HDONE_ERROR(H5E_DATASPACE, H5E_CANTRELEASE, FAIL, "unable to release selection iterator");
-        sel_iter = H5FL_FREE(H5S_sel_iter_t, sel_iter);
+        sel_iter = H5FL_FREE_MT(H5S_sel_iter_t, sel_iter);
     }
 
     H5MM_free(len);
@@ -672,7 +672,7 @@ H5S__mpio_reg_hyper_type(H5S_t *space, size_t elmt_size, MPI_Datatype *new_type,
     bigio_count = H5_mpi_get_bigio_count();
 
     /* Allocate a selection iterator for iterating over the dataspace */
-    if (NULL == (sel_iter = H5FL_MALLOC(H5S_sel_iter_t)))
+    if (NULL == (sel_iter = H5FL_MALLOC_MT(H5S_sel_iter_t)))
         HGOTO_ERROR(H5E_DATASPACE, H5E_CANTALLOC, FAIL, "couldn't allocate dataspace selection iterator");
 
     /* Initialize selection iterator */
@@ -961,7 +961,7 @@ done:
     if (sel_iter) {
         if (sel_iter_init && H5S_SELECT_ITER_RELEASE(sel_iter) < 0)
             HDONE_ERROR(H5E_DATASPACE, H5E_CANTRELEASE, FAIL, "unable to release selection iterator");
-        sel_iter = H5FL_FREE(H5S_sel_iter_t, sel_iter);
+        sel_iter = H5FL_FREE_MT(H5S_sel_iter_t, sel_iter);
     }
 
 #ifdef H5S_DEBUG
