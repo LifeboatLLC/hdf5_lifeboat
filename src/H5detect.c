@@ -41,6 +41,7 @@ static const char *FileHeader = "\n\
  */
 #undef NDEBUG
 #include "H5private.h"
+#include "H5MMprivate.h"
 /* Do NOT use fprintf in this file as it is not linked with the library,
  * which contains the H5system.c file in which the function is defined.
  */
@@ -423,8 +424,8 @@ dt->shared->u.atomic.u.f.pad = H5T_PAD_ZERO;\n",
 done:\n\
     if(ret_value < 0) {\n\
         if(dt != NULL) {\n\
-            dt->shared = H5FL_FREE(H5T_shared_t, dt->shared);\n\
-            dt = H5FL_FREE(H5T_t, dt);\n\
+            dt->shared = H5FL_FREE_MT(H5T_shared_t, dt->shared);\n\
+            dt = H5FL_FREE_MT(H5T_t, dt);\n\
         } /* end if */\n\
     } /* end if */\n\
 \n\

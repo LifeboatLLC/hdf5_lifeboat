@@ -1419,8 +1419,8 @@ done:
             else {
                 if (dt->shared->owned_vol_obj && H5VL_free_object(dt->shared->owned_vol_obj) < 0)
                     HDONE_ERROR(H5E_DATATYPE, H5E_CANTCLOSEOBJ, FAIL, "unable to close owned VOL object");
-                dt->shared = H5FL_FREE(H5T_shared_t, dt->shared);
-                dt         = H5FL_FREE(H5T_t, dt);
+                dt->shared = H5FL_FREE_MT(H5T_shared_t, dt->shared);
+                dt         = H5FL_FREE_MT(H5T_t, dt);
             } /* end else */
         }     /* end if */
     }         /* end if */
@@ -3291,8 +3291,8 @@ done:
         if (dt) {
             if (dt->shared->owned_vol_obj && H5VL_free_object(dt->shared->owned_vol_obj) < 0)
                 HDONE_ERROR(H5E_DATATYPE, H5E_CANTCLOSEOBJ, NULL, "unable to close owned VOL object");
-            dt->shared = H5FL_FREE(H5T_shared_t, dt->shared);
-            dt         = H5FL_FREE(H5T_t, dt);
+            dt->shared = H5FL_FREE_MT(H5T_shared_t, dt->shared);
+            dt         = H5FL_FREE_MT(H5T_t, dt);
         }
     }
 
@@ -3322,9 +3322,9 @@ H5T__initiate_copy(const H5T_t *old_dt)
     FUNC_ENTER_PACKAGE
 
     /* Allocate space */
-    if (NULL == (new_dt = H5FL_MALLOC(H5T_t)))
+    if (NULL == (new_dt = H5FL_MALLOC_MT(H5T_t)))
         HGOTO_ERROR(H5E_DATATYPE, H5E_CANTALLOC, NULL, "H5T_t memory allocation failed");
-    if (NULL == (new_dt->shared = H5FL_MALLOC(H5T_shared_t)))
+    if (NULL == (new_dt->shared = H5FL_MALLOC_MT(H5T_shared_t)))
         HGOTO_ERROR(H5E_DATATYPE, H5E_CANTALLOC, NULL, "H5T_shared_t memory allocation failed");
 
     /* Copy shared information */
@@ -3346,9 +3346,9 @@ done:
             if (new_dt->shared) {
                 if (new_dt->shared->owned_vol_obj && H5VL_free_object(new_dt->shared->owned_vol_obj) < 0)
                     HDONE_ERROR(H5E_DATATYPE, H5E_CANTCLOSEOBJ, NULL, "unable to close owned VOL object");
-                new_dt->shared = H5FL_FREE(H5T_shared_t, new_dt->shared);
+                new_dt->shared = H5FL_FREE_MT(H5T_shared_t, new_dt->shared);
             } /* end if */
-            new_dt = H5FL_FREE(H5T_t, new_dt);
+            new_dt = H5FL_FREE_MT(H5T_t, new_dt);
         } /* end if */
 
     FUNC_LEAVE_NOAPI(ret_value)
@@ -3673,8 +3673,8 @@ done:
             assert(new_dt->shared);
             if (new_dt->shared->owned_vol_obj && H5VL_free_object(new_dt->shared->owned_vol_obj) < 0)
                 HDONE_ERROR(H5E_DATATYPE, H5E_CANTCLOSEOBJ, NULL, "unable to close owned VOL object");
-            new_dt->shared = H5FL_FREE(H5T_shared_t, new_dt->shared);
-            new_dt         = H5FL_FREE(H5T_t, new_dt);
+            new_dt->shared = H5FL_FREE_MT(H5T_shared_t, new_dt->shared);
+            new_dt         = H5FL_FREE_MT(H5T_t, new_dt);
         } /* end if */
 
     FUNC_LEAVE_NOAPI(ret_value)
@@ -3739,7 +3739,7 @@ H5T_copy_reopen(H5T_t *old_dt)
              * Not terribly efficient. */
             if (new_dt->shared->owned_vol_obj && H5VL_free_object(new_dt->shared->owned_vol_obj) < 0)
                 HGOTO_ERROR(H5E_DATATYPE, H5E_CANTCLOSEOBJ, NULL, "unable to close owned VOL object");
-            new_dt->shared = H5FL_FREE(H5T_shared_t, new_dt->shared);
+            new_dt->shared = H5FL_FREE_MT(H5T_shared_t, new_dt->shared);
             new_dt->shared = reopened_fo;
 
             reopened_fo->fo_count++;
@@ -3777,8 +3777,8 @@ done:
             assert(new_dt->shared);
             if (new_dt->shared->owned_vol_obj && H5VL_free_object(new_dt->shared->owned_vol_obj) < 0)
                 HDONE_ERROR(H5E_DATATYPE, H5E_CANTCLOSEOBJ, NULL, "unable to close owned VOL object");
-            new_dt->shared = H5FL_FREE(H5T_shared_t, new_dt->shared);
-            new_dt         = H5FL_FREE(H5T_t, new_dt);
+            new_dt->shared = H5FL_FREE_MT(H5T_shared_t, new_dt->shared);
+            new_dt         = H5FL_FREE_MT(H5T_t, new_dt);
         } /* end if */
 
     FUNC_LEAVE_NOAPI(ret_value)
@@ -3846,14 +3846,14 @@ H5T__alloc(void)
     FUNC_ENTER_PACKAGE
 
     /* Allocate & initialize datatype wrapper info */
-    if (NULL == (dt = H5FL_CALLOC(H5T_t)))
+    if (NULL == (dt = H5FL_CALLOC_MT(H5T_t)))
         HGOTO_ERROR(H5E_RESOURCE, H5E_NOSPACE, NULL, "memory allocation failed");
     H5O_loc_reset(&(dt->oloc));
     H5G_name_reset(&(dt->path));
     H5O_msg_reset_share(H5O_DTYPE_ID, dt);
 
     /* Allocate & initialize shared datatype structure */
-    if (NULL == (dt->shared = H5FL_CALLOC(H5T_shared_t)))
+    if (NULL == (dt->shared = H5FL_CALLOC_MT(H5T_shared_t)))
         HGOTO_ERROR(H5E_RESOURCE, H5E_NOSPACE, NULL, "memory allocation failed");
     dt->shared->version = H5O_DTYPE_VERSION_1;
 
@@ -3868,9 +3868,9 @@ done:
         if (dt) {
             if (dt->shared) {
                 assert(!dt->shared->owned_vol_obj);
-                dt->shared = H5FL_FREE(H5T_shared_t, dt->shared);
+                dt->shared = H5FL_FREE_MT(H5T_shared_t, dt->shared);
             } /* end if */
-            dt = H5FL_FREE(H5T_t, dt);
+            dt = H5FL_FREE_MT(H5T_t, dt);
         } /* end if */
 
     FUNC_LEAVE_NOAPI(ret_value)
@@ -3985,14 +3985,14 @@ H5T_close_real(H5T_t *dt)
             HGOTO_ERROR(H5E_DATATYPE, H5E_CANTFREE, FAIL, "unable to free datatype");
 
         assert(!dt->shared->owned_vol_obj);
-        dt->shared = H5FL_FREE(H5T_shared_t, dt->shared);
+        dt->shared = H5FL_FREE_MT(H5T_shared_t, dt->shared);
     } /* end if */
     else
         /* Free the group hier. path since we're not calling H5T__free() */
         H5G_name_free(&(dt->path));
 
     /* Free the 'top' datatype struct */
-    dt = H5FL_FREE(H5T_t, dt);
+    dt = H5FL_FREE_MT(H5T_t, dt);
 
 done:
     FUNC_LEAVE_NOAPI(ret_value)
