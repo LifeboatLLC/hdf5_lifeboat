@@ -3649,7 +3649,7 @@ H5D_get_create_plist(const H5D_t *dset)
 
             /* Allocate a background buffer */
             bkg_size = MAX(H5T_GET_SIZE(copied_fill.type), H5T_GET_SIZE(dset->shared->type));
-            if (H5T_path_bkg(tpath) && NULL == (bkg_buf = H5FL_BLK_CALLOC(type_conv, bkg_size))) {
+            if (H5T_path_bkg(tpath) && NULL == (bkg_buf = H5FL_BLK_CALLOC_MT(type_conv, bkg_size))) {
                 H5I_dec_ref(src_id);
                 H5I_dec_ref(dst_id);
                 HGOTO_ERROR(H5E_DATASET, H5E_CANTALLOC, FAIL, "memory allocation failed");
@@ -3661,7 +3661,7 @@ H5D_get_create_plist(const H5D_t *dset)
                 H5I_dec_ref(src_id);
                 H5I_dec_ref(dst_id);
                 if (bkg_buf)
-                    bkg_buf = H5FL_BLK_FREE(type_conv, bkg_buf);
+                    bkg_buf = H5FL_BLK_FREE_MT(type_conv, bkg_buf);
                 HGOTO_ERROR(H5E_DATASET, H5E_CANTCONVERT, FAIL, "datatype conversion failed");
             } /* end if */
 
@@ -3671,7 +3671,7 @@ H5D_get_create_plist(const H5D_t *dset)
             if (H5I_dec_ref(dst_id) < 0)
                 HGOTO_ERROR(H5E_DATASET, H5E_CANTDEC, FAIL, "unable to close temporary object");
             if (bkg_buf)
-                bkg_buf = H5FL_BLK_FREE(type_conv, bkg_buf);
+                bkg_buf = H5FL_BLK_FREE_MT(type_conv, bkg_buf);
         } /* end if */
     }     /* end if */
 

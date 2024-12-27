@@ -365,7 +365,7 @@ H5FL_DEFINE(H5D_piece_info_t);
 H5FL_BLK_DEFINE_STATIC(chunk);
 
 /* Declare extern free list to manage the H5S_sel_iter_t struct */
-H5FL_EXTERN(H5S_sel_iter_t);
+H5FL_EXTERN_MT(H5S_sel_iter_t);
 
 /*-------------------------------------------------------------------------
  * Function:    H5D__chunk_direct_write
@@ -5815,7 +5815,7 @@ H5D__chunk_prune_fill(H5D_chunk_it_ud1_t *udata, hbool_t new_unfilt_chunk)
             HGOTO_ERROR(H5E_DATASET, H5E_CANTCONVERT, FAIL, "can't refill fill value buffer");
 
     /* Allocate the chunk selection iterator */
-    if (NULL == (chunk_iter = H5FL_MALLOC(H5S_sel_iter_t)))
+    if (NULL == (chunk_iter = H5FL_MALLOC_MT(H5S_sel_iter_t)))
         HGOTO_ERROR(H5E_DATASET, H5E_CANTALLOC, FAIL, "can't allocate chunk selection iterator");
 
     /* Create a selection iterator for scattering the elements to memory buffer */
@@ -5841,7 +5841,7 @@ done:
     if (chunk_iter_init && H5S_SELECT_ITER_RELEASE(chunk_iter) < 0)
         HDONE_ERROR(H5E_DATASET, H5E_CANTFREE, FAIL, "Can't release selection iterator");
     if (chunk_iter)
-        chunk_iter = H5FL_FREE(H5S_sel_iter_t, chunk_iter);
+        chunk_iter = H5FL_FREE_MT(H5S_sel_iter_t, chunk_iter);
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5D__chunk_prune_fill */

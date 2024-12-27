@@ -3038,20 +3038,20 @@ H5Pset_fill_value(hid_t plist_id, hid_t type_id, const void *value)
             uint8_t *bkg_buf = NULL; /* Background conversion buffer */
 
             /* Allocate a background buffer */
-            if (H5T_path_bkg(tpath) && NULL == (bkg_buf = H5FL_BLK_CALLOC(type_conv, (size_t)fill.size)))
+            if (H5T_path_bkg(tpath) && NULL == (bkg_buf = H5FL_BLK_CALLOC_MT(type_conv, (size_t)fill.size)))
                 HGOTO_ERROR(H5E_RESOURCE, H5E_NOSPACE, FAIL, "memory allocation failed");
 
             /* Convert the fill value */
             if (H5T_convert(tpath, type_id, type_id, (size_t)1, (size_t)0, (size_t)0, fill.buf, bkg_buf) <
                 0) {
                 if (bkg_buf)
-                    bkg_buf = H5FL_BLK_FREE(type_conv, bkg_buf);
+                    bkg_buf = H5FL_BLK_FREE_MT(type_conv, bkg_buf);
                 HGOTO_ERROR(H5E_DATASET, H5E_CANTCONVERT, FAIL, "datatype conversion failed");
             } /* end if */
 
             /* Release the background buffer */
             if (bkg_buf)
-                bkg_buf = H5FL_BLK_FREE(type_conv, bkg_buf);
+                bkg_buf = H5FL_BLK_FREE_MT(type_conv, bkg_buf);
         } /* end if */
     }     /* end if */
     else

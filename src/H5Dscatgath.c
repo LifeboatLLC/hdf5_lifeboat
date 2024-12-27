@@ -66,7 +66,7 @@ static herr_t H5D__compound_opt_write(size_t nelmts, const H5D_type_info_t *type
 /*******************/
 
 /* Declare extern free list to manage the H5S_sel_iter_t struct */
-H5FL_EXTERN(H5S_sel_iter_t);
+H5FL_EXTERN_MT(H5S_sel_iter_t);
 
 /* Declare extern free list to manage sequences of size_t */
 H5FL_SEQ_EXTERN(size_t);
@@ -479,11 +479,11 @@ H5D__scatgath_read(const H5D_io_info_t *io_info, const H5D_dset_io_info_t *dset_
                      dset_info->layout_io_info.contig_piece_info->in_place_tconv;
 
     /* Allocate the iterators */
-    if (NULL == (mem_iter = H5FL_MALLOC(H5S_sel_iter_t)))
+    if (NULL == (mem_iter = H5FL_MALLOC_MT(H5S_sel_iter_t)))
         HGOTO_ERROR(H5E_DATASET, H5E_CANTALLOC, FAIL, "can't allocate memory iterator");
-    if (NULL == (bkg_iter = H5FL_MALLOC(H5S_sel_iter_t)))
+    if (NULL == (bkg_iter = H5FL_MALLOC_MT(H5S_sel_iter_t)))
         HGOTO_ERROR(H5E_DATASET, H5E_CANTALLOC, FAIL, "can't allocate background iterator");
-    if (NULL == (file_iter = H5FL_MALLOC(H5S_sel_iter_t)))
+    if (NULL == (file_iter = H5FL_MALLOC_MT(H5S_sel_iter_t)))
         HGOTO_ERROR(H5E_DATASET, H5E_CANTALLOC, FAIL, "can't allocate file iterator");
 
     /* Figure out the strip mine size. */
@@ -595,15 +595,15 @@ done:
     if (file_iter_init && H5S_SELECT_ITER_RELEASE(file_iter) < 0)
         HDONE_ERROR(H5E_DATASET, H5E_CANTFREE, FAIL, "Can't release selection iterator");
     if (file_iter)
-        file_iter = H5FL_FREE(H5S_sel_iter_t, file_iter);
+        file_iter = H5FL_FREE_MT(H5S_sel_iter_t, file_iter);
     if (mem_iter_init && H5S_SELECT_ITER_RELEASE(mem_iter) < 0)
         HDONE_ERROR(H5E_DATASET, H5E_CANTFREE, FAIL, "Can't release selection iterator");
     if (mem_iter)
-        mem_iter = H5FL_FREE(H5S_sel_iter_t, mem_iter);
+        mem_iter = H5FL_FREE_MT(H5S_sel_iter_t, mem_iter);
     if (bkg_iter_init && H5S_SELECT_ITER_RELEASE(bkg_iter) < 0)
         HDONE_ERROR(H5E_DATASET, H5E_CANTFREE, FAIL, "Can't release selection iterator");
     if (bkg_iter)
-        bkg_iter = H5FL_FREE(H5S_sel_iter_t, bkg_iter);
+        bkg_iter = H5FL_FREE_MT(H5S_sel_iter_t, bkg_iter);
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5D__scatgath_read() */
@@ -654,11 +654,11 @@ H5D__scatgath_write(const H5D_io_info_t *io_info, const H5D_dset_io_info_t *dset
                      dset_info->layout_io_info.contig_piece_info->in_place_tconv;
 
     /* Allocate the iterators */
-    if (NULL == (mem_iter = H5FL_MALLOC(H5S_sel_iter_t)))
+    if (NULL == (mem_iter = H5FL_MALLOC_MT(H5S_sel_iter_t)))
         HGOTO_ERROR(H5E_DATASET, H5E_CANTALLOC, FAIL, "can't allocate memory iterator");
-    if (NULL == (bkg_iter = H5FL_MALLOC(H5S_sel_iter_t)))
+    if (NULL == (bkg_iter = H5FL_MALLOC_MT(H5S_sel_iter_t)))
         HGOTO_ERROR(H5E_DATASET, H5E_CANTALLOC, FAIL, "can't allocate background iterator");
-    if (NULL == (file_iter = H5FL_MALLOC(H5S_sel_iter_t)))
+    if (NULL == (file_iter = H5FL_MALLOC_MT(H5S_sel_iter_t)))
         HGOTO_ERROR(H5E_DATASET, H5E_CANTALLOC, FAIL, "can't allocate file iterator");
 
     /* Figure out the strip mine size. */
@@ -770,15 +770,15 @@ done:
     if (file_iter_init && H5S_SELECT_ITER_RELEASE(file_iter) < 0)
         HDONE_ERROR(H5E_DATASET, H5E_CANTFREE, FAIL, "Can't release selection iterator");
     if (file_iter)
-        file_iter = H5FL_FREE(H5S_sel_iter_t, file_iter);
+        file_iter = H5FL_FREE_MT(H5S_sel_iter_t, file_iter);
     if (mem_iter_init && H5S_SELECT_ITER_RELEASE(mem_iter) < 0)
         HDONE_ERROR(H5E_DATASET, H5E_CANTFREE, FAIL, "Can't release selection iterator");
     if (mem_iter)
-        mem_iter = H5FL_FREE(H5S_sel_iter_t, mem_iter);
+        mem_iter = H5FL_FREE_MT(H5S_sel_iter_t, mem_iter);
     if (bkg_iter_init && H5S_SELECT_ITER_RELEASE(bkg_iter) < 0)
         HDONE_ERROR(H5E_DATASET, H5E_CANTFREE, FAIL, "Can't release selection iterator");
     if (bkg_iter)
-        bkg_iter = H5FL_FREE(H5S_sel_iter_t, bkg_iter);
+        bkg_iter = H5FL_FREE_MT(H5S_sel_iter_t, bkg_iter);
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5D__scatgath_write() */
@@ -821,7 +821,7 @@ H5D__scatgath_read_select(H5D_io_info_t *io_info)
         HGOTO_ERROR(H5E_RESOURCE, H5E_CANTALLOC, FAIL, "memory allocation failed for temporary buffer list");
 
     /* Allocate the iterator */
-    if (NULL == (mem_iter = H5FL_MALLOC(H5S_sel_iter_t)))
+    if (NULL == (mem_iter = H5FL_MALLOC_MT(H5S_sel_iter_t)))
         HGOTO_ERROR(H5E_DATASET, H5E_CANTALLOC, FAIL, "can't allocate memory iterator");
 
     /* Allocate list of block memory spaces */
@@ -995,7 +995,7 @@ done:
     if (mem_iter_init && H5S_SELECT_ITER_RELEASE(mem_iter) < 0)
         HDONE_ERROR(H5E_DATASET, H5E_CANTFREE, FAIL, "Can't release selection iterator");
     if (mem_iter)
-        mem_iter = H5FL_FREE(H5S_sel_iter_t, mem_iter);
+        mem_iter = H5FL_FREE_MT(H5S_sel_iter_t, mem_iter);
 
     /* Free tmp_bufs */
     H5MM_free(tmp_bufs);
@@ -1058,7 +1058,7 @@ H5D__scatgath_write_select(H5D_io_info_t *io_info)
         HGOTO_ERROR(H5E_RESOURCE, H5E_CANTALLOC, FAIL, "memory allocation failed for temporary buffer list");
 
     /* Allocate the iterator */
-    if (NULL == (mem_iter = H5FL_MALLOC(H5S_sel_iter_t)))
+    if (NULL == (mem_iter = H5FL_MALLOC_MT(H5S_sel_iter_t)))
         HGOTO_ERROR(H5E_DATASET, H5E_CANTALLOC, FAIL, "can't allocate memory iterator");
 
     /* Allocate list of block memory spaces */
@@ -1298,7 +1298,7 @@ done:
     if (mem_iter_init && H5S_SELECT_ITER_RELEASE(mem_iter) < 0)
         HDONE_ERROR(H5E_DATASET, H5E_CANTFREE, FAIL, "Can't release selection iterator");
     if (mem_iter)
-        mem_iter = H5FL_FREE(H5S_sel_iter_t, mem_iter);
+        mem_iter = H5FL_FREE_MT(H5S_sel_iter_t, mem_iter);
 
     /* Free write_bufs */
     H5MM_free(write_bufs);

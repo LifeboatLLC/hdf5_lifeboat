@@ -78,7 +78,7 @@ H5FL_BLK_DEFINE_STATIC(non_zero_fill);
 H5FL_BLK_DEFINE_STATIC(zero_fill);
 
 /* Declare extern free list to manage the H5S_sel_iter_t struct */
-H5FL_EXTERN(H5S_sel_iter_t);
+H5FL_EXTERN_MT(H5S_sel_iter_t);
 
 /*--------------------------------------------------------------------------
  NAME
@@ -190,12 +190,12 @@ H5D__fill(const void *fill, const H5T_t *fill_type, void *buf, const H5T_t *buf_
             H5_CHECK_OVERFLOW(nelmts, hsize_t, size_t);
 
             /* Allocate a temporary buffer */
-            if (NULL == (tmp_buf = H5FL_BLK_MALLOC(type_conv, (size_t)nelmts * buf_size)))
+            if (NULL == (tmp_buf = H5FL_BLK_MALLOC_MT(type_conv, (size_t)nelmts * buf_size)))
                 HGOTO_ERROR(H5E_RESOURCE, H5E_NOSPACE, FAIL, "memory allocation failed");
 
             /* Allocate a background buffer, if necessary */
             if (H5T_path_bkg(tpath) &&
-                NULL == (bkg_buf = H5FL_BLK_CALLOC(type_conv, (size_t)nelmts * buf_size)))
+                NULL == (bkg_buf = H5FL_BLK_CALLOC_MT(type_conv, (size_t)nelmts * buf_size)))
                 HGOTO_ERROR(H5E_RESOURCE, H5E_NOSPACE, FAIL, "memory allocation failed");
 
             /* Replicate the file's fill value into the temporary buffer */
@@ -207,7 +207,7 @@ H5D__fill(const void *fill, const H5T_t *fill_type, void *buf, const H5T_t *buf_
                 HGOTO_ERROR(H5E_DATASET, H5E_CANTCONVERT, FAIL, "data type conversion failed");
 
             /* Allocate the chunk selection iterator */
-            if (NULL == (mem_iter = H5FL_MALLOC(H5S_sel_iter_t)))
+            if (NULL == (mem_iter = H5FL_MALLOC_MT(H5S_sel_iter_t)))
                 HGOTO_ERROR(H5E_DATASET, H5E_CANTALLOC, FAIL, "can't allocate memory selection iterator");
 
             /* Create a selection iterator for scattering the elements to memory buffer */
@@ -272,19 +272,19 @@ done:
     if (mem_iter_init && H5S_SELECT_ITER_RELEASE(mem_iter) < 0)
         HDONE_ERROR(H5E_DATASET, H5E_CANTFREE, FAIL, "Can't release selection iterator");
     if (mem_iter)
-        mem_iter = H5FL_FREE(H5S_sel_iter_t, mem_iter);
+        mem_iter = H5FL_FREE_MT(H5S_sel_iter_t, mem_iter);
     if (src_id != (-1) && H5I_dec_ref(src_id) < 0)
         HDONE_ERROR(H5E_DATASET, H5E_CANTFREE, FAIL, "Can't decrement temporary datatype ID");
     if (dst_id != (-1) && H5I_dec_ref(dst_id) < 0)
         HDONE_ERROR(H5E_DATASET, H5E_CANTFREE, FAIL, "Can't decrement temporary datatype ID");
     if (tmp_buf)
-        tmp_buf = H5FL_BLK_FREE(type_conv, tmp_buf);
+        tmp_buf = H5FL_BLK_FREE_MT(type_conv, tmp_buf);
     if (elem_wb && H5WB_unwrap(elem_wb) < 0)
         HDONE_ERROR(H5E_ATTR, H5E_CLOSEERROR, FAIL, "can't close wrapped buffer");
     if (bkg_elem_wb && H5WB_unwrap(bkg_elem_wb) < 0)
         HDONE_ERROR(H5E_ATTR, H5E_CLOSEERROR, FAIL, "can't close wrapped buffer");
     if (bkg_buf)
-        bkg_buf = H5FL_BLK_FREE(type_conv, bkg_buf);
+        bkg_buf = H5FL_BLK_FREE_MT(type_conv, bkg_buf);
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5D__fill() */
@@ -395,7 +395,7 @@ H5D__fill_init(H5D_fill_buf_info_t *fb_info, void *caller_fill_buf, H5MM_allocat
                     fb_info->bkg_buf_size = fb_info->max_elmt_size;
 
                 /* Allocate the background buffer */
-                if (NULL == (fb_info->bkg_buf = H5FL_BLK_MALLOC(type_conv, fb_info->bkg_buf_size)))
+                if (NULL == (fb_info->bkg_buf = H5FL_BLK_MALLOC_MT(type_conv, fb_info->bkg_buf_size)))
                     HGOTO_ERROR(H5E_RESOURCE, H5E_NOSPACE, FAIL, "memory allocation failed");
             } /* end if */
         }     /* end if */
@@ -627,7 +627,7 @@ H5D__fill_term(H5D_fill_buf_info_t *fb_info)
         else if (fb_info->mem_type)
             (void)H5T_close_real(fb_info->mem_type);
         if (fb_info->bkg_buf)
-            fb_info->bkg_buf = H5FL_BLK_FREE(type_conv, fb_info->bkg_buf);
+            fb_info->bkg_buf = H5FL_BLK_FREE_MT(type_conv, fb_info->bkg_buf);
     } /* end if */
 
     FUNC_LEAVE_NOAPI(SUCCEED)
