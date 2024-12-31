@@ -75,9 +75,9 @@ herr_t H5P__delete_prop_class(H5P_mt_prop_t *prop, H5P_mt_class_t *class);
 
 H5P_mt_prop_t * H5P__search_prop_class(H5P_mt_prop_t *prop, H5P_mt_class_t *class);
 
-void find_mod_point(H5P_mt_class_t *class, H5P_mt_prop_t **first_ptr_ptr, 
-                    H5P_mt_prop_t **second_ptr, int32_t *deletes_comp, 
-                    int32_t *nodes_visited, int32_t *thrd_cols,
+void H5P__find_mod_point(H5P_mt_class_t *class, H5P_mt_prop_t **first_ptr_ptr, 
+                    H5P_mt_prop_t **second_ptr_ptr, int32_t *deletes_ptr, 
+                    int32_t *nodes_visited_ptr, int32_t *thrd_cols_ptr,
                     int64_t target_chksum);
 
 
@@ -598,15 +598,15 @@ H5P__insert_prop_class(H5P_mt_prop_t *new_prop, H5P_mt_class_t *class)
 
 
 void
-find_mod_point(H5P_mt_class_t *class, H5P_mt_prop_t **first_ptr_ptr, 
-               H5P_mt_prop_t **second_ptr_ptr, int32_t *deletes_comp, 
-               int32_t *nodes_visited, int32_t *thrd_cols, 
+H5P__find_mod_point(H5P_mt_class_t *class, H5P_mt_prop_t **first_ptr_ptr, 
+               H5P_mt_prop_t **second_ptr_ptr, int32_t *deletes_ptr, 
+               int32_t *nodes_visited_ptr, int32_t *thrd_cols_ptr, 
                int64_t target_chksum)
 {
     bool done = FALSE;
     bool retry = FALSE;
-    int32_t cols = 0;
-    int32_t delets = 0;
+    int32_t thrd_cols = 0;
+    int32_t deletes = 0;
     int32_t nodes_visited = 0;
     H5P_mt_prop_t * first_prop;
     H5P_mt_prop_t * second_prop;
@@ -620,9 +620,9 @@ find_mod_point(H5P_mt_class_t *class, H5P_mt_prop_t **first_ptr_ptr,
     assert(NULL == *first_ptr_ptr);
     assert(second_ptr_ptr);
     assert(NULL == *second_ptr_ptr);
-    assert(deletes_comp);
-    assert(nodes_visited);
-    assert(thrd_cols);
+    assert(deletes_ptr);
+    assert(nodes_visited_ptr);
+    assert(thrd_cols_ptr);
     assert(target_chksum > LLONG_MIN && target_chksum < LLONG_MAX);
 
     /* update stats */
@@ -659,11 +659,16 @@ find_mod_point(H5P_mt_class_t *class, H5P_mt_prop_t **first_ptr_ptr,
             {
                 if ( second_prop->ref_count != 0 )
                 {
+                    /* Update stats */
+                    /* num_prop_marked_deleted_but_still_referenced */
+
+#if 0 /* This section needs moved to delete */
                     uint64_t version;
 
                     version = atomic_load(&(class->curr_version));
                     version--;
                     atomic_store(&(second_prop->delete_version), version);
+#endif
                 }
                 else /* second_prop->ref_count == 0 */
                 {
@@ -684,7 +689,7 @@ find_mod_point(H5P_mt_class_t *class, H5P_mt_prop_t **first_ptr_ptr,
                     else 
                     {
                         atomic_fetch_sub(&(class->phys_pl_len), 1);
-                        deletes_comp++;
+                        deletes++;
                         nodes_visited++;
 
                         second_prop = next_prop;
@@ -699,243 +704,51 @@ find_mod_point(H5P_mt_class_t *class, H5P_mt_prop_t **first_ptr_ptr,
 
             } /* end while ( second_prop->next.deleted ) */
 
-            
+            if ( ! retry )
+            {
+                assert(first_prop);
+                assert(first_prop->tag == H5P_MT_PROP_TAG);
+
+                assert(second_prop);
+                assert(second_prop->tag == H5P_MT_PROP_TAG);
+
+                assert(first_prop->chksum <= target_chksum);
+
+                if ( second_prop->chksum >= target_chksum )
+                {
+                    done = TRUE;
+                }
+                else
+                {
+                    first_prop = second_prop;
+                    next_prop = atomic_load(&(second_prop->next.ptr));
+                    second_prop = next_prop;
+
+                    nodes_visited++;
+                }
+            }
         
         } while ( ( ! done ) && ( ! retry ) ); 
 
+        assert( ! ( done && retry ) );
 
+    } while ( retry );
 
-        if ( second_prop->chksum > target_chksum )
-        {
+    assert(done);
+    assert(retry);
 
+    assert(first_prop->chksum < target_chksum);
+    assert(second_prop->chksum >= target_chksum);
 
-#if 0
-            /* prep new_prop to be inserted between prev_prop and curr_prop */
-            atomic_store(&(new_prop->next.ptr), curr_prop);
-            
-            /** Attempt to atomically insert new_prop 
-             * 
-             * NOTE: If this fails, another thread modified the LFSLL and we must 
-             * update stats and restart to ensure new_prop is correctly inserted.
-             */
-            if ( !atomic_compare_exchange_strong(&(prev_prop->next.ptr), 
-                                                 &curr_prop, new_prop) )
-            {
-                /* update stats */
-                /* num_insert_prop_class_cols */
+    *first_ptr_ptr = first_prop;
+    *second_ptr_ptr = second_prop;
+    *thrd_cols_ptr += thrd_cols;
+    *deletes_ptr += deletes;
+    *nodes_visited_ptr += nodes_visited;
 
-                continue;
-            }
-            /* The attempt was successful. Update lengths and stats */
-            else
-            {
-                atomic_fetch_add(&(class->log_pl_len), 1);
-                atomic_fetch_add(&(class->phys_pl_len), 1);
+    return;
 
-                done = TRUE;
-
-                /* update stats */
-                /* num_insert_prop_class_success */
-            }
-#endif
-        }
-        else if ( curr_prop->chksum == new_prop->chksum )
-        {
-            int32_t        cmp_result;
-            H5P_mt_prop_t *next_prop;
-            bool           str_cmp_done = FALSE;
-
-            while ( ! str_cmp_done )
-            { 
-                /* update stats */
-                /* num_insert_prop_class_chksum_cols */
-
-                cmp_result = strcmp(curr_prop->name, new_prop->name);
-
-                /* new_prop is less than curr_prop lexicographically */
-                if ( cmp_result > 0 )
-                {
-                    /* prep new_prop to insert between prev_prop and curr_prop */
-                    atomic_store(&(new_prop->next.ptr), curr_prop);
-
-                    /** Attempt to atomically insert new_prop 
-                     * 
-                     * NOTE: If this fails, another thread modified the LFSLL and we must 
-                     * update stats and restart to ensure new_prop is correctly inserted.
-                    */
-                    if ( !atomic_compare_exchange_strong(&(prev_prop->next.ptr), 
-                                                         &curr_prop, new_prop) )
-                    {
-                        /* update stats */
-                        /* num_insert_prop_class_cols */
-
-                        break;
-
-                    }
-                    /* The attempt was successful. Update lengths and stats */
-                    else 
-                    {
-                        atomic_fetch_add(&(class->log_pl_len), 1);
-                        atomic_fetch_add(&(class->phys_pl_len), 1);
-
-                        done = TRUE;
-                        str_cmp_done = TRUE;
-
-                        /* update stats */
-                        /* num_insert_prop_class_success */
-                    }
-                }
-                else if ( cmp_result < 0 )
-                {
-
-                    atomic_store(&(next_prop), curr_prop->next.ptr);
-
-                    assert(next_prop->chksum >= curr_prop->chksum);
-
-                    /** 
-                     * If the next property in the LFSLL doesn't have the same chksum,
-                     * then new_prop gets inserted between curr_prop and new_prop since
-                     * chksum is used to sort first.
-                     */
-                    if ( next_prop->chksum != curr_prop->chksum )
-                    {
-                        /* Prep new_prop to be inserted between curr_prop and next_prop */
-                        atomic_store(&(new_prop->next.ptr), next_prop);
-
-                        /** Attempt to atomically insert new_prop 
-                         * 
-                         * NOTE: If this fails, another thread modified the LFSLL and we must 
-                         * update stats and restart to ensure new_prop is correctly inserted.
-                        */
-                        if ( !atomic_compare_exchange_strong(&(curr_prop->next.ptr), 
-                                                            &next_prop, new_prop) )
-                        {
-                            /* update stats */
-                            /* num_insert_prop_class_success */
-
-                            break;
-
-                        }
-                        /* The attempt was successful. Update lengths and stats */
-                        else
-                        {
-                            atomic_fetch_add(&(class->log_pl_len), 1);
-                            atomic_fetch_add(&(class->phys_pl_len), 1);
-
-                            done = TRUE;
-                            str_cmp_done = TRUE;
-
-                            /* update stats */
-                            /* num_insert_prop_class_success */
-                        }
-                    } /* end if ( next_prop->chksum != curr_prop->chksum ) */
-  
-                } 
-                else /* cmp_results == 0 */
-                {
-                    /* update stats */
-                    /* num_insert_prop_class_string_cols */
-
-                    /**
-                     * If the name's of curr_prop and new_prop are the same, we must
-                     * move on to using version number to determine insert location.
-                     */
-                    if ( new_prop->create_version > curr_prop->create_version )
-                    {
-                        atomic_store(&(new_prop->next.ptr), curr_prop);
-
-                        if ( !atomic_compare_exchange_strong(&(prev_prop->next.ptr), 
-                                                             &curr_prop, new_prop) )
-                        {
-                            /* update stats */
-                            /* num_insert_prop_class_cols */
-
-                            break;
-                        }
-                        /* The attempt was successful. Update lengths and stats */
-                        else 
-                        {
-                            atomic_fetch_add(&(class->log_pl_len), 1);
-                            atomic_fetch_add(&(class->phys_pl_len), 1);
-
-                            done = TRUE;
-                            str_cmp_done = TRUE;
-
-                            /* update stats */
-                            /* num_insert_prop_class_success */
-                        }
-                        
-                    } /* end if ( new_prop->create_version > curr_prop->create_version ) */
-                    else
-                    {
-                        /* Property is already in the LFSLL, update stats and exit */
-                        if ( new_prop->create_version == curr_prop->create_version )
-                        {
-                            /* update stats */
-                            /* num_insert_prop_class_alread_in_LFSLL */
-                            
-                            done = TRUE;
-                            str_cmp_done = TRUE;
-
-                            break;
-                        }
-                        
-                        atomic_store(&(next_prop), curr_prop->next.ptr);
-
-                        assert(next_prop->chksum >= curr_prop->chksum);
-
-                        if ( new_prop->chksum != next_prop->chksum )
-                        {
-                            /* Prep new_prop to be inserted between curr_prop and next_prop */
-                            atomic_store(&(new_prop->next.ptr), next_prop);
-
-                            /** Attempt to atomically insert new_prop 
-                             * 
-                             * NOTE: If this fails, another thread modified the LFSLL and we must 
-                             * update stats and restart to ensure new_prop is correctly inserted.
-                            */
-                            if ( !atomic_compare_exchange_strong(&(curr_prop->next.ptr), 
-                                                                &next_prop, new_prop) )
-                            {
-                                /* update stats */
-                                /* num_insert_prop_class_success */
-
-                                break;
-
-                            }
-                            /* The attempt was successful. Update lengths and stats */
-                            else
-                            {
-                                atomic_fetch_add(&(class->log_pl_len), 1);
-                                atomic_fetch_add(&(class->phys_pl_len), 1);
-
-                                done = TRUE;
-                                str_cmp_done = TRUE;
-
-                                /* update stats */
-                                /* num_insert_prop_class_success */
-                            }
-                        } /* end if ( new_prop->chksum != next_prop->chksum ) */
-
-                    } /* end else */
-
-                } /* end else ( cmp_results == 0 ) */ 
-
-                /** 
-                 * Must update prev_prop and curr_prop to compare next_prop
-                 * with new_prop to find the correct insert location.
-                 */
-                atomic_store(&(prev_prop), curr_prop);
-                atomic_store(&(curr_prop), next_prop);
-
-
-            } /* end while ( ! str_cmp_done ) */
-            
-
-        } /* end else if ( curr_prop->chksum == new_prop->chksum ) */
-    
-    } /* end while (!done) */
-}
+} /* H5P__find_mod_point() */
 
 
 
