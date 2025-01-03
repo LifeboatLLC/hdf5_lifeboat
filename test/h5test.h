@@ -54,8 +54,16 @@ typedef struct thread_info_t {
 #ifdef H5_HAVE_MULTITHREAD
 extern pthread_key_t test_thread_info_key_g;
 
-#define IS_MAIN_TEST_THREAD ((GetTestMaxNumThreads() <= 1) ||\
-    ((pthread_getspecific(test_thread_info_key_g)) && (((thread_info_t*)pthread_getspecific(test_thread_info_key_g))->thread_idx == 0)))
+#define IS_MAIN_TEST_THREAD (                                                                                \
+    /* if GetTestMaxNumThreads() == 0, no additional threads can be spawned */                               \
+    (GetTestMaxNumThreads() == 0) ||                                                                         \
+    /* if no thread-specific 'test_thread_info_key_g' key is set, we can't                                   \
+     * determine which thread is the main thread anyway */                                                   \
+    (pthread_getspecific(test_thread_info_key_g) == NULL) ||                                                 \
+    /* for now, if a thread-specific 'test_thread_info_key_g' key is set,                                    \
+     * assume that the thread with thread_idx 0 is the main thread */                                        \
+    (((thread_info_t*)pthread_getspecific(test_thread_info_key_g))->thread_idx == 0)                         \
+)
 
 #else
 #define IS_MAIN_TEST_THREAD true
