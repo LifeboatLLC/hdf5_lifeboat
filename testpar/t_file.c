@@ -53,7 +53,7 @@ static int open_file(const char *filename, hid_t fapl, int metadata_write_strate
  * sooner or later due to barrier mixed up.
  */
 void
-test_split_comm_access(const void *params)
+test_split_comm_access(void *params)
 {
     MPI_Comm    comm;
     MPI_Info    info = MPI_INFO_NULL;
@@ -130,7 +130,7 @@ test_split_comm_access(const void *params)
 }
 
 void
-test_page_buffer_access(const void *params)
+test_page_buffer_access(void *params)
 {
     hid_t       file_id = -1; /* File ID */
     hid_t       fcpl, fapl;
@@ -767,7 +767,7 @@ open_file(const char *filename, hid_t fapl, int metadata_write_strategy, hsize_t
  *        multiple opens of the same file.
  */
 void
-test_file_properties(const void *params)
+test_file_properties(void *params)
 {
     hid_t       fid          = H5I_INVALID_HID; /* HDF5 file ID */
     hid_t       fapl_id      = H5I_INVALID_HID; /* File access plist */
@@ -972,7 +972,7 @@ test_file_properties(const void *params)
 } /* end test_file_properties() */
 
 void
-test_delete(const void *params)
+test_delete(void *params)
 {
     hid_t       fid           = H5I_INVALID_HID; /* HDF5 file ID */
     hid_t       fapl_id       = H5I_INVALID_HID; /* File access plist */

@@ -934,7 +934,7 @@ test_vl_rewrite()
  *-------------------------------------------------------------------------
  */
 extern "C" void
-test_vlstrings(const void *params)
+test_vlstrings(void *params)
 {
     // Output message about test being performed
     MESSAGE(5, ("Testing Variable-Length Strings"));

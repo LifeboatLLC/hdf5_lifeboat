@@ -729,7 +729,7 @@ test_compound_set_size()
  *-------------------------------------------------------------------------
  */
 extern "C" void
-test_compound(const void *params)
+test_compound(void *params)
 {
     // Output message about test being performed
     MESSAGE(5, ("Testing Compound Data Type operations\n"));

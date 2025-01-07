@@ -1868,7 +1868,7 @@ test_h5o_getinfo_visit(void)
 **
 ****************************************************************/
 void
-test_h5o(const void H5_ATTR_UNUSED *params)
+test_h5o(void H5_ATTR_UNUSED *params)
 {
     /* Output message about test being performed */
     MESSAGE(5, ("Testing Objects\n"));

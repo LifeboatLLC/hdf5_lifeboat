@@ -458,7 +458,7 @@ verify_data(const char *filename, int chunk_factor, write_type write_pattern, in
  * it, read to verify all data are as written.
  */
 void
-test_chunk_alloc(const void *params)
+test_chunk_alloc(void *params)
 {
     const char *filename;
     hid_t       file_id, dataset;

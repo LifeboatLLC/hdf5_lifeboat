@@ -827,7 +827,7 @@ test_reference_region_1D()
  *-------------------------------------------------------------------------
  */
 extern "C" void
-test_reference(const void *params)
+test_reference(void *params)
 {
     // Output message about test being performed
     MESSAGE(5, ("Testing References\n"));

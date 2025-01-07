@@ -8334,7 +8334,7 @@ test_deprec(const char *env_h5_drvr)
 **
 ****************************************************************/
 void
-test_file(const void H5_ATTR_UNUSED *params)
+test_file(void H5_ATTR_UNUSED *params)
 {
     const char *env_h5_drvr;               /* File Driver value from environment */
     hid_t       fapl_id = H5I_INVALID_HID; /* VFD-dependent fapl ID */

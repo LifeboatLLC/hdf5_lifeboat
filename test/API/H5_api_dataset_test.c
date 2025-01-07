@@ -16,91 +16,91 @@
  * XXX: H5Dread_chunk/H5Dwrite_chunk, H5Dfill/scatter/gather
  */
 
-static void print_dataset_test_header(const void *params);
-static void test_create_dataset_under_root(const void *params);
-static void test_create_dataset_under_existing_group(const void *params);
-static void test_create_dataset_invalid_params(const void *params);
-static void test_create_anonymous_dataset(const void *params);
-static void test_create_anonymous_dataset_invalid_params(const void *params);
-static void test_create_dataset_null_space(const void *params);
-static void test_create_dataset_scalar_space(const void *params);
-static void test_create_zero_dim_dset(const void *params);
-static void test_create_dataset_random_shapes(const void *params);
-static void test_create_dataset_predefined_types(const void *params);
-static void test_create_dataset_string_types(const void *params);
-static void test_create_dataset_compound_types(const void *params);
-static void test_create_dataset_enum_types(const void *params);
-static void test_create_dataset_array_types(const void *params);
-static void test_create_dataset_creation_properties(const void *params);
-static void test_create_many_dataset(const void *params);
-static void test_open_dataset(const void *params);
-static void test_open_dataset_invalid_params(const void *params);
-static void test_close_dataset_invalid_params(const void *params);
-static void test_get_dataset_space_and_type(const void *params);
-static void test_get_dataset_space_and_type_invalid_params(const void *params);
-static void test_get_dataset_space_status(const void *params);
-static void test_get_dataset_space_status_invalid_params(const void *params);
-static void test_dataset_property_lists(const void *params);
-static void test_get_dataset_storage_size(const void *params);
-static void test_get_dataset_storage_size_invalid_params(const void *params);
-static void test_get_dataset_chunk_storage_size(const void *params);
-static void test_get_dataset_chunk_storage_size_invalid_params(const void *params);
-static void test_get_dataset_offset(const void *params);
-static void test_get_dataset_offset_invalid_params(const void *params);
-static void test_read_dataset_small_all(const void *params);
-static void test_read_dataset_small_hyperslab(const void *params);
-static void test_read_dataset_small_point_selection(const void *params);
-static void test_read_multi_dataset_small_all(const void *params);
-static void test_read_multi_dataset_small_hyperslab(const void *params);
-static void test_read_multi_dataset_small_point_selection(const void *params);
-static void test_dataset_io_point_selections(const void *params);
-static void test_read_dataset_invalid_params(const void *params);
-static void test_write_dataset_small_all(const void *params);
-static void test_write_dataset_small_hyperslab(const void *params);
-static void test_write_dataset_small_point_selection(const void *params);
-static void test_write_dataset_data_verification(const void *params);
-static void test_write_multi_dataset_small_all(const void *params);
-static void test_write_multi_dataset_small_hyperslab(const void *params);
-static void test_write_multi_dataset_small_point_selection(const void *params);
-static void test_write_multi_dataset_data_verification(const void *params);
-static void test_write_dataset_invalid_params(const void *params);
-static void test_dataset_string_encodings(const void *params);
-static void test_dataset_builtin_type_conversion(const void *params);
-static void test_dataset_real_to_int_conversion(const void *params);
-static void test_dataset_compound_partial_io(const void *params);
-static void test_dataset_vlen_io(const void *params);
-static void test_dataset_set_extent_chunked_unlimited(const void *params);
-static void test_dataset_set_extent_chunked_fixed(const void *params);
-static void test_dataset_set_extent_data(const void *params);
-static void test_dataset_set_extent_double_handles(const void *params);
-static void test_dataset_set_extent_invalid_params(const void *params);
-static void test_flush_dataset(const void *params);
-static void test_flush_dataset_invalid_params(const void *params);
-static void test_refresh_dataset(const void *params);
-static void test_refresh_dataset_invalid_params(const void *params);
+static void print_dataset_test_header(void *params);
+static void test_create_dataset_under_root(void *params);
+static void test_create_dataset_under_existing_group(void *params);
+static void test_create_dataset_invalid_params(void *params);
+static void test_create_anonymous_dataset(void *params);
+static void test_create_anonymous_dataset_invalid_params(void *params);
+static void test_create_dataset_null_space(void *params);
+static void test_create_dataset_scalar_space(void *params);
+static void test_create_zero_dim_dset(void *params);
+static void test_create_dataset_random_shapes(void *params);
+static void test_create_dataset_predefined_types(void *params);
+static void test_create_dataset_string_types(void *params);
+static void test_create_dataset_compound_types(void *params);
+static void test_create_dataset_enum_types(void *params);
+static void test_create_dataset_array_types(void *params);
+static void test_create_dataset_creation_properties(void *params);
+static void test_create_many_dataset(void *params);
+static void test_open_dataset(void *params);
+static void test_open_dataset_invalid_params(void *params);
+static void test_close_dataset_invalid_params(void *params);
+static void test_get_dataset_space_and_type(void *params);
+static void test_get_dataset_space_and_type_invalid_params(void *params);
+static void test_get_dataset_space_status(void *params);
+static void test_get_dataset_space_status_invalid_params(void *params);
+static void test_dataset_property_lists(void *params);
+static void test_get_dataset_storage_size(void *params);
+static void test_get_dataset_storage_size_invalid_params(void *params);
+static void test_get_dataset_chunk_storage_size(void *params);
+static void test_get_dataset_chunk_storage_size_invalid_params(void *params);
+static void test_get_dataset_offset(void *params);
+static void test_get_dataset_offset_invalid_params(void *params);
+static void test_read_dataset_small_all(void *params);
+static void test_read_dataset_small_hyperslab(void *params);
+static void test_read_dataset_small_point_selection(void *params);
+static void test_read_multi_dataset_small_all(void *params);
+static void test_read_multi_dataset_small_hyperslab(void *params);
+static void test_read_multi_dataset_small_point_selection(void *params);
+static void test_dataset_io_point_selections(void *params);
+static void test_read_dataset_invalid_params(void *params);
+static void test_write_dataset_small_all(void *params);
+static void test_write_dataset_small_hyperslab(void *params);
+static void test_write_dataset_small_point_selection(void *params);
+static void test_write_dataset_data_verification(void *params);
+static void test_write_multi_dataset_small_all(void *params);
+static void test_write_multi_dataset_small_hyperslab(void *params);
+static void test_write_multi_dataset_small_point_selection(void *params);
+static void test_write_multi_dataset_data_verification(void *params);
+static void test_write_dataset_invalid_params(void *params);
+static void test_dataset_string_encodings(void *params);
+static void test_dataset_builtin_type_conversion(void *params);
+static void test_dataset_real_to_int_conversion(void *params);
+static void test_dataset_compound_partial_io(void *params);
+static void test_dataset_vlen_io(void *params);
+static void test_dataset_set_extent_chunked_unlimited(void *params);
+static void test_dataset_set_extent_chunked_fixed(void *params);
+static void test_dataset_set_extent_data(void *params);
+static void test_dataset_set_extent_double_handles(void *params);
+static void test_dataset_set_extent_invalid_params(void *params);
+static void test_flush_dataset(void *params);
+static void test_flush_dataset_invalid_params(void *params);
+static void test_refresh_dataset(void *params);
+static void test_refresh_dataset_invalid_params(void *params);
 
 /*
  * Chunking tests
  */
-static void test_create_single_chunk_dataset(const void *params);
-static void test_write_single_chunk_dataset(const void *params);
-static void test_create_multi_chunk_dataset(const void *params);
-static void test_write_multi_chunk_dataset_same_shape_read(const void *params);
-static void test_write_multi_chunk_dataset_diff_shape_read(const void *params);
-static void test_overwrite_multi_chunk_dataset_same_shape_read(const void *params);
-static void test_overwrite_multi_chunk_dataset_diff_shape_read(const void *params);
-static void test_read_partial_chunk_all_selection(const void *params);
-static void test_read_partial_chunk_hyperslab_selection(const void *params);
-static void test_read_partial_chunk_point_selection(const void *params);
+static void test_create_single_chunk_dataset(void *params);
+static void test_write_single_chunk_dataset(void *params);
+static void test_create_multi_chunk_dataset(void *params);
+static void test_write_multi_chunk_dataset_same_shape_read(void *params);
+static void test_write_multi_chunk_dataset_diff_shape_read(void *params);
+static void test_overwrite_multi_chunk_dataset_same_shape_read(void *params);
+static void test_overwrite_multi_chunk_dataset_diff_shape_read(void *params);
+static void test_read_partial_chunk_all_selection(void *params);
+static void test_read_partial_chunk_hyperslab_selection(void *params);
+static void test_read_partial_chunk_point_selection(void *params);
 
-static void test_get_vlen_buf_size(const void *params);
+static void test_get_vlen_buf_size(void *params);
 
 static size_t filter(unsigned int flags, size_t H5_ATTR_UNUSED cd_nelmts,
                      const unsigned int H5_ATTR_UNUSED cd_values[], size_t nbytes,
                      size_t H5_ATTR_UNUSED *buf_size, void H5_ATTR_UNUSED **buf);
 
 static void
-print_dataset_test_header(const void H5_ATTR_UNUSED *params)
+print_dataset_test_header(void H5_ATTR_UNUSED *params)
 {
     printf("\n");
     printf("**********************************************\n");
@@ -115,7 +115,7 @@ print_dataset_test_header(const void H5_ATTR_UNUSED *params)
  * created under the root group.
  */
 static void
-test_create_dataset_under_root(const void H5_ATTR_UNUSED *params)
+test_create_dataset_under_root(void H5_ATTR_UNUSED *params)
 {
     hid_t file_id    = H5I_INVALID_HID;
     hid_t dset_id    = H5I_INVALID_HID;
@@ -182,7 +182,7 @@ error:
  * under a group that is not the root group.
  */
 static void
-test_create_dataset_under_existing_group(const void H5_ATTR_UNUSED *params)
+test_create_dataset_under_existing_group(void H5_ATTR_UNUSED *params)
 {
     hid_t file_id         = H5I_INVALID_HID;
     hid_t container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
@@ -270,7 +270,7 @@ error:
  * when H5Dcreate is passed invalid parameters.
  */
 static void
-test_create_dataset_invalid_params(const void H5_ATTR_UNUSED *params)
+test_create_dataset_invalid_params(void H5_ATTR_UNUSED *params)
 {
     hid_t file_id         = H5I_INVALID_HID;
     hid_t container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
@@ -526,7 +526,7 @@ error:
  * A test to check that an anonymous dataset can be created.
  */
 static void
-test_create_anonymous_dataset(const void H5_ATTR_UNUSED *params)
+test_create_anonymous_dataset(void H5_ATTR_UNUSED *params)
 {
     hid_t file_id         = H5I_INVALID_HID;
     hid_t container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
@@ -613,7 +613,7 @@ error:
  * parameters.
  */
 static void
-test_create_anonymous_dataset_invalid_params(const void H5_ATTR_UNUSED *params)
+test_create_anonymous_dataset_invalid_params(void H5_ATTR_UNUSED *params)
 {
     hid_t file_id         = H5I_INVALID_HID;
     hid_t container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
@@ -808,7 +808,7 @@ error:
  * dataspace is not problematic.
  */
 static void
-test_create_dataset_null_space(const void H5_ATTR_UNUSED *params)
+test_create_dataset_null_space(void H5_ATTR_UNUSED *params)
 {
     hid_t file_id         = H5I_INVALID_HID;
     hid_t container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
@@ -905,7 +905,7 @@ error:
  * dataspace is not problematic.
  */
 static void
-test_create_dataset_scalar_space(const void H5_ATTR_UNUSED *params)
+test_create_dataset_scalar_space(void H5_ATTR_UNUSED *params)
 {
     hid_t file_id         = H5I_INVALID_HID;
     hid_t container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
@@ -1002,7 +1002,7 @@ error:
  * which contains a 0-sized dimension is not problematic.
  */
 static void
-test_create_zero_dim_dset(const void H5_ATTR_UNUSED *params)
+test_create_zero_dim_dset(void H5_ATTR_UNUSED *params)
 {
     hsize_t dims[ZERO_DIM_DSET_TEST_SPACE_RANK] = {0};
     hid_t   file_id                             = H5I_INVALID_HID;
@@ -1105,7 +1105,7 @@ error:
  * a variety of different dataspace shapes.
  */
 static void
-test_create_dataset_random_shapes(const void H5_ATTR_UNUSED *params)
+test_create_dataset_random_shapes(void H5_ATTR_UNUSED *params)
 {
     size_t i;
     hid_t  file_id         = H5I_INVALID_HID;
@@ -1204,7 +1204,7 @@ error:
  * datatypes.
  */
 static void
-test_create_dataset_predefined_types(const void H5_ATTR_UNUSED *params)
+test_create_dataset_predefined_types(void H5_ATTR_UNUSED *params)
 {
     size_t i;
     hid_t  file_id         = H5I_INVALID_HID;
@@ -1307,7 +1307,7 @@ error:
  * string datatypes.
  */
 static void
-test_create_dataset_string_types(const void H5_ATTR_UNUSED *params)
+test_create_dataset_string_types(void H5_ATTR_UNUSED *params)
 {
     hid_t file_id         = H5I_INVALID_HID;
     hid_t container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
@@ -1476,7 +1476,7 @@ error:
  * a variety of compound datatypes.
  */
 static void
-test_create_dataset_compound_types(const void H5_ATTR_UNUSED *params)
+test_create_dataset_compound_types(void H5_ATTR_UNUSED *params)
 {
     size_t i, j;
     hid_t  file_id         = H5I_INVALID_HID;
@@ -1646,7 +1646,7 @@ error:
  * enum datatypes.
  */
 static void
-test_create_dataset_enum_types(const void H5_ATTR_UNUSED *params)
+test_create_dataset_enum_types(void H5_ATTR_UNUSED *params)
 {
     size_t      i;
     hid_t       file_id         = H5I_INVALID_HID;
@@ -1788,7 +1788,7 @@ error:
  * array datatypes.
  */
 static void
-test_create_dataset_array_types(const void H5_ATTR_UNUSED *params)
+test_create_dataset_array_types(void H5_ATTR_UNUSED *params)
 {
     hsize_t array_dims1[DATASET_ARRAY_TYPE_TEST_RANK1];
     hsize_t array_dims2[DATASET_ARRAY_TYPE_TEST_RANK2];
@@ -1999,7 +1999,7 @@ filter(unsigned int H5_ATTR_UNUSED flags, size_t H5_ATTR_UNUSED cd_nelmts,
  * dataset creation properties.
  */
 static void
-test_create_dataset_creation_properties(const void H5_ATTR_UNUSED *params)
+test_create_dataset_creation_properties(void H5_ATTR_UNUSED *params)
 {
     hsize_t      dims[DATASET_CREATION_PROPERTIES_TEST_SHAPE_RANK];
     hsize_t      chunk_dims[DATASET_CREATION_PROPERTIES_TEST_SHAPE_RANK];
@@ -3084,7 +3084,7 @@ error:
  * A test to create many small datasets (100,000)
  */
 static void
-test_create_many_dataset(const void H5_ATTR_UNUSED *params)
+test_create_many_dataset(void H5_ATTR_UNUSED *params)
 {
     hid_t         file_id         = H5I_INVALID_HID;
     hid_t         container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
@@ -3187,7 +3187,7 @@ error:
  * H5Dopen succeeds.
  */
 static void
-test_open_dataset(const void H5_ATTR_UNUSED *params)
+test_open_dataset(void H5_ATTR_UNUSED *params)
 {
     TESTING("H5Dopen");
 
@@ -3201,7 +3201,7 @@ test_open_dataset(const void H5_ATTR_UNUSED *params)
  * passed invalid parameters.
  */
 static void
-test_open_dataset_invalid_params(const void H5_ATTR_UNUSED *params)
+test_open_dataset_invalid_params(void H5_ATTR_UNUSED *params)
 {
     hid_t file_id         = H5I_INVALID_HID;
     hid_t container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
@@ -3376,7 +3376,7 @@ error:
  * passed an invalid dataset ID.
  */
 static void
-test_close_dataset_invalid_params(const void H5_ATTR_UNUSED *params)
+test_close_dataset_invalid_params(void H5_ATTR_UNUSED *params)
 {
     herr_t err_ret = -1;
     hid_t  file_id = H5I_INVALID_HID;
@@ -3431,7 +3431,7 @@ error:
  * H5Dget_type, respectively.
  */
 static void
-test_get_dataset_space_and_type(const void H5_ATTR_UNUSED *params)
+test_get_dataset_space_and_type(void H5_ATTR_UNUSED *params)
 {
     hsize_t dset_dims[DATASET_GET_SPACE_TYPE_TEST_SPACE_RANK];
     size_t  i;
@@ -3721,7 +3721,7 @@ error:
  * invalid parameters, respectively.
  */
 static void
-test_get_dataset_space_and_type_invalid_params(const void H5_ATTR_UNUSED *params)
+test_get_dataset_space_and_type_invalid_params(void H5_ATTR_UNUSED *params)
 {
     hid_t file_id         = H5I_INVALID_HID;
     hid_t container_group = H5I_INVALID_HID;
@@ -3864,7 +3864,7 @@ error:
  * A test for H5Dget_space_status.
  */
 static void
-test_get_dataset_space_status(const void H5_ATTR_UNUSED *params)
+test_get_dataset_space_status(void H5_ATTR_UNUSED *params)
 {
     TESTING("H5Dget_space_status");
 
@@ -3879,7 +3879,7 @@ test_get_dataset_space_status(const void H5_ATTR_UNUSED *params)
  * it is passed invalid parameters.
  */
 static void
-test_get_dataset_space_status_invalid_params(const void H5_ATTR_UNUSED *params)
+test_get_dataset_space_status_invalid_params(void H5_ATTR_UNUSED *params)
 {
     TESTING("H5Dget_space_status with invalid parameters");
 
@@ -3896,7 +3896,7 @@ test_get_dataset_space_status_invalid_params(const void H5_ATTR_UNUSED *params)
  * access can be retrieved with a call to H5Dget_access_plist.
  */
 static void
-test_dataset_property_lists(const void H5_ATTR_UNUSED *params)
+test_dataset_property_lists(void H5_ATTR_UNUSED *params)
 {
     const char *path_prefix = "/test_prefix";
     hsize_t     dims[DATASET_PROPERTY_LIST_TEST_SPACE_RANK];
@@ -4300,7 +4300,7 @@ error:
  * A test for H5Dget_storage_size.
  */
 static void
-test_get_dataset_storage_size(const void H5_ATTR_UNUSED *params)
+test_get_dataset_storage_size(void H5_ATTR_UNUSED *params)
 {
     TESTING("H5Dget_storage_size");
 
@@ -4315,7 +4315,7 @@ test_get_dataset_storage_size(const void H5_ATTR_UNUSED *params)
  * invalid parameters.
  */
 static void
-test_get_dataset_storage_size_invalid_params(const void H5_ATTR_UNUSED *params)
+test_get_dataset_storage_size_invalid_params(void H5_ATTR_UNUSED *params)
 {
     TESTING("H5Dget_storage_size with invalid parameters");
 
@@ -4328,7 +4328,7 @@ test_get_dataset_storage_size_invalid_params(const void H5_ATTR_UNUSED *params)
  * A test for H5Dget_chunk_storage_size.
  */
 static void
-test_get_dataset_chunk_storage_size(const void H5_ATTR_UNUSED *params)
+test_get_dataset_chunk_storage_size(void H5_ATTR_UNUSED *params)
 {
     TESTING("H5Dget_chunk_storage_size");
 
@@ -4343,7 +4343,7 @@ test_get_dataset_chunk_storage_size(const void H5_ATTR_UNUSED *params)
  * is passed invalid parameters.
  */
 static void
-test_get_dataset_chunk_storage_size_invalid_params(const void H5_ATTR_UNUSED *params)
+test_get_dataset_chunk_storage_size_invalid_params(void H5_ATTR_UNUSED *params)
 {
     TESTING("H5Dget_chunk_storage_size with invalid parameters");
 
@@ -4356,7 +4356,7 @@ test_get_dataset_chunk_storage_size_invalid_params(const void H5_ATTR_UNUSED *pa
  * A test for H5Dget_offset.
  */
 static void
-test_get_dataset_offset(const void H5_ATTR_UNUSED *params)
+test_get_dataset_offset(void H5_ATTR_UNUSED *params)
 {
     TESTING("H5Dget_offset");
 
@@ -4371,7 +4371,7 @@ test_get_dataset_offset(const void H5_ATTR_UNUSED *params)
  * parameters.
  */
 static void
-test_get_dataset_offset_invalid_params(const void H5_ATTR_UNUSED *params)
+test_get_dataset_offset_invalid_params(void H5_ATTR_UNUSED *params)
 {
     TESTING("H5Dget_offset with invalid parameters");
 
@@ -4385,7 +4385,7 @@ test_get_dataset_offset_invalid_params(const void H5_ATTR_UNUSED *params)
  * read back from a dataset using an H5S_ALL selection.
  */
 static void
-test_read_dataset_small_all(const void H5_ATTR_UNUSED *params)
+test_read_dataset_small_all(void H5_ATTR_UNUSED *params)
 {
     hsize_t dims[DATASET_SMALL_READ_TEST_ALL_DSET_SPACE_RANK] = {10, 5, 3};
     size_t  i, data_size;
@@ -4490,7 +4490,7 @@ error:
  * read back from a dataset using a hyperslab selection.
  */
 static void
-test_read_dataset_small_hyperslab(const void H5_ATTR_UNUSED *params)
+test_read_dataset_small_hyperslab(void H5_ATTR_UNUSED *params)
 {
     hsize_t start[DATASET_SMALL_READ_TEST_HYPERSLAB_DSET_SPACE_RANK];
     hsize_t stride[DATASET_SMALL_READ_TEST_HYPERSLAB_DSET_SPACE_RANK];
@@ -4617,7 +4617,7 @@ error:
  * read back from a dataset using a point selection.
  */
 static void
-test_read_dataset_small_point_selection(const void H5_ATTR_UNUSED *params)
+test_read_dataset_small_point_selection(void H5_ATTR_UNUSED *params)
 {
     hsize_t points[DATASET_SMALL_READ_TEST_POINT_SELECTION_NUM_POINTS *
                    DATASET_SMALL_READ_TEST_POINT_SELECTION_DSET_SPACE_RANK];
@@ -4746,7 +4746,7 @@ error:
  * read back from multiple datasets using H5S_ALL selections.
  */
 static void
-test_read_multi_dataset_small_all(const void H5_ATTR_UNUSED *params)
+test_read_multi_dataset_small_all(void H5_ATTR_UNUSED *params)
 {
 
     hsize_t dims[DATASET_SMALL_READ_TEST_ALL_DSET_SPACE_RANK] = {10, 5, 3};
@@ -4872,7 +4872,7 @@ error:
  * read back from datasets using hyperslab selections.
  */
 static void
-test_read_multi_dataset_small_hyperslab(const void H5_ATTR_UNUSED *params)
+test_read_multi_dataset_small_hyperslab(void H5_ATTR_UNUSED *params)
 {
     hsize_t start[DATASET_SMALL_READ_TEST_HYPERSLAB_DSET_SPACE_RANK];
     hsize_t stride[DATASET_SMALL_READ_TEST_HYPERSLAB_DSET_SPACE_RANK];
@@ -5025,7 +5025,7 @@ error:
  * read back from datasets using point selections.
  */
 static void
-test_read_multi_dataset_small_point_selection(const void H5_ATTR_UNUSED *params)
+test_read_multi_dataset_small_point_selection(void H5_ATTR_UNUSED *params)
 {
     hsize_t points[DATASET_SMALL_READ_TEST_POINT_SELECTION_NUM_POINTS *
                    DATASET_SMALL_READ_TEST_POINT_SELECTION_DSET_SPACE_RANK];
@@ -5195,7 +5195,7 @@ error:
             } while ((J) < (I));                                                                             \
     }
 static void
-test_dataset_io_point_selections(const void H5_ATTR_UNUSED *params)
+test_dataset_io_point_selections(void H5_ATTR_UNUSED *params)
 {
     hid_t   file_id         = H5I_INVALID_HID;
     hid_t   dset_id         = H5I_INVALID_HID;
@@ -5676,7 +5676,7 @@ error:
  * dataset when H5Dread is passed invalid parameters.
  */
 static void
-test_read_dataset_invalid_params(const void H5_ATTR_UNUSED *params)
+test_read_dataset_invalid_params(void H5_ATTR_UNUSED *params)
 {
     hsize_t dims[DATASET_READ_INVALID_PARAMS_TEST_DSET_SPACE_RANK] = {10, 5, 3};
     herr_t  err_ret                                                = -1;
@@ -5910,7 +5910,7 @@ error:
  * made to a dataset using an H5S_ALL selection.
  */
 static void
-test_write_dataset_small_all(const void H5_ATTR_UNUSED *params)
+test_write_dataset_small_all(void H5_ATTR_UNUSED *params)
 {
     hssize_t space_npoints;
     hsize_t  dims[DATASET_SMALL_WRITE_TEST_ALL_DSET_SPACE_RANK] = {10, 5, 3};
@@ -6038,7 +6038,7 @@ error:
  * to a dataset using a hyperslab selection.
  */
 static void
-test_write_dataset_small_hyperslab(const void H5_ATTR_UNUSED *params)
+test_write_dataset_small_hyperslab(void H5_ATTR_UNUSED *params)
 {
     hsize_t start[DATASET_SMALL_WRITE_TEST_HYPERSLAB_DSET_SPACE_RANK];
     hsize_t stride[DATASET_SMALL_WRITE_TEST_HYPERSLAB_DSET_SPACE_RANK];
@@ -6169,7 +6169,7 @@ error:
  * to a dataset using a point selection.
  */
 static void
-test_write_dataset_small_point_selection(const void H5_ATTR_UNUSED *params)
+test_write_dataset_small_point_selection(void H5_ATTR_UNUSED *params)
 {
     hsize_t points[DATASET_SMALL_WRITE_TEST_POINT_SELECTION_NUM_POINTS *
                    DATASET_SMALL_WRITE_TEST_POINT_SELECTION_DSET_SPACE_RANK];
@@ -6301,7 +6301,7 @@ error:
  * a dataset after it has been written.
  */
 static void
-test_write_dataset_data_verification(const void H5_ATTR_UNUSED *params)
+test_write_dataset_data_verification(void H5_ATTR_UNUSED *params)
 {
     hssize_t space_npoints;
     hsize_t  dims[DATASET_DATA_VERIFY_WRITE_TEST_DSET_SPACE_RANK] = {10, 10, 10};
@@ -6816,7 +6816,7 @@ error:
  * made to a dataset using an H5S_ALL selection.
  */
 static void
-test_write_multi_dataset_small_all(const void H5_ATTR_UNUSED *params)
+test_write_multi_dataset_small_all(void H5_ATTR_UNUSED *params)
 {
     hssize_t    space_npoints;
     hsize_t     dims[DATASET_SMALL_WRITE_TEST_ALL_DSET_SPACE_RANK] = {10, 5, 3};
@@ -6979,7 +6979,7 @@ error:
  * to a dataset using a hyperslab selection.
  */
 static void
-test_write_multi_dataset_small_hyperslab(const void H5_ATTR_UNUSED *params)
+test_write_multi_dataset_small_hyperslab(void H5_ATTR_UNUSED *params)
 {
     hsize_t     start[DATASET_SMALL_WRITE_TEST_HYPERSLAB_DSET_SPACE_RANK];
     hsize_t     stride[DATASET_SMALL_WRITE_TEST_HYPERSLAB_DSET_SPACE_RANK];
@@ -7140,7 +7140,7 @@ error:
  * to a dataset using a point selection.
  */
 static void
-test_write_multi_dataset_small_point_selection(const void H5_ATTR_UNUSED *params)
+test_write_multi_dataset_small_point_selection(void H5_ATTR_UNUSED *params)
 {
     hsize_t     points[DATASET_SMALL_WRITE_TEST_POINT_SELECTION_NUM_POINTS *
                    DATASET_SMALL_WRITE_TEST_POINT_SELECTION_DSET_SPACE_RANK];
@@ -7303,7 +7303,7 @@ error:
  * multiple datasets after it has been written.
  */
 static void
-test_write_multi_dataset_data_verification(const void H5_ATTR_UNUSED *params)
+test_write_multi_dataset_data_verification(void H5_ATTR_UNUSED *params)
 {
     hssize_t space_npoints[DATASET_MULTI_COUNT];
     hsize_t  dims[DATASET_DATA_VERIFY_WRITE_TEST_DSET_SPACE_RANK] = {10, 10, 10};
@@ -7906,7 +7906,7 @@ error:
  * when H5Dwrite is passed invalid parameters.
  */
 static void
-test_write_dataset_invalid_params(const void H5_ATTR_UNUSED *params)
+test_write_dataset_invalid_params(void H5_ATTR_UNUSED *params)
 {
     hssize_t space_npoints;
     hsize_t  dims[DATASET_WRITE_INVALID_PARAMS_TEST_DSET_SPACE_RANK] = {10, 5, 3};
@@ -8147,7 +8147,7 @@ error:
  * can be written to and read from a dataset
  */
 static void
-test_dataset_string_encodings(const void H5_ATTR_UNUSED *params)
+test_dataset_string_encodings(void H5_ATTR_UNUSED *params)
 {
     hid_t   file_id                             = H5I_INVALID_HID;
     hid_t   container_group                     = H5I_INVALID_HID;
@@ -8393,7 +8393,7 @@ error:
  * been written, using type conversion with builtin types.
  */
 static void
-test_dataset_builtin_type_conversion(const void H5_ATTR_UNUSED *params)
+test_dataset_builtin_type_conversion(void H5_ATTR_UNUSED *params)
 {
     hssize_t    space_npoints;
     hsize_t     dims[DATASET_DATA_BUILTIN_CONVERSION_TEST_DSET_SPACE_RANK] = {10, 10, 10};
@@ -8927,7 +8927,7 @@ error:
 }
 
 static void
-test_dataset_real_to_int_conversion(const void H5_ATTR_UNUSED *params)
+test_dataset_real_to_int_conversion(void H5_ATTR_UNUSED *params)
 {
     hssize_t space_npoints;
     hsize_t  dims[DATASET_DATA_REAL_CONVERSION_TEST_DSET_SPACE_RANK] = {10, 10, 10};
@@ -9478,7 +9478,7 @@ typedef struct dataset_compount_partial_io_t {
 } dataset_compount_partial_io_t;
 
 static void
-test_dataset_compound_partial_io(const void H5_ATTR_UNUSED *params)
+test_dataset_compound_partial_io(void H5_ATTR_UNUSED *params)
 {
     hsize_t                       dims[1] = {DATASET_COMPOUND_PARTIAL_IO_DSET_DIMS};
     size_t                        i;
@@ -9733,7 +9733,7 @@ error:
 /* A test to check that vlen sequences can be written and read back
  * with basic parent types and selections */
 static void
-test_dataset_vlen_io(const void H5_ATTR_UNUSED *params)
+test_dataset_vlen_io(void H5_ATTR_UNUSED *params)
 {
     hid_t file_id         = H5I_INVALID_HID;
     hid_t container_group = H5I_INVALID_HID;
@@ -10396,7 +10396,7 @@ error:
  * dataset may both shrink and grow.
  */
 static void
-test_dataset_set_extent_chunked_unlimited(const void H5_ATTR_UNUSED *params)
+test_dataset_set_extent_chunked_unlimited(void H5_ATTR_UNUSED *params)
 {
     hsize_t dims[DATASET_SET_EXTENT_CHUNKED_UNLIMITED_TEST_SPACE_RANK];
     hsize_t max_dims[DATASET_SET_EXTENT_CHUNKED_UNLIMITED_TEST_SPACE_RANK];
@@ -10629,7 +10629,7 @@ error:
  * dataset may only shrink.
  */
 static void
-test_dataset_set_extent_chunked_fixed(const void H5_ATTR_UNUSED *params)
+test_dataset_set_extent_chunked_fixed(void H5_ATTR_UNUSED *params)
 {
     hsize_t dims[DATASET_SET_EXTENT_CHUNKED_FIXED_TEST_SPACE_RANK];
     hsize_t dims2[DATASET_SET_EXTENT_CHUNKED_FIXED_TEST_SPACE_RANK];
@@ -10907,7 +10907,7 @@ error:
  * and shrinking the dataset with H5Dset_extent
  */
 static void
-test_dataset_set_extent_data(const void H5_ATTR_UNUSED *params)
+test_dataset_set_extent_data(void H5_ATTR_UNUSED *params)
 {
     hsize_t dims_origin[DATASET_SET_EXTENT_DATA_TEST_SPACE_RANK] = {DATASET_SET_EXTENT_DATA_TEST_SPACE_DIM,
                                                                     DATASET_SET_EXTENT_DATA_TEST_SPACE_DIM};
@@ -11247,7 +11247,7 @@ error:
  * return the new size when queried.
  */
 static void
-test_dataset_set_extent_double_handles(const void H5_ATTR_UNUSED *params)
+test_dataset_set_extent_double_handles(void H5_ATTR_UNUSED *params)
 {
     hsize_t dims_origin[DATASET_SET_EXTENT_DOUBLE_HANDLES_TEST_SPACE_RANK] = {
         DATASET_SET_EXTENT_DOUBLE_HANDLES_TEST_SPACE_DIM, DATASET_SET_EXTENT_DOUBLE_HANDLES_TEST_SPACE_DIM};
@@ -11388,7 +11388,7 @@ error:
  * changed when H5Dset_extent is passed invalid parameters.
  */
 static void
-test_dataset_set_extent_invalid_params(const void H5_ATTR_UNUSED *params)
+test_dataset_set_extent_invalid_params(void H5_ATTR_UNUSED *params)
 {
     hsize_t dims[DATASET_SET_EXTENT_INVALID_PARAMS_TEST_SPACE_RANK];
     hsize_t chunk_dims[DATASET_SET_EXTENT_INVALID_PARAMS_TEST_SPACE_RANK];
@@ -11650,7 +11650,7 @@ error:
  * A test for H5Dflush.
  */
 static void
-test_flush_dataset(const void H5_ATTR_UNUSED *params)
+test_flush_dataset(void H5_ATTR_UNUSED *params)
 {
     TESTING("H5Dflush");
 
@@ -11664,7 +11664,7 @@ test_flush_dataset(const void H5_ATTR_UNUSED *params)
  * passed invalid parameters.
  */
 static void
-test_flush_dataset_invalid_params(const void H5_ATTR_UNUSED *params)
+test_flush_dataset_invalid_params(void H5_ATTR_UNUSED *params)
 {
     TESTING("H5Dflush with invalid parameters");
 
@@ -11677,7 +11677,7 @@ test_flush_dataset_invalid_params(const void H5_ATTR_UNUSED *params)
  * A test for H5Drefresh.
  */
 static void
-test_refresh_dataset(const void H5_ATTR_UNUSED *params)
+test_refresh_dataset(void H5_ATTR_UNUSED *params)
 {
     TESTING("H5Drefresh");
 
@@ -11691,7 +11691,7 @@ test_refresh_dataset(const void H5_ATTR_UNUSED *params)
  * passed invalid parameters.
  */
 static void
-test_refresh_dataset_invalid_params(const void H5_ATTR_UNUSED *params)
+test_refresh_dataset_invalid_params(void H5_ATTR_UNUSED *params)
 {
     TESTING("H5Drefresh with invalid parameters");
 
@@ -11704,7 +11704,7 @@ test_refresh_dataset_invalid_params(const void H5_ATTR_UNUSED *params)
  * A test to create a dataset composed of a single chunk.
  */
 static void
-test_create_single_chunk_dataset(const void H5_ATTR_UNUSED *params)
+test_create_single_chunk_dataset(void H5_ATTR_UNUSED *params)
 {
     hsize_t dims[DATASET_SINGLE_CHUNK_TEST_SPACE_RANK];
     hsize_t retrieved_chunk_dims[DATASET_SINGLE_CHUNK_TEST_SPACE_RANK];
@@ -11882,7 +11882,7 @@ error:
  * and read correctly.
  */
 static void
-test_write_single_chunk_dataset(const void H5_ATTR_UNUSED *params)
+test_write_single_chunk_dataset(void H5_ATTR_UNUSED *params)
 {
     hssize_t space_npoints;
     hsize_t  dims[DATASET_SINGLE_CHUNK_WRITE_TEST_DSET_SPACE_RANK];
@@ -12102,7 +12102,7 @@ error:
  * A test to create a dataset composed of multiple chunks.
  */
 static void
-test_create_multi_chunk_dataset(const void H5_ATTR_UNUSED *params)
+test_create_multi_chunk_dataset(void H5_ATTR_UNUSED *params)
 {
     hsize_t dims[DATASET_MULTI_CHUNK_TEST_SPACE_RANK]       = {100, 100};
     hsize_t chunk_dims[DATASET_MULTI_CHUNK_TEST_SPACE_RANK] = {10, 10};
@@ -12283,7 +12283,7 @@ error:
  * used are the same shape.
  */
 static void
-test_write_multi_chunk_dataset_same_shape_read(const void H5_ATTR_UNUSED *params)
+test_write_multi_chunk_dataset_same_shape_read(void H5_ATTR_UNUSED *params)
 {
     hsize_t dims[DATASET_MULTI_CHUNK_WRITE_SAME_SPACE_READ_TEST_DSET_SPACE_RANK]       = {100, 100};
     hsize_t chunk_dims[DATASET_MULTI_CHUNK_WRITE_SAME_SPACE_READ_TEST_DSET_SPACE_RANK] = {10, 10};
@@ -12612,7 +12612,7 @@ error:
  * used are differently shaped.
  */
 static void
-test_write_multi_chunk_dataset_diff_shape_read(const void H5_ATTR_UNUSED *params)
+test_write_multi_chunk_dataset_diff_shape_read(void H5_ATTR_UNUSED *params)
 {
     hsize_t dims[DATASET_MULTI_CHUNK_WRITE_DIFF_SPACE_READ_TEST_DSET_SPACE_RANK]       = {100, 100};
     hsize_t chunk_dims[DATASET_MULTI_CHUNK_WRITE_DIFF_SPACE_READ_TEST_DSET_SPACE_RANK] = {10, 10};
@@ -12949,7 +12949,7 @@ error:
  * dataspace and memory dataspace used are the same shape.
  */
 static void
-test_overwrite_multi_chunk_dataset_same_shape_read(const void H5_ATTR_UNUSED *params)
+test_overwrite_multi_chunk_dataset_same_shape_read(void H5_ATTR_UNUSED *params)
 {
     hsize_t dims[DATASET_MULTI_CHUNK_OVERWRITE_SAME_SPACE_READ_TEST_DSET_SPACE_RANK]       = {100, 100};
     hsize_t chunk_dims[DATASET_MULTI_CHUNK_OVERWRITE_SAME_SPACE_READ_TEST_DSET_SPACE_RANK] = {10, 10};
@@ -13284,7 +13284,7 @@ error:
  * dataspace and memory dataspace used are differently shaped.
  */
 static void
-test_overwrite_multi_chunk_dataset_diff_shape_read(const void H5_ATTR_UNUSED *params)
+test_overwrite_multi_chunk_dataset_diff_shape_read(void H5_ATTR_UNUSED *params)
 {
     hsize_t dims[DATASET_MULTI_CHUNK_OVERWRITE_DIFF_SPACE_READ_TEST_DSET_SPACE_RANK]       = {100, 100};
     hsize_t chunk_dims[DATASET_MULTI_CHUNK_OVERWRITE_DIFF_SPACE_READ_TEST_DSET_SPACE_RANK] = {10, 10};
@@ -13632,7 +13632,7 @@ error:
 #define FIXED_DIMSIZE       25
 #define FIXED_CHUNK_DIMSIZE 10
 static void
-test_read_partial_chunk_all_selection(const void H5_ATTR_UNUSED *params)
+test_read_partial_chunk_all_selection(void H5_ATTR_UNUSED *params)
 {
     DATASET_PARTIAL_CHUNK_READ_ALL_SEL_TEST_DSET_CTYPE write_buf[FIXED_DIMSIZE][FIXED_DIMSIZE];
     DATASET_PARTIAL_CHUNK_READ_ALL_SEL_TEST_DSET_CTYPE read_buf[FIXED_DIMSIZE][FIXED_DIMSIZE];
@@ -13818,7 +13818,7 @@ error:
 #define FIXED_CHUNK_DIMSIZE 10
 #define FIXED_NCHUNKS       9 /* For convenience - make sure to adjust this as necessary */
 static void
-test_read_partial_chunk_hyperslab_selection(const void H5_ATTR_UNUSED *params)
+test_read_partial_chunk_hyperslab_selection(void H5_ATTR_UNUSED *params)
 {
     DATASET_PARTIAL_CHUNK_READ_HYPER_SEL_TEST_DSET_CTYPE write_buf[FIXED_CHUNK_DIMSIZE][FIXED_CHUNK_DIMSIZE];
     DATASET_PARTIAL_CHUNK_READ_HYPER_SEL_TEST_DSET_CTYPE read_buf[FIXED_CHUNK_DIMSIZE][FIXED_CHUNK_DIMSIZE];
@@ -14111,7 +14111,7 @@ error:
 /* #define FIXED_DIMSIZE       25 */
 /* #define FIXED_CHUNK_DIMSIZE 10 */
 static void
-test_read_partial_chunk_point_selection(const void H5_ATTR_UNUSED *params)
+test_read_partial_chunk_point_selection(void H5_ATTR_UNUSED *params)
 {
     TESTING("reading a partial chunk using a point selection in file dataspace");
     SKIPPED();
@@ -14126,7 +14126,7 @@ test_read_partial_chunk_point_selection(const void H5_ATTR_UNUSED *params)
  * correct size
  */
 static void
-test_get_vlen_buf_size(const void H5_ATTR_UNUSED *params)
+test_get_vlen_buf_size(void H5_ATTR_UNUSED *params)
 {
     hvl_t    wdata[DATASET_GET_VLEN_BUF_SIZE_DSET_SPACE_DIM]; /* Information to write */
     hid_t    file_id         = H5I_INVALID_HID;

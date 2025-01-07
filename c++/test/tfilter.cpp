@@ -224,7 +224,7 @@ test_szip_filter(H5File &file1)
  */
 const H5std_string FILE1("tfilters.h5");
 extern "C" void
-test_filters(const void *params)
+test_filters(void *params)
 {
     // Output message about test being performed
     MESSAGE(5, ("Testing Various Filters\n"));

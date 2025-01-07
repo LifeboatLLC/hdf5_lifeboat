@@ -28,7 +28,7 @@
  *-------------------------------------------------------------------------
  */
 void
-test_fapl_mpio_dup(const void H5_ATTR_UNUSED *params)
+test_fapl_mpio_dup(void H5_ATTR_UNUSED *params)
 {
     int      mpi_size, mpi_rank;
     MPI_Comm comm, comm_tmp;

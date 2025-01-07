@@ -23,7 +23,7 @@
 typedef struct TestStruct {
     char           Name[MAXTESTNAME];
     char           Description[MAXTESTDESC];
-    void          (*TestFunc)(const void *);
+    void          (*TestFunc)(void *);
     void          (*TestSetupFunc)(void *);
     void          (*TestCleanupFunc)(void *);
     void          *TestParameters;
@@ -74,7 +74,7 @@ static void  H5_test_thread_info_key_destructor(void *value);
  * Add a new test to the list of tests to be executed
  */
 herr_t
-AddTest(const char *TestName, void (*TestFunc)(const void *), void (*TestSetupFunc)(void *),
+AddTest(const char *TestName, void (*TestFunc)(void *), void (*TestSetupFunc)(void *),
         void (*TestCleanupFunc)(void *), const void *TestData, size_t TestDataSize,
         int64_t TestFrameworkFlags, const char *TestDescr)
 {

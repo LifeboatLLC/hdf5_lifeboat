@@ -968,7 +968,7 @@ test_file_info()
  *-------------------------------------------------------------------------
  */
 extern "C" void
-test_file(const void *params)
+test_file(void *params)
 {
     // Output message about test being performed
     MESSAGE(5, ("Testing File I/O Operations\n"));

@@ -12,28 +12,28 @@
 
 #include "H5_api_file_test.h"
 
-static void print_file_test_header(const void *params);
-static void test_create_file(const void *params);
-static void test_create_file_invalid_params(const void *params);
-static void test_create_file_excl(const void *params);
-static void test_open_file(const void *params);
-static void test_open_file_invalid_params(const void *params);
-static void test_open_nonexistent_file(const void *params);
-static void test_file_open_overlap(const void *params);
-static void test_file_permission(const void *params);
-static void test_reopen_file(const void *params);
-static void test_close_file_invalid_id(const void *params);
-static void test_flush_file(const void *params);
-static void test_file_is_accessible(const void *params);
-static void test_file_property_lists(const void *params);
-static void test_get_file_intent(const void *params);
-static void test_get_file_obj_count(const void *params);
-static void test_file_mounts(const void *params);
-static void test_get_file_name(const void *params);
+static void print_file_test_header(void *params);
+static void test_create_file(void *params);
+static void test_create_file_invalid_params(void *params);
+static void test_create_file_excl(void *params);
+static void test_open_file(void *params);
+static void test_open_file_invalid_params(void *params);
+static void test_open_nonexistent_file(void *params);
+static void test_file_open_overlap(void *params);
+static void test_file_permission(void *params);
+static void test_reopen_file(void *params);
+static void test_close_file_invalid_id(void *params);
+static void test_flush_file(void *params);
+static void test_file_is_accessible(void *params);
+static void test_file_property_lists(void *params);
+static void test_get_file_intent(void *params);
+static void test_get_file_obj_count(void *params);
+static void test_file_mounts(void *params);
+static void test_get_file_name(void *params);
 static herr_t check_open_obj_count(ssize_t obj_count, int expected);
 
 static void
-print_file_test_header(const void H5_ATTR_UNUSED *params)
+print_file_test_header(void H5_ATTR_UNUSED *params)
 {
     printf("\n");
     printf("**********************************************\n");
@@ -47,7 +47,7 @@ print_file_test_header(const void H5_ATTR_UNUSED *params)
  * Tests that a file can be created.
  */
 static void
-test_create_file(const void H5_ATTR_UNUSED *params)
+test_create_file(void H5_ATTR_UNUSED *params)
 {
     hid_t file_id           = H5I_INVALID_HID;
     char *prefixed_filename = NULL;
@@ -104,7 +104,7 @@ error:
  * invalid parameters.
  */
 static void
-test_create_file_invalid_params(const void H5_ATTR_UNUSED *params)
+test_create_file_invalid_params(void H5_ATTR_UNUSED *params)
 {
     hid_t file_id           = H5I_INVALID_HID;
     char *prefixed_filename = NULL;
@@ -255,7 +255,7 @@ error:
  * using the H5F_ACC_EXCL flag while the file already exists.
  */
 static void
-test_create_file_excl(const void H5_ATTR_UNUSED *params)
+test_create_file_excl(void H5_ATTR_UNUSED *params)
 {
     hid_t file_id           = H5I_INVALID_HID;
     hid_t file_id2          = H5I_INVALID_HID;
@@ -339,7 +339,7 @@ error:
  * Tests that a file can be opened.
  */
 static void
-test_open_file(const void H5_ATTR_UNUSED *params)
+test_open_file(void H5_ATTR_UNUSED *params)
 {
     hid_t file_id = H5I_INVALID_HID;
 
@@ -423,7 +423,7 @@ error:
  * invalid parameters.
  */
 static void
-test_open_file_invalid_params(const void H5_ATTR_UNUSED *params)
+test_open_file_invalid_params(void H5_ATTR_UNUSED *params)
 {
     hid_t file_id = H5I_INVALID_HID;
 
@@ -524,7 +524,7 @@ error:
  * A test to ensure that opening a file which doesn't exist will fail.
  */
 static void
-test_open_nonexistent_file(const void H5_ATTR_UNUSED *params)
+test_open_nonexistent_file(void H5_ATTR_UNUSED *params)
 {
     hid_t file_id           = H5I_INVALID_HID;
     char *prefixed_filename = NULL;
@@ -587,7 +587,7 @@ error:
  * and things are handled appropriately.
  */
 static void
-test_file_permission(const void H5_ATTR_UNUSED *params)
+test_file_permission(void H5_ATTR_UNUSED *params)
 {
     hid_t  file_id           = H5I_INVALID_HID;
     hid_t  dset_id           = H5I_INVALID_HID;
@@ -826,7 +826,7 @@ error:
  * A test to check that a file can be re-opened with H5Freopen.
  */
 static void
-test_reopen_file(const void H5_ATTR_UNUSED *params)
+test_reopen_file(void H5_ATTR_UNUSED *params)
 {
     hid_t file_id  = H5I_INVALID_HID;
     hid_t file_id2 = H5I_INVALID_HID;
@@ -876,7 +876,7 @@ error:
  * A test to check that H5Fclose doesn't succeed for an
  * invalid file ID */
 static void
-test_close_file_invalid_id(const void H5_ATTR_UNUSED *params)
+test_close_file_invalid_id(void H5_ATTR_UNUSED *params)
 {
     herr_t err_ret = -1;
 
@@ -913,7 +913,7 @@ error:
  * A test to check that a file can be flushed using H5Fflush.
  */
 static void
-test_flush_file(const void H5_ATTR_UNUSED *params)
+test_flush_file(void H5_ATTR_UNUSED *params)
 {
     hid_t    file_id           = H5I_INVALID_HID;
     hid_t    dspace_id         = H5I_INVALID_HID;
@@ -1038,7 +1038,7 @@ error:
  * A test for H5Fis_accessible.
  */
 static void
-test_file_is_accessible(const void H5_ATTR_UNUSED *params)
+test_file_is_accessible(void H5_ATTR_UNUSED *params)
 {
     const char *const fake_filename     = "nonexistent_file.h5";
     char             *prefixed_filename = NULL;
@@ -1126,7 +1126,7 @@ error:
  * can be retrieved with a call to H5Fget_access_plist.
  */
 static void
-test_file_property_lists(const void H5_ATTR_UNUSED *params)
+test_file_property_lists(void H5_ATTR_UNUSED *params)
 {
     hsize_t prop_val           = 0;
     hid_t   file_id1           = H5I_INVALID_HID;
@@ -1436,7 +1436,7 @@ error:
  * A test to check that the file intent flags can be retrieved.
  */
 static void
-test_get_file_intent(const void H5_ATTR_UNUSED *params)
+test_get_file_intent(void H5_ATTR_UNUSED *params)
 {
     unsigned file_intent;
     hid_t    file_id           = H5I_INVALID_HID;
@@ -1599,7 +1599,7 @@ error:
  * can be retrieved.
  */
 static void
-test_get_file_obj_count(const void H5_ATTR_UNUSED *params)
+test_get_file_obj_count(void H5_ATTR_UNUSED *params)
 {
     ssize_t obj_count;
     hid_t   file_id            = H5I_INVALID_HID;
@@ -1963,7 +1963,7 @@ error:
  * works correctly.
  */
 static void
-test_file_open_overlap(const void H5_ATTR_UNUSED *params)
+test_file_open_overlap(void H5_ATTR_UNUSED *params)
 {
     ssize_t obj_count;
     hid_t   file_id           = H5I_INVALID_HID;
@@ -2105,7 +2105,7 @@ error:
  * correctly.
  */
 static void
-test_file_mounts(const void H5_ATTR_UNUSED *params)
+test_file_mounts(void H5_ATTR_UNUSED *params)
 {
     hid_t file_id           = H5I_INVALID_HID;
     hid_t child_fid         = H5I_INVALID_HID;
@@ -2197,7 +2197,7 @@ error:
  * A test to ensure that a file's name can be retrieved.
  */
 static void
-test_get_file_name(const void H5_ATTR_UNUSED *params)
+test_get_file_name(void H5_ATTR_UNUSED *params)
 {
     ssize_t file_name_buf_len = 0;
     hid_t   file_id           = H5I_INVALID_HID;

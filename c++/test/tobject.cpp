@@ -718,7 +718,7 @@ test_intermediate_groups()
  *-------------------------------------------------------------------------
  */
 extern "C" void
-test_object(const void *params)
+test_object(void *params)
 {
     // Output message about test being performed
     MESSAGE(5, ("Testing Object Functions\n"));

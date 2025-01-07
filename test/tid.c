@@ -1370,7 +1370,7 @@ error:
 } /* end test_future_ids() */
 
 void
-test_ids(const void H5_ATTR_UNUSED *params)
+test_ids(void H5_ATTR_UNUSED *params)
 {
     /* Set the random # seed */
     HDsrandom((unsigned)HDtime(NULL));

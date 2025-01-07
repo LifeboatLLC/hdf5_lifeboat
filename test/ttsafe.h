@@ -27,18 +27,18 @@
 extern char *gen_name(int);
 
 /* Prototypes for the test routines */
-void tts_is_threadsafe(const void *);
+void tts_is_threadsafe(void *);
 
 #if defined H5_HAVE_THREADSAFE || defined H5_HAVE_MULTITHREAD
-void tts_errstk(const void *);
+void tts_errstk(void *);
 #endif
 
 #ifdef H5_HAVE_THREADSAFE
-void tts_dcreate(const void *);
-void tts_error(const void *);
-void tts_cancel(const void *);
-void tts_acreate(const void *);
-void tts_attr_vlen(const void *);
+void tts_dcreate(void *);
+void tts_error(void *);
+void tts_cancel(void *);
+void tts_acreate(void *);
+void tts_attr_vlen(void *);
 
 /* Prototypes for the cleanup routines */
 void cleanup_dcreate(void *);

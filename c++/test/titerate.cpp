@@ -440,7 +440,7 @@ test_HDFFV_9920()
  *-------------------------------------------------------------------------
  */
 extern "C" void
-test_iterate(const void *params)
+test_iterate(void *params)
 {
     // Output message about test being performed
     MESSAGE(5, ("Testing Iterate Feature\n"));

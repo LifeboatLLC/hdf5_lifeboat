@@ -1948,7 +1948,7 @@ test_attr_corder_create_basic(FileCreatPropList &fcpl, FileAccPropList &fapl)
  *-------------------------------------------------------------------------
  */
 extern "C" void
-test_attr(const void *params)
+test_attr(void *params)
 {
     // Output message about test being performed
     MESSAGE(5, ("Testing Attributes\n"));

@@ -1093,7 +1093,7 @@ test_operators()
  *-------------------------------------------------------------------------
  */
 extern "C" void
-test_types(const void *params)
+test_types(void *params)
 {
     // Output message about test being performed
     MESSAGE(5, ("Testing Generic Data Types\n"));

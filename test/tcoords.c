@@ -678,7 +678,7 @@ test_multiple_ends(hid_t file, hbool_t is_chunked)
 **
 ****************************************************************/
 void
-test_coords(const void H5_ATTR_UNUSED *params)
+test_coords(void H5_ATTR_UNUSED *params)
 {
     hid_t   fid;
     hbool_t is_chunk[2] = {TRUE, FALSE};
