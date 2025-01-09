@@ -772,3 +772,205 @@ done:
 
     return ret_value;
 }
+
+/* Create the API container test file(s), one per thread.
+ * Returns negative on failure, 0 on success */
+int
+H5_api_test_create_containers(const char *filename, uint64_t vol_cap_flags)
+{
+    char *tl_filename = NULL;
+
+    if (!(vol_cap_flags & H5VL_CAP_FLAG_FILE_BASIC)) {
+        printf("   VOL connector doesn't support file creation\n");
+        goto error;
+    }
+
+    if (GetTestMaxNumThreads() >= 1) {
+#ifdef H5_HAVE_MULTITHREAD
+        for (int i = 0; i < GetTestMaxNumThreads(); i++) {
+            if ((tl_filename = generate_threadlocal_filename(test_path_prefix, i, filename)) == NULL) {
+                printf("    failed to generate thread-local API test filename\n");
+                goto error;
+            }
+
+            if (H5_api_test_create_single_container((const char *)tl_filename, vol_cap_flags) < 0) {
+                printf("    failed to create thread-local API test container");
+                goto error;
+            }
+
+            free(tl_filename);
+            tl_filename = NULL;
+        }
+#else
+        printf("    thread-specific filename requested, but multithread support not enabled\n");
+        goto error;
+#endif
+
+    } else {
+        if (H5_api_test_create_single_container((const char *)filename, vol_cap_flags) < 0) {
+            printf("    failed to create test container\n");
+            goto error;
+        }
+    }
+
+    return 0;
+
+error:
+    free(tl_filename);
+    return -1;
+}
+
+/* Helper for H5_api_test_create_containers().
+ * Returns negative on failure, 0 on success */
+int
+H5_api_test_create_single_container(const char *filename, uint64_t vol_cap_flags) {
+    hid_t file_id  = H5I_INVALID_HID;
+    hid_t group_id = H5I_INVALID_HID;
+
+    if ((file_id = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
+        printf("    couldn't create testing container file '%s'\n", filename);
+        goto error;
+    }
+
+    printf("    created container file\n");
+
+    if (vol_cap_flags & H5VL_CAP_FLAG_GROUP_BASIC) {
+        /* Create container groups for each of the test interfaces
+         * (group, attribute, dataset, etc.).
+         */
+        if ((group_id = H5Gcreate2(file_id, GROUP_TEST_GROUP_NAME, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) >=
+            0) {
+            H5Gclose(group_id);
+        }
+
+        if ((group_id = H5Gcreate2(file_id, ATTRIBUTE_TEST_GROUP_NAME, H5P_DEFAULT, H5P_DEFAULT,
+                                   H5P_DEFAULT)) >= 0) {
+            H5Gclose(group_id);
+        }
+
+        if ((group_id =
+                 H5Gcreate2(file_id, DATASET_TEST_GROUP_NAME, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) >= 0) {
+            H5Gclose(group_id);
+        }
+
+        if ((group_id =
+                 H5Gcreate2(file_id, DATATYPE_TEST_GROUP_NAME, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) >= 0) {
+            H5Gclose(group_id);
+        }
+
+        if ((group_id = H5Gcreate2(file_id, LINK_TEST_GROUP_NAME, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) >=
+            0) {
+            H5Gclose(group_id);
+        }
+
+        if ((group_id = H5Gcreate2(file_id, OBJECT_TEST_GROUP_NAME, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) >=
+            0) {
+            H5Gclose(group_id);
+        }
+
+        if ((group_id = H5Gcreate2(file_id, MISCELLANEOUS_TEST_GROUP_NAME, H5P_DEFAULT, H5P_DEFAULT,
+                                   H5P_DEFAULT)) >= 0) {
+            H5Gclose(group_id);
+        }
+    }
+
+    if (H5Fclose(file_id) < 0) {
+        printf("    failed to close testing container %s\n", filename);
+        goto error;
+    }
+
+    return 0;
+error:
+    H5E_BEGIN_TRY
+    {
+        H5Gclose(group_id);
+        H5Fclose(file_id);
+    }
+    H5E_END_TRY
+
+    return -1;
+
+}
+
+/* Delete the API test container file(s).
+ * Returns negative on failure, 0 on success */
+int
+H5_api_test_destroy_container_files(const char *base_filename, hid_t fapl_id_in) {
+
+    char *filename = NULL;
+    hid_t fapl_id = H5I_INVALID_HID;
+
+    if (!(vol_cap_flags_g & H5VL_CAP_FLAG_FILE_BASIC)) {
+        printf("   container should not have been created\n");
+        goto error;
+    }
+
+    if (fapl_id_in <= 0) {
+        if ((fapl_id = H5Pcreate(H5P_FILE_ACCESS)) < 0) {
+            printf("    failed to create default file access property list\n");
+            goto error;
+        }
+    }
+    else
+        fapl_id = fapl_id_in;
+
+    if (GetTestMaxNumThreads() >= 1) {
+#ifndef H5_HAVE_MULTITHREAD
+        printf("    thread-specific cleanup requested, but multithread support not enabled\n");
+        goto error;
+#endif
+        
+        for (int i = 0; i < GetTestMaxNumThreads(); i++) {
+            if ((filename = generate_threadlocal_filename(test_path_prefix, i, base_filename)) == NULL) {
+                printf("    failed to generate thread-local API test filename\n");
+                goto error;
+            }
+
+            H5E_BEGIN_TRY {
+                if (H5Fis_accessible(filename, fapl_id) > 0) {
+                    if (H5Fdelete(filename, fapl_id) < 0) {
+                        printf("    failed to destroy thread-local API test container");
+                        goto error;
+                    }
+                }
+            }
+            H5E_END_TRY
+
+            free(filename);
+            filename = NULL;
+        }
+    } else {
+        H5E_BEGIN_TRY {
+            
+            if (prefix_filename(test_path_prefix, base_filename, &filename) < 0) {
+                printf("    failed to prefix filename\n");
+                goto error;
+            }
+
+            if (H5Fis_accessible(filename, fapl_id) > 0) {
+                if (H5Fdelete(filename, fapl_id) < 0) {
+                    printf("    failed to destroy thread-local API test container");
+                    goto error;
+                }
+            }
+        }
+        H5E_END_TRY
+    }
+
+    free(filename);
+    filename = NULL;
+
+    if (fapl_id > 0)
+        if (H5Pclose(fapl_id) < 0) {
+            printf("    failed to close file access property list\n");
+            goto error;
+        }
+
+    return 0;
+
+error:
+    free(filename);
+    filename = NULL;
+    H5Pclose(fapl_id);
+    return -1;
+}
