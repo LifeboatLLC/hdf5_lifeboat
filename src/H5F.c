@@ -89,10 +89,10 @@ static herr_t H5F__flush_api_common(hid_t object_id, H5F_scope_t scope, void **t
 /*******************/
 
 /* Declare a free list to manage the H5VL_t struct */
-H5FL_EXTERN(H5VL_t);
+H5FL_EXTERN_MT(H5VL_t);
 
 /* Declare a free list to manage the H5VL_object_t struct */
-H5FL_EXTERN(H5VL_object_t);
+H5FL_EXTERN_MT(H5VL_object_t);
 
 /*-------------------------------------------------------------------------
  * Function:    H5Fget_create_plist

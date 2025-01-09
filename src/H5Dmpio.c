@@ -379,7 +379,7 @@ static herr_t H5D__mpio_dump_collective_filtered_chunk_list(H5D_filtered_collect
 /*******************/
 
 /* Declare extern free list to manage the H5S_sel_iter_t struct */
-H5FL_EXTERN(H5S_sel_iter_t);
+H5FL_EXTERN_MT(H5S_sel_iter_t);
 
 #ifdef H5Dmpio_DEBUG
 
@@ -3686,7 +3686,7 @@ H5D__mpio_share_chunk_modification_data(H5D_filtered_collective_io_info_t *chunk
 
     if (chunk_list->num_chunk_infos > 0) {
         /* Allocate a selection iterator for iterating over chunk dataspaces */
-        if (NULL == (mem_iter = H5FL_MALLOC(H5S_sel_iter_t)))
+        if (NULL == (mem_iter = H5FL_MALLOC_MT(H5S_sel_iter_t)))
             HGOTO_ERROR(H5E_DATASET, H5E_CANTALLOC, FAIL, "couldn't allocate dataspace selection iterator");
 
         /*
@@ -4027,7 +4027,7 @@ done:
     if (mem_iter) {
         if (mem_iter_init && H5S_SELECT_ITER_RELEASE(mem_iter) < 0)
             HDONE_ERROR(H5E_DATASET, H5E_CANTFREE, FAIL, "couldn't release dataspace selection iterator");
-        mem_iter = H5FL_FREE(H5S_sel_iter_t, mem_iter);
+        mem_iter = H5FL_FREE_MT(H5S_sel_iter_t, mem_iter);
     }
 
 #ifdef H5Dmpio_DEBUG
@@ -4480,7 +4480,7 @@ H5D__mpio_collective_filtered_chunk_update(H5D_filtered_collective_io_info_t *ch
     }
 
     /* Allocate iterator for memory selection */
-    if (NULL == (sel_iter = H5FL_MALLOC(H5S_sel_iter_t)))
+    if (NULL == (sel_iter = H5FL_MALLOC_MT(H5S_sel_iter_t)))
         HGOTO_ERROR(H5E_DATASET, H5E_CANTALLOC, FAIL, "couldn't allocate memory iterator");
 
     /* Now process all received chunk message buffers */
@@ -4563,7 +4563,7 @@ done:
     if (sel_iter) {
         if (sel_iter_init && H5S_SELECT_ITER_RELEASE(sel_iter) < 0)
             HDONE_ERROR(H5E_DATASET, H5E_CANTFREE, FAIL, "couldn't release selection iterator");
-        sel_iter = H5FL_FREE(H5S_sel_iter_t, sel_iter);
+        sel_iter = H5FL_FREE_MT(H5S_sel_iter_t, sel_iter);
     }
     if (dataspace && (H5S_close(dataspace) < 0))
         HDONE_ERROR(H5E_DATASPACE, H5E_CANTFREE, FAIL, "can't close dataspace");

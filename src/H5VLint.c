@@ -112,16 +112,16 @@ static const H5I_class_t H5I_VOL_CLS[1] = {{
 }};
 
 /* Declare a free list to manage the H5VL_class_t struct */
-H5FL_DEFINE_STATIC(H5VL_class_t);
+H5FL_DEFINE_STATIC_MT(H5VL_class_t);
 
 /* Declare a free list to manage the H5VL_t struct */
-H5FL_DEFINE(H5VL_t);
+H5FL_DEFINE_MT(H5VL_t);
 
 /* Declare a free list to manage the H5VL_object_t struct */
-H5FL_DEFINE(H5VL_object_t);
+H5FL_DEFINE_MT(H5VL_object_t);
 
 /* Declare a free list to manage the H5VL_wrap_ctx_t struct */
-H5FL_DEFINE_STATIC(H5VL_wrap_ctx_t);
+H5FL_DEFINE_STATIC_MT(H5VL_wrap_ctx_t);
 
 /* Default VOL connector */
 static H5VL_connector_prop_t H5VL_def_conn_s = {-1, NULL};
@@ -291,7 +291,7 @@ H5VL__free_cls(H5VL_class_t *cls, void H5_ATTR_UNUSED **request)
 
     /* Release the class */
     H5MM_xfree_const(cls->name);
-    H5FL_FREE(H5VL_class_t, cls);
+    H5FL_FREE_MT(H5VL_class_t, cls);
 
 done:
     FUNC_LEAVE_NOAPI(ret_value)
@@ -542,7 +542,7 @@ H5VL__new_vol_obj(H5I_type_t type, void *object, H5VL_t *vol_connector, hbool_t 
         HGOTO_ERROR(H5E_VOL, H5E_BADVALUE, NULL, "invalid type number");
 
     /* Create the new VOL object */
-    if (NULL == (new_vol_obj = H5FL_CALLOC(H5VL_object_t)))
+    if (NULL == (new_vol_obj = H5FL_CALLOC_MT(H5VL_object_t)))
         HGOTO_ERROR(H5E_VOL, H5E_CANTALLOC, NULL, "can't allocate memory for VOL object");
     new_vol_obj->connector = vol_connector;
     if (wrap_obj) {
@@ -769,7 +769,7 @@ H5VL_new_connector(hid_t connector_id)
         HGOTO_ERROR(H5E_VOL, H5E_BADTYPE, NULL, "not a VOL connector ID");
 
     /* Setup VOL info struct */
-    if (NULL == (connector = H5FL_CALLOC(H5VL_t)))
+    if (NULL == (connector = H5FL_CALLOC_MT(H5VL_t)))
         HGOTO_ERROR(H5E_VOL, H5E_CANTALLOC, NULL, "can't allocate VOL connector struct");
     connector->cls = cls;
     connector->id  = connector_id;
@@ -789,7 +789,7 @@ done:
 
         /* Free VOL connector struct */
         if (NULL != connector)
-            connector = H5FL_FREE(H5VL_t, connector);
+            connector = H5FL_FREE_MT(H5VL_t, connector);
     } /* end if */
 
     FUNC_LEAVE_NOAPI(ret_value)
@@ -861,7 +861,7 @@ H5VL_create_object(void *object, H5VL_t *vol_connector)
 
     /* Set up VOL object for the passed-in data */
     /* (Does not wrap object, since it's from a VOL callback) */
-    if (NULL == (ret_value = H5FL_CALLOC(H5VL_object_t)))
+    if (NULL == (ret_value = H5FL_CALLOC_MT(H5VL_object_t)))
         HGOTO_ERROR(H5E_VOL, H5E_CANTALLOC, NULL, "can't allocate memory for VOL object");
     ret_value->connector = vol_connector;
     ret_value->data      = object;
@@ -901,7 +901,7 @@ H5VL_create_object_using_vol_id(H5I_type_t type, void *obj, hid_t connector_id)
         HGOTO_ERROR(H5E_VOL, H5E_BADTYPE, NULL, "not a VOL connector ID");
 
     /* Setup VOL info struct */
-    if (NULL == (connector = H5FL_CALLOC(H5VL_t)))
+    if (NULL == (connector = H5FL_CALLOC_MT(H5VL_t)))
         HGOTO_ERROR(H5E_VOL, H5E_CANTALLOC, NULL, "can't allocate VOL info struct");
     connector->cls = cls;
     connector->id  = connector_id;
@@ -923,7 +923,7 @@ done:
 
         /* Free VOL connector struct */
         if (NULL != connector)
-            connector = H5FL_FREE(H5VL_t, connector);
+            connector = H5FL_FREE_MT(H5VL_t, connector);
     } /* end if */
 
     FUNC_LEAVE_NOAPI(ret_value)
@@ -982,7 +982,7 @@ H5VL_conn_dec_rc(H5VL_t *connector)
     if (0 == connector->nrefs) {
         if (H5I_dec_ref(connector->id) < 0)
             HGOTO_ERROR(H5E_VOL, H5E_CANTDEC, FAIL, "unable to decrement ref count on VOL connector");
-        H5FL_FREE(H5VL_t, connector);
+        H5FL_FREE_MT(H5VL_t, connector);
 
         /* Set return value */
         ret_value = 0;
@@ -1041,7 +1041,7 @@ H5VL_free_object(H5VL_object_t *vol_obj)
         if (H5VL_conn_dec_rc(vol_obj->connector) < 0)
             HGOTO_ERROR(H5E_VOL, H5E_CANTDEC, FAIL, "unable to decrement ref count on VOL connector");
 
-        vol_obj = H5FL_FREE(H5VL_object_t, vol_obj);
+        vol_obj = H5FL_FREE_MT(H5VL_object_t, vol_obj);
     } /* end if */
 
 done:
@@ -1179,7 +1179,7 @@ H5VL__register_connector(const void *_cls, hbool_t app_ref, hid_t vipl_id)
     assert(cls);
 
     /* Copy the class structure so the caller can reuse or free it */
-    if (NULL == (saved = H5FL_MALLOC(H5VL_class_t)))
+    if (NULL == (saved = H5FL_MALLOC_MT(H5VL_class_t)))
         HGOTO_ERROR(H5E_VOL, H5E_CANTALLOC, H5I_INVALID_HID,
                     "memory allocation failed for VOL connector class struct");
     H5MM_memcpy(saved, cls, sizeof(H5VL_class_t));
@@ -1200,7 +1200,7 @@ done:
         if (saved->name)
             H5MM_xfree_const(saved->name);
 
-        H5FL_FREE(H5VL_class_t, saved);
+        H5FL_FREE_MT(H5VL_class_t, saved);
     } /* end if */
 
     FUNC_LEAVE_NOAPI(ret_value)
@@ -2189,7 +2189,7 @@ H5VL__free_vol_wrapper(H5VL_wrap_ctx_t *vol_wrap_ctx)
         HGOTO_ERROR(H5E_VOL, H5E_CANTDEC, FAIL, "unable to decrement ref count on VOL connector");
 
     /* Release object wrapping context */
-    H5FL_FREE(H5VL_wrap_ctx_t, vol_wrap_ctx);
+    H5FL_FREE_MT(H5VL_wrap_ctx_t, vol_wrap_ctx);
 
 done:
     FUNC_LEAVE_NOAPI(ret_value)
@@ -2238,7 +2238,7 @@ H5VL_set_vol_wrapper(const H5VL_object_t *vol_obj)
         } /* end if */
 
         /* Allocate VOL object wrapper context */
-        if (NULL == (vol_wrap_ctx = H5FL_MALLOC(H5VL_wrap_ctx_t)))
+        if (NULL == (vol_wrap_ctx = H5FL_MALLOC_MT(H5VL_wrap_ctx_t)))
             HGOTO_ERROR(H5E_VOL, H5E_CANTALLOC, FAIL, "can't allocate VOL wrap context");
 
         /* Increment the outstanding objects that are using the connector */
@@ -2260,7 +2260,7 @@ H5VL_set_vol_wrapper(const H5VL_object_t *vol_obj)
 done:
     if (ret_value < 0 && vol_wrap_ctx)
         /* Release object wrapping context */
-        H5FL_FREE(H5VL_wrap_ctx_t, vol_wrap_ctx);
+        H5FL_FREE_MT(H5VL_wrap_ctx_t, vol_wrap_ctx);
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5VL_set_vol_wrapper() */

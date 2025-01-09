@@ -1424,7 +1424,7 @@ H5O__dtype_copy(const void *_src, void *_dst)
     /* Was result already allocated? */
     if (_dst) {
         *((H5T_t *)_dst) = *dst;
-        dst              = H5FL_FREE(H5T_t, dst);
+        dst              = H5FL_FREE_MT(H5T_t, dst);
         dst              = (H5T_t *)_dst;
     } /* end if */
 
