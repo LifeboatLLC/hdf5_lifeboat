@@ -44,7 +44,7 @@
 #include <pthread.h>
 #endif
 
-char H5_api_test_filename_g[H5_API_TEST_FILENAME_MAX_LENGTH];
+char H5_api_test_filename_g[H5_TEST_FILENAME_MAX_LENGTH];
 
 static int H5_api_test_create_containers(const char *filename, uint64_t vol_cap_flags);
 static int H5_api_test_create_single_container(const char *filename, uint64_t vol_cap_flags);
@@ -214,27 +214,23 @@ main(int argc, char **argv)
         test_path_prefix = "";
 
 #ifndef H5_HAVE_MULTITHREAD
-    if (GetTestMaxNumThreads() > 1) {
-        fprintf(stderr, "HDF5 must be built with multi-thread support to run multi-threaded API tests\n");
+    if (TEST_EXECUTION_THREADED) {
+        fprintf(stderr, "HDF5 must be built with multi-thread support to run threaded API tests\n");
         err_occurred = TRUE;
         goto done;
     }
 #endif
 
-    if (GetTestMaxNumThreads() <= 0) {
-        SetTestMaxNumThreads(API_TESTS_DEFAULT_NUM_THREADS);
-    }
-
-    if (GetTestMaxNumThreads() == 1) {
+    if (!TEST_EXECUTION_THREADED) {
         /* Populate global test filename */
-        if ((chars_written = HDsnprintf(H5_api_test_filename_g, H5_API_TEST_FILENAME_MAX_LENGTH, "%s%s",test_path_prefix,
+        if ((chars_written = HDsnprintf(H5_api_test_filename_g, H5_TEST_FILENAME_MAX_LENGTH, "%s%s",test_path_prefix,
                 TEST_FILE_NAME)) < 0) {
             fprintf(stderr, "Error while creating test file name\n");
             err_occurred = TRUE;
             goto done;
         }
 
-        if ((size_t)chars_written >= H5_API_TEST_FILENAME_MAX_LENGTH) {
+        if ((size_t)chars_written >= H5_TEST_FILENAME_MAX_LENGTH) {
             fprintf(stderr, "Test file name exceeded expected size\n");
             err_occurred = TRUE;
             goto done;
@@ -414,7 +410,6 @@ done:
 static int
 H5_api_test_create_containers(const char *filename, uint64_t vol_cap_flags)
 {
-    int max_threads = GetTestMaxNumThreads();
     char *tl_filename = NULL;
 
     if (!(vol_cap_flags & H5VL_CAP_FLAG_FILE_BASIC)) {
@@ -422,9 +417,9 @@ H5_api_test_create_containers(const char *filename, uint64_t vol_cap_flags)
         goto error;
     }
 
-    if (max_threads > 1) {
+    if (TEST_EXECUTION_THREADED) {
 #ifdef H5_HAVE_MULTITHREAD
-        for (int i = 0; i < max_threads; i++) {
+        for (int i = 0; i < GetTestMaxNumThreads(); i++) {
             if ((tl_filename = generate_threadlocal_filename(test_path_prefix, i, filename)) == NULL) {
                 printf("    failed to generate thread-local API test filename\n");
                 goto error;
@@ -534,7 +529,6 @@ error:
 static int
 H5_api_test_destroy_container_files(void) {
 
-    int max_threads = GetTestMaxNumThreads();
     char *filename = NULL;
 
     if (!(vol_cap_flags_g & H5VL_CAP_FLAG_FILE_BASIC)) {
@@ -542,13 +536,13 @@ H5_api_test_destroy_container_files(void) {
         goto error;
     }
 
-    if (max_threads > 1) {
+    if (TEST_EXECUTION_THREADED) {
 #ifndef H5_HAVE_MULTITHREAD
         printf("    thread-specific cleanup requested, but multithread support not enabled\n");
         goto error;
 #endif
         
-        for (int i = 0; i < max_threads; i++) {
+        for (int i = 0; i < GetTestMaxNumThreads(); i++) {
             if ((filename = generate_threadlocal_filename(test_path_prefix, i, TEST_FILE_NAME)) == NULL) {
                 printf("    failed to generate thread-local API test filename\n");
                 goto error;

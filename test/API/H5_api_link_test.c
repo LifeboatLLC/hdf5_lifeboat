@@ -461,9 +461,9 @@ test_create_hard_link_many(void H5_ATTR_UNUSED *params)
     }
 
     for (size_t i = 1; (i < HARD_LINK_TEST_GROUP_MANY_NUM_HARD_LINKS + 1 && !valid_name_matched); i++) {
-        char name_possibility[H5_API_TEST_FILENAME_MAX_LENGTH];
+        char name_possibility[H5_TEST_FILENAME_MAX_LENGTH];
 
-        snprintf(name_possibility, H5_API_TEST_FILENAME_MAX_LENGTH, "%s%zu",
+        snprintf(name_possibility, H5_TEST_FILENAME_MAX_LENGTH, "%s%zu",
                  "/" LINK_TEST_GROUP_NAME "/" HARD_LINK_TEST_GROUP_MANY_NAME "/hard", i);
 
         valid_name_matched |= !strcmp(objname, name_possibility);
@@ -1678,9 +1678,9 @@ test_create_soft_link_many(void H5_ATTR_UNUSED *params)
     }
 
     for (size_t i = 1; (i < SOFT_LINK_TEST_GROUP_MANY_NAME_SOFT_LINK_COUNT + 1 && !valid_name_matched); i++) {
-        char name_possibility[H5_API_TEST_FILENAME_MAX_LENGTH];
+        char name_possibility[H5_TEST_FILENAME_MAX_LENGTH];
 
-        snprintf(name_possibility, H5_API_TEST_FILENAME_MAX_LENGTH, "%s%zu",
+        snprintf(name_possibility, H5_TEST_FILENAME_MAX_LENGTH, "%s%zu",
                  "/" LINK_TEST_GROUP_NAME "/" SOFT_LINK_TEST_GROUP_MANY_NAME "/soft", i);
 
         valid_name_matched |= !strcmp(objname, name_possibility);
@@ -2570,6 +2570,8 @@ test_create_external_link_multi(void H5_ATTR_UNUSED *params)
     }
     END_MULTIPART;
 
+    TESTING_2("test cleanup");
+
     if (remove_test_file(NULL, ext_link_filename1) < 0)
         TEST_ERROR;
     if (remove_test_file(NULL, ext_link_filename2) < 0)
@@ -2580,6 +2582,8 @@ test_create_external_link_multi(void H5_ATTR_UNUSED *params)
     free(ext_link_filename1);
     free(ext_link_filename2);
     free(ext_link_filename3);
+
+    PASSED();
 
     return;
 
@@ -2777,9 +2781,9 @@ test_create_external_link_ping_pong(void H5_ATTR_UNUSED *params)
             }
 
             for (size_t i = 1; i < EXTERNAL_LINK_TEST_PING_PONG_NUM_LINKS + 1 && !valid_name_matched; i++) {
-                char name_possibility[H5_API_TEST_FILENAME_MAX_LENGTH];
+                char name_possibility[H5_TEST_FILENAME_MAX_LENGTH];
 
-                snprintf(name_possibility, H5_API_TEST_FILENAME_MAX_LENGTH, "%s%zu", "/link", i);
+                snprintf(name_possibility, H5_TEST_FILENAME_MAX_LENGTH, "%s%zu", "/link", i);
 
                 valid_name_matched |= !strcmp(name_possibility, objname);
             }
@@ -2847,9 +2851,9 @@ test_create_external_link_ping_pong(void H5_ATTR_UNUSED *params)
             }
 
             for (size_t i = 1; i < EXTERNAL_LINK_TEST_PING_PONG_NUM_LINKS + 1 && !valid_name_matched; i++) {
-                char name_possibility[H5_API_TEST_FILENAME_MAX_LENGTH];
+                char name_possibility[H5_TEST_FILENAME_MAX_LENGTH];
 
-                snprintf(name_possibility, H5_API_TEST_FILENAME_MAX_LENGTH, "%s%zu%s", "/link", i,
+                snprintf(name_possibility, H5_TEST_FILENAME_MAX_LENGTH, "%s%zu%s", "/link", i,
                          "/new_group");
 
                 valid_name_matched |= !strcmp(objname, name_possibility);
@@ -2882,6 +2886,8 @@ test_create_external_link_ping_pong(void H5_ATTR_UNUSED *params)
     }
     END_MULTIPART;
 
+    TESTING_2("test cleanup");
+
     if (remove_test_file(NULL, ext_link_filename1) < 0)
         TEST_ERROR;
     if (remove_test_file(NULL, ext_link_filename2) < 0)
@@ -2889,6 +2895,8 @@ test_create_external_link_ping_pong(void H5_ATTR_UNUSED *params)
 
     free(ext_link_filename1);
     free(ext_link_filename2);
+
+    PASSED();
 
     return;
 
