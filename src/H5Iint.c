@@ -5176,6 +5176,7 @@ H5I__dec_ref(hid_t id, void **request, hbool_t app)
     hbool_t                  do_not_disturb_set;
     hbool_t                  marked_for_deletion;
     hbool_t                  have_global_mutex = TRUE; /* trivially so in single thread builds */
+    hbool_t                  initial_have_global_mutex = FALSE; /* store initial value from target ID */
     hbool_t                  cls_is_mt_safe;
     hbool_t                  bool_result;
     int                      pass                = 0;
@@ -5298,6 +5299,8 @@ H5I__dec_ref(hid_t id, void **request, hbool_t app)
              * global copy of the kernel has changed since we read it at the 
              * top of the do/while loop. 
              */
+            initial_have_global_mutex = info_k.have_global_mutex;
+
             mod_info_k.count             = info_k.count;
             mod_info_k.app_count         = info_k.app_count;
             mod_info_k.object            = info_k.object;
@@ -5305,7 +5308,7 @@ H5I__dec_ref(hid_t id, void **request, hbool_t app)
             mod_info_k.marked            = info_k.marked;
             mod_info_k.do_not_disturb    = info_k.do_not_disturb;
             mod_info_k.is_future         = info_k.is_future;
-            mod_info_k.have_global_mutex = FALSE;
+            mod_info_k.have_global_mutex = initial_have_global_mutex;
 
             if ( info_k.count > 1 ) {
 
@@ -5334,7 +5337,7 @@ H5I__dec_ref(hid_t id, void **request, hbool_t app)
                 mod_info_k.marked            = TRUE;
                 mod_info_k.do_not_disturb    = FALSE;
                 mod_info_k.is_future         = FALSE;
-                mod_info_k.have_global_mutex = FALSE;
+                mod_info_k.have_global_mutex = initial_have_global_mutex;
 
                 marked_for_deletion = TRUE;
             }
@@ -5526,7 +5529,7 @@ H5I__dec_ref(hid_t id, void **request, hbool_t app)
                 mod_info_k.marked            = TRUE;
                 mod_info_k.do_not_disturb    = FALSE;
                 mod_info_k.is_future         = FALSE;
-                mod_info_k.have_global_mutex = FALSE;
+                mod_info_k.have_global_mutex = initial_have_global_mutex;
 
                 marked_for_deletion       = TRUE;
 
@@ -5540,7 +5543,7 @@ H5I__dec_ref(hid_t id, void **request, hbool_t app)
                 atomic_fetch_add(&(H5I_mt_g.H5I__dec_ref__free_func_failed), 1ULL);
 
                 mod_info_k.do_not_disturb    = FALSE;
-                mod_info_k.have_global_mutex = FALSE;
+                mod_info_k.have_global_mutex = initial_have_global_mutex;
                 ret_value = -1;
 
             }
@@ -7823,6 +7826,7 @@ H5I__find_id(hid_t id)
     hbool_t                 do_not_disturb_set;
     hbool_t                 done = FALSE;
     hbool_t                 have_global_mutex = TRUE; /* trivially true in the serial case */
+    hbool_t                 initial_have_global_mutex = FALSE; /* store initial value from target ID */
     hbool_t                 cls_is_mt_safe;
     hbool_t                 bool_result;
     int                     pass = 0;
@@ -8044,6 +8048,8 @@ H5I__find_id(hid_t id)
                  * thread may have realized the ID.
                  */
 
+                initial_have_global_mutex = info_k.have_global_mutex;
+
                 mod_info_k.count             = info_k.count;
                 mod_info_k.app_count         = info_k.app_count;
                 mod_info_k.object            = info_k.object;
@@ -8104,7 +8110,7 @@ H5I__find_id(hid_t id)
                      * before we use it to overwrite id_info_ptr->k.
                      */
                     mod_info_k.do_not_disturb    = FALSE;
-                    mod_info_k.have_global_mutex = FALSE;
+                    mod_info_k.have_global_mutex = initial_have_global_mutex;
 
                     /* update stats */
                     atomic_fetch_add(&(H5I_mt_g.num_successful_do_not_disturb_sets), 1ULL);
