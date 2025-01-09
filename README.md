@@ -1,5 +1,7 @@
 HDF5 version 1.14.2 released on 2023-08-11
 
+This branch contains an archived initial implementation of virtual lock assertions to verify that IDs are not erroneously duplicated by an application. It was decided not to move forward with this implementation, so this branch is as a form of documentation. Note that the virtual lock as implemented and used in this branch require the MT VL implementation in order to build and work properly.
+
 # Experimental
 
 [![Lifeboat hdf5 dev autotools CI](https://github.com/LifeboatLLC/hdf5_lifeboat/actions/workflows/main-auto.yml/badge.svg)](https://github.com/LifeboatLLC/hdf5_lifeboat/actions/workflows/main-auto.yml)
