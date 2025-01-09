@@ -123,9 +123,6 @@ H5FL_DEFINE(H5VL_object_t);
 /* Declare a free list to manage the H5VL_wrap_ctx_t struct */
 H5FL_DEFINE_STATIC(H5VL_wrap_ctx_t);
 
-/* Default VOL connector */
-static H5VL_connector_prop_t H5VL_def_conn_s = {-1, NULL};
-
 /*-------------------------------------------------------------------------
  * Function:    H5VL_init_phase1
  *
@@ -204,10 +201,6 @@ H5VL_init_phase2(void)
 
     /* clang-format on */
 
-    /* Sanity check default VOL connector */
-    assert(H5VL_def_conn_s.connector_id == (-1));
-    assert(H5VL_def_conn_s.connector_info == NULL);
-
     /* Set up the default VOL connector in the default FAPL */
     if (H5VL__set_def_conn() < 0)
         HGOTO_ERROR(H5E_VOL, H5E_CANTSET, FAIL, "unable to set default VOL connector");
@@ -234,31 +227,22 @@ H5VL_term_package(void)
 
     FUNC_ENTER_NOAPI_NOINIT_NOERR
 
-    if (H5VL_def_conn_s.connector_id > 0) {
-        /* Release the default VOL connector */
-        (void)H5VL_conn_free(&H5VL_def_conn_s);
-        H5VL_def_conn_s.connector_id   = -1;
-        H5VL_def_conn_s.connector_info = NULL;
+    if (H5I_nmembers(H5I_VOL) > 0) {
+        /* Unregister all VOL connectors */
+        (void)H5I_clear_type(H5I_VOL, TRUE, FALSE);
         n++;
     } /* end if */
     else {
-        if (H5I_nmembers(H5I_VOL) > 0) {
-            /* Unregister all VOL connectors */
-            (void)H5I_clear_type(H5I_VOL, TRUE, FALSE);
+        if (H5VL__num_opt_operation() > 0) {
+            /* Unregister all dynamically registered optional operations */
+            (void)H5VL__term_opt_operation();
             n++;
         } /* end if */
         else {
-            if (H5VL__num_opt_operation() > 0) {
-                /* Unregister all dynamically registered optional operations */
-                (void)H5VL__term_opt_operation();
-                n++;
-            } /* end if */
-            else {
-                /* Destroy the VOL connector ID group */
-                n += (H5I_dec_type_ref(H5I_VOL) > 0);
-            } /* end else */
-        }     /* end else */
-    }         /* end else */
+            /* Destroy the VOL connector ID group */
+            n += (H5I_dec_type_ref(H5I_VOL) > 0);
+        } /* end else */
+    }     /* end else */
 
     FUNC_LEAVE_NOAPI(n)
 } /* end H5VL_term_package() */
@@ -351,6 +335,7 @@ H5VL__get_connector_cb(void *obj, hid_t id, void *_op_data)
 herr_t
 H5VL__set_def_conn(void)
 {
+    H5VL_connector_prop_t vol_prop = {H5_DEFAULT_VOL, NULL}; /* VOL connector property */
     H5P_genplist_t *def_fapl;               /* Default file access property list */
     H5P_genclass_t *def_fapclass;           /* Default file access property class */
     const char     *env_var;                /* Environment variable for default VOL connector */
@@ -360,15 +345,6 @@ H5VL__set_def_conn(void)
     herr_t          ret_value    = SUCCEED; /* Return value */
 
     FUNC_ENTER_PACKAGE
-
-    /* Reset default VOL connector, if it's set already */
-    /* (Can happen during testing -QAK) */
-    if (H5VL_def_conn_s.connector_id > 0) {
-        /* Release the default VOL connector */
-        (void)H5VL_conn_free(&H5VL_def_conn_s);
-        H5VL_def_conn_s.connector_id   = -1;
-        H5VL_def_conn_s.connector_info = NULL;
-    } /* end if */
 
     /* Check for environment variable set */
     env_var = HDgetenv(HDF5_VOL_CONNECTOR);
@@ -424,26 +400,18 @@ H5VL__set_def_conn(void)
             if (H5VL__connector_str_to_info(tok, connector_id, &vol_info) < 0)
                 HGOTO_ERROR(H5E_VOL, H5E_CANTDECODE, FAIL, "can't deserialize connector info");
 
-        /* Set the default VOL connector */
-        H5VL_def_conn_s.connector_id   = connector_id;
-        H5VL_def_conn_s.connector_info = vol_info;
+        /* Store information */
+        /* Temporary local copy, do not increase ref count */
+        vol_prop.connector_id   = connector_id;
+        vol_prop.connector_info = vol_info;
     } /* end if */
-    else {
-        /* Set the default VOL connector */
-        H5VL_def_conn_s.connector_id   = H5_DEFAULT_VOL;
-        H5VL_def_conn_s.connector_info = NULL;
-
-        /* Increment the ref count on the default connector */
-        if (H5I_inc_ref(H5VL_def_conn_s.connector_id, FALSE) < 0)
-            HGOTO_ERROR(H5E_VOL, H5E_CANTINC, FAIL, "can't increment VOL connector refcount");
-    } /* end else */
 
     /* Get default file access pclass */
     if (NULL == (def_fapclass = (H5P_genclass_t *)H5I_object(H5P_FILE_ACCESS)))
         HGOTO_ERROR(H5E_VOL, H5E_BADID, FAIL, "can't find object for default file access property class ID");
 
     /* Change the default VOL for the default file access pclass */
-    if (H5P_reset_vol_class(def_fapclass, &H5VL_def_conn_s) < 0)
+    if (H5P_reset_vol_class(def_fapclass, &vol_prop) < 0)
         HGOTO_ERROR(H5E_VOL, H5E_CANTSET, FAIL,
                     "can't set default VOL connector for default file access property class");
 
@@ -452,7 +420,7 @@ H5VL__set_def_conn(void)
         HGOTO_ERROR(H5E_VOL, H5E_BADID, FAIL, "can't find object for default fapl ID");
 
     /* Change the default VOL for the default FAPL */
-    if (H5P_set_vol(def_fapl, H5VL_def_conn_s.connector_id, H5VL_def_conn_s.connector_info) < 0)
+    if (H5P_set_vol(def_fapl, vol_prop.connector_id, vol_prop.connector_info) < 0)
         HGOTO_ERROR(H5E_VOL, H5E_CANTSET, FAIL, "can't set default VOL connector for default FAPL");
 
 done:
@@ -2487,19 +2455,14 @@ H5VL_check_plugin_load(const H5VL_class_t *cls, const H5PL_key_t *key, hbool_t *
  *-------------------------------------------------------------------------
  */
 void
-H5VL__is_default_conn(hid_t fapl_id, hid_t connector_id, hbool_t *is_default)
+H5VL__is_default_conn(hid_t connector_id, hbool_t *is_default)
 {
     FUNC_ENTER_PACKAGE_NOERR
 
     /* Sanity checks */
     assert(is_default);
 
-    /* Determine if the default VOL connector will be used, based on non-default
-     * values in the FAPL, connector ID, or the HDF5_VOL_CONNECTOR environment
-     * variable being set.
-     */
-    *is_default = (H5VL_def_conn_s.connector_id == H5_DEFAULT_VOL) &&
-                  ((H5P_FILE_ACCESS_DEFAULT == fapl_id) || connector_id == H5_DEFAULT_VOL);
+    *is_default = (connector_id == H5_DEFAULT_VOL);
 
     FUNC_LEAVE_NOAPI_VOID
 } /* end H5VL__is_default_conn() */
