@@ -66,12 +66,13 @@ static bool TestDoCleanUp_g = true;  /* Do cleanup or not. Default is yes. */
 int TestFrameworkProcessID_g = 0;         /* MPI process rank value for parallel tests */
 int TestVerbosity_g          = VERBO_DEF; /* Default Verbosity is Low */
 
+static void PerformThreadedTest(TestStruct Test);
+
 #ifdef H5_HAVE_MULTITHREAD
 static void *ThreadTestWrapper(void *test);
 static int   H5_mt_test_thread_setup(int thread_idx);
 static int   H5_mt_test_global_setup(void);
 static void  H5_test_thread_info_key_destructor(void *value);
-static void PerformThreadedTest(TestStruct Test);
 static void UpdateTestStats(TestThreadArgs *test_args);
 #endif
 
@@ -450,7 +451,6 @@ herr_t
 PerformTests(void)
 {
     int test_num_errs = 0;
-    int max_num_threads = GetTestMaxNumThreads();
 
     for (unsigned Loop = 0; Loop < TestCount; Loop++) {
         bool is_test_mt = (TestArray[Loop].TestFrameworkFlags & ALLOW_MULTITHREAD) && TEST_EXECUTION_THREADED;
