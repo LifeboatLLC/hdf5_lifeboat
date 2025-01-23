@@ -230,8 +230,12 @@ test_create_file_invalid_params(void H5_ATTR_UNUSED *params)
     }
     END_MULTIPART;
 
+    TESTING_2("test cleanup");
+
     free(prefixed_filename);
     prefixed_filename = NULL;
+
+    PASSED();
 
     return;
 
@@ -404,7 +408,7 @@ test_open_file(void H5_ATTR_UNUSED *params)
          * XXX: SWMR open flags
          */
     }
-    END_MULTIPART;
+    END_MULTIPART_NO_CLEANUP;
 
     return;
 
@@ -506,7 +510,7 @@ test_open_file_invalid_params(void H5_ATTR_UNUSED *params)
         }
         PART_END(H5Fopen_invalid_flags);
     }
-    END_MULTIPART;
+    END_MULTIPART_NO_CLEANUP;
 
     return;
 
@@ -1107,8 +1111,12 @@ test_file_is_accessible(void H5_ATTR_UNUSED *params)
     }
     END_MULTIPART;
 
+    TESTING_2("test cleanup");
+
     free(prefixed_filename);
     prefixed_filename = NULL;
+
+    PASSED();
 
     return;
 
@@ -1572,11 +1580,15 @@ test_get_file_intent(void H5_ATTR_UNUSED *params)
     }
     END_MULTIPART;
 
+    TESTING_2("test cleanup");
+
     if (GetTestCleanup() && H5Fdelete(prefixed_filename, H5P_DEFAULT) < 0)
         TEST_ERROR;
 
     free(prefixed_filename);
     prefixed_filename = NULL;
+
+    PASSED();
 
     return;
 
@@ -1625,11 +1637,6 @@ test_get_file_obj_count(void H5_ATTR_UNUSED *params)
             "    API functions for basic or more file,  basic dataset, group, stored datatypes, or attribute "
             "aren't supported with this connector\n");
         return;
-    }
-
-    if (GetTestMaxNumThreads() == 0) {
-        printf("    Active thread count is invalid\n");
-        TEST_ERROR;
     }
 
     TESTING_2("test setup");
@@ -1720,7 +1727,7 @@ test_get_file_obj_count(void H5_ATTR_UNUSED *params)
             if (check_open_obj_count(obj_count, 2) < 0) {
                 H5_FAILED();
                 printf("    number of open files (%ld) did not match %s expected number (2)\n", obj_count,
-                       GetTestMaxNumThreads() > 1 ? "or exceed" : "");
+                       TEST_EXECUTION_CONCURRENT ? "or exceed" : "");
                 PART_ERROR(H5Fget_obj_count_files);
             }
 
@@ -1764,7 +1771,7 @@ test_get_file_obj_count(void H5_ATTR_UNUSED *params)
             if (check_open_obj_count(obj_count, 1) < 0) {
                 H5_FAILED();
                 printf("    number of open groups (%ld) did not match %s expected number (1)\n", obj_count,
-                       GetTestMaxNumThreads() > 1 ? "or exceed" : "");
+                       TEST_EXECUTION_CONCURRENT ? "or exceed" : "");
                 PART_ERROR(H5Fget_obj_count_types);
             }
 
@@ -1786,7 +1793,7 @@ test_get_file_obj_count(void H5_ATTR_UNUSED *params)
             if (check_open_obj_count(obj_count, 1) < 0) {
                 H5_FAILED();
                 printf("    number of open named datatypes (%ld) did not match %s expected number (1)\n", obj_count,
-                       GetTestMaxNumThreads() > 1 ? "or exceed" : "");
+                       TEST_EXECUTION_CONCURRENT ? "or exceed" : "");
                 PART_ERROR(H5Fget_obj_count_types);
             }
 
@@ -1808,7 +1815,7 @@ test_get_file_obj_count(void H5_ATTR_UNUSED *params)
             if (check_open_obj_count(obj_count, 1) < 0) {
                 H5_FAILED();
                 printf("    number of open attributes (%ld) did not match %s expected number (1)\n", obj_count,
-                       GetTestMaxNumThreads() > 1 ? "or exceed" : "");
+                       TEST_EXECUTION_CONCURRENT ? "or exceed" : "");
                 PART_ERROR(H5Fget_obj_count_attrs);
             }
 
@@ -1830,7 +1837,7 @@ test_get_file_obj_count(void H5_ATTR_UNUSED *params)
             if (check_open_obj_count(obj_count, 1) < 0) {
                 H5_FAILED();
                 printf("    number of open datasets (%ld) did not match %s expected number (1)\n", obj_count,
-                       GetTestMaxNumThreads() > 1 ? "or exceed" : "");
+                       TEST_EXECUTION_CONCURRENT ? "or exceed" : "");
                 PART_ERROR(H5Fget_obj_count_dsets);
             }
 
@@ -1874,7 +1881,7 @@ test_get_file_obj_count(void H5_ATTR_UNUSED *params)
             if (check_open_obj_count(obj_count, 6) < 0) {
                 H5_FAILED();
                 printf("    number of open objects (%ld) did not match %s expected number (6)\n", obj_count,
-                       GetTestMaxNumThreads() > 1 ? "or exceed" : "");
+                       TEST_EXECUTION_CONCURRENT ? "or exceed" : "");
                 PART_ERROR(H5Fget_obj_count_all);
             }
 
@@ -2559,9 +2566,9 @@ herr_t
 check_open_obj_count(ssize_t obj_count, int expected) {
     herr_t ret_value = SUCCEED;
     /* If multiple threads are concurrently executing tests, then more objects than expected may be open in the library */
-    if (GetTestMaxNumThreads() > 1 && obj_count < expected) {
+    if (TEST_EXECUTION_CONCURRENT && obj_count < expected) {
         ret_value = FAIL;
-    } else if (GetTestMaxNumThreads() == 1 && obj_count != expected) { /* Single thread, expect exact count */
+    } else if (!TEST_EXECUTION_CONCURRENT && obj_count != expected) { /* Single thread, expect exact count */
         ret_value = FAIL;
     }
 

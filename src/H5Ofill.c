@@ -587,7 +587,7 @@ H5O__fill_copy(const void *_src, void *_dst)
 
                 /* Allocate a background buffer */
                 bkg_size = MAX(H5T_get_size(dst->type), H5T_get_size(src->type));
-                if (H5T_path_bkg(tpath) && NULL == (bkg_buf = H5FL_BLK_CALLOC(type_conv, bkg_size))) {
+                if (H5T_path_bkg(tpath) && NULL == (bkg_buf = H5FL_BLK_CALLOC_MT(type_conv, bkg_size))) {
                     H5I_dec_ref(src_id);
                     H5I_dec_ref(dst_id);
                     HGOTO_ERROR(H5E_RESOURCE, H5E_NOSPACE, NULL, "memory allocation failed");
@@ -599,7 +599,7 @@ H5O__fill_copy(const void *_src, void *_dst)
                     H5I_dec_ref(src_id);
                     H5I_dec_ref(dst_id);
                     if (bkg_buf)
-                        bkg_buf = H5FL_BLK_FREE(type_conv, bkg_buf);
+                        bkg_buf = H5FL_BLK_FREE_MT(type_conv, bkg_buf);
                     HGOTO_ERROR(H5E_OHDR, H5E_CANTCONVERT, NULL, "datatype conversion failed");
                 } /* end if */
 
@@ -607,7 +607,7 @@ H5O__fill_copy(const void *_src, void *_dst)
                 H5I_dec_ref(src_id);
                 H5I_dec_ref(dst_id);
                 if (bkg_buf)
-                    bkg_buf = H5FL_BLK_FREE(type_conv, bkg_buf);
+                    bkg_buf = H5FL_BLK_FREE_MT(type_conv, bkg_buf);
             } /* end if */
         }     /* end if */
     }         /* end if */

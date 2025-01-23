@@ -167,9 +167,9 @@ H5D__select_io(const H5D_io_info_t *io_info, const H5D_dset_io_info_t *dset_info
             HGOTO_ERROR(H5E_DATASET, H5E_CANTALLOC, FAIL, "can't allocate I/O offset vector array");
 
         /* Allocate the iterators */
-        if (NULL == (mem_iter = H5FL_MALLOC(H5S_sel_iter_t)))
+        if (NULL == (mem_iter = H5FL_MALLOC_MT(H5S_sel_iter_t)))
             HGOTO_ERROR(H5E_DATASET, H5E_CANTALLOC, FAIL, "can't allocate memory iterator");
-        if (NULL == (file_iter = H5FL_MALLOC(H5S_sel_iter_t)))
+        if (NULL == (file_iter = H5FL_MALLOC_MT(H5S_sel_iter_t)))
             HGOTO_ERROR(H5E_DATASET, H5E_CANTALLOC, FAIL, "can't allocate file iterator");
 
         /* Initialize file iterator */
@@ -237,11 +237,11 @@ done:
     if (file_iter_init && H5S_SELECT_ITER_RELEASE(file_iter) < 0)
         HDONE_ERROR(H5E_DATASET, H5E_CANTRELEASE, FAIL, "unable to release selection iterator");
     if (file_iter)
-        file_iter = H5FL_FREE(H5S_sel_iter_t, file_iter);
+        file_iter = H5FL_FREE_MT(H5S_sel_iter_t, file_iter);
     if (mem_iter_init && H5S_SELECT_ITER_RELEASE(mem_iter) < 0)
         HDONE_ERROR(H5E_DATASET, H5E_CANTRELEASE, FAIL, "unable to release selection iterator");
     if (mem_iter)
-        mem_iter = H5FL_FREE(H5S_sel_iter_t, mem_iter);
+        mem_iter = H5FL_FREE_MT(H5S_sel_iter_t, mem_iter);
 
     /* Release vector arrays, if allocated */
     if (file_len)
@@ -356,9 +356,9 @@ H5D_select_io_mem(void *dst_buf, H5S_t *dst_space, const void *src_buf, H5S_t *s
             HGOTO_ERROR(H5E_IO, H5E_CANTALLOC, FAIL, "can't allocate I/O offset vector array");
 
         /* Allocate the dataspace selection iterators */
-        if (NULL == (dst_sel_iter = H5FL_MALLOC(H5S_sel_iter_t)))
+        if (NULL == (dst_sel_iter = H5FL_MALLOC_MT(H5S_sel_iter_t)))
             HGOTO_ERROR(H5E_DATASPACE, H5E_CANTALLOC, FAIL, "can't allocate destination selection iterator");
-        if (NULL == (src_sel_iter = H5FL_MALLOC(H5S_sel_iter_t)))
+        if (NULL == (src_sel_iter = H5FL_MALLOC_MT(H5S_sel_iter_t)))
             HGOTO_ERROR(H5E_DATASPACE, H5E_CANTALLOC, FAIL, "can't allocate source selection iterator");
 
         /* Initialize destination selection iterator */
@@ -416,13 +416,13 @@ done:
         if (src_sel_iter_init && H5S_SELECT_ITER_RELEASE(src_sel_iter) < 0)
             HDONE_ERROR(H5E_DATASPACE, H5E_CANTRELEASE, FAIL, "unable to release selection iterator");
 
-        src_sel_iter = H5FL_FREE(H5S_sel_iter_t, src_sel_iter);
+        src_sel_iter = H5FL_FREE_MT(H5S_sel_iter_t, src_sel_iter);
     }
     if (dst_sel_iter) {
         if (dst_sel_iter_init && H5S_SELECT_ITER_RELEASE(dst_sel_iter) < 0)
             HDONE_ERROR(H5E_DATASPACE, H5E_CANTRELEASE, FAIL, "unable to release selection iterator");
 
-        dst_sel_iter = H5FL_FREE(H5S_sel_iter_t, dst_sel_iter);
+        dst_sel_iter = H5FL_FREE_MT(H5S_sel_iter_t, dst_sel_iter);
     }
 
     /* Release vector arrays, if allocated */

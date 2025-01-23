@@ -33,16 +33,17 @@
 
 /* Internal struct to track VOL connector information for objects */
 typedef struct H5VL_t {
-    const H5VL_class_t *cls;   /* Pointer to connector class struct                    */
-    int64_t             nrefs; /* Number of references by objects using this struct    */
-    hid_t               id;    /* Identifier for the VOL connector                     */
+    const H5VL_class_t *cls; /* Pointer to connector class struct                    */
+    H5_ATOMIC(int64_t) nrefs; /* Number of references by objects using this struct    */
+    hid_t id; /* Identifier for the VOL connector                     */
 } H5VL_t;
 
 /* Internal vol object structure returned to the API */
 typedef struct H5VL_object_t {
     void   *data;      /* Pointer to connector-managed data for this object    */
     H5VL_t *connector; /* Pointer to VOL connector struct                      */
-    size_t  rc;        /* Reference count                                      */
+    H5_ATOMIC(size_t) rc; /* Reference count                                      */
+
 } H5VL_object_t;
 
 /* Internal structure to hold the connector ID & info for FAPLs */

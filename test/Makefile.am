@@ -126,7 +126,7 @@ if HAVE_SHARED_CONDITIONAL
   # The libh5test library provides common support code for the tests.
   # The filter_plugin* libraries are for use in filter_plugin.c.
   # Build them as shared libraries if that option was enabled in configure.
-  noinst_LTLIBRARIES=libh5test.la libfilter_plugin1_dsets.la libfilter_plugin2_dsets.la libfilter_plugin3_dsets.la libfilter_plugin4_groups.la libnull_vfd_plugin.la libnull_vol_connector.la
+  noinst_LTLIBRARIES=libh5test.la libfilter_plugin1_dsets.la libfilter_plugin2_dsets.la libfilter_plugin3_dsets.la libfilter_plugin4_groups.la libnull_vfd_plugin.la libnull_vol_connector.la libmt_vl_test_vol_connector.la libmt_native_wrapper_vol_connector.la libmt_passthru_wrapper_vol_connector.la
   libfilter_plugin1_dsets_la_SOURCES=filter_plugin1_dsets.c
   libfilter_plugin2_dsets_la_SOURCES=filter_plugin2_dsets.c
   libfilter_plugin3_dsets_la_SOURCES=filter_plugin3_dsets.c
@@ -149,7 +149,14 @@ if HAVE_SHARED_CONDITIONAL
   # null_vol_connector is used for testing basic VOL plugin functionality.
   libnull_vol_connector_la_SOURCES=null_vol_connector.c
   libnull_vol_connector_la_LDFLAGS=$(AM_LDFLAGS) -avoid-version -module -shared -export-dynamic -rpath /nowhere
-
+  # mt_vl_test_vol_connector is used for testing the H5VL module's internals
+  libmt_vl_test_vol_connector_la_SOURCES=mt_vl_test_vol_connector.c
+  libmt_vl_test_vol_connector_la_LDFLAGS=$(AM_LDFLAGS) -avoid-version -module -shared -export-dynamic -rpath /nowhere
+  # mt_native_wrapper_vol_connector and mt_passthru_wrapper_connector are used for testing the H5VL module with real operations
+  libmt_native_wrapper_vol_connector_la_SOURCES=mt_native_wrapper_vol_connector.c
+  libmt_native_wrapper_vol_connector_la_LDFLAGS=$(AM_LDFLAGS) -avoid-version -module -shared -export-dynamic -rpath /nowhere
+  libmt_passthru_wrapper_vol_connector_la_SOURCES=mt_passthru_wrapper_vol_connector.c ../src/H5VLpassthru.c
+  libmt_passthru_wrapper_vol_connector_la_LDFLAGS=$(AM_LDFLAGS) -avoid-version -module -shared -export-dynamic -rpath /nowhere
 else
   # The libh5test library provides common support code for the tests.
   noinst_LTLIBRARIES=libh5test.la
@@ -248,9 +255,14 @@ if MIRROR_VFD_CONDITIONAL
   DISTCLEANFILES+= test_mirror.sh
 endif
 
+# Set up SUBDIRS, working around the fact that it must be defined all at once
 if BUILD_API_TESTS
-  SUBDIRS= . API
+  API_TESTS_DIR = API
 endif
+
+THREADS_TESTS_DIR = threads
+
+SUBDIRS = . $(THREADS_TESTS_DIR) $(API_TESTS_DIR)
 
 include $(top_srcdir)/config/conclude.am
 

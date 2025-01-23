@@ -649,7 +649,7 @@ error:
  * is responsible for freeing the returned filename
  * pointer with free().
  * 
- * If the API tests are being run multi-threaded,
+ * If the API tests are being run in separate thread(s)
  * then the framework-assigned thread index will be inserted as well.
  */
 herr_t
@@ -678,7 +678,7 @@ prefix_filename(const char *prefix, const char *filename, char **filename_out)
         goto done;
     }
 
-    if (GetTestMaxNumThreads() > 1) {
+    if (TEST_EXECUTION_THREADED) {
 #ifdef H5_HAVE_MULTITHREAD
 
         if ((tinfo = (thread_info_t *)pthread_getspecific(test_thread_info_key_g)) == NULL) {
@@ -699,13 +699,13 @@ prefix_filename(const char *prefix, const char *filename, char **filename_out)
         goto done;
 #endif
     } else {
-        if (NULL == (out_buf = malloc(H5_API_TEST_FILENAME_MAX_LENGTH))) {
+        if (NULL == (out_buf = malloc(H5_TEST_FILENAME_MAX_LENGTH))) {
             printf("    couldn't allocated filename buffer\n");
             ret_value = FAIL;
             goto done;
         }
 
-        if ((chars_written = HDsnprintf(out_buf, H5_API_TEST_FILENAME_MAX_LENGTH, "%s%s", prefix, filename)) <
+        if ((chars_written = HDsnprintf(out_buf, H5_TEST_FILENAME_MAX_LENGTH, "%s%s", prefix, filename)) <
             0) {
             printf("    couldn't prefix filename\n");
             ret_value = FAIL;
@@ -713,7 +713,7 @@ prefix_filename(const char *prefix, const char *filename, char **filename_out)
         }
     }
 
-    if ((size_t)chars_written >= H5_API_TEST_FILENAME_MAX_LENGTH) {
+    if ((size_t)chars_written >= H5_TEST_FILENAME_MAX_LENGTH) {
         printf("    filename buffer too small\n");
         ret_value = FAIL;
         goto done;
