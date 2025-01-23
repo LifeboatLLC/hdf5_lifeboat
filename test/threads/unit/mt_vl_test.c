@@ -96,7 +96,7 @@ void mt_test_registration_by_name(void *args) {
     vol_ids[i] = H5VLregister_connector_by_name(NULL_VOL_CONNECTOR_NAME, H5P_DEFAULT);
 
     if (vol_ids[i] == H5I_INVALID_HID)
-      TestErrPrintf("Failed to register VOL connector by name (Make sure test is run from 'test' directory)\n");
+      TestErrPrintf("Failed to register VOL connector by name\n");
   }
 
   for (size_t i = 0; i < params->num_repetitions; i++) {
@@ -135,7 +135,7 @@ void mt_test_registration_by_value(void *args) {
                                                       H5P_DEFAULT);
     
     if (vol_ids[i] == H5I_INVALID_HID)
-      TestErrPrintf("Failed to register VOL connector by value (Make sure test is run from 'test' directory)\n");
+      TestErrPrintf("Failed to register VOL connector by value\n");
   }
 
   for (size_t i = 0; i < params->num_repetitions; i++) {
@@ -348,7 +348,7 @@ void mt_test_file_open_failure_registration(void H5_ATTR_UNUSED *args) {
   H5E_END_TRY;
 
   if (file_id < 0) {
-    TestErrPrintf("Failed to load and use dynamic VOL connector (Make sure test is run from 'test' directory)\n");
+    TestErrPrintf("Failed to load and use dynamic VOL connector\n");
   }
 
   /* Clean up library-internal state for fake file */
