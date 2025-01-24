@@ -156,7 +156,7 @@ jobs:
                 if [[ "${{ matrix.build_system }}" == "autotools" ]]; then
                   MT_VL_TEST_COMMAND="./threads/testmthdf5"
                 else
-                  MT_VL_TEST_COMMAND="./build/bin/testmthdf5'"
+                  MT_VL_TEST_COMMAND="./build/bin/testmthdf5"
                 fi
 
                 echo "$CONNECTOR_STACKS" | jq -r '.[]' | while IFS= read -r connector_stack; do
