@@ -335,6 +335,10 @@ typedef struct H5CX_t {
     hbool_t vol_connector_prop_valid;         /* Whether property for VOL connector ID & info is valid */
     void   *vol_wrap_ctx;                     /* VOL connector's "wrap context" for creating IDs */
     hbool_t vol_wrap_ctx_valid; /* Whether VOL connector's "wrap context" for creating IDs is valid */
+
+#if H5_HAVE_VIRTUAL_LOCK
+    H5TS_vlock_t vlock; /* Virtual lock to verify thread-safe access to the context */
+#endif
 } H5CX_t;
 
 /* Typedef for nodes on the API context stack */
@@ -426,6 +430,28 @@ typedef struct H5CX_fapl_cache_t {
 #if defined(H5_HAVE_THREADSAFE) || defined(H5_HAVE_MULTITHREAD)
 static H5CX_node_t **H5CX__get_context(void);
 #endif /* H5_HAVE_THREADSAFE or H5_HAVE_MULTITHREAD */
+
+#if H5_HAVE_VIRTUAL_LOCK
+static void H5CX__vlock_init(H5CX_t *ctx);
+static void H5CX__vlock_acquire(H5CX_t *ctx, H5TS_vlock_op_type_t op_type);
+static void H5CX__vlock_release(H5CX_t *ctx, H5TS_vlock_op_type_t op_type);
+
+#define H5CX_VLOCK_INIT(ctx) H5CX__vlock_init(ctx)
+#define H5CX_VLOCK_ACQUIRE_W(ctx) H5CX__vlock_acquire(ctx, H5TS_VLOCK_WRITER)
+#define H5CX_VLOCK_ACQUIRE_R(ctx) H5CX__vlock_acquire(ctx, H5TS_VLOCK_READER)
+#define H5CX_VLOCK_RELEASE_W(ctx) H5CX__vlock_release(ctx, H5TS_VLOCK_WRITER)
+#define H5CX_VLOCK_RELEASE_R(ctx) H5CX__vlock_release(ctx, H5TS_VLOCK_READER)
+
+#else /* H5_HAVE_VIRTUAL_LOCK */
+
+#define H5CX_VLOCK_INIT(ctx) (void) ctx
+#define H5CX_VLOCK_ACQUIRE_W(ctx) (void) ctx
+#define H5CX_VLOCK_ACQUIRE_R(ctx) (void) ctx
+#define H5CX_VLOCK_RELEASE_W(ctx) (void) ctx
+#define H5CX_VLOCK_RELEASE_R(ctx) (void) ctx
+
+#endif /* H5_HAVE_VIRTUAL_LOCK */
+
 static void         H5CX__push_common(H5CX_node_t *cnode);
 static H5CX_node_t *H5CX__pop_common(hbool_t update_dxpl_props);
 
@@ -791,6 +817,8 @@ H5CX__push_common(H5CX_node_t *cnode)
     cnode->ctx.tag     = H5AC__INVALID_TAG;
     cnode->ctx.ring    = H5AC_RING_USER;
 
+    H5CX_VLOCK_INIT(&cnode->ctx);
+
     /* Push context node onto stack */
     cnode->next = *head;
     *head       = cnode;
@@ -880,6 +908,8 @@ H5CX_retrieve_state(H5CX_state_t **api_state)
     head = H5CX_get_my_context(); /* Get the pointer to the head of the API context, for this thread */
     assert(head && *head);
     assert(api_state);
+
+    H5CX_VLOCK_ACQUIRE_R(&(*head)->ctx);
 
     /* Allocate & clear API context state */
     if (NULL == (*api_state = H5FL_CALLOC(H5CX_state_t)))
@@ -983,6 +1013,8 @@ H5CX_retrieve_state(H5CX_state_t **api_state)
 #endif /* H5_HAVE_PARALLEL */
 
 done:
+    H5CX_VLOCK_RELEASE_R(&(*head)->ctx);
+
     /* Cleanup on error */
     if (ret_value < 0) {
         if (*api_state) {
@@ -1022,6 +1054,8 @@ H5CX_restore_state(const H5CX_state_t *api_state)
     assert(head && *head);
     assert(api_state);
 
+    H5CX_VLOCK_ACQUIRE_W(&(*head)->ctx);
+
     /* Restore the DCPL info */
     (*head)->ctx.dcpl_id = api_state->dcpl_id;
     (*head)->ctx.dcpl    = NULL;
@@ -1054,6 +1088,8 @@ H5CX_restore_state(const H5CX_state_t *api_state)
     /* Restore parallel I/O settings */
     (*head)->ctx.coll_metadata_read = api_state->coll_metadata_read;
 #endif /* H5_HAVE_PARALLEL */
+
+    H5CX_VLOCK_RELEASE_W(&(*head)->ctx);
 
     FUNC_LEAVE_NOAPI(SUCCEED)
 } /* end H5CX_restore_state() */
@@ -1143,8 +1179,12 @@ H5CX_is_def_dxpl(void)
     head = H5CX_get_my_context(); /* Get the pointer to the head of the API context, for this thread */
     assert(head && *head);
 
+    H5CX_VLOCK_ACQUIRE_R(&(*head)->ctx);
+
     /* Set return value */
     is_def_dxpl = ((*head)->ctx.dxpl_id == H5P_DATASET_XFER_DEFAULT);
+
+    H5CX_VLOCK_RELEASE_R(&(*head)->ctx);
 
     FUNC_LEAVE_NOAPI(is_def_dxpl)
 } /* end H5CX_is_def_dxpl() */
@@ -1169,8 +1209,12 @@ H5CX_set_dxpl(hid_t dxpl_id)
     head = H5CX_get_my_context(); /* Get the pointer to the head of the API context, for this thread */
     assert(head && *head);
 
+    H5CX_VLOCK_ACQUIRE_W(&(*head)->ctx);
+
     /* Set the API context's DXPL to a new value */
     (*head)->ctx.dxpl_id = dxpl_id;
+
+    H5CX_VLOCK_RELEASE_W(&(*head)->ctx);
 
     FUNC_LEAVE_NOAPI_VOID
 } /* end H5CX_set_dxpl() */
@@ -1195,8 +1239,12 @@ H5CX_set_dcpl(hid_t dcpl_id)
     head = H5CX_get_my_context(); /* Get the pointer to the head of the API context, for this thread */
     assert(head && *head);
 
+    H5CX_VLOCK_ACQUIRE_W(&(*head)->ctx);
+
     /* Set the API context's DCPL to a new value */
     (*head)->ctx.dcpl_id = dcpl_id;
+
+    H5CX_VLOCK_RELEASE_W(&(*head)->ctx);
 
     FUNC_LEAVE_NOAPI_VOID
 } /* end H5CX_set_dcpl() */
@@ -1223,6 +1271,8 @@ H5CX_set_libver_bounds(H5F_t *f)
     head = H5CX_get_my_context(); /* Get the pointer to the head of the API context, for this thread */
     assert(head && *head);
 
+    H5CX_VLOCK_ACQUIRE_W(&(*head)->ctx);
+
     /* Set the API context value */
     (*head)->ctx.low_bound  = (f == NULL) ? H5F_LIBVER_LATEST : H5F_LOW_BOUND(f);
     (*head)->ctx.high_bound = (f == NULL) ? H5F_LIBVER_LATEST : H5F_HIGH_BOUND(f);
@@ -1230,6 +1280,8 @@ H5CX_set_libver_bounds(H5F_t *f)
     /* Mark the values as valid */
     (*head)->ctx.low_bound_valid  = TRUE;
     (*head)->ctx.high_bound_valid = TRUE;
+
+    H5CX_VLOCK_RELEASE_W(&(*head)->ctx);
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5CX_set_libver_bounds() */
@@ -1254,8 +1306,12 @@ H5CX_set_lcpl(hid_t lcpl_id)
     head = H5CX_get_my_context(); /* Get the pointer to the head of the API context, for this thread */
     assert(head && *head);
 
+    H5CX_VLOCK_ACQUIRE_W(&(*head)->ctx);
+
     /* Set the API context's LCPL to a new value */
     (*head)->ctx.lcpl_id = lcpl_id;
+
+    H5CX_VLOCK_RELEASE_W(&(*head)->ctx);
 
     FUNC_LEAVE_NOAPI_VOID
 } /* end H5CX_set_lcpl() */
@@ -1280,8 +1336,12 @@ H5CX_set_lapl(hid_t lapl_id)
     head = H5CX_get_my_context(); /* Get the pointer to the head of the API context, for this thread */
     assert(head && *head);
 
+    H5CX_VLOCK_ACQUIRE_W(&(*head)->ctx);
+
     /* Set the API context's LAPL to a new value */
     (*head)->ctx.lapl_id = lapl_id;
+
+    H5CX_VLOCK_RELEASE_W(&(*head)->ctx);
 
     FUNC_LEAVE_NOAPI_VOID
 } /* end H5CX_set_lapl() */
@@ -1319,6 +1379,8 @@ H5CX_set_apl(hid_t *acspl_id, const H5P_libclass_t *libclass,
     assert(libclass);
     head = H5CX_get_my_context(); /* Get the pointer to the head of the API context, for this thread */
     assert(head && *head);
+
+    H5CX_VLOCK_ACQUIRE_W(&(*head)->ctx);
 
     /* Set access plist to the default property list of the appropriate class if it's the generic default */
     if (H5P_DEFAULT == *acspl_id)
@@ -1404,6 +1466,7 @@ H5CX_set_apl(hid_t *acspl_id, const H5P_libclass_t *libclass,
 #endif    /* H5_HAVE_PARALLEL */
 
 done:
+    H5CX_VLOCK_RELEASE_W(&(*head)->ctx);
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5CX_set_apl() */
 
@@ -1436,6 +1499,8 @@ H5CX_set_loc(hid_t
     head = H5CX_get_my_context(); /* Get the pointer to the head of the API context, for this thread */
     assert(head && *head);
 
+    H5CX_VLOCK_ACQUIRE_W(&(*head)->ctx);
+
     /* Set collective metadata read flag */
     (*head)->ctx.coll_metadata_read = TRUE;
 
@@ -1456,6 +1521,7 @@ H5CX_set_loc(hid_t
     } /* end if */
 
 done:
+    H5CX_VLOCK_RELEASE_W(&(*head)->ctx);
     FUNC_LEAVE_NOAPI(ret_value)
 #else  /* H5_HAVE_PARALLEL */
     FUNC_ENTER_NOAPI_NOINIT_NOERR
@@ -1485,11 +1551,15 @@ H5CX_set_vol_wrap_ctx(void *vol_wrap_ctx)
     head = H5CX_get_my_context(); /* Get the pointer to the head of the API context, for this thread */
     assert(head && *head);
 
+    H5CX_VLOCK_ACQUIRE_W(&(*head)->ctx);
+
     /* Set the API context value */
     (*head)->ctx.vol_wrap_ctx = vol_wrap_ctx;
 
     /* Mark the value as valid */
     (*head)->ctx.vol_wrap_ctx_valid = TRUE;
+
+    H5CX_VLOCK_RELEASE_W(&(*head)->ctx);
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5CX_set_vol_wrap_ctx() */
@@ -1515,11 +1585,15 @@ H5CX_set_vol_connector_prop(const H5VL_connector_prop_t *vol_connector_prop)
     head = H5CX_get_my_context(); /* Get the pointer to the head of the API context, for this thread */
     assert(head && *head);
 
+    H5CX_VLOCK_ACQUIRE_W(&(*head)->ctx);
+
     /* Set the API context value */
     H5MM_memcpy(&(*head)->ctx.vol_connector_prop, vol_connector_prop, sizeof(H5VL_connector_prop_t));
 
     /* Mark the value as valid */
     (*head)->ctx.vol_connector_prop_valid = TRUE;
+
+    H5CX_VLOCK_RELEASE_W(&(*head)->ctx);
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5CX_set_vol_connector_prop() */
@@ -1545,8 +1619,12 @@ H5CX_get_dxpl(void)
     head = H5CX_get_my_context(); /* Get the pointer to the head of the API context, for this thread */
     assert(head && *head);
 
+    H5CX_VLOCK_ACQUIRE_R(&(*head)->ctx);
+
     /* Set return value */
     dxpl_id = (*head)->ctx.dxpl_id;
+
+    H5CX_VLOCK_RELEASE_R(&(*head)->ctx);
 
     FUNC_LEAVE_NOAPI(dxpl_id)
 } /* end H5CX_get_dxpl() */
@@ -1572,8 +1650,12 @@ H5CX_get_lapl(void)
     head = H5CX_get_my_context(); /* Get the pointer to the head of the API context, for this thread */
     assert(head && *head);
 
+    H5CX_VLOCK_ACQUIRE_R(&(*head)->ctx);
+
     /* Set return value */
     lapl_id = (*head)->ctx.lapl_id;
+
+    H5CX_VLOCK_RELEASE_R(&(*head)->ctx);
 
     FUNC_LEAVE_NOAPI(lapl_id)
 } /* end H5CX_get_lapl() */
@@ -1608,12 +1690,16 @@ H5CX_get_vol_wrap_ctx(void **vol_wrap_ctx)
     if (!(*head))
         HGOTO_ERROR(H5E_CONTEXT, H5E_CANTGET, FAIL, "unable to get the current API context");
 
+    H5CX_VLOCK_ACQUIRE_R(&(*head)->ctx);
+
     /* Check for value that was set */
     if ((*head)->ctx.vol_wrap_ctx_valid)
         /* Get the value */
         *vol_wrap_ctx = (*head)->ctx.vol_wrap_ctx;
     else
         *vol_wrap_ctx = NULL;
+
+    H5CX_VLOCK_RELEASE_R(&(*head)->ctx);
 
 done:
     FUNC_LEAVE_NOAPI(ret_value)
@@ -1641,12 +1727,16 @@ H5CX_get_vol_connector_prop(H5VL_connector_prop_t *vol_connector_prop)
     head = H5CX_get_my_context(); /* Get the pointer to the head of the API context, for this thread */
     assert(head && *head);
 
+    H5CX_VLOCK_ACQUIRE_R(&(*head)->ctx);
+
     /* Check for value that was set */
     if ((*head)->ctx.vol_connector_prop_valid)
         /* Get the value */
         H5MM_memcpy(vol_connector_prop, &(*head)->ctx.vol_connector_prop, sizeof(H5VL_connector_prop_t));
     else
         memset(vol_connector_prop, 0, sizeof(H5VL_connector_prop_t));
+
+    H5CX_VLOCK_RELEASE_R(&(*head)->ctx);
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5CX_get_vol_connector_prop() */
@@ -1672,8 +1762,12 @@ H5CX_get_tag(void)
     head = H5CX_get_my_context(); /* Get the pointer to the head of the API context, for this thread */
     assert(head && *head);
 
+    H5CX_VLOCK_ACQUIRE_R(&(*head)->ctx);
+
     /* Set return value */
     tag = (*head)->ctx.tag;
+
+    H5CX_VLOCK_RELEASE_R(&(*head)->ctx);
 
     FUNC_LEAVE_NOAPI(tag)
 } /* end H5CX_get_tag() */
@@ -1699,8 +1793,12 @@ H5CX_get_ring(void)
     head = H5CX_get_my_context(); /* Get the pointer to the head of the API context, for this thread */
     assert(head && *head);
 
+    H5CX_VLOCK_ACQUIRE_R(&(*head)->ctx);
+
     /* Set return value */
     ring = (*head)->ctx.ring;
+
+    H5CX_VLOCK_RELEASE_R(&(*head)->ctx);
 
     FUNC_LEAVE_NOAPI(ring)
 } /* end H5CX_get_ring() */
@@ -1728,8 +1826,12 @@ H5CX_get_coll_metadata_read(void)
     head = H5CX_get_my_context(); /* Get the pointer to the head of the API context, for this thread */
     assert(head && *head);
 
+    H5CX_VLOCK_ACQUIRE_R(&(*head)->ctx);
+
     /* Set return value */
     coll_md_read = (*head)->ctx.coll_metadata_read;
+
+    H5CX_VLOCK_RELEASE_R(&(*head)->ctx);
 
     FUNC_LEAVE_NOAPI(coll_md_read)
 } /* end H5CX_get_coll_metadata_read() */
@@ -1759,9 +1861,13 @@ H5CX_get_mpi_coll_datatypes(MPI_Datatype *btype, MPI_Datatype *ftype)
     head = H5CX_get_my_context(); /* Get the pointer to the head of the API context, for this thread */
     assert(head && *head);
 
+    H5CX_VLOCK_ACQUIRE_R(&(*head)->ctx);
+
     /* Set the API context values */
     *btype = (*head)->ctx.btype;
     *ftype = (*head)->ctx.ftype;
+
+    H5CX_VLOCK_RELEASE_R(&(*head)->ctx);
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5CX_get_mpi_coll_datatypes() */
@@ -1787,8 +1893,12 @@ H5CX_get_mpi_file_flushing(void)
     head = H5CX_get_my_context(); /* Get the pointer to the head of the API context, for this thread */
     assert(head && *head);
 
+    H5CX_VLOCK_ACQUIRE_R(&(*head)->ctx);
+
     /* Set return value */
     flushing = (*head)->ctx.mpi_file_flushing;
+
+    H5CX_VLOCK_RELEASE_R(&(*head)->ctx);
 
     FUNC_LEAVE_NOAPI(flushing)
 } /* end H5CX_get_mpi_file_flushing() */
@@ -1815,8 +1925,12 @@ H5CX_get_mpio_rank0_bcast(void)
     head = H5CX_get_my_context(); /* Get the pointer to the head of the API context, for this thread */
     assert(head && *head);
 
+    H5CX_VLOCK_ACQUIRE_R(&(*head)->ctx);
+
     /* Set return value */
     do_rank0_bcast = (*head)->ctx.rank0_bcast;
+
+    H5CX_VLOCK_RELEASE_R(&(*head)->ctx);
 
     FUNC_LEAVE_NOAPI(do_rank0_bcast)
 } /* end H5CX_get_mpio_rank0_bcast() */
@@ -1845,6 +1959,8 @@ H5CX_get_btree_split_ratios(double split_ratio[3])
     assert(head && *head);
     assert(H5P_DEFAULT != (*head)->ctx.dxpl_id);
 
+    H5CX_VLOCK_ACQUIRE_R(&(*head)->ctx);
+
     H5CX_RETRIEVE_PROP_VALID(dxpl, H5P_DATASET_XFER_DEFAULT, H5D_XFER_BTREE_SPLIT_RATIO_NAME,
                              btree_split_ratio)
 
@@ -1852,6 +1968,8 @@ H5CX_get_btree_split_ratios(double split_ratio[3])
     H5MM_memcpy(split_ratio, &(*head)->ctx.btree_split_ratio, sizeof((*head)->ctx.btree_split_ratio));
 
 done:
+    H5CX_VLOCK_RELEASE_R(&(*head)->ctx);
+
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5CX_get_btree_split_ratios() */
 
@@ -1878,12 +1996,16 @@ H5CX_get_max_temp_buf(size_t *max_temp_buf)
     assert(head && *head);
     assert(H5P_DEFAULT != (*head)->ctx.dxpl_id);
 
+    H5CX_VLOCK_ACQUIRE_R(&(*head)->ctx);
+
     H5CX_RETRIEVE_PROP_VALID(dxpl, H5P_DATASET_XFER_DEFAULT, H5D_XFER_MAX_TEMP_BUF_NAME, max_temp_buf)
 
     /* Get the value */
     *max_temp_buf = (*head)->ctx.max_temp_buf;
 
 done:
+    H5CX_VLOCK_RELEASE_R(&(*head)->ctx);
+
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5CX_get_max_temp_buf() */
 
@@ -1910,12 +2032,16 @@ H5CX_get_tconv_buf(void **tconv_buf)
     assert(head && *head);
     assert(H5P_DEFAULT != (*head)->ctx.dxpl_id);
 
+    H5CX_VLOCK_ACQUIRE_R(&(*head)->ctx);
+
     H5CX_RETRIEVE_PROP_VALID(dxpl, H5P_DATASET_XFER_DEFAULT, H5D_XFER_TCONV_BUF_NAME, tconv_buf)
 
     /* Get the value */
     *tconv_buf = (*head)->ctx.tconv_buf;
 
 done:
+    H5CX_VLOCK_RELEASE_R(&(*head)->ctx);
+
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5CX_get_tconv_buf() */
 
@@ -1942,12 +2068,16 @@ H5CX_get_bkgr_buf(void **bkgr_buf)
     assert(head && *head);
     assert(H5P_DEFAULT != (*head)->ctx.dxpl_id);
 
+    H5CX_VLOCK_ACQUIRE_R(&(*head)->ctx);
+
     H5CX_RETRIEVE_PROP_VALID(dxpl, H5P_DATASET_XFER_DEFAULT, H5D_XFER_BKGR_BUF_NAME, bkgr_buf)
 
     /* Get the value */
     *bkgr_buf = (*head)->ctx.bkgr_buf;
 
 done:
+    H5CX_VLOCK_RELEASE_R(&(*head)->ctx);
+
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5CX_get_bkgr_buf() */
 
@@ -1974,12 +2104,16 @@ H5CX_get_bkgr_buf_type(H5T_bkg_t *bkgr_buf_type)
     assert(head && *head);
     assert(H5P_DEFAULT != (*head)->ctx.dxpl_id);
 
+    H5CX_VLOCK_ACQUIRE_R(&(*head)->ctx);
+
     H5CX_RETRIEVE_PROP_VALID(dxpl, H5P_DATASET_XFER_DEFAULT, H5D_XFER_BKGR_BUF_TYPE_NAME, bkgr_buf_type)
 
     /* Get the value */
     *bkgr_buf_type = (*head)->ctx.bkgr_buf_type;
 
 done:
+    H5CX_VLOCK_RELEASE_R(&(*head)->ctx);
+
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5CX_get_bkgr_buf_type() */
 
@@ -2006,12 +2140,16 @@ H5CX_get_vec_size(size_t *vec_size)
     assert(head && *head);
     assert(H5P_DEFAULT != (*head)->ctx.dxpl_id);
 
+    H5CX_VLOCK_ACQUIRE_R(&(*head)->ctx);
+
     H5CX_RETRIEVE_PROP_VALID(dxpl, H5P_DATASET_XFER_DEFAULT, H5D_XFER_HYPER_VECTOR_SIZE_NAME, vec_size)
 
     /* Get the value */
     *vec_size = (*head)->ctx.vec_size;
 
 done:
+    H5CX_VLOCK_RELEASE_R(&(*head)->ctx);
+
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5CX_get_vec_size() */
 
@@ -2040,12 +2178,16 @@ H5CX_get_io_xfer_mode(H5FD_mpio_xfer_t *io_xfer_mode)
     assert(head && *head);
     assert(H5P_DEFAULT != (*head)->ctx.dxpl_id);
 
+    H5CX_VLOCK_ACQUIRE_R(&(*head)->ctx);
+
     H5CX_RETRIEVE_PROP_VALID(dxpl, H5P_DATASET_XFER_DEFAULT, H5D_XFER_IO_XFER_MODE_NAME, io_xfer_mode)
 
     /* Get the value */
     *io_xfer_mode = (*head)->ctx.io_xfer_mode;
 
 done:
+    H5CX_VLOCK_RELEASE_R(&(*head)->ctx);
+
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5CX_get_io_xfer_mode() */
 
@@ -2072,12 +2214,16 @@ H5CX_get_mpio_coll_opt(H5FD_mpio_collective_opt_t *mpio_coll_opt)
     assert(head && *head);
     assert(H5P_DEFAULT != (*head)->ctx.dxpl_id);
 
+    H5CX_VLOCK_ACQUIRE_R(&(*head)->ctx);
+
     H5CX_RETRIEVE_PROP_VALID(dxpl, H5P_DATASET_XFER_DEFAULT, H5D_XFER_MPIO_COLLECTIVE_OPT_NAME, mpio_coll_opt)
 
     /* Get the value */
     *mpio_coll_opt = (*head)->ctx.mpio_coll_opt;
 
 done:
+    H5CX_VLOCK_RELEASE_R(&(*head)->ctx);
+
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5CX_get_mpio_coll_opt() */
 
@@ -2104,6 +2250,8 @@ H5CX_get_mpio_local_no_coll_cause(uint32_t *mpio_local_no_coll_cause)
     assert(head && *head);
     assert(H5P_DEFAULT != (*head)->ctx.dxpl_id);
 
+    H5CX_VLOCK_ACQUIRE_R(&(*head)->ctx);
+
     H5CX_RETRIEVE_PROP_VALID_SET(dxpl, H5P_DATASET_XFER_DEFAULT, H5D_MPIO_LOCAL_NO_COLLECTIVE_CAUSE_NAME,
                                  mpio_local_no_coll_cause)
 
@@ -2111,6 +2259,8 @@ H5CX_get_mpio_local_no_coll_cause(uint32_t *mpio_local_no_coll_cause)
     *mpio_local_no_coll_cause = (*head)->ctx.mpio_local_no_coll_cause;
 
 done:
+    H5CX_VLOCK_RELEASE_R(&(*head)->ctx);
+
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5CX_get_mpio_local_no_coll_cause() */
 
@@ -2137,6 +2287,8 @@ H5CX_get_mpio_global_no_coll_cause(uint32_t *mpio_global_no_coll_cause)
     assert(head && *head);
     assert(H5P_DEFAULT != (*head)->ctx.dxpl_id);
 
+    H5CX_VLOCK_ACQUIRE_R(&(*head)->ctx);
+
     H5CX_RETRIEVE_PROP_VALID_SET(dxpl, H5P_DATASET_XFER_DEFAULT, H5D_MPIO_GLOBAL_NO_COLLECTIVE_CAUSE_NAME,
                                  mpio_global_no_coll_cause)
 
@@ -2144,6 +2296,8 @@ H5CX_get_mpio_global_no_coll_cause(uint32_t *mpio_global_no_coll_cause)
     *mpio_global_no_coll_cause = (*head)->ctx.mpio_global_no_coll_cause;
 
 done:
+    H5CX_VLOCK_RELEASE_R(&(*head)->ctx);
+
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5CX_get_mpio_global_no_coll_cause() */
 
@@ -2170,6 +2324,8 @@ H5CX_get_mpio_chunk_opt_mode(H5FD_mpio_chunk_opt_t *mpio_chunk_opt_mode)
     assert(head && *head);
     assert(H5P_DEFAULT != (*head)->ctx.dxpl_id);
 
+    H5CX_VLOCK_ACQUIRE_R(&(*head)->ctx);
+
     H5CX_RETRIEVE_PROP_VALID(dxpl, H5P_DATASET_XFER_DEFAULT, H5D_XFER_MPIO_CHUNK_OPT_HARD_NAME,
                              mpio_chunk_opt_mode)
 
@@ -2177,6 +2333,8 @@ H5CX_get_mpio_chunk_opt_mode(H5FD_mpio_chunk_opt_t *mpio_chunk_opt_mode)
     *mpio_chunk_opt_mode = (*head)->ctx.mpio_chunk_opt_mode;
 
 done:
+    H5CX_VLOCK_RELEASE_R(&(*head)->ctx);
+
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5CX_get_mpio_chunk_opt_mode() */
 
@@ -2203,6 +2361,8 @@ H5CX_get_mpio_chunk_opt_num(unsigned *mpio_chunk_opt_num)
     assert(head && *head);
     assert(H5P_DEFAULT != (*head)->ctx.dxpl_id);
 
+    H5CX_VLOCK_ACQUIRE_R(&(*head)->ctx);
+
     H5CX_RETRIEVE_PROP_VALID(dxpl, H5P_DATASET_XFER_DEFAULT, H5D_XFER_MPIO_CHUNK_OPT_NUM_NAME,
                              mpio_chunk_opt_num)
 
@@ -2210,6 +2370,8 @@ H5CX_get_mpio_chunk_opt_num(unsigned *mpio_chunk_opt_num)
     *mpio_chunk_opt_num = (*head)->ctx.mpio_chunk_opt_num;
 
 done:
+    H5CX_VLOCK_RELEASE_R(&(*head)->ctx);
+
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5CX_get_mpio_chunk_opt_num() */
 
@@ -2236,6 +2398,8 @@ H5CX_get_mpio_chunk_opt_ratio(unsigned *mpio_chunk_opt_ratio)
     assert(head && *head);
     assert(H5P_DEFAULT != (*head)->ctx.dxpl_id);
 
+    H5CX_VLOCK_ACQUIRE_R(&(*head)->ctx);
+
     H5CX_RETRIEVE_PROP_VALID(dxpl, H5P_DATASET_XFER_DEFAULT, H5D_XFER_MPIO_CHUNK_OPT_RATIO_NAME,
                              mpio_chunk_opt_ratio)
 
@@ -2243,6 +2407,8 @@ H5CX_get_mpio_chunk_opt_ratio(unsigned *mpio_chunk_opt_ratio)
     *mpio_chunk_opt_ratio = (*head)->ctx.mpio_chunk_opt_ratio;
 
 done:
+    H5CX_VLOCK_RELEASE_R(&(*head)->ctx);
+
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5CX_get_mpio_chunk_opt_ratio() */
 #endif /* H5_HAVE_PARALLEL */
@@ -2270,12 +2436,16 @@ H5CX_get_err_detect(H5Z_EDC_t *err_detect)
     assert(head && *head);
     assert(H5P_DEFAULT != (*head)->ctx.dxpl_id);
 
+    H5CX_VLOCK_ACQUIRE_R(&(*head)->ctx);
+
     H5CX_RETRIEVE_PROP_VALID(dxpl, H5P_DATASET_XFER_DEFAULT, H5D_XFER_EDC_NAME, err_detect)
 
     /* Get the value */
     *err_detect = (*head)->ctx.err_detect;
 
 done:
+    H5CX_VLOCK_RELEASE_R(&(*head)->ctx);
+
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5CX_get_err_detect() */
 
@@ -2302,12 +2472,16 @@ H5CX_get_filter_cb(H5Z_cb_t *filter_cb)
     assert(head && *head);
     assert(H5P_DEFAULT != (*head)->ctx.dxpl_id);
 
+    H5CX_VLOCK_ACQUIRE_R(&(*head)->ctx);
+
     H5CX_RETRIEVE_PROP_VALID(dxpl, H5P_DATASET_XFER_DEFAULT, H5D_XFER_FILTER_CB_NAME, filter_cb)
 
     /* Get the value */
     *filter_cb = (*head)->ctx.filter_cb;
 
 done:
+    H5CX_VLOCK_RELEASE_R(&(*head)->ctx);
+
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5CX_get_filter_cb() */
 
@@ -2333,6 +2507,8 @@ H5CX_get_data_transform(H5Z_data_xform_t **data_transform)
     head = H5CX_get_my_context(); /* Get the pointer to the head of the API context, for this thread */
     assert(head && *head);
     assert(H5P_DEFAULT != (*head)->ctx.dxpl_id);
+
+    H5CX_VLOCK_ACQUIRE_R(&(*head)->ctx);
 
     /* Check if the value has been retrieved already */
     if (!(*head)->ctx.data_transform_valid) {
@@ -2363,6 +2539,8 @@ H5CX_get_data_transform(H5Z_data_xform_t **data_transform)
     *data_transform = (*head)->ctx.data_transform;
 
 done:
+    H5CX_VLOCK_RELEASE_R(&(*head)->ctx);
+
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5CX_get_data_transform() */
 
@@ -2388,6 +2566,8 @@ H5CX_get_vlen_alloc_info(H5T_vlen_alloc_info_t *vl_alloc_info)
     head = H5CX_get_my_context(); /* Get the pointer to the head of the API context, for this thread */
     assert(head && *head);
     assert(H5P_DEFAULT != (*head)->ctx.dxpl_id);
+
+    H5CX_VLOCK_ACQUIRE_R(&(*head)->ctx);
 
     /* Check if the value has been retrieved already */
     if (!(*head)->ctx.vl_alloc_info_valid) {
@@ -2425,6 +2605,8 @@ H5CX_get_vlen_alloc_info(H5T_vlen_alloc_info_t *vl_alloc_info)
     *vl_alloc_info = (*head)->ctx.vl_alloc_info;
 
 done:
+    H5CX_VLOCK_RELEASE_R(&(*head)->ctx);
+
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5CX_get_vlen_alloc_info() */
 
@@ -2451,12 +2633,16 @@ H5CX_get_dt_conv_cb(H5T_conv_cb_t *dt_conv_cb)
     assert(head && *head);
     assert(H5P_DEFAULT != (*head)->ctx.dxpl_id);
 
+    H5CX_VLOCK_ACQUIRE_R(&(*head)->ctx);
+
     H5CX_RETRIEVE_PROP_VALID(dxpl, H5P_DATASET_XFER_DEFAULT, H5D_XFER_CONV_CB_NAME, dt_conv_cb)
 
     /* Get the value */
     *dt_conv_cb = (*head)->ctx.dt_conv_cb;
 
 done:
+    H5CX_VLOCK_RELEASE_R(&(*head)->ctx);
+
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5CX_get_dt_conv_cb() */
 
@@ -2483,6 +2669,8 @@ H5CX_get_selection_io_mode(H5D_selection_io_mode_t *selection_io_mode)
     assert(head && *head);
     assert(H5P_DEFAULT != (*head)->ctx.dxpl_id);
 
+    H5CX_VLOCK_ACQUIRE_R(&(*head)->ctx);
+
     H5CX_RETRIEVE_PROP_VALID(dxpl, H5P_DATASET_XFER_DEFAULT, H5D_XFER_SELECTION_IO_MODE_NAME,
                              selection_io_mode)
 
@@ -2490,6 +2678,8 @@ H5CX_get_selection_io_mode(H5D_selection_io_mode_t *selection_io_mode)
     *selection_io_mode = (*head)->ctx.selection_io_mode;
 
 done:
+    H5CX_VLOCK_RELEASE_R(&(*head)->ctx);
+
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5CX_get_selection_io_mode() */
 
@@ -2517,6 +2707,8 @@ H5CX_get_no_selection_io_cause(uint32_t *no_selection_io_cause)
     assert(head && *head);
     assert(H5P_DEFAULT != (*head)->ctx.dxpl_id);
 
+    H5CX_VLOCK_ACQUIRE_R(&(*head)->ctx);
+
     H5CX_RETRIEVE_PROP_VALID_SET(dxpl, H5P_DATASET_XFER_DEFAULT, H5D_XFER_NO_SELECTION_IO_CAUSE_NAME,
                                  no_selection_io_cause)
 
@@ -2524,6 +2716,8 @@ H5CX_get_no_selection_io_cause(uint32_t *no_selection_io_cause)
     *no_selection_io_cause = (*head)->ctx.no_selection_io_cause;
 
 done:
+    H5CX_VLOCK_RELEASE_R(&(*head)->ctx);
+
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5CX_get_no_selection_io_cause() */
 
@@ -2550,12 +2744,16 @@ H5CX_get_modify_write_buf(hbool_t *modify_write_buf)
     assert(head && *head);
     assert(H5P_DEFAULT != (*head)->ctx.dxpl_id);
 
+    H5CX_VLOCK_ACQUIRE_R(&(*head)->ctx);
+
     H5CX_RETRIEVE_PROP_VALID(dxpl, H5P_DATASET_XFER_DEFAULT, H5D_XFER_MODIFY_WRITE_BUF_NAME, modify_write_buf)
 
     /* Get the value */
     *modify_write_buf = (*head)->ctx.modify_write_buf;
 
 done:
+    H5CX_VLOCK_RELEASE_R(&(*head)->ctx);
+
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5CX_get_selection_io_mode() */
 
@@ -2582,12 +2780,16 @@ H5CX_get_encoding(H5T_cset_t *encoding)
     assert(head && *head);
     assert(H5P_DEFAULT != (*head)->ctx.lcpl_id);
 
+    H5CX_VLOCK_ACQUIRE_R(&(*head)->ctx);
+
     H5CX_RETRIEVE_PROP_VALID(lcpl, H5P_LINK_CREATE_DEFAULT, H5P_STRCRT_CHAR_ENCODING_NAME, encoding)
 
     /* Get the value */
     *encoding = (*head)->ctx.encoding;
 
 done:
+    H5CX_VLOCK_RELEASE_R(&(*head)->ctx);
+
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5CX_get_encoding() */
 
@@ -2614,6 +2816,8 @@ H5CX_get_intermediate_group(unsigned *crt_intermed_group)
     assert(head && *head);
     assert(H5P_DEFAULT != (*head)->ctx.lcpl_id);
 
+    H5CX_VLOCK_ACQUIRE_R(&(*head)->ctx);
+
     H5CX_RETRIEVE_PROP_VALID(lcpl, H5P_LINK_CREATE_DEFAULT, H5L_CRT_INTERMEDIATE_GROUP_NAME,
                              intermediate_group)
 
@@ -2621,6 +2825,8 @@ H5CX_get_intermediate_group(unsigned *crt_intermed_group)
     *crt_intermed_group = (*head)->ctx.intermediate_group;
 
 done:
+    H5CX_VLOCK_RELEASE_R(&(*head)->ctx);
+
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5CX_get_create_intermediate_group() */
 
@@ -2647,12 +2853,16 @@ H5CX_get_nlinks(size_t *nlinks)
     assert(head && *head);
     assert(H5P_DEFAULT != (*head)->ctx.dxpl_id);
 
+    H5CX_VLOCK_ACQUIRE_R(&(*head)->ctx);
+
     H5CX_RETRIEVE_PROP_VALID(lapl, H5P_LINK_ACCESS_DEFAULT, H5L_ACS_NLINKS_NAME, nlinks)
 
     /* Get the value */
     *nlinks = (*head)->ctx.nlinks;
 
 done:
+    H5CX_VLOCK_RELEASE_R(&(*head)->ctx);
+
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5CX_get_nlinks() */
 
@@ -2680,6 +2890,8 @@ H5CX_get_libver_bounds(H5F_libver_t *low_bound, H5F_libver_t *high_bound)
     assert(head && *head);
     assert(H5P_DEFAULT != (*head)->ctx.fapl_id);
 
+    H5CX_VLOCK_ACQUIRE_R(&(*head)->ctx);
+
     H5CX_RETRIEVE_PROP_VALID(fapl, H5P_FILE_ACCESS_DEFAULT, H5F_ACS_LIBVER_LOW_BOUND_NAME, low_bound)
     H5CX_RETRIEVE_PROP_VALID(fapl, H5P_FILE_ACCESS_DEFAULT, H5F_ACS_LIBVER_HIGH_BOUND_NAME, high_bound)
 
@@ -2688,6 +2900,8 @@ H5CX_get_libver_bounds(H5F_libver_t *low_bound, H5F_libver_t *high_bound)
     *high_bound = (*head)->ctx.high_bound;
 
 done:
+    H5CX_VLOCK_RELEASE_R(&(*head)->ctx);
+
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5CX_get_libver_bounds() */
 
@@ -2715,6 +2929,8 @@ H5CX_get_dset_min_ohdr_flag(hbool_t *dset_min_ohdr_flag)
     assert(head && *head);
     assert(H5P_DEFAULT != (*head)->ctx.dcpl_id);
 
+    H5CX_VLOCK_ACQUIRE_R(&(*head)->ctx);
+
     H5CX_RETRIEVE_PROP_VALID(dcpl, H5P_DATASET_CREATE_DEFAULT, H5D_CRT_MIN_DSET_HDR_SIZE_NAME,
                              do_min_dset_ohdr)
 
@@ -2722,6 +2938,8 @@ H5CX_get_dset_min_ohdr_flag(hbool_t *dset_min_ohdr_flag)
     *dset_min_ohdr_flag = (*head)->ctx.do_min_dset_ohdr;
 
 done:
+    H5CX_VLOCK_RELEASE_R(&(*head)->ctx);
+
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5CX_get_dset_min_ohdr_flag() */
 
@@ -2747,6 +2965,8 @@ H5CX_get_ext_file_prefix(const char **extfile_prefix)
     head = H5CX_get_my_context(); /* Get the pointer to the head of the API context, for this thread */
     assert(head && *head);
     assert(H5P_DEFAULT != (*head)->ctx.dapl_id);
+
+    H5CX_VLOCK_ACQUIRE_R(&(*head)->ctx);
 
     /* Check if the value has been retrieved already */
     if (!(*head)->ctx.extfile_prefix_valid) {
@@ -2777,6 +2997,8 @@ H5CX_get_ext_file_prefix(const char **extfile_prefix)
     *extfile_prefix = (*head)->ctx.extfile_prefix;
 
 done:
+    H5CX_VLOCK_RELEASE_R(&(*head)->ctx);
+
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5CX_get_ext_file_prefix() */
 
@@ -2802,6 +3024,8 @@ H5CX_get_vds_prefix(const char **vds_prefix)
     head = H5CX_get_my_context(); /* Get the pointer to the head of the API context, for this thread */
     assert(head && *head);
     assert(H5P_DEFAULT != (*head)->ctx.dapl_id);
+
+    H5CX_VLOCK_ACQUIRE_R(&(*head)->ctx);
 
     /* Check if the value has been retrieved already */
     if (!(*head)->ctx.vds_prefix_valid) {
@@ -2832,6 +3056,8 @@ H5CX_get_vds_prefix(const char **vds_prefix)
     *vds_prefix = (*head)->ctx.vds_prefix;
 
 done:
+    H5CX_VLOCK_RELEASE_R(&(*head)->ctx);
+
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5CX_get_vds_prefix() */
 
@@ -2855,7 +3081,11 @@ H5CX_set_tag(haddr_t tag)
     head = H5CX_get_my_context(); /* Get the pointer to the head of the API context, for this thread */
     assert(head && *head);
 
+    H5CX_VLOCK_ACQUIRE_W(&(*head)->ctx);
+
     (*head)->ctx.tag = tag;
+
+    H5CX_VLOCK_RELEASE_W(&(*head)->ctx);
 
     FUNC_LEAVE_NOAPI_VOID
 } /* end H5CX_set_tag() */
@@ -2880,7 +3110,11 @@ H5CX_set_ring(H5AC_ring_t ring)
     head = H5CX_get_my_context(); /* Get the pointer to the head of the API context, for this thread */
     assert(head && *head);
 
+    H5CX_VLOCK_ACQUIRE_W(&(*head)->ctx);
+
     (*head)->ctx.ring = ring;
+
+    H5CX_VLOCK_RELEASE_W(&(*head)->ctx);
 
     FUNC_LEAVE_NOAPI_VOID
 } /* end H5CX_set_ring() */
@@ -2907,7 +3141,11 @@ H5CX_set_coll_metadata_read(hbool_t cmdr)
     head = H5CX_get_my_context(); /* Get the pointer to the head of the API context, for this thread */
     assert(head && *head);
 
+    H5CX_VLOCK_ACQUIRE_W(&(*head)->ctx);
+
     (*head)->ctx.coll_metadata_read = cmdr;
+
+    H5CX_VLOCK_RELEASE_W(&(*head)->ctx);
 
     FUNC_LEAVE_NOAPI_VOID
 } /* end H5CX_set_coll_metadata_read() */
@@ -2936,9 +3174,13 @@ H5CX_set_mpi_coll_datatypes(MPI_Datatype btype, MPI_Datatype ftype)
     head = H5CX_get_my_context(); /* Get the pointer to the head of the API context, for this thread */
     assert(head && *head);
 
+    H5CX_VLOCK_ACQUIRE_W(&(*head)->ctx);
+
     /* Set the API context values */
     (*head)->ctx.btype = btype;
     (*head)->ctx.ftype = ftype;
+
+    H5CX_VLOCK_RELEASE_W(&(*head)->ctx);
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5CX_set_mpi_coll_datatypes() */
@@ -2964,11 +3206,15 @@ H5CX_set_io_xfer_mode(H5FD_mpio_xfer_t io_xfer_mode)
     head = H5CX_get_my_context(); /* Get the pointer to the head of the API context, for this thread */
     assert(head && *head);
 
+    H5CX_VLOCK_ACQUIRE_W(&(*head)->ctx);
+
     /* Set the API context value */
     (*head)->ctx.io_xfer_mode = io_xfer_mode;
 
     /* Mark the value as valid */
     (*head)->ctx.io_xfer_mode_valid = TRUE;
+
+    H5CX_VLOCK_RELEASE_W(&(*head)->ctx);
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5CX_set_io_xfer_mode() */
@@ -2994,11 +3240,15 @@ H5CX_set_mpio_coll_opt(H5FD_mpio_collective_opt_t mpio_coll_opt)
     head = H5CX_get_my_context(); /* Get the pointer to the head of the API context, for this thread */
     assert(head && *head);
 
+    H5CX_VLOCK_ACQUIRE_W(&(*head)->ctx);
+
     /* Set the API context value */
     (*head)->ctx.mpio_coll_opt = mpio_coll_opt;
 
     /* Mark the value as valid */
     (*head)->ctx.mpio_coll_opt_valid = TRUE;
+
+    H5CX_VLOCK_RELEASE_W(&(*head)->ctx);
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5CX_set_mpio_coll_opt() */
@@ -3023,7 +3273,11 @@ H5CX_set_mpi_file_flushing(hbool_t flushing)
     head = H5CX_get_my_context(); /* Get the pointer to the head of the API context, for this thread */
     assert(head && *head);
 
+    H5CX_VLOCK_ACQUIRE_W(&(*head)->ctx);
+
     (*head)->ctx.mpi_file_flushing = flushing;
+
+    H5CX_VLOCK_RELEASE_W(&(*head)->ctx);
 
     FUNC_LEAVE_NOAPI_VOID
 } /* end H5CX_set_mpi_file_flushing() */
@@ -3049,7 +3303,11 @@ H5CX_set_mpio_rank0_bcast(hbool_t rank0_bcast)
     head = H5CX_get_my_context(); /* Get the pointer to the head of the API context, for this thread */
     assert(head && *head);
 
+    H5CX_VLOCK_ACQUIRE_W(&(*head)->ctx);
+
     (*head)->ctx.rank0_bcast = rank0_bcast;
+
+    H5CX_VLOCK_RELEASE_W(&(*head)->ctx);
 
     FUNC_LEAVE_NOAPI_VOID
 } /* end H5CX_set_mpio_rank0_bcast() */
@@ -3076,6 +3334,8 @@ H5CX_set_vlen_alloc_info(H5MM_allocate_t alloc_func, void *alloc_info, H5MM_free
     head = H5CX_get_my_context(); /* Get the pointer to the head of the API context, for this thread */
     assert(head && *head);
 
+    H5CX_VLOCK_ACQUIRE_W(&(*head)->ctx);
+
     /* Set the API context value */
     (*head)->ctx.vl_alloc_info.alloc_func = alloc_func;
     (*head)->ctx.vl_alloc_info.alloc_info = alloc_info;
@@ -3084,6 +3344,8 @@ H5CX_set_vlen_alloc_info(H5MM_allocate_t alloc_func, void *alloc_info, H5MM_free
 
     /* Mark the value as valid */
     (*head)->ctx.vl_alloc_info_valid = TRUE;
+
+    H5CX_VLOCK_RELEASE_W(&(*head)->ctx);
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5CX_set_vlen_alloc_info() */
@@ -3109,11 +3371,15 @@ H5CX_set_nlinks(size_t nlinks)
     head = H5CX_get_my_context(); /* Get the pointer to the head of the API context, for this thread */
     assert(head && *head);
 
+    H5CX_VLOCK_ACQUIRE_W(&(*head)->ctx);
+
     /* Set the API context value */
     (*head)->ctx.nlinks = nlinks;
 
     /* Mark the value as valid */
     (*head)->ctx.nlinks_valid = TRUE;
+
+    H5CX_VLOCK_RELEASE_W(&(*head)->ctx);
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5CX_set_nlinks() */
@@ -3141,9 +3407,13 @@ H5CX_set_mpio_actual_chunk_opt(H5D_mpio_actual_chunk_opt_mode_t mpio_actual_chun
     assert(head && *head);
     assert(!((*head)->ctx.dxpl_id == H5P_DEFAULT || (*head)->ctx.dxpl_id == H5P_DATASET_XFER_DEFAULT));
 
+    H5CX_VLOCK_ACQUIRE_W(&(*head)->ctx);
+
     /* Cache the value for later, marking it to set in DXPL when context popped */
     (*head)->ctx.mpio_actual_chunk_opt     = mpio_actual_chunk_opt;
     (*head)->ctx.mpio_actual_chunk_opt_set = TRUE;
+
+    H5CX_VLOCK_RELEASE_W(&(*head)->ctx);
 
     FUNC_LEAVE_NOAPI_VOID
 } /* end H5CX_set_mpio_actual_chunk_opt() */
@@ -3169,9 +3439,13 @@ H5CX_set_mpio_actual_io_mode(H5D_mpio_actual_io_mode_t mpio_actual_io_mode)
     assert(head && *head);
     assert(!((*head)->ctx.dxpl_id == H5P_DEFAULT || (*head)->ctx.dxpl_id == H5P_DATASET_XFER_DEFAULT));
 
+    H5CX_VLOCK_ACQUIRE_W(&(*head)->ctx);
+
     /* Cache the value for later, marking it to set in DXPL when context popped */
     (*head)->ctx.mpio_actual_io_mode     = mpio_actual_io_mode;
     (*head)->ctx.mpio_actual_io_mode_set = TRUE;
+
+    H5CX_VLOCK_RELEASE_W(&(*head)->ctx);
 
     FUNC_LEAVE_NOAPI_VOID
 } /* end H5CX_set_mpio_actual_chunk_opt() */
@@ -3197,12 +3471,16 @@ H5CX_set_mpio_local_no_coll_cause(uint32_t mpio_local_no_coll_cause)
     assert(head && *head);
     assert((*head)->ctx.dxpl_id != H5P_DEFAULT);
 
+    H5CX_VLOCK_ACQUIRE_W(&(*head)->ctx);
+
     /* If we're using the default DXPL, don't modify it */
     if ((*head)->ctx.dxpl_id != H5P_DATASET_XFER_DEFAULT) {
         /* Cache the value for later, marking it to set in DXPL when context popped */
         (*head)->ctx.mpio_local_no_coll_cause     = mpio_local_no_coll_cause;
         (*head)->ctx.mpio_local_no_coll_cause_set = TRUE;
     } /* end if */
+
+    H5CX_VLOCK_RELEASE_W(&(*head)->ctx);
 
     FUNC_LEAVE_NOAPI_VOID
 } /* end H5CX_set_mpio_local_no_coll_cause() */
@@ -3228,12 +3506,16 @@ H5CX_set_mpio_global_no_coll_cause(uint32_t mpio_global_no_coll_cause)
     assert(head && *head);
     assert((*head)->ctx.dxpl_id != H5P_DEFAULT);
 
+    H5CX_VLOCK_ACQUIRE_W(&(*head)->ctx);
+
     /* If we're using the default DXPL, don't modify it */
     if ((*head)->ctx.dxpl_id != H5P_DATASET_XFER_DEFAULT) {
         /* Cache the value for later, marking it to set in DXPL when context popped */
         (*head)->ctx.mpio_global_no_coll_cause     = mpio_global_no_coll_cause;
         (*head)->ctx.mpio_global_no_coll_cause_set = TRUE;
     } /* end if */
+
+    H5CX_VLOCK_RELEASE_W(&(*head)->ctx);
 
     FUNC_LEAVE_NOAPI_VOID
 } /* end H5CX_set_mpio_global_no_coll_cause() */
@@ -3264,9 +3546,13 @@ H5CX_test_set_mpio_coll_chunk_link_hard(int mpio_coll_chunk_link_hard)
     assert(head && *head);
     assert(!((*head)->ctx.dxpl_id == H5P_DEFAULT || (*head)->ctx.dxpl_id == H5P_DATASET_XFER_DEFAULT));
 
+    H5CX_VLOCK_ACQUIRE_W(&(*head)->ctx);
+
     H5CX_TEST_SET_PROP(H5D_XFER_COLL_CHUNK_LINK_HARD_NAME, mpio_coll_chunk_link_hard)
 
 done:
+    H5CX_VLOCK_RELEASE_W(&(*head)->ctx);
+
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5CX_test_set_mpio_coll_chunk_link_hard() */
 
@@ -3294,9 +3580,13 @@ H5CX_test_set_mpio_coll_chunk_multi_hard(int mpio_coll_chunk_multi_hard)
     assert(head && *head);
     assert(!((*head)->ctx.dxpl_id == H5P_DEFAULT || (*head)->ctx.dxpl_id == H5P_DATASET_XFER_DEFAULT));
 
+    H5CX_VLOCK_ACQUIRE_W(&(*head)->ctx);
+
     H5CX_TEST_SET_PROP(H5D_XFER_COLL_CHUNK_MULTI_HARD_NAME, mpio_coll_chunk_multi_hard)
 
 done:
+    H5CX_VLOCK_RELEASE_W(&(*head)->ctx);
+
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5CX_test_set_mpio_coll_chunk_multi_hard() */
 
@@ -3324,9 +3614,13 @@ H5CX_test_set_mpio_coll_chunk_link_num_true(int mpio_coll_chunk_link_num_true)
     assert(head && *head);
     assert(!((*head)->ctx.dxpl_id == H5P_DEFAULT || (*head)->ctx.dxpl_id == H5P_DATASET_XFER_DEFAULT));
 
+    H5CX_VLOCK_ACQUIRE_W(&(*head)->ctx);
+
     H5CX_TEST_SET_PROP(H5D_XFER_COLL_CHUNK_LINK_NUM_TRUE_NAME, mpio_coll_chunk_link_num_true)
 
 done:
+    H5CX_VLOCK_RELEASE_W(&(*head)->ctx);
+
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5CX_test_set_mpio_coll_chunk_link_num_true() */
 
@@ -3355,9 +3649,13 @@ H5CX_test_set_mpio_coll_chunk_link_num_false(int mpio_coll_chunk_link_num_false)
     assert(head && *head);
     assert(!((*head)->ctx.dxpl_id == H5P_DEFAULT || (*head)->ctx.dxpl_id == H5P_DATASET_XFER_DEFAULT));
 
+    H5CX_VLOCK_ACQUIRE_W(&(*head)->ctx);
+
     H5CX_TEST_SET_PROP(H5D_XFER_COLL_CHUNK_LINK_NUM_FALSE_NAME, mpio_coll_chunk_link_num_false)
 
 done:
+    H5CX_VLOCK_RELEASE_W(&(*head)->ctx);
+
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5CX_test_set_mpio_coll_chunk_link_num_false() */
 
@@ -3386,9 +3684,13 @@ H5CX_test_set_mpio_coll_chunk_multi_ratio_coll(int mpio_coll_chunk_multi_ratio_c
     assert(head && *head);
     assert(!((*head)->ctx.dxpl_id == H5P_DEFAULT || (*head)->ctx.dxpl_id == H5P_DATASET_XFER_DEFAULT));
 
+    H5CX_VLOCK_ACQUIRE_W(&(*head)->ctx);
+
     H5CX_TEST_SET_PROP(H5D_XFER_COLL_CHUNK_MULTI_RATIO_COLL_NAME, mpio_coll_chunk_multi_ratio_coll)
 
 done:
+    H5CX_VLOCK_RELEASE_W(&(*head)->ctx);
+
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5CX_test_set_mpio_coll_chunk_multi_ratio_coll() */
 
@@ -3417,9 +3719,13 @@ H5CX_test_set_mpio_coll_chunk_multi_ratio_ind(int mpio_coll_chunk_multi_ratio_in
     assert(head && *head);
     assert(!((*head)->ctx.dxpl_id == H5P_DEFAULT || (*head)->ctx.dxpl_id == H5P_DATASET_XFER_DEFAULT));
 
+    H5CX_VLOCK_ACQUIRE_W(&(*head)->ctx);
+
     H5CX_TEST_SET_PROP(H5D_XFER_COLL_CHUNK_MULTI_RATIO_IND_NAME, mpio_coll_chunk_multi_ratio_ind)
 
 done:
+    H5CX_VLOCK_RELEASE_W(&(*head)->ctx);
+
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5CX_test_set_mpio_coll_chunk_multi_ratio_ind() */
 
@@ -3447,9 +3753,13 @@ H5CX_test_set_mpio_coll_rank0_bcast(hbool_t mpio_coll_rank0_bcast)
     assert(head && *head);
     assert(!((*head)->ctx.dxpl_id == H5P_DEFAULT || (*head)->ctx.dxpl_id == H5P_DATASET_XFER_DEFAULT));
 
+    H5CX_VLOCK_ACQUIRE_W(&(*head)->ctx);
+
     H5CX_TEST_SET_PROP(H5D_XFER_COLL_RANK0_BCAST_NAME, mpio_coll_rank0_bcast)
 
 done:
+    H5CX_VLOCK_RELEASE_W(&(*head)->ctx);
+
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5CX_test_set_mpio_coll_rank0_bcast() */
 #endif /* H5_HAVE_INSTRUMENTED_LIBRARY */
@@ -3477,12 +3787,16 @@ H5CX_set_no_selection_io_cause(uint32_t no_selection_io_cause)
     assert(head && *head);
     assert((*head)->ctx.dxpl_id != H5P_DEFAULT);
 
+    H5CX_VLOCK_ACQUIRE_W(&(*head)->ctx);
+
     /* If we're using the default DXPL, don't modify it */
     if ((*head)->ctx.dxpl_id != H5P_DATASET_XFER_DEFAULT) {
         /* Cache the value for later, marking it to set in DXPL when context popped */
         (*head)->ctx.no_selection_io_cause     = no_selection_io_cause;
         (*head)->ctx.no_selection_io_cause_set = TRUE;
     } /* end if */
+
+    H5CX_VLOCK_RELEASE_W(&(*head)->ctx);
 
     FUNC_LEAVE_NOAPI_VOID
 } /* end H5CX_set_no_selectiion_io_cause() */
@@ -3510,12 +3824,16 @@ H5CX_get_ohdr_flags(uint8_t *ohdr_flags)
     assert(head && *head);
     assert(H5P_DEFAULT != (*head)->ctx.dcpl_id);
 
+    H5CX_VLOCK_ACQUIRE_R(&(*head)->ctx);
+
     H5CX_RETRIEVE_PROP_VALID(dcpl, H5P_DATASET_CREATE_DEFAULT, H5O_CRT_OHDR_FLAGS_NAME, ohdr_flags)
 
     /* Get the value */
     *ohdr_flags = (*head)->ctx.ohdr_flags;
 
 done:
+    H5CX_VLOCK_RELEASE_R(&(*head)->ctx);
+
     FUNC_LEAVE_NOAPI(ret_value)
 } /* End H5CX_get_ohdr_flags() */
 
@@ -3539,6 +3857,9 @@ H5CX__pop_common(hbool_t update_dxpl_props)
     /* Sanity check */
     head = H5CX_get_my_context(); /* Get the pointer to the head of the API context, for this thread */
     assert(head && *head);
+
+    /* Unmatched H5TS_vlock_acquire() because the context is soon to be released */
+    H5CX_VLOCK_ACQUIRE_W(&(*head)->ctx);
 
     /* Check for cached DXPL properties to return to application */
     if (update_dxpl_props) {
@@ -3595,3 +3916,58 @@ H5CX_pop(hbool_t update_dxpl_props)
 done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5CX_pop() */
+
+#if H5_HAVE_VIRTUAL_LOCK
+
+/*-------------------------------------------------------------------------
+ * Function:    H5CX__vlock_init
+ *
+ * Purpose:     Initializes the virtual lock for the context.
+ * 
+ *-------------------------------------------------------------------------
+ */
+static void H5CX__vlock_init(H5CX_t *ctx) {
+    assert(ctx);
+
+    FUNC_ENTER_PACKAGE_NAMECHECK_ONLY
+
+    H5TS_vlock_init(&ctx->vlock);
+
+    FUNC_LEAVE_NOAPI_VOID_NAMECHECK_ONLY
+}
+
+/*-------------------------------------------------------------------------
+ * Function:    H5CX__vlock_acquire
+ *
+ * Purpose:     Acquires the virtual lock for the context.
+ * 
+ *-------------------------------------------------------------------------
+ */
+static void H5CX__vlock_acquire(H5CX_t *ctx, H5TS_vlock_op_type_t op_type) {
+    assert(ctx);
+
+    FUNC_ENTER_PACKAGE_NAMECHECK_ONLY
+
+    H5TS_vlock_acquire(&ctx->vlock, op_type);
+
+    FUNC_LEAVE_NOAPI_VOID_NAMECHECK_ONLY
+}
+
+/*-------------------------------------------------------------------------
+ * Function:    H5CX__vlock_release
+ *
+ * Purpose:     Releases the virtual lock for the context.
+ *
+ *-------------------------------------------------------------------------
+ */
+static void H5CX__vlock_release(H5CX_t *ctx, H5TS_vlock_op_type_t op_type) {
+    assert(ctx);
+
+    FUNC_ENTER_PACKAGE_NAMECHECK_ONLY
+
+    H5TS_vlock_release(&ctx->vlock, op_type);
+
+    FUNC_LEAVE_NOAPI_VOID_NAMECHECK_ONLY
+}
+
+#endif

@@ -577,7 +577,7 @@ done:
 htri_t
 H5Tcommitted(hid_t type_id)
 {
-    H5T_t *type;      /* Datatype to query */
+    H5T_t *type = NULL; /* Datatype to query */
     htri_t ret_value; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX(FAIL)
@@ -591,6 +591,7 @@ H5Tcommitted(hid_t type_id)
     ret_value = H5T_is_named(type);
 
 done:
+
     FUNC_LEAVE_API_NO_MUTEX(ret_value)
 } /* end H5Tcommitted() */
 
@@ -843,7 +844,7 @@ done:
 herr_t
 H5Tflush(hid_t type_id)
 {
-    H5T_t *dt;                  /* Datatype for this operation */
+    H5T_t *dt = NULL;           /* Datatype for this operation */
     herr_t ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX(FAIL)
@@ -852,6 +853,7 @@ H5Tflush(hid_t type_id)
     /* Check args */
     if (NULL == (dt = (H5T_t *)H5I_object_verify(type_id, H5I_DATATYPE)))
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a datatype");
+
     if (!H5T_is_named(dt))
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a committed datatype");
 
@@ -876,6 +878,7 @@ H5Tflush(hid_t type_id)
     }
 
 done:
+
     FUNC_LEAVE_API_NO_MUTEX(ret_value)
 } /* H5Tflush */
 
@@ -891,7 +894,7 @@ done:
 herr_t
 H5Trefresh(hid_t type_id)
 {
-    H5T_t *dt;                  /* Datatype for this operation */
+    H5T_t *dt = NULL;           /* Datatype for this operation */
     herr_t ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX(FAIL)
@@ -900,6 +903,7 @@ H5Trefresh(hid_t type_id)
     /* Check args */
     if (NULL == (dt = (H5T_t *)H5I_object_verify(type_id, H5I_DATATYPE)))
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a datatype");
+
     if (!H5T_is_named(dt))
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a committed datatype");
 
@@ -924,6 +928,7 @@ H5Trefresh(hid_t type_id)
     }
 
 done:
+
     FUNC_LEAVE_API_NO_MUTEX(ret_value)
 } /* H5Trefresh */
 
@@ -1079,6 +1084,7 @@ H5T_open(const H5G_loc_t *loc)
         /* Open the datatype object */
         if (NULL == (dt = H5T__open_oid(loc)))
             HGOTO_ERROR(H5E_DATATYPE, H5E_NOTFOUND, NULL, "not found");
+        H5T_VLOCK_ACQUIRE_W(dt);
 
         /* Add the datatype to the list of opened objects in the file */
         if (H5FO_insert(dt->sh_loc.file, dt->sh_loc.u.loc.oh_addr, dt->shared, FALSE) < 0)
@@ -1098,6 +1104,9 @@ H5T_open(const H5G_loc_t *loc)
     else {
         if (NULL == (dt = H5FL_MALLOC_MT(H5T_t)))
             HGOTO_ERROR(H5E_RESOURCE, H5E_NOSPACE, NULL, "can't allocate space for datatype");
+        H5T_VLOCK_INIT(dt);
+        H5T_VLOCK_ACQUIRE_W(dt);
+
         dt->vol_obj = NULL;
 
 #if defined(H5_USING_MEMCHECKER) || !defined(NDEBUG)
@@ -1146,6 +1155,9 @@ H5T_open(const H5G_loc_t *loc)
     ret_value = dt;
 
 done:
+    if (dt)
+        H5T_VLOCK_RELEASE_W(dt);
+
     if (ret_value == NULL) {
         if (dt) {
             if (shared_fo == NULL) { /* Need to free shared file object */
@@ -1196,6 +1208,8 @@ H5T__open_oid(const H5G_loc_t *loc)
     if (NULL == (dt = (H5T_t *)H5O_msg_read(loc->oloc, H5O_DTYPE_ID, NULL)))
         HGOTO_ERROR(H5E_DATATYPE, H5E_CANTINIT, NULL, "unable to load type message from object header");
 
+    H5T_VLOCK_ACQUIRE_W(dt);
+
     /* Mark the type as named and open */
     dt->shared->state = H5T_STATE_OPEN;
 
@@ -1214,6 +1228,9 @@ H5T__open_oid(const H5G_loc_t *loc)
     ret_value = dt;
 
 done:
+    if (dt)
+        H5T_VLOCK_RELEASE_W(dt);
+
     if (ret_value == NULL)
         if (dt == NULL)
             H5O_close(loc->oloc, NULL);
@@ -1373,9 +1390,14 @@ H5T_save_refresh_state(hid_t tid, H5O_shared_t *cached_H5O_shared)
 
     if (NULL == (dt = (H5T_t *)H5I_object_verify(tid, H5I_DATATYPE)))
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "tid is not a datatype ID");
+    H5T_VLOCK_ACQUIRE_R(dt);
+
     vol_dt = H5T_get_actual_type(dt);
     if (NULL == vol_dt)
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "tid is not not a named datatype ID");
+    /* Avoid double-locking if datatypes are the same */
+    if (dt != vol_dt)
+        H5T_VLOCK_ACQUIRE_W(vol_dt);
 
     /* Increase the count on the file object */
     vol_dt->shared->fo_count += 1;
@@ -1388,6 +1410,11 @@ H5T_save_refresh_state(hid_t tid, H5O_shared_t *cached_H5O_shared)
     H5MM_memcpy(cached_H5O_shared, &(vol_dt->sh_loc), sizeof(H5O_shared_t));
 
 done:
+    if (dt)
+        H5T_VLOCK_RELEASE_R(dt);
+    if (vol_dt && dt != vol_dt)
+        H5T_VLOCK_RELEASE_W(vol_dt);
+
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5T_save_refresh_state() */
 
@@ -1413,9 +1440,15 @@ H5T_restore_refresh_state(hid_t tid, H5O_shared_t *cached_H5O_shared)
 
     if (NULL == (dt = (H5T_t *)H5I_object_verify(tid, H5I_DATATYPE)))
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "tid not a datatype ID");
+    H5T_VLOCK_ACQUIRE_R(dt);
+
     vol_dt = H5T_get_actual_type(dt);
     if (NULL == vol_dt)
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "tid is not not a named datatype ID");
+
+    /* Avoid double-locking if datatypes are the same */
+    if (dt != vol_dt)
+        H5T_VLOCK_ACQUIRE_W(vol_dt);
 
     /* Restore the H5O_shared_t data */
     H5MM_memcpy(&(vol_dt->sh_loc), cached_H5O_shared, sizeof(H5O_shared_t));
@@ -1428,6 +1461,11 @@ H5T_restore_refresh_state(hid_t tid, H5O_shared_t *cached_H5O_shared)
     vol_dt->shared->fo_count -= 1;
 
 done:
+    if (dt)
+        H5T_VLOCK_RELEASE_R(dt);
+    if (vol_dt && dt != vol_dt)
+        H5T_VLOCK_RELEASE_W(vol_dt);
+
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5T_restore_refresh_state() */
 

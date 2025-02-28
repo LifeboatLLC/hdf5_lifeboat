@@ -100,6 +100,21 @@ typedef struct H5TS_mutex_struct {
     unsigned int    attempt_lock_count;
 } H5TS_mutex_t;
 
+#if H5_HAVE_VIRTUAL_LOCK
+/* Enum for the type of operation that holds a virtual lock */
+typedef enum {
+    H5TS_VLOCK_READER,
+    H5TS_VLOCK_WRITER
+} H5TS_vlock_op_type_t;
+
+/* A virtual lock to document assumptions of single-thread usage
+ * and track violations of this assupmtion */
+typedef struct H5TS_vlock_t {
+    _Atomic size_t reader_count;
+    _Atomic size_t writer_count;
+} H5TS_vlock_t;
+#endif
+
 /* Portability wrappers around pthread types */
 typedef pthread_t       H5TS_thread_t;
 typedef pthread_attr_t  H5TS_attr_t;
@@ -146,6 +161,13 @@ H5_DLL herr_t H5TS_cancel_count_inc(void);
 H5_DLL herr_t H5TS_cancel_count_dec(void);
 /* (Only used in the multi-thread build) */
 H5_DLL herr_t H5TS_have_mutex(H5TS_mutex_t *mutex, bool *have_mutex_ptr);
+
+#if H5_HAVE_VIRTUAL_LOCK
+/* Virtual lock routines */
+H5_DLL void H5TS_vlock_acquire(H5TS_vlock_t *vlock, H5TS_vlock_op_type_t op_type);
+H5_DLL void H5TS_vlock_release(H5TS_vlock_t *vlock, H5TS_vlock_op_type_t op_type);
+H5_DLL void H5TS_vlock_init(H5TS_vlock_t *vlock);
+#endif
 
 /* Testing routines */
 H5_DLL H5TS_thread_t H5TS_create_thread(void *(*func)(void *), H5TS_attr_t *attr, void *udata);
