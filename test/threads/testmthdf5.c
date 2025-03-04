@@ -109,6 +109,14 @@ int main(int argc, char *argv[])
     AddTest("mt_reg_search", mt_test_register_and_search, NULL, NULL,
         &params, sizeof(mt_test_params), no_threaded_test_flag, "MT reg/unreg of connectors while searching for connector");
 
+    /* H5CX tests */
+    AddTest("mt_ctx_vol_conn_prop", mt_test_api_ctx_vol_conn_prop, NULL, NULL,
+        &params, sizeof(mt_test_params), no_threaded_test_flag, "MT usage of API context VOL connector property routines");
+
+    AddTest("mt_ctx_vol_wrap_ctx", mt_test_api_ctx_vol_wrap_ctx, NULL,
+        mt_test_api_ctx_vol_wrap_ctx_cleanup, &params, sizeof(mt_test_params), 
+        no_threaded_test_flag, "MT usage of API context VOL wrap context routines");
+
     /* Misc MT tests */
     AddTest("mt_library_init", mt_test_library_init, NULL, NULL,
         &params, sizeof(mt_test_params), threaded_test_flag, "MT usage of H5open/H5close");
