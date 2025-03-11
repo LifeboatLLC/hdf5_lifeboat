@@ -9471,6 +9471,8 @@ test_attr_shared_dtype(TestParams_t *params)
         TESTFRAME_TEST_ERROR(params);
     if (H5Tclose(attr_dtype) < 0)
         TESTFRAME_TEST_ERROR(params);
+    if (H5Aclose(attr_id) < 0)
+        TESTFRAME_TEST_ERROR(params);
     if (H5Gclose(group_id) < 0)
         TESTFRAME_TEST_ERROR(params);
     if (H5Gclose(container_group) < 0)
@@ -9484,6 +9486,7 @@ error:
     H5E_BEGIN_TRY
     {
         H5Tclose(attr_dtype);
+        H5Aclose(attr_id);
         H5Dclose(dset_id);
         H5Gclose(group_id);
         H5Gclose(container_group);
