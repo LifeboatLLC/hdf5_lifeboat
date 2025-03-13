@@ -41,6 +41,12 @@
 /* Package Private Macros */
 /**************************/
 
+/**
+ * Macro used for testing so the program will stop executing if hit.
+ */
+#define H5P_MT_ASSERT_FAIL FAIL 
+
+
 /****************************/
 /* Package Private Typedefs */
 /****************************/
@@ -88,7 +94,7 @@ typedef struct H5P_mt_prop_aptr_t
 {
     H5P_mt_prop_t * ptr;
 
-    bool         deleted;
+    bool            deleted;
 
     bool            dummy_bool_1;
     bool            dummy_bool_2;
@@ -255,8 +261,267 @@ typedef struct H5P_mt_prop_value_t
  * 
  * Property Callback Functions:
  *
- * These fields are currently left out to keep the structure more simple for early 
- * testing.
+ * create:  Function to call whena property is created.
+ * 
+ *      Signature: 
+ * 
+ *          herr_t
+ *          H5P_prp_create_func_t (const char *name, size_t size, void *value)
+ *          
+ *		    This callback should set up the initial value of the property by modifying
+ *		    the provided value buffer. This is necessary when the property is a complex
+ *		    object that cannot be deep copied by a single memcpy(). size describes the
+ *		    size of value, and name is the name of the property being created.
+ *
+ *          value is a shallow copy of the initial property value provided to
+ *          H5P__register_real(). If this callback returns a negative value, then the
+ *          potentially modified value is not copied into the property and the creation
+ *          routine returns an error.
+ *
+ *          The initialization done by this callback may consist of simply deep copying
+ *          the initial value. This deep copy may be implemented via reference counting
+ *          (as seen in H5P__facc_file_driver_create() and H5P__facc_vol_create()), or
+ *          as a ’real’ copy with new memory allocation for each dynamically allocated
+ *          field of the property value. The memory management method this callback uses
+ *          to enable copy-by-value semantics must be cleaned up during the delete and
+ *          free callbacks assigned to the same property.
+ *
+ *          The original dynamically allocated fields under value, if any, should not be
+ *          freed or modified, since these fields are still in use by either the property
+ *          list class or the original property list. An exception to this is that if
+ *          reference counting is used to implement copy-by-value, then the underlying
+ *          fields must be modified to update their reference count.
+ *
+ *          This callback is invoked in two places by the library: During the creation
+ *          of a new property list in H5P__create(), and when copying a property from
+ *          one plist to another plist that does not already contain it in
+ *          H5P__copy_prop_plist(). (If the target plist for a copy operation does
+ *          already contain the property, the copy callback is used instead.
+ * 
+ * 
+ * set:     Function to call when a property value is set.
+ *
+ *      Signature:
+ *
+ *          herr_t
+ *          H5P_prp_set_func_t(hid_t prop_id, const char *name, size_t size, void *value)
+ *
+ *          This callback should modify value as necessary for the set operation to
+ *          follow copy-by-value semantics for the property. This callback is necessary
+ *          when the value is a complex object with its own internal dynamic memory
+ *          allocation. This callback may also perform a transformation on the property
+ *          value, if the internal representation differs from the representation visible
+ *          to the user.
+ *
+ *          prop_id is the ID of the property list being modified. name is the name of
+ *          the property being modified. value is a shallow copy of the provided value
+ *          to write. size is the size of the buffer value. If this callback returns a
+ *          negative value, the potentially modified value is not copied into the
+ *          property and the set routine returns an error.
+ *
+ *          If performing a deep copy, the set callback should either allocate new memory
+ *          for the dynamically allocated fields of the property value, or ’fake’ copy
+ *          them using reference counting - see H5P__facc_file_driver_set() and
+ *          H5P__facc_vol_set() as examples. The memory management method this callback
+ *          uses to enable copy-by-value semantics must be cleaned up during the delete
+ *          and free callbacks assigned to the same property.
+ *
+ *          If no error occurs, the modified value buffer is copied to the target property
+ *          after this callback finishes.
+ *
+ *          The original dynamically allocated fields under value, if any, should not be
+ *          freed or modified, since these fields are still in use by the application.
+ *          An exception to this is that if reference counting is used to implement
+ *          copy-by-value, then the underlying fields must be modified to update their
+ *          reference count.
+ *
+ *          The set callback is used to set the value of a property in a list by
+ *          H5P__set_plist_cb(), and to set the value of a property in a class by
+ *          H5P__set_pclass_cb().
+ *
+ *          If the set callback is not defined, the property read operation defaults to
+ *          a simple memcpy() from the application buffer to the property value buffer.
+ * 
+ * 
+ * get:     Function to call when a property value is retrieved.
+ *
+ *      Signature:
+ *
+ *          herr_t
+ *          H5P_prp_get_func_t(hid_t prop_id, const char *name, size_t size, void *value)
+ *
+ *          This callback should modify value as necessary for the get operation
+ *          to follow copy-by-value semantics for the property. This is necessary
+ *          when the property value is a complex object with its own internal
+ *          dynamic memory allocation. The get callback may also perform a
+ *          transformation on the property value before providing it to the user,
+ *          if the representation visible to the user differs from how it is
+ *          stored in the library.
+ *  
+ *          prop_id is the ID of the property list being queried. name is the name
+ *          of the property being queried. value is a shallow copy of the property
+ *          value that will eventually be returned to the application. size is the
+ *          size of the buffer value. If this returns a negative value, then the
+ *          user’s buffer is not modified and the get routine returns an error.
+ * 
+ *          If performing a deep copy, the get callback should either allocate new
+ *          memory for the dynamically allocated fields of the property value, or
+ *          ’fake’ copy them using reference counting - see H5P__facc_file_driver_get()
+ *          and H5P__facc_vol_get(). The memory management method this callback uses to
+ *          enable copy-by-value semantics must be cleaned up during the delete and free
+ *          callbacks assigned to the same property.
+ * 
+ *          The original dynamically allocated fields under value, if any, should not
+ *          be freed or modified, since these fields are still in use by the property
+ *          itself. An exception to this is that if reference counting is used to
+ *          implement copy-by-value, then the underlying fields must be modified to
+ *          update their reference count.
+ *
+ *          If no error occurs, the modified value buffer is copied to the application
+ *          buffer by H5P__get_cb().
+ *
+ *          If this callback is not defined, the read operation defaults to a simple
+ *          memcpy() from the property’s value to the application buffer.
+ * 
+ * 
+ * encode:  Function to call when a property is encoded. 
+ *
+ *      Signature:
+ *
+ *          herr_t
+ *          H5P_prp_encode_func_t(const void *value, void **buf, size_t *size)
+ *
+ *          This callback is used to encode the property value value into the
+ *          application-allocated buffer *buf. size describes the size of the
+ *          destination buffer *buf. If the provided buffer is NULL, or if the
+ *          provided size is zero, then the encode callback should modify size
+ *          to return the necessary buffer size for the encoded value.
+ *
+ *          Unlike decode, the encode callback should not increment the provided
+ *          value pointer after encoding.
+ *
+ * 
+ * decode:  Function to call when a property is decoded.
+ *
+ *      Signature:
+ *
+ *          herr_t
+ *          H5P_prp_decode_func_t(const void **buf, void *value)
+ *
+ *          This callback is used to decode the encoded property value in *buf to
+ *          the library-allocated buffer value.
+ *
+ *          The decode callback must increment the pointer *buf by the size of the
+ *          encoded value. This is the reason buf is a is provided as a void**.
+ *          This incrementing is necessary for H5P__decode() to iterate through
+ *          all properties in an encoded property list.
+ * 
+ * 
+ * del:   Function to call when a property is deleted.
+ *
+ *      Signature:
+ *
+ *          herr_t
+ *          H5P_prp_delete_func_t(hid_t prop_id, const char *name, size_t size, 
+ *                                void *value)
+ *
+ *          This callback should clean up any callback-controlled resources under
+ *          value that were allocated during create, set, or copy. It is invoked
+ *          when a property is deleted from a property list or class, or when the
+ *          value of a property is replaced by a set operation. The top-level value
+ *          buffer itself should not be freed, as the library frees that buffer
+ *          during generic property free operations.
+ *
+ *          prop_id is the ID of the property list the property is being deleted
+ *          from. name is the name of the property being deleted. value is the value
+ *          of the property which is being deleted. size is the size of value.
+ *
+ *          If this callback returns a negative value, then an error is returned,
+ *          but the target property is still deleted.
+ * 
+ * 
+ * copy:    Function to call when a property is copied.
+ *
+ *      Signature:
+ *
+ *          herr_t
+ *          H5P_prp_copy_func_t(const char *name, size_t size, void *value)
+ *
+ *          This callback should modify value as necessary for copy-by-value semantics
+ *          to be upheld when copying this property between property lists. This is
+ *          necessary when the property value is a complex object that is not fully
+ *          copied by a single memcpy() call.
+ *
+ *          name is the name of the property being copied. value is a shallow copy of
+ *          the original property value. size is the size in bytes of value. If this
+ *          callback succeeds, then value is copied to the new property in the
+ *          destination property list.
+ *
+ *          If this callback returns a negative value, the potentially modified value
+ *          is not copied into the destination plist and the copy routine returns an
+ *          error.
+ *
+ *          This callback may implement a deep copy by copying any allocated fields
+ *          stored under value, or ’fake’ such copying by using reference-counted
+ *          fields. The memory management method this callback uses to enable
+ *          copy-by-value semantics must be cleaned up during the delete and free
+ *          callbacks assigned to the same property.
+ *
+ *          Note that this callback is used when copying an entire property list, and
+ *          when copying a property to another list that already contains a property
+ *          of the same name, but not when copying a property to another list that
+ *          does not contain a property of the same name. In this last case, the create
+ *          callback is used instead.
+ *
+ *          The original dynamically allocated fields under value, if any, should not
+ *          be freed or modified, since these fields are still in use by the original
+ *          property. The exception to this is that if reference counting is used to
+ *          implement copy-by-value, then the underlying fields must be modified to
+ *          update their reference count.
+ * 
+ * 
+ * cmp:     Function to call when a property is compared.
+ *
+ *      Signature:
+ *
+ *          int
+ *          H5P_prp_compare_func_t(const void *value1, const void *value2, size_t size)
+ *
+ *          This callback should return a positive value if value1 >value2, a
+ *          negative value if value2 >value1, or zero if value1 = value2. Neither
+ *          input value should be modified.
+ *
+ *          This callback is only the final step of the property comparison operation
+ *          H5P__cmp_prop(). Before this callback is used, the property’s names, sizes,
+ *          and callbacks are compared. If any of these fields are nonequal, the
+ *          comparison returns early and this callback is not used. If two properties
+ *          are nonequal due to one not defining a callback which the other property
+ *          does define, the property which defines the callback is considered greater.
+ *          If two properties provide different implementations of the same callback,
+ *          then the first property is considered smaller.
+ *
+ * 
+ * close:   Function to call when a property is closed.
+ *
+ *      Signature:
+ *
+ *          herr_t
+ *          H5P_prp_close_func_t(const char *name, size_t size, void *value)
+ *
+ *          This callback should clean up any callback-controlled resources under
+ *          value that were allocated during create, set, or copy. This callback
+ *          is invoked when a property list containing this property is destroyed.
+ *
+ *          name is the name of the property being closed. value is a buffer
+ *          containing the value of the property being closed. size is the size
+ *          of the buffer value.
+ *
+ *          The top-level value buffer itself should not be freed, as the library
+ *          frees that buffer during generic property free operations.
+ *
+ *          If this callback returns a negative value, the property list close
+ *          operation returns an error, but the property list is still closed.
+ *      
  * 
  ****************************************************************************************
  */
@@ -264,6 +529,8 @@ typedef struct H5P_mt_prop_value_t
 #define H5P_MT_PROP_TAG             0x1010 /* 4112 */
 #define H5P_MT_PROP_VALID_ONFL_TAG  0X3030 /* 12336 */
 #define H5P_MT_PROP_INVALID_TAG     0x2020 /* 8224 */
+#define H5P_MT_CLASS_FL_REALLOC_TAG 0x4040 /* 16448 */
+
 
 typedef struct H5P_mt_prop_t
 {
@@ -283,7 +550,17 @@ typedef struct H5P_mt_prop_t
     _Atomic uint64_t            create_version;
     _Atomic uint64_t            delete_version;
 
-    /* Callbacks are currently left out for early testing */
+    /* Callback fields */
+    bool                        callbacks_mt_safe;
+    H5P_prp_create_func_t       create;
+    H5P_prp_set_func_t          set;
+    H5P_prp_get_func_t          get;
+    H5P_prp_encode_func_t       encode;
+    H5P_prp_decode_func_t       decode;
+    H5P_prp_delete_func_t       del;
+    H5P_prp_copy_func_t         copy;
+    H5P_prp_compare_func_t      cmp;
+    H5P_prp_close_func_t        close;
 
     
 } H5P_mt_prop_t;
@@ -371,11 +648,6 @@ typedef struct H5P_mt_prop_t
  * closing (bool):
  *      Boolean flag that is set to TRUE iff the host structure is about to be discarded.
  * 
- * dummy_int_1:
- * dummy_bool_1:
- * dummy_bool_2: The dummy_int and dummy_bool fields exist to pad 
- *               H5P_mt_active_thread_count_t out to 128 bits.
- * 
  ****************************************************************************************
  */
 typedef struct H5P_mt_active_thread_count_t
@@ -383,10 +655,6 @@ typedef struct H5P_mt_active_thread_count_t
     uint64_t    count;
     bool        opening;
     bool        closing;
-
-    uint32_t    dummy_int_1;
-    bool        dummy_bool_1;
-    bool        dummy_bool_2;
 
 } H5P_mt_active_thread_count_t;
 
@@ -728,7 +996,133 @@ typedef struct H5P_mt_class_sptr_t
  * 
  * 
  * 
- * Callbacks are currently left out for early testing
+ * The following fields are pointers to the callback functions associated with the 
+ * property along with pointers to data to be passed to these functions when called. 
+ * These are combined with a Boolean indicating whether all callbacks are thread safe. 
+ * If this flag is not set, all callbacks must be protected by the global mutex. 
+ * 
+ * The descriptions of the callbacks are all taken from Matt Larson’s “Census of H5P
+ * Callbacks”, and are a major improvement on the existing documentation.  These
+ * descriptions may have to be modified to reflect the re-implementation of H5P.
+ *
+ * Quoting from Matt’s document:
+ *
+ *     At the time of this document’s creation (HDF5 1.14.4.3), the library does
+ *     not define any of these callbacks on any of its predefined property list
+ *     classes.
+ *
+ *     If the test code for the property list class callbacks
+ *     (test_genprop_class_callback in tgenprop.c) is indicative of the design
+ *     intent, then these callbacks may be intended to let users associate
+ *     reference-counted data with property list classes. Property list create,
+ *     copy, and close operations would then reference shared data on the class
+ *     object, and would not be threadsafe if the operations potentially modify
+ *     that data.
+ *
+ * We need to determine if there are any other uses for these callbacks.  
+ * 
+ * callbacks_mt_safe: Boolean flag used to indicate whether all callbacks are 
+ *              multi-thread safe.  If this field is not set, the global mutex must 
+ *              be held when the callbacks are called. 
+ * 
+ * create_func: Function to call when a property list is created.
+ *
+ *              Signature:
+ *
+ *                  herr_t H5P_cls_create_func_t(hid_t prop_id, void *create_data)
+ *
+ *              This callback is invoked when a property list of the given class
+ *              is created. prop_id is the identifier of the property list being
+ *              created. create_data is a pointer to a buffer of application-defined
+ *              data stored on the parent class of prop_id.
+ *
+ *              This callback may modify create_data, or perform application-defined
+ *              initialization work on the list prop_id. If this callback allocates
+ *              any resources under create_data, then those resources should be
+ *              released by the corresponding property class close callback.
+ *
+ *              If this callback returns a negative value, then the new list is not
+ *              returned to the user and the property list creation routine returns
+ *              an error.
+ *
+ *              When this callback is invoked, it is invoked for every property list
+ *              class in the class hierarchy of the list parent class, starting from
+ *              the immediate parent class and proceeding until the root class.
+ *
+ *              If this callback modifies create_data, then it is not threadsafe due
+ *              to modifying a resource which may be accessed by other threads
+ *              performing plist operations concurrently.
+ *
+ *              create_data is not copied by the library; the buffer passed in by
+ *              the application is used directly. If this buffer is dynamically
+ *              allocated, releasing it is the responsibility of the application.
+ * 
+ * create_data: Pointer to user data to pass along to create callback. 
+ * 
+ * copy_func:   Function to call when a property list is copied.
+ *
+ *              Signature:
+ *
+ *                  herr_t
+ *                  H5P_cls_copy_func_t(hid_t new_prop_id, hid_t old_prop_id,
+ *                                      void *copy_data)
+ *
+ *              This callback is invoked when copying a property list of the given
+ *              class. new_prop_id is the identifier of the newly created property
+ *              list copy. old_prop_id is the id of the list being copied. copy_data
+ *              is a pointer to application-defined data on the class.
+ *
+ *              This callback may modify copy_data, or it may perform work on the new
+ *              list or original list. If this callback allocates resources under
+ *              copy_data, then those resources must be released by the corresponding
+ *              property class close callback.
+ *
+ *              If this callback returns a negative value, the new list is not returned
+ *              to the user, and the property list copy function returns an error value.
+ *
+ *              When this callback is invoked, it is invoked for every property list
+ *              class in the class hierarchy of the list parent class, starting from
+ *              the immediate parent class and proceeding until the root class.
+ *
+ *              If this callback modifies copy_data or old_prop_id, then it is not
+ *              threadsafe due to modifying a resource which may be accessed by other
+ *              threads performing plist operations concurrently.
+ *
+ *              copy_data is not copied by the library; the buffer passed in by the
+ *              application is used directly. If this buffer is dynamically allocated,
+ *              releasing it is the responsibility of the application.
+ * 
+ * copy_data:   Pointer to user data to pass along to copy callback. 
+ * 
+ * close_func:  Function to call when a property list is closed.
+ *
+ *              Signature:
+ *
+ *                  herr_t H5P_cls_close_func_t(hid_t prop_id, void *close_data)
+ *
+ *              This callback is invoked when a property list of the given class
+ *              is closed. prop_id is the ID of the property list being closed.
+ *              close_data is a pointer to application-defined data on the property
+ *              list class.
+ *
+ *              This callback should release any resources that were allocated
+ *              under the class’s create or copy callbacks.
+ *
+ *              If this callback modifies close_data, then it is not threadsafe
+ *              due to modifying a resource which may be accessed by other threads
+ *              concurrently.
+ *
+ *              When this callback is invoked, it is invoked for every property
+ *              list class in the class hierarchy of the list parent class,
+ *              starting from the immediate parent class and proceeding until
+ *              the root class.
+ *
+ *              close_data is not copied by the library; the buffer passed in by
+ *              the application is used directly. If this buffer is dynamically
+ *              allocated, releasing it is the responsibility of the application.
+ *
+ * close_data:  Pointer to user data to pass along to close callback.
+ * 
  * 
  * 
  * Free list and shutdown management fields:
@@ -750,26 +1144,138 @@ typedef struct H5P_mt_class_sptr_t
  * 
  * Statistics Fields:
  * 
+ * 
  * Insert statistics:
  * 
  * H5P__insert_prop_setup__num_calls (_Atomic uint64_t):
- *      Tracks the number of H5P__insert_prop_setup() function calls have occured. Can 
- *      also be used in compination with H5P__mt_create_class() to track the number of
- *      times H5P__mt_insert_prop() and H5P__mt_create_prop were called.
+ *      Tracks the number of H5P__insert_prop_setup() function calls. Can also be used in
+ *      compination with H5P__mt_create_class() to track the number of times 
+ *      H5P__mt_insert_prop() and H5P__mt_create_prop were called.
  * 
  * insert_max_nodes_visited (_Atomic uint64_t):
- *      Keeps track of the largest number of nodes visited in the LFSLL of a class during 
- *      an insert.
+ *      Keeps track of the largest number of nodes visited in the LFSLL of the class 
+ *      during an insert.
  * 
  * insert_avg_nodes_visited (_Atomic uint64_t):
- *      This field tracks the the average number of nodes visited in the LFSLL of a class
- *      across all inserts. Fields H5P__insert_prop_setup_num_calls and 
- *      num_insert_node_visited are needed to calculate the avg_nodes_visited.
+ *      This field tracks the the average number of nodes visited in the LFSLL of the 
+ *      class across all inserts. Fields H5P__insert_prop_setup__num_calls and 
+ *      num_insert_node_visited are needed to calculate the insert_avg_nodes_visited.
+ * 
+ * num_insert_nodes_visited (_Atomic uint64_t):
+ *      The number of nodes in the LFSLL visited during the most recent insert call.
+ * 
+ * num_insert_prop_cols (_Atomic uint64_t):
+ *      The number of collisions with other threads that occur when attempting to 
+ *      atomically insert a property.
+ * 
+ * num_insert_prop_success (_Atomic uint64_t):
+ *      The number of successful property insertions. Will be equal to 
+ *      H5P__insert_prop_setup__num_calls unless an error occurs during the insert
+ *      process
+ * 
+ * num_insert_chksum_cols (_Atomic uint64_t):
+ *      The number of inserts where the property being inserted is a different version
+ *      of a property that already exists in the LFSLL of the class.
+ * 
+ * 
+ * Delete Version statistics:
+ * 
+ * H5P__set_delete_version__num_calls (_Atomic uint64_t):
+ *      Tracks the number of H5P__set_delete_version() function calls.
+ * 
+ * set_delete_max_nodes_visited (_Atomic uint64_t):
+ *      Keeps track of the largest number of nodes visited in the LFSLL of the class 
+ *      during a set delete version call.
+ * 
+ * set_delete_avg_nodes_visited (_Atomic uint64_t):
+ *      This field tracks the the average number of nodes visited in the LFSLL of the 
+ *      class across all H5P__ set_delete_version() calls. Fields 
+ *      H5P__set_delete_version__num_calls and num_set_delete_nodes_visited are needed to
+ *      calculate the set_delete_avg_nodes_visited.
+ * 
+ * num_set_delete_nodes_visited (_Atomic uint64_t):
+ *      The number of nodes visited during the most recent set_delete_version call.
+ * 
+ * num_set_delete_prop_cols (_Atomic uint64_t):
+ *      The number of collisions with other threads that occur when attempting to 
+ *      atomically set the delete_version of a property.
+ * 
+ * num_set_delete_prop_success (_Atomic uint64_t):
+ *      The number of properties with their delete_version set successfully. Will be 
+ *      equal to H5P__set_delete_version__num_calls unless an error occurs during
+ *      H5P__set_delete_version().
+ * 
+ * num_set_delete_chksum_cols (_Atomic uint64_t):
+ *      The number of properties that have their delete_version set that have another 
+ *      version of the property in the LFSLL of the class.
+ * 
+ * 
+ * Search statistics:
+ * 
+ * H5P__search_prop__num_calls (_Atomic uint64_t):
+ *      Tracks the number of H5P__mt_search_prop() function calls.
+ * 
+ * search_max_nodes_visited (_Atomic uint64_t):
+ *      Keeps track of the largest number of nodes visited in the LFSLL of the class 
+ *      during a search function call
+ * 
+ * search_avg_nodes_visited (_Atomic uint64_t):
+ *      This field tracks the the average number of nodes visited in the LFSLL of the 
+ *      class across all search function calls. Fields H5P__search_prop__num_calls and 
+ *      num_search_nodes_visited are needed to calculate the search_avg_nodes_visited.
+ * 
+ * num_search_nodes_visited (_Atomic uint64_t):
+ *      The number of nodes visited during the most recent search call.
+ * 
+ * num_search_success (_Atomic uint64_t):
+ *      The number of successful searches in the LFSLL for a property. Should be the same
+ *      as H5P__search_prop__num_calls, unless an error occurs during a search.
+ * 
+ * num_search_chksum_cols (_Atomic uint64_t):
+ *      The number of searches where the property being searched for has another version 
+ *      of the property in the LFSLL of the class.
+ * 
+ * 
+ * Version check statistics:
+ * 
+ * num_wait_for_curr_version_to_inc (_Atomic uint64_t):
+ *      The number of times a thread is trying to modify this class's LFSLL in some 
+ *      manner and has had to wait for the curr_version of the class to increment to be 
+ *      one less than the next_version that was recieved via an atomic_fetch_add() call.
+ * 
+ * 
+ * Thread Count statistics: 
+ * 
+ * num_thrd_count_update_cols (_Atomic uint64_t):
+ *      The number of times this class goes to update its thrd->count field and a 
+ *      collision with another thread occurs.
+ * 
+ * num_thrd_count_update (_Atomic uint64_t):
+ *      The number of times this class has its thrd->count field updated.
+ * 
+ * num_thrd_closing_flag_set (_Atomic uint64_t):
+ *      The number of times a thread tried to access this class when its thrd->closing
+ *      is set to TRUE.
+ * 
+ * num_thrd_opening_flag_set (_Atomic uint64_t):
+ *      The number of times a thread tried to access this class when its thrd->opening 
+ *      is set to TRUE.
+ * 
+ * 
+ * Reference Count statistics:
+ * 
+ * num_ref_count_cols (_Atomic uint64_t):
+ *      The number of times a thread tries to update the reference count (either pl or 
+ *      plc) for a class and a collision with another thread occurs.
+ * 
+ * num_ref_count_update (_Atomic uint64_t):
+ *      The number of times a thread updates the reference count (either pl or plc).
  *  
  ****************************************************************************************
  */
 #define H5P_MT_CLASS_TAG            0x1011 /* 4113 */
 #define H5P_MT_CLASS_INVALID_TAG    0x2021 /* 8225 */
+#define H5P_MT_CLASS_FL_REALLOC_TAG 0x3031 /* 12337 */
 
 typedef struct H5P_mt_class_t
 {
@@ -781,7 +1287,7 @@ typedef struct H5P_mt_class_t
     uint64_t           parent_version;
 
     /* Fields related to this class */
-    const char       * name;
+    char             * name;
     _Atomic hid_t      id;
     H5P_plist_type_t   type;
     _Atomic uint64_t   curr_version;
@@ -796,7 +1302,12 @@ typedef struct H5P_mt_class_t
     _Atomic H5P_mt_class_ref_counts_t ref_count;
 
     /* Callback function pointers and info */
-    /* Currently left out for simple testing */
+    H5P_cls_create_func_t   create_func;
+    void                  * create_data;
+    H5P_cls_copy_func_t     copy_func;
+    void                  * copy_data;
+    H5P_cls_close_func_t    close_func;
+    void                  * close_data;
 
     /* Shutdown and free list management fields */
     _Atomic H5P_mt_active_thread_count_t thrd;
@@ -828,6 +1339,7 @@ typedef struct H5P_mt_class_t
     _Atomic uint64_t search_avg_nodes_visited;
     _Atomic uint64_t num_search_nodes_visited;
     _Atomic uint64_t num_search_success;
+    _Atomic uint64_t num_search_chksum_cols;
 
     /* Version check stats */
     _Atomic uint64_t num_wait_for_curr_version_to_inc;
@@ -1246,12 +1758,163 @@ typedef struct H5P_mt_list_table_entry_t
  *      H5P_mt_list_t.
  * 
  * 
- * Statistics Fields     
+ * Statistics Fields:
+ * 
+ * 
+ * Insert statistics:
+ * 
+ * H5P__insert_prop_setup__num_calls (_Atomic uint64_t):
+ *      Tracks the number of H5P__insert_prop_setup() function calls. Also is the number
+ *      of times H5P__mt_insert_prop() and H5P__mt_create_prop were called for the list.
+ * 
+ * insert_max_nodes_visited (_Atomic uint64_t):
+ *      Keeps track of the largest number of nodes visited in the LFSLL of the list 
+ *      during an insert.
+ * 
+ * insert_avg_nodes_visited (_Atomic uint64_t):
+ *      This field tracks the the average number of nodes visited in the LFSLL of the 
+ *      list across all inserts. Fields H5P__insert_prop_setup__num_calls and 
+ *      num_insert_node_visited are needed to calculate the insert_avg_nodes_visited.
+ * 
+ * num_insert_nodes_visited (_Atomic uint64_t):
+ *      The number of nodes in the LFSLL visited during the most recent insert call.
+ * 
+ * num_insert_prop_cols (_Atomic uint64_t):
+ *      The number of collisions with other threads that occur when attempting to 
+ *      atomically insert a property.
+ * 
+ * num_insert_prop_success (_Atomic uint64_t):
+ *      The number of successful property insertions. Will be equal to 
+ *      H5P__insert_prop_setup__num_calls unless an error occurs during the insert 
+ *      process
+ * 
+ * num_insert_chksum_cols (_Atomic uint64_t):
+ *      The number of inserts where the property being inserted is a different version
+ *      of a property that already exists in the LFSLL of the list.
+ * 
+ * num_insert_update_entry_success (_Atomic uint64_t):
+ *      The number of successful updates to the curr field of an entry in the lkup_tbl.
+ * 
+ * num_insert_update_entry_cols (_Atomic uint64_t):
+ *      The number of collisions with other threads when trying to update the curr field
+ *      of an entry in the lkup_tbl.
+ * 
+ * 
+ * Delete Version statistics:
+ * 
+ * H5P__set_delete_version__num_calls (_Atomic uint64_t):
+ *      Tracks the number of H5P__set_delete_version() function calls.
+ * 
+ * set_delete_max_nodes_visited (_Atomic uint64_t):
+ *      Keeps track of the largest number of nodes visited in the LFSLL of the list 
+ *      during a set delete version call.
+ * 
+ * set_delete_avg_nodes_visited (_Atomic uint64_t):
+ *      This field tracks the the average number of nodes visited in the LFSLL of the 
+ *      list across all H5P__ set_delete_version() calls. Fields 
+ *      H5P__set_delete_version__num_calls and num_set_delete_nodes_visited are needed to
+ *      calculate the set_delete_avg_nodes_visited.
+ * 
+ * num_set_delete_nodes_visited (_Atomic uint64_t):
+ *      The number of nodes visited during the most recent set_delete_version call.
+ * 
+ * num_set_delete_prop_cols (_Atomic uint64_t):
+ *      The number of collisions with other threads that occur when attempting to 
+ *      atomically set the delete_version of a property.
+ * 
+ * num_set_delete_prop_success (_Atomic uint64_t):
+ *      The number of properties in the LFSLL with their delete_version set successfully.
+ *      Will be equal to H5P__set_delete_version__num_calls plus 
+ *      num_set_entry_base_delete_version unless an error occurs during 
+ *      H5P__set_delete_version().
+ * 
+ * num_set_delete_chksum_cols (_Atomic uint64_t):
+ *      The number of properties that have their delete_version set that have another 
+ *      version of the property in the LFSLL of the list.
+ * 
+ * num_set_entry_base_delete_version (_Atomic uint64_t):
+ *      The number of times the property to set the delete_version of was in the lkup_tbl
+ *      and the base was the most recent version, so the entry's base_delete_version was 
+ *      set.
+ * 
+ * num_set_delete_on_curr_entry (_Atomic uint64_t):
+ *      The number of times the property to set the delete_version of is the property 
+ *      that a lkup_tbl entry's curr.ptr points to.
+ * 
+ * num_set_delete_older_ver_than_curr (_Atomic uint64_t):
+ *      The number of times a property to set the delete_version of is an older version
+ *      of a property that a lkup_tbl's entry curr.ptr points to.
+ * 
+ * 
+ * Search statistics:
+ * 
+ * H5P__search_prop__num_calls (_Atomic uint64_t):
+ *      Tracks the number of H5P__mt_search_prop() function calls.
+ * 
+ * search_max_nodes_visited (_Atomic uint64_t):
+ *      Keeps track of the largest number of nodes visited in the LFSLL of the list 
+ *      during a search function call
+ * 
+ * search_avg_nodes_visited (_Atomic uint64_t):
+ *      This field tracks the the average number of nodes visited in the LFSLL of the 
+ *      list across all search function calls. Fields H5P__search_prop__num_calls and 
+ *      num_search_nodes_visited are needed to calculate the search_avg_nodes_visited.
+ * 
+ * num_search_nodes_visited (_Atomic uint64_t):
+ *      The number of nodes visited during the most recent search call.
+ * 
+ * num_search_success (_Atomic uint64_t):
+ *      The number of successful searches in the LFSLL for a property. Should be the same
+ *      as H5P__search_prop__num_calls plus num_search_tbl_found_base plus 
+ *      num_search_tbl_found_curr, unless an error occurs during a search.
+ * 
+ * num_search_chksum_cols (_Atomic uint64_t):
+ *      The number of searches where the property being searched for has another version 
+ *      of the property in the LFSLL of the list.
+ * 
+ * num_search_tbl_found_base (_Atomic uint64_t):
+ *      The number of searches in a list where the target property is being pointed to by
+ *      an entry in the lkup_tbl's base.ptr.
+ * 
+ * num_search_tbl_found_curr (_Atomic uint64_t):
+ *      The number of searches in a list where the target property is being pointed to by
+ *      an entry in the lkup_tbl's curr.ptr.
+ * 
+ * num_search_tbl_found_older_than_curr (_Atomic uint64_t):
+ *      The number of searches in a list where the target property is an older version of
+ *      the property that an entry in the lkup_tbl's curr.ptr is pointing to.
+ * 
+ * 
+ * Version check statistics:
+ * 
+ * num_wait_for_curr_version_to_inc (_Atomic uint64_t):
+ *      The number of times a thread is trying to modify this list's LFSLL in some 
+ *      manner and has had to wait for the curr_version of the list to increment to be 
+ *      one less than the next_version that was recieved via an atomic_fetch_add() call.
+ * 
+ * 
+ * Thread Count statistics: 
+ * 
+ * num_thrd_count_update_cols (_Atomic uint64_t):
+ *      The number of times this list goes to update its thrd->count field and a 
+ *      collision with another thread occurs.
+ * 
+ * num_thrd_count_update (_Atomic uint64_t):
+ *      The number of times this list has its thrd->count field updated.
+ * 
+ * num_thrd_closing_flag_set (_Atomic uint64_t):
+ *      The number of times a thread tried to access this list when its thrd->closing
+ *      is set to TRUE.
+ * 
+ * num_thrd_opening_flag_set (_Atomic uint64_t):
+ *      The number of times a thread tried to access this list when its thrd->opening 
+ *      is set to TRUE.
  * 
  ****************************************************************************************
  */
-#define H5P_MT_LIST_TAG         0x1012 /* 4114 */
-#define H5P_MT_LIST_INVALID_TAG 0x2022 /* 8226 */
+#define H5P_MT_LIST_TAG             0x1012 /* 4114 */
+#define H5P_MT_LIST_INVALID_TAG     0x2022 /* 8226 */
+#define H5P_MT_LIST_FL_REALLOC_TAG  0x3032 /* 12338 */
 
 typedef struct H5P_mt_list_t
 {
@@ -1295,8 +1958,8 @@ typedef struct H5P_mt_list_t
     _Atomic uint64_t num_insert_prop_cols;
     _Atomic uint64_t num_insert_prop_success;
     _Atomic uint64_t num_insert_chksum_cols;
-    _Atomic uint64_t num_insert_update_entry_cols;
     _Atomic uint64_t num_insert_update_entry_success;
+    _Atomic uint64_t num_insert_update_entry_cols;
 
     /* H5P_mt_list_t set delete version stats */
     _Atomic uint64_t H5P__set_delete_version__num_calls;
@@ -1316,6 +1979,7 @@ typedef struct H5P_mt_list_t
     _Atomic uint64_t search_avg_nodes_visited;
     _Atomic uint64_t num_search_nodes_visited;
     _Atomic uint64_t num_search_success;
+    _Atomic uint64_t num_search_chksum_cols;
     _Atomic uint64_t num_search_tbl_found_base;
     _Atomic uint64_t num_search_tbl_found_curr;
     _Atomic uint64_t num_search_tbl_found_older_than_curr;
@@ -1333,22 +1997,74 @@ typedef struct H5P_mt_list_t
 
 
 
-/**
+/****************************************************************************************
  * 
+ * Structure: H5P_mt_t
+ * 
+ * Description:
+ * 
+ *      A single, global instance of H5P_mt_t is used to handle the free lists for the 
+ *      properties (H5P_mt_prop_t struct), lists (H5P_mt_list_t struct), and classes 
+ *      (H5P_mt_class_t structs), and collects statistical variables related to the free
+ *      lists as well as statistical variables used for comparing different classes 
+ *      and lists. 
+ * 
+ * Fields:
+ * 
+ * 
+ * Property Free List statistics:
+ * 
+ * prop_fl_head_update (_Atomic uint64_t):
+ *      Number of times the head of the property free list was updated.
+ * 
+ * prop_fl_head_update_cols (_Atomic uint64_t):
+ *      Number of times a collision occured with another thread when trying to update the
+ *      head of the property free list.
+ * 
+ * prop_fl_tail_update (_Atomic uint64_t):
+ *      Number of times the tail of the property free list was updated.
+ * 
+ * prop_fl_tail_update_cols (_Atomic uint64_t):
+ *      Number of times a collision occured with another thread when trying to update the
+ *      tail of the property free list.
+ * 
+ * prop_fl_next_update (_Atomic uint64_t):
+ *      Number of times a the next.ptr of a property on the property free list gets 
+ *      updated.
+ * 
+ * prop_fl_next_update_cols (_Atomic uint64_t):
+ *      Number of times a collision occured with another thread when trying to update the
+ *      next.ptr of a property on the property free list.
+ * 
+ * 
+ * List Free List statistics:
+ *      TODO: list free list stats
+ * 
+ * Class Free List statistics:
+ *      TODO: class free list stats
+ * 
+ * 
+ * Clear Function Statistics: 
+ * 
+ *      
+ * 
+ ****************************************************************************************
  */
 typedef struct H5P_mt_t
 {
-    _Atomic H5P_mt_prop_aptr_t  prop_fl_head;
-    _Atomic H5P_mt_prop_aptr_t  prop_fl_tail;
-    _Atomic uint64_t            prop_fl_len;
-    
-    _Atomic H5P_mt_class_sptr_t class_fl_head;
-    _Atomic H5P_mt_class_sptr_t class_fl_tail;
-    _Atomic uint64_t            class_fl_len;
+    _Atomic uint32_t        active_threads;
 
-    _Atomic H5P_mt_list_sptr_t  list_fl_head;
-    _Atomic H5P_mt_list_sptr_t  list_fl_tail;
-    _Atomic uint64_t            list_fl_len;
+    _Atomic H5P_mt_prop_t  * prop_fl_head;
+    _Atomic H5P_mt_prop_t  * prop_fl_tail;
+    _Atomic uint64_t         prop_fl_len;
+    
+    _Atomic H5P_mt_class_t * class_fl_head;
+    _Atomic H5P_mt_class_t * class_fl_tail;
+    _Atomic uint64_t         class_fl_len;
+
+    _Atomic H5P_mt_list_t  * list_fl_head;
+    _Atomic H5P_mt_list_t  * list_fl_tail;
+    _Atomic uint64_t         list_fl_len;
 
     /* stats */
 
@@ -1360,6 +2076,22 @@ typedef struct H5P_mt_t
     _Atomic uint64_t prop_fl_next_update;
     _Atomic uint64_t prop_fl_next_update_cols;
     _Atomic uint64_t num_props_added_to_fl;
+
+    _Atomic uint64_t class_fl_head_update;
+    _Atomic uint64_t class_fl_head_update_cols;
+    _Atomic uint64_t class_fl_tail_update;
+    _Atomic uint64_t class_fl_tail_update_cols;
+    _Atomic uint64_t class_fl_next_update;
+    _Atomic uint64_t class_fl_next_update_cols;
+    _Atomic uint64_t num_class_added_to_fl;
+
+    _Atomic uint64_t list_fl_head_update;
+    _Atomic uint64_t list_fl_head_update_cols;
+    _Atomic uint64_t list_fl_tail_update;
+    _Atomic uint64_t list_fl_tail_update_cols;
+    _Atomic uint64_t list_fl_next_update;
+    _Atomic uint64_t list_fl_next_update_cols;
+    _Atomic uint64_t num_list_added_to_fl; 
 
     /* stats for the clear functions */
     _Atomic uint64_t num_classes_freed;
