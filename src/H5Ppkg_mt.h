@@ -529,12 +529,12 @@ typedef struct H5P_mt_prop_value_t
 #define H5P_MT_PROP_TAG             0x1010 /* 4112 */
 #define H5P_MT_PROP_VALID_ONFL_TAG  0X3030 /* 12336 */
 #define H5P_MT_PROP_INVALID_TAG     0x2020 /* 8224 */
-#define H5P_MT_CLASS_FL_REALLOC_TAG 0x4040 /* 16448 */
+#define H5P_MT_PROP_FL_REALLOC_TAG  0x4040 /* 16448 */
 
 
 typedef struct H5P_mt_prop_t
 {
-    uint32_t                    tag;
+    _Atomic uint32_t            tag;
     
     _Atomic H5P_mt_prop_aptr_t  next;
 
@@ -1279,7 +1279,7 @@ typedef struct H5P_mt_class_sptr_t
 
 typedef struct H5P_mt_class_t
 {
-    uint32_t           tag;
+    _Atomic uint32_t   tag;
 
     /* fields related to the parent class */
     hid_t              parent_id;
@@ -1299,15 +1299,15 @@ typedef struct H5P_mt_class_t
     _Atomic uint32_t   phys_pl_len;
 
     /* reference counts */
-    _Atomic H5P_mt_class_ref_counts_t ref_count;
+    _Atomic H5P_mt_class_ref_counts_t    ref_count;
 
     /* Callback function pointers and info */
-    H5P_cls_create_func_t   create_func;
-    void                  * create_data;
-    H5P_cls_copy_func_t     copy_func;
-    void                  * copy_data;
-    H5P_cls_close_func_t    close_func;
-    void                  * close_data;
+    H5P_cls_create_func_t                create_func;
+    void                               * create_data;
+    H5P_cls_copy_func_t                  copy_func;
+    void                               * copy_data;
+    H5P_cls_close_func_t                 close_func;
+    void                               * close_data;
 
     /* Shutdown and free list management fields */
     _Atomic H5P_mt_active_thread_count_t thrd;
@@ -1918,7 +1918,7 @@ typedef struct H5P_mt_list_table_entry_t
 
 typedef struct H5P_mt_list_t
 {
-    uint32_t                    tag;
+    _Atomic uint32_t            tag;
 
     /* Fields related to the parent class*/
     hid_t                       pclass_id;
@@ -2052,19 +2052,19 @@ typedef struct H5P_mt_list_t
  */
 typedef struct H5P_mt_t
 {
-    _Atomic uint32_t        active_threads;
+    _Atomic uint32_t            active_threads;
 
-    _Atomic H5P_mt_prop_t  * prop_fl_head;
-    _Atomic H5P_mt_prop_t  * prop_fl_tail;
-    _Atomic uint64_t         prop_fl_len;
+    _Atomic H5P_mt_prop_aptr_t  prop_fl_head;
+    _Atomic H5P_mt_prop_aptr_t  prop_fl_tail;
+    _Atomic uint64_t            prop_fl_len;
     
-    _Atomic H5P_mt_class_t * class_fl_head;
-    _Atomic H5P_mt_class_t * class_fl_tail;
-    _Atomic uint64_t         class_fl_len;
+    _Atomic H5P_mt_class_sptr_t class_fl_head;
+    _Atomic H5P_mt_class_sptr_t class_fl_tail;
+    _Atomic uint64_t            class_fl_len;
 
-    _Atomic H5P_mt_list_t  * list_fl_head;
-    _Atomic H5P_mt_list_t  * list_fl_tail;
-    _Atomic uint64_t         list_fl_len;
+    _Atomic H5P_mt_list_sptr_t  list_fl_head;
+    _Atomic H5P_mt_list_sptr_t  list_fl_tail;
+    _Atomic uint64_t            list_fl_len;
 
     /* stats */
 

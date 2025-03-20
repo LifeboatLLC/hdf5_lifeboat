@@ -40,6 +40,7 @@ void simple_test_1(void)
     uint64_t                  prop2_create_ver;
     uint64_t                  curr_version;
     uint64_t                  next_version;
+    //H5P_mt_class_sptr_t       fl_class_head;
     H5P_mt_class_t          * root_class;
     H5P_mt_class_t          * new_class;
     const char              * new_class_name;
@@ -57,7 +58,9 @@ void simple_test_1(void)
 
     H5P_mt_init();
 
-    root_class = atomic_load(&(H5P_mt_g.class_fl_head));
+    //fl_class_head = atomic_load(&(H5P_mt_g.class_fl_head));
+
+    root_class = H5P_mt_rootcls_g;
 
     assert(root_class);
     assert(root_class->tag == H5P_MT_CLASS_TAG);
@@ -333,7 +336,7 @@ void simple_test_1(void)
     assert( 4 == (atomic_load(&(second_prop->delete_version))));
 
 
-
+#if 0
     /* Testing H5P__clear_mt_list() */
 
     check_value = H5P__clear_mt_list(new_list);
@@ -351,6 +354,17 @@ void simple_test_1(void)
 
     check_value = H5P__clear_prop_free_list();
     assert(check_value >= 0);
+#endif
+    check_value = H5P__mt_close_list(new_list);
+    assert(check_value >= 0);
+
+    check_value = H5P__mt_close_class(new_class);
+    assert(check_value >= 0);
+
+    check_value = H5P__mt_close_class(root_class);
+    assert(check_value >= 0);
+
+    H5P__shutdown();
 
 
 } /* end simple_test_1() */
@@ -370,6 +384,7 @@ void simple_test_1(void)
  */
 void serial_class_test(void)
 {
+    //H5P_mt_class_sptr_t          fl_class_head;
     H5P_mt_class_t             * root_class;
     H5P_mt_class_t             * att_class;
     H5P_mt_class_t             * group_class;
@@ -387,6 +402,7 @@ void serial_class_test(void)
     H5P_mt_prop_value_t          prop_value;
     uint32_t                     log_pl_len;
     uint32_t                     phys_pl_len;
+    int32_t                      check_value;
 
 
 
@@ -396,7 +412,9 @@ void serial_class_test(void)
     /* Initializes the root class which is needed as a base for H5P_mt */
     H5P_mt_init();
 
-    root_class = atomic_load(&(H5P_mt_g.class_fl_head));
+    //fl_class_head = atomic_load(&(H5P_mt_g.class_fl_head));
+
+    root_class = H5P_mt_rootcls_g;
 
     assert(root_class);
     assert(root_class->tag == H5P_MT_CLASS_TAG);
@@ -722,9 +740,20 @@ void serial_class_test(void)
         
     } /* end for() */
 
+#if 0
     H5P__clear_mt_class(group_class);
     H5P__clear_mt_class(att_class);
     H5P__clear_mt_class(root_class);
+#endif 
+    check_value = H5P__mt_close_class(group_class);
+    assert(check_value >= 0);
+
+    check_value = H5P__mt_close_class(att_class);
+    assert(check_value >= 0);
+
+    check_value = H5P__mt_close_class(root_class);
+
+    H5P__shutdown();
     
 } /* end serial_class_test() */
 
@@ -735,6 +764,7 @@ void serial_class_test(void)
  */
 void serial_list_test(void)
 {
+    //H5P_mt_class_sptr_t          fl_class_head;
     H5P_mt_class_t             * root_class;
     H5P_mt_class_t             * att_class;
     H5P_mt_list_t              * test_list;
@@ -754,6 +784,7 @@ void serial_list_test(void)
     uint32_t                     phys_pl_len;
     H5P_mt_list_table_entry_t  * entry;
     H5P_mt_list_prop_ref_t       base;
+    int32_t                      check_value;
 
 
 
@@ -764,7 +795,9 @@ void serial_list_test(void)
     /* Initializes H5P multithread */
     H5P_mt_init();
 
-    root_class = atomic_load(&(H5P_mt_g.class_fl_head));
+    //fl_class_head = atomic_load(&(H5P_mt_g.class_fl_head));
+
+    root_class = H5P_mt_rootcls_g;
 
     assert(root_class);
     assert(root_class->tag == H5P_MT_CLASS_TAG);
@@ -1269,11 +1302,21 @@ void serial_list_test(void)
 
     } /* end for() */
 
-
+#if 0
     H5P__clear_mt_list(test_list);
     H5P__clear_mt_class(att_class);
     H5P__clear_mt_class(root_class);
+#endif
+    check_value = H5P__mt_close_list(test_list);
+    assert(check_value >= 0);
 
+    check_value = H5P__mt_close_class(att_class);
+    assert(check_value >= 0);
+
+    check_value = H5P__mt_close_class(root_class);
+    assert(check_value >= 0);
+
+    H5P__shutdown();
 
 } /* serial_list_test() */
 
