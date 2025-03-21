@@ -1345,7 +1345,7 @@ typedef struct H5P_mt_class_t
     _Atomic uint64_t num_wait_for_curr_version_to_inc;
 
     /* H5P_mt_active_thread_count_t stats */
-    _Atomic uint64_t num_thrd_count_update_cols;
+    _Atomic uint64_t num_thrd_update_cols;
     _Atomic uint64_t num_thrd_count_update;
     _Atomic uint64_t num_thrd_closing_flag_set;
     _Atomic uint64_t num_thrd_opening_flag_set;
@@ -1988,7 +1988,7 @@ typedef struct H5P_mt_list_t
     _Atomic uint64_t num_wait_for_curr_version_to_inc;
 
     /* H5P_mt_active_thread_count_t stats */
-    _Atomic uint64_t num_thrd_count_update_cols;
+    _Atomic uint64_t num_thrd_update_cols;
     _Atomic uint64_t num_thrd_count_update;
     _Atomic uint64_t num_thrd_closing_flag_set;
     _Atomic uint64_t num_thrd_opening_flag_set;

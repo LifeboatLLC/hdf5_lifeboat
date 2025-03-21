@@ -707,8 +707,8 @@ H5P__mt_alloc_class(void)
     head_class = fl_head.ptr;
 
     /* If allocating root class or no class structs are reallocable, alloc from memory */
-    if ( ( atomic_load(&(head_class->tag)) != H5P_MT_CLASS_FL_REALLOC_TAG ) ||
-           head_class == NULL )
+    if ( head_class == NULL || 
+        ( atomic_load(&(head_class->tag)) != H5P_MT_CLASS_FL_REALLOC_TAG ) )
     {
         new_class = (H5P_mt_class_t *)malloc(sizeof(H5P_mt_class_t));
         if ( NULL == new_class )
@@ -1029,8 +1029,7 @@ H5P__mt_alloc_list(void)
 
     head_list = fl_head.ptr;
 
-    if ( (atomic_load(&(head_list->tag)) != H5P_MT_LIST_FL_REALLOC_TAG ) ||
-         head_list == NULL )
+    if ( head_list == NULL || (atomic_load(&(head_list->tag)) != H5P_MT_LIST_FL_REALLOC_TAG ) )
     {
         new_list = (H5P_mt_list_t *)malloc(sizeof(H5P_mt_list_t));
         if ( NULL == new_list )
@@ -1192,8 +1191,9 @@ H5P__init_lkup_tbl(H5P_mt_class_t *parent, uint64_t version, H5P_mt_list_t *list
             entry->name   = strdup(valid_prop->name);
 
             /**
-             * If valid_prop has the create or copy callback create a new_prop,
-             * insert it into the LFSLL, and have the curr.ptr point to it.
+             * If valid_prop has the create or copy callback create a new_prop struct
+             * as a copy of valid_prop, insert it in the LFSLL, and set curr.ptr to 
+             * point to it.
              */
             if ( valid_prop->create || valid_prop->copy )
             {
@@ -1213,6 +1213,14 @@ H5P__init_lkup_tbl(H5P_mt_class_t *parent, uint64_t version, H5P_mt_list_t *list
                     HGOTO_ERROR(H5E_PLIST, H5E_CANTINIT, FAIL, 
                                 "Failed creating property for property list.");
 
+                /* Call the copy callback */
+                if ( (new_prop->copy)(new_prop->name, valid_prop_value.size, 
+                                                      valid_prop_value.ptr) < 0 )
+                {
+                    assert(H5P_MT_ASSERT_FAIL);
+                    HGOTO_ERROR(H5E_PLIST, H5E_CANTCOPY, FAIL, "Can't copy property");
+                }
+
                 /* Inserts the new_prop into the new_class's LFSLL */
                 H5P__mt_ins_or_mod_prop__lfsll_ins(list->pl_head,
                                                    new_prop,
@@ -1226,6 +1234,7 @@ H5P__init_lkup_tbl(H5P_mt_class_t *parent, uint64_t version, H5P_mt_list_t *list
                 curr.ptr = new_prop;
                 curr.ver = 1;
                 atomic_store(&(entry->curr), curr);
+
 
             }
             /* Else set the base.ptr to point to the prop in the parent's LFSLL */
@@ -3609,18 +3618,34 @@ H5P__add_prop_onfl(H5P_mt_prop_t *prop)
  * 
  * Purpose:     Multithread safe function to close a property list class.
  * 
- *              First check that there are no threads currently active in the structure, 
- *              and that there aren't any existing classes or lists derived from this 
- *              class. 
+ *              First check if the class is already marked deleted, and if it isn't mark
+ *              it deleted.
  * 
- *              If those are true, we decrement the plc of this class's parent (if 
- *              applicable), and then add this class to the head of the class free list 
- *              instead of freeing the struct.
+ *              Then check if it's marked as closing and if it already is, throw an 
+ *              error, because it shouldn't be marked as closing until it is actually
+ *              being closed. 
+ * 
+ *              Check to see if the class is ready to be closed, by checking the ref
+ *              counts for derived classes and lists. If one or both ref counts are
+ *              not at zero, then we must exit and when a ref count gets decremented
+ *              it will check again.
+ * 
+ *              If both ref counts are zero, we will now mark it as closing. This will 
+ *              prevent more threads from accessing the struct so it can close when any
+ *              other current threads in the struct exit. We then check if it's opening
+ *              or contains other threads. If either are true we sleep and check again.
+ * 
+ *              When opening is FALSE and there are no other threads in the struct, we 
+ *              decrement the parent's ref count for derived classes and then add this
+ *              struct to the head of the class free list.
  * 
  *              We do this so if in the future we need to allocate another class struct,
  *              we can instead reuse this existing one. The struct will be cleared of 
  *              any data before being reallocated, but we leave the data as is for now as
- *              a safety precaution.
+ *              a safety precaution, in case some thread still needs to get access it.
+ * 
+ *              Lastly we set the closing flag back to FALSE, now that the class is 
+ *              finished closing and is on the free list.
  * 
  * 
  * Return:      SUCCEED/FAIL    
@@ -3635,7 +3660,7 @@ H5P__mt_close_class(H5P_mt_class_t * class)
     H5P_mt_class_sptr_t          fl_next;
     H5P_mt_class_sptr_t          fl_update_head;
     H5P_mt_class_sptr_t          class_next;
-    H5P_mt_active_thread_count_t thrd;
+    H5P_mt_active_thread_count_t local_thrd;
     H5P_mt_active_thread_count_t closing_thrd;
     H5P_mt_class_ref_counts_t    ref_count;
     H5P_mt_class_ref_counts_t    update_rc;  /* rc = ref_count */
@@ -3649,119 +3674,183 @@ H5P__mt_close_class(H5P_mt_class_t * class)
     assert(class);
     assert(atomic_load(&(class->tag)) == H5P_MT_CLASS_TAG);
 
-    do 
-    { 
-        thrd = atomic_load(&(class->thrd));
-        ref_count = atomic_load(&(class->ref_count));
+    ref_count = atomic_load(&(class->ref_count));
 
-        assert(thrd.count == 0);
-        assert(thrd.opening == FALSE);
-        assert(thrd.closing == FALSE);
-
-        assert(ref_count.pl == 0);
-        assert(ref_count.plc == 0);
-        assert( ! ref_count.deleted );
-
-        closing_thrd = thrd;
-        closing_thrd.closing = TRUE;
-
-        if ( ! atomic_compare_exchange_strong(&(class->thrd), &thrd, closing_thrd))
-        {
-            assert(H5P_MT_ASSERT_FAIL);
-            HGOTO_ERROR(H5E_PLIST, H5E_BADVALUE, FAIL, 
-                        "Class's opening or closing flag is set and shouldn't be.");
-        }
-
-        update_rc = ref_count;
-        update_rc.deleted = TRUE;
-
-        if ( ! atomic_compare_exchange_strong(&(class->ref_count),
-                                              &ref_count, update_rc))
-        {
-            /* failed, update stats */
-            atomic_fetch_add(&(class->num_ref_count_cols), 1);
-        }
-        else
-        {
-            /* success, update stats */
-            atomic_fetch_add(&(class->num_ref_count_update), 1);
-
-            done = TRUE;
-        }
-
-    } while ( ! done );
-
-    assert(done);
-
-    done = FALSE;
-
-    if ( class->parent_ptr )
+    /* If deleted is not already TRUE, set it to TRUE atomically */
+    if ( ! ref_count.deleted )
     {
-        parent = class->parent_ptr;
-        assert(parent);
-        assert(atomic_load(&(parent->tag)) == H5P_MT_CLASS_TAG);
-
-        /* update parent's thrd count */
-        if ( H5P__inc_thrd_count(parent) < 0) 
-            HGOTO_ERROR(H5E_PLIST, H5E_BADVALUE, FAIL, 
-                        "Couldn't increment parent's thread count.");
-        
-        inc_thrd_flag = TRUE;
-
-        /* update parent's ref count of derived classes */
-        if ( H5P__dec_ref_count(parent, TRUE) < 0 )
-            HGOTO_ERROR(H5E_PLIST, H5E_BADVALUE, FAIL, 
-                        "Couldn't decrement parent's plc ref count."); 
-
-        
-
-    } /* end if ( class->parent_ptr ) */
-
-
-    /* Atomically adds the class to the class free list */
-    do
-    {
-        fl_head = atomic_load(&(H5P_mt_g.class_fl_head));
-
-        class_next = atomic_load(&(class->fl_next));
-
-        /* update the class's fl_next fields */
-        fl_next.ptr = fl_head.ptr;
-        fl_next.sn  = class_next.sn + 1;
-        atomic_store(&(class->fl_next), fl_next);
-
-        /* update the head of the class free list */
-        fl_update_head.ptr = class;
-        fl_update_head.sn  = fl_head.sn + 1;
-
-        if ( ! atomic_compare_exchange_strong(&(H5P_mt_g.class_fl_head), 
-                                                &fl_head, fl_update_head))
+        do
         {
-            /* failed, updated stats and try again */
-            atomic_fetch_add(&(H5P_mt_g.class_fl_head_update_cols), 1);
-        }
-        else
-        {
-            /* success, update stats and continue */
-            atomic_fetch_add(&(H5P_mt_g.class_fl_head_update), 1);
-            atomic_fetch_add(&(H5P_mt_g.num_class_added_to_fl), 1);
+            ref_count = atomic_load(&(class->ref_count));
 
-            atomic_fetch_add(&(H5P_mt_g.class_fl_len), 1);
+            update_rc = ref_count;
+            update_rc.deleted = TRUE;
 
-            done = TRUE;
-        }
+            if ( ! atomic_compare_exchange_strong(&(class->ref_count),
+                                                &ref_count, update_rc))
+            {
+                /* failed, update stats */
+                atomic_fetch_add(&(class->num_ref_count_cols), 1);
+            }
+            else
+            {
+                /* success, update stats */
+                atomic_fetch_add(&(class->num_ref_count_update), 1);
 
-    } while ( ! done );
+                done = TRUE;
+            }
 
-done:
+        } while ( ! done );
 
-    thrd = atomic_load(&(class->thrd));
-    if ( thrd.closing )
+        assert(done);
+
+        done = FALSE;
+
+    } /* end if ( ! ref_count.deleted ) */
+
+
+
+    /* If closing is already TRUE, throw an error */
+
+    local_thrd = atomic_load(&(class->thrd));
+
+    if ( local_thrd.closing )
     {
-        closing_thrd.closing = FALSE;
-        atomic_store(&(class->thrd), closing_thrd);
+        assert(H5P_MT_ASSERT_FAIL);
+        HGOTO_ERROR(H5E_PLIST, H5E_BADVALUE, FAIL, 
+                    "Closing flag is set when it shouldn't be.");
     }
 
+
+
+    /**
+     * If there are no active derived lists or classes, we can close this class.
+     * Else, we must check again when a derived list or class count gets decremented.
+     */
+    if ( ref_count.pl == 0 && ref_count.plc == 0 && ref_count.deleted )
+    {
+        /* Set the closing flag to TRUE to prevent new threads from entering the struct */
+        do 
+        {
+            assert(local_thrd.opening == FALSE);
+            assert(local_thrd.count == 0);
+
+            closing_thrd = local_thrd;
+            closing_thrd.closing = TRUE;
+
+            /* Atomically update closing flag to TRUE */
+            if ( ! atomic_compare_exchange_strong(&(class->thrd), &local_thrd, closing_thrd))
+            {
+                /* failed, update stats and try again */
+                atomic_fetch_add(&(class->num_thrd_update_cols), 1);
+            }
+            else
+            {
+                /* success, update stats and mark done */
+                atomic_fetch_add(&(class->num_thrd_closing_flag_set), 1);
+
+                done = TRUE;
+            }
+
+        } while ( ! done );
+
+        assert(done);
+        done = FALSE;
+
+        /* If the struct is opening or has other threads wait and try again */
+        do 
+        {
+            /* If opening is TRUE, sleep and try again */
+            if ( local_thrd.opening )
+            {
+                atomic_fetch_add(&(class->num_thrd_opening_flag_set), 1);
+                sleep(1);
+            }
+            /* If there are any other threads in the struct, wait for them to drain out */
+            else if ( local_thrd.count > 0 )
+            {
+                sleep(1);
+            }
+            else
+            {
+                done = TRUE;
+            }
+
+            local_thrd = atomic_load(&(class->thrd));
+
+        } while ( ! done );
+
+        assert(done);
+        done = FALSE;
+
+
+        local_thrd = atomic_load(&(class->thrd));
+        assert(local_thrd.opening == FALSE);
+        assert(local_thrd.closing == TRUE);
+        assert(local_thrd.count == 0);
+
+
+        /* Decrement the parents ref count for derived classes */
+        if ( class->parent_ptr )
+        {
+            parent = class->parent_ptr;
+            assert(parent);
+            assert(atomic_load(&(parent->tag)) == H5P_MT_CLASS_TAG);
+
+            /* update parent's thrd count */
+            if ( H5P__inc_thrd_count(parent) < 0) 
+                HGOTO_ERROR(H5E_PLIST, H5E_BADVALUE, FAIL, 
+                            "Couldn't increment parent's thread count.");
+            
+            inc_thrd_flag = TRUE;
+
+            /* update parent's ref count of derived classes */
+            if ( H5P__dec_ref_count(parent, TRUE) < 0 )
+                HGOTO_ERROR(H5E_PLIST, H5E_BADVALUE, FAIL, 
+                            "Couldn't decrement parent's plc ref count."); 
+
+        } /* end if ( class->parent_ptr ) */
+
+
+        /* Atomically adds the class to the class free list */
+        do
+        {
+            fl_head = atomic_load(&(H5P_mt_g.class_fl_head));
+
+            class_next = atomic_load(&(class->fl_next));
+
+            /* update the class's fl_next fields */
+            fl_next.ptr = fl_head.ptr;
+            fl_next.sn  = class_next.sn + 1;
+            atomic_store(&(class->fl_next), fl_next);
+
+            /* update the head of the class free list */
+            fl_update_head.ptr = class;
+            fl_update_head.sn  = fl_head.sn + 1;
+
+            if ( ! atomic_compare_exchange_strong(&(H5P_mt_g.class_fl_head), 
+                                                    &fl_head, fl_update_head))
+            {
+                /* failed, updated stats and try again */
+                atomic_fetch_add(&(H5P_mt_g.class_fl_head_update_cols), 1);
+            }
+            else
+            {
+                /* success, update stats and continue */
+                atomic_fetch_add(&(H5P_mt_g.class_fl_head_update), 1);
+                atomic_fetch_add(&(H5P_mt_g.num_class_added_to_fl), 1);
+
+                atomic_fetch_add(&(H5P_mt_g.class_fl_len), 1);
+
+                done = TRUE;
+            }
+
+        } while ( ! done );
+
+
+    }
+
+done:
 
     /* update parent's thrd count */
     if ( parent != NULL && inc_thrd_flag )
@@ -3769,6 +3858,13 @@ done:
         if ( 0 > H5P__dec_thrd_count(parent) )
             HDONE_ERROR(H5E_PLIST, H5E_BADVALUE, FAIL, 
                         "Failure to decrement thrd_count.");
+    }
+
+    local_thrd = atomic_load(&(class->thrd));
+    if ( local_thrd.closing )
+    {
+        closing_thrd.closing = FALSE;
+        atomic_store(&(class->thrd), closing_thrd);
     }
 
 
@@ -3781,66 +3877,37 @@ done:
 /****************************************************************************************
  * Function:    H5P__clear_mt_class
  *
- * Purpose:     Frees all properties in a property list class and then frees the class. 
+ * Purpose:     Frees all allocated memory in the class and clears all fields
  *
  *              This function first makes sure that no other thread is accessing this
  *              class struct, and then sets the tag to H5P_MT_CLASS_INVALID_TAG to mark 
  *              that this class is no longer valid for threads to access. 
  * 
- *              This function sets its thrd.closing to TRUE, adds all properties to the 
- *              property free list, free itself, and then decrements it's parent's 
- *              plc count.
+ *              Then it frees its name, adds all properties to the property free list, 
+ *              and resets all of its stats fields.
  * 
  *
- * Return:      SUCCEED/FAIL    
+ * Return:      Success: Returns a pointer to the class after all data being cleared.
+ * 
+ *              Failure: NULL
  *
  ****************************************************************************************
  */
 H5P_mt_class_t *
 H5P__clear_mt_class(H5P_mt_class_t *class)
 {
-    //H5P_mt_class_t             * parent;
     H5P_mt_active_thread_count_t thrd;
-    //H5P_mt_active_thread_count_t closing_thrd;
     H5P_mt_prop_t              * first_prop;
     H5P_mt_prop_aptr_t           next_ptr;
     H5P_mt_class_ref_counts_t    ref_count;
     hid_t                        null_list_id = 0;
     uint32_t                     phys_pl_len;
     uint32_t                     i;
-    //bool                         inc_thrd_flag = FALSE;
-    //bool                         done = FALSE;
-    //bool                         plc = TRUE;
 
     H5P_mt_class_t             * ret_value;
 
     FUNC_ENTER_PACKAGE
 
-#if 0
-    parent = class->parent_ptr; 
-
-    /* If parent is NULL, then this is the root class */
-    if ( ! parent )
-    {
-        done = TRUE;
-    }
-    else
-    {
-        /* Increment parent's thrd count */
-        if ( H5P__inc_thrd_count(parent) < 0 )
-            HGOTO_ERROR(H5E_PLIST, H5E_BADTYPE, NULL, 
-                        "Couldn't increment parent's thread count.");
-        else
-            inc_thrd_flag = TRUE;
-
-        done = TRUE;
-    }
-
-    assert(done);
-#endif
-
-
-    /* Free the structures inside the class and then the class itself */
 
     thrd = atomic_load(&(class->thrd));
 
@@ -3853,7 +3920,7 @@ H5P__clear_mt_class(H5P_mt_class_t *class)
     assert(ref_count.plc == 0);
 
 
-    /* Set lists fields for deletion */
+    /* Clears the class's fields */
 
     /** TODO: turn this into an atomic_compare_strong() */
     atomic_store(&(class->tag), H5P_MT_CLASS_INVALID_TAG);
@@ -3906,37 +3973,11 @@ H5P__clear_mt_class(H5P_mt_class_t *class)
         HGOTO_ERROR(H5E_PLIST, H5E_BADVALUE, NULL, 
                     "Failed resetting stats fields.");
 
-    //free(class);
-        
-#if 0
-        /* If parent is NULL, then this is the root class */
-        if ( ! parent )
-        {
-            done = TRUE;
-        }
-        /* Otherwise, decrement the parent's ref_count and active threads count */
-        else
-        {
-            H5P__dec_ref_count(parent, plc);
-
-        } /* end else () */
-#endif
-
 
     /* update stats */
     atomic_fetch_add(&(H5P_mt_g.num_classes_freed), 1);
 
 done:
-
-#if 0
-    /* update parent's thrd count */
-    if ( parent != NULL && inc_thrd_flag )
-    {
-        if ( 0 > H5P__dec_thrd_count(parent) )
-            HDONE_ERROR(H5E_PLIST, H5E_BADVALUE, NULL, 
-                        "Failure to decrement parent's thrd_count.");
-    }
-#endif
 
     ret_value = class;
 
@@ -3950,12 +3991,24 @@ done:
  * Function:    H5P__mt_close_list
  * 
  * Purpose:     Multithread safe function to close a property list
- *               
- *              First check that there are no threads currently active in the structure.
+ *              
+ *              First we check if the list is already marked closing and if it throw an
+ *              error, because it shouldn't be marked closing until it is actually 
+ *              closing.
  * 
- *              If there isn't, we decrement the pl ref count of this lists's parent, 
- *              then add this list to the head of the list free list instead of freeing 
- *              the struct.
+ *              Then we set closing to TRUE, and check if opening is TRUE, or if there
+ *              are other threads in this struct, and if so we loop and check again.
+ * 
+ *              When opening is FALSE and there are no other threads in the struct, we
+ *              check if the property list initialization function completed. If so call
+ *              the close callback (cb) on the parent class.
+ *  
+ *              Next iterate the lkup_tbl and if base.ptr is not NULL and the property
+ *              has the close cb, we call it. Then iterate the LFSLL and do the same
+ *              thing, if the property has the close cb call it. 
+ * 
+ *              Decrement the pl ref count of this lists's parent, then add this list to 
+ *              the head of the list free list instead of freeing the struct.
  * 
  *              We do this so if in the future we need to allocate another list struct,
  *              we can instead reuse this existing one. The struct will be cleared of 
@@ -3983,6 +4036,8 @@ H5P__mt_close_list(H5P_mt_list_t * list)
     H5P_mt_prop_t              * prop;
     H5P_mt_prop_aptr_t           next_prop;
     H5P_mt_prop_value_t          prop_value;
+    uint64_t                     list_version;
+    uint64_t                     delete_version;
     bool                         done = FALSE;
     bool                         inc_thrd_flag = FALSE;
     
@@ -3993,25 +4048,56 @@ H5P__mt_close_list(H5P_mt_list_t * list)
     assert(list);
     assert(atomic_load(&(list->tag)) == H5P_MT_LIST_TAG);
 
-    /* Ensure struct isn't opening or closing, and that it's empty of threads */
+
+    local_thrd = atomic_load(&(list->thrd));
+
+    /* If closing is already TRUE, throw an error */
+    if ( local_thrd.closing )
+    {
+        assert(H5P_MT_ASSERT_FAIL);
+        HGOTO_ERROR(H5E_PLIST, H5E_BADVALUE, FAIL, 
+                    "Closing flag is set when it shouldn't be.");
+    }
+
+    /* Atomically set the closing to be TRUE */
     do
     {
-        local_thrd = atomic_load(&(list->thrd));
+        assert(local_thrd.opening == FALSE);
+        assert(local_thrd.count == 0);
 
-        /* If closing is TRUE, throw an error */
-        if ( local_thrd.closing )
+        closing_thrd = local_thrd;
+        closing_thrd.closing = TRUE;
+
+        /* Atomically update closing flag to TRUE */
+        if ( ! atomic_compare_exchange_strong(&(list->thrd), &local_thrd, closing_thrd))
         {
-            assert(H5P_MT_ASSERT_FAIL);
-            HGOTO_ERROR(H5E_PLIST, H5E_BADVALUE, FAIL, 
-                        "Closing flag is set when it shouldn't be.");
+            /* failed, update stats and try again */
+            atomic_fetch_add(&(list->num_thrd_update_cols), 1);
         }
+        else
+        {
+            /* success, update stats and mark done */
+            atomic_fetch_add(&(list->num_thrd_closing_flag_set), 1);
+
+            done = TRUE;
+        }
+        
+    } while ( ! done );
+
+    assert(done);
+    done = FALSE;
+
+
+    /* Ensure struct isn't opening, and that it's empty of other threads */
+    do
+    {
         /* If opening is TRUE, sleep and try again */
-        else if ( local_thrd.opening )
+        if ( local_thrd.opening )
         {
             atomic_fetch_add(&(list->num_thrd_opening_flag_set), 1);
             sleep(1);
         }
-        /* If there are any threads in the struct, wait for them to drain out */
+        /* If there are any other threads in the struct, wait for them to drain out */
         else if ( local_thrd.count > 0 )
         {
             sleep(1);
@@ -4021,29 +4107,13 @@ H5P__mt_close_list(H5P_mt_list_t * list)
             done = TRUE;
         }
 
-    } while ( ! done );
+        local_thrd = atomic_load(&(list->thrd));
 
-
-    /* Atomically set the closing to be TRUE */
-    do
-    {
-        closing_thrd = local_thrd;
-        closing_thrd.closing = TRUE;
-
-        if ( ! atomic_compare_exchange_strong(&(list->thrd), &local_thrd, closing_thrd))
-        {
-            assert(H5P_MT_ASSERT_FAIL);
-            HGOTO_ERROR(H5E_PLIST, H5E_BADVALUE, FAIL, 
-                        "List's opening or closing flag is set and shouldn't be.");
-        }
-        else
-        {
-            done = TRUE;
-        }
-        
     } while ( ! done );
 
     assert(done);
+    done = FALSE;
+
 
     local_thrd = atomic_load(&(list->thrd));
     assert(local_thrd.opening == FALSE);
@@ -4058,34 +4128,31 @@ H5P__mt_close_list(H5P_mt_list_t * list)
         assert(parent);
         assert(atomic_load(&(parent->tag)) == H5P_MT_CLASS_TAG);
 
-        /* Call the class close callback, if needed, up the family tree */
-        while ( parent ) 
-        {
-            /* update parent's thrd count */
-            if ( H5P__inc_thrd_count(parent) < 0) 
-                HGOTO_ERROR(H5E_PLIST, H5E_BADVALUE, FAIL, 
-                            "Couldn't increment parent's thread count.");
-            
-            inc_thrd_flag = TRUE;
+        /* Call the class close callback on the parent, if needed */
 
-
-            if ( parent->close_func )
-            {
-                (parent->close_func)(list->plist_id, parent->close_data);
-            }
-
-            /* Decrement the thrd count as we move on to this class's parent */
-            if ( 0 > H5P__dec_thrd_count(parent) )
-                HDONE_ERROR(H5E_PLIST, H5E_BADVALUE, FAIL, 
-                            "Failure to decrement parent's thrd_count.");
-
-            inc_thrd_flag = FALSE;
-
-            parent = parent->parent_ptr;
+        /* update parent's thrd count */
+        if ( H5P__inc_thrd_count(parent) < 0) 
+            HGOTO_ERROR(H5E_PLIST, H5E_BADVALUE, FAIL, 
+                        "Couldn't increment parent's thread count.");
         
-        } /* end while ( parent) */ 
+        inc_thrd_flag = TRUE;
 
+        /* class close callback */
+        if ( parent->close_func )
+        {
+            (parent->close_func)(list->plist_id, parent->close_data);
+        }
+
+        /* Decrement the thrd count */
+        if ( 0 > H5P__dec_thrd_count(parent) )
+            HDONE_ERROR(H5E_PLIST, H5E_BADVALUE, FAIL, 
+                        "Failure to decrement parent's thrd_count.");
+
+        inc_thrd_flag = FALSE;
+        
     } /* end if ( atomic_load(&(list->class_init)) ) */
+
+
 
     /* Increment this list's parent thrd count since we will be accessing it's props */
 
@@ -4106,21 +4173,29 @@ H5P__mt_close_list(H5P_mt_list_t * list)
     {
         entry = &list->lkup_tbl[i];
 
-        base_ref = atomic_load(&(entry->base));
+        delete_version = atomic_load(&(entry->base_delete_version));
 
-        if ( base_ref.ptr )
+        /* Check if the base has been marked as deleted */
+        if ( delete_version == 0 || delete_version > list_version )
         {
-            base_prop = base_ref.ptr;
+            base_ref = atomic_load(&(entry->base));
 
-            if ( base_prop->close )
+            /* Ensure the base pointer isn't NULL */
+            if ( base_ref.ptr )
             {
-                prop_value = atomic_load(&(base_prop->value));
+                base_prop = base_ref.ptr;
 
-                (base_prop->close)(base_prop->name, prop_value.size, prop_value.ptr);
+                if ( base_prop->close )
+                {
+                    prop_value = atomic_load(&(base_prop->value));
 
-                /* Decrement the parent's prop's ref_count */
-                assert( 0 != (atomic_load(&(base_prop->ref_count))));
-                atomic_fetch_sub(&(base_prop->ref_count), 1);
+                    /* property close callback */
+                    (base_prop->close)(base_prop->name, prop_value.size, prop_value.ptr);
+
+                    /* Decrement the parent's prop's ref_count */
+                    assert( 0 != (atomic_load(&(base_prop->ref_count))));
+                    atomic_fetch_sub(&(base_prop->ref_count), 1);
+                }
             }
         }
     }
@@ -4140,11 +4215,16 @@ H5P__mt_close_list(H5P_mt_list_t * list)
 
     while ( ! prop->sentinel )
     {
-        if ( prop->close )
-        {
-            prop_value = atomic_load(&(prop->value));
+        delete_version = atomic_load(&(prop->delete_version));
 
-            (prop->close)(prop->name, prop_value.size, prop_value.ptr);
+        if ( delete_version == 0 || ( delete_version > list_version ) )
+        {
+            if ( prop->close )
+            {
+                prop_value = atomic_load(&(prop->value));
+
+                (prop->close)(prop->name, prop_value.size, prop_value.ptr);
+            }
         }
 
         next_prop = atomic_load(&(prop->next));
@@ -4160,6 +4240,7 @@ H5P__mt_close_list(H5P_mt_list_t * list)
 
     done = FALSE;
 
+    /* Add the list to the head of the list free list */
     do 
     {
         fl_head = atomic_load(&(H5P_mt_g.list_fl_head));
@@ -4225,27 +4306,26 @@ done:
 /****************************************************************************************
  * Function:    H5P__clear_mt_list
  *
- * Purpose:     Frees all properties in a property list and then frees the list itself. 
+ * Purpose:     Frees all allocated memory in the list and clears all fields
  *
  *              This function first makes sure that no other thread is accessing this
  *              list struct, and then itsets the tag to H5P_MT_LIST_INVALID_TAG to mark 
  *              that this list is no longer valid for threads to access. 
  * 
- *              This function sets it's thrd.closing to TRUE, frees the lkup_tbl, adds
- *              all properties to the property free list, frees itself, and then 
- *              decrements it's parent's pl count.
+ *              Then it frees all entries in the lkup_tbl, frees the lkup_tbl, adds all
+ *              properties from the LFSLL to the property free list, and resets all of 
+ *              its stats fields.
  * 
  *
- * Return:      SUCCEED/FAIL    
- *
+ * Return:      Success: Returns a pointer to the list after all data being cleared.
+ * 
+ *              Failure: NULL *
  ****************************************************************************************
  */
 H5P_mt_list_t *
 H5P__clear_mt_list(H5P_mt_list_t *list)
 {
-    //H5P_mt_class_t             * parent;
     H5P_mt_active_thread_count_t thrd;
-    //H5P_mt_active_thread_count_t closing_thrd;
     H5P_mt_list_prop_ref_t       prop_ref;
     H5P_mt_list_table_entry_t  * entry;
     H5P_mt_prop_t              * first_prop;
@@ -4253,28 +4333,11 @@ H5P__clear_mt_list(H5P_mt_list_t *list)
     hid_t                        null_list_id = 0;
     uint32_t                     phys_pl_len;
     uint32_t                     i;
-    //bool                         inc_thrd_flag = FALSE;
-    //bool                         done = FALSE;
-    //bool                         plc = FALSE;
 
     H5P_mt_list_t             * ret_value;
 
     FUNC_ENTER_PACKAGE
 
-#if 0
-    /* Increment the thead count for active threads in the parent class */
-    parent = list->pclass_ptr;
-
-    /* Increment parent's thrd count */
-    if ( H5P__inc_thrd_count(parent) < 0 )
-        HGOTO_ERROR(H5E_PLIST, H5E_BADTYPE, NULL, 
-                    "Couldn't increment parent's thread count.");
-
-    
-    inc_thrd_flag = TRUE;
-#endif
-
-    /* Free the structures inside the list and then the list itself */
 
     thrd = atomic_load(&(list->thrd));
 
@@ -4282,7 +4345,7 @@ H5P__clear_mt_list(H5P_mt_list_t *list)
     assert(thrd.opening == FALSE);
     assert(thrd.closing == FALSE);
 
-    /* Set lists fields for deletion */
+    /* Clears the list's fields */
 
     /** TODO: turn this into an atomic_compare_strong() */
     atomic_store(&(list->tag), H5P_MT_LIST_INVALID_TAG);
@@ -4292,7 +4355,7 @@ H5P__clear_mt_list(H5P_mt_list_t *list)
     
     atomic_store(&(list->plist_id), null_list_id);
 
-    /* Set lkup_tbl up to be deleted */
+    /* Clear the lkup_tbl, including free any allocated memory */
     for ( i = 0; i < list->nprops_inherited; i++ )
     {
         entry = &list->lkup_tbl[i];
@@ -4325,7 +4388,7 @@ H5P__clear_mt_list(H5P_mt_list_t *list)
 
     free(list->lkup_tbl);
 
-    /* Iterate the LFSLL and free all properties including sentinels */
+    /* Iterate the LFSLL and add all properties to the free list */
     phys_pl_len = atomic_load(&(list->phys_pl_len));
 
     for ( i = 0; i < ( phys_pl_len ); i++ )
@@ -4366,11 +4429,6 @@ H5P__clear_mt_list(H5P_mt_list_t *list)
     if ( 0 > (H5P__reset_stats_list(list)) )
         HGOTO_ERROR(H5E_PLIST, H5E_BADVALUE, NULL, 
                     "Failed resetting stats fields.");
-
-    //free(list);
-#if 0
-            H5P__dec_ref_count(parent, plc);
-#endif
         
 
     /* update stats */
@@ -4378,15 +4436,6 @@ H5P__clear_mt_list(H5P_mt_list_t *list)
 
 
 done:
-#if 0
-    /* update parent's thrd count */
-    if ( parent != NULL && inc_thrd_flag )
-    {
-        if ( 0 > H5P__dec_thrd_count(parent) )
-            HDONE_ERROR(H5E_PLIST, H5E_BADVALUE, NULL, 
-                        "Failure to decrement parent's thrd_count.");
-    }
-#endif
 
     ret_value = list;
 
@@ -4722,7 +4771,7 @@ H5P__inc_thrd_count(void *param)
                                                         &thrd, update_thrd))
                 {
                     /* attempt failed, update stats and try again */
-                    atomic_fetch_add(&(class->num_thrd_count_update_cols), 1);
+                    atomic_fetch_add(&(class->num_thrd_update_cols), 1);
                 }
                 else
                 {
@@ -4738,7 +4787,7 @@ H5P__inc_thrd_count(void *param)
                                                         &thrd, update_thrd))
                 {
                     /* attempt failed, update stats and try again */
-                    atomic_fetch_add(&(list->num_thrd_count_update_cols), 1);
+                    atomic_fetch_add(&(list->num_thrd_update_cols), 1);
                 }
                 else
                 {
@@ -4840,7 +4889,7 @@ H5P__dec_thrd_count(void *param)
                                                     &thrd, update_thrd))
             {
                 /* attempt failed, update stats and try again */
-                atomic_fetch_add(&(class->num_thrd_count_update_cols), 1);
+                atomic_fetch_add(&(class->num_thrd_update_cols), 1);
             }
             else
             {
@@ -4856,7 +4905,7 @@ H5P__dec_thrd_count(void *param)
                                                     &thrd, update_thrd))
             {
                 /* attempt failed, update stats and try again */
-                atomic_fetch_add(&(list->num_thrd_count_update_cols), 1);
+                atomic_fetch_add(&(list->num_thrd_update_cols), 1);
             }
             else
             {
@@ -4944,7 +4993,11 @@ H5P__inc_ref_count(H5P_mt_class_t *parent, bool plc)
  *
  * Purpose:     Decrements the reference count of a class for either plc or pl, depending
  *              on if the derived struct being deleted is a H5P_mt_class_t or a
- *              H5P_mt_list_t. 
+ *              H5P_mt_list_t respectively.
+ * 
+ *              After decrementing the ref count, it checks if both ref counts, plc and 
+ *              pl, are zero and if the class is marked deleted. If both are zero, and
+ *              it's marked deleted, call H5P__mt_close_class().
  * 
  *              NOTE: for more details on this process, see the description comment for
  *              H5P_mt_class_t in H5Ppkg_mt.h.
@@ -4962,7 +5015,7 @@ H5P__dec_ref_count(H5P_mt_class_t *parent, bool plc)
 
     herr_t                    ret_value = SUCCEED;
 
-    FUNC_ENTER_NOAPI_NOERR
+    FUNC_ENTER_PACKAGE
 
     do
     {    
@@ -4993,6 +5046,22 @@ H5P__dec_ref_count(H5P_mt_class_t *parent, bool plc)
         }        
 
     } while ( ! done );
+
+
+    /** 
+     * If the ref counts for derived classes and lists are zero, and 
+     * the class is marked deleted, then call the close function on it.
+     */
+    ref_count = atomic_load(&(parent->ref_count));
+
+    if ( ref_count.pl == 0 && ref_count.plc == 0 && ref_count.deleted )
+    {
+        if ( 0 > H5P__mt_close_class(parent) )
+            HGOTO_ERROR(H5E_PLIST, H5E_BADVALUE, FAIL, 
+                        "Failed to close the property list class.");
+    }
+
+done:
 
     FUNC_LEAVE_NOAPI(ret_value)
 
@@ -5097,7 +5166,7 @@ H5P__init_stats_class(H5P_mt_class_t *class)
     atomic_init(&(class->num_wait_for_curr_version_to_inc),   0ULL);
 
     /* H5P_mt_active_thread_count_t stats */
-    atomic_init(&(class->num_thrd_count_update_cols),         0ULL);
+    atomic_init(&(class->num_thrd_update_cols),               0ULL);
     atomic_init(&(class->num_thrd_count_update),              0ULL);
     atomic_init(&(class->num_thrd_closing_flag_set),          0ULL);
     atomic_init(&(class->num_thrd_opening_flag_set),          0ULL);
@@ -5166,7 +5235,7 @@ H5P__reset_stats_class(H5P_mt_class_t *class)
     atomic_store(&(class->num_wait_for_curr_version_to_inc),   0ULL);
 
     /* H5P_mt_active_thread_count_t stats */
-    atomic_store(&(class->num_thrd_count_update_cols),         0ULL);
+    atomic_store(&(class->num_thrd_update_cols),               0ULL);
     atomic_store(&(class->num_thrd_count_update),              0ULL);
     atomic_store(&(class->num_thrd_closing_flag_set),          0ULL);
     atomic_store(&(class->num_thrd_opening_flag_set),          0ULL);
@@ -5239,7 +5308,7 @@ H5P__init_stats_list(H5P_mt_list_t *list)
     atomic_init(&(list->num_wait_for_curr_version_to_inc),     0ULL);
 
     /* H5P_mt_active_thread_count_t stats */
-    atomic_init(&(list->num_thrd_count_update_cols),           0ULL);
+    atomic_init(&(list->num_thrd_update_cols),                 0ULL);
     atomic_init(&(list->num_thrd_count_update),                0ULL);
     atomic_init(&(list->num_thrd_closing_flag_set),            0ULL);
     atomic_init(&(list->num_thrd_opening_flag_set),            0ULL);
@@ -5312,7 +5381,7 @@ H5P__reset_stats_list(H5P_mt_list_t *list)
     atomic_store(&(list->num_wait_for_curr_version_to_inc),     0ULL);
 
     /* H5P_mt_active_thread_count_t stats */
-    atomic_store(&(list->num_thrd_count_update_cols),           0ULL);
+    atomic_store(&(list->num_thrd_update_cols),                 0ULL);
     atomic_store(&(list->num_thrd_count_update),                0ULL);
     atomic_store(&(list->num_thrd_closing_flag_set),            0ULL);
     atomic_store(&(list->num_thrd_opening_flag_set),            0ULL);
@@ -5458,8 +5527,8 @@ H5P__dump_stats_class(FILE *file_ptr, H5P_mt_class_t *class)
     fprintf(file_ptr, "class->num_wait_for_curr_version_to_inc   = %lld\n", 
         (unsigned long long)(atomic_load(&(class->num_wait_for_curr_version_to_inc))));
 
-    fprintf(file_ptr, "class->num_thrd_count_update_cols         = %lld\n", 
-        (unsigned long long)(atomic_load(&(class->num_thrd_count_update_cols))));
+    fprintf(file_ptr, "class->num_thrd_update_cols               = %lld\n", 
+        (unsigned long long)(atomic_load(&(class->num_thrd_update_cols))));
     fprintf(file_ptr, "class->num_thrd_count_update              = %lld\n", 
         (unsigned long long)(atomic_load(&(class->num_thrd_count_update))));
     fprintf(file_ptr, "class->num_thrd_closing_flag_set          = %lld\n", 
@@ -5573,8 +5642,8 @@ H5P__dump_stats_list(FILE *file_ptr, H5P_mt_list_t *list)
     fprintf(file_ptr, "list->num_wait_for_curr_version_to_inc     = %lld\n", 
         (unsigned long long)(atomic_load(&(list->num_wait_for_curr_version_to_inc))));
 
-    fprintf(file_ptr, "list->num_thrd_count_update_cols           = %lld\n", 
-        (unsigned long long)(atomic_load(&(list->num_thrd_count_update_cols))));
+    fprintf(file_ptr, "list->num_thrd_update_cols                 = %lld\n", 
+        (unsigned long long)(atomic_load(&(list->num_thrd_update_cols))));
     fprintf(file_ptr, "list->num_thrd_count_update                = %lld\n", 
         (unsigned long long)(atomic_load(&(list->num_thrd_count_update))));
     fprintf(file_ptr, "clalists->num_thrd_closing_flag_set        = %lld\n", 
