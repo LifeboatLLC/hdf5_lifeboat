@@ -60,13 +60,19 @@ H5P_mt_class_t *
     H5P__mt_alloc_class(void);
 
 H5P_mt_list_t * 
-    H5P__mt_create_list(H5P_mt_class_t *parent, uint64_t test_version);
+    H5P__mt_create_list(H5P_mt_class_t *parent, H5P_mt_list_t* old_list, 
+                        uint64_t test_version);
 
 H5P_mt_list_t * 
     H5P__mt_alloc_list(void);
 
 herr_t 
-    H5P__init_lkup_tbl(H5P_mt_class_t *parent, uint64_t version, H5P_mt_list_t *list);
+    H5P__init_lkup_tbl(H5P_mt_class_t *parent, uint64_t version, 
+                       H5P_mt_list_t *new_list, H5P_mt_list_t *old_list);
+
+H5P_mt_list_t *
+    H5P__mt_copy_list_cb_prop(H5P_mt_list_t *new_list, H5P_mt_list_table_entry_t * entry, 
+                              H5P_mt_prop_t *cb_prop);
 
 H5P_mt_prop_t * 
     H5P__create_sentinels(bool in_prop_class);
@@ -817,7 +823,8 @@ done:
  ****************************************************************************************
  */
 H5P_mt_list_t *
-H5P__mt_create_list(H5P_mt_class_t *parent, uint64_t test_version)
+H5P__mt_create_list(H5P_mt_class_t *parent, H5P_mt_list_t *old_list, 
+                    uint64_t test_version)
 {
     H5P_mt_list_t              * new_list = NULL;
     hid_t                        parent_id;
@@ -838,6 +845,12 @@ H5P__mt_create_list(H5P_mt_class_t *parent, uint64_t test_version)
     assert( (atomic_load(&(parent->tag))) == H5P_MT_CLASS_TAG);
 
     parent_version = atomic_load(&(parent->curr_version));
+
+    /* if old_list isn't NULL ensure it's valid */
+    if ( old_list )
+    {
+        assert(old_list->tag == H5P_MT_LIST_TAG);
+    }
 
     /**
      * NOTE: This is for testing to choose a specific version to create the list at to 
@@ -955,7 +968,7 @@ H5P__mt_create_list(H5P_mt_class_t *parent, uint64_t test_version)
 
 
     /* Allocate and nitialize the lkup_tbl */
-    if ( 0 > (H5P__init_lkup_tbl(parent, parent_version, new_list) ) )
+    if ( 0 > (H5P__init_lkup_tbl(parent, parent_version, new_list, old_list) ) )
         HGOTO_ERROR(H5E_PLIST, H5E_CANTCREATE, NULL, "Failed to create lkup_tbl.");
     
 
@@ -977,6 +990,28 @@ H5P__mt_create_list(H5P_mt_class_t *parent, uint64_t test_version)
 
     /* update parent's ref count and thrd count */
     H5P__inc_ref_count(parent, FALSE);
+
+    /** 
+     * If old_list is not NULL, then this is for a copy callback, and we must call the
+     * class callback on the parent class, if it exists. 
+     */
+    if ( old_list )
+    {
+        if ( parent->copy_func )
+        {
+            hid_t new_list_id = atomic_load(&(new_list->plist_id));
+            hid_t old_list_id = atomic_load(&(old_list->plist_id));
+
+            if ((parent->copy_func)(new_list_id, old_list_id, parent->copy_data) < 0)
+            {
+                /** TODO: add H5I_remove(new_list_id) */
+
+                assert(H5P_MT_ASSERT_FAIL);
+                HGOTO_ERROR(H5E_PLIST, H5E_CANTINIT, H5I_INVALID_HID, 
+                            "Can't initialize property");
+            }
+        }
+    }
     
 
 done:
@@ -1120,7 +1155,8 @@ done:
  ****************************************************************************************
  */
 herr_t
-H5P__init_lkup_tbl(H5P_mt_class_t *parent, uint64_t version, H5P_mt_list_t *list)
+H5P__init_lkup_tbl(H5P_mt_class_t *parent, uint64_t version, 
+                   H5P_mt_list_t *new_list, H5P_mt_list_t *old_list)
 {
     H5P_mt_list_table_entry_t * entry;
     H5P_mt_list_prop_ref_t      base;
@@ -1133,6 +1169,7 @@ H5P__init_lkup_tbl(H5P_mt_class_t *parent, uint64_t version, H5P_mt_list_t *list
     uint32_t                    deletes       = 0;
     uint32_t                    nodes_visited = 0;
     uint32_t                    thrd_cols     = 0;
+    bool                        base_set      = FALSE;
 
     herr_t                      ret_value = SUCCEED;
 
@@ -1144,6 +1181,12 @@ H5P__init_lkup_tbl(H5P_mt_class_t *parent, uint64_t version, H5P_mt_list_t *list
     assert(atomic_load(&(parent_prop->tag)) == H5P_MT_PROP_TAG);
     assert(parent_prop->sentinel);
 
+    /* if old_list isn't NULL ensure it's valid */
+    if ( old_list )
+    {
+        assert(old_list->tag == H5P_MT_LIST_TAG);
+    }
+
     /* Iterate the parent's LFSLL and count the valid properties */
     do
     {
@@ -1151,7 +1194,7 @@ H5P__init_lkup_tbl(H5P_mt_class_t *parent, uint64_t version, H5P_mt_list_t *list
 
         if ( valid_prop )
         {
-            list->nprops_inherited++;
+            new_list->nprops_inherited++;
 
             parent_prop = valid_prop;
         }
@@ -1161,12 +1204,12 @@ H5P__init_lkup_tbl(H5P_mt_class_t *parent, uint64_t version, H5P_mt_list_t *list
 
     /* Allocate the lkup_tbl array */
 
-    assert(list->nprops_inherited > 0);
+    assert(new_list->nprops_inherited > 0);
 
     /* Allocates the number of entries needed in the lkup_tbl */
-    list->lkup_tbl = (H5P_mt_list_table_entry_t *)malloc(list->nprops_inherited * 
-                                                    sizeof(H5P_mt_list_table_entry_t));
-    if ( NULL == list->lkup_tbl )
+    new_list->lkup_tbl = (H5P_mt_list_table_entry_t *)malloc(new_list->nprops_inherited * 
+                                                      sizeof(H5P_mt_list_table_entry_t));
+    if ( NULL == new_list->lkup_tbl )
     {
         assert(H5P_MT_ASSERT_FAIL);
         HGOTO_ERROR(H5E_PLIST, H5E_CANTALLOC, FAIL, "lkup_tbl allocation failed");
@@ -1185,60 +1228,74 @@ H5P__init_lkup_tbl(H5P_mt_class_t *parent, uint64_t version, H5P_mt_list_t *list
         {
             /* Initialize the entry's fields */
 
-            entry = &list->lkup_tbl[nprops];
+            entry = &new_list->lkup_tbl[nprops];
 
             entry->chksum = valid_prop->chksum;
             entry->name   = strdup(valid_prop->name);
 
-            /**
-             * If valid_prop has the create or copy callback create a new_prop struct
-             * as a copy of valid_prop, insert it in the LFSLL, and set curr.ptr to 
-             * point to it.
+            /** 
+             * If old_list is not NULL, then this lkup_tbl is being initialized for a 
+             * copy callback. Meaning that we much check each property for the copy 
+             * callback.
              */
-            if ( valid_prop->create || valid_prop->copy )
+            if ( old_list )
             {
-                base.ptr = NULL;
-                base.ver = 1;
-                atomic_store(&(entry->base), base);
-
-                atomic_store(&(entry->base_delete_version), 0);
-
-                valid_prop_value = atomic_load(&(valid_prop->value));
-
-                new_prop = H5P__mt_create_prop(valid_prop->name, valid_prop_value.ptr,
-                                               valid_prop_value.size, FALSE, 1, NULL,
-                                               NULL, NULL, NULL, NULL, NULL, NULL, 
-                                               NULL, NULL);
-                if ( NULL == new_prop )
-                    HGOTO_ERROR(H5E_PLIST, H5E_CANTINIT, FAIL, 
-                                "Failed creating property for property list.");
-
-                /* Call the copy callback */
-                if ( (new_prop->copy)(new_prop->name, valid_prop_value.size, 
-                                                      valid_prop_value.ptr) < 0 )
+                /**
+                 * If valid_prop has the copy callback create a new_prop struct
+                 * as a copy of valid_prop, insert it in the LFSLL, and set curr.ptr to 
+                 * point to it.
+                 */
+                if ( valid_prop->copy )
                 {
-                    assert(H5P_MT_ASSERT_FAIL);
-                    HGOTO_ERROR(H5E_PLIST, H5E_CANTCOPY, FAIL, "Can't copy property");
-                }
+                    base_set = TRUE;
 
-                /* Inserts the new_prop into the new_class's LFSLL */
-                H5P__mt_ins_or_mod_prop__lfsll_ins(list->pl_head,
-                                                   new_prop,
-                                                   &deletes,
-                                                   &nodes_visited,
-                                                   &thrd_cols);
+                    base.ptr = NULL;
+                    base.ver = 1;
+                    atomic_store(&(entry->base), base);
 
-                atomic_fetch_add(&(list->log_pl_len), 1);
-                atomic_fetch_add(&(list->phys_pl_len), 1);
+                    atomic_store(&(entry->base_delete_version), 0);
 
-                curr.ptr = new_prop;
-                curr.ver = 1;
-                atomic_store(&(entry->curr), curr);
+                    valid_prop_value = atomic_load(&(valid_prop->value));
 
+                    new_prop = H5P__mt_create_prop(valid_prop->name, valid_prop_value.ptr,
+                                                valid_prop_value.size, FALSE, 1, NULL,
+                                                NULL, NULL, NULL, NULL, NULL, NULL, 
+                                                NULL, NULL);
+                    if ( NULL == new_prop )
+                        HGOTO_ERROR(H5E_PLIST, H5E_CANTINIT, FAIL, 
+                                    "Failed creating property for property list.");
 
-            }
-            /* Else set the base.ptr to point to the prop in the parent's LFSLL */
-            else
+                    /* Call the copy callback */
+                    if ( (new_prop->copy)(new_prop->name, valid_prop_value.size, 
+                                                        valid_prop_value.ptr) < 0 )
+                    {
+                        assert(H5P_MT_ASSERT_FAIL);
+                        HGOTO_ERROR(H5E_PLIST, H5E_CANTCOPY, FAIL, "Can't copy property");
+                    }
+
+                    /* Inserts the new_prop into the new_class's LFSLL */
+                    H5P__mt_ins_or_mod_prop__lfsll_ins(new_list->pl_head,
+                                                    new_prop,
+                                                    &deletes,
+                                                    &nodes_visited,
+                                                    &thrd_cols);
+
+                    atomic_fetch_add(&(new_list->log_pl_len), 1);
+                    atomic_fetch_add(&(new_list->phys_pl_len), 1);
+
+                    curr.ptr = new_prop;
+                    curr.ver = 1;
+                    atomic_store(&(entry->curr), curr);
+
+                } /* end if ( valid_prop->copy ) */
+
+            } /* end if ( old_list ) */
+
+            /** 
+             * If base_set is FALSE, either this lkup_tbl isn't for a copy of a list, or 
+             * if it is but the property doesn't have a copy callback.
+             */
+            if ( ! base_set )
             {
                 base.ptr = atomic_load(&(valid_prop));
                 base.ver = 1;
@@ -1255,23 +1312,45 @@ H5P__init_lkup_tbl(H5P_mt_class_t *parent, uint64_t version, H5P_mt_list_t *list
 
             /* Increment number of properties */
             nprops++;
-            assert(nprops <= list->nprops_inherited);
+            assert(nprops <= new_list->nprops_inherited);
 
             /* Iterate in the parent's LFSLL to look for the next valid_prop */
             parent_prop = valid_prop;
-        }
+        
+        } /* end if ( valid_prop ) */
 
     } while ( valid_prop );
     
-    assert(nprops == list->nprops_inherited);
+    assert(nprops == new_list->nprops_inherited);
 
-    atomic_store(&(list->nprops), nprops);
+    atomic_store(&(new_list->nprops), nprops);
 
 done:
 
     FUNC_LEAVE_NOAPI(ret_value)
 
 } /* H5P__init_lkup_tbl() */
+
+
+
+/**
+ * 
+ */
+H5P_mt_list_t *
+H5P__mt_copy_list_cb_prop(H5P_mt_list_t *new_list, H5P_mt_list_table_entry_t * entry, 
+                          H5P_mt_prop_t *cb_prop)
+{
+    H5P_mt_list_prop_ref_t      base;
+    H5P_mt_list_prop_ref_t      curr;
+    H5P_mt_prop_value_t         prop_value;
+    H5P_mt_prop_t             * new_prop;
+    uint32_t                    deletes       = 0;
+    uint32_t                    nodes_visited = 0;
+    uint32_t                    thrd_cols     = 0;
+
+    H5P_mt_list_t             * ret_value = NULL;
+
+}
 
 
 
@@ -1433,7 +1512,11 @@ H5P__mt_create_prop(const char *name, void *value_ptr, size_t value_size,
     assert(name);
 
     /* Allocate memory for the new property */
+#if 1
+    new_prop = H5P__mt_alloc_prop();
+#else
     new_prop = (H5P_mt_prop_t *)malloc(sizeof(H5P_mt_prop_t));
+#endif
     if ( NULL == new_prop )
     {
         assert(H5P_MT_ASSERT_FAIL);
@@ -2861,7 +2944,7 @@ H5P__mt_search_lkup_tbl(H5P_mt_list_table_entry_t * lkup_tbl,
  *                       bool *base_flag to TRUE, so the calling function knows base.ptr 
  *                       is the correct version.
  * 
- *              Failure: Can not fail
+ *              Failure: NULL
  *
  ****************************************************************************************
  */
