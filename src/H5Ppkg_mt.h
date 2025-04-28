@@ -200,6 +200,16 @@ typedef struct H5P_mt_prop_value_t
  *
  *      2) this property has been either deleted or superseded
  *      in the property list class.
+ * 
+ * in_lkup_tbl (bool):
+ *      Boolean flag that is set to TRUE if this instance of H5P_mt_prop_t
+ *      has an entry in this list's lkup_tbl that points to it. This boolean
+ *      aids when copying a list from another list, or when encoding a list,
+ *      preventing any need from iterating the lkup_tbl multiple times.
+ * 
+ *      Note that if there is a more current version of the property, the 
+ *      older versions will still have in_lkup_tbl set to TRUE, bacause they
+ *      still refer to that lkup_tbl entry. 
  *
  *
  * Property Chksum, Name & Value:
@@ -542,6 +552,7 @@ typedef struct H5P_mt_prop_t
 
     bool                        in_prop_class;
     _Atomic uint64_t            ref_count;
+    bool                        in_lkup_tbl;
 
     int64_t                     chksum;
     char                      * name;
@@ -1340,6 +1351,7 @@ typedef struct H5P_mt_class_t
     _Atomic uint64_t num_search_nodes_visited;
     _Atomic uint64_t num_search_success;
     _Atomic uint64_t num_search_chksum_cols;
+    _Atomic uint64_t num_target_prop_found_but_deleted;
 
     /* Version check stats */
     _Atomic uint64_t num_wait_for_curr_version_to_inc;
@@ -1353,6 +1365,10 @@ typedef struct H5P_mt_class_t
     /* H5P_mt_class_ref_counts_t stats */
     _Atomic uint64_t num_ref_count_cols;
     _Atomic uint64_t num_ref_count_update;
+
+    /* Property ref_count stats */
+    _Atomic uint64_t num_prop_ref_count_cols;
+    _Atomic uint64_t num_prop_ref_count_update;
 
 } H5P_mt_class_t;
 
@@ -1983,6 +1999,7 @@ typedef struct H5P_mt_list_t
     _Atomic uint64_t num_search_tbl_found_base;
     _Atomic uint64_t num_search_tbl_found_curr;
     _Atomic uint64_t num_search_tbl_found_older_than_curr;
+    _Atomic uint64_t num_target_prop_found_but_deleted;
 
     /* Version check stats */
     _Atomic uint64_t num_wait_for_curr_version_to_inc;

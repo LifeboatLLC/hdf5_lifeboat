@@ -7,9 +7,41 @@
 #include <stdio.h>
 #include <stdatomic.h>
 
-#define MAX_PROP_NAME_LEN 50
+#define MAX_NAME_LEN 50
 
-void simple_test_1(void);
+//void simple_test_1(void);
+//void serial_class_test(void);
+//void serial_list_test(void);
+
+typedef struct prop_info_t
+{
+    int64_t       chksum;
+    char        * name;
+    void        * value_ptr;
+    size_t        value_size;
+    void        * edited_value_ptr;
+    size_t        edited_value_size;
+
+} prop_info_t;
+
+prop_info_t * prop_info_tbl[10];
+
+
+
+void init_prop_info_tbl(void);
+H5P_mt_class_t * 
+    H5P_test_init(void);
+H5P_mt_class_t *
+    H5P_mt_create_class_test(H5P_mt_class_t *parent, char *name, 
+                             H5P_plist_type_t type, uint64_t test_version);
+H5P_mt_list_t *
+    H5P_mt_create_list_test(H5P_mt_class_t *parent, H5P_mt_list_t *old_list, bool copy,
+                            uint64_t version);
+herr_t
+    compare_prop_to_prop_info(H5P_mt_prop_t * prop, bool in_prop_class, bool in_lkup_tbl,
+                            uint64_t ref_count);
+prop_info_t *
+    search_prop_info_tbl(int64_t chksum);
 void serial_class_test(void);
 void serial_list_test(void);
 
@@ -17,1112 +49,1190 @@ void serial_list_test(void);
 
 
 /****************************************************************************************
- * Function:    simple_test_1
- *
- * Purpose:     Performs a simple serial test of each of the H5Pint_mt.c functions.
- *
- * Return:      void   
- *
+ * Function:    init_prop_info_tbl()
+ * 
+ * Purpose:     Allocates and initiates the prop_info_tbl which is an array of 
+ *              prop_info_t that contain information about the properties that are 
+ *              created in the test functions to be able to compare them ensuring they 
+ *              are created correctly and are sorted in the correct order in the the 
+ *              lkup_tbls and lfslls 
+ * 
+ * Return:      void
+ * 
  ****************************************************************************************
  */
-void simple_test_1(void)
+void
+init_prop_info_tbl(void)
 {
-    H5P_mt_prop_t           * first_prop;
-    H5P_mt_prop_t           * second_prop;
-    H5P_mt_prop_t           * target_prop;
-    H5P_mt_list_table_entry_t * tbl_entry;
-    H5P_mt_list_prop_ref_t      tbl_prop_ref;
-    H5P_mt_prop_aptr_t        next_ptr;
-    char                    * new_prop_name;
-    void                    * value_ptr;
-    size_t                    value_size;
-    uint64_t                  prop1_create_ver;
-    uint64_t                  prop2_create_ver;
-    uint64_t                  curr_version;
-    uint64_t                  next_version;
-    //H5P_mt_class_sptr_t       fl_class_head;
-    H5P_mt_class_t          * root_class;
-    H5P_mt_class_t          * new_class;
-    const char              * new_class_name;
-    H5P_mt_class_ref_counts_t ref_count;
-    uint64_t                  log_pl_len;
-    uint64_t                  phys_pl_len;
-    H5P_mt_list_t           * new_list;
-    H5P_mt_list_table_entry_t * lkup_tbl;
-    int32_t                     cmp_result;
-    int32_t                     check_value;
-
-
-    printf("\nMT PROP serial simple test #1\n");
-
-
-    H5P_mt_init();
-
-    //fl_class_head = atomic_load(&(H5P_mt_g.class_fl_head));
-
-    root_class = H5P_mt_rootcls_g;
-
-    assert(root_class);
-    assert(root_class->tag == H5P_MT_CLASS_TAG);
-    
-    curr_version = atomic_load(&(root_class->curr_version));
-    assert( 1 == curr_version);
-
-    next_version = atomic_load(&(root_class->next_version)); 
-    assert( 2 == next_version);
-
-    ref_count = atomic_load(&(root_class->ref_count));
-    assert( 0 == ref_count.plc);
-
-    first_prop = atomic_load(&(root_class->pl_head));
-    
-    assert(first_prop);
-    assert(first_prop->tag == H5P_MT_PROP_TAG);
-    assert(first_prop->sentinel);
-    
-    next_ptr = atomic_load(&(first_prop->next));
-    second_prop = atomic_load(&(next_ptr.ptr));
-
-    assert(second_prop);
-    assert(second_prop->tag == H5P_MT_PROP_TAG);
-    assert(second_prop->sentinel);
-
-
-    /* Testing H5P__mt_create_class() */
-
-    new_class_name = "attribute access";
-
-    new_class = H5P__mt_create_class(root_class, new_class_name, 
-                                     H5P_TYPE_ATTRIBUTE_ACCESS, 0);
-
-    assert(new_class);
-    assert(new_class->tag == H5P_MT_CLASS_TAG);
-
-    ref_count = atomic_load(&(root_class->ref_count));
-    assert( 1 == ref_count.plc);
-
-    curr_version = atomic_load(&(new_class->curr_version));
-    assert( 1 == curr_version);
-
-    next_version = atomic_load(&(new_class->next_version)); 
-    assert( 2 == next_version);
-
-    assert(new_class);
-    assert(new_class->tag == H5P_MT_CLASS_TAG);
-    
-    first_prop = atomic_load(&(new_class->pl_head));
-    
-    assert(first_prop);
-    assert(first_prop->tag == H5P_MT_PROP_TAG);
-    assert(first_prop->sentinel);
-    
-    next_ptr = atomic_load(&(first_prop->next));
-    second_prop = atomic_load(&(next_ptr.ptr));
-
-    assert(second_prop);
-    assert(second_prop->tag == H5P_MT_PROP_TAG);
-    assert(second_prop->sentinel);
-
-    log_pl_len = atomic_load(&(new_class->log_pl_len));
-    phys_pl_len = atomic_load(&(new_class->phys_pl_len));
-    assert( 0 == log_pl_len);
-    assert( 2 == phys_pl_len);
-
-
-    /* Testing inserting a property into a class */
-
-    new_prop_name = malloc(MAX_PROP_NAME_LEN);
-
-    snprintf(new_prop_name, MAX_PROP_NAME_LEN, "prop_1");
-
-    value_size = (size_t)(snprintf(NULL, 0, "This is the value for prop_1.") + 1);
-    value_ptr  = malloc(value_size);
-
-    snprintf(value_ptr, value_size, "This is the value for prop_1.");
-
-    H5P__mt_ins_or_mod_prop__main(new_class, new_prop_name, value_ptr, value_size);
-
-    curr_version = atomic_load(&(new_class->curr_version));
-    assert( 2 == curr_version);
-
-    next_version = atomic_load(&(new_class->next_version)); 
-    assert( 3 == next_version);
-
-    log_pl_len = atomic_load(&(new_class->log_pl_len));
-    phys_pl_len = atomic_load(&(new_class->phys_pl_len));
-    assert( 1 == log_pl_len);
-    assert( 3 == phys_pl_len);
-
-    first_prop = new_class->pl_head;
-    next_ptr = atomic_load(&(first_prop->next));
-    target_prop = next_ptr.ptr;
-
-    assert(target_prop);
-    assert(target_prop->tag == H5P_MT_PROP_TAG);
-    assert( ! target_prop->sentinel);
-
-
-    /* Testing 'modifying' a property in a class */
-
-    value_size = (size_t)(snprintf(NULL, 0, "This is the value for prop_1 modified.") + 1);
-    value_ptr  = malloc(value_size);
-
-    snprintf(value_ptr, value_size, "This is the value for prop_1 modified.");
-
-    H5P__mt_ins_or_mod_prop__main(new_class, new_prop_name, value_ptr, value_size);
-    curr_version = atomic_load(&(new_class->curr_version));
-    assert( 3 == curr_version);
-
-    next_version = atomic_load(&(new_class->next_version)); 
-    assert( 4 == next_version);
-
-    log_pl_len = atomic_load(&(new_class->log_pl_len));
-    phys_pl_len = atomic_load(&(new_class->phys_pl_len));
-    assert( 2 == log_pl_len);
-    assert( 4 == phys_pl_len);
-
-    first_prop = new_class->pl_head;
-    next_ptr = atomic_load(&(first_prop->next));
-    target_prop = next_ptr.ptr;
-
-    assert(target_prop);
-    assert(target_prop->tag == H5P_MT_PROP_TAG);
-    assert( ! target_prop->sentinel);
-
-    next_ptr = atomic_load(&(target_prop->next));
-    second_prop = next_ptr.ptr;
-
-    assert(target_prop->chksum == second_prop->chksum);
-    
-    cmp_result = strcmp(target_prop->name, second_prop->name);
-    assert(cmp_result == 0);
-    
-    prop1_create_ver = atomic_load(&(target_prop->create_version));
-    prop2_create_ver = atomic_load(&(second_prop->create_version));
-    assert(prop1_create_ver > prop2_create_ver);
-
-
-    /* Testing H5P__mt_create_list() */
-
-    new_list = H5P__mt_create_list(new_class, 0);
-
-    assert(new_list);
-    assert(new_list->tag == H5P_MT_LIST_TAG);
-
-    assert(new_list->pclass_ptr == new_class);
-    assert(new_list->pclass_version == curr_version);
-
-    curr_version = atomic_load(&(new_list->curr_version));
-    next_version = atomic_load(&(new_list->next_version));
-
-    assert(curr_version == 1);
-    assert(next_version == 2);
-
-    lkup_tbl = atomic_load(&(new_list->lkup_tbl));
-    assert(lkup_tbl);
-    
-    tbl_entry = &lkup_tbl[0];
-    tbl_prop_ref = atomic_load(&(tbl_entry->base));
-    assert(tbl_prop_ref.ptr);
-    assert(tbl_prop_ref.ver == 1);
-    assert(tbl_prop_ref.ptr == target_prop);
-
-    assert( 1 == new_list->nprops_inherited);
-    assert( 0 == (atomic_load(&(new_list->nprops_added))));
-    assert( 1 == (atomic_load(&(new_list->nprops))));
-
-    first_prop = atomic_load(&(new_list->pl_head));
-    assert(first_prop);
-    assert(first_prop->tag == H5P_MT_PROP_TAG);
-    assert(first_prop->sentinel);
-
-    next_ptr = atomic_load(&(first_prop->next));
-    second_prop = atomic_load(&(next_ptr.ptr));
-    assert(second_prop);
-    assert(second_prop->tag);
-    assert(second_prop->sentinel);
-
-
-    /* Testing inserting a property into a list's LFSLL */
-
-    new_prop_name = malloc(MAX_PROP_NAME_LEN);
-
-    snprintf(new_prop_name, MAX_PROP_NAME_LEN, "prop_2");
-
-    value_size = (size_t)(snprintf(NULL, 0, "This is the value for prop_2.") + 1);
-    value_ptr  = malloc(value_size);
-
-    snprintf(value_ptr, value_size, "This is the value for prop_2.");
-
-    H5P__mt_ins_or_mod_prop__main(new_list, new_prop_name, value_ptr, value_size);
-
-    curr_version = atomic_load(&(new_list->curr_version));
-    assert( 2 == curr_version);
-
-    next_version = atomic_load(&(new_list->next_version)); 
-    assert( 3 == next_version);
-
-    log_pl_len = atomic_load(&(new_list->log_pl_len));
-    phys_pl_len = atomic_load(&(new_list->phys_pl_len));
-    assert( 1 == log_pl_len);
-    assert( 3 == phys_pl_len);
-    
-    assert( 1 == new_list->nprops_inherited);
-    assert( 1 == (atomic_load(&(new_list->nprops_added))));
-    assert( 2 == (atomic_load(&(new_list->nprops))));
-
-
-    /* Testing H5P__set_delete_version() on a prop in a class */
-
-    H5P__set_delete_version(new_class, target_prop);
-
-    curr_version = atomic_load(&(new_class->curr_version));
-    assert( 4 == curr_version);
-
-    next_version = atomic_load(&(new_class->next_version)); 
-    assert( 5 == next_version);
-
-    log_pl_len = atomic_load(&(new_class->log_pl_len));
-    phys_pl_len = atomic_load(&(new_class->phys_pl_len));
-    assert( 2 == log_pl_len);
-    assert( 4 == phys_pl_len);
-
-    assert( 4 == (atomic_load(&(target_prop->delete_version))));
-
-
-    /* Testing H5P__set_delete_version() on a prop in a list's lkup_tbl */
-
-    H5P__set_delete_version(new_list, target_prop);
-
-    curr_version = atomic_load(&(new_list->curr_version));
-    assert( 3 == curr_version);
-
-    next_version = atomic_load(&(new_list->next_version)); 
-    assert( 4 == next_version);
-
-    log_pl_len = atomic_load(&(new_list->log_pl_len));
-    phys_pl_len = atomic_load(&(new_list->phys_pl_len));
-    assert( 1 == log_pl_len);
-    assert( 3 == phys_pl_len);
-
-    tbl_entry = &new_list->lkup_tbl[0];
-    assert( 3 == (atomic_load(&(tbl_entry->base_delete_version))));
-
-
-    /* Testing H5P__set_delete_version() on a prop in a list's LFSLL*/
-
-    first_prop  = new_list->pl_head;
-    next_ptr    = atomic_load(&(first_prop->next));
-    second_prop = atomic_load(&(next_ptr.ptr));
-    
-    cmp_result = strcmp(second_prop->name, "prop_2");
-
-    assert(cmp_result == 0);
-    //assert(second_prop->name == "prop_2");
-
-    H5P__set_delete_version(new_list, second_prop);
-
-    curr_version = atomic_load(&(new_list->curr_version));
-    assert( 4 == curr_version);
-
-    next_version = atomic_load(&(new_list->next_version)); 
-    assert( 5 == next_version);
-
-    log_pl_len = atomic_load(&(new_list->log_pl_len));
-    phys_pl_len = atomic_load(&(new_list->phys_pl_len));
-    assert( 1 == log_pl_len);
-    assert( 3 == phys_pl_len);
-
-    assert( 4 == (atomic_load(&(second_prop->delete_version))));
-
-
-#if 0
-    /* Testing H5P__clear_mt_list() */
-
-    check_value = H5P__clear_mt_list(new_list);
-    assert(check_value >= 0);
-
-    /* Testing H5P__clear_mt_class() */
-
-    check_value = H5P__clear_mt_class(new_class);
-    assert(check_value >= 0);
-
-    check_value = H5P__clear_mt_class(root_class);
-    assert(check_value >= 0);
-
-    /* Testing H5P__clear_prop_free_list() and H5P__clear_mt_prop() */
-
-    check_value = H5P__clear_prop_free_list();
-    assert(check_value >= 0);
-#endif
-    check_value = H5P__mt_close_list(new_list);
-    assert(check_value >= 0);
-
-    check_value = H5P__mt_close_class(new_class);
-    assert(check_value >= 0);
-
-    check_value = H5P__mt_close_class(root_class);
-    assert(check_value >= 0);
-
-    H5P__shutdown();
-
-
-} /* end simple_test_1() */
+    /* prop_1 */
+    prop_info_tbl[0]                     = malloc(sizeof(prop_info_t)); 
+    prop_info_tbl[0]->chksum             = 268839092;
+    prop_info_tbl[0]->name               = strdup("prop_1");
+    prop_info_tbl[0]->value_ptr          = strdup("value for prop_1");
+    prop_info_tbl[0]->value_size         = strlen("value for prop_1");
+    prop_info_tbl[0]->edited_value_ptr   = strdup("edited value for prop_1");
+    prop_info_tbl[0]->edited_value_size  = strlen("edited value for prop_1");
+
+    /* prop_5 */
+    prop_info_tbl[1]                     = malloc(sizeof(prop_info_t)); 
+    prop_info_tbl[1]->chksum             = 937277374;
+    prop_info_tbl[1]->name               = strdup("prop_5");
+    prop_info_tbl[1]->value_ptr          = strdup("value for prop_5");
+    prop_info_tbl[1]->value_size         = strlen("value for prop_5");
+    prop_info_tbl[1]->edited_value_ptr   = strdup("edited value for prop_5");
+    prop_info_tbl[1]->edited_value_size  = strlen("edited value for prop_5"); 
+
+    /* prop_6 */
+    prop_info_tbl[2]                     = malloc(sizeof(prop_info_t)); 
+    prop_info_tbl[2]->chksum             = 2009604789;
+    prop_info_tbl[2]->name               = strdup("prop_6");
+    prop_info_tbl[2]->value_ptr          = strdup("value for prop_6");
+    prop_info_tbl[2]->value_size         = strlen("value for prop_6");
+    prop_info_tbl[2]->edited_value_ptr   = strdup("edited value for prop_6");
+    prop_info_tbl[2]->edited_value_size  = strlen("edited value for prop_6");
+
+    /* prop_7 */
+    prop_info_tbl[3]                     = malloc(sizeof(prop_info_t)); 
+    prop_info_tbl[3]->chksum             = 2153701089;
+    prop_info_tbl[3]->name               = strdup("prop_7");
+    prop_info_tbl[3]->value_ptr          = strdup("value for prop_7");
+    prop_info_tbl[3]->value_size         = strlen("value for prop_7");
+    prop_info_tbl[3]->edited_value_ptr   = strdup("edited value for prop_7");
+    prop_info_tbl[3]->edited_value_size  = strlen("edited value for prop_7");
+
+    /* prop_9 */
+    prop_info_tbl[4]                     = malloc(sizeof(prop_info_t)); 
+    prop_info_tbl[4]->chksum             = 2283177890;
+    prop_info_tbl[4]->name               = strdup("prop_9");
+    prop_info_tbl[4]->value_ptr          = strdup("value for prop_9");
+    prop_info_tbl[4]->value_size         = strlen("value for prop_9");
+    prop_info_tbl[4]->edited_value_ptr   = strdup("edited value for prop_9");
+    prop_info_tbl[4]->edited_value_size  = strlen("edited value for prop_9"); 
+
+    /* prop_8 */
+    prop_info_tbl[5]                     = malloc(sizeof(prop_info_t)); 
+    prop_info_tbl[5]->chksum             = 2719365105;
+    prop_info_tbl[5]->name               = strdup("prop_8");
+    prop_info_tbl[5]->value_ptr          = strdup("value for prop_8");
+    prop_info_tbl[5]->value_size         = strlen("value for prop_8");
+    prop_info_tbl[5]->edited_value_ptr   = strdup("edited value for prop_8");
+    prop_info_tbl[5]->edited_value_size  = strlen("edited value for prop_8"); 
+
+    /* prop_0 */
+    prop_info_tbl[6]                     = malloc(sizeof(prop_info_t));    
+    prop_info_tbl[6]->chksum             = 2734785588;
+    prop_info_tbl[6]->name               = strdup("prop_0");
+    prop_info_tbl[6]->value_ptr          = strdup("value for prop_0");
+    prop_info_tbl[6]->value_size         = strlen("value for prop_0");
+    prop_info_tbl[6]->edited_value_ptr   = strdup("edited value for prop_0");
+    prop_info_tbl[6]->edited_value_size  = strlen("edited value for prop_0");
+
+    /* prop_2 */
+    prop_info_tbl[7]                     = malloc(sizeof(prop_info_t)); 
+    prop_info_tbl[7]->chksum             = 2899762636;
+    prop_info_tbl[7]->name               = strdup("prop_2");
+    prop_info_tbl[7]->value_ptr          = strdup("value for prop_2");
+    prop_info_tbl[7]->value_size         = strlen("value for prop_2");
+    prop_info_tbl[7]->edited_value_ptr   = strdup("edited value for prop_2");
+    prop_info_tbl[7]->edited_value_size  = strlen("edited value for prop_2");
+
+    /* prop_4 */
+    prop_info_tbl[8]                     = malloc(sizeof(prop_info_t)); 
+    prop_info_tbl[8]->chksum             = 2968727381;
+    prop_info_tbl[8]->name               = strdup("prop_4");
+    prop_info_tbl[8]->value_ptr          = strdup("value for prop_4");
+    prop_info_tbl[8]->value_size         = strlen("value for prop_4");
+    prop_info_tbl[8]->edited_value_ptr   = strdup("edited value for prop_4");
+    prop_info_tbl[8]->edited_value_size  = strlen("edited value for prop_4");
+
+    /* prop_10*/
+    prop_info_tbl[9]                     = malloc(sizeof(prop_info_t)); 
+    prop_info_tbl[9]->chksum             = 3204791218;
+    prop_info_tbl[9]->name               = strdup("prop_10");
+    prop_info_tbl[9]->value_ptr          = strdup("value for prop_10");
+    prop_info_tbl[9]->value_size         = strlen("value for prop_10");
+    prop_info_tbl[9]->edited_value_ptr   = strdup("edited value for prop_10");
+    prop_info_tbl[9]->edited_value_size  = strlen("edited value for prop_10");
+
+    /* prop_3 */
+    prop_info_tbl[10]                     = malloc(sizeof(prop_info_t)); 
+    prop_info_tbl[10]->chksum             = 3974747559;
+    prop_info_tbl[10]->name               = strdup("prop_3");
+    prop_info_tbl[10]->value_ptr          = strdup("value for prop_3");
+    prop_info_tbl[10]->value_size         = strlen("value for prop_3");
+    prop_info_tbl[10]->edited_value_ptr   = strdup("edited value for prop_3");
+    prop_info_tbl[10]->edited_value_size  = strlen("edited value for prop_3");
+
+    /* prop_11 */
+    prop_info_tbl[11]                     = malloc(sizeof(prop_info_t)); 
+    prop_info_tbl[11]->chksum             = 1966212493;
+    prop_info_tbl[11]->name               = strdup("prop_11");
+    prop_info_tbl[11]->value_ptr          = strdup("value for prop_11");
+    prop_info_tbl[11]->value_size         = strlen("value for prop_11");
+    prop_info_tbl[11]->edited_value_ptr   = strdup("edited value for prop_11");
+    prop_info_tbl[11]->edited_value_size  = strlen("edited value for prop_11");
+
+} /* init_prop_info_tbl() */
 
 
 
 /****************************************************************************************
- * Function:    serial_class_test
- *
- * Purpose:     Tests the H5P__mt_create_class() function with more detail. Still serial
- *              tests, but manually sets flags to ensure certain things get triggered 
- *              correctly.
- *
- * Return:      void   
- *
+ * Function:    H5P_test_init()
+ * 
+ * Purpose:     Calls H5P_mt_init() function to set up the multi-thread root class and 
+ *              the free lists for properties, lists, and classes. Then does many asserts
+ *              to ensure all the values in the root class struct are correct.
+ * 
+ * Return:      Pointer to root class
+ * 
+ ****************************************************************************************
+ */
+H5P_mt_class_t *
+H5P_test_init(void)
+{
+    H5P_mt_prop_t           * prop;
+    H5P_mt_prop_aptr_t        next;
+    H5P_mt_prop_value_t       value;
+    H5P_mt_class_t          * root_class;
+    H5P_mt_class_ref_counts_t ref_count;
+
+
+
+    H5P_mt_init();
+
+    root_class = H5P_MT_CLS_ROOT_g;
+
+    assert(root_class);
+    assert(root_class->tag == H5P_MT_CLASS_TAG);
+
+    assert(root_class->parent_id == H5I_INVALID_HID);
+    assert(root_class->parent_ptr == NULL);
+    assert(root_class->parent_version == 0);
+
+    assert( 0 == strcmp(root_class->name, "root"));
+    assert( H5I_INVALID_HID == atomic_load(&(root_class->id)));
+    assert( H5P_TYPE_ROOT == root_class->type);
+        
+    assert( 1 == atomic_load(&(root_class->curr_version)));
+    assert( 2 == atomic_load(&(root_class->next_version))); 
+
+    ref_count = atomic_load(&(root_class->ref_count));
+    assert( 0 == ref_count.plc);
+    assert( 0 == ref_count.pl);
+    assert( FALSE == ref_count.deleted);
+    assert( FALSE == ref_count.dummy_bool_1);
+    assert( FALSE == ref_count.dummy_bool_2);
+    assert( FALSE == ref_count.dummy_bool_3);
+
+    prop = root_class->pl_head;
+    value = atomic_load(&(prop->value));
+    
+    assert(prop);
+    assert(prop->tag == H5P_MT_PROP_TAG);
+    assert(prop->chksum == LLONG_MIN);
+    assert(prop->sentinel);
+    assert(value.size == 0);
+    assert(value.ptr == NULL);
+    
+    next = atomic_load(&(prop->next));
+    prop = next.ptr;
+    value = atomic_load(&(prop->value));
+
+    assert(prop);
+    assert(prop->tag == H5P_MT_PROP_TAG);
+    assert(prop->chksum == LLONG_MAX);
+    assert(prop->sentinel);
+    assert(value.size == 0);
+    assert(value.ptr == NULL);
+
+    assert(0 == atomic_load(&(root_class->log_pl_len)));
+    assert(2 == atomic_load(&(root_class->phys_pl_len)));
+
+    
+    return(root_class);
+
+} /* H5P_test_init() */
+
+
+
+/****************************************************************************************
+ * Function:    H5P_mt_create_class_test()
+ * 
+ * Purpose:     Calls H5P__mt_create_class() function and then uses asserts to ensure all 
+ *              the basic values in the class are correct.
+ * 
+ * Return:      Success: pointer to the class was created
+ * 
+ *              Failure: NULL
+ * 
+ ****************************************************************************************
+ */
+H5P_mt_class_t *
+H5P_mt_create_class_test(H5P_mt_class_t *parent, char *name, H5P_plist_type_t type,
+                         uint64_t test_version)
+{
+    H5P_mt_class_t          * new_class;
+    H5P_mt_class_ref_counts_t ref_count;
+
+    new_class = H5P__mt_create_class(parent, name, type, test_version, NULL, NULL, 
+                                     NULL, NULL, NULL, NULL);
+
+    if ( ! new_class )
+    {
+        fprintf(stderr, "Failed to initialize the class.");
+        assert(H5P_MT_ASSERT_FAIL);
+    }
+
+    assert(new_class);
+    assert(new_class->tag == H5P_MT_CLASS_TAG);
+
+    assert(new_class->parent_id == parent->id);
+    assert(new_class->parent_ptr == parent);
+
+    if (test_version == 0)
+        assert(new_class->parent_version == (atomic_load(&(parent->curr_version))));
+    else
+        assert(new_class->parent_version == test_version);
+
+    assert( 0 == strcmp(new_class->name, name));
+    assert( H5I_INVALID_HID == atomic_load(&(new_class->id)));
+    assert( type == new_class->type);
+        
+    assert( 1 == atomic_load(&(new_class->curr_version)));
+    assert( 2 == atomic_load(&(new_class->next_version))); 
+
+    ref_count = atomic_load(&(new_class->ref_count));
+    assert( 0 == ref_count.plc);
+    assert( 0 == ref_count.pl);
+    assert( FALSE == ref_count.deleted);
+    assert( FALSE == ref_count.dummy_bool_1);
+    assert( FALSE == ref_count.dummy_bool_2);
+    assert( FALSE == ref_count.dummy_bool_3);
+    
+    return(new_class);
+
+
+} /* H5P_mt_create_class_test() */
+
+
+
+/****************************************************************************************
+ * Function:    H5P_mt_create_class_test()
+ * 
+ * Purpose:     Calls H5P__mt_create_list() function and then uses asserts to ensure all 
+ *              the basic values in the list are correct.
+ * 
+ * Return:      Success: pointer to the list was created
+ * 
+ *              Failure: NULL
+ * 
+ ****************************************************************************************
+ */
+H5P_mt_list_t *
+H5P_mt_create_list_test(H5P_mt_class_t *parent, H5P_mt_list_t *old_list, bool copy,
+                        uint64_t version)
+{
+    H5P_mt_list_t          * new_list;
+
+    new_list = H5P__mt_create_list(parent, old_list, copy, version);
+
+    assert(new_list);
+    assert(new_list->tag == H5P_MT_LIST_TAG);
+
+    assert(new_list->pclass_id == parent->id);
+    assert(new_list->pclass_ptr == parent);
+    if ( version == 0 )
+    {
+        assert(new_list->pclass_version == parent->curr_version);
+    }
+    else
+    {
+        assert(new_list->pclass_version == version);
+    }
+
+    assert(atomic_load(&(new_list->plist_id)) == H5I_INVALID_HID);
+    assert(atomic_load(&(new_list->curr_version)) == 1);
+    assert(atomic_load(&(new_list->next_version)) == 2);
+
+    assert(atomic_load(&(new_list->nprops_added)) == 0);
+    assert(atomic_load(&(new_list->nprops)) == new_list->nprops_inherited);
+
+    if ( version == 0 )
+    {
+        assert(new_list->nprops_inherited == parent->log_pl_len);
+    }
+
+    
+    return(new_list);
+
+} /* H5P_mt_create_list_test() */
+
+
+
+/****************************************************************************************
+ * Function:    compare_prop_to_prop_info()
+ * 
+ * Purpose:     Function that compares a property to the prop_info_t struct for that 
+ *              property to ensure it's chksum, name, and value are correct
+ * 
+ * Return:      SUCCESS/FAIL
+ * 
+ ****************************************************************************************
+ */
+herr_t
+compare_prop_to_prop_info(H5P_mt_prop_t * prop, bool in_prop_class, bool in_lkup_tbl,
+                        uint64_t ref_count)
+{
+    H5P_mt_prop_value_t value;
+    prop_info_t       * cmp_prop;
+
+    herr_t               ret_value = SUCCEED;
+
+
+    assert(prop);
+    assert(atomic_load(&(prop->tag)) == H5P_MT_PROP_TAG);
+    
+    assert( ! prop->sentinel);
+    assert(prop->in_prop_class == in_prop_class);
+    assert(prop->in_lkup_tbl == in_lkup_tbl);
+    assert(atomic_load(&(prop->ref_count)) == ref_count);
+
+    cmp_prop = search_prop_info_tbl(prop->chksum);
+    
+    assert(prop->chksum == cmp_prop->chksum);
+    assert( 0 == strcmp(prop->name, cmp_prop->name));
+    
+    value = atomic_load(&(prop->value));
+
+   
+    
+    if ( value.size == cmp_prop->value_size )
+    {
+        assert(0 == memcmp(value.ptr, cmp_prop->value_ptr, value.size));
+    }
+    else if ( value.size == cmp_prop->edited_value_size )
+    {
+        assert(0 == memcmp(value.ptr, cmp_prop->edited_value_ptr, value.size));
+    }
+    else
+    {
+        fprintf(stderr, "value doesn't match prop_info_tbl.");
+        assert(H5P_MT_ASSERT_FAIL);
+    }
+    
+
+    return(ret_value);
+
+} /* compare_prop_to_prop_info() */
+
+
+
+/****************************************************************************************
+ * Function:    search_prop_info_tbl()
+ * 
+ * Purpose:     Searches the prop_info_tbl to get the entry with the supplied chksum
+ * 
+ * Return:      Success: pointer to the prop_info_t for the supplied chksum
+ * 
+ *              Failure: can't fail
+ * 
+ ****************************************************************************************
+ */
+prop_info_t *
+search_prop_info_tbl(int64_t chksum)
+{
+    prop_info_t * prop_info;
+    int32_t       left;
+    int32_t       middle;
+    int32_t       right;
+
+    prop_info_t * ret_value = NULL;
+
+    left  = 0;
+    right = 11; /* size of prop_info_tbl array */
+
+    while ( left <= right )
+    {
+        middle = left + (right - left) / 2;
+
+        prop_info = prop_info_tbl[middle];
+
+        if ( prop_info->chksum == chksum )
+        {
+            ret_value = prop_info;
+            break;
+        }
+        else if ( prop_info->chksum < chksum )
+        {
+            left = middle + 1;
+        }
+        else
+        {
+            right = middle -1;
+        }
+    }
+    
+    return(ret_value);
+
+} /* search_prop_info_tbl() */
+
+
+
+/****************************************************************************************
+ * Function:    serial_class_test()
+ * 
+ * Purpose:     Goes through the H5Pint_mt.c class functions and performs checks to 
+ *              ensure all of the classes and their properties are correct after creating
+ *              a class, inserting a new property, 'modifying' an existing property, and
+ *              setting the delete version on a property. We also test searching for a 
+ *              property, comparing classes that are the same and that are different,
+ *              and closing and clearing classes.
+ * 
+ * Return:      void
+ * 
  ****************************************************************************************
  */
 void serial_class_test(void)
 {
-    //H5P_mt_class_sptr_t          fl_class_head;
-    H5P_mt_class_t             * root_class;
-    H5P_mt_class_t             * att_class;
-    H5P_mt_class_t             * group_class;
-    const char                 * new_class_name;
-    uint64_t                     curr_version;
-    //H5P_mt_active_thread_count_t thrd;
-    char                       * prop_name;
-    char                       * value_str;
-    char                       * test_value_str;
-    void                       * value_ptr;
-    size_t                       value_size;
-    H5P_mt_prop_t              * first_prop;
-    H5P_mt_prop_t              * second_prop;
-    H5P_mt_prop_aptr_t           next_ptr;
-    H5P_mt_prop_value_t          prop_value;
-    uint32_t                     log_pl_len;
-    uint32_t                     phys_pl_len;
-    int32_t                      check_value;
+    H5P_mt_class_t    * root_class;
+    H5P_mt_class_t    * att_class;
+    H5P_mt_class_t    * group_class;
+    H5P_mt_class_t    * data_class;
+    char              * class_name;
+    H5P_mt_prop_t     * prop;
+    char                tmp_name[MAX_NAME_LEN];
+    char              * prop_name;
+    H5P_mt_prop_aptr_t  next;
+    H5P_mt_prop_value_t value;
+    prop_info_t       * prop_info;
+    size_t              name_len;
+    int64_t             chksum;
 
 
 
-    printf("MT PROP serial_create_class_test\n");
+    printf("\nMT PROP serial class test\n");
+
+    /* Call the test function for initializing the MT H5P and getting the root class */
+    root_class = H5P_test_init();
 
 
-    /* Initializes the root class which is needed as a base for H5P_mt */
-    H5P_mt_init();
-
-    //fl_class_head = atomic_load(&(H5P_mt_g.class_fl_head));
-
-    root_class = H5P_mt_rootcls_g;
-
-    assert(root_class);
-    assert(root_class->tag == H5P_MT_CLASS_TAG);
-
-
-    /* Creates a new class derived from the root class */
-    curr_version = atomic_load(&(root_class->curr_version));
-
-    new_class_name = "attribute access";
-
-    att_class = H5P__mt_create_class(root_class, new_class_name, 
-                                     H5P_TYPE_ATTRIBUTE_ACCESS, 0);
-
-
-/**
- * NOTE: currently this gives an assertion error from H5Eint.c
- * assert(cls_id > 0); it fails this because nothing in the MT version of H5P is being
- * registered yet.
- */
-#if 0
-
-    /**
-     * Manually sets att_class's thrd.opening to TRUE to ensure that condition is
-     * triggered and and that a new class can't be created until opening is completed.
-     */
-    assert( 0 == (atomic_load(&(att_class->num_thrd_opening_flag_set))) );
-
-    thrd = atomic_load(&(att_class->thrd));
-
-    thrd.opening = TRUE;
-
-    atomic_store(&(att_class->thrd), thrd);
-
-    new_class_name = "group access";
-
-    group_class = H5P__mt_create_class(att_class, new_class_name,
-                                       H5P_TYPE_GROUP_ACCESS, 0);
-
-    assert( group_class == NULL );
-    assert( 1 == (atomic_load(&(att_class->num_thrd_opening_flag_set))) );
-
-    /* Manually set thrd.opening back to FALSE */
-    thrd = atomic_load(&(att_class->thrd));
-
-    thrd.opening = FALSE;
-
-    atomic_store(&(att_class->thrd), thrd);
-
-
-
-
-    /**
-     * Manually sets att_class's thrd.closing to TRUE to ensure that condition is
-     * triggered and and that a new class can't be created until closing is completed.
-     * 
-     * *** Will print and error message to terminal ***
-     */
-    assert( 0 == (atomic_load(&(att_class->num_thrd_closing_flag_set))) );
-
-    thrd = atomic_load(&(att_class->thrd));
-
-    thrd.closing = TRUE;
-
-    atomic_store(&(att_class->thrd), thrd);
-
-    group_class = H5P__mt_create_class(att_class, new_class_name,
-                                       H5P_TYPE_GROUP_ACCESS, 0);
-
-    assert( group_class == NULL );
-    assert( 1 == (atomic_load(&(att_class->num_thrd_closing_flag_set))) );
-
-    /* Manually set thrd.closing back to FALSE */
-    thrd = atomic_load(&(att_class->thrd));
-
-    thrd.closing = FALSE;
-
-    atomic_store(&(att_class->thrd), thrd);
-
-#endif
-
-
-
-    /**
-     * Will test to make sure that only the valid properties are copied to the new class
-     * but doing several inserts to put more properties att_class, and deleting a couple
-     * of them, and doing a few insert calls that are 'modifications' to existing props. 
-     * 
-     * This also tests that att_class handles all of these commands correctly as well.
+    /** 
+     * First testing creating a new class from the root class 
      */
 
-    /* Inserts 10 new properties */
-    for ( int i = 0; i < 10; i++ )
-    {
-        prop_name = malloc(MAX_PROP_NAME_LEN);
+    class_name = malloc(MAX_NAME_LEN);
 
-        snprintf(prop_name, MAX_PROP_NAME_LEN, "prop_%d", i);
+    snprintf(class_name, MAX_NAME_LEN, "attribute_class");
 
-        value_size = (size_t)(snprintf(NULL, 0, "This is the value for %s.", prop_name) + 1);
-        value_ptr = malloc(value_size);
-        if ( ! value_ptr )
-        {
-            fprintf(stderr, "Failed to allocate memory for value");
-        }
+    att_class = H5P_mt_create_class_test(root_class, class_name, 
+                                         H5P_TYPE_ATTRIBUTE_ACCESS, 0);
 
-        snprintf(value_ptr, value_size, "This is the value for %s.", prop_name);
+    prop = att_class->pl_head;
 
-        H5P__mt_ins_or_mod_prop__main(att_class, prop_name, (void *)value_ptr, value_size);
-
-    }
-
-
-
-    /* Sets a delete version of a property */
-    first_prop = att_class->pl_head;
-    next_ptr = atomic_load(&(first_prop->next));
-    second_prop = atomic_load(&(next_ptr.ptr));
-
-    for ( int i = 0; i < 3; i++ )
-    {
-        first_prop = second_prop;
-        next_ptr = atomic_load(&(first_prop->next));
-        second_prop = atomic_load(&(next_ptr.ptr));
-    }
-
-    H5P__set_delete_version(att_class, second_prop);
-
-
-
-
-    /* 'Modifies' a property */
-
-    first_prop = att_class->pl_head;
-    next_ptr = atomic_load(&(first_prop->next));
-    second_prop = atomic_load(&(next_ptr.ptr));
-
-    prop_name = second_prop->name;
-    value_size = (size_t)(snprintf(NULL, 0, "This is the value for %s, modified.", 
-                          prop_name) + 1);
-    value_ptr = malloc(value_size);
-    if ( ! value_ptr )
-    {
-        fprintf(stderr, "Failed to allocate memory for value");
-    }
+    assert(prop);
+    assert(prop->tag == H5P_MT_PROP_TAG);
+    assert(prop->sentinel);
     
-    snprintf(value_ptr, value_size, "This is the value for %s, modified.", 
-             prop_name);
+    next = atomic_load(&(prop->next));
+    prop = next.ptr;
+
+    assert(prop);
+    assert(prop->tag == H5P_MT_PROP_TAG);
+    assert(prop->sentinel);
+
+    assert(0 == atomic_load(&(att_class->log_pl_len)));
+    assert(2 == atomic_load(&(att_class->phys_pl_len)));
 
 
-    H5P__mt_ins_or_mod_prop__main(att_class, prop_name, (void *)value_ptr, value_size);
-
-
-
-
-    /* Gets the version of the class we want to derive a new class from */
-
-    curr_version = atomic_load(&(att_class->curr_version));
-
-
-
-    /* 'Modifies' a second property */
-
-    next_ptr = atomic_load(&(second_prop->next));
-    first_prop = atomic_load(&(next_ptr.ptr));
-
-    prop_name = first_prop->name;
-    value_size = (size_t)(snprintf(NULL, 0, "This is the value for %s, modified.", 
-                          prop_name) + 1);
-    value_ptr = malloc(value_size);
-    if ( ! value_ptr )
-    {
-        fprintf(stderr, "Failed to allocate memory for value");
-    }
-    snprintf(value_ptr, value_size, "This is the value for %s, modified.", 
-             prop_name);
-
-
-    H5P__mt_ins_or_mod_prop__main(att_class, prop_name, (void *)value_ptr, value_size);
-
-
-
-    /* Sets a delete version of a property */
-
-    first_prop = att_class->pl_head;
-    next_ptr = atomic_load(&(first_prop->next));
-    second_prop = atomic_load(&(next_ptr.ptr));
-
-    for ( int i = 0; i < 6; i++ )
-    {
-        first_prop = second_prop;
-        next_ptr = atomic_load(&(first_prop->next));
-        second_prop = atomic_load(&(next_ptr.ptr));
-    }
-
-    H5P__set_delete_version(att_class, second_prop);
-
-
-
-/** NOTE: This is a way to print info that was used to develop the tests */
-#if 0
-    first_prop = att_class->pl_head;
-    next_ptr = atomic_load(&(first_prop->next));
-    
-    while ( first_prop )
-    {
-        prop_value = atomic_load(&(first_prop->value));
-        value_str = (char *)prop_value.ptr;
-
-        printf("\nProp chksum: %lld,\nProp name: %s,\nProp value: %s,\ncreate_ver: %lld,\ndelete_ver: %lld\n", 
-              (unsigned long long)first_prop->chksum,
-               first_prop->name,
-               value_str,
-              (unsigned long long)(atomic_load(&(first_prop->create_version))),
-              (unsigned long long)(atomic_load(&(first_prop->delete_version))) );
-
-        
-            first_prop = next_ptr.ptr;
-            if ( first_prop )
-                next_ptr = atomic_load(&(first_prop->next));
-    }
-#endif
-    
-
-
-    /**
-     * Creates a new class from the version after one delete_version was set and one
-     * 'modification' was done but before the second delete_version and second 
-     * 'modification' to test the correct properties were copied into the new class.
+    /** 
+     * Test adding a few properties to the attribute class 
      */
-
-    group_class = H5P__mt_create_class(att_class, new_class_name,
-                                       H5P_TYPE_GROUP_ACCESS, curr_version);
-
-    assert(group_class);
-    assert(group_class->tag == H5P_MT_CLASS_TAG);
-
-    /* Checks that the lengths are what they should be */
-    phys_pl_len = atomic_load(&(group_class->phys_pl_len));    
-    assert(phys_pl_len == 11);
-
-    log_pl_len = atomic_load(&(group_class->log_pl_len));
-    assert(log_pl_len == 9);
-
-    first_prop = group_class->pl_head;
-    assert(first_prop);
-    assert(first_prop->tag == H5P_MT_PROP_TAG);
-    assert(first_prop->sentinel);
-
-    next_ptr = atomic_load(&(first_prop->next));
-    second_prop = atomic_load(&(next_ptr.ptr));
-
-    /**
-     * Iterates through group_class's LFSLL and ensures only the expected 
-     * properties were copied over when it was derived from app_class.
-     */
-    for ( uint32_t i = 0; i < log_pl_len; i++ )
+    
+    for ( uint32_t i = 0; i < 11; i++ )
     {
-        assert(second_prop);
-        assert(second_prop->tag == H5P_MT_PROP_TAG);
+        snprintf(tmp_name, sizeof("prop_%d"), "prop_%d", i);
 
-        prop_value = atomic_load(&(second_prop->value));
+        prop_name = strdup(tmp_name);
 
-        value_ptr = prop_value.ptr;
-        value_str = (char *)value_ptr;
+        name_len = strlen(prop_name);
 
-        if ( i == 0 )
-        {
-            snprintf(prop_name, MAX_PROP_NAME_LEN, "prop_%d", i);
+        chksum = H5_checksum_metadata(prop_name, name_len, 0);
 
-            value_size = (size_t)(snprintf(NULL, 0, "This is the value for %s, modified.", prop_name) + 1);
-            test_value_str = malloc(value_size);
-            if ( ! test_value_str )
-            {
-                fprintf(stderr, "Failed to allocate memory for test value");
-            }
+        prop_info = search_prop_info_tbl(chksum);
 
-            snprintf(test_value_str, value_size, "This is the value for %s, modified.", prop_name);
+        H5P__mt_ins_or_mod_prop__main(att_class, prop_info->name, prop_info->value_ptr, 
+                                      prop_info->value_size, FALSE, FALSE, NULL, NULL, 
+                                      NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
-            //printf("%s\n", value_str);
-            //printf("%s\n", test_value_str);
+        prop = H5P__mt_search_prop(att_class, chksum, prop_name);
 
-            assert( 0 == strcmp(value_str, test_value_str) );
-        }
-        else if ( i >= 3 )
-        {
-            snprintf(prop_name, MAX_PROP_NAME_LEN, "prop_%d", (i + 1) );
+        assert(atomic_load(&(prop->create_version)) == ( i + 2 ) );
 
-            value_size = (size_t)(snprintf(NULL, 0, "This is the value for %s.", prop_name) + 1);
-            test_value_str = malloc(value_size);
-            if ( ! test_value_str )
-            {
-                fprintf(stderr, "Failed to allocate memory for test value");
-            }
+        free(prop_name);
 
-            snprintf(test_value_str, value_size, "This is the value for %s.", prop_name);
-
-            //printf("%s\n", value_str);
-            //printf("%s\n", test_value_str);
-
-            assert( 0 == strcmp(value_str, test_value_str) );
-        }
-        else
-        {
-            snprintf(prop_name, MAX_PROP_NAME_LEN, "prop_%d", i);
-
-            value_size = (size_t)(snprintf(NULL, 0, "This is the value for %s.", prop_name) + 1);
-            test_value_str = malloc(value_size);
-            if ( ! test_value_str )
-            {
-                fprintf(stderr, "Failed to allocate memory for test value");
-            }
-
-            snprintf(test_value_str, value_size, "This is the value for %s.", prop_name);
-
-            //printf("value.ptr: %s\n", value_str);
-            //printf("test_value: %s\n", test_value_str);
-
-            assert( 0 == strcmp(value_str, test_value_str) );
-        }
-
-        first_prop = second_prop;
-        next_ptr = atomic_load(&(first_prop->next));
-        second_prop = atomic_load(&(next_ptr.ptr));
-        
     } /* end for() */
 
-#if 0
-    H5P__clear_mt_class(group_class);
-    H5P__clear_mt_class(att_class);
-    H5P__clear_mt_class(root_class);
-#endif 
-    check_value = H5P__mt_close_class(group_class);
-    assert(check_value >= 0);
+    assert(11 == atomic_load(&(att_class->log_pl_len)));
+    assert(13 == atomic_load(&(att_class->phys_pl_len)));
 
-    check_value = H5P__mt_close_class(att_class);
-    assert(check_value >= 0);
 
-    check_value = H5P__mt_close_class(root_class);
 
-    H5P__shutdown();
+    /**
+     * Iterate the lfsll to ensure the properties were created correctly and
+     * are sorted correctly.
+     */
+
+    prop = att_class->pl_head;
+
+    for ( uint32_t i = 0; i < atomic_load(&(att_class->phys_pl_len)); i++ )
+    {
+        if ( i == 0 )
+        {
+            assert(prop->chksum == LLONG_MIN);
+            assert(prop->sentinel);
+        }
+        else if ( i > 0 && i < (atomic_load(&(att_class->phys_pl_len)) - 1 ) )
+        {
+            assert(atomic_load(&(prop->tag)) == H5P_MT_PROP_TAG);
+            assert( ! atomic_load(&(prop->sentinel)));
+            assert(prop->in_prop_class);
+            assert(prop->chksum == prop_info_tbl[i-1]->chksum);
+            assert(0 == strcmp(prop->name, prop_info_tbl[i-1]->name));
+            
+            value = atomic_load(&(prop->value));
+
+            //printf("value.size: %ld\ntbl_value_size: %ld\n\n", value.size, prop_info_tbl[i-1]->value_size);
+
+            assert(value.size == prop_info_tbl[i-1]->value_size);
+            assert(0 == memcmp(value.ptr, prop_info_tbl[i-1]->value_ptr, value.size));
+            //assert(1 == prop->create_version);
+            //assert(0 == prop->delete_version);
+            
+        }        
+        else
+        {
+            assert(prop->chksum == LLONG_MAX);
+            assert(prop->sentinel);
+        }
+
+        next = atomic_load(&(prop->next));
+        prop = next.ptr;
+
+    } /* end for() */
+
+
+    /** 
+     * Test creating two properties that are "modified" prop_0 and prop_5 
+     */
+
+    /* New version of prop_5 */
+    H5P__mt_ins_or_mod_prop__main(att_class, prop_info_tbl[1]->name, 
+                                  prop_info_tbl[1]->edited_value_ptr, 
+                                  prop_info_tbl[1]->edited_value_size,
+                                  FALSE, FALSE, NULL, NULL, NULL, NULL,
+                                  NULL, NULL, NULL, NULL, NULL);
+
+    /* New version of prop_0 */
+    H5P__mt_ins_or_mod_prop__main(att_class, prop_info_tbl[6]->name,
+                                 prop_info_tbl[6]->edited_value_ptr,
+                                 prop_info_tbl[6]->edited_value_size,
+                                 FALSE, FALSE, NULL, NULL, NULL, NULL,
+                                 NULL, NULL, NULL, NULL, NULL);
+
     
-} /* end serial_class_test() */
+    assert(11 == atomic_load(&(att_class->log_pl_len)));
+    assert(15 == atomic_load(&(att_class->phys_pl_len)));
+
+
+    /**
+     * Iterate the lfsll again and ensure the new properties are correct
+     * and all props are stil in the correct order.
+     */
+    prop = att_class->pl_head;
+
+    for ( uint32_t i = 0; i < atomic_load(&(att_class->phys_pl_len)); i++ )
+    {
+        if ( i == 0 )
+        {
+            assert(prop->chksum == LLONG_MIN);
+            assert(prop->sentinel);
+        }
+        else if ( i == 1 )
+        {
+            assert(atomic_load(&(prop->tag)) == H5P_MT_PROP_TAG);
+            assert( ! atomic_load(&(prop->sentinel)));
+            assert(prop->in_prop_class);
+            assert(prop->chksum == prop_info_tbl[i-1]->chksum);
+            assert(0 == strcmp(prop->name, prop_info_tbl[i-1]->name));
+            
+            value = atomic_load(&(prop->value));
+
+            //printf(prop->name, "\n");
+            //printf("value.size: %ld\ntbl_value_size: %ld\n\n", value.size, 
+            //       prop_info_tbl[i-1]->value_size);
+
+            assert(value.size == prop_info_tbl[i-1]->value_size);
+            assert(0 == memcmp(value.ptr, prop_info_tbl[i-1]->value_ptr, value.size)); 
+        }
+        else if ( i == 2 )
+        {
+            assert(atomic_load(&(prop->tag)) == H5P_MT_PROP_TAG);
+            assert( ! atomic_load(&(prop->sentinel)));
+            assert(prop->in_prop_class);
+            assert(prop->chksum == prop_info_tbl[i-1]->chksum);
+            assert(0 == strcmp(prop->name, prop_info_tbl[i-1]->name));
+            
+            value = atomic_load(&(prop->value));
+
+            assert(value.size == prop_info_tbl[i-1]->edited_value_size);
+            assert(0 == memcmp(value.ptr, prop_info_tbl[i-1]->edited_value_ptr, 
+                               value.size));
+        }
+        else if ( i >= 3 && i < 8 )
+        {
+            assert(atomic_load(&(prop->tag)) == H5P_MT_PROP_TAG);
+            assert( ! atomic_load(&(prop->sentinel)));
+            assert(prop->in_prop_class);
+            assert(prop->chksum == prop_info_tbl[i-2]->chksum);
+            assert(0 == strcmp(prop->name, prop_info_tbl[i-2]->name));
+            
+            value = atomic_load(&(prop->value));
+
+            assert(value.size == prop_info_tbl[i-2]->value_size);
+            assert(0 == memcmp(value.ptr, prop_info_tbl[i-2]->value_ptr, value.size));
+        }
+        else if ( i == 8 )
+        {
+            assert(atomic_load(&(prop->tag)) == H5P_MT_PROP_TAG);
+            assert( ! atomic_load(&(prop->sentinel)));
+            assert(prop->in_prop_class);
+            assert(prop->chksum == prop_info_tbl[i-2]->chksum);
+            assert(0 == strcmp(prop->name, prop_info_tbl[i-2]->name));
+            
+            value = atomic_load(&(prop->value));
+
+            assert(value.size == prop_info_tbl[i-2]->edited_value_size);
+            assert(0 == memcmp(value.ptr, prop_info_tbl[i-2]->edited_value_ptr, 
+                               value.size));
+        }
+        else if ( i > 8 && i < (atomic_load(&(att_class->phys_pl_len)) - 1 ) )
+        {
+            assert(atomic_load(&(prop->tag)) == H5P_MT_PROP_TAG);
+            assert( ! atomic_load(&(prop->sentinel)));
+            assert(prop->in_prop_class);
+            assert(prop->chksum == prop_info_tbl[i-3]->chksum);
+            assert(0 == strcmp(prop->name, prop_info_tbl[i-3]->name));
+            
+            value = atomic_load(&(prop->value));
+
+            assert(value.size == prop_info_tbl[i-3]->value_size);
+            assert(0 == memcmp(value.ptr, prop_info_tbl[i-3]->value_ptr, value.size));
+        }      
+        else
+        {
+            assert(prop->chksum == LLONG_MAX);
+            assert(prop->sentinel);
+        }
+
+        next = atomic_load(&(prop->next));
+        prop = next.ptr;
+
+    } /* end for() */
+
+
+    /**
+     * Test setting the delete version on property prop_4.
+     */
+
+    prop = H5P__mt_search_prop(att_class, prop_info_tbl[8]->chksum, 
+                               prop_info_tbl[8]->name);
+
+
+    if ( compare_prop_to_prop_info(prop, TRUE, FALSE, 0) < 0 )
+    {
+        fprintf(stderr, "property doesn't match with prop_info_tbl.");
+        assert(H5P_MT_ASSERT_FAIL);
+    }
+
+    if ( H5P__set_delete_version(att_class, prop) < 0 )
+    {
+        fprintf(stderr, "Failed to set delete version on property.");
+        assert(H5P_MT_ASSERT_FAIL);
+    }
+
+    assert(15 == atomic_load(&(prop->delete_version)));
+
+    
+    /**
+     * Test creating a new class derived from att_class
+     */
+
+    snprintf(class_name, MAX_NAME_LEN, "group_class");
+
+    group_class = H5P_mt_create_class_test(att_class, class_name,
+                                           H5P_TYPE_GROUP_ACCESS, 0);
+
+    assert(10 == atomic_load(&(group_class->log_pl_len)));
+    assert(12 == atomic_load(&(group_class->phys_pl_len)));
+
+
+    /**
+     * Iterate the lfsll and ensure the properties are in the correct order
+     * and that any non-valid properties didn't get copied over.
+     */
+    prop = group_class->pl_head;
+
+    for ( uint32_t i = 0; i < atomic_load(&(group_class->phys_pl_len)); i++ )
+    {
+        if ( i == 0 )
+        {
+            assert(prop->chksum == LLONG_MIN);
+            assert(prop->sentinel);
+        }
+        else if ( i == 1 || ( i >= 3 && i < 7 ) || i == 8 )
+        {
+            assert(atomic_load(&(prop->tag)) == H5P_MT_PROP_TAG);
+            assert( ! atomic_load(&(prop->sentinel)));
+            assert(prop->in_prop_class);
+            assert(prop->chksum == prop_info_tbl[i-1]->chksum);
+            assert(0 == strcmp(prop->name, prop_info_tbl[i-1]->name));
+            
+            value = atomic_load(&(prop->value));
+
+            //printf(prop->name, "\n");
+            //printf("value.size: %ld\ntbl_value_size: %ld\n\n", value.size, 
+            //       prop_info_tbl[i-1]->value_size);
+
+            assert(value.size == prop_info_tbl[i-1]->value_size);
+            assert(0 == memcmp(value.ptr, prop_info_tbl[i-1]->value_ptr, value.size)); 
+        }
+        else if ( i == 2 || i == 7 )
+        {
+            assert(atomic_load(&(prop->tag)) == H5P_MT_PROP_TAG);
+            assert( ! atomic_load(&(prop->sentinel)));
+            assert(prop->in_prop_class);
+            assert(prop->chksum == prop_info_tbl[i-1]->chksum);
+            assert(0 == strcmp(prop->name, prop_info_tbl[i-1]->name));
+            
+            value = atomic_load(&(prop->value));
+
+            assert(value.size == prop_info_tbl[i-1]->edited_value_size);
+            assert(0 == memcmp(value.ptr, prop_info_tbl[i-1]->edited_value_ptr, 
+                                value.size));
+        }
+        else if ( ( i > 8 && i < (atomic_load(&(group_class->phys_pl_len)) - 1 ) ) )
+        {
+            assert(atomic_load(&(prop->tag)) == H5P_MT_PROP_TAG);
+            assert( ! atomic_load(&(prop->sentinel)));
+            assert(prop->in_prop_class);
+            assert(prop->chksum == prop_info_tbl[i]->chksum);
+            assert(0 == strcmp(prop->name, prop_info_tbl[i]->name));
+            
+            value = atomic_load(&(prop->value));
+
+            assert(value.size == prop_info_tbl[i]->value_size);
+            assert(0 == memcmp(value.ptr, prop_info_tbl[i]->value_ptr, value.size));
+        }     
+        else
+        {
+            assert(prop->chksum == LLONG_MAX);
+            assert(prop->sentinel);
+        }
+
+        next = atomic_load(&(prop->next));
+        prop = next.ptr;
+
+    } /* end for() */
 
 
 
-/**
+    /**
+     * Test creating a class derived from att_class at version 14, meaning it should
+     * contain prop_4 since version 14 was before it was deleted.
+     */
+    snprintf(class_name, MAX_NAME_LEN, "datatype_class");
+
+    data_class = H5P_mt_create_class_test(att_class, class_name,
+                                           H5P_TYPE_DATATYPE_ACCESS, 14);
+
+    assert(11 == atomic_load(&(data_class->log_pl_len)));
+    assert(13 == atomic_load(&(data_class->phys_pl_len)));
+
+    /**
+     * Iterate the lfsll and ensure the properties are in the correct order
+     */
+    prop = data_class->pl_head;
+
+    for ( uint32_t i = 0; i < atomic_load(&(data_class->phys_pl_len)); i++ )
+    {
+        if ( i == 0 )
+        {
+            assert(prop->chksum == LLONG_MIN);
+            assert(prop->sentinel);
+        }
+        else if ( i == 1 || ( i >= 3 && i < 7 ) || 
+                  ( i >= 8 && i < (atomic_load(&(data_class->phys_pl_len)) - 1 ) ) )
+        {
+            assert(atomic_load(&(prop->tag)) == H5P_MT_PROP_TAG);
+            assert( ! atomic_load(&(prop->sentinel)));
+            assert(prop->in_prop_class);
+            assert(prop->chksum == prop_info_tbl[i-1]->chksum);
+            assert(0 == strcmp(prop->name, prop_info_tbl[i-1]->name));
+            
+            value = atomic_load(&(prop->value));
+
+            //printf(prop->name, "\n");
+            //printf("value.size: %ld\ntbl_value_size: %ld\n\n", value.size, 
+            //       prop_info_tbl[i-1]->value_size);
+
+            assert(value.size == prop_info_tbl[i-1]->value_size);
+            assert(0 == memcmp(value.ptr, prop_info_tbl[i-1]->value_ptr, value.size)); 
+        }
+        else if ( i == 2 || i == 7 )
+        {
+            assert(atomic_load(&(prop->tag)) == H5P_MT_PROP_TAG);
+            assert( ! atomic_load(&(prop->sentinel)));
+            assert(prop->in_prop_class);
+            assert(prop->chksum == prop_info_tbl[i-1]->chksum);
+            assert(0 == strcmp(prop->name, prop_info_tbl[i-1]->name));
+            
+            value = atomic_load(&(prop->value));
+
+            assert(value.size == prop_info_tbl[i-1]->edited_value_size);
+            assert(0 == memcmp(value.ptr, prop_info_tbl[i-1]->edited_value_ptr, 
+                                value.size));
+        }
+        else if ( ( i > 8 && i < (atomic_load(&(data_class->phys_pl_len)) - 1 ) ) )
+        {
+            assert(atomic_load(&(prop->tag)) == H5P_MT_PROP_TAG);
+            assert( ! atomic_load(&(prop->sentinel)));
+            assert(prop->in_prop_class);
+            assert(prop->chksum == prop_info_tbl[i]->chksum);
+            assert(0 == strcmp(prop->name, prop_info_tbl[i]->name));
+            
+            value = atomic_load(&(prop->value));
+
+            assert(value.size == prop_info_tbl[i]->value_size);
+            assert(0 == memcmp(value.ptr, prop_info_tbl[i]->value_ptr, value.size));
+        }     
+        else
+        {
+            assert(prop->chksum == LLONG_MAX);
+            assert(prop->sentinel);
+        }
+
+        next = atomic_load(&(prop->next));
+        prop = next.ptr;
+
+    } /* end for() */
+
+
+
+    /**
+     * Test comparing two classes to see if they are equal
+     */
+
+    /* Should be equal */
+    assert(0 == H5P__mt_cmp_list_or_class(att_class, att_class));
+
+    /* Should not be equal */
+    assert(1 == H5P__mt_cmp_list_or_class(att_class, group_class));
+
+
+
+    /**
+     * Testing closing the class structures, which puts them on the class free list.
+     * H5P__shutdown() then tests the H5P__mt_clear_class() function and frees all of
+     * the allocated memory in those structures and the structures themselves.
+     */
+    H5P__mt_close_class(data_class);
+    H5P__mt_close_class(group_class);
+    H5P__mt_close_class(att_class);
+    H5P__mt_close_class(root_class);
+    
+    H5P__shutdown();
+
+
+} /* serial_class_test() */
+
+
+
+/****************************************************************************************
+ * Function:    serial_list_test()
  * 
+ * Purpose:     Goes through the H5Pint_mt.c list functions and performs checks to 
+ *              ensure all of the lists and their properties are correct after creating
+ *              a list, inserting a new property, 'modifying' an existing property, and
+ *              setting the delete version on a property. We also test searching for a 
+ *              property, copying a list from another list, comparing lists that are the
+ *              same and that are different, and closing and clearing lists.
+ * 
+ *              This function starts by creating an attribute class (att_class) to create
+ *              lists from. 
+ * 
+ * Return:      void
+ * 
+ ****************************************************************************************
  */
 void serial_list_test(void)
 {
-    //H5P_mt_class_sptr_t          fl_class_head;
-    H5P_mt_class_t             * root_class;
-    H5P_mt_class_t             * att_class;
-    H5P_mt_list_t              * test_list;
-    const char                 * new_class_name;
-    uint64_t                     curr_version;
-    //H5P_mt_active_thread_count_t thrd;
-    char                       * prop_name;
-    char                       * value_str;
-    char                       * test_value_str;
-    void                       * value_ptr;
-    size_t                       value_size;
-    H5P_mt_prop_t              * first_prop;
-    H5P_mt_prop_t              * second_prop;
-    H5P_mt_prop_aptr_t           next_ptr;
-    H5P_mt_prop_value_t          prop_value;
-    uint32_t                     log_pl_len;
-    uint32_t                     phys_pl_len;
-    H5P_mt_list_table_entry_t  * entry;
-    H5P_mt_list_prop_ref_t       base;
-    int32_t                      check_value;
+    H5P_mt_class_t            * root_class;
+    H5P_mt_class_t            * att_class;
+    //H5P_mt_class_t            * group_class;
+    //H5P_mt_class_t            * data_class;
+    char                      * class_name;
+    H5P_mt_list_t             * list1;
+    H5P_mt_list_t             * list2;
+    H5P_mt_list_t             * list1_copy;
+    H5P_mt_list_table_entry_t * entry;
+    H5P_mt_list_prop_ref_t      base;
+    H5P_mt_list_prop_ref_t      curr;
+    H5P_mt_prop_t             * prop;
+    char                        tmp_name[MAX_NAME_LEN];
+    char                      * prop_name;
+    H5P_mt_prop_aptr_t          next;
+    H5P_mt_prop_value_t         value;
+    prop_info_t               * prop_info;
+    size_t                      name_len;
+    int64_t                     chksum;
 
 
+    printf("\nMT PROP serial list test\n");
+
+    /* Call the test function for initializing the MT H5P and getting the root class */
+    root_class = H5P_test_init();
 
 
-    printf("MT PROP serial_create_list_test\n");
-
-
-    /* Initializes H5P multithread */
-    H5P_mt_init();
-
-    //fl_class_head = atomic_load(&(H5P_mt_g.class_fl_head));
-
-    root_class = H5P_mt_rootcls_g;
-
-    assert(root_class);
-    assert(root_class->tag == H5P_MT_CLASS_TAG);
-
-
-    /* Creates a new class derived from the root class to derive a list from */
-    curr_version = atomic_load(&(root_class->curr_version));
-
-    new_class_name = "attribute access";
-
-    att_class = H5P__mt_create_class(root_class, new_class_name, 
-                                     H5P_TYPE_ATTRIBUTE_ACCESS, 0);
-
-
-
-/**
- * NOTE: currently this gives an assertion error from H5Eint.c
- * assert(cls_id > 0); it fails this because nothing in the MT version of H5P is being
- * registered yet.
- */
-#if 0
-    /**
-     * Manually sets att_class's thrd.opening to TRUE to ensure that condition is
-     * triggered and and that a new list can't be created until opening is completed.
-     */
-    assert( 0 == (atomic_load(&(att_class->num_thrd_opening_flag_set))) );
-
-    thrd = atomic_load(&(att_class->thrd));
-
-    thrd.opening = TRUE;
-
-    atomic_store(&(att_class->thrd), thrd);
-
-    test_list = H5P__mt_create_list(att_class, 0);
-
-    assert( test_list == NULL );
-    assert( 1 == (atomic_load(&(att_class->num_thrd_opening_flag_set))) );
-
-    /* Manually set thrd.opening back to FALSE */
-    thrd = atomic_load(&(att_class->thrd));
-
-    thrd.opening = FALSE;
-
-    atomic_store(&(att_class->thrd), thrd);
-
-
-    /**
-     * Manually sets att_class's thrd.closing to TRUE to ensure that condition is
-     * triggered and and that a new list can't be created until closing is completed.
-     * 
-     * *** Will print and error message to terminal ***
+    /** 
+     * First create the classes to derive the lists from. 
      */
 
+     class_name = malloc(MAX_NAME_LEN);
 
-    assert( 0 == (atomic_load(&(att_class->num_thrd_closing_flag_set))) );
+     snprintf(class_name, MAX_NAME_LEN, "attribute_class");
+ 
+     att_class = H5P_mt_create_class_test(root_class, class_name, 
+                                          H5P_TYPE_ATTRIBUTE_ACCESS, 0);
 
-    thrd = atomic_load(&(att_class->thrd));
-
-    thrd.closing = TRUE;
-
-    atomic_store(&(att_class->thrd), thrd);
-
-    test_list = H5P__mt_create_list(att_class, 0);
-
-    assert( test_list == NULL );
-    assert( 1 == (atomic_load(&(att_class->num_thrd_closing_flag_set))) );
-
-    /* Manually set thrd.closing back to FALSE */
-    thrd = atomic_load(&(att_class->thrd));
-
-    thrd.closing = FALSE;
-
-    atomic_store(&(att_class->thrd), thrd);
-#endif
-
-
-    /**
-     * Will test to make sure that only the valid properties are copied to the new class
-     * but doing several inserts to put more properties att_class, and deleting a couple
-     * of them, and doing a few insert calls that are 'modifications' to existing props. 
-     */
-
-
-    /* Inserts 10 new properties */
-    for ( int i = 0; i < 10; i++ )
+    /* Add properties to att_class */
+    for ( uint32_t i = 0; i < 11; i++ )
     {
-        prop_name = malloc(MAX_PROP_NAME_LEN);
+        snprintf(tmp_name, sizeof("prop_%d"), "prop_%d", i);
 
-        snprintf(prop_name, MAX_PROP_NAME_LEN, "prop_%d", i);
+        prop_name = strdup(tmp_name);
 
-        value_size = (size_t)(snprintf(NULL, 0, "This is the value for %s.", prop_name) + 1);
-        value_ptr = malloc(value_size);
-        if ( ! value_ptr )
+        name_len = strlen(prop_name);
+
+        chksum = H5_checksum_metadata(prop_name, name_len, 0);
+
+        prop_info = search_prop_info_tbl(chksum);
+
+        H5P__mt_ins_or_mod_prop__main(att_class, prop_info->name, prop_info->value_ptr, 
+                                      prop_info->value_size, FALSE, FALSE, NULL, NULL, 
+                                      NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+
+        prop = H5P__mt_search_prop(att_class, chksum, prop_name);
+
+        assert(atomic_load(&(prop->create_version)) == ( i + 2 ) );
+
+        free(prop_name);
+
+    } /* end for() */
+
+
+    /* New version of prop_5 */
+    H5P__mt_ins_or_mod_prop__main(att_class, prop_info_tbl[1]->name, 
+        prop_info_tbl[1]->edited_value_ptr, 
+        prop_info_tbl[1]->edited_value_size,
+        FALSE, FALSE, NULL, NULL, NULL, NULL,
+        NULL, NULL, NULL, NULL, NULL);
+
+    /* New version of prop_0 */
+    H5P__mt_ins_or_mod_prop__main(att_class, prop_info_tbl[6]->name,
+            prop_info_tbl[6]->edited_value_ptr,
+            prop_info_tbl[6]->edited_value_size,
+            FALSE, FALSE, NULL, NULL, NULL, NULL,
+            NULL, NULL, NULL, NULL, NULL);
+
+    prop = H5P__mt_search_prop(att_class, prop_info_tbl[8]->chksum, 
+                               prop_info_tbl[8]->name);
+
+    /* deleting prop_4 */
+    if ( H5P__set_delete_version(att_class, prop) < 0 )
+    {
+        fprintf(stderr, "Failed to set delete version on property.");
+        assert(H5P_MT_ASSERT_FAIL);
+    }
+
+
+
+
+    /**
+     * Test deriving a list from att_class
+     */
+
+    list1 = H5P_mt_create_list_test(att_class, NULL, FALSE, 0);
+
+    assert(list1);
+
+    assert(list1->nprops_inherited == 10);
+    assert(list1->log_pl_len == 0);
+    assert(list1->phys_pl_len == 2);
+
+    for ( uint32_t i = 0; i < list1->nprops_inherited; i++ )
+    {
+        entry = &list1->lkup_tbl[i];
+
+        if ( i == 0 || ( i >= 2 && i < 6 ) || i == 7 )
         {
-            fprintf(stderr, "Failed to allocate memory for value");
-        }
-
-        snprintf(value_ptr, value_size, "This is the value for %s.", prop_name);
-
-        H5P__mt_ins_or_mod_prop__main(att_class, prop_name, (void *)value_ptr, value_size);
-
-    }
-
-
-    /* Sets a delete version of a property */
-    first_prop = att_class->pl_head;
-    next_ptr = atomic_load(&(first_prop->next));
-    second_prop = atomic_load(&(next_ptr.ptr));
-
-    for ( int i = 0; i < 3; i++ )
-    {
-        first_prop = second_prop;
-        next_ptr = atomic_load(&(first_prop->next));
-        second_prop = atomic_load(&(next_ptr.ptr));
-    }
-
-    H5P__set_delete_version(att_class, second_prop);
-
-
-
-
-    /* 'Modifies' a property */
-
-    first_prop = att_class->pl_head;
-    next_ptr = atomic_load(&(first_prop->next));
-    second_prop = atomic_load(&(next_ptr.ptr));
-
-    prop_name = second_prop->name;
-    value_size = (size_t)(snprintf(NULL, 0, "This is the value for %s, modified.", 
-                          prop_name) + 1);
-    value_ptr = malloc(value_size);
-    if ( ! value_ptr )
-    {
-        fprintf(stderr, "Failed to allocate memory for value");
-    }
+            assert(entry->chksum == prop_info_tbl[i]->chksum);
+            assert(0 == strcmp(entry->name, prop_info_tbl[i]->name));
+            assert(0 == atomic_load(&(entry->base_delete_version)));
     
-    snprintf(value_ptr, value_size, "This is the value for %s, modified.", 
-             prop_name);
-
-
-    H5P__mt_ins_or_mod_prop__main(att_class, prop_name, (void *)value_ptr, value_size);
-
-
-
-
-    /* Gets the version of the class we want to derive a new class from */
-
-    curr_version = atomic_load(&(att_class->curr_version));
-
-
-
-    /* 'Modifies' a second property */
-
-    next_ptr = atomic_load(&(second_prop->next));
-    first_prop = atomic_load(&(next_ptr.ptr));
-
-    prop_name = first_prop->name;
-    value_size = (size_t)(snprintf(NULL, 0, "This is the value for %s, modified.", 
-                          prop_name) + 1);
-    value_ptr = malloc(value_size);
-    if ( ! value_ptr )
-    {
-        fprintf(stderr, "Failed to allocate memory for value");
-    }
-    snprintf(value_ptr, value_size, "This is the value for %s, modified.", 
-             prop_name);
-
-
-    H5P__mt_ins_or_mod_prop__main(att_class, prop_name, (void *)value_ptr, value_size);
-
-
-
-    /* Sets a delete version of a property */
-
-    first_prop = att_class->pl_head;
-    next_ptr = atomic_load(&(first_prop->next));
-    second_prop = atomic_load(&(next_ptr.ptr));
-
-    for ( int i = 0; i < 6; i++ )
-    {
-        first_prop = second_prop;
-        next_ptr = atomic_load(&(first_prop->next));
-        second_prop = atomic_load(&(next_ptr.ptr));
-    }
-
-    H5P__set_delete_version(att_class, second_prop);
-
-
-/** NOTE: This is a way to print info that was used to develop the tests */
-#if 0
-    first_prop = att_class->pl_head;
-    next_ptr = atomic_load(&(first_prop->next));
+            base = atomic_load(&(entry->base));
     
-    while ( first_prop )
-    {
-        prop_value = atomic_load(&(first_prop->value));
-        value_str = (char *)prop_value.ptr;
+            assert(base.ver == 1);
+            
+            prop = base.ptr;
+    
+            assert(atomic_load(&(prop->tag)) == H5P_MT_PROP_TAG);
+            assert(! atomic_load(&(prop->sentinel)));
+            assert(prop->chksum == prop_info_tbl[i]->chksum);
+            assert(0 == strcmp(prop->name, prop_info_tbl[i]->name));
+            assert(prop->in_prop_class);
+            assert(1 == atomic_load(&(prop->ref_count)));
+    
+            value = atomic_load(&(prop->value));
+    
+            assert(value.size == prop_info_tbl[i]->value_size);
+            assert(0 == memcmp(value.ptr, prop_info_tbl[i]->value_ptr, value.size));
+        }
+        else if ( i == 1 || i == 6 )
+        {
+            assert(entry->chksum == prop_info_tbl[i]->chksum);
+            assert(0 == strcmp(entry->name, prop_info_tbl[i]->name));
+            assert(0 == atomic_load(&(entry->base_delete_version)));
+    
+            base = atomic_load(&(entry->base));
+    
+            assert(base.ver == 1);
+            
+            prop = base.ptr;
+    
+            assert(atomic_load(&(prop->tag)) == H5P_MT_PROP_TAG);
+            assert(! atomic_load(&(prop->sentinel)));
+            assert(prop->chksum == prop_info_tbl[i]->chksum);
+            assert(0 == strcmp(prop->name, prop_info_tbl[i]->name));
+            assert(prop->in_prop_class);
+            assert(1 == atomic_load(&(prop->ref_count)));
+    
+            value = atomic_load(&(prop->value));
+    
+            assert(value.size == prop_info_tbl[i]->edited_value_size);
+            assert(0 == memcmp(value.ptr, prop_info_tbl[i]->edited_value_ptr, 
+                               value.size));
+        }
+        else if ( i > 7 )
+        {
+            assert(entry->chksum == prop_info_tbl[i+1]->chksum);
+            assert(0 == strcmp(entry->name, prop_info_tbl[i+1]->name));
+            assert(0 == atomic_load(&(entry->base_delete_version)));
+    
+            base = atomic_load(&(entry->base));
+    
+            assert(base.ver == 1);
+            
+            prop = base.ptr;
+    
+            assert(atomic_load(&(prop->tag)) == H5P_MT_PROP_TAG);
+            assert(! atomic_load(&(prop->sentinel)));
+            assert(prop->chksum == prop_info_tbl[i+1]->chksum);
+            assert(0 == strcmp(prop->name, prop_info_tbl[i+1]->name));
+            assert(prop->in_prop_class);
+            assert(1 == atomic_load(&(prop->ref_count)));
+    
+            value = atomic_load(&(prop->value));
+    
+            assert(value.size == prop_info_tbl[i+1]->value_size);
+            assert(0 == memcmp(value.ptr, prop_info_tbl[i+1]->value_ptr, value.size));
+        }
 
-        printf("\nProp chksum: %lld,\nProp name: %s,\nProp value: %s,\ncreate_ver: %lld,\ndelete_ver: %lld\n", 
-              (unsigned long long)first_prop->chksum,
-               first_prop->name,
-               value_str,
-              (unsigned long long)(atomic_load(&(first_prop->create_version))),
-              (unsigned long long)(atomic_load(&(first_prop->delete_version))) );
-
-        
-            first_prop = next_ptr.ptr;
-            if ( first_prop )
-                next_ptr = atomic_load(&(first_prop->next));
-    }
-#endif
-
-
-
+    } /* end for() */
 
 
     /**
-     * Creates a new list from the version after one delete_version was set and one
-     * 'modification' was done but before the second delete_version and second 
-     * 'modification' to test the correct properties are setup in the lkup_tbl.
+     * Test deriving a list from att_class at version 14, meaning it should
+     * contain prop_4 since version 14 was before it was deleted.
      */
+    list2 = H5P_mt_create_list_test(att_class, NULL, FALSE, 14);
 
-    test_list = H5P__mt_create_list(att_class, curr_version);
+    assert(list2);
 
-    assert(test_list);
-    assert(test_list->tag == H5P_MT_LIST_TAG);
-
-    /* Checks the correct number of props were stored in the lkup_tbl */
-    assert(test_list->nprops_inherited == 9);
-
-    /* Checks that the lengths are what they should be */
-    phys_pl_len = atomic_load(&(test_list->phys_pl_len));    
-    assert(phys_pl_len == 2);
-
-    log_pl_len = atomic_load(&(test_list->log_pl_len));
-    assert(log_pl_len == 0);
+    assert(list2->nprops_inherited == 11);
+    assert(list2->log_pl_len == 0);
+    assert(list2->phys_pl_len == 2);
 
 
-
-/** NOTE: This is a way to print info that was used to develop the tests */
-#if 0
-    for ( int i = 0; i < test_list->nprops_inherited; i++ )
+    for ( uint32_t i = 0; i < list2->nprops_inherited; i++ )
     {
-        entry = &test_list->lkup_tbl[i];
-        value_str = (char *)entry->name;
+        entry = &list2->lkup_tbl[i];
 
-        printf("\nLkup_tbl entry %d: \n Chksum: %lld,\n Name: %s\n", 
-              i, 
-              (unsigned long long)entry->chksum,
-              value_str);
-    }
-#endif
-
-
-    /* Iterates the lkup_tbl and ensures only the expected properties were setup */
-
-    for ( uint32_t i = 0; i < test_list->nprops_inherited; i++ )
-    {
-        entry = &test_list->lkup_tbl[i];
-
-        base = atomic_load(&(entry->base));
-        
-        assert(base.ptr);
-        assert(base.ver == 1);
-
-        prop_value = atomic_load(&(base.ptr->value));
-
-        value_ptr = prop_value.ptr;
-        value_str = (char *)value_ptr;
-
-        assert(entry->chksum == base.ptr->chksum);
-
-        if ( i == 0 )
+        if ( i == 0 || ( i >= 2 && i < 6 ) || i >= 7 )
         {
-            snprintf(prop_name, MAX_PROP_NAME_LEN, "prop_%d", i);
-
-            value_size = (size_t)(snprintf(NULL, 0, "This is the value for %s, modified.", prop_name) + 1);
-            test_value_str = malloc(value_size);
-            if ( ! test_value_str )
+            assert(entry->chksum == prop_info_tbl[i]->chksum);
+            assert(0 == strcmp(entry->name, prop_info_tbl[i]->name));
+            assert(0 == atomic_load(&(entry->base_delete_version)));
+    
+            base = atomic_load(&(entry->base));
+    
+            assert(base.ver == 1);
+            
+            prop = base.ptr;
+    
+            assert(atomic_load(&(prop->tag)) == H5P_MT_PROP_TAG);
+            assert(! atomic_load(&(prop->sentinel)));
+            assert(prop->chksum == prop_info_tbl[i]->chksum);
+            assert(0 == strcmp(prop->name, prop_info_tbl[i]->name));
+            assert(prop->in_prop_class);
+            
+            /* If prop_4 ref_count should only be 1 because it isn't in list1 */
+            if ( prop->chksum == 2968727381 )
             {
-                fprintf(stderr, "Failed to allocate memory for test value");
+                assert(1 == atomic_load(&(prop->ref_count)));
             }
-
-            snprintf(test_value_str, value_size, "This is the value for %s, modified.", prop_name);
-
-            //printf("%s\n", value_str);
-            //printf("%s\n", test_value_str);
-
-            assert( 0 == strcmp(value_str, test_value_str) );
+            else 
+            {
+                assert(2 == atomic_load(&(prop->ref_count)));
+            }
+    
+            value = atomic_load(&(prop->value));
+    
+            assert(value.size == prop_info_tbl[i]->value_size);
+            assert(0 == memcmp(value.ptr, prop_info_tbl[i]->value_ptr, value.size));
         }
-        else if ( i >= 3 )
+        else if ( i == 1 || i == 6 )
         {
-            snprintf(prop_name, MAX_PROP_NAME_LEN, "prop_%d", (i + 1) );
-
-            value_size = (size_t)(snprintf(NULL, 0, "This is the value for %s.", prop_name) + 1);
-            test_value_str = malloc(value_size);
-            if ( ! test_value_str )
-            {
-                fprintf(stderr, "Failed to allocate memory for test value");
-            }
-
-            snprintf(test_value_str, value_size, "This is the value for %s.", prop_name);
-
-            //printf("%s\n", value_str);
-            //printf("%s\n", test_value_str);
-
-            assert( 0 == strcmp(value_str, test_value_str) );
-        }
-        else
-        {
-            snprintf(prop_name, MAX_PROP_NAME_LEN, "prop_%d", i);
-
-            value_size = (size_t)(snprintf(NULL, 0, "This is the value for %s.", prop_name) + 1);
-            test_value_str = malloc(value_size);
-            if ( ! test_value_str )
-            {
-                fprintf(stderr, "Failed to allocate memory for test value");
-            }
-
-            snprintf(test_value_str, value_size, "This is the value for %s.", prop_name);
-
-            //printf("value.ptr: %s\n", value_str);
-            //printf("test_value: %s\n", test_value_str);
-
-            assert( 0 == strcmp(value_str, test_value_str) );
+            assert(entry->chksum == prop_info_tbl[i]->chksum);
+            assert(0 == strcmp(entry->name, prop_info_tbl[i]->name));
+            assert(0 == atomic_load(&(entry->base_delete_version)));
+    
+            base = atomic_load(&(entry->base));
+    
+            assert(base.ver == 1);
+            
+            prop = base.ptr;
+    
+            assert(atomic_load(&(prop->tag)) == H5P_MT_PROP_TAG);
+            assert(! atomic_load(&(prop->sentinel)));
+            assert(prop->chksum == prop_info_tbl[i]->chksum);
+            assert(0 == strcmp(prop->name, prop_info_tbl[i]->name));
+            assert(prop->in_prop_class);
+    
+            value = atomic_load(&(prop->value));
+    
+            assert(value.size == prop_info_tbl[i]->edited_value_size);
+            assert(0 == memcmp(value.ptr, prop_info_tbl[i]->edited_value_ptr, 
+                               value.size));
         }
 
     } /* end for() */
@@ -1130,193 +1240,379 @@ void serial_list_test(void)
 
 
     /**
-     * Tests doing several inserts, 'modifications', and setting the delete_version
-     * on props.
+     * Test adding a new property to list1
      */
+    H5P__mt_ins_or_mod_prop__main(list1, prop_info_tbl[11]->name, 
+                                 prop_info_tbl[11]->value_ptr,
+                                 prop_info_tbl[11]->value_size,
+                                 FALSE, FALSE, NULL, NULL, NULL, NULL,
+                                 NULL, NULL, NULL, NULL, NULL);
+
+    assert(11 == atomic_load(&(list1->nprops)));
+    assert(1 == atomic_load(&(list1->nprops_added)));
+    assert(1 == atomic_load(&(list1->log_pl_len)));
+    assert(3 == atomic_load(&(list1->phys_pl_len)));
+                            
+    prop = list1->pl_head;
+    assert(atomic_load(&(prop->tag)) == H5P_MT_PROP_TAG);
+    assert(prop->sentinel);
+    assert(prop->chksum == LLONG_MIN);
+
+    next = atomic_load(&(prop->next));
+    prop = next.ptr;
+
+    assert(atomic_load(&(prop->tag)) == H5P_MT_PROP_TAG);
+    assert(! prop->sentinel);
+    assert(! prop->in_prop_class);
+    assert(0 == atomic_load(&(prop->ref_count)));
+    assert(! prop->in_lkup_tbl);
+
+    assert(prop->chksum == prop_info_tbl[11]->chksum);
+    assert(0 == strcmp(prop->name, prop_info_tbl[11]->name));
+
+    value = atomic_load(&(prop->value));
+
+    assert(value.size == prop_info_tbl[11]->value_size);
+    assert(0 == memcmp(value.ptr, prop_info_tbl[11]->value_ptr, 
+                       value.size));
+
+    next = atomic_load(&(prop->next));
+    prop = next.ptr;
+
+    assert(atomic_load(&(prop->tag)) == H5P_MT_PROP_TAG);
+    assert(prop->sentinel);
+    assert(prop->chksum == LLONG_MAX);
+
+
 
     /**
-     * Inserts 10 new properties, starts at 8 to test a couple inserts that have versions
-     * in the lkup_tbl that will need to update the curr struct.
+     * Test adding a new version of prop_6 an existing property to list1
+     * and test setting the delete_version on the prop_11 in the lfsll 
+     * and prop_7 in the lkup_tbl.
      */
-    for ( int i = 8; i < 18; i++ )
+    H5P__mt_ins_or_mod_prop__main(list1, prop_info_tbl[2]->name, 
+                                 prop_info_tbl[2]->edited_value_ptr,
+                                 prop_info_tbl[2]->edited_value_size,
+                                 FALSE, FALSE, NULL, NULL, NULL, NULL,
+                                 NULL, NULL, NULL, NULL, NULL);
+
+    assert(12 == atomic_load(&(list1->nprops)));
+    assert(2 == atomic_load(&(list1->nprops_added)));
+    assert(2 == atomic_load(&(list1->log_pl_len)));
+    assert(4 == atomic_load(&(list1->phys_pl_len)));
+
+    prop = H5P__mt_search_prop(list1, prop_info_tbl[11]->chksum, prop_info_tbl[11]->name);
+
+    H5P__set_delete_version(list1, prop);
+
+    prop = H5P__mt_search_prop(list1, prop_info_tbl[3]->chksum, prop_info_tbl[3]->name);
+
+    H5P__set_delete_version(list1, prop);
+
+    assert(11 == atomic_load(&(list1->nprops)));
+    assert(2 == atomic_load(&(list1->nprops_added)));
+    assert(1 == atomic_load(&(list1->log_pl_len)));
+    assert(4 == atomic_load(&(list1->phys_pl_len)));
+
+
+    for ( uint32_t i = 0; i < 4; i++ )
     {
-        prop_name = malloc(MAX_PROP_NAME_LEN);
-
-        snprintf(prop_name, MAX_PROP_NAME_LEN, "prop_%d", i);
-
-        if ( i < 10 )
+        if ( i == 2 )
         {
-            value_size = (size_t)(snprintf(NULL, 0, "This is the value for %s, modified.", prop_name) + 1);
-            value_ptr = malloc(value_size);
-            if ( ! value_ptr )
-            {
-                fprintf(stderr, "Failed to allocate memory for value");
-            }
-    
-            snprintf(value_ptr, value_size, "This is the value for %s, modified.", prop_name);
-    
-            H5P__mt_ins_or_mod_prop__main(test_list, prop_name, (void *)value_ptr, value_size);
+            entry = &list1->lkup_tbl[i];
+
+            assert(entry->chksum == prop_info_tbl[i]->chksum);
+            assert(0 == strcmp(entry->name, prop_info_tbl[i]->name));
+            assert(0 == atomic_load(&(entry->base_delete_version)));
+
+            curr = atomic_load(&(entry->curr));
+
+            assert(curr.ptr);
+
+            prop = curr.ptr;
+
+            assert(atomic_load(&(prop->tag)) == H5P_MT_PROP_TAG);
+            assert(! prop->sentinel);
+            assert(! prop->in_prop_class);
+            assert(0 == atomic_load(&(prop->ref_count)));
+            assert(prop->in_lkup_tbl);
+
+            assert(prop->chksum == prop_info_tbl[i]->chksum);
+            assert(0 == strcmp(prop->name, prop_info_tbl[i]->name));
+            
+            value = atomic_load(&(prop->value));
+
+            assert(value.size == prop_info_tbl[i]->edited_value_size);
+            assert(0 == memcmp(value.ptr, prop_info_tbl[i]->edited_value_ptr, 
+                               value.size));
         }
-        else
+        else if ( i == 3 )
         {
-            value_size = (size_t)(snprintf(NULL, 0, "This is the value for %s.", prop_name) + 1);
-            value_ptr = malloc(value_size);
-            if ( ! value_ptr )
-            {
-                fprintf(stderr, "Failed to allocate memory for value");
-            }
+            entry = &list1->lkup_tbl[i];
 
-            snprintf(value_ptr, value_size, "This is the value for %s.", prop_name);
-
-            H5P__mt_ins_or_mod_prop__main(test_list, prop_name, (void *)value_ptr, value_size);
+            assert(entry->chksum == prop_info_tbl[i]->chksum);
+            assert(0 == strcmp(entry->name, prop_info_tbl[i]->name));
+            assert(5 == atomic_load(&(entry->base_delete_version)));
         }
 
-    }
-
-    assert(12 == (atomic_load(&(test_list->phys_pl_len))));
-    assert(10 == (atomic_load(&(test_list->log_pl_len))));
-
-    
-    /* Sets delete_version of a property in the lkup_tbl */
-
-    /* Manually setting the fields of the property we need to search for it */
-    first_prop->tag = H5P_MT_PROP_TAG;
-    
-    first_prop->chksum = 148505174;
-    
-    first_prop->name   = malloc(MAX_PROP_NAME_LEN);
-    snprintf(first_prop->name, MAX_PROP_NAME_LEN, "prop_6");
-
-    atomic_store(&(first_prop->create_version), 8);
-
-    /* This is testing search_prop() while giving us the actual property we want */
-    second_prop = H5P__mt_search_prop(test_list, first_prop);
-
-    H5P__set_delete_version(test_list, second_prop);
+    } /* end for () */
 
 
-    /* Checks that the delete_version was set */
+                            
+    prop = list1->pl_head;
 
-    entry = &test_list->lkup_tbl[5];
+    next = atomic_load(&(prop->next));
+    prop = next.ptr;
 
-    assert(entry->chksum == 148505174);
-    assert(entry->base_delete_version > 0);
+    assert(atomic_load(&(prop->tag)) == H5P_MT_PROP_TAG);
+    assert(! prop->sentinel);
+    assert(! prop->in_prop_class);
+    assert(0 == atomic_load(&(prop->ref_count)));
+    assert(! prop->in_lkup_tbl);
 
+    assert(prop->chksum == prop_info_tbl[11]->chksum);
+    assert(0 == strcmp(prop->name, prop_info_tbl[11]->name));
 
+    value = atomic_load(&(prop->value));
 
-    /* Sets delete_version of a property in the LFSLL */
+    assert(value.size == prop_info_tbl[11]->value_size);
+    assert(0 == memcmp(value.ptr, prop_info_tbl[11]->value_ptr, 
+                       value.size));
+    assert(4 == atomic_load(&(prop->delete_version)));
 
-    /* Manually setting the fields of the property we need to search for it */
-    first_prop->tag = H5P_MT_PROP_TAG;
+    next = atomic_load(&(prop->next));
+    prop = next.ptr;
 
-    first_prop->chksum = 190448261;
-    
-    first_prop->name   = malloc(MAX_PROP_NAME_LEN);
-    snprintf(first_prop->name, MAX_PROP_NAME_LEN, "prop_14");
+    assert(atomic_load(&(prop->tag)) == H5P_MT_PROP_TAG);
+    assert(! prop->sentinel);
+    assert(! prop->in_prop_class);
+    assert(0 == atomic_load(&(prop->ref_count)));
+    assert(prop->in_lkup_tbl);
 
-    atomic_store(&(first_prop->create_version), 8);
-    atomic_store(&(first_prop->delete_version), 0);
+    assert(prop->chksum == prop_info_tbl[2]->chksum);
+    assert(0 == strcmp(prop->name, prop_info_tbl[2]->name));
 
-    /* This is testing search_prop() while giving us the actual property we want */
-    second_prop = H5P__mt_search_prop(test_list, first_prop);
+    value = atomic_load(&(prop->value));
 
-    H5P__set_delete_version(test_list, second_prop);
-
-    /* Sets delete_version of a property with a curr.ptr pointing to it in the LFSLL */
-
-    /* Manually setting the fields of the property we need to search for it */
-    first_prop->tag = H5P_MT_PROP_TAG;
-
-    first_prop->chksum = 148636248;
-    
-    first_prop->name   = malloc(MAX_PROP_NAME_LEN);
-    snprintf(first_prop->name, MAX_PROP_NAME_LEN, "prop_8");
-
-    atomic_store(&(first_prop->create_version), 2);
-    atomic_store(&(first_prop->delete_version), 0);
-
-    /* This is testing search_prop() while giving us the actual property we want */
-    second_prop = H5P__mt_search_prop(test_list, first_prop);
-
-    H5P__set_delete_version(test_list, second_prop);
+    assert(value.size == prop_info_tbl[2]->edited_value_size);
+    assert(0 == memcmp(value.ptr, prop_info_tbl[2]->edited_value_ptr, 
+                       value.size));
 
 
-    first_prop = test_list->pl_head;
-    assert(first_prop);
-    assert(first_prop->tag == H5P_MT_PROP_TAG);
-    assert(first_prop->sentinel);
 
-    next_ptr = atomic_load(&(first_prop->next));
 
-    first_prop = next_ptr.ptr;
+    /**
+     * Test creating a copy of list1.
+     */
+    list1_copy = H5P__mt_create_list(att_class, list1, TRUE, 0);
 
-    for (uint32_t i = 8; i < (log_pl_len + 8); i++ )
+    assert(list1_copy);
+
+    assert(10 == list1_copy->nprops_inherited);
+    assert(11 == atomic_load(&(list1_copy->nprops)));
+    assert(2 == atomic_load(&(list1_copy->nprops_added)));
+    assert(1 == atomic_load(&(list1_copy->log_pl_len)));
+    assert(3 == atomic_load(&(list1_copy->phys_pl_len)));
+
+    for ( uint32_t i = 0; i < list1_copy->nprops_inherited; i++ )
     {
-        assert(first_prop);
-        assert(first_prop->tag == H5P_MT_PROP_TAG);
+        entry = &list1_copy->lkup_tbl[i];
 
-        prop_value = atomic_load(&(first_prop->value));
-
-        value_ptr = prop_value.ptr;
-        value_str = (char *)value_ptr;
-
-        if ( i < 10 )
+        /* entry's that haven't been deleted or modifed */
+        if ( i == 0 || ( i > 3 && i < 6 ) || i == 7 )
         {
-            snprintf(prop_name, MAX_PROP_NAME_LEN, "prop_%d", i);
-
-            value_size = (size_t)(snprintf(NULL, 0, "This is the value for %s, modified.", prop_name) + 1);
-            test_value_str = malloc(value_size);
-            if ( ! test_value_str )
-            {
-                fprintf(stderr, "Failed to allocate memory for test value");
-            }
-
-            snprintf(test_value_str, value_size, "This is the value for %s, modified.", prop_name);
-
-            //printf("%s\n", value_str);
-            //printf("%s\n", test_value_str);
-
-            assert( 0 == strcmp(value_str, test_value_str) );
+            assert(entry->chksum == prop_info_tbl[i]->chksum);
+            assert(0 == strcmp(entry->name, prop_info_tbl[i]->name));
+            assert(0 == atomic_load(&(entry->base_delete_version)));
+    
+            base = atomic_load(&(entry->base));
+    
+            assert(base.ver == 1);
+            
+            prop = base.ptr;
+    
+            assert(atomic_load(&(prop->tag)) == H5P_MT_PROP_TAG);
+            assert(! atomic_load(&(prop->sentinel)));
+            assert(prop->chksum == prop_info_tbl[i]->chksum);
+            assert(0 == strcmp(prop->name, prop_info_tbl[i]->name));
+            assert(prop->in_prop_class);
+            assert(3 == atomic_load(&(prop->ref_count)));
+    
+            value = atomic_load(&(prop->value));
+    
+            assert(value.size == prop_info_tbl[i]->value_size);
+            assert(0 == memcmp(value.ptr, prop_info_tbl[i]->value_ptr, value.size));
         }
-        else
+        /* entries that were modified in the att_class */
+        else if ( i == 1 || i == 6 )
         {
-            snprintf(prop_name, MAX_PROP_NAME_LEN, "prop_%d", i);
+            assert(entry->chksum == prop_info_tbl[i]->chksum);
+            assert(0 == strcmp(entry->name, prop_info_tbl[i]->name));
+            assert(0 == atomic_load(&(entry->base_delete_version)));
+    
+            base = atomic_load(&(entry->base));
+    
+            assert(base.ver == 1);
+            
+            prop = base.ptr;
+    
+            assert(atomic_load(&(prop->tag)) == H5P_MT_PROP_TAG);
+            assert(! atomic_load(&(prop->sentinel)));
+            assert(prop->chksum == prop_info_tbl[i]->chksum);
+            assert(0 == strcmp(prop->name, prop_info_tbl[i]->name));
+            assert(prop->in_prop_class);
+            assert(3 == atomic_load(&(prop->ref_count)));
+    
+            value = atomic_load(&(prop->value));
+    
+            assert(value.size == prop_info_tbl[i]->edited_value_size);
+            assert(0 == memcmp(value.ptr, prop_info_tbl[i]->edited_value_ptr, 
+                               value.size));
+        }
+        /* entry that was edited in list1 prior to copying it */
+        else if ( i == 2 )
+        {
+            assert(entry->chksum == prop_info_tbl[i]->chksum);
+            assert(0 == strcmp(entry->name, prop_info_tbl[i]->name));
+            assert(0 == atomic_load(&(entry->base_delete_version)));
+    
+            base = atomic_load(&(entry->base));
+    
+            assert(base.ver == 1);
+            
+            prop = base.ptr;
+    
+            assert(atomic_load(&(prop->tag)) == H5P_MT_PROP_TAG);
+            assert(! atomic_load(&(prop->sentinel)));
+            assert(prop->chksum == prop_info_tbl[i]->chksum);
+            assert(0 == strcmp(prop->name, prop_info_tbl[i]->name));
+            assert(prop->in_prop_class);
+            assert(3 == atomic_load(&(prop->ref_count)));
 
-            value_size = (size_t)(snprintf(NULL, 0, "This is the value for %s.", prop_name) + 1);
-            test_value_str = malloc(value_size);
-            if ( ! test_value_str )
-            {
-                fprintf(stderr, "Failed to allocate memory for test value");
-            }
+            value = atomic_load(&(prop->value));
+    
+            assert(value.size == prop_info_tbl[i]->value_size);
+            assert(0 == memcmp(value.ptr, prop_info_tbl[i]->value_ptr, 
+                               value.size));
 
-            snprintf(test_value_str, value_size, "This is the value for %s.", prop_name);
-
-            //printf("value.ptr: %s\n", value_str);
-            //printf("test_value: %s\n", test_value_str);
-
-            assert( 0 == strcmp(value_str, test_value_str) );
+            curr = atomic_load(&(entry->curr));
+    
+            assert(curr.ver == 1);
+            
+            prop = curr.ptr;
+    
+            assert(atomic_load(&(prop->tag)) == H5P_MT_PROP_TAG);
+            assert(! atomic_load(&(prop->sentinel)));
+            assert(prop->chksum == prop_info_tbl[i]->chksum);
+            assert(0 == strcmp(prop->name, prop_info_tbl[i]->name));
+            assert( ! prop->in_prop_class);
+            assert(0 == atomic_load(&(prop->ref_count)));
+    
+            value = atomic_load(&(prop->value));
+    
+            assert(value.size == prop_info_tbl[i]->edited_value_size);
+            assert(0 == memcmp(value.ptr, prop_info_tbl[i]->edited_value_ptr, 
+                               value.size));
+        }
+        /* entry that was deleted from the lkup_tbl is list 1 prior to copying it */
+        else if ( i == 3 )
+        {
+            assert(entry->chksum == prop_info_tbl[i]->chksum);
+            assert(0 == strcmp(entry->name, prop_info_tbl[i]->name));
+            assert(1 == atomic_load(&(entry->base_delete_version)));
+    
+            base = atomic_load(&(entry->base));
+    
+            /**
+             * The base_delete_version was set when the list was copied, 
+             * so the copy set it to 0 and set base.ptr to NULL.
+             */
+            assert(base.ver == 0);
+            
+            prop = base.ptr;
+            
+            /* */
+            assert(prop == NULL);
+        }
+        else if ( i > 7 )
+        {
+            assert(entry->chksum == prop_info_tbl[i+1]->chksum);
+            assert(0 == strcmp(entry->name, prop_info_tbl[i+1]->name));
+            assert(0 == atomic_load(&(entry->base_delete_version)));
+    
+            base = atomic_load(&(entry->base));
+    
+            assert(base.ver == 1);
+            
+            prop = base.ptr;
+    
+            assert(atomic_load(&(prop->tag)) == H5P_MT_PROP_TAG);
+            assert(! atomic_load(&(prop->sentinel)));
+            assert(prop->chksum == prop_info_tbl[i+1]->chksum);
+            assert(0 == strcmp(prop->name, prop_info_tbl[i+1]->name));
+            assert(prop->in_prop_class);
+            assert(3 == atomic_load(&(prop->ref_count)));
+    
+            value = atomic_load(&(prop->value));
+    
+            assert(value.size == prop_info_tbl[i+1]->value_size);
+            assert(0 == memcmp(value.ptr, prop_info_tbl[i+1]->value_ptr, value.size));
         }
 
-        next_ptr = atomic_load(&(first_prop->next));
-        first_prop = next_ptr.ptr;
+    } /* end for () */
 
-    } /* end for() */
+    prop = list1_copy->pl_head;
+    
+    assert(atomic_load(&(prop->tag)) == H5P_MT_PROP_TAG);
+    assert(prop->sentinel);
+    assert(prop->chksum == LLONG_MIN);
 
-#if 0
-    H5P__clear_mt_list(test_list);
-    H5P__clear_mt_class(att_class);
-    H5P__clear_mt_class(root_class);
-#endif
-    check_value = H5P__mt_close_list(test_list);
-    assert(check_value >= 0);
+    next = atomic_load(&(prop->next));
+    prop = next.ptr;
 
-    check_value = H5P__mt_close_class(att_class);
-    assert(check_value >= 0);
+    assert(atomic_load(&(prop->tag)) == H5P_MT_PROP_TAG);
+    assert(! prop->sentinel);
+    assert(! prop->in_prop_class);
+    assert(0 == atomic_load(&(prop->ref_count)));
+    assert(prop->in_lkup_tbl);
 
-    check_value = H5P__mt_close_class(root_class);
-    assert(check_value >= 0);
+    assert(prop->chksum == prop_info_tbl[2]->chksum);
+    assert(0 == strcmp(prop->name, prop_info_tbl[2]->name));
+
+    value = atomic_load(&(prop->value));
+
+    assert(value.size == prop_info_tbl[2]->edited_value_size);
+    assert(0 == memcmp(value.ptr, prop_info_tbl[2]->edited_value_ptr, 
+                       value.size));
+
+
+
+    /**
+     * Test comparing two classes to see if they are equal
+     */
+
+    /* Should be equal */
+    assert(0 == H5P__mt_cmp_list_or_class(list1, list1));
+
+    /* Should not be equal */
+    assert(1 == H5P__mt_cmp_list_or_class(list1, list2));
+
+    assert(0 == H5P__mt_cmp_list_or_class(list1, list1_copy));
+    
+
+
+    /**
+     * Testing closing the class structures, which puts them on the class free list.
+     * H5P__shutdown() then tests the H5P__mt_clear_class() function and frees all of
+     * the allocated memory in those structures and the structures themselves.
+     */
+    H5P__mt_close_list(list1);
+    H5P__mt_close_list(list2);
+    H5P__mt_close_class(att_class);
+    H5P__mt_close_class(root_class);
 
     H5P__shutdown();
+
 
 } /* serial_list_test() */
 
@@ -1325,10 +1621,9 @@ void serial_list_test(void)
 int main(void)
 {
 
-    simple_test_1();
+    init_prop_info_tbl();
     serial_class_test();
     serial_list_test();
-
 
     printf("\nTesting MT PROP finished!\n");
 
