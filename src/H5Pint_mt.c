@@ -53,6 +53,9 @@ typedef enum {
 /********************/
 /* Local Prototypes */
 /********************/
+
+herr_t H5P_mt_init(void);
+
 H5P_mt_class_t * 
     H5P__mt_create_class(H5P_mt_class_t *parent, const char *name, 
                          H5P_plist_type_t type, uint64_t test_version,
@@ -65,7 +68,7 @@ H5P_mt_class_t *
 
 H5P_mt_list_t * 
     H5P__mt_create_list(H5P_mt_class_t *parent, H5P_mt_list_t* old_list, bool copy,
-                        uint64_t test_version);
+                        uint64_t test_version, bool app_ref);
 
 H5P_mt_list_t * 
     H5P__mt_alloc_list(void);
@@ -162,13 +165,13 @@ H5P_mt_prop_t *
     H5P__clear_mt_prop(H5P_mt_prop_t *prop);
 
 herr_t
-    H5P__mt_close_class(H5P_mt_class_t * class);
+    H5P__mt_close_class(H5P_mt_class_t *class);
 
 H5P_mt_class_t *
     H5P__clear_mt_class(H5P_mt_class_t *class);
 
 herr_t
-    H5P__mt_close_list(H5P_mt_list_t * list);
+    H5P__mt_close_list(H5P_mt_list_t *list);
 
 H5P_mt_list_t * 
     H5P__clear_mt_list(H5P_mt_list_t *list);
@@ -225,50 +228,28 @@ void H5P__shutdown(void);
 
 H5P_mt_t         H5P_mt_g;
 
-//hid_t            H5P_CLS_ROOT_ID_g = H5I_INVALID_HID;
 H5P_mt_class_t * H5P_MT_CLS_ROOT_g = NULL;
 
-//hid_t           H5P_CLS_ATTRIBUTE_ACCESS_ID_g = H5I_INVALID_HID;
 H5P_mt_class_t *H5P_MT_CLS_ATTRIBUTE_ACCESS_g = NULL;
-//hid_t           H5P_CLS_ATTRIBUTE_CREATE_ID_g = H5I_INVALID_HID;
 H5P_mt_class_t *H5P_MT_CLS_ATTRIBUTE_CREATE_g = NULL;
-//hid_t           H5P_CLS_DATASET_ACCESS_ID_g   = H5I_INVALID_HID;
 H5P_mt_class_t *H5P_MT_CLS_DATASET_ACCESS_g   = NULL;
-//hid_t           H5P_CLS_DATASET_CREATE_ID_g   = H5I_INVALID_HID;
 H5P_mt_class_t *H5P_MT_CLS_DATASET_CREATE_g   = NULL;
-//hid_t           H5P_CLS_DATASET_XFER_ID_g     = H5I_INVALID_HID;
 H5P_mt_class_t *H5P_MT_CLS_DATASET_XFER_g     = NULL;
-//hid_t           H5P_CLS_DATATYPE_ACCESS_ID_g  = H5I_INVALID_HID;
 H5P_mt_class_t *H5P_MT_CLS_DATATYPE_ACCESS_g  = NULL;
-//hid_t           H5P_CLS_DATATYPE_CREATE_ID_g  = H5I_INVALID_HID;
 H5P_mt_class_t *H5P_MT_CLS_DATATYPE_CREATE_g  = NULL;
-//hid_t           H5P_CLS_FILE_ACCESS_ID_g      = H5I_INVALID_HID;
 H5P_mt_class_t *H5P_MT_CLS_FILE_ACCESS_g      = NULL;
-//hid_t           H5P_CLS_FILE_CREATE_ID_g      = H5I_INVALID_HID;
 H5P_mt_class_t *H5P_MT_CLS_FILE_CREATE_g      = NULL;
-//hid_t           H5P_CLS_FILE_MOUNT_ID_g       = H5I_INVALID_HID;
 H5P_mt_class_t *H5P_MT_CLS_FILE_MOUNT_g       = NULL;
-//hid_t           H5P_CLS_GROUP_ACCESS_ID_g     = H5I_INVALID_HID;
 H5P_mt_class_t *H5P_MT_CLS_GROUP_ACCESS_g     = NULL;
-//hid_t           H5P_CLS_GROUP_CREATE_ID_g     = H5I_INVALID_HID;
 H5P_mt_class_t *H5P_MT_CLS_GROUP_CREATE_g     = NULL;
-//hid_t           H5P_CLS_LINK_ACCESS_ID_g      = H5I_INVALID_HID;
 H5P_mt_class_t *H5P_MT_CLS_LINK_ACCESS_g      = NULL;
-//hid_t           H5P_CLS_LINK_CREATE_ID_g      = H5I_INVALID_HID;
 H5P_mt_class_t *H5P_MT_CLS_LINK_CREATE_g      = NULL;
-//hid_t           H5P_CLS_MAP_ACCESS_ID_g       = H5I_INVALID_HID;
 H5P_mt_class_t *H5P_MT_CLS_MAP_ACCESS_g       = NULL;
-//hid_t           H5P_CLS_MAP_CREATE_ID_g       = H5I_INVALID_HID;
 H5P_mt_class_t *H5P_MT_CLS_MAP_CREATE_g       = NULL;
-//hid_t           H5P_CLS_OBJECT_COPY_ID_g      = H5I_INVALID_HID;
 H5P_mt_class_t *H5P_MT_CLS_OBJECT_COPY_g      = NULL;
-//hid_t           H5P_CLS_OBJECT_CREATE_ID_g    = H5I_INVALID_HID;
 H5P_mt_class_t *H5P_MT_CLS_OBJECT_CREATE_g    = NULL;
-//hid_t           H5P_CLS_REFERENCE_ACCESS_ID_g = H5I_INVALID_HID;
 H5P_mt_class_t *H5P_MT_CLS_REFERENCE_ACCESS_g = NULL;
-//hid_t           H5P_CLS_STRING_CREATE_ID_g    = H5I_INVALID_HID;
 H5P_mt_class_t *H5P_MT_CLS_STRING_CREATE_g    = NULL;
-//hid_t           H5P_CLS_VOL_INITIALIZE_ID_g   = H5I_INVALID_HID;
 H5P_mt_class_t *H5P_MT_CLS_VOL_INITIALIZE_g   = NULL;
 
 
@@ -845,7 +826,7 @@ done:
  */
 H5P_mt_list_t *
 H5P__mt_create_list(H5P_mt_class_t *parent, H5P_mt_list_t *old_list, bool copy,
-                    uint64_t test_version)
+                    uint64_t test_version, bool app_ref)
 {
     H5P_mt_list_t              * new_list = NULL;
     hid_t                        parent_id;
@@ -988,7 +969,7 @@ H5P__mt_create_list(H5P_mt_class_t *parent, H5P_mt_list_t *old_list, bool copy,
     /**
      * NOTE: this is my first attempt at registering the list in the index
      */
-    if ( ( new_plist_id = H5I_register(H5I_GENPROP_LST, new_list, TRUE) ) < 0 )
+    if ( ( new_plist_id = H5I_register(H5I_GENPROP_LST, new_list, app_ref) ) < 0 )
         HGOTO_ERROR(H5E_PLIST, H5E_CANTREGISTER, NULL, 
                     "unable to register property list");
 
@@ -2142,8 +2123,10 @@ done:
  */
 herr_t
 H5P__mt_ins_or_mod_prop__main(void *param, const char *name, void *value, size_t size,
-                              bool create, bool copy, H5P_prp_create_func_t prp_create,
-                              H5P_prp_set_func_t prp_set, H5P_prp_get_func_t prp_get, 
+                              bool create, bool copy,
+                              H5P_prp_create_func_t prp_create,
+                              H5P_prp_set_func_t prp_set, 
+                              H5P_prp_get_func_t prp_get, 
                               H5P_prp_encode_func_t prp_encode, 
                               H5P_prp_decode_func_t prp_decode, 
                               H5P_prp_delete_func_t prp_del,
@@ -2301,6 +2284,38 @@ H5P__mt_ins_or_mod_prop__main(void *param, const char *name, void *value, size_t
                 }
             }
         }
+    #if 0
+        /* If set is TRUE and a set callback exists call it */
+        else if ( set )
+        {
+
+            if ( new_prop->set )
+            {
+                /* Make a copy of the current value, in case the callback fails */
+                if (NULL == (tmp_value.ptr = H5MM_malloc(prop_value.size)))
+                    HGOTO_ERROR(H5E_PLIST, H5E_CANTALLOC, FAIL, 
+                                "memory allocation failed temporary property value");
+                
+                H5MM_memcpy(tmp_value.ptr, value, prop_value.size);
+
+                if ( (*(new_prop->set))(list->plist_id, name, prop_value.size, 
+                                        tmp_value.ptr) < 0 )
+                {
+                    assert(H5P_MT_ASSERT_FAIL);
+                    HGOTO_ERROR(H5E_PLIST, H5E_CANTINIT, FAIL, 
+                                "can't set property value");
+                }
+                
+            }
+            else
+                tmp_value.ptr = 
+
+            set_value.ptr = NULL;
+            set_value.size = tmp_value.size;
+
+            H5MM_memcpy(set_value.ptr, tmp_value.ptr, prop_value.size)
+        }
+#endif
     } /* end if ( tag == LIST_TAG ) */
 
     else

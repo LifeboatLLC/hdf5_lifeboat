@@ -22,6 +22,9 @@
 #ifndef H5Ppkg_H
 #define H5Ppkg_H
 
+#define MT_TESTING 1
+
+
 /* Get package's private header */
 #include "H5Pprivate.h"
 
@@ -35,6 +38,12 @@
 /****************************/
 /* Package Private Typedefs */
 /****************************/
+
+#if MT_TESTING 
+/* Forward declarations for anonymous MT H5P objects */
+typedef struct H5P_mt_class_t H5P_mt_class_t;
+typedef struct H5P_mt_list_t H5P_mt_list_t;
+#endif
 
 /* Define enum for type of object that property is within */
 typedef enum {
@@ -129,7 +138,12 @@ H5_DLL H5P_genclass_t *H5P__create_class(H5P_genclass_t *par_class, const char *
                                          H5P_cls_create_func_t cls_create, void *create_data,
                                          H5P_cls_copy_func_t cls_copy, void *copy_data,
                                          H5P_cls_close_func_t cls_close, void *close_data);
+#if MT_TESTING
+H5_DLL H5P_mt_class_t *H5P__copy_pclass(H5P_mt_class_t *pclass);
+
+#else
 H5_DLL H5P_genclass_t *H5P__copy_pclass(H5P_genclass_t *pclass);
+#endif
 H5_DLL herr_t H5P__register_real(H5P_genclass_t *pclass, const char *name, size_t size, const void *def_value,
                                  H5P_prp_create_func_t prp_create, H5P_prp_set_func_t prp_set,
                                  H5P_prp_get_func_t prp_get, H5P_prp_encode_func_t prp_encode,
