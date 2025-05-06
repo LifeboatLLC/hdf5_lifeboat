@@ -16,8 +16,11 @@
 #ifndef H5Pprivate_H
 #define H5Pprivate_H
 
+#if H5_HAVE_MULTITHREAD
+#else
 /* Early typedefs to avoid circular dependencies */
 typedef struct H5P_genplist_t H5P_genplist_t;
+#endif
 
 /* Include package's public header */
 #include "H5Ppublic.h"
@@ -60,9 +63,18 @@ typedef enum H5P_coll_md_read_flag_t {
 /* Forward declarations for anonymous MT H5P objects */
 typedef struct H5P_mt_class_t H5P_mt_class_t;
 typedef struct H5P_mt_list_t H5P_mt_list_t;
-#endif
+typedef struct H5P_mt_prop_t H5P_mt_prop_t;
+
+typedef H5P_mt_list_t H5P_genplist_t;
+typedef H5P_mt_class_t H5P_genclass_t;
+typedef H5P_mt_prop_t H5P_genprop_t;
+
+#else
 /* Forward declarations for anonymous H5P objects */
 typedef struct H5P_genclass_t H5P_genclass_t;
+
+#endif
+
 
 
 typedef enum H5P_plist_type_t {

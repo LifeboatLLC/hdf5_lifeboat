@@ -51,6 +51,13 @@
 /* Local Typedefs */
 /******************/
 
+#if H5_HAVE_MULTITHREAD
+
+typedef H5P_mt_list_t H5P_genplist_t;
+typedef H5P_mt_class_t H5P_genclass_t;
+
+#endif
+
 /* User data for recursive traversal over objects from a group */
 typedef struct {
     hid_t          obj_id;    /* The ID for the starting group */

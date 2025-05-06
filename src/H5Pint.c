@@ -37,10 +37,9 @@
 
 #ifdef H5_HAVE_MULTITHREAD
 #include "H5Pint_mt.c"
+typedef H5P_mt_class_t H5P_genclass_t;
+typedef H5P_mt_list_t H5P_genplist_t;
 #endif /**/
-
-#define MT_TESTING 1
-
 
 
 /****************/
@@ -209,7 +208,7 @@ const H5P_libclass_t H5P_CLS_ROOT[1] = {{
 
     NULL,               /* Parent class                 */
 
-#if MT_TESTING
+#if H5_HAVE_MULTITHREAD
     &H5P_MT_CLS_ROOT_g, /* Point to MT class*/
 #else
     &H5P_CLS_ROOT_g,    /* Pointer to class             */
@@ -233,7 +232,7 @@ const H5P_libclass_t H5P_CLS_AACC[1] = {{
     "attribute access",        /* Class name for debugging     */
     H5P_TYPE_ATTRIBUTE_ACCESS, /* Class type                   */
 
-#if MT_TESTING
+#if H5_HAVE_MULTITHREAD
     &H5P_MT_CLS_LINK_ACCESS_g,      /* Parent MT class */
     &H5P_MT_CLS_ATTRIBUTE_ACCESS_g, /* Pointer to MT class */
 #else
@@ -259,7 +258,7 @@ const H5P_libclass_t H5P_CLS_GACC[1] = {{
     "group access",        /* Class name for debugging     */
     H5P_TYPE_GROUP_ACCESS, /* Class type                   */
 
-#if MT_TESTING
+#if H5_HAVE_MULTITHREAD
     &H5P_MT_CLS_LINK_ACCESS_g,  /* Parent MT class */
     &H5P_MT_CLS_GROUP_ACCESS_g, /* Pointer to MT class */
 #else
@@ -285,7 +284,7 @@ const H5P_libclass_t H5P_CLS_TCRT[1] = {{
     "datatype create",        /* Class name for debugging     */
     H5P_TYPE_DATATYPE_CREATE, /* Class type                   */
 
-#if MT_TESTING
+#if H5_HAVE_MULTITHREAD
     &H5P_MT_CLS_OBJECT_CREATE_g,   /* Parent MT class */
     &H5P_MT_CLS_DATATYPE_CREATE_g, /* Pointer to MT class */
 #else
@@ -311,7 +310,7 @@ const H5P_libclass_t H5P_CLS_TACC[1] = {{
     "datatype access",        /* Class name for debugging     */
     H5P_TYPE_DATATYPE_ACCESS, /* Class type                   */
 
-#if MT_TESTING
+#if H5_HAVE_MULTITHREAD
     &H5P_MT_CLS_LINK_ACCESS_g,     /* Parent MT class */
     &H5P_MT_CLS_DATATYPE_ACCESS_g, /* Pointer to MT class */
 #else
@@ -337,7 +336,7 @@ const H5P_libclass_t H5P_CLS_VINI[1] = {{
     "VOL initialization",    /* Class name for debugging     */
     H5P_TYPE_VOL_INITIALIZE, /* Class type                   */
 
-#if MT_TESTING
+#if H5_HAVE_MULTITHREAD
     &H5P_MT_CLS_ROOT_g,           /* Parent MT class */
     &H5P_MT_CLS_VOL_INITIALIZE_g, /* Pointer to MT class */
 #else  
@@ -363,7 +362,7 @@ const H5P_libclass_t H5P_CLS_RACC[1] = {{
     "reference access",        /* Class name for debugging     */
     H5P_TYPE_REFERENCE_ACCESS, /* Class type                   */
 
-#if MT_TESTING
+#if H5_HAVE_MULTITHREAD
     &H5P_MT_CLS_FILE_ACCESS_g,      /* Parent MT class */
     &H5P_MT_CLS_REFERENCE_ACCESS_g, /* Pointer to MT class */
 #else 
@@ -435,6 +434,8 @@ static H5P_libclass_t const *const init_class[] = {
     H5P_CLS_RACC    /* Reference access */
 };
 
+#if H5_HAVE_MULTITHREAD
+#else
 /* Declare a free list to manage the H5P_genclass_t struct */
 H5FL_DEFINE_STATIC(H5P_genclass_t);
 
@@ -443,6 +444,7 @@ H5FL_DEFINE_STATIC(H5P_genprop_t);
 
 /* Declare a free list to manage the H5P_genplist_t struct */
 H5FL_DEFINE_STATIC(H5P_genplist_t);
+#endif
 
 #if 0
 
@@ -541,7 +543,7 @@ H5P_init_phase1(void)
                 /* Sanity check - only the root class is not allowed to have a parent class */
                 assert(lib_class->par_pclass || lib_class == H5P_CLS_ROOT);
 
-#if MT_TESTING
+#if H5_HAVE_MULTITHREAD
                 /* Allocate the MT safe new class */
                 if ( NULL == (*lib_class->pclass = H5P__mt_create_class(
                                 lib_class->par_pclass ? *lib_class->par_pclass : NULL, lib_class->name,
@@ -569,7 +571,7 @@ H5P_init_phase1(void)
 
                 /* Only register the default property list if it hasn't been created yet */
                 if (lib_class->def_plist_id && *lib_class->def_plist_id == (-1)) {
-#if MT_TESTING
+#if H5_HAVE_MULTITHREAD
                     H5P_mt_list_t * def_plist;
 
                     /* Register the default MT property list for the new MT class */
@@ -613,7 +615,7 @@ done:
                     HDONE_ERROR(H5E_PLIST, H5E_CLOSEERROR, FAIL, "unable to close property list class ID");
             }
             else if (lib_class->pclass && *lib_class->pclass) {
-#if MT_TESTING
+#if H5_HAVE_MULTITHREAD
                 if ( H5P__mt_close_class(*lib_class->pclass) < 0 )
                     HDONE_ERROR(H5E_PLIST, H5E_CLOSEERROR, FAIL, 
                                 "unable to close MT property list class");
@@ -787,6 +789,43 @@ H5P_term_package(void)
     FUNC_LEAVE_NOAPI(n)
 } /* end H5P_term_package() */
 
+
+
+#if H5_HAVE_MULTITHREAD
+/*-------------------------------------------------------------------------
+ * Function:    H5P__close_class_cb
+ *
+ * Purpose:     Called when the ref count reaches zero on a property class's ID
+ * 
+ *              NOTE: Made to be a multithread safe version of the functions
+ *              and thus uses multithread safe functions and structures
+ *
+ * Return:      SUCCEED / FAIL
+ *
+ *-------------------------------------------------------------------------
+ */
+static herr_t
+H5P__close_class_cb(void *_pclass, void H5_ATTR_UNUSED **request)
+{
+    H5P_mt_class_t * pclass   = (H5P_mt_class_t *)_pclass;
+
+    herr_t          ret_value = SUCCEED;                   /* Return value */
+
+    FUNC_ENTER_PACKAGE
+
+    /* Sanity check */
+    assert(pclass);
+
+    /* Close the property list class object */
+    if (H5P__mt_close_class(pclass) < 0)
+        HGOTO_ERROR(H5E_PLIST, H5E_CLOSEERROR, FAIL, "unable to close property list class");
+
+done:
+
+    FUNC_LEAVE_NOAPI(ret_value)
+} /* end H5P__close_class_cb() */
+
+#else
 /*-------------------------------------------------------------------------
  * Function:    H5P__close_class_cb
  *
@@ -799,11 +838,8 @@ H5P_term_package(void)
 static herr_t
 H5P__close_class_cb(void *_pclass, void H5_ATTR_UNUSED **request)
 {
-#if MT_TESTING
-    H5P_mt_class_t * pclass   = (H5P_mt_class_t *)_pclass;
-#else
     H5P_genclass_t *pclass    = (H5P_genclass_t *)_pclass; /* Property list class to close */
-#endif
+
     herr_t          ret_value = SUCCEED;                   /* Return value */
 
     FUNC_ENTER_PACKAGE
@@ -811,20 +847,51 @@ H5P__close_class_cb(void *_pclass, void H5_ATTR_UNUSED **request)
     /* Sanity check */
     assert(pclass);
 
-#if MT_TESTING
-    /* Close the property list class object */
-    if (H5P__mt_close_class(pclass) < 0)
-        HGOTO_ERROR(H5E_PLIST, H5E_CLOSEERROR, FAIL, "unable to close property list class");
-#else
+
     /* Close the property list class object */
     if (H5P__close_class(pclass) < 0)
         HGOTO_ERROR(H5E_PLIST, H5E_CLOSEERROR, FAIL, "unable to close property list class");
-#endif
 
 done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5P__close_class_cb() */
+#endif
 
+
+#if H5_HAVE_MULTITHREAD
+/*-------------------------------------------------------------------------
+ * Function:    H5P__close_list_cb
+ *
+ * Purpose:     Called when the ref count reaches zero on a property list's ID
+ * 
+ *              NOTE: Made to be a multithread safe version of the functions
+ *              and thus uses multithread safe functions and structures
+ *
+ * Return:      SUCCEED / FAIL
+ *
+ *-------------------------------------------------------------------------
+ */
+static herr_t
+H5P__close_list_cb(void *_plist, void H5_ATTR_UNUSED **request)
+{
+    H5P_mt_list_t  * plist    = (H5P_mt_list_t *)_plist;
+
+    herr_t          ret_value = SUCCEED;                  /* Return value */
+
+    FUNC_ENTER_PACKAGE
+
+    /* Sanity check */
+    assert(plist);
+
+    /* Close the property list class object */
+    if (H5P__mt_close_list(plist) < 0)
+        HGOTO_ERROR(H5E_PLIST, H5E_CLOSEERROR, FAIL, "unable to close property list class");
+
+done:
+    FUNC_LEAVE_NOAPI(ret_value)
+} /* end H5P__close_list_cb() MT safe version */
+
+#else
 /*-------------------------------------------------------------------------
  * Function:    H5P__close_list_cb
  *
@@ -837,11 +904,8 @@ done:
 static herr_t
 H5P__close_list_cb(void *_plist, void H5_ATTR_UNUSED **request)
 {
-#if MT_TESTING
-    H5P_mt_list_t  * plist    = (H5P_mt_list_t *)_plist;
-#else
     H5P_genplist_t *plist     = (H5P_genplist_t *)_plist; /* Property list to close */
-#endif
+
     herr_t          ret_value = SUCCEED;                  /* Return value */
 
     FUNC_ENTER_PACKAGE
@@ -849,20 +913,26 @@ H5P__close_list_cb(void *_plist, void H5_ATTR_UNUSED **request)
     /* Sanity check */
     assert(plist);
 
-#if MT_TESTING
-    /* Close the property list class object */
-    if (H5P__mt_close_list(plist) < 0)
-        HGOTO_ERROR(H5E_PLIST, H5E_CLOSEERROR, FAIL, "unable to close property list class");
-#else
     /* Close the property list object */
     if (H5P_close(plist) < 0)
         HGOTO_ERROR(H5E_PLIST, H5E_CLOSEERROR, FAIL, "unable to close property list");
-#endif
 
 done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5P__close_list_cb() */
+#endif
 
+
+
+#if H5_HAVE_MULTITHREAD
+
+/**
+ * NOTE: There is not a multithread safe version of this functions because
+ * the purpose of this function is handled else where in the multithread
+ * safe functions.
+ */
+
+#else
 /*--------------------------------------------------------------------------
  NAME
     H5P__do_prop_cb1
@@ -932,12 +1002,22 @@ done:
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5P__do_prop_cb1() */
+#endif
 
 
-
-#if MT_TESTING
-/**
+#if H5_HAVE_MULTITHREAD
+/****************************************************************************************
+ * Function:    H5P__copy_pclass
+ *
+ * Purpose:     Multithread version of H5P__copy_pclass which is just a passthrough
+ *              function that calls H5P__mt_create_class() to create a copy of the
+ *              pclass parameter
+ *
+ * Return:      Success: Returns a pointer to the new H5P_mt_class_t structure
  * 
+ *              Failure: NULL
+ *
+ ****************************************************************************************
  */
 H5P_mt_class_t *
 H5P__copy_pclass(H5P_mt_class_t *pclass)
@@ -1057,12 +1137,23 @@ done:
 
 
 
-#if MT_TESTING
-/**
+#if H5_HAVE_MULTITHREAD
+/****************************************************************************************
+ * Function:    H5P_copy_plist
+ *
+ * Purpose:     Multithread version of H5P_copy_plist which is just a passthrough
+ *              function that calls H5P__mt_create_list() to create a copy of the
+ *              plist parameter
  * 
+ *
+ * Return:      Success: ID of the new copy of the plist
+ * 
+ *              Failure: H5I_INVALID_HID
+ *
+ ****************************************************************************************
  */
 hid_t
-H5P_copy_plist(H5P_mt_list_t *plist, hbool_t app_ref)
+H5P_copy_plist(const H5P_mt_list_t *plist, hbool_t app_ref)
 {
     H5P_mt_class_t * parent;
     H5P_mt_list_t  * copy_list;
@@ -1085,7 +1176,6 @@ done:
     FUNC_LEAVE_NOAPI(ret_value)
 
 } /* H5P_copy_plist() MT safe version */
-
 
 #else
 /*--------------------------------------------------------------------------
@@ -1317,6 +1407,57 @@ done:
 
 
 
+
+#if H5_HAVE_MULTITHREAD
+
+/**
+ * NOTE: The top version of the function is a multithread safe
+ * version of the function, but is not a function that gets called,
+ * but may be needed for testing purposes.
+ */
+
+#else
+static H5P_mt_prop_t *
+H5P__dup_prop(H5P_mt_prop_t *oprop, H5P_prop_within_t type)
+{
+    H5P_mt_prop_t * prop;
+    H5P_mt_prop_value_t value;
+
+    H5P_genprop_t * ret_value = NULL;
+
+    FUNC_ENTER_PACKAGE
+
+    value = atomic_load(&(oprop->value));
+
+    if ((prop = H5P__mt_create_prop(oprop->name, value.ptr, value.size, 
+                                    oprop->in_prop_class, 0, oprop->create, oprop->set, 
+                                    oprop->get, oprop->encode, oprop->decode, oprop->del,
+                                    oprop->copy, oprop->cmp, oprop->close)) == NULL )
+        HGOTO_ERROR(H5E_PLIST, H5E_CANTCREATE, NULL, 
+                    "can't create MT property list");
+
+
+done:
+    /* Free any resources allocated */
+    if (ret_value == NULL) {
+        if (prop != NULL) {
+            if (prop->name != NULL)
+                H5MM_xfree(prop->name);
+
+            value = atomic_load(&(prop->value));
+            
+            if (value.ptr != NULL)
+                H5MM_xfree(value.ptr);
+
+            H5MM_xfree(prop);
+        } /* end if */
+    }     /* end if */
+
+    FUNC_LEAVE_NOAPI(ret_value)
+
+} /* H5P__dup_prop() MT safe version */
+
+
 /*--------------------------------------------------------------------------
  NAME
     H5P__dup_prop
@@ -1412,7 +1553,17 @@ done:
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P__dup_prop() */
+#endif
 
+#if H5_HAVE_MULTITHREAD
+
+/**
+ * NOTE: There is not a multithread safe version of this functions because
+ * the purpose of this function is handled else where in the multithread
+ * safe functions.
+ */
+
+#else
 /*--------------------------------------------------------------------------
  NAME
     H5P__create_prop
@@ -1513,7 +1664,17 @@ done:
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P__create_prop() */
+#endif
 
+#if H5_HAVE_MULTITHREAD
+
+/**
+ * NOTE: There is not a multithread safe version of this functions because
+ * the purpose of this function is handled else where in the multithread
+ * safe functions.
+ */
+
+#else
 /*--------------------------------------------------------------------------
  NAME
     H5P__add_prop
@@ -1550,7 +1711,17 @@ H5P__add_prop(H5SL_t *slist, H5P_genprop_t *prop)
 done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P__add_prop() */
+#endif
 
+#if H5_HAVE_MULTITHREAD
+
+/**
+ * NOTE: There is not a multithread safe version of this functions because
+ * the purpose of this function is handled else where in the multithread
+ * safe functions.
+ */
+
+#else
 /*--------------------------------------------------------------------------
  NAME
     H5P__find_prop_plist
@@ -1609,7 +1780,17 @@ H5P__find_prop_plist(const H5P_genplist_t *plist, const char *name)
 done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P__find_prop_plist() */
+#endif
 
+#if H5_HAVE_MULTITHREAD
+
+/**
+ * NOTE: There is not a multithread safe version of this functions because
+ * the purpose of this function is handled else where in the multithread
+ * safe functions.
+ */
+
+#else
 /*--------------------------------------------------------------------------
  NAME
     H5P__find_prop_pclass
@@ -1645,7 +1826,18 @@ H5P__find_prop_pclass(H5P_genclass_t *pclass, const char *name)
 done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P__find_prop_pclass() */
+#endif
 
+
+#if H5_HAVE_MULTITHREAD
+
+/**
+ * NOTE: There is not a multithread safe version of this functions because
+ * the purpose of this function is handled else where in the multithread
+ * safe functions.
+ */
+
+#else
 /*--------------------------------------------------------------------------
  NAME
     H5P__free_prop
@@ -1683,7 +1875,18 @@ H5P__free_prop(H5P_genprop_t *prop)
 
     FUNC_LEAVE_NOAPI(SUCCEED)
 } /* H5P__free_prop() */
+#endif
 
+
+#if H5_HAVE_MULTITHREAD
+
+/**
+ * NOTE: There is not a multithread safe version of this functions because
+ * the purpose of this function is handled else where in the multithread
+ * safe functions.
+ */
+
+#else
 /*--------------------------------------------------------------------------
  NAME
     H5P__free_prop_cb
@@ -1723,7 +1926,18 @@ H5P__free_prop_cb(void *item, void H5_ATTR_UNUSED *key, void *op_data)
 
     FUNC_LEAVE_NOAPI(0)
 } /* H5P__free_prop_cb() */
+#endif
 
+
+#if H5_HAVE_MULTITHREAD
+
+/**
+ * NOTE: There is not a multithread safe version of this functions because
+ * the purpose of this function is handled else where in the multithread
+ * safe functions.
+ */
+
+#else
 /*--------------------------------------------------------------------------
  NAME
     H5P__free_del_name_cb
@@ -1757,7 +1971,18 @@ H5P__free_del_name_cb(void *item, void H5_ATTR_UNUSED *key, void H5_ATTR_UNUSED 
 
     FUNC_LEAVE_NOAPI(0)
 } /* H5P__free_del_name_cb() */
+#endif
 
+
+#if H5_HAVE_MULTITHREAD
+
+/**
+ * NOTE: There is not a multithread safe version of this functions because
+ * the purpose of this function is handled else where in the multithread
+ * safe functions.
+ */
+
+#else
 /*--------------------------------------------------------------------------
  NAME
     H5P__access_class
@@ -1849,7 +2074,17 @@ H5P__access_class(H5P_genclass_t *pclass, H5P_class_mod_t mod)
 
     FUNC_LEAVE_NOAPI(SUCCEED)
 } /* H5P__access_class() */
+#endif
 
+#if H5_HAVE_MULTITHREAD
+
+/**
+ * NOTE: There is not a multithread safe version of this functions because
+ * the purpose of this function is handled else where in the multithread
+ * safe functions.
+ */
+
+#else
 /*--------------------------------------------------------------------------
  NAME
     H5P__open_class_path_cb
@@ -1895,11 +2130,19 @@ H5P__open_class_path_cb(void *_obj, hid_t H5_ATTR_UNUSED id, void *_key)
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5P__open_class_path_cb() */
+#endif
 
 
 
+#if H5_HAVE_MULTITHREAD
 
+/**
+ * NOTE: There is not a multithread safe version of this functions because
+ * the purpose of this function is handled else where in the multithread
+ * safe functions.
+ */
 
+#else
 /*--------------------------------------------------------------------------
  NAME
     H5P__create_class
@@ -2002,9 +2245,18 @@ done:
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P__create_class() */
+#endif
 
 
+#if H5_HAVE_MULTITHREAD
 
+/**
+ * NOTE: There is not a multithread safe version of this functions because
+ * the purpose of this function is handled else where in the multithread
+ * safe functions.
+ */
+
+#else
 /*--------------------------------------------------------------------------
  NAME
     H5P__create
@@ -2147,12 +2399,24 @@ done:
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P__create() */
+#endif
 
 
 
-#if MT_TESTING
-/**
+#if H5_HAVE_MULTITHREAD
+/****************************************************************************************
+ * Function:    H5P_create_id
+ *
+ * Purpose:     Multithread version of H5P_create_id which is just a passthrough
+ *              function that calls H5P__mt_create_list() to create a new plist derived
+ *              from the pclass parameter
  * 
+ *
+ * Return:      Success: ID of the new plist
+ * 
+ *              Failure: H5I_INVALID_HID
+ *
+ ****************************************************************************************
  */
 hid_t
 H5P_create_id(H5P_mt_class_t *pclass, hbool_t app_ref)
@@ -2261,7 +2525,15 @@ done:
 #endif
 
 
+#if H5_HAVE_MULTITHREAD
 
+/**
+ * NOTE: There is not a multithread safe version of this functions because
+ * the purpose of this function is handled else where in the multithread
+ * safe functions.
+ */
+
+#else
 /*--------------------------------------------------------------------------
  NAME
     H5P__register_real
@@ -2491,7 +2763,18 @@ done:
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P__register_real() */
+#endif
 
+
+#if H5_HAVE_MULTITHREAD
+
+/**
+ * NOTE: There is not a multithread safe version of this functions because
+ * the purpose of this function is handled else where in the multithread
+ * safe functions.
+ */
+
+#else
 /*--------------------------------------------------------------------------
  NAME
     H5P__register
@@ -2747,12 +3030,22 @@ done:
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P__register() */
+#endif
 
 
 
-#if MT_TESTING
-/**
+#if H5_HAVE_MULTITHREAD
+/****************************************************************************************
+ * Function:    H5P_insert
+ *
+ * Purpose:     Multithread version of H5P_insert() which is just a passthrough
+ *              function that calls H5P__mt_ins_or_mod_prop__main() to create a new
+ *              H5P_mt_prop_t from the parameters and inserts it into the plist parameter
  * 
+ *
+ * Return:      SUCCEED/FAIL
+ *
+ ****************************************************************************************
  */
 herr_t
 H5P_insert(H5P_mt_list_t *plist, const char *name, size_t size, void *value, H5P_prp_set_func_t prp_set,
@@ -3024,7 +3317,15 @@ done:
 #endif
 
 
+#if H5_HAVE_MULTITHREAD
 
+/**
+ * NOTE: There is not a multithread safe version of this functions because
+ * the purpose of this function is handled else where in the multithread
+ * safe functions.
+ */
+
+#else
 /*--------------------------------------------------------------------------
  NAME
     H5P__do_prop
@@ -3107,7 +3408,18 @@ H5P__do_prop(H5P_genplist_t *plist, const char *name, H5P_do_plist_op_t plist_op
 done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P__do_prop() */
+#endif
 
+
+#if H5_HAVE_MULTITHREAD
+
+/**
+ * NOTE: There is not a multithread safe version of this functions because
+ * the purpose of this function is handled else where in the multithread
+ * safe functions.
+ */
+
+#else
 /*--------------------------------------------------------------------------
  NAME
     H5P__poke_plist_cb
@@ -3153,7 +3465,18 @@ H5P__poke_plist_cb(H5P_genplist_t H5_ATTR_NDEBUG_UNUSED *plist, const char H5_AT
 done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P__poke_plist_cb() */
+#endif
 
+
+#if H5_HAVE_MULTITHREAD
+
+/**
+ * NOTE: There is not a multithread safe version of this functions because
+ * the purpose of this function is handled else where in the multithread
+ * safe functions.
+ */
+
+#else
 /*--------------------------------------------------------------------------
  NAME
     H5P__poke_pclass_cb
@@ -3213,7 +3536,18 @@ done:
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P__poke_pclass_cb() */
+#endif
 
+
+#if H5_HAVE_MULTITHREAD
+
+/**
+ * NOTE: There is not a multithread safe version of this functions because
+ * the purpose of this function is handled else where in the multithread
+ * safe functions.
+ */
+
+#else
 /*--------------------------------------------------------------------------
  NAME
     H5P_poke
@@ -3259,7 +3593,18 @@ H5P_poke(H5P_genplist_t *plist, const char *name, const void *value)
 done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P_poke() */
+#endif
 
+
+#if H5_HAVE_MULTITHREAD
+
+/**
+ * NOTE: There is not a multithread safe version of this functions because
+ * the purpose of this function is handled else where in the multithread
+ * safe functions.
+ */
+
+#else
 /*--------------------------------------------------------------------------
  NAME
     H5P__set_plist_cb
@@ -3335,7 +3680,18 @@ done:
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P__set_plist_cb() */
+#endif
 
+
+#if H5_HAVE_MULTITHREAD
+
+/**
+ * NOTE: There is not a multithread safe version of this functions because
+ * the purpose of this function is handled else where in the multithread
+ * safe functions.
+ */
+
+#else
 /*--------------------------------------------------------------------------
  NAME
     H5P__set_pclass_cb
@@ -3418,12 +3774,27 @@ done:
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P__set_pclass_cb() */
+#endif
 
 
-
-#if MT_TESTING
-/**
+#if H5_HAVE_MULTITHREAD
+/****************************************************************************************
+ * Function:    H5P_set
+ *
+ * Purpose:     Multithread version of H5P_set() which calls the multithread functions 
+ *              needed to perform the operation needed. 
  * 
+ *              H5P__mt_search_prop() is called to retrieve the property from the plist
+ *              parameter. H5P__mt_ins_or_mod_prop__main() is called to create a new 
+ *              version of the property and insert it into plist. H5P__mt_search_prop is
+ *              then called again to get the new version of the property to then perform
+ *              the property's set callback to update it with the new value. Finally the
+ *              value is atomically updated to the new version of the property.
+ * 
+ *
+ * Return:      SUCCEED/FAIL
+ *
+ ****************************************************************************************
  */
 herr_t
 H5P_set(H5P_mt_list_t *plist, const char *name, const void *value)
@@ -3567,7 +3938,15 @@ done:
 #endif
 
 
+#if H5_HAVE_MULTITHREAD
 
+/**
+ * NOTE: There is not a multithread safe version of this functions because
+ * the purpose of this function is handled else where in the multithread
+ * safe functions.
+ */
+
+#else
 /*--------------------------------------------------------------------------
  NAME
     H5P__class_get
@@ -3620,7 +3999,18 @@ H5P__class_get(const H5P_genclass_t *pclass, const char *name, void *value)
 done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P__class_get() */
+#endif
 
+
+#if H5_HAVE_MULTITHREAD
+
+/**
+ * NOTE: There is not a multithread safe version of this functions because
+ * the purpose of this function is handled else where in the multithread
+ * safe functions.
+ */
+
+#else
 /*--------------------------------------------------------------------------
  NAME
     H5P__class_set
@@ -3675,7 +4065,18 @@ H5P__class_set(const H5P_genclass_t *pclass, const char *name, const void *value
 done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P__class_set() */
+#endif
 
+
+#if H5_HAVE_MULTITHREAD
+
+/**
+ * NOTE: There is not a multithread safe version of this functions because
+ * the purpose of this function is handled else where in the multithread
+ * safe functions.
+ */
+
+#else
 /*--------------------------------------------------------------------------
  NAME
     H5P_exist_plist
@@ -3734,7 +4135,18 @@ H5P_exist_plist(const H5P_genplist_t *plist, const char *name)
 done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P_exist_plist() */
+#endif
 
+
+#if H5_HAVE_MULTITHREAD
+
+/**
+ * NOTE: There is not a multithread safe version of this functions because
+ * the purpose of this function is handled else where in the multithread
+ * safe functions.
+ */
+
+#else
 /*--------------------------------------------------------------------------
  NAME
     H5P__exist_pclass
@@ -3788,7 +4200,18 @@ H5P__exist_pclass(H5P_genclass_t *pclass, const char *name)
 done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P__exist_pclass() */
+#endif
 
+
+#if H5_HAVE_MULTITHREAD
+
+/**
+ * NOTE: There is not a multithread safe version of this functions because
+ * the purpose of this function is handled else where in the multithread
+ * safe functions.
+ */
+
+#else
 /*--------------------------------------------------------------------------
  NAME
     H5P__get_size_plist
@@ -3833,7 +4256,18 @@ H5P__get_size_plist(const H5P_genplist_t *plist, const char *name, size_t *size)
 done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P__get_size_plist() */
+#endif
 
+
+#if H5_HAVE_MULTITHREAD
+
+/**
+ * NOTE: There is not a multithread safe version of this functions because
+ * the purpose of this function is handled else where in the multithread
+ * safe functions.
+ */
+
+#else
 /*--------------------------------------------------------------------------
  NAME
     H5P__get_size_pclass
@@ -3878,7 +4312,18 @@ H5P__get_size_pclass(H5P_genclass_t *pclass, const char *name, size_t *size)
 done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P__get_size_pclass() */
+#endif
 
+
+#if H5_HAVE_MULTITHREAD
+
+/**
+ * NOTE: There is not a multithread safe version of this functions because
+ * the purpose of this function is handled else where in the multithread
+ * safe functions.
+ */
+
+#else
 /*--------------------------------------------------------------------------
  NAME
     H5P__get_nprops_plist
@@ -3912,7 +4357,18 @@ H5P__get_nprops_plist(const H5P_genplist_t *plist, size_t *nprops)
 
     FUNC_LEAVE_NOAPI(SUCCEED)
 } /* H5P__get_nprops_plist() */
+#endif
 
+
+#if H5_HAVE_MULTITHREAD
+
+/**
+ * NOTE: There is not a multithread safe version of this functions because
+ * the purpose of this function is handled else where in the multithread
+ * safe functions.
+ */
+
+#else
 /*--------------------------------------------------------------------------
  NAME
     H5P_get_nprops_pclass
@@ -3956,7 +4412,18 @@ H5P_get_nprops_pclass(const H5P_genclass_t *pclass, size_t *nprops, hbool_t recu
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P_get_nprops_pclass() */
+#endif
 
+
+#if H5_HAVE_MULTITHREAD
+
+/**
+ * NOTE: There is not a multithread safe version of this functions because
+ * the purpose of this function is handled else where in the multithread
+ * safe functions.
+ */
+
+#else
 /*--------------------------------------------------------------------------
  NAME
     H5P__cmp_prop
@@ -4086,7 +4553,18 @@ H5P__cmp_prop(const H5P_genprop_t *prop1, const H5P_genprop_t *prop2)
 done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P__cmp_prop() */
+#endif
 
+
+#if H5_HAVE_MULTITHREAD
+
+/**
+ * NOTE: There is not a multithread safe version of this functions because
+ * the purpose of this function is handled else where in the multithread
+ * safe functions.
+ */
+
+#else
 /*--------------------------------------------------------------------------
  NAME
     H5P__cmp_class
@@ -4215,7 +4693,18 @@ H5P__cmp_class(const H5P_genclass_t *pclass1, const H5P_genclass_t *pclass2)
 done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P__cmp_class() */
+#endif
 
+
+#if H5_HAVE_MULTITHREAD
+
+/**
+ * NOTE: There is not a multithread safe version of this functions because
+ * the purpose of this function is handled else where in the multithread
+ * safe functions.
+ */
+
+#else
 /*--------------------------------------------------------------------------
  NAME
     H5P__cmp_plist_cb
@@ -4275,7 +4764,18 @@ H5P__cmp_plist_cb(H5P_genprop_t *prop, void *_udata)
 done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5P__cmp_plist_cb() */
+#endif
 
+
+#if H5_HAVE_MULTITHREAD
+
+/**
+ * NOTE: There is not a multithread safe version of this functions because
+ * the purpose of this function is handled else where in the multithread
+ * safe functions.
+ */
+
+#else
 /*--------------------------------------------------------------------------
  NAME
     H5P__cmp_plist
@@ -4355,7 +4855,19 @@ H5P__cmp_plist(const H5P_genplist_t *plist1, const H5P_genplist_t *plist2, int *
 done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P__cmp_plist() */
+#endif
 
+
+
+#if H5_HAVE_MULTITHREAD
+
+/**
+ * NOTE: There is not a multithread safe version of this functions because
+ * the purpose of this function is handled else where in the multithread
+ * safe functions.
+ */
+
+#else
 /*--------------------------------------------------------------------------
  NAME
     H5P_class_isa
@@ -4404,6 +4916,9 @@ H5P_class_isa(const H5P_genclass_t *pclass1, const H5P_genclass_t *pclass2)
 done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P_class_isa() */
+#endif
+
+
 
 /*--------------------------------------------------------------------------
  NAME
@@ -4433,7 +4948,7 @@ done:
 htri_t
 H5P_isa_class(hid_t plist_id, hid_t pclass_id)
 {
-#if MT_TESTING
+#if H5_HAVE_MULTITHREAD
     H5P_mt_class_t * pclass;
     H5P_mt_list_t  * plist;
 #else
@@ -4444,7 +4959,7 @@ H5P_isa_class(hid_t plist_id, hid_t pclass_id)
 
     FUNC_ENTER_NOAPI(FAIL)
 
-#if MT_TESTING
+#if H5_HAVE_MULTITHREAD
     /* Check arguments. */
     if (NULL == (plist = (H5P_mt_list_t *)H5I_object_verify(plist_id, H5I_GENPROP_LST)))
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a MT property list");
@@ -4470,6 +4985,17 @@ done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P_isa_class() */
 
+
+
+#if H5_HAVE_MULTITHREAD
+
+/**
+ * NOTE: There is not a multithread safe version of this functions because
+ * the purpose of this function is handled else where in the multithread
+ * safe functions.
+ */
+
+#else
 /*--------------------------------------------------------------------------
  NAME
     H5P_object_verify
@@ -4516,7 +5042,18 @@ H5P_object_verify(hid_t plist_id, hid_t pclass_id)
 done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P_object_verify() */
+#endif
 
+
+#if H5_HAVE_MULTITHREAD
+
+/**
+ * NOTE: There is not a multithread safe version of this functions because
+ * the purpose of this function is handled else where in the multithread
+ * safe functions.
+ */
+
+#else
 /*--------------------------------------------------------------------------
  NAME
     H5P__iterate_plist_cb
@@ -4569,7 +5106,18 @@ H5P__iterate_plist_cb(void *_item, void *_key, void *_udata)
 done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5P__iterate_plist_cb() */
+#endif
 
+
+#if H5_HAVE_MULTITHREAD
+
+/**
+ * NOTE: There is not a multithread safe version of this functions because
+ * the purpose of this function is handled else where in the multithread
+ * safe functions.
+ */
+
+#else
 /*--------------------------------------------------------------------------
  NAME
     H5P__iterate_plist_pclass_cb
@@ -4612,7 +5160,18 @@ H5P__iterate_plist_pclass_cb(void *_item, void *_key, void *_udata)
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5P__iterate_plist_pclass_cb() */
+#endif
 
+
+#if H5_HAVE_MULTITHREAD
+
+/**
+ * NOTE: There is not a multithread safe version of this functions because
+ * the purpose of this function is handled else where in the multithread
+ * safe functions.
+ */
+
+#else
 /*--------------------------------------------------------------------------
  NAME
     H5P__iterate_plist
@@ -4727,7 +5286,19 @@ done:
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P__iterate_plist() */
+#endif
 
+
+
+#if H5_HAVE_MULTITHREAD
+
+/**
+ * NOTE: There is not a multithread safe version of this functions because
+ * the purpose of this function is handled else where in the multithread
+ * safe functions.
+ */
+
+#else
 /*--------------------------------------------------------------------------
  NAME
     H5P__iterate_pclass_cb
@@ -4776,7 +5347,18 @@ H5P__iterate_pclass_cb(void *_item, void H5_ATTR_NDEBUG_UNUSED *_key, void *_uda
 done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5P__iterate_pclass_cb() */
+#endif
 
+
+#if H5_HAVE_MULTITHREAD
+
+/**
+ * NOTE: There is not a multithread safe version of this functions because
+ * the purpose of this function is handled else where in the multithread
+ * safe functions.
+ */
+
+#else
 /*--------------------------------------------------------------------------
  NAME
     H5P__iterate_pclass
@@ -4859,7 +5441,19 @@ done:
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P__iterate_pclass() */
+#endif
 
+
+
+#if H5_HAVE_MULTITHREAD
+
+/**
+ * NOTE: There is not a multithread safe version of this functions because
+ * the purpose of this function is handled else where in the multithread
+ * safe functions.
+ */
+
+#else
 /*--------------------------------------------------------------------------
  NAME
     H5P__peek_cb
@@ -4906,7 +5500,18 @@ H5P__peek_cb(H5P_genplist_t H5_ATTR_NDEBUG_UNUSED *plist, const char H5_ATTR_NDE
 done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P__peek_cb() */
+#endif
 
+
+#if H5_HAVE_MULTITHREAD
+
+/**
+ * NOTE: There is not a multithread safe version of this functions because
+ * the purpose of this function is handled else where in the multithread
+ * safe functions.
+ */
+
+#else
 /*--------------------------------------------------------------------------
  NAME
     H5P_peek
@@ -4952,7 +5557,20 @@ H5P_peek(H5P_genplist_t *plist, const char *name, void *value)
 done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P_peek() */
+#endif
 
+
+
+
+#if H5_HAVE_MULTITHREAD
+
+/**
+ * NOTE: There is not a multithread safe version of this functions because
+ * the purpose of this function is handled else where in the multithread
+ * safe functions.
+ */
+
+#else
 /*--------------------------------------------------------------------------
  NAME
     H5P__get_cb
@@ -5018,7 +5636,19 @@ done:
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P__get_cb() */
+#endif
 
+
+
+#if H5_HAVE_MULTITHREAD
+
+/**
+ * NOTE: There is not a multithread safe version of this functions because
+ * the purpose of this function is handled else where in the multithread
+ * safe functions.
+ */
+
+#else
 /*--------------------------------------------------------------------------
  NAME
     H5P_get
@@ -5068,7 +5698,19 @@ H5P_get(H5P_genplist_t *plist, const char *name, void *value)
 done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P_get() */
+#endif
 
+
+
+#if H5_HAVE_MULTITHREAD
+
+/**
+ * NOTE: There is not a multithread safe version of this functions because
+ * the purpose of this function is handled else where in the multithread
+ * safe functions.
+ */
+
+#else
 /*--------------------------------------------------------------------------
  NAME
     H5P__del_plist_cb
@@ -5136,7 +5778,19 @@ done:
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P__del_plist_cb() */
+#endif
 
+
+
+#if H5_HAVE_MULTITHREAD
+
+/**
+ * NOTE: There is not a multithread safe version of this functions because
+ * the purpose of this function is handled else where in the multithread
+ * safe functions.
+ */
+
+#else
 /*--------------------------------------------------------------------------
  NAME
     H5P__del_pclass_cb
@@ -5208,12 +5862,22 @@ done:
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P__del_pclass_cb() */
+#endif
 
 
 
-#if MT_TESTING
-/**
- * 
+#if H5_HAVE_MULTITHREAD
+/****************************************************************************************
+ * Function:    H5P_remove
+ *
+ * Purpose:     Multithread version of H5P_remove which is just a passthrough
+ *              function that calls H5P__mt_search_prop() to retrieve the property to 
+ *              delete. Then H5P__set_delete_version() is called to set the 
+ *              delete_vesrion on that property.
+ *
+ * Return:      SUCCEED/FAIL
+ *
+ ****************************************************************************************
  */
 herr_t
 H5P_remove(H5P_mt_list_t *plist, const char *name)
@@ -5293,9 +5957,22 @@ done:
 
 
 
-#if MT_TESTING
-/**
+#if H5_HAVE_MULTITHREAD
+/****************************************************************************************
+ * Function:    H5P__copy_prop_plist
+ *
+ * Purpose:     Multithread version of H5P__copy_prop_plist() which calls 
+ *              H5P__mt_search_prop() to retrieve the property to copy from the source
+ *              plist(src_plist). Then H5P__mt_ins_or_mod_prop__main() is called to
+ *              create a copy of the property and insert it into the the destination 
+ *              plist (dst_plist). 
  * 
+ *              NOTE: if a version of the property already exists in the dst_plist the
+ *              property's copy callback in called, else the create callback is called.
+ *
+ * Return:      SUCCEED/FAIL
+ *
+ ****************************************************************************************
  */
 herr_t
 H5P__copy_prop_plist(hid_t dst_id, hid_t src_id, const char *name)
@@ -5495,7 +6172,20 @@ done:
 
 
 
-#if MT_TESTING
+#if H5_HAVE_MULTITHREAD
+/****************************************************************************************
+ * Function:    H5P__copy_prop_pclass
+ *
+ * Purpose:     Multithread version of H5P__copy_prop_pclass() which calls 
+ *              H5P__mt_search_prop() to retrieve the property to copy from the source
+ *              plist(src_plist). Then H5P__mt_ins_or_mod_prop__main() is called to
+ *              create a copy of the property and insert it into the the destination 
+ *              plist (dst_plist). 
+ *
+ * Return:      SUCCEED/FAIL
+ *
+ ****************************************************************************************
+ */
 herr_t
 H5P__copy_prop_pclass(hid_t dst_id, hid_t src_id, const char *name)
 {
@@ -5632,7 +6322,15 @@ done:
 #endif
 
 
+#if H5_HAVE_MULTITHREAD
 
+/**
+ * NOTE: There is not a multithread safe version of this functions because
+ * the purpose of this function is handled else where in the multithread
+ * safe functions.
+ */
+
+#else
 /*--------------------------------------------------------------------------
  NAME
     H5P__unregister
@@ -5685,7 +6383,19 @@ H5P__unregister(H5P_genclass_t *pclass, const char *name)
 done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P__unregister() */
+#endif
 
+
+
+#if H5_HAVE_MULTITHREAD
+
+/**
+ * NOTE: There is not a multithread safe version of this functions because
+ * the purpose of this function is handled else where in the multithread
+ * safe functions.
+ */
+
+#else
 /*--------------------------------------------------------------------------
  NAME
     H5P_close
@@ -5857,7 +6567,18 @@ done:
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P_close() */
+#endif
 
+
+#if H5_HAVE_MULTITHREAD
+
+/**
+ * NOTE: There is not a multithread safe version of this functions because
+ * the purpose of this function is handled else where in the multithread
+ * safe functions.
+ */
+
+#else
 /*--------------------------------------------------------------------------
  NAME
     H5P_get_class_name
@@ -5892,7 +6613,19 @@ H5P_get_class_name(H5P_genclass_t *pclass)
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P_get_class_name() */
+#endif
 
+
+
+#if H5_HAVE_MULTITHREAD
+
+/**
+ * NOTE: There is not a multithread safe version of this functions because
+ * the purpose of this function is handled else where in the multithread
+ * safe functions.
+ */
+
+#else
 /*--------------------------------------------------------------------------
  NAME
     H5P__get_class_path
@@ -5955,7 +6688,19 @@ H5P__get_class_path(H5P_genclass_t *pclass)
 done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P__get_class_path() */
+#endif
 
+
+
+#if H5_HAVE_MULTITHREAD
+
+/**
+ * NOTE: There is not a multithread safe version of this functions because
+ * the purpose of this function is handled else where in the multithread
+ * safe functions.
+ */
+
+#else
 /*--------------------------------------------------------------------------
  NAME
     H5P__open_class_path
@@ -6039,7 +6784,18 @@ done:
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P__open_class_path() */
+#endif
 
+
+#if H5_HAVE_MULTITHREAD
+
+/**
+ * NOTE: There is not a multithread safe version of this functions because
+ * the purpose of this function is handled else where in the multithread
+ * safe functions.
+ */
+
+#else
 /*--------------------------------------------------------------------------
  NAME
     H5P__get_class_parent
@@ -6073,7 +6829,19 @@ H5P__get_class_parent(const H5P_genclass_t *pclass)
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P__get_class_parent() */
+#endif
 
+
+
+#if H5_HAVE_MULTITHREAD
+
+/**
+ * NOTE: There is not a multithread safe version of this functions because
+ * the purpose of this function is handled else where in the multithread
+ * safe functions.
+ */
+
+#else
 /*--------------------------------------------------------------------------
  NAME
     H5P__close_class
@@ -6107,11 +6875,21 @@ H5P__close_class(H5P_genclass_t *pclass)
 done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P__close_class() */
+#endif
 
 
-#if MT_TESTING
-/**
+#if H5_HAVE_MULTITHREAD
+/****************************************************************************************
+ * Function:    H5P__new_plist_of_type
+ *
+ * Purpose:     Multithread version of H5P__new_plist_of_type() which is the same as the
+ *              original version, but uses the multithread safe structures.
+ *
+ * Return:      Success: Returns a pointer to the new H5P_mt_class_t structure
  * 
+ *              Failure: NULL
+ *
+ ****************************************************************************************
  */
 hid_t
 H5P__new_plist_of_type(H5P_plist_type_t type)
@@ -6379,7 +7157,15 @@ done:
 
 
 
+#if H5_HAVE_MULTITHREAD
 
+/**
+ * NOTE: There is not a multithread safe version of this functions because
+ * the purpose of this function is handled else where in the multithread
+ * safe functions.
+ */
+
+#else
 /*-------------------------------------------------------------------------
  * Function:	H5P_get_plist_id
  *
@@ -6403,7 +7189,18 @@ H5P_get_plist_id(const H5P_genplist_t *plist)
 
     FUNC_LEAVE_NOAPI(plist->plist_id)
 } /* end H5P_get_plist_id() */
+#endif
 
+
+#if H5_HAVE_MULTITHREAD
+
+/**
+ * NOTE: There is not a multithread safe version of this functions because
+ * the purpose of this function is handled else where in the multithread
+ * safe functions.
+ */
+
+#else
 /*-------------------------------------------------------------------------
  * Function:	H5P_get_class
  *
@@ -6427,7 +7224,19 @@ H5P_get_class(const H5P_genplist_t *plist)
 
     FUNC_LEAVE_NOAPI(plist->pclass)
 } /* end H5P_get_class() */
+#endif
 
+
+
+#if H5_HAVE_MULTITHREAD
+
+/**
+ * NOTE: There is not a multithread safe version of this functions because
+ * the purpose of this function is handled else where in the multithread
+ * safe functions.
+ */
+
+#else
 /*-------------------------------------------------------------------------
  * Function:       H5P_ignore_cmp
  *
@@ -6444,3 +7253,4 @@ H5P_ignore_cmp(const void H5_ATTR_UNUSED *val1, const void H5_ATTR_UNUSED *val2,
 
     FUNC_LEAVE_NOAPI(0)
 } /* end H5P_ignore_cmp() */
+#endif

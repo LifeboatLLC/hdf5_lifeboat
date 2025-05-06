@@ -41,8 +41,11 @@
 
 #if MT_TESTING 
 /* Forward declarations for anonymous MT H5P objects */
-typedef struct H5P_mt_class_t H5P_mt_class_t;
-typedef struct H5P_mt_list_t H5P_mt_list_t;
+//typedef struct H5P_mt_class_t H5P_mt_class_t;
+//typedef struct H5P_mt_list_t H5P_mt_list_t;
+
+typedef H5P_genclass_t H5P_mt_class_t;
+typedef H5P_genplist_t H5P_mt_list_t;
 #endif
 
 /* Define enum for type of object that property is within */
@@ -85,6 +88,8 @@ typedef struct H5P_genprop_t {
     H5P_prp_close_func_t   close;  /* Function to call when a property is closed */
 } H5P_genprop_t;
 
+#if H5_HAVE_MULTITHREAD
+#else
 /* Define structure to hold class information */
 struct H5P_genclass_t {
     struct H5P_genclass_t *parent; /* Pointer to parent class */
@@ -118,6 +123,7 @@ struct H5P_genplist_t {
     H5SL_t         *del;        /* Skip list containing names of deleted properties */
     H5SL_t         *props;      /* Skip list containing properties */
 };
+#endif
 
 /* Property list/class iterator callback function pointer */
 typedef int (*H5P_iterate_int_t)(H5P_genprop_t *prop, void *udata);
