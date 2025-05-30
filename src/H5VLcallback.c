@@ -3880,18 +3880,18 @@ H5VL__file_open_find_connector_cb(H5PL_type_t plugin_type, const void *plugin_in
 
 done:
     if (ret_value != H5_ITER_STOP) {
-        /* TBD: Retain lock to protect ID iteration */
+
         if (fapl_id >= 0) {
-            H5_API_LOCK
+
             dec_ref_ret = H5I_dec_app_ref(fapl_id);
-            H5_API_UNLOCK
+
             if (dec_ref_ret < 0)
                 HDONE_ERROR(H5E_PLIST, H5E_CANTCLOSEOBJ, H5_ITER_ERROR, "can't close fapl");
         }
         if (connector_id >= 0) {
-            H5_API_LOCK
+
             dec_ref_ret = H5I_dec_app_ref(connector_id);
-            H5_API_UNLOCK
+
             if (dec_ref_ret < 0)
                 HDONE_ERROR(H5E_PLIST, H5E_CANTCLOSEOBJ, H5_ITER_ERROR, "can't close VOL connector ID");
         }

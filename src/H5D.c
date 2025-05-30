@@ -246,10 +246,8 @@ H5Dcreate_async(const char *app_file, const char *app_func, unsigned app_line, h
         if (H5ES_insert(es_id, vol_obj->connector, token,
                         H5ARG_TRACE11(__func__, "*s*sIui*siiiiii", app_file, app_func, app_line, loc_id, name, type_id, space_id, lcpl_id, dcpl_id, dapl_id, es_id)) < 0) {
             /* clang-format on */
-            /* TBD: Retain lock to protect ID iteration */
-            H5_API_LOCK
+
             dec_ref_ret = H5I_dec_app_ref_always_close(ret_value);
-            H5_API_UNLOCK
 
             if (dec_ref_ret < 0)
                 HDONE_ERROR(H5E_DATASET, H5E_CANTDEC, H5I_INVALID_HID, "can't decrement count on dataset ID");
@@ -486,10 +484,8 @@ H5Dopen_async(const char *app_file, const char *app_func, unsigned app_line, hid
         if (H5ES_insert(es_id, vol_obj->connector, token,
                         H5ARG_TRACE7(__func__, "*s*sIui*sii", app_file, app_func, app_line, loc_id, name, dapl_id, es_id)) < 0) {
             /* clang-format on */
-            /* TBD: Retain lock to protect ID iteration */
-            H5_API_LOCK
+
             dec_ref_ret = H5I_dec_app_ref_always_close(ret_value);
-            H5_API_UNLOCK
 
             if (dec_ref_ret < 0)
                 HDONE_ERROR(H5E_DATASET, H5E_CANTDEC, H5I_INVALID_HID, "can't decrement count on dataset ID");
@@ -528,10 +524,8 @@ H5Dclose(hid_t dset_id)
     /* Decrement the counter on the dataset.  It will be freed if the count
      * reaches zero.
      */
-    /* TBD: Retain lock to protect ID iteration */
-    H5_API_LOCK
+
     dec_ref_ret = H5I_dec_app_ref_always_close(dset_id);
-    H5_API_UNLOCK
 
     if (dec_ref_ret < 0)
         HGOTO_ERROR(H5E_DATASET, H5E_CANTDEC, FAIL, "can't decrement count on dataset ID");
@@ -584,10 +578,8 @@ H5Dclose_async(const char *app_file, const char *app_func, unsigned app_line, hi
     /* Decrement the counter on the dataset.  It will be freed if the count
      * reaches zero.
      */
-    /* TBD: Retain lock to protect ID iteration */
-    H5_API_LOCK
+
     dec_ref_ret = H5I_dec_app_ref_always_close_async(dset_id, token_ptr);
-    H5_API_UNLOCK
 
     if (dec_ref_ret < 0)
         HGOTO_ERROR(H5E_DATASET, H5E_CANTDEC, FAIL, "can't decrement count on dataset ID");
@@ -715,10 +707,8 @@ H5Dget_space_async(const char *app_file, const char *app_func, unsigned app_line
         if (H5ES_insert(es_id, vol_obj->connector, token,
                         H5ARG_TRACE5(__func__, "*s*sIuii", app_file, app_func, app_line, dset_id, es_id)) < 0) {
             /* clang-format on */
-            /* TBD: Retain lock to protect ID iteration */
-            H5_API_LOCK
+
             dec_ref_ret = H5I_dec_app_ref_always_close(ret_value);
-            H5_API_UNLOCK
 
             if (dec_ref_ret < 0)
                 HDONE_ERROR(H5E_DATASET, H5E_CANTDEC, H5I_INVALID_HID,

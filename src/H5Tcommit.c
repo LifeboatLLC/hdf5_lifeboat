@@ -742,10 +742,8 @@ H5Topen_async(const char *app_file, const char *app_func, unsigned app_line, hid
         if (H5ES_insert(es_id, vol_obj->connector, token,
                         H5ARG_TRACE7(__func__, "*s*sIui*sii", app_file, app_func, app_line, loc_id, name, tapl_id, es_id)) < 0) {
             /* clang-format on */
-            /* TBD: Retain lock to protect ID iteration */
-            H5_API_LOCK
+
             dec_ref_ret = H5I_dec_app_ref_always_close(ret_value);
-            H5_API_UNLOCK
 
             if (dec_ref_ret < 0)
                 HGOTO_ERROR(H5E_DATATYPE, H5E_CANTDEC, H5I_INVALID_HID,

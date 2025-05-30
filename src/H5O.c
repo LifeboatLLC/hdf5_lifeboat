@@ -200,10 +200,8 @@ H5Oopen_async(const char *app_file, const char *app_func, unsigned app_line, hid
         if (H5ES_insert(es_id, vol_obj->connector, token,
                         H5ARG_TRACE7(__func__, "*s*sIui*sii", app_file, app_func, app_line, loc_id, name, lapl_id, es_id)) < 0) {
             /* clang-format on */
-            /* TBD: Retain lock to protect ID iteration */
-            H5_API_LOCK
+
             dec_ref_ret = H5I_dec_app_ref_always_close(ret_value);
-            H5_API_UNLOCK
 
             if (dec_ref_ret < 0)
                 HDONE_ERROR(H5E_OHDR, H5E_CANTDEC, H5I_INVALID_HID, "can't decrement count on object ID");
@@ -337,10 +335,8 @@ H5Oopen_by_idx_async(const char *app_file, const char *app_func, unsigned app_li
         if (H5ES_insert(es_id, vol_obj->connector, token,
                         H5ARG_TRACE10(__func__, "*s*sIui*sIiIohii", app_file, app_func, app_line, loc_id, group_name, idx_type, order, n, lapl_id, es_id)) < 0) {
             /* clang-format on */
-            /* TBD: Retain lock to protect ID iteration */
-            H5_API_LOCK
+
             dec_ref_ret = H5I_dec_app_ref_always_close(ret_value);
-            H5_API_UNLOCK
 
             if (dec_ref_ret < 0)
                 HDONE_ERROR(H5E_OHDR, H5E_CANTDEC, H5I_INVALID_HID, "can't decrement count on object ID");
@@ -2022,10 +2018,7 @@ H5Oclose(hid_t object_id)
     if (H5O__close_check_type(object_id) <= 0)
         HGOTO_ERROR(H5E_OHDR, H5E_CANTRELEASE, FAIL, "not a valid object");
 
-    /* TBD: Retain lock to protect ID iteration */
-    H5_API_LOCK
     dec_ref_ret = H5I_dec_app_ref(object_id);
-    H5_API_UNLOCK
 
     if (dec_ref_ret < 0)
         HGOTO_ERROR(H5E_OHDR, H5E_CANTRELEASE, FAIL, "unable to close object");
@@ -2078,10 +2071,8 @@ H5Oclose_async(const char *app_file, const char *app_func, unsigned app_line, hi
     /* Asynchronously decrement reference count on ID.
      * When it reaches zero the object will be closed.
      */
-    /* TBD: Retain lock to protect ID iteration */
-    H5_API_LOCK
+
     dec_ref_ret = H5I_dec_app_ref_async(object_id, token_ptr);
-    H5_API_UNLOCK
 
     if (dec_ref_ret < 0)
         HGOTO_ERROR(H5E_OHDR, H5E_CANTCLOSEFILE, FAIL, "decrementing object ID failed");

@@ -287,10 +287,8 @@ H5Gcreate_async(const char *app_file, const char *app_func, unsigned app_line, h
         if (H5ES_insert(es_id, vol_obj->connector, token,
                         H5ARG_TRACE9(__func__, "*s*sIui*siiii", app_file, app_func, app_line, loc_id, name, lcpl_id, gcpl_id, gapl_id, es_id)) < 0) {
             /* clang-format on */
-            /* TBD: Retain lock to protect ID iteration */
-            H5_API_LOCK
+
             dec_ref_ret = H5I_dec_app_ref_always_close(ret_value);
-            H5_API_UNLOCK
             
             if (dec_ref_ret < 0)
                 HDONE_ERROR(H5E_SYM, H5E_CANTDEC, H5I_INVALID_HID, "can't decrement count on group ID");
@@ -520,10 +518,8 @@ H5Gopen_async(const char *app_file, const char *app_func, unsigned app_line, hid
         if (H5ES_insert(es_id, vol_obj->connector, token,
                         H5ARG_TRACE7(__func__, "*s*sIui*sii", app_file, app_func, app_line, loc_id, name, gapl_id, es_id)) < 0) {
             /* clang-format on */
-            /* TBD: Retain lock to protect ID iteration */
-            H5_API_LOCK
+
             dec_ref_ret = H5I_dec_app_ref_always_close(ret_value);
-            H5_API_UNLOCK
 
             if (dec_ref_ret < 0)
                 HDONE_ERROR(H5E_SYM, H5E_CANTDEC, H5I_INVALID_HID, "can't decrement count on group ID");
@@ -936,10 +932,7 @@ H5Gclose(hid_t group_id)
      * reaches zero.
      */
 
-    /* TBD: Retain lock to protect ID iteration */
-    H5_API_LOCK
     dec_ref_ret = H5I_dec_app_ref(group_id);
-    H5_API_UNLOCK
     
     if (dec_ref_ret < 0)
         HGOTO_ERROR(H5E_SYM, H5E_CANTDEC, FAIL, "decrementing group ID failed");
@@ -993,10 +986,7 @@ H5Gclose_async(const char *app_file, const char *app_func, unsigned app_line, hi
      * reaches zero.
      */
 
-    /* TBD: Retain lock to protect ID iteration */
-    H5_API_LOCK
     dec_ref_ret = H5I_dec_app_ref_async(group_id, token_ptr);
-    H5_API_UNLOCK
 
     if (dec_ref_ret < 0)
         HGOTO_ERROR(H5E_SYM, H5E_CANTDEC, FAIL, "decrementing group ID failed");

@@ -31,6 +31,7 @@
 #include "H5private.h"   /* Generic Functions                        */
 #include "H5Eprivate.h"  /* Error handling                           */
 #include "H5MMprivate.h" /* Memory management                        */
+#include "H5TSprivate.h"
 
 #if defined(H5_HAVE_THREADSAFE) || defined(H5_HAVE_MULTITHREAD)
 
@@ -55,7 +56,6 @@ typedef void *(*H5TS_thread_cb_t)(void *);
 /* Local Prototypes */
 /********************/
 static void   H5TS__key_destructor(void *key_val);
-static herr_t H5TS__mutex_acquire(H5TS_mutex_t *mutex, unsigned int lock_count, bool *acquired);
 static herr_t H5TS__mutex_unlock(H5TS_mutex_t *mutex, unsigned int *lock_count);
 
 static void H5TS_tid_destructor(void *_v);
@@ -396,7 +396,7 @@ H5TS_pthread_first_thread_init(void)
 #endif /* H5_HAVE_WIN_THREADS */
 
 /*--------------------------------------------------------------------------
- * Function:    H5TS__mutex_acquire
+ * Function:    H5TS_mutex_acquire
  *
  * Purpose:     Attempts to acquire a mutex lock, without blocking
  *
@@ -408,12 +408,12 @@ H5TS_pthread_first_thread_init(void)
  * Return:      Non-negative on success / Negative on failure
  *--------------------------------------------------------------------------
  */
-static herr_t
-H5TS__mutex_acquire(H5TS_mutex_t *mutex, unsigned int lock_count, bool *acquired)
+herr_t
+H5TS_mutex_acquire(H5TS_mutex_t *mutex, unsigned int lock_count, bool *acquired)
 {
     herr_t ret_value = SUCCEED;
 
-    FUNC_ENTER_PACKAGE_NAMECHECK_ONLY
+    FUNC_ENTER_NOAPI_NAMECHECK_ONLY
 
 #ifdef H5_HAVE_WIN_THREADS
     EnterCriticalSection(&mutex->CriticalSection);
@@ -449,7 +449,7 @@ H5TS__mutex_acquire(H5TS_mutex_t *mutex, unsigned int lock_count, bool *acquired
 #endif /* H5_HAVE_WIN_THREADS */
 
     FUNC_LEAVE_NOAPI_NAMECHECK_ONLY(ret_value)
-} /* end H5TS__mutex_acquire() */
+} /* end H5TS_mutex_acquire() */
 
 /*--------------------------------------------------------------------------
  * Function:    H5TSmutex_acquire
@@ -466,7 +466,7 @@ herr_t
 H5TSmutex_acquire(unsigned int lock_count, bool *acquired){
     FUNC_ENTER_API_NAMECHECK_ONLY
 
-        FUNC_LEAVE_API_NAMECHECK_ONLY(H5TS__mutex_acquire(&H5_g.init_lock, lock_count, acquired))}
+        FUNC_LEAVE_API_NAMECHECK_ONLY(H5TS_mutex_acquire(&H5_g.init_lock, lock_count, acquired))}
 /* end H5TSmutex_acquire() */
 
 /*--------------------------------------------------------------------------

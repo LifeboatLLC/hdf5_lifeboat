@@ -493,7 +493,12 @@ H5I_init(void)
     atomic_init(&(H5I_mt_g.num_successful_do_not_disturb_sets), 0ULL);
     atomic_init(&(H5I_mt_g.num_failed_do_not_disturb_sets), 0ULL);
     atomic_init(&(H5I_mt_g.num_do_not_disturb_resets), 0ULL);
-    atomic_init(&(H5I_mt_g.num_do_not_disturb_bypasses), 0ULL);
+    atomic_init(&(H5I_mt_g.num_do_not_disturb_recursions), 0ULL);
+
+    atomic_init(&(H5I_mt_g.global_mutex_acquire_attempts), 0ULL);
+    atomic_init(&(H5I_mt_g.global_mutex_acquire_successes), 0ULL);
+    atomic_init(&(H5I_mt_g.global_mutex_acquire_failures), 0ULL);
+    atomic_init(&(H5I_mt_g.num_deadlock_evasions), 0ULL);
 
     atomic_init(&(H5I_mt_g.num_H5I_entries_via_public_API), 0ULL);
     atomic_init(&(H5I_mt_g.num_H5I_entries_via_internal_API), 0ULL);
@@ -830,7 +835,12 @@ H5I_clear_stats(void)
     atomic_store(&(H5I_mt_g.num_successful_do_not_disturb_sets), 0ULL);
     atomic_store(&(H5I_mt_g.num_failed_do_not_disturb_sets), 0ULL);
     atomic_store(&(H5I_mt_g.num_do_not_disturb_resets), 0ULL);
-    atomic_store(&(H5I_mt_g.num_do_not_disturb_bypasses), 0ULL);
+    atomic_store(&(H5I_mt_g.num_do_not_disturb_recursions), 0ULL);
+
+    atomic_store(&(H5I_mt_g.global_mutex_acquire_attempts), 0ULL);
+    atomic_store(&(H5I_mt_g.global_mutex_acquire_successes), 0ULL);
+    atomic_store(&(H5I_mt_g.global_mutex_acquire_failures), 0ULL);
+    atomic_store(&(H5I_mt_g.num_deadlock_evasions), 0ULL);
 
     atomic_store(&(H5I_mt_g.num_H5I_entries_via_public_API), 0ULL);
     atomic_store(&(H5I_mt_g.num_H5I_entries_via_internal_API), 0ULL);
@@ -1211,8 +1221,17 @@ H5I_dump_stats(FILE * file_ptr)
             (unsigned long long)(atomic_load(&(H5I_mt_g.num_failed_do_not_disturb_sets))));
     fprintf(file_ptr, "H5I_mt_g.num_do_not_disturb_resets                                     = %lld\n", 
             (unsigned long long)(atomic_load(&(H5I_mt_g.num_do_not_disturb_resets))));
-    fprintf(file_ptr, "H5I_mt_g.num_do_not_disturb_bypasses                                   = %lld\n\n", 
-            (unsigned long long)(atomic_load(&(H5I_mt_g.num_do_not_disturb_bypasses))));
+    fprintf(file_ptr, "H5I_mt_g.num_do_not_disturb_recursions                                 = %lld\n\n",
+            (unsigned long long)(atomic_load(&(H5I_mt_g.num_do_not_disturb_recursions))));
+
+    fprintf(file_ptr, "H5I_mt_g.global_mutex_acquire_attempts                                 = %lld\n",
+            (unsigned long long)(atomic_load(&(H5I_mt_g.global_mutex_acquire_attempts))));
+    fprintf(file_ptr, "H5I_mt_g.global_mutex_acquire_successes                                = %lld\n",
+            (unsigned long long)(atomic_load(&(H5I_mt_g.global_mutex_acquire_successes))));
+    fprintf(file_ptr, "H5I_mt_g.global_mutex_acquire_failures                                 = %lld\n",
+            (unsigned long long)(atomic_load(&(H5I_mt_g.global_mutex_acquire_failures))));
+    fprintf(file_ptr, "H5I_mt_g.num_deadlock_evasions                                         = %lld\n\n",
+            (unsigned long long)(atomic_load(&(H5I_mt_g.num_deadlock_evasions))));
 
     fprintf(file_ptr, "H5I_mt_g.num_H5I_entries_via_public_API                                = %lld\n", 
             (unsigned long long)(atomic_load(&(H5I_mt_g.num_H5I_entries_via_public_API))));
@@ -1961,9 +1980,45 @@ H5I_dump_nz_stats(FILE * file_ptr, const char * tag)
         fprintf(file_ptr, "H5I_mt_g.num_do_not_disturb_resets                                     = %lld\n", 
                 (unsigned long long)(atomic_load(&(H5I_mt_g.num_do_not_disturb_resets))));
 
-    if ( (unsigned long long)(atomic_load(&(H5I_mt_g.num_do_not_disturb_bypasses))) > 0ULL )
-        fprintf(file_ptr, "H5I_mt_g.num_do_not_disturb_bypasses                                   = %lld\n", 
-                (unsigned long long)(atomic_load(&(H5I_mt_g.num_do_not_disturb_bypasses))));
+    if ((unsigned long long)(atomic_load(&(H5I_mt_g.num_do_not_disturb_recursions))) > 0ULL)
+        fprintf(file_ptr, "H5I_mt_g.num_do_not_disturb_recursions                                 = %lld\n",
+                (unsigned long long)(atomic_load(&(H5I_mt_g.num_do_not_disturb_recursions))));
+
+    /* global mutex acquire / dealock avoidance stats */
+
+    if ((unsigned long long)(atomic_load(&(H5I_mt_g.global_mutex_acquire_attempts))) > 0ULL)
+        fprintf(file_ptr, "H5I_mt_g.global_mutex_acquire_attempts                                 = %lld\n",
+                (unsigned long long)(atomic_load(&(H5I_mt_g.global_mutex_acquire_attempts))));
+
+    if ((unsigned long long)(atomic_load(&(H5I_mt_g.global_mutex_acquire_successes))) > 0ULL)
+        fprintf(file_ptr, "H5I_mt_g.global_mutex_acquire_successes                                = %lld\n",
+                (unsigned long long)(atomic_load(&(H5I_mt_g.global_mutex_acquire_successes))));
+
+    if ((unsigned long long)(atomic_load(&(H5I_mt_g.global_mutex_acquire_failures))) > 0ULL)
+        fprintf(file_ptr, "H5I_mt_g.global_mutex_acquire_failures                                 = %lld\n",
+                (unsigned long long)(atomic_load(&(H5I_mt_g.global_mutex_acquire_failures))));
+
+    if ((unsigned long long)(atomic_load(&(H5I_mt_g.num_deadlock_evasions))) > 0ULL)
+        fprintf(file_ptr, "H5I_mt_g.num_deadlock_evasions                                         = %lld\n",
+                (unsigned long long)(atomic_load(&(H5I_mt_g.num_deadlock_evasions))));
+
+    /* active_threads stats */
+
+    if ((unsigned long long)(atomic_load(&(H5I_mt_g.num_H5I_entries_via_public_API))) > 0ULL)
+        fprintf(file_ptr, "H5I_mt_g.num_H5I_entries_via_public_API                                = %lld\n",
+                (unsigned long long)(atomic_load(&(H5I_mt_g.num_H5I_entries_via_public_API))));
+
+    if ((unsigned long long)(atomic_load(&(H5I_mt_g.num_H5I_entries_via_internal_API))) > 0ULL)
+        fprintf(file_ptr, "H5I_mt_g.num_H5I_entries_via_internal_API                              = %lld\n",
+                (unsigned long long)(atomic_load(&(H5I_mt_g.num_H5I_entries_via_internal_API))));
+
+    if ((unsigned long long)(atomic_load(&(H5I_mt_g.max_active_threads))) > 0ULL)
+        fprintf(file_ptr, "H5I_mt_g.max_active_threads                                            = %lld\n",
+                (unsigned long long)(atomic_load(&(H5I_mt_g.max_active_threads))));
+
+    if ((unsigned long long)(atomic_load(&(H5I_mt_g.times_active_threads_is_zero))) > 0ULL)
+        fprintf(file_ptr, "H5I_mt_g.times_active_threads_is_zero                                  = %lld\n",
+                (unsigned long long)(atomic_load(&(H5I_mt_g.times_active_threads_is_zero))));
 
     FUNC_LEAVE_NOAPI_VOID;
 
@@ -2762,12 +2817,14 @@ H5I__mark_node(void *_info, void H5_ATTR_UNUSED *key, void *_udata)
     hbool_t                 is_candidate;
     hbool_t                 cant_roll_back;
     hbool_t                 do_not_disturb_set;
+    hbool_t                 global_mutex_acquired;
     hbool_t                 mark;
     hbool_t                 done = FALSE;
     hbool_t                 have_global_mutex = TRUE; /*trivially so for single thread builds */
     hbool_t                 cls_is_mt_safe;
     hbool_t                 bool_result;
     int                     pass = 0;
+    H5I_mt_id_info_kernel_t init_info_k;
     H5I_mt_id_info_kernel_t info_k;
     H5I_mt_id_info_kernel_t mod_info_k;
     H5I_mt_id_info_t       *id_info_ptr  = (H5I_mt_id_info_t *)_info;        /* Current ID info being worked with */
@@ -2777,6 +2834,7 @@ H5I__mark_node(void *_info, void H5_ATTR_UNUSED *key, void *_udata)
 
     FUNC_ENTER_NOAPI(FAIL)
 
+    memset(&init_info_k, 0, sizeof(H5I_mt_id_info_kernel_t));
     memset(&info_k, 0, sizeof(H5I_mt_id_info_kernel_t));
     memset(&mod_info_k, 0, sizeof(H5I_mt_id_info_kernel_t));
 
@@ -2813,15 +2871,21 @@ H5I__mark_node(void *_info, void H5_ATTR_UNUSED *key, void *_udata)
     do {
 
         /* If another thread modified id_info_ptr-k while we are preparing our modified copy,
-         * or if we need to set the do not disturb flag to prevent simultaneous calls to 
-         * the future id discard_cb callback or the regular id free_func, we will have to 
-         * re-run this do-while loop.  Since we start each pass fresh, start by reseting 
-         * all the flags to their initial values.
+         * or if we need to but fail to set the do not disturb flag to prevent simultaneous 
+         * calls to the future id discard_cb callback or the regular id free_func, we will 
+         * have to re-run this do-while loop.  Since we start each pass fresh, start by 
+         * reseting all the flags to their initial values.
          */
         is_candidate       = FALSE;
         cant_roll_back     = FALSE;
         do_not_disturb_set = FALSE;
+        global_mutex_acquired = FALSE;
         mark               = FALSE;
+
+        /* dito the structures for local copies of the kernel */
+        memset(&init_info_k, 0, sizeof(H5I_mt_id_info_kernel_t));
+        memset(&info_k, 0, sizeof(H5I_mt_id_info_kernel_t));
+        memset(&mod_info_k, 0, sizeof(H5I_mt_id_info_kernel_t));
 
         /* increment the pass and log retries */
         if ( pass++ >= 1 ) {
@@ -2831,10 +2895,13 @@ H5I__mark_node(void *_info, void H5_ATTR_UNUSED *key, void *_udata)
 
         /* load the atomic kernel from *id_info_ptr into info_k.  Note that this is a snapshot of the 
          * state of *id_info_ptr, and can be changed before we get to writing it back.
+         *
+         * We keep the inital version of the kernel around so we can back out of the do_not_disturb
+         * easily if we fail to acquire the global mutex.
          */
-        info_k = atomic_load(&(id_info_ptr->k));
+        init_info_k = atomic_load(&(id_info_ptr->k));
 
-        if ( info_k.marked ) {
+        if (init_info_k.marked) {
 
             /* this is is already marked for deletion -- nothing to do here */
 
@@ -2850,15 +2917,29 @@ H5I__mark_node(void *_info, void H5_ATTR_UNUSED *key, void *_udata)
             break;
         }
 
-        if ( info_k.do_not_disturb ) {
-#if 0 
-            if ( ( have_global_mutex ) && ( info_k.have_global_mutex ) ) {
+        if (init_info_k.do_not_disturb) {
+#if H5I_BYPASS_HDF5_TID
+           /* since the do not disturb flag is set, info_k.tid_valid must be true */
+           assert(init_info_k.tid_valid);
 
-                bypass_do_not_disturb = TRUE;
+            /* In principle, if init_info_k.tid == pthread_self(), we could bypass
+             * the do_not_disturb_flag and proceed.  However, since H5I__mark_node() will 
+             * modify the kernel, this will cause the reset of the do_not_disturb flag to 
+             * fail.  In principle, this could be dealt with.  However, since this 
+             * issue hasn't arrisen yet, just assert that info_k.tid != H5TS_thread_id().
+             */
+           assert( ! pthread_equal(init_info_k.tid, pthread_self()) );
+#else
+           /* since the do not disturb flag is set, info_k.tid must be non-zero */
+           assert(init_info_k.tid != 0ULL);
 
-                atomic_fetch_add(&(H5I_mt_g.num_do_not_disturb_bypasses), 1ULL);
-
-            } else {
+            /* In principle, if init_info_k.tid == H5TS_thread_id(), we could bypass
+             * the do_not_disturb_flag and proceed.  However, since H5I__mark_node() will 
+             * modify the kernel, this will cause the reset of the do_not_disturb flag to 
+             * fail.  In principle, this could be dealt with.  However, since this 
+             * issue hasn't arrisen yet, just assert that info_k.tid != H5TS_thread_id().
+             */
+           assert(init_info_k.tid != H5TS_thread_id());
 #endif
 
                 /* Another thread is in the process of performing an operation on the info kernel
@@ -2883,11 +2964,11 @@ H5I__mark_node(void *_info, void H5_ATTR_UNUSED *key, void *_udata)
 #endif
         }
 
-        if ( ( udata->force ) || ( (info_k.count - ((!udata->app_ref) * info_k.app_count)) <= 1 ) ) {
+        if ((udata->force) || ((init_info_k.count - ((!udata->app_ref) * init_info_k.app_count)) <= 1)) {
 
             is_candidate = TRUE;
 
-            if ( ( info_k.is_future ) || ( udata->type_info->cls->free_func ) ) {
+            if ((init_info_k.is_future) || (udata->type_info->cls->free_func)) {
 
                 cant_roll_back = TRUE;
             }
@@ -2905,14 +2986,23 @@ H5I__mark_node(void *_info, void H5_ATTR_UNUSED *key, void *_udata)
 
         if ( cant_roll_back ) {
 
-            mod_info_k.count             = info_k.count;
-            mod_info_k.app_count         = info_k.app_count;
-            mod_info_k.object            = info_k.object;
+            /* we must set the do_not_disturb flag */
 
-            mod_info_k.marked            = info_k.marked;
+            mod_info_k.count     = init_info_k.count;
+            mod_info_k.app_count = init_info_k.app_count;
+            mod_info_k.object    = init_info_k.object;
+#if H5I_BYPASS_HDF5_TID
+            mod_info_k.tid       = pthread_self();
+            mod_info_k.tid_valid = TRUE;
+#else
+            mod_info_k.tid       = H5TS_thread_id();
+
+            assert(mod_info_k.tid > 0ULL);
+#endif
+            mod_info_k.marked            = init_info_k.marked;
             mod_info_k.do_not_disturb    = TRUE;
-            mod_info_k.is_future         = info_k.is_future;
-            mod_info_k.have_global_mutex = have_global_mutex;
+            mod_info_k.is_future         = init_info_k.is_future;
+            mod_info_k.have_global_mutex = ( ( have_global_mutex ) || ( ! cls_is_mt_safe ) );
 
             /* We don't want multiple threads trying to either realize or dispose of the 
              * data associated with the future id or trying to free the data associated 
@@ -2922,7 +3012,7 @@ H5I__mark_node(void *_info, void H5_ATTR_UNUSED *key, void *_udata)
              * flag.  If successful, this will prevent any other threads from modifying 
              * id_info_ptr->k until after it is set back to FALSE.
              */
-            if ( ! atomic_compare_exchange_strong(&(id_info_ptr->k), &info_k, mod_info_k ) ) {
+            if ( ! atomic_compare_exchange_strong(&(id_info_ptr->k), &init_info_k, mod_info_k) ) {
 
                 /* Some other thread changed the value of id_info_ptr->k since we last read
                  * it.  Thus we must return to the beginning of the do loop and start 
@@ -2939,10 +3029,6 @@ H5I__mark_node(void *_info, void H5_ATTR_UNUSED *key, void *_udata)
 
                 do_not_disturb_set = TRUE;
 
-#if 0 /* JRM */
-                /* make info_k into a copy of the global kernel */
-                info_k.do_not_disturb = TRUE;
-#else /* JTM */
                 /* On the face of it, it would seem that we could just update info_k
                  * to match mod_info_k, and use it in the next atomic_compare_exchange_strong()
                  * call.  However, for reason or reasons unknown, this doesn't work.
@@ -2955,12 +3041,21 @@ H5I__mark_node(void *_info, void H5_ATTR_UNUSED *key, void *_udata)
                 assert(info_k.count             == mod_info_k.count);
                 assert(info_k.app_count         == mod_info_k.app_count);
                 assert(info_k.object            == mod_info_k.object);
+#if H5I_BYPASS_HDF5_TID
+                assert(info_k.tid_valid == mod_info_k.tid_valid);
+
+                if ( info_k.tid_valid ) {
+
+                    assert( pthread_equal(info_k.tid, pthread_self()) );
+                }
+#else
+                assert(info_k.tid == mod_info_k.tid);
+#endif
 
                 assert(info_k.marked            == mod_info_k.marked);
                 assert(info_k.do_not_disturb    == mod_info_k.do_not_disturb);
                 assert(info_k.is_future         == mod_info_k.is_future);
                 assert(info_k.have_global_mutex == mod_info_k.have_global_mutex);
-#endif /* JRM */
 
                 /* update stats */
                 atomic_fetch_add(&(H5I_mt_g.num_successful_do_not_disturb_sets), 1ULL);
@@ -2973,26 +3068,140 @@ H5I__mark_node(void *_info, void H5_ATTR_UNUSED *key, void *_udata)
 
         assert( ( do_not_disturb_set ) || ( ! cant_roll_back ) );
 
+        if ( ( ! have_global_mutex ) && ( ! cls_is_mt_safe ) ) {
+
+            /* Since the class is not mult-thread safe, and we don't currently
+             * hold it, we must obtain the the global mutex before proceeding.  
+             *
+             * If we were able to enforce lock ordering between locking an ID and 
+             * obtaining the global mutex, we would simply do this via H5_API_LOCK.
+             *
+             * While this still works if we don't have to lock the target ID
+             * (i.e. the cant_roll_back flag is false, and the ID was not locked
+             * on entry -- always true in this function), there is the potential 
+             * for a deadlock if the do_not_disturb flag is aready set.
+             *
+             * We resolve this by using the H5TS_mutex_acquire() call to attempt
+             * to obtain the global mutex without blocking.  
+             *
+             * If H5TS_mutex_acquire() succeeds, we invoke the callback and then 
+             * drop the global mutex as usual.
+             *
+             * If, however, H5TS_mutex_acquire() fails to obtain the global mutex,
+             * we must clear the do not disturb flag on the target id, either 
+             * thread yield or sleep a bit, and return to the beginning of the 
+             * do loop.  
+             */
+
+             if ( cant_roll_back ) {
+
+                assert( do_not_disturb_set );
+
+                atomic_fetch_add(&(H5I_mt_g.global_mutex_acquire_attempts), 1ULL);
+
+                if ( H5TS_mutex_acquire(&H5_g.init_lock, 1, &global_mutex_acquired) < 0 ) {
+
+                    /* the call to H5TS_mutex_acquire() returned an error.  Drop the
+                     * do not disturb flag on the target ID if set in this function, and
+                     * throw an error.
+                     */
+
+                    /* since we have the do_not_disturb flag, the following
+                     * atomic_compare_exchange_strong() must succeed.
+                     */
+                    assert(mod_info_k.do_not_disturb);
+                    assert(mod_info_k.have_global_mutex);
+                    assert(init_info_k.do_not_disturb);
+                    assert(init_info_k.have_global_mutex);
+
+                    /* reset the kernel to its initial value */
+
+                    bool_result = atomic_compare_exchange_strong(&(id_info_ptr->k), &mod_info_k, init_info_k);
+
+                    assert(bool_result);
+
+                    atomic_fetch_add(&(H5I_mt_g.num_do_not_disturb_resets), 1ULL);
+
+                    HGOTO_ERROR(H5E_INTERNAL, H5E_SYSERRSTR, FAIL, "H5TS_mutex_acquire reported failure");
+
+                } else { /* H5TS_mutex_acquire() completed without error */
+
+                    if ( ! global_mutex_acquired ) {
+#if 0
+                        fprintf(stderr, "%s: H5TS_mutex_acquire() failed to acquire global mutex\n",
+                                "H5I__mark_node()");
+#endif
+                        atomic_fetch_add(&(H5I_mt_g.global_mutex_acquire_failures), 1ULL);
+
+                        /* the attempt to acquire the global mutex failed -- presumably because
+                         * some other thread holds it.
+                         *
+                         * This may or may not be a deadlock -- but since we can't tell, we will
+                         * assume it is.  Drop the do_not_disturb flag on the target ID, update
+                         * stats, sleep a little, and retry.
+                         */
+
+                        /* since we have the do_not_disturb flag, the following
+                         * atomic_compare_exchange_strong() must succeed.
+                         */
+                        assert( mod_info_k.do_not_disturb );
+                        assert( mod_info_k.have_global_mutex );
+                        assert( ! init_info_k.do_not_disturb );
+                        assert( ! init_info_k.have_global_mutex );
+
+                        bool_result = atomic_compare_exchange_strong(&(id_info_ptr->k), &mod_info_k, 
+                                                                     init_info_k);
+                        assert(bool_result);
+
+                        atomic_fetch_add(&(H5I_mt_g.num_do_not_disturb_resets), 1ULL);
+                        atomic_fetch_add(&(H5I_mt_g.num_deadlock_evasions), 1ULL);
+
+                        sleep(1);
+
+                        continue;
+
+                    } else { /* global mutext acquired */
+
+                        /* success -- update stats  */
+                        atomic_fetch_add(&(H5I_mt_g.global_mutex_acquire_successes), 1ULL);
+                    }
+                }
+            } else {
+
+                assert( ! do_not_disturb_set );
+
+                H5_API_LOCK
+
+                /* Set global_mutex_acquired to TRUE so that we know to drop the global mutex when 
+                 * we are done.
+                 */
+               global_mutex_acquired = TRUE;
+            }
+        } /* if ( ( ! have_global_mutex ) && ( ! cls_is_mt_safe ) ) */
+
+        assert( ( cls_is_mt_safe ) || ( have_global_mutex || global_mutex_acquired ) );
+
         if ( info_k.is_future ) {
 
             assert(do_not_disturb_set);
 
-            /* Discard the future object */
-            if ( ( ! have_global_mutex ) && ( ! cls_is_mt_safe ) ) {
+            if ( global_mutex_acquired ) {
 
                 atomic_fetch_add(&(H5I_mt_g.H5I__mark_node__global_mutex_locks_for_discard_cb), 1ULL);
-                H5_API_LOCK
+            }
+
+            /* Discard the future object */
+
                 H5_GCC_CLANG_DIAG_OFF("cast-qual")
                 result = (id_info_ptr->discard_cb)((void *)info_k.object);
                 H5_GCC_CLANG_DIAG_ON("cast-qual")
+
+            /* drop the global mutex if it was acquired */
+            if ( global_mutex_acquired ) {
+
                 H5_API_UNLOCK
+
                 atomic_fetch_add(&(H5I_mt_g.H5I__mark_node__global_mutex_unlocks_for_discard_cb), 1ULL);
-
-            } else {
-
-                H5_GCC_CLANG_DIAG_OFF("cast-qual")
-                result = (id_info_ptr->discard_cb)((void *)info_k.object);
-                H5_GCC_CLANG_DIAG_ON("cast-qual")
             }
 
             if ( result < 0 ) {
@@ -3047,21 +3256,21 @@ H5I__mark_node(void *_info, void H5_ATTR_UNUSED *key, void *_udata)
 
                 assert(do_not_disturb_set);
 
-                if ( ( ! have_global_mutex ) && ( ! cls_is_mt_safe ) ) {
+                if ( global_mutex_acquired ) {
 
                     atomic_fetch_add(&(H5I_mt_g.H5I__mark_node__global_mutex_locks_for_free_func), 1ULL);
-                    H5_API_LOCK
-                    H5_GCC_CLANG_DIAG_OFF("cast-qual")
-                    result = (udata->type_info->cls->free_func)((void *)info_k.object, H5_REQUEST_NULL);
-                    H5_GCC_CLANG_DIAG_ON("cast-qual")
+                }
+
+                H5_GCC_CLANG_DIAG_OFF("cast-qual")
+                result = (udata->type_info->cls->free_func)((void *)info_k.object, H5_REQUEST_NULL);
+                H5_GCC_CLANG_DIAG_ON("cast-qual")
+
+                /* drop the global mutex if it was acquired */
+                if ( global_mutex_acquired ) {
+
                     H5_API_UNLOCK
+
                     atomic_fetch_add(&(H5I_mt_g.H5I__mark_node__global_mutex_unlocks_for_free_func), 1ULL);
-
-                } else {
-
-                    H5_GCC_CLANG_DIAG_OFF("cast-qual")
-                    result = (udata->type_info->cls->free_func)((void *)info_k.object, H5_REQUEST_NULL);
-                    H5_GCC_CLANG_DIAG_ON("cast-qual")
                 }
 
                 if ( result < 0 ) {
@@ -3136,6 +3345,11 @@ H5I__mark_node(void *_info, void H5_ATTR_UNUSED *key, void *_udata)
                 mod_info_k.count             = 0;
                 mod_info_k.app_count         = 0;
                 mod_info_k.object            = NULL;
+#if H5I_BYPASS_HDF5_TID
+                mod_info_k.tid_valid = FALSE;
+#else
+                mod_info_k.tid       = 0ULL;
+#endif
 
                 mod_info_k.marked            = TRUE;
                 mod_info_k.do_not_disturb    = FALSE;  
@@ -3147,6 +3361,11 @@ H5I__mark_node(void *_info, void H5_ATTR_UNUSED *key, void *_udata)
                 mod_info_k.count             = info_k.count;
                 mod_info_k.app_count         = info_k.app_count;
                 mod_info_k.object            = info_k.object;
+#if H5I_BYPASS_HDF5_TID
+                mod_info_k.tid_valid = FALSE;
+#else
+                mod_info_k.tid       = 0ULL;
+#endif
 
                 mod_info_k.marked            = info_k.marked;
                 mod_info_k.do_not_disturb    = FALSE;  
@@ -4040,6 +4259,10 @@ H5I_subst(hid_t id, const void *new_object)
         id_info_ptr = NULL;
         old_object = NULL;
 
+        memset(&info_k, 0, sizeof(H5I_mt_id_info_kernel_t));
+        memset(&mod_info_k, 0, sizeof(H5I_mt_id_info_kernel_t));
+
+
         /* increment the pass and log retries */
         if ( pass++ >= 1 ) {
 
@@ -4069,36 +4292,32 @@ H5I_subst(hid_t id, const void *new_object)
         }
 
         if ( info_k.do_not_disturb ) {
-#if 0
-            if ( ( have_global_mutex ) && ( info_k.have_global_mutex ) ) {
 
-                bypass_do_not_disturb = TRUE;
+            /* Another thread is in the process of performing an operation on the info kernel
+             * that can't be rolled back -- either a future id realize_cb or discard_cb, or a
+             * regular id free_func.
+             *
+             * Thus we must wait until that thread is done and then re-start the operation -- which
+             * may be moot by that point.
+             */
 
-                atomic_fetch_add(&(H5I_mt_g.num_do_not_disturb_bypasses), 1ULL);
+            /* update stats */
+            atomic_fetch_add(&(H5I_mt_g.num_do_not_disturb_yields), 1ULL);
 
-            } else {
-#endif 
-                /* Another thread is in the process of performing an operation on the info kernel
-                 * that can't be rolled back -- either a future id realize_cb or discard_cb, or a
-                 * regular id free_func.
-                 *
-                 * Thus we must wait until that thread is done and then re-start the operation -- which
-                 * may be moot by that point.
-                 */
+            /* need to do better than this.  Want to call pthread_yield(),
+             * but that call doesn't seem to be supported anymore.
+             */
+            sleep(1);
 
-                /* update stats */
-                atomic_fetch_add(&(H5I_mt_g.num_do_not_disturb_yields), 1ULL);
-
-                /* need to do better than this.  Want to call pthread_yield(),
-                 * but that call doesn't seem to be supported anymore.
-                 */
-                sleep(1);
-
-                continue;
-#if 0
-            }
-#endif
+            continue;
         }
+
+        assert( ! info_k.do_not_disturb );
+#if H5I_BYPASS_HDF5_TID
+        assert( ! info_k.tid_valid );
+#else
+        assert( 0ULL == info_k.tid );
+#endif
 
         old_object = info_k.object;
 
@@ -4106,12 +4325,19 @@ H5I_subst(hid_t id, const void *new_object)
         mod_info_k.count          = info_k.count;
         mod_info_k.app_count      = info_k.app_count;
         mod_info_k.object         = new_object;
+#if H5I_BYPASS_HDF5_TID
+        mod_info_k.tid       = info_k.tid;
+        mod_info_k.tid_valid = info_k.tid_valid;
 
-        mod_info_k.marked         = info_k.marked;;
-        mod_info_k.do_not_disturb = info_k.do_not_disturb;;
+        assert( ( ! mod_info_k.tid_valid ) || ( pthread_equal(mod_info_k.tid, info_k.tid) ) );
+#else
+        mod_info_k.tid       = info_k.tid;
+#endif
+
+        mod_info_k.marked = info_k.marked;
+        mod_info_k.do_not_disturb = info_k.do_not_disturb;
         mod_info_k.is_future      = info_k.is_future;
 
-        mod_info_k.object = new_object;
 
         if ( atomic_compare_exchange_strong(&(id_info_ptr->k), &info_k, mod_info_k) ) {
 
@@ -4813,6 +5039,9 @@ H5I__remove_common(H5I_type_info_t *type_info_ptr, hid_t id)
     /* Delete or mark the node */
     do {
 
+        memset(&info_k, 0, sizeof(H5I_mt_id_info_kernel_t));
+        memset(&mod_info_k, 0, sizeof(H5I_mt_id_info_kernel_t));
+
         /* increment the pass and log retries */
         if ( pass++ >= 1 ) {
 
@@ -4877,6 +5106,11 @@ H5I__remove_common(H5I_type_info_t *type_info_ptr, hid_t id)
                 mod_info_k.count             = 0;
                 mod_info_k.app_count         = 0;
                 mod_info_k.object            = NULL;
+#if H5I_BYPASS_HDF5_TID
+                mod_info_k.tid_valid = FALSE;
+#else
+                mod_info_k.tid       = 0ULL;
+#endif
 
                 mod_info_k.marked            = TRUE;
                 mod_info_k.do_not_disturb    = FALSE;
@@ -5176,9 +5410,11 @@ H5I__dec_ref(hid_t id, void **request, hbool_t app)
     hbool_t                  do_not_disturb_set;
     hbool_t                  marked_for_deletion;
     hbool_t                  have_global_mutex = TRUE; /* trivially so in single thread builds */
+    hbool_t                 global_mutex_acquired;
     hbool_t                  cls_is_mt_safe;
     hbool_t                  bool_result;
     int                      pass                = 0;
+    H5I_mt_id_info_kernel_t base_info_k;
     H5I_mt_id_info_kernel_t  info_k;
     H5I_mt_id_info_kernel_t  mod_info_k;
     H5I_mt_id_info_t        *id_info_ptr         = NULL; /* Pointer to the ID */
@@ -5187,9 +5423,6 @@ H5I__dec_ref(hid_t id, void **request, hbool_t app)
     int                      ret_value           = 0;    /* Return value */
 
     FUNC_ENTER_PACKAGE
-
-    memset(&info_k, 0, sizeof(H5I_mt_id_info_kernel_t));
-    memset(&mod_info_k, 0, sizeof(H5I_mt_id_info_kernel_t));
 
 #if H5I_MT_DEBUG
     fprintf(stdout, "   H5I__dec_ref(0x%llx, reguest, app) called. \n", (unsigned long long)id);
@@ -5244,6 +5477,11 @@ H5I__dec_ref(hid_t id, void **request, hbool_t app)
 
         do_not_disturb_set  = FALSE;
         marked_for_deletion = FALSE;
+        global_mutex_acquired   = FALSE;
+
+        memset(&base_info_k, 0, sizeof(H5I_mt_id_info_kernel_t));
+        memset(&info_k, 0, sizeof(H5I_mt_id_info_kernel_t));
+        memset(&mod_info_k, 0, sizeof(H5I_mt_id_info_kernel_t));
 
         /* increment the pass and log retries */
         if ( pass++ >= 1 ) {
@@ -5251,9 +5489,9 @@ H5I__dec_ref(hid_t id, void **request, hbool_t app)
             atomic_fetch_add(&(H5I_mt_g.H5I__dec_ref__retries), 1ULL);
         }
 
-        info_k = atomic_load(&(id_info_ptr->k));
+        base_info_k = atomic_load(&(id_info_ptr->k));
 
-        if ( info_k.marked ) {
+        if (base_info_k.marked) {
 
             /* this is is already marked for deletion -- nothing to do here */
 
@@ -5270,44 +5508,79 @@ H5I__dec_ref(hid_t id, void **request, hbool_t app)
             HGOTO_ERROR(H5E_ID, H5E_BADID, (-1), "can't locate ID");
         }
 
-        if ( info_k.do_not_disturb ) {
+        if (base_info_k.do_not_disturb) {
+#if H5I_BYPASS_HDF5_TID
+            if ( ( base_info_k.tid_valid ) && (  pthread_equal(base_info_k.tid, pthread_self()) ) ) {
+#else
+            if ( base_info_k.tid == H5TS_thread_id() ) {
+#endif
+                /* this thread has already set the do not disturb flag on this ID.  Thus,
+                 * to avoid a deadlock, we must bypass the do_not_disturb flag.
+                 *
+                 * Note that at present, if the kernel of the ID has changed when the
+                 * do not disturb flag is droped higher up the call stack, that operation
+                 * will change.
+                 *
+                 * As long as this is only a matter of bracketing inc ref / dec ref calls,
+                 * this will be OK.  However, if net changes are made, we will have to
+                 * come up with a better solution.
+                 *
+                 * Ideally, this will be getting rid of locks on IDs entirely.
+                 */
 
-            /* Another thread is in the process of performing an operation on the info kernel
-             * that can't be rolled back -- either a future id realize_cb or discard_cb, or a
-             * regular id callback that must be serialized.
-             *
-             * Thus we must wait until that thread is done and then re-start the operation -- which
-             * may be moot by that point.
-             */
+                assert( base_info_k.count > 1 );
 
-            /* update stats */
-            atomic_fetch_add(&(H5I_mt_g.num_do_not_disturb_yields), 1ULL);
+                assert( base_info_k.have_global_mutex );
 
-            /* need to do better than this.  Want to call pthread_yield(),
-             * but that call doesn't seem to be supported anymore.
-             */
-            sleep(1);
+                atomic_fetch_add(&(H5I_mt_g.num_do_not_disturb_recursions), 1ULL);
 
-            continue;
+            } else {
+
+                /* Another thread is in the process of performing an operation on the info kernel
+                 * that can't be rolled back -- either a future id realize_cb or discard_cb, or a
+                 * regular id callback that must be serialized.
+                 *
+                 * Thus we must wait until that thread is done and then re-start the operation -- which
+                 * may be moot by that point.
+                 */
+
+                /* update stats */
+                atomic_fetch_add(&(H5I_mt_g.num_do_not_disturb_yields), 1ULL);
+
+                /* need to do better than this.  Want to call pthread_yield(),
+                 * but that call doesn't seem to be supported anymore.
+                 */
+                sleep(1);
+
+                continue;
+            }
         }
 
-        if ( ( info_k.count > 1 ) || ( NULL == type_info_ptr->cls->free_func ) ) {
+        if ((base_info_k.count > 1) || (NULL == type_info_ptr->cls->free_func)) {
 
             /* Either count > 1 or the free function for the class is undefined.
-             * In either case, we can roll back the operation an re-try if the 
+             * In either case, we can roll back the operation and re-try if the
              * global copy of the kernel has changed since we read it at the 
              * top of the do/while loop. 
              */
-            mod_info_k.count             = info_k.count;
-            mod_info_k.app_count         = info_k.app_count;
-            mod_info_k.object            = info_k.object;
+            mod_info_k.count     = base_info_k.count;
+            mod_info_k.app_count = base_info_k.app_count;
+            mod_info_k.object    = base_info_k.object;
+#if H5I_BYPASS_HDF5_TID
+            mod_info_k.tid       = base_info_k.tid;
+            mod_info_k.tid_valid = base_info_k.tid_valid;
 
-            mod_info_k.marked            = info_k.marked;
-            mod_info_k.do_not_disturb    = info_k.do_not_disturb;
-            mod_info_k.is_future         = info_k.is_future;
-            mod_info_k.have_global_mutex = FALSE;
+            assert( ( ! mod_info_k.tid_valid ) || ( pthread_equal(base_info_k.tid, mod_info_k.tid) ) );
+#else
+            mod_info_k.tid       = base_info_k.tid;
+#endif
 
-            if ( info_k.count > 1 ) {
+            mod_info_k.marked            = base_info_k.marked;
+            mod_info_k.do_not_disturb    = base_info_k.do_not_disturb;
+            mod_info_k.is_future         = base_info_k.is_future;
+            mod_info_k.have_global_mutex = base_info_k.have_global_mutex;;
+
+            if (base_info_k.count > 1) {
 
                 mod_info_k.count--;
 
@@ -5330,6 +5603,11 @@ H5I__dec_ref(hid_t id, void **request, hbool_t app)
                 mod_info_k.count             = 0;
                 mod_info_k.app_count         = 0;
                 mod_info_k.object            = NULL;
+#if H5I_BYPASS_HDF5_TID
+                mod_info_k.tid_valid = FALSE;
+#else
+                mod_info_k.tid       = 0ULL;
+#endif
 
                 mod_info_k.marked            = TRUE;
                 mod_info_k.do_not_disturb    = FALSE;
@@ -5339,7 +5617,7 @@ H5I__dec_ref(hid_t id, void **request, hbool_t app)
                 marked_for_deletion = TRUE;
             }
 
-            if ( atomic_compare_exchange_strong(&(id_info_ptr->k), &info_k, mod_info_k) ) {
+            if (atomic_compare_exchange_strong(&(id_info_ptr->k), &base_info_k, mod_info_k)) {
 
                 if ( marked_for_deletion ) {
 
@@ -5393,19 +5671,26 @@ H5I__dec_ref(hid_t id, void **request, hbool_t app)
              *       mutex before calling the free_func() and drop if after the call if we 
              *       don't have the mutex already.
              *
-             *    2) Call the free_func().  If the class is not multi-thread safe and
-             *       we don't already hold the globla mutex, we must obtain it before the 
-             *       call, and drop it afterwards.
+             *    2) If the class is not MT safe (!cls_is_mt_safe) and we don't already
+             *       hold the global mutext, we must obtain the global mutex before we call 
+             *       the free func.  Since we can't enforce lock ordering, attempt to obtain 
+             *       the global mutex with H5TS_mutex_acquire().
              * 
-             *       On success, go on to 3) below.  
+             *       It this fails, it is possible that we have a deadlock -- to avoid this,
+             *       drop the do_not_disturb flag on the target ID, wait a bit, and retry.
+             *
+             *    3) Call the free_func(), and then drop the global mutex if it was obtained
+             *       in 2) above.  
+             *
+             *       If the free_func() succeeded, go on to 3) below.
              *
              *       On failure, reset the do_not_disturb flag and return -1.  Do
              *       not flag an error
              *
-             *    3) Set the marked flag, reset the do_not_disturb flag, and set
+             *    4) Set the marked flag, reset the do_not_disturb flag, and set
              *       the return value to zero.
              * 
-             *    4) If H5I_mt_g.marking_array[H5I_TYPE(id)] is zero, remove the ID from 
+             *    5) If H5I_mt_g.marking_array[H5I_TYPE(id)] is zero, remove the ID from
              *       the lock free hash table, and release the associated instance of 
              *       H5I_mt_id_info_t to the free list.
              *
@@ -5418,9 +5703,17 @@ H5I__dec_ref(hid_t id, void **request, hbool_t app)
              */
 
             /* attempt to set the do_not_disturb flag */
-            mod_info_k.count             = info_k.count;
-            mod_info_k.app_count         = info_k.app_count;
-            mod_info_k.object            = info_k.object;
+            mod_info_k.count     = base_info_k.count;
+            mod_info_k.app_count = base_info_k.app_count;
+            mod_info_k.object    = base_info_k.object;
+#if H5I_BYPASS_HDF5_TID
+            mod_info_k.tid       = pthread_self();
+            mod_info_k.tid_valid = TRUE;
+#else
+            mod_info_k.tid       = H5TS_thread_id();
+
+            assert(mod_info_k.tid > 0ULL);
+#endif
 
             mod_info_k.marked            = info_k.marked;
             mod_info_k.do_not_disturb    = TRUE;
@@ -5435,7 +5728,7 @@ H5I__dec_ref(hid_t id, void **request, hbool_t app)
              * successful, this will prevent any other threads from modifying
              * id_info_ptr->k until after it is set back to FALSE.
              */
-            if ( ! atomic_compare_exchange_strong(&(id_info_ptr->k), &info_k, mod_info_k) ) {
+            if (!atomic_compare_exchange_strong(&(id_info_ptr->k), &base_info_k, mod_info_k)) {
 
                 /* Some other thread changed the value of id_info_ptr->k since we last read
                  * it.  Thus we must return to the beginning of the do loop and start
@@ -5468,6 +5761,12 @@ H5I__dec_ref(hid_t id, void **request, hbool_t app)
                 assert(info_k.count             == mod_info_k.count);
                 assert(info_k.app_count         == mod_info_k.app_count);
                 assert(info_k.object            == mod_info_k.object);
+#if H5I_BYPASS_HDF5_TID
+                assert( pthread_equal(info_k.tid, pthread_self()) );
+                assert( info_k.tid_valid == mod_info_k.tid_valid );
+#else
+                assert(info_k.tid == mod_info_k.tid);
+#endif
 
                 assert(info_k.marked            == mod_info_k.marked);
                 assert(info_k.do_not_disturb    == mod_info_k.do_not_disturb);
@@ -5486,6 +5785,106 @@ H5I__dec_ref(hid_t id, void **request, hbool_t app)
 
             assert( do_not_disturb_set );
 
+            if ( ( ! have_global_mutex )  && ( ! cls_is_mt_safe ) )  {
+
+                /* Since the class is not mult-thread safe, and we don't currently
+                 * hold it, we must obtain the the global mutex before proceeding.
+                 *
+                 * If we were able to enforce lock ordering between locking an ID and
+                 * obtaining the global mutex, we would simply do this via H5_API_LOCK.
+                 *
+                 * While this would still work if we knew that the free func would 
+                 * succeed, that is not presently the case.  Thus there is a potential
+                 * for deadlock if the do_not_disturb flag is aready set.
+                 *
+                 * We resolve this by using the H5TS_mutex_acquire() call to attempt
+                 * to obtain the global mutex without blocking.
+                 *
+                 * If H5TS_mutex_acquire() succeeds, we invoke the free func and then
+                 * drop the global mutex as usual.
+                 *
+                 * If, however, H5TS_mutex_acquire() fails to obtain the global mutex,
+                 * we must clear the do not disturb flag on the target id, either
+                 * thread yield or sleep a bit, and return to the beginning of the
+                 * do loop.
+                 */
+
+                assert( do_not_disturb_set );
+
+                atomic_fetch_add(&(H5I_mt_g.global_mutex_acquire_attempts), 1ULL);
+
+                if ( H5TS_mutex_acquire(&H5_g.init_lock, 1, &global_mutex_acquired) < 0 ) {
+
+                    /* the call to H5TS_mutex_acquire() returned an error.  Drop the
+                     * do not disturb flag on the target ID if set in this function, and
+                     * throw an error.
+                     */
+
+                    /* since we have the do_not_disturb flag, the following
+                     * atomic_compare_exchange_strong() must succeed.
+                     */
+                    assert(mod_info_k.do_not_disturb);
+                    assert(mod_info_k.have_global_mutex);
+                    assert(base_info_k.do_not_disturb);
+                    assert(base_info_k.have_global_mutex);
+
+                    /* reset the kernel to its initial value */
+
+                    bool_result = atomic_compare_exchange_strong(&(id_info_ptr->k), &mod_info_k, base_info_k);
+
+                    assert(bool_result);
+
+                    atomic_fetch_add(&(H5I_mt_g.num_do_not_disturb_resets), 1ULL);
+
+                    HGOTO_ERROR(H5E_INTERNAL, H5E_SYSERRSTR, FAIL, "H5TS_mutex_acquire reported failure");
+
+                } else { /* H5TS_mutex_acquire() completed without error */
+
+                    if ( ! global_mutex_acquired ) {
+#if 0
+                        fprintf(stderr, "%s: H5TS_mutex_acquire() failed to acquire global mutex\n",
+                                "H5I__dec_ref()");
+#endif
+                        atomic_fetch_add(&(H5I_mt_g.global_mutex_acquire_failures), 1ULL);
+
+                        /* the attempt to acquire the global mutex failed -- presumably because
+                         * some other thread holds it.
+                         *
+                         * This may or may not be a deadlock -- but since we can't tell, we will
+                         * assume it is.  Drop the do_not_disturb flag on the target ID, update
+                         * stats, sleep a little, and retry.
+                         */
+
+                        /* since we have the do_not_disturb flag, the following
+                         * atomic_compare_exchange_strong() must succeed.
+                         */
+                        assert( mod_info_k.do_not_disturb );
+                        assert( mod_info_k.have_global_mutex );
+                        assert( ! base_info_k.do_not_disturb );
+                        assert( ! base_info_k.have_global_mutex );
+
+                        bool_result = atomic_compare_exchange_strong(&(id_info_ptr->k), &mod_info_k,
+                                                                     base_info_k);
+                        assert(bool_result);
+
+                        atomic_fetch_add(&(H5I_mt_g.num_do_not_disturb_resets), 1ULL);
+                        atomic_fetch_add(&(H5I_mt_g.num_deadlock_evasions), 1ULL);
+
+                        sleep(1);
+
+                        continue;
+
+                    } else { /* global mutext acquired */
+
+                        /* success -- update stats  */
+                        atomic_fetch_add(&(H5I_mt_g.H5I__dec_ref__global_mutex_locks_for_free_func), 1ULL);
+                        atomic_fetch_add(&(H5I_mt_g.global_mutex_acquire_successes), 1ULL);
+                    }
+                }
+            } /* if ( ( ! have_global_mutex ) && ( ! cls_is_mt_safe ) ) */
+ 
+            assert( ( cls_is_mt_safe ) || ( have_global_mutex || global_mutex_acquired ) );
+
             atomic_fetch_add(&(H5I_mt_g.H5I__dec_ref__calls_to_free_func), 1ULL);
 
             /* Note that the free_func may call back into H5I.  As long as it doesn't try
@@ -5495,21 +5894,15 @@ H5I__dec_ref(hid_t id, void **request, hbool_t app)
              * manageable as we have access to the code.  For external users (either user 
              * programmer or VOL connectors), we must document this.
              */
-            if ( ( ! have_global_mutex ) && ( ! cls_is_mt_safe ) ) {
 
-                atomic_fetch_add(&(H5I_mt_g.H5I__dec_ref__global_mutex_locks_for_free_func), 1ULL);
-                H5_API_LOCK
-                H5_GCC_CLANG_DIAG_OFF("cast-qual")
-                result = type_info_ptr->cls->free_func((void *)info_k.object, request);
-                H5_GCC_CLANG_DIAG_ON("cast-qual")
+            H5_GCC_CLANG_DIAG_OFF("cast-qual")
+            result = type_info_ptr->cls->free_func((void *)info_k.object, request);
+            H5_GCC_CLANG_DIAG_ON("cast-qual")
+
+            if ( global_mutex_acquired ) {
+
                 H5_API_UNLOCK
                 atomic_fetch_add(&(H5I_mt_g.H5I__dec_ref__global_mutex_unlocks_for_free_func), 1ULL);
-
-            } else {
-
-                H5_GCC_CLANG_DIAG_OFF("cast-qual")
-                result = type_info_ptr->cls->free_func((void *)info_k.object, request);
-                H5_GCC_CLANG_DIAG_ON("cast-qual")
             }
 
             if ( result >= 0 ) {
@@ -5522,6 +5915,11 @@ H5I__dec_ref(hid_t id, void **request, hbool_t app)
                 mod_info_k.count             = 0;
                 mod_info_k.app_count         = 0;
                 mod_info_k.object            = NULL;
+#if H5I_BYPASS_HDF5_TID
+                mod_info_k.tid_valid = FALSE;
+#else
+                mod_info_k.tid       = 0ULL;
+#endif
 
                 mod_info_k.marked            = TRUE;
                 mod_info_k.do_not_disturb    = FALSE;
@@ -5539,16 +5937,39 @@ H5I__dec_ref(hid_t id, void **request, hbool_t app)
                  */
                 atomic_fetch_add(&(H5I_mt_g.H5I__dec_ref__free_func_failed), 1ULL);
 
+#if H5I_BYPASS_HDF5_TID
+                mod_info_k.tid_valid         = FALSE;
+#else
+                mod_info_k.tid               = 0ULL;
+#endif
                 mod_info_k.do_not_disturb    = FALSE;
                 mod_info_k.have_global_mutex = FALSE;
                 ret_value = -1;
-
             }
 
             /* since we have the do_not_disturb flag, the following atomic_compare_exchange_strong()
              * must succeed.
              */
+#if 0 /* JRM */
+            {
+                H5I_mt_id_info_kernel_t tmp_info_k;
+
+                tmp_info_k = atomic_load(&(id_info_ptr->k));
+
+                if ( 0 != memcmp(&tmp_info_k, &info_k, sizeof(H5I_mt_id_info_kernel_t)) ) {
+
+                    fprintf(stderr, "\n\nH5I_dec_ref(): compare_echange_strong for id_info_ptr->id = 0x%lld will fail.\n\n", 
+                            (long long)(id_info_ptr->id));
+                }
+            }
+#endif /* JRM */
             bool_result = atomic_compare_exchange_strong(&(id_info_ptr->k), &info_k, mod_info_k);
+#if 0 /* JRM */
+            if ( ! bool_result ) {
+
+                fprintf(stderr, "\n\nH5I_dec_ref(): bool_result == FALSE, id_info_ptr->id = 0x%lld.\n\n", (long long)(id_info_ptr->id));
+            }
+#endif /* JRM */
             assert(bool_result);
 
             atomic_fetch_add(&(H5I_mt_g.num_do_not_disturb_resets), 1ULL);
@@ -6358,9 +6779,6 @@ H5I_inc_ref_internal(hid_t id, hbool_t app_ref)
 
     FUNC_ENTER_NOAPI((-1))
 
-    memset(&info_k, 0, sizeof(H5I_mt_id_info_kernel_t));
-    memset(&mod_info_k, 0, sizeof(H5I_mt_id_info_kernel_t));
-
 #if H5I_MT_DEBUG
     fprintf(stdout, "   H5I_inc_ref((id = 0x%llx, app_ref = %d) called. \n", 
               (unsigned long long)id, (int)app_ref);
@@ -6388,6 +6806,9 @@ H5I_inc_ref_internal(hid_t id, hbool_t app_ref)
 
     do {
 
+        memset(&info_k, 0, sizeof(H5I_mt_id_info_kernel_t));
+        memset(&mod_info_k, 0, sizeof(H5I_mt_id_info_kernel_t));
+
         /* increment the pass and log retries */
         if ( pass++ >= 1 ) {
 
@@ -6414,30 +6835,62 @@ H5I_inc_ref_internal(hid_t id, hbool_t app_ref)
         }
 
         if ( info_k.do_not_disturb ) {
+#if H5I_BYPASS_HDF5_TID
+            if ( ( info_k.tid_valid ) && (  pthread_equal(info_k.tid, pthread_self()) ) ) {
+#else
+            if ( info_k.tid == H5TS_thread_id() ) {
+#endif
+                /* this thread has already set the do not disturb flag on this ID.  Thus,
+                 * to avoid a deadlock, we must bypass the do_not_disturb flag.  
+                 *
+                 * Note that at present, if the kernel of the ID has changed when the 
+                 * do not disturb flag is droped higher up the call stack, that operation
+                 * will change.
+                 *
+                 * As long as this is only a matter of bracketing inc ref / dec ref calls,
+                 * this will be OK.  However, if net changes are made, we will have to 
+                 * come up with a better solution.
+                 *
+                 * Ideally, this will be getting rid of locks on IDs entirely.
+                 */
+                assert( info_k.have_global_mutex );
 
-            /* Another thread is in the process of performing an operation on the info kernel
-             * that can't be rolled back -- either a future id realize_cb or discard_cb, or a
-             * regular id callback that must be serialized.
-             *
-             * Thus we must wait until that thread is done and then re-start the operation -- which
-             * may be moot by that point.
-             */
+                atomic_fetch_add(&(H5I_mt_g.num_do_not_disturb_recursions), 1ULL);
 
-            /* update stats */
-            atomic_fetch_add(&(H5I_mt_g.num_do_not_disturb_yields), 1ULL);
+            } else {
 
-            /* need to do better than this.  Want to call pthread_yield(),
-             * but that call doesn't seem to be supported anymore.
-             */
-            sleep(1);
+                /* Another thread is in the process of performing an operation on the info kernel
+                 * that can't be rolled back -- either a future id realize_cb or discard_cb, or a
+                 * regular id callback that must be serialized.
+                 *
+                 * Thus we must wait until that thread is done and then re-start the operation -- which
+                 * may be moot by that point.
+                 */
 
-            continue;
+                /* update stats */
+                atomic_fetch_add(&(H5I_mt_g.num_do_not_disturb_yields), 1ULL);
+
+                /* need to do better than this.  Want to call pthread_yield(),
+                 * but that call doesn't seem to be supported anymore.
+                 */
+                sleep(1);
+
+                continue;
+            }
         }
 
         /* Set mod_info_k to reflect the ref_count increment */
         mod_info_k.count             = info_k.count + 1;
         mod_info_k.app_count         = info_k.app_count;
         mod_info_k.object            = info_k.object;
+#if H5I_BYPASS_HDF5_TID
+        mod_info_k.tid       = info_k.tid;
+        mod_info_k.tid_valid = info_k.tid_valid;
+
+        assert( ( ! mod_info_k.tid_valid ) || ( pthread_equal(mod_info_k.tid, info_k.tid) ) );
+#else
+        mod_info_k.tid       = info_k.tid;
+#endif
 
         mod_info_k.marked            = info_k.marked;
         mod_info_k.do_not_disturb    = info_k.do_not_disturb;
@@ -6978,16 +7431,61 @@ done:
  *
  *              Updated for multi-thread.
  *
+ *              The use of internal iteration is problematic, as we have
+ *              no control over the activities of the callback.  In 
+ *              principle this wouldn't be a problem if the entire HDF5
+ *              library was multi-thread safe and lock free.  Unfortunately,
+ *              this will not be the case for years if ever.
+ *
+ *              For this reason this function should be depreceated and 
+ *              replaced with support for external iteration -- thus 
+ *              avoiding the possibility of any interaction between the
+ *              callback and the iteration code.
+ *
  * Return:      Success:    H5_ITER_CONT (0) or H5_ITER_STOP (1)
  *              Failure:    H5_ITER_ERROR (-1)
+ *
+ * Changes:     The initial multi-thread impleementation of this 
+ *              function set the do not disturb flag to prevent the 
+ *              ID from being deleted out from under the callback and 
+ *              to give the callback exclusive access to ID and its
+ *              associated buffer.
+ *
+ *              While this worked well at first, when we extended the 
+ *              multi-thread effort to the VOL layer this approach 
+ *              resulted lock ordering issues.  Specifically, some
+ *              calls to H5I_iterate() occur under the global mutex,
+ *              and others outside it -- which breaks the ID, global 
+ *              mutex lock ordering.
+ *
+ *              The correct solution is to stop locking IDs.  Unfortunately
+ *              this can't be done until we either make the free functions
+ *              always succeed, or we create a mechanism that allows us
+ *              determine whether the free func will succeed.
+ *
+ *              Fortunately, we can avoid locking IDs here.  Do this by
+ *              wrapping calls to H5I__iterate_cb() in ref count increments
+ *              and decrements -- which prevents deletion of the ID during
+ *              the call to H5I__iterate_cb() (assuming no coding errors
+ *              in ref count management, or overlapping discards of the 
+ *              target ID type). 
+ *
+ *              In principle, all callbacks manipulating the buffer 
+ *              associated with the ID should be thread safe -- but that
+ *              will not be the case until the library is completely 
+ *              multi-thread safe.  Until then, we wrap callbacks in the
+ *              global mutex if it isn't already held.
+ *
+ *                                              JRM -- 3/12/25
  *
  *-------------------------------------------------------------------------
  */
 static int
 H5I__iterate_cb(void *_item, void H5_ATTR_UNUSED *_key, void *_udata)
 {
+    hbool_t                 done = FALSE;
     hbool_t                  have_global_mutex;
-    hbool_t                  bool_result;
+    hbool_t                 drop_global_mutex = FALSE;
     H5I_mt_id_info_t        *id_info_ptr       = (H5I_mt_id_info_t *)_item;  /* Pointer to the ID info */
     H5I_iterate_ud_t        *udata             = (H5I_iterate_ud_t *)_udata; /* User data for callback */
     H5I_mt_id_info_kernel_t  info_k;
@@ -6995,8 +7493,6 @@ H5I__iterate_cb(void *_item, void H5_ATTR_UNUSED *_key, void *_udata)
     int                      ret_value         = H5_ITER_CONT;               /* Callback return value */
 
     FUNC_ENTER_PACKAGE_NOERR
-
-    memset(&info_k, 0, sizeof(H5I_mt_id_info_kernel_t));
 
 #if H5I_MT_DEBUG
     fprintf(stdout, "\n\n   H5I__iterate_cb() called. \n\n\n");
@@ -7015,186 +7511,167 @@ H5I__iterate_cb(void *_item, void H5_ATTR_UNUSED *_key, void *_udata)
         atomic_fetch_add(&(H5I_mt_g.H5I__iterate_cb__num_calls__without_global_mutex), 1ULL);
     }
 
-    /* read the current value of the id info kernel */
-    info_k = atomic_load(&(id_info_ptr->k));
 
-    /* Only invoke the callback function if this ID has not been marked for deletion, is visible 
-     * externally and its reference count is positive.
+    /* The call to H5I__iterate_cb() was wrapped in a pair of calls to increment and then
+     * then decrement the reference count.  Under normal circumstances, this should ensure 
+     * that the entry will not be deleted out from under us.
      *
-     * While the user_func (and all the callbacks defined in the type) should be thread safe,
-     * for now, use the do_not_disturb flag to ensure that user_func has exclusive access
-     * to the object -- at least from within H5I.  (Note, however, that the object can still 
-     * be looked up by the user and accessed outside the H5I code.  Similarly, the user 
-     * may have a copy of the pointer, and be able to access its data structure at will 
-     * directly))  
+     * However, there are two scenarios where this need not be the case.
      *
-     * If the limited protection given to the object associated with the ID is not sufficient, 
-     * the client object will have to be made multi-thread safe.  Indeed, this should be 
-     * the end state -- but unless and until the native VOL is made thread safe, this 
-     * limited protection seems a reasonable middle ground 
+     * The obvious one is a coding error elsewhere, that inserts spurious ref count decrements.
+     * Unfortunately, there isn't much we can do about this other than try to detect it.
      * 
-     * As per the other uses of the do_not_disturb flag, it is possible for the user_func to 
-     * trigger a deadlock if it attempts to access the current ID via H5I either directly 
-     * or through some sequence of calls.
+     * The less obvious occurs when an ID type is destroyed.  Here IDs are deleted regardless of 
+     * their reference counts.
+     *
+     * For the HDF5 library proper, the presumption at present is that shut down will 
+     * be single thread -- making this case moot.
+     *
+     * However, discards of user ID types can happen whenever.  Ideally, the data structures
+     * and callbacks used in such user ID typs will be designed to handle this case gracefully.
+     * Failing that, the issue must be avoided through careful coding.
+     *
+     * Here again there isn't much we can do other than to try to detect the issue.
+     *
+     * In both cases, we attempt to detect the issue by asserting that the ref count is positive.
+     *
+     * 
+     * Note that even if it is successful in blocking deletion of the IDs under consideration, 
+     * wrapping the target ID in a ref count increment / decrement doesn't prevent concurrent 
+     * access to the void pointer associated with the ID -- indeed, it is possible for value 
+     * of the void pointer to be changed at any time.
+     *
+     * Again, this would not be a problem if all clients of H5I, and all callback functions
+     * supplied to the iterate function, were multithread safe.  However, this is not the 
+     * case, and likely will not be for some time if ever.  Thus, in addition to ensuring that the 
+     * target ID will not be deleted out from under the callback, we need some method to maintain
+     * mutual exclusion on the target of the void pointer associated with the target ID.
+     *
+     * Initially this was done using the do not disturb flag.  While this worked when all calls
+     * to H5I_iterate() were under the global mutex, moving the global mutex below the VOL layer
+     * made it possible for some calls to H5I_interate() to be under the global mutex, and others
+     * above -- exposing potential lock ordering issues where sometimes the global lock is obtained
+     * before the lock on the target ID, and sometimes afterwards.
+     *
+     * To resolve this, stop using the do not disturb flag, and wrap both the unwrap call 
+     * and the callback in the global mutex.
+     *
+     * Note that this is not a complete solution.  It is still possible for the void pointer 
+     * associated with the ID to be modified by another thread even if the global mutex is 
+     * held.  At present, I don't believe this is a problem, as to my knowlege, the only 
+     * place that void pointers are modified is in H5P when property list classes are modified.
+     * Thus, I don't think this is a problem for now.  That said, the ultimate solution is 
+     * make all the callback multi-thread safe.
      */
-    if ( ( ! info_k.marked ) && ( ( ( ! udata->app_ref ) || ( info_k.app_count > 0 ) ) ) ) {
 
-        hbool_t                  done = FALSE;
-        hbool_t                  bypass_do_not_disturb;
-        hbool_t                  do_not_disturb_set = FALSE;
-        int                      pass                = 0;
-        H5I_type_t               type                = udata->obj_type;
-        H5I_mt_id_info_kernel_t  mod_info_k;
-        void                    *object;
-        herr_t                   cb_ret_val;
+    do {
 
-        memset(&mod_info_k, 0, sizeof(H5I_mt_id_info_kernel_t));
+        memset(&info_k, 0, sizeof(H5I_mt_id_info_kernel_t));
 
-        do {
-            bypass_do_not_disturb = FALSE;
+        if ( ! have_global_mutex ) {
 
-            /* increment the pass and log retries */
-            if ( pass++ >= 1 ) {
+            atomic_fetch_add(&(H5I_mt_g.H5I__iterate_cb__global_mutex_locks_for_user_func), 1ULL);
+            H5_API_LOCK
+            drop_global_mutex = TRUE;
+        }
 
-                atomic_fetch_add(&(H5I_mt_g.H5I__dec_ref__retries), 1ULL);
-            }
-
+        /* read the current value of the id info kernel */
             info_k = atomic_load(&(id_info_ptr->k));
 
             if ( info_k.marked ) {
 
-                /* the ID has been marked for deletion since we started, update stats 
-                 * and return without calling the user_func()
-                 */
-                atomic_fetch_add(&(H5I_mt_g.H5I__iterate_cb__marked_during_call), 1ULL);
+            /* ID was deleted out from under us -- update stats and go on
+             * to the next ID if it exists.
+             */
+            assert( H5_ITER_CONT == ret_value );
+
+            done = TRUE;
+
+            if ( drop_global_mutex ) {
+
+                H5_API_UNLOCK
+                drop_global_mutex = FALSE;
+            }
 
                 break;
             }
 
             if ( info_k.do_not_disturb ) {
+#if H5I_BYPASS_HDF5_TID
+            if ( ( info_k.tid_valid ) && (  pthread_equal(info_k.tid, pthread_self()) ) ) {
+#else
+            if ( info_k.tid == H5TS_thread_id() ) {
+#endif
+                /* this thread has already set the do not disturb flag on this ID.  Thus,
+                 * to avoid a deadlock, we must bypass the do_not_disturb flag.
+                 *
+                 * Note that at present, if the kernel of the ID has changed when the
+                 * do not disturb flag is droped higher up the call stack, that operation
+                 * will fail.
+                 *
+                 * As long as this is only a matter of bracketing inc ref / dec ref calls,
+                 * this will be OK.  However, if net changes are made, we will have to
+                 * come up with a better solution.
+                 *
+                 * Ideally, this will be getting rid of locks on IDs entirely.
+                 */
+                assert( info_k.have_global_mutex );
 
-                if ( ( have_global_mutex ) && ( info_k.have_global_mutex ) ) {
+                atomic_fetch_add(&(H5I_mt_g.num_do_not_disturb_recursions), 1ULL);
 
-                    bypass_do_not_disturb = TRUE;
+            } else {
 
-                    atomic_fetch_add(&(H5I_mt_g.num_do_not_disturb_bypasses), 1ULL);
+                /* Another thread has the do not disturb flag set. 
+                 *
+                 * Drop the global mutex if we didn't have it on entry, wait a bit, and try again. 
+                 *
+                 * Note that the other thread will drop the do not disturb and try again if it needs
+                 * the global mutex.  Thus thus sleep and retry should not result in a deadlock even 
+                 * if we had the global mutex on entry.
+                 */
 
-                } else {
+                if ( drop_global_mutex ) {
 
-                    /* Another thread is in the process of performing an operation on the info kernel
-                     * that can't be rolled back -- either a future id realize_cb or discard_cb, or a
-                     * regular id callback that must be serialized.
-                     *
-                     * Thus we must wait until that thread is done and then re-start the operation -- which
-                     * may be moot by that point.
-                     */
+                    H5_API_UNLOCK
+                    drop_global_mutex = FALSE;
+                }
 
                     /* update stats */
                     atomic_fetch_add(&(H5I_mt_g.num_do_not_disturb_yields), 1ULL);
 
-                    /* need to do better than this.  Want to call pthread_yield(),
-                     * but that call doesn't seem to be supported anymore.
-                     */
                     sleep(1);
 
                     continue;
                 }
             }
 
-            if ( ! bypass_do_not_disturb ) {
+        /* If we get this far, verify that the reference count on the target id is positive. */
+        assert( info_k.count > 0 );
 
-                /* attempt to set the do_not_disturb flag */
-                mod_info_k.count             = info_k.count;
-                mod_info_k.app_count         = info_k.app_count;
-                mod_info_k.object            = info_k.object;
 
-                mod_info_k.marked            = info_k.marked;
-                mod_info_k.do_not_disturb    = TRUE;
-                mod_info_k.is_future         = info_k.is_future;
+        /* Only invoke the callback function if this ID has not been marked for deletion, is visible
+         * externally and its reference count is positive. 
+         *
+         * While the user_func (and all the callbacks defined in the type) should be thread safe,
+         * for now, we use the global mutext to attempt to ensure that the user_func has exclusive access
+         * to the object.  Note, however, that the object can still be looked up by the user and accessed 
+         * outside the H5I code.  Similarly, the user may have a copy of the pointer, and be able to access 
+         * its data structure at will directly.
+         *
+         * The following boolean expression is partially redundant, since we have already verified 
+         * that info_k.marked is FALSE.  Leave it for now.
+         */
+        if ( ( ! info_k.marked ) && ( ( ( ! udata->app_ref ) || ( info_k.app_count > 0 ) ) ) ) {
 
-                /* set mod_inf_k.have_global_mutex to TRUE since if we don't have the global
-                 * mutext, we will grab it before calling the user function, and drop it as soon
-                 * as it returns.
-                 */
-                mod_info_k.have_global_mutex = have_global_mutex;
+            H5I_type_t              type               = udata->obj_type;
+            void                   *object;
+            herr_t                  cb_ret_val;
 
-                /* We want to ensure that no other thread inside H5I does anything with 
-                 * the object while we call the user_func on the objec on the object.  
-                 * Note that this is only a partial solution, but it is the best we can 
-                 * do in H5I.
-                 *
-                 * To do this, try to set the do_not_disturb flag in the kernl.   If
-                 * successful, this will prevent any other threads from modifying
-                 * id_info_ptr->k until after it is set back to FALSE.  In particluar,
-                 * no thread in H5I will call any function on the object associated 
-                 * with the ID until it successfully sets the do_not_disturb flag.
-                 */
-                if ( ! atomic_compare_exchange_strong(&(id_info_ptr->k), &info_k, mod_info_k) ) {
-
-                    /* Some other thread changed the value of id_info_ptr->k since we last read
-                     * it.  Thus we must return to the beginning of the do loop and start
-                     * again.  Note that it is possible that by that time, there will be
-                     * nothing left to do.
-                     */
-    
-                    /* update stats */
-                    atomic_fetch_add(&(H5I_mt_g.num_failed_do_not_disturb_sets), 1ULL);
-    
-                    continue;
-    
-                } else {
-    
-                    do_not_disturb_set = TRUE;
-    
-#if 0 /* JRM */
-                    /* make info_k into a copy of the global kernel */
-                    info_k.do_not_disturb = TRUE;
-#else /* JTM */
-                    /* On the face of it, it would seem that we could just update info_k
-                     * to match mod_info_k, and use it in the next atomic_compare_exchange_strong()
-                     * call.  However, for reason or reasons unknown, this doesn't work.
-                     *
-                     * Instead, we reload info_k after the atomic_compare_exchange_strong(),
-                     * and verify that it contains the expected values.
-                     */
-                    info_k = atomic_load(&(id_info_ptr->k));
-
-                    assert(info_k.count             == mod_info_k.count);
-                    assert(info_k.app_count         == mod_info_k.app_count);
-                    assert(info_k.object            == mod_info_k.object);
-
-                    assert(info_k.marked            == mod_info_k.marked);
-                    assert(info_k.do_not_disturb    == mod_info_k.do_not_disturb);
-                    assert(info_k.is_future         == mod_info_k.is_future);
-                    assert(info_k.have_global_mutex == mod_info_k.have_global_mutex);
-#endif /* JRM */
-
-                    /* prepare to reset the do_not_disturb flag */
-                    mod_info_k.do_not_disturb    = FALSE;
-                    mod_info_k.have_global_mutex = FALSE;
-
-                    /* update stats */
-                    atomic_fetch_add(&(H5I_mt_g.num_successful_do_not_disturb_sets), 1ULL);
-
-#if H5I_MT_DEBUG_DO_NOT_DISTURB
-                    fprintf(stdout, "H5I__iterate_cb() set do not disturb on id = 0x%llx.\n",
-                            (unsigned long long)(id_info_ptr->id));
-#endif /* H5I_MT_DEBUG_DO_NOT_DISTURB */
-                }
-            } /* if ( ! bypass_do_not_disturb ) */
-
-            assert( ( do_not_disturb_set ) || ( bypass_do_not_disturb ) );
-
-            /* The stored object pointer might be an H5VL_object_t, in which
-             * case we'll need to get the wrapped object struct (H5F_t *, etc.).
-             */
-#if 0 
-            H5_GCC_CLANG_DIAG_OFF("cast-qual")
-            object = H5I__unwrap((void *)info_k.object, type, &object); /* may hit global mutex */
-            H5_GCC_CLANG_DIAG_ON("cast-qual")
-#endif 
             /* H5I__unwrap() can fail -- for now at least.  Handle this by treating any 
              * failure as a callback failure.  
+             *
+             * Note also that H5I__unwrap() grabs the global mutex.  This is redundant in 
+             * this case at least, and should be repaired in the production version.
              */
             H5_GCC_CLANG_DIAG_OFF("cast-qual")
             result = H5I__unwrap((void *)info_k.object, type, &object);
@@ -7208,67 +7685,47 @@ H5I__iterate_cb(void *_item, void H5_ATTR_UNUSED *_key, void *_udata)
 
                 atomic_fetch_add(&(H5I_mt_g.H5I__iterate_cb__num_user_func_calls), 1ULL);
 
-                /* Invoke callback function.  Grab the global mutex if we don't have it already */
-                if ( ! have_global_mutex ) {
+                cb_ret_val = (*udata->user_func)((void *)object, id_info_ptr->id, udata->user_udata);
 
-                    atomic_fetch_add(&(H5I_mt_g.H5I__iterate_cb__global_mutex_locks_for_user_func), 1ULL);
-                    H5_API_LOCK
-                    cb_ret_val = (*udata->user_func)((void *)object, id_info_ptr->id, udata->user_udata);
-                    H5_API_UNLOCK
-                    atomic_fetch_add(&(H5I_mt_g.H5I__iterate_cb__global_mutex_unlocks_for_user_func), 1ULL);
+
+                /* Set the return value based on the callback's return value */
+                if (cb_ret_val > 0) {
+
+                    atomic_fetch_add(&(H5I_mt_g.H5I__iterate_cb__num_user_func_iter_stops), 1ULL);
+  
+                    ret_value = H5_ITER_STOP; /* terminate iteration early */
+
+                } else if (cb_ret_val < 0) {
+
+                    atomic_fetch_add(&(H5I_mt_g.H5I__iterate_cb__num_user_func_fails), 1ULL);
+
+                    ret_value = H5_ITER_ERROR; /* indicate failure (which terminates iteration) */
 
                 } else {
 
-                    cb_ret_val = (*udata->user_func)((void *)object, id_info_ptr->id, udata->user_udata);
+                    atomic_fetch_add(&(H5I_mt_g.H5I__iterate_cb__num_user_func_successes), 1ULL);
                 }
             }
+        } else {
 
-            /* Set the return value based on the callback's return value */
-            if (cb_ret_val > 0) {
+            atomic_fetch_add(&(H5I_mt_g.H5I__iterate_cb__num_user_func_skips), 1ULL);
+        }
 
-                atomic_fetch_add(&(H5I_mt_g.H5I__iterate_cb__num_user_func_iter_stops), 1ULL);
+        if ( drop_global_mutex ) {
 
-                ret_value = H5_ITER_STOP; /* terminate iteration early */
+            H5_API_UNLOCK
 
-            } else if (cb_ret_val < 0) {
+            drop_global_mutex = FALSE;
 
-                atomic_fetch_add(&(H5I_mt_g.H5I__iterate_cb__num_user_func_fails), 1ULL);
+            atomic_fetch_add(&(H5I_mt_g.H5I__iterate_cb__global_mutex_unlocks_for_user_func), 1ULL);
+        }
 
-                ret_value = H5_ITER_ERROR; /* indicate failure (which terminates iteration) */
+        done = TRUE;
 
-            } else {
+    } while ( ! done );
 
-                atomic_fetch_add(&(H5I_mt_g.H5I__iterate_cb__num_user_func_successes), 1ULL);
-            }
-
-            if ( ! bypass_do_not_disturb ) {
-
-                /* since we have the do_not_disturb flag, the following atomic_compare_exchange_strong()
-                 * must succeed.
-                 */
-                assert(info_k.do_not_disturb);
-
-                assert( ! mod_info_k.do_not_disturb );
-
-                bool_result = atomic_compare_exchange_strong(&(id_info_ptr->k), &info_k, mod_info_k);
-                assert(bool_result);
-
-                atomic_fetch_add(&(H5I_mt_g.num_do_not_disturb_resets), 1ULL);
-
-#if H5I_MT_DEBUG_DO_NOT_DISTURB
-                fprintf(stdout, "H5I__iterate_cb() reset do not disturb on id = 0x%llx.\n",
-                        (unsigned long long)(id_info_ptr->id));
-#endif /* H5I_MT_DEBUG_DO_NOT_DISTURB */
-            }
-
-            /* If execution gets this far, we are done with the do/while loop */
-            done = TRUE;
-
-        } while ( ! done );
-    } else {
-
-        atomic_fetch_add(&(H5I_mt_g.H5I__iterate_cb__num_user_func_skips), 1ULL);
-    }
+    /* verify that we droped the global mutex if we grabbed it */
+    assert( ! drop_global_mutex);
 
     FUNC_LEAVE_NOAPI(ret_value)
 
@@ -7347,7 +7804,20 @@ H5I__iterate_cb(void *_item, void H5_ATTR_UNUSED *_key, void *_udata)
  *              udata as arguments and return non-zero to terminate
  *              siteration, and zero to continue.
  *
+ *
  *              Updated for multi-thread.
+ *
+ *              The use of internal iteration is problematic, as we have
+ *              no control over the activities of the callback.  In 
+ *              principle this wouldn't be a problem if the entire HDF5
+ *              library was multi-thread safe and lock free.  Unfortunately,
+ *              this will not be the case for years if ever.
+ *
+ *              For this reason this function should be depreceated and 
+ *              replaced with support for external iteration -- thus 
+ *              avoiding the possibility of any interaction between the
+ *              callback and the iteration code.
+ *
  *
  * Limitation:  Currently there is no way to start the iteration from
  *              where a previous iteration left off.
@@ -7367,6 +7837,25 @@ H5I__iterate_cb(void *_item, void H5_ATTR_UNUSED *_key, void *_udata)
  *              change when we get to the production version.
  * 
  *                                              JRM -- 07/04/24
+ *
+ *              Modified the function to increment the ref count on the
+ *              target entry before calling H5I__iterate_cb().  Prior to 
+ *              this change H5I__iterate_cb() was setting the do_not_disturb
+ *              flag to ensure that the entry didn't get deleted out from
+ *              under the call, and to ensure that the target wasn't 
+ *              modified during the call.
+ *
+ *              While this was fine for external calls only, this results
+ *              in a deadlock if there are conurrent itterations both 
+ *              inside and outside the global mutex.  To fix this, we 
+ *              do the ref count increment and decrement in 
+ *              H5I__iterate_internal(), and grab the global mutex 
+ *              before calling the supplied H5I_search_func_t.  Note
+ *              that this adds significant overhead.  Assuming we keep
+ *              the H5I_iterate() private API, we should allow for 
+ *              thread safe search functions.
+ *      
+ *                                              JRM 3/11/25
  *
  *-------------------------------------------------------------------------
  */
@@ -7440,17 +7929,64 @@ H5I_iterate_internal(H5I_type_t type, H5I_search_func_t func, void *udata, hbool
             do {
                 id_info_ptr = (H5I_mt_id_info_t *)value;
 
+                assert(H5I__ID_INFO == id_info_ptr->tag);
+
                 info_k = atomic_load(&(id_info_ptr->k));
 
                 if (! info_k.marked) {
 
-                    int ret = H5I__iterate_cb((void *)id_info_ptr, NULL, (void *)&iter_udata);
+                    /* Since this iteration may be called in parallel with other 
+                     * operations on the target id type, it is possible that the 
+                     * target ID will be deleted during the iterate callback.  
+                     * 
+                     * To prevent this, increment the ref count on the target ID
+                     * before we call the itterate callback, and decrement it again
+                     * when that call returns.
+                     *
+                     * While this isn't fool proof, it should work absent 
+                     * coding errors elsewhere.
+                     *
+                     * At present, we do this with calls to H5I_inc_ref_internal()
+                     * and H5I__dec_ref().  This is very inefficient as it requires
+                     * two unnecessary calls to H5I__find_id(), in addition to 
+                     * other issues.  This is acceptable for the prototype, but
+                     * we need to do better for the production version.
+                     *
+                     * Note also that the call to H5I_inc_ref_internal() may fail.
+                     * If it does, presume that this is due to the target ID being
+                     * deleted out from under the itteration, and just go on to the 
+                     * next ID.
+                     */
 
-                    if (H5_ITER_ERROR == ret)
-                        HGOTO_ERROR(H5E_ID, H5E_BADITER, FAIL, "iteration failed");
+                    if ( -1 != H5I_inc_ref_internal(id_info_ptr->id, FALSE) ) {
 
-                    if (H5_ITER_STOP == ret)
-                        break;
+                        int ret;  /* return value for iterate cb */
+
+                        /* inc ref was successful -- call the iterate callback */
+
+                        ret = H5I__iterate_cb((void *)id_info_ptr, NULL, (void *)&iter_udata);
+
+                        /* decrement the ref count again before we check the iterate 
+                         * callback return value.
+                         */
+                        if ( H5I__dec_ref(id_info_ptr->id, NULL, FALSE) < 0 )
+
+                            HGOTO_ERROR(H5E_ID, H5E_CANTDEC, (-1), "can't decrement ID ref count");
+
+                        /* Now check results of the iteration */
+
+                        if (H5_ITER_ERROR == ret)
+                            HGOTO_ERROR(H5E_ID, H5E_BADITER, FAIL, "iteration failed");
+
+                        if (H5_ITER_STOP == ret)
+                            break;
+
+                    } else {
+
+                        /* ID was deleted out from under us -- update stats and go on 
+                         * to the next ID if it exists.
+                         */
+                    }
                 }
             } while (lfht_get_next(&(type_info_ptr->lfht), id, &id, &value));
         }
@@ -7823,6 +8359,7 @@ H5I__find_id(hid_t id)
     hbool_t                 do_not_disturb_set;
     hbool_t                 done = FALSE;
     hbool_t                 have_global_mutex = TRUE; /* trivially true in the serial case */
+    hbool_t                 global_mutex_acquired;
     hbool_t                 cls_is_mt_safe;
     hbool_t                 bool_result;
     int                     pass = 0;
@@ -7832,6 +8369,7 @@ H5I__find_id(hid_t id)
     H5I_mt_id_info_t       *id_info_ptr        = NULL; /* ID's info */
     H5I_mt_id_info_t       *dup_id_info_ptr;
     H5I_mt_id_info_t       *last_id_info_ptr   = NULL; /* ID's info */
+    H5I_mt_id_info_kernel_t init_info_k;
     H5I_mt_id_info_kernel_t info_k;
     H5I_mt_id_info_kernel_t mod_info_k;
     H5I_mt_id_info_t       *ret_value          = NULL; /* Return value */
@@ -7846,6 +8384,12 @@ H5I__find_id(hid_t id)
 
 #if defined(H5_HAVE_THREADSAFE) || defined(H5_HAVE_MULTITHREAD)
 
+    /* We don't throw an error if H5TS_have_mutex() fails, since H5I__find_id() 
+     * doesn't have an error reporting mechanism -- it either finds the target
+     * or not.  
+     *
+     * Think on improving this in the production version.
+     */
     if ( H5TS_have_mutex(&H5_g.init_lock, &have_global_mutex) < 0 )
 
         HGOTO_DONE(NULL);
@@ -7863,14 +8407,21 @@ H5I__find_id(hid_t id)
 
     /* Check arguments */
     type = H5I_TYPE(id);
-    if (type <= H5I_BADID || (int)type >= atomic_load(&(H5I_mt_g.next_type)))
+    if ( type <= H5I_BADID || (int)type >= atomic_load(&(H5I_mt_g.next_type)) ) {
+
         HGOTO_DONE(NULL);
+    }
 
     do {
 
         do_not_disturb_set = FALSE;
+        global_mutex_acquired = FALSE;
         type_info_ptr = NULL;
         id_info_ptr = NULL;
+
+        memset(&init_info_k, 0, sizeof(H5I_mt_id_info_kernel_t));
+        memset(&info_k, 0, sizeof(H5I_mt_id_info_kernel_t));
+        memset(&mod_info_k, 0, sizeof(H5I_mt_id_info_kernel_t));
 
         /* increment the pass and log retries */
         if ( pass++ >= 1 ) {
@@ -7911,9 +8462,9 @@ H5I__find_id(hid_t id)
 
         if ( id_info_ptr ) {
 
-            info_k = atomic_load(&(id_info_ptr->k));
+            init_info_k = atomic_load(&(id_info_ptr->k));
 
-            if ( info_k.marked ) {
+            if (init_info_k.marked) {
 
                 /* the ID is marked for deletion -- nothing to do here.  Set
                  * id_info_ptr to NULL and break out of the loop
@@ -7929,7 +8480,7 @@ H5I__find_id(hid_t id)
              * negatives in the test bed.  Thus do the thread yield if info_k.do_not_disturb is TRUE,
              * regardless of the value of info_k.is_future.
              */
-            if ( info_k.do_not_disturb ) {
+            if (init_info_k.do_not_disturb) {
 
                 /* It is possible that this call into H5I is recursive.  If so, it is possible to
                  * deadlock on the do_not_discurb flag.  To avoid this, we check to see if the 
@@ -7941,9 +8492,18 @@ H5I__find_id(hid_t id)
                  * the regression tests.  A more general solution is needed for the production 
                  * version.
                  */
-                if ( ( have_global_mutex ) && ( info_k.have_global_mutex ) ) {
+#if H5I_BYPASS_HDF5_TID
+                if ( ( have_global_mutex ) && ( pthread_equal(init_info_k.tid, pthread_self()) ) ) {
 
-                    atomic_fetch_add(&(H5I_mt_g.num_do_not_disturb_bypasses), 1ULL);
+                    assert( init_info_k.tid_valid );
+#else
+                if ( ( have_global_mutex ) && ( init_info_k.tid == H5TS_thread_id()) ) {
+
+                    assert( 0 != init_info_k.tid );
+#endif
+                    assert( init_info_k.have_global_mutex );
+
+                    atomic_fetch_add(&(H5I_mt_g.num_do_not_disturb_recursions), 1ULL);
 
                 } else {
 
@@ -7967,7 +8527,7 @@ H5I__find_id(hid_t id)
                 }
             }
 
-            if ( info_k.is_future ) {
+            if ( init_info_k.is_future ) {
 
                 /* we must try to resolve the future ID.  This requires 
                  * the following three operations:
@@ -8044,22 +8604,44 @@ H5I__find_id(hid_t id)
                  * thread may have realized the ID.
                  */
 
-                mod_info_k.count             = info_k.count;
-                mod_info_k.app_count         = info_k.app_count;
-                mod_info_k.object            = info_k.object;
+                mod_info_k.count     = init_info_k.count;
+                mod_info_k.app_count = init_info_k.app_count;
+                mod_info_k.object    = init_info_k.object;
+#if H5I_BYPASS_HDF5_TID
+                mod_info_k.tid_valid = FALSE;
+#else
+                mod_info_k.tid       = 0ULL;
+#endif
 
-                mod_info_k.marked            = info_k.marked;
+                mod_info_k.marked            = init_info_k.marked;
                 mod_info_k.do_not_disturb    = TRUE;
-                mod_info_k.is_future         = info_k.is_future;
+                mod_info_k.is_future         = init_info_k.is_future;
+                mod_info_k.have_global_mutex = FALSE;
 
-                /* set mod_info_k.have_global_mutex to TRUE if either this thread has the 
-                 * global mutex or the class is not multi-thread safe.  Set mod_info_k.have_global_mutex
-                 * to TRUE in the latter case since we must grab the global mutex before calling
+                /* Overwrite mod_info_k.have_global_mutex and and mod_info_k.tid with TRUE and 
+                 * H5TS_thread_id() respectively if either this thread has the global mutex or 
+                 * the class is not multi-thread safe.  
+                 *
+                 * Do this in  the latter case since we must grab the global mutex before calling
                  * the realize callback and drop it when it returns.
                  */
-                mod_info_k.have_global_mutex = ((have_global_mutex) || (! cls_is_mt_safe));
+                if ( ( have_global_mutex ) || ( ! cls_is_mt_safe ) ) {
 
-                if ( ! atomic_compare_exchange_strong(&(id_info_ptr->k), &info_k, mod_info_k ) ) {
+#if H5I_BYPASS_HDF5_TID
+                    mod_info_k.tid               = pthread_self();
+                    mod_info_k.tid_valid         = TRUE;
+
+                    mod_info_k.have_global_mutex = TRUE;
+#else
+                    mod_info_k.tid               = H5TS_thread_id();
+
+                    mod_info_k.have_global_mutex = TRUE;
+
+                    assert( 0 < mod_info_k.tid );
+#endif
+                }
+
+                if (!atomic_compare_exchange_strong(&(id_info_ptr->k), &init_info_k, mod_info_k)) {
 
                     /* Some other thread changed the value of id_info_ptr->k since we last read
                      * it.  Thus we must return to the beginning of the do loop and start
@@ -8076,10 +8658,6 @@ H5I__find_id(hid_t id)
 
                     do_not_disturb_set = TRUE;
 
-#if 0 /* JRM */
-                    /* make info_k into a copy of the global kernel */
-                    info_k.do_not_disturb = TRUE;
-#else /* JTM */
                     /* On the face of it, it would seem that we could just update info_k
                      * to match mod_info_k, and use it in the next atomic_compare_exchange_strong()
                      * call.  However, for reason or reasons unknown, this doesn't work.
@@ -8092,17 +8670,28 @@ H5I__find_id(hid_t id)
                     assert(info_k.count             == mod_info_k.count);
                     assert(info_k.app_count         == mod_info_k.app_count);
                     assert(info_k.object            == mod_info_k.object);
+#if H5I_BYPASS_HDF5_TID
+                    assert( info_k.tid_valid == mod_info_k.tid_valid );
+                    assert( ( ! mod_info_k.tid_valid ) || ( pthread_equal(info_k.tid, mod_info_k.tid) ) );
+#else
+                    assert(info_k.tid == mod_info_k.tid);
+#endif
 
                     assert(info_k.marked            == mod_info_k.marked);
                     assert(info_k.do_not_disturb    == mod_info_k.do_not_disturb);
                     assert(info_k.is_future         == mod_info_k.is_future);
                     assert(info_k.have_global_mutex == mod_info_k.have_global_mutex);
-#endif /* JRM */
+
 
                     /* setup mod_info_k to reset the do_not_disturb flag.  If we are successful
                      * at realizing the future ID, we will make further changes to mod_info_k
                      * before we use it to overwrite id_info_ptr->k.
                      */
+#if H5I_BYPASS_HDF5_TID
+                    mod_info_k.tid_valid         = FALSE;
+#else
+                    mod_info_k.tid               = 0ULL;
+#endif
                     mod_info_k.do_not_disturb    = FALSE;
                     mod_info_k.have_global_mutex = FALSE;
 
@@ -8114,6 +8703,115 @@ H5I__find_id(hid_t id)
                               (unsigned long long)(id_info_ptr->id));
 #endif /* H5I_MT_DEBUG_DO_NOT_DISTURB */
                 }
+
+                if ( ( ! have_global_mutex ) && ( ! cls_is_mt_safe ) ) {
+
+                    /* Since the class is not mult-thread safe, and we don't currently
+                     * hold it, we must obtain the the global mutex before proceeding.
+                     *
+                     * If we were able to enforce lock ordering between locking an ID and
+                     * obtaining the global mutex, we would simply do this via H5_API_LOCK.
+                     *
+                     * While this still works if we don't have to lock the target ID
+                     * (i.e. the cant_roll_back flag is false, and the ID was not locked
+                     * on entry -- always true in this function), there is the potential
+                     * for a deadlock if the do_not_disturb flag is aready set.
+                     *
+                     * We resolve this by using the H5TS_mutex_acquire() call to attempt
+                     * to obtain the global mutex without blocking.
+                     *
+                     * If H5TS_mutex_acquire() succeeds, we invoke the callback and then
+                     * drop the global mutex as usual.
+                     *
+                     * If, however, H5TS_mutex_acquire() fails to obtain the global mutex,
+                     * we must clear the do not disturb flag on the target id, either
+                     * thread yield or sleep a bit, and return to the beginning of the
+                     * do loop.
+                     */
+    
+                    assert( do_not_disturb_set );
+
+                    atomic_fetch_add(&(H5I_mt_g.global_mutex_acquire_attempts), 1ULL);
+    
+                    if ( H5TS_mutex_acquire(&H5_g.init_lock, 1, &global_mutex_acquired) < 0 ) {
+    
+                        /* the call to H5TS_mutex_acquire() returned an error.  Drop the
+                         * do not disturb flag on the target ID if set in this function, and
+                         * throw an error.
+                         */
+    
+                        /* since we have the do_not_disturb flag, the following
+                         * atomic_compare_exchange_strong() must succeed.
+                         */
+                        assert( mod_info_k.do_not_disturb );
+                        assert( mod_info_k.have_global_mutex );
+                        assert( ! init_info_k.do_not_disturb );
+                        assert( ! init_info_k.have_global_mutex );
+    
+                        /* reset the kernel to its initial value */
+    
+                        bool_result = atomic_compare_exchange_strong(&(id_info_ptr->k), &mod_info_k, 
+                                                                     init_info_k);
+    
+                        assert(bool_result);
+    
+                        atomic_fetch_add(&(H5I_mt_g.num_do_not_disturb_resets), 1ULL);
+
+                        /* we should throw an error here, but H5I__find_id() doesn't let us in 
+                         * its current form.  Fix this in the production version.
+                         *
+                         * For now, just throw an assertion, and call HGOTO_DONE(NULL).
+                         *
+                         * In production mode, this should cause the function return failure.
+                         */
+                        assert(FALSE);
+                        HGOTO_DONE(NULL);
+
+                    } else { /* H5TS_mutex_acquire() completed without error */
+    
+                        if ( ! global_mutex_acquired ) {
+#if 0
+                            fprintf(stderr, "%s: H5TS_mutex_acquire() failed to acquire global mutex\n",
+                                    "H5I__find_id()");
+#endif
+                            atomic_fetch_add(&(H5I_mt_g.global_mutex_acquire_failures), 1ULL);
+
+                            /* the attempt to acquire the global mutex failed -- presumably because
+                             * some other thread holds it.
+                             *
+                             * This may or may not be a deadlock -- but since we can't tell, we will
+                             * assume it is.  Drop the do_not_disturb flag on the target ID, update
+                             * stats, sleep a little, and retry.
+                             */
+    
+                            /* since we have the do_not_disturb flag, the following
+                             * atomic_compare_exchange_strong() must succeed.
+                             */
+                            assert( mod_info_k.do_not_disturb );
+                            assert( mod_info_k.have_global_mutex );
+                            assert( ! init_info_k.do_not_disturb );
+                            assert( ! init_info_k.have_global_mutex );
+    
+                            bool_result = atomic_compare_exchange_strong(&(id_info_ptr->k), &mod_info_k,
+                                                                         init_info_k);
+                            assert(bool_result);
+    
+                            atomic_fetch_add(&(H5I_mt_g.num_do_not_disturb_resets), 1ULL);
+                            atomic_fetch_add(&(H5I_mt_g.num_deadlock_evasions), 1ULL);
+    
+                            sleep(1);
+    
+                            continue;
+    
+                        } else { /* global mutext acquired */
+    
+                            /* success -- update stats  */
+                            atomic_fetch_add(&(H5I_mt_g.H5I__find_id__global_mutex_locks_for_realize_cb), 
+                                             1ULL);
+                            atomic_fetch_add(&(H5I_mt_g.global_mutex_acquire_successes), 1ULL);
+                        }
+                    }
+                } /* if ( ( ! have_global_mutex ) && ( ! cls_is_mt_safe ) ) */
             }
 
             assert( ( ! info_k.is_future ) || ( do_not_disturb_set ) );
@@ -8127,31 +8825,16 @@ H5I__find_id(hid_t id)
                 const void * actual_object = NULL;
                 const void * future_object = NULL;
 
+                assert( ( have_global_mutex ) || ( global_mutex_acquired ) );
+
                 atomic_fetch_add(&(H5I_mt_g.H5I__find_id__num_calls_to_realize_cb), 1ULL);
                     
                 /* Invoke the realize callback, to get the actual object.  If this
                  * call fails, we must reset the do_not_disturb flag and return NULL
-                 *
-                 * If we don't have the global mutex, and the class is not multi-thread
-                 * safe, grab the global mutex before the call and drop it immediately 
-                 * afterwards.
                  */
-                if ( ( ! have_global_mutex ) && ( ! cls_is_mt_safe ) ) {
-
-                    atomic_fetch_add(&(H5I_mt_g.H5I__find_id__global_mutex_locks_for_realize_cb), 1ULL);
-                    H5_API_LOCK
-                    H5_GCC_CLANG_DIAG_OFF("cast-qual")
-                    result = (id_info_ptr->realize_cb)((void *)info_k.object, &actual_id);
-                    H5_GCC_CLANG_DIAG_ON("cast-qual")
-                    H5_API_UNLOCK
-                    atomic_fetch_add(&(H5I_mt_g.H5I__find_id__global_mutex_unlocks_for_realize_cb), 1ULL);
-
-                } else {
-
-                    H5_GCC_CLANG_DIAG_OFF("cast-qual")
-                    result = (id_info_ptr->realize_cb)((void *)info_k.object, &actual_id);
-                    H5_GCC_CLANG_DIAG_ON("cast-qual")
-                }
+                H5_GCC_CLANG_DIAG_OFF("cast-qual")
+                result = (id_info_ptr->realize_cb)((void *)info_k.object, &actual_id);
+                H5_GCC_CLANG_DIAG_ON("cast-qual")
 
                 if ( result < 0 ) {
 
@@ -8209,26 +8892,16 @@ H5I__find_id(hid_t id)
 
                     atomic_fetch_add(&(H5I_mt_g.H5I__find_id__num_calls_to_discard_cb), 1ULL);
 
-                    /* Discard the future object.  If we don't hold the global mutex and 
-                     * the class is not multi-thread safe, grab the global mutex before 
-                     * the call to the discard_cb, and drop it immediately on return.
-                     */
-                    if ( ( ! have_global_mutex ) && ( ! cls_is_mt_safe ) ) {
+                    if ( global_mutex_acquired ) {
 
                         atomic_fetch_add(&(H5I_mt_g.H5I__find_id__global_mutex_locks_for_discard_cb), 1ULL);
-                        H5_API_LOCK
-                        H5_GCC_CLANG_DIAG_OFF("cast-qual")
-                        result = (id_info_ptr->discard_cb)((void *)future_object);
-                        H5_GCC_CLANG_DIAG_ON("cast-qual")
-                        H5_API_UNLOCK
-                        atomic_fetch_add(&(H5I_mt_g.H5I__find_id__global_mutex_unlocks_for_discard_cb), 1ULL);
-
-                    } else {
-
-                        H5_GCC_CLANG_DIAG_OFF("cast-qual")
-                        result = (id_info_ptr->discard_cb)((void *)future_object);
-                        H5_GCC_CLANG_DIAG_ON("cast-qual")
                     }
+
+                    /* Discard the future object. */
+                    atomic_fetch_add(&(H5I_mt_g.H5I__find_id__global_mutex_locks_for_discard_cb), 1ULL);
+                    H5_GCC_CLANG_DIAG_OFF("cast-qual")
+                    result = (id_info_ptr->discard_cb)((void *)future_object);
+                    H5_GCC_CLANG_DIAG_ON("cast-qual")
 
                     if ( result < 0 ) {
 
@@ -8260,6 +8933,16 @@ H5I__find_id(hid_t id)
                     }
 
                     future_object = NULL;
+                }
+
+                /* drop the global mutex if it was acquired */
+                if ( global_mutex_acquired ) {
+                    
+                    H5_API_UNLOCK
+                    
+                    atomic_fetch_add(&(H5I_mt_g.H5I__find_id__global_mutex_unlocks_for_realize_cb), 1ULL);
+                    atomic_fetch_add(&(H5I_mt_g.H5I__find_id__global_mutex_unlocks_for_discard_cb), 1ULL);
+
                 }
             }
 
@@ -8774,6 +9457,11 @@ H5I__discard_mt_id_info(H5I_mt_id_info_t * id_info_ptr)
     assert(0 == info_k.count);
     assert(0 == info_k.app_count);
     assert(NULL == info_k.object);
+#if H5I_BYPASS_HDF5_TID
+    assert(FALSE == info_k.tid_valid);
+#else
+    assert(0ULL == info_k.tid);
+#endif
     assert(TRUE == info_k.marked);
     assert(FALSE == info_k.do_not_disturb);
     assert(FALSE == info_k.is_future);
@@ -9050,7 +9738,7 @@ H5I__new_mt_id_info(hid_t id, unsigned count, unsigned app_count, const void * o
     hbool_t result;
     H5I_mt_id_info_t * id_info_ptr = NULL;
     H5I_mt_id_info_sptr_t fl_shead;
-    H5I_mt_id_info_sptr_t new_fl_shead;;
+    H5I_mt_id_info_sptr_t new_fl_shead;
     H5I_mt_id_info_sptr_t test_fl_shead;
     H5I_mt_id_info_sptr_t fl_stail;
     H5I_mt_id_info_sptr_t new_fl_stail;
@@ -9063,9 +9751,15 @@ H5I__new_mt_id_info(hid_t id, unsigned count, unsigned app_count, const void * o
     FUNC_ENTER_NOAPI(NULL)
 
     memset(&new_k, 0, sizeof(H5I_mt_id_info_kernel_t));
+
     new_k.count = count;
     new_k.app_count = app_count;
     new_k.object = object;
+#if H5I_BYPASS_HDF5_TID
+    new_k.tid_valid         = FALSE;
+#else
+    new_k.tid               = 0ULL;
+#endif
     new_k.marked = FALSE;
     new_k.do_not_disturb = FALSE;
     new_k.is_future = is_future;
@@ -9257,7 +9951,7 @@ H5I__clear_mt_type_info_free_list(void)
     H5I_mt_type_info_sptr_t fl_head;
     H5I_mt_type_info_sptr_t null_snext = {NULL, 0ULL};
     H5I_mt_type_info_t    * fl_head_ptr;
-    H5I_mt_type_info_t    * type_info_ptr;;
+    H5I_mt_type_info_t    * type_info_ptr;
     herr_t                  ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_NOAPI(FAIL)
@@ -9650,7 +10344,7 @@ H5I__discard_mt_type_info(H5I_mt_type_info_t * type_info_ptr)
 static H5I_mt_type_info_t * 
 H5I__new_mt_type_info(const H5I_class_t *cls, unsigned reserved)
 {
-    hbool_t fl_search_done = FALSE;;
+    hbool_t fl_search_done = FALSE;
     hbool_t result;
     H5I_mt_type_info_t * type_info_ptr = NULL;
     H5I_mt_type_info_sptr_t fl_shead;
