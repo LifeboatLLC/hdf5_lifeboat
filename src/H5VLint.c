@@ -2171,6 +2171,8 @@ done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5VL_vol_object() */
 
+#if 1 /* JRM */
+
 /*-------------------------------------------------------------------------
  * Function:    H5VL_object_data
  *
@@ -2189,14 +2191,56 @@ H5VL_object_data(const H5VL_object_t *vol_obj)
 
     FUNC_ENTER_NOAPI_NOINIT_NOERR
 
+    /* Check for 'get_object' callback in connector with checks for NULL
+     * pointers along the way.  If found, return NULL -- otherwise 
+     * proceed as before.
+     */
+    if ( ( NULL == vol_obj ) || ( NULL == vol_obj->connector ) || ( NULL == vol_obj->connector->cls ) ) {
+
+        ret_value = NULL;
+
+    } else if ( vol_obj->connector->cls->wrap_cls.get_object ) {
+
+        ret_value = (vol_obj->connector->cls->wrap_cls.get_object)(vol_obj->data);
+
+    } else {
+
+        ret_value = vol_obj->data;
+    }
+
+    FUNC_LEAVE_NOAPI(ret_value)
+} /* end H5VL_object_data() */
+
+#else /* JRM */
+
+/*-------------------------------------------------------------------------
+ * Function:    H5VL_object_data
+ *          
+ * Purpose:     Correctly retrieve the 'data' field for a VOL object (H5VL_object),
+ *              even for nested / stacked VOL connectors.
+ *      
+ * Return:      Success:        object pointer
+ *              Failure:        NULL
+ *
+ *-------------------------------------------------------------------------
+ */     
+void *      
+H5VL_object_data(const H5VL_object_t *vol_obj)
+{
+    void *ret_value = NULL;
+    
+    FUNC_ENTER_NOAPI_NOINIT_NOERR
+
     /* Check for 'get_object' callback in connector */
     if (vol_obj->connector->cls->wrap_cls.get_object)
         ret_value = (vol_obj->connector->cls->wrap_cls.get_object)(vol_obj->data);
     else
         ret_value = vol_obj->data;
-
+ 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5VL_object_data() */
+
+#endif /* JRM */
 
 /*-------------------------------------------------------------------------
  * Function:    H5VL_object_unwrap
