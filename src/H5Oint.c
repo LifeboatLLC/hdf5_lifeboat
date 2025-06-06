@@ -51,7 +51,7 @@
 /* Local Typedefs */
 /******************/
 
-#if H5_HAVE_MULTITHREAD
+#ifdef H5_HAVE_MULTITHREAD
 
 typedef H5P_mt_list_t H5P_genplist_t;
 typedef H5P_mt_class_t H5P_genclass_t;
