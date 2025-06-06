@@ -16,7 +16,7 @@
 #ifndef H5Pprivate_H
 #define H5Pprivate_H
 
-#if H5_HAVE_MULTITHREAD
+#ifdef H5_HAVE_MULTITHREAD
 #else
 /* Early typedefs to avoid circular dependencies */
 typedef struct H5P_genplist_t H5P_genplist_t;
@@ -46,7 +46,7 @@ typedef struct H5P_genplist_t H5P_genplist_t;
 
 #define H5_COLL_MD_READ_FLAG_NAME "collective_metadata_read"
 
-#define MT_TESTING 1
+
 
 /****************************/
 /* Library Private Typedefs */
@@ -59,7 +59,7 @@ typedef enum H5P_coll_md_read_flag_t {
 } H5P_coll_md_read_flag_t;
 
 
-#if MT_TESTING 
+#ifdef H5_HAVE_MULTITHREAD 
 /* Forward declarations for anonymous MT H5P objects */
 typedef struct H5P_mt_class_t H5P_mt_class_t;
 typedef struct H5P_mt_list_t H5P_mt_list_t;
@@ -105,7 +105,7 @@ typedef enum H5P_plist_type_t {
 } H5P_plist_type_t;
 
 
-#if MT_TESTING
+#ifdef H5_HAVE_MULTITHREAD
 /* Function pointer for library classes with properties to register */
 typedef herr_t (*H5P_reg_prop_func_t)(H5P_mt_class_t *pclass);
 #else
@@ -117,7 +117,7 @@ typedef herr_t (*H5P_reg_prop_func_t)(H5P_genclass_t *pclass);
  * Each library property list class has a variable of this type that contains
  * class variables and methods used to initialize the class.
  */
-#if MT_TESTING
+#ifdef H5_HAVE_MULTITHREAD
 
 typedef struct H5P_libclass_t {
     const char      *name; /* Class name */
@@ -165,7 +165,32 @@ typedef struct H5P_libclass_t {
 /* Library Private Variables */
 /*****************************/
 
-#if MT_TESTING
+#ifdef H5_HAVE_MULTITHREAD
+
+/* Macros mapping pre-MT gobals to MT globals */
+#define H5P_CLS_ROOT_g                  H5P_MT_CLS_ROOT_g
+#define H5P_CLS_OBJECT_CREATE_g         H5P_MT_CLS_OBJECT_CREATE_g
+#define H5P_CLS_FILE_CREATE_g           H5P_MT_CLS_FILE_CREATE_g
+#define H5P_CLS_FILE_ACCESS_g           H5P_MT_CLS_FILE_ACCESS_g
+#define H5P_CLS_DATASET_CREATE_g        H5P_MT_CLS_DATASET_CREATE_g
+#define H5P_CLS_DATASET_ACCESS_g        H5P_MT_CLS_DATASET_ACCESS_g
+#define H5P_CLS_DATASET_XFER_g          H5P_MT_CLS_DATASET_XFER_g
+#define H5P_CLS_FILE_MOUNT_g            H5P_MT_CLS_FILE_MOUNT_g
+#define H5P_CLS_GROUP_CREATE_g          H5P_MT_CLS_GROUP_CREATE_g
+#define H5P_CLS_GROUP_ACCESS_g          H5P_MT_CLS_GROUP_ACCESS_g
+#define H5P_CLS_DATATYPE_CREATE_g       H5P_MT_CLS_DATATYPE_CREATE_g
+#define H5P_CLS_DATATYPE_ACCESS_g       H5P_MT_CLS_DATATYPE_ACCESS_g
+#define H5P_CLS_MAP_CREATE_g            H5P_MT_CLS_MAP_CREATE_g
+#define H5P_CLS_MAP_ACCESS_g            H5P_MT_CLS_MAP_ACCESS_g
+#define H5P_CLS_ATTRIBUTE_CREATE_g      H5P_MT_CLS_ATTRIBUTE_CREATE_g
+#define H5P_CLS_ATTRIBUTE_ACCESS_g      H5P_MT_CLS_ATTRIBUTE_ACCESS_g
+#define H5P_CLS_OBJECT_COPY_g           H5P_MT_CLS_OBJECT_COPY_g
+#define H5P_CLS_LINK_CREATE_g           H5P_MT_CLS_LINK_CREATE_g
+#define H5P_CLS_LINK_ACCESS_g           H5P_MT_CLS_LINK_ACCESS_g
+#define H5P_CLS_STRING_CREATE_g         H5P_MT_CLS_STRING_CREATE_g
+#define H5P_CLS_REFERENCE_ACCESS_g      H5P_MT_CLS_REFERENCE_ACCESS_g
+#define H5P_CLS_VOL_INITIALIZE_g        H5P_MT_CLS_VOL_INITIALIZE_g
+
 /* Predefined property list classes. */
 H5_DLLVAR H5P_mt_class_t *H5P_MT_CLS_ROOT_g;
 H5_DLLVAR H5P_mt_class_t *H5P_MT_CLS_OBJECT_CREATE_g;
@@ -187,6 +212,8 @@ H5_DLLVAR H5P_mt_class_t *H5P_MT_CLS_OBJECT_COPY_g;
 H5_DLLVAR H5P_mt_class_t *H5P_MT_CLS_LINK_CREATE_g;
 H5_DLLVAR H5P_mt_class_t *H5P_MT_CLS_LINK_ACCESS_g;
 H5_DLLVAR H5P_mt_class_t *H5P_MT_CLS_STRING_CREATE_g;
+H5_DLLVAR H5P_mt_class_t *H5P_MT_CLS_REFERENCE_ACCESS_g;
+H5_DLLVAR H5P_mt_class_t *H5P_MT_CLS_VOL_INITIALIZE_g;
 
 #else
 /* Predefined property list classes. */
@@ -210,6 +237,8 @@ H5_DLLVAR H5P_genclass_t *H5P_CLS_OBJECT_COPY_g;
 H5_DLLVAR H5P_genclass_t *H5P_CLS_LINK_CREATE_g;
 H5_DLLVAR H5P_genclass_t *H5P_CLS_LINK_ACCESS_g;
 H5_DLLVAR H5P_genclass_t *H5P_CLS_STRING_CREATE_g;
+H5_DLLVAR H5P_genclass_t *H5P_CLS_REFERENCE_ACCESS_g;
+H5_DLLVAR H5P_genclass_t *H5P_CLS_VOL_INITIALIZE_g;
 
 #endif
 
@@ -240,13 +269,13 @@ H5_DLL herr_t H5P_init_phase2(void);
 /* Internal versions of API routines */
 H5_DLL herr_t H5P_close(H5P_genplist_t *plist);
 
-#if MT_TESTING
+#ifdef H5_HAVE_MULTITHREAD
 H5_DLL hid_t  H5P_create_id(H5P_mt_class_t *pclass, hbool_t app_ref);
 #else
 H5_DLL hid_t  H5P_create_id(H5P_genclass_t *pclass, hbool_t app_ref);
 #endif
 
-#if MT_TESTING
+#ifdef H5_HAVE_MULTITHREAD
 H5_DLL hid_t  H5P_copy_plist(H5P_mt_list_t *old_plist, hbool_t app_ref);
 #else
 H5_DLL hid_t  H5P_copy_plist(const H5P_genplist_t *old_plist, hbool_t app_ref);
@@ -254,16 +283,20 @@ H5_DLL hid_t  H5P_copy_plist(const H5P_genplist_t *old_plist, hbool_t app_ref);
 
 H5_DLL herr_t H5P_get(H5P_genplist_t *plist, const char *name, void *value);
 
-#if MT_TESTING
+#ifdef H5_HAVE_MULTITHREAD
 H5_DLL herr_t H5P_set(H5P_mt_list_t *plist, const char *name, const void *value);
 #else
 H5_DLL herr_t H5P_set(H5P_genplist_t *plist, const char *name, const void *value);
 #endif
 
 H5_DLL herr_t H5P_peek(H5P_genplist_t *plist, const char *name, void *value);
+#ifdef H5_HAVE_MULTITHREAD
+H5_DLL herr_t H5P_poke(H5P_genplist_t *plist, const char *name, void *value);
+#else
 H5_DLL herr_t H5P_poke(H5P_genplist_t *plist, const char *name, const void *value);
+#endif
 
-#if MT_TESTING
+#ifdef H5_HAVE_MULTITHREAD
 H5_DLL herr_t H5P_insert(H5P_mt_list_t *plist, const char *name, size_t size, void *value,
                          H5P_prp_set_func_t prp_set, H5P_prp_get_func_t prp_get,
                          H5P_prp_encode_func_t prp_encode, H5P_prp_decode_func_t prp_decode,
@@ -279,8 +312,14 @@ H5_DLL herr_t H5P_insert(H5P_genplist_t *plist, const char *name, size_t size, v
 H5_DLL herr_t H5P_remove(H5P_genplist_t *plist, const char *name);
 #endif
 
+#ifdef H5_HAVE_MULTITHREAD
+H5_DLL htri_t H5P_class_isa(H5P_mt_class_t *pclass1, H5P_mt_class_t *pclass2);
+H5_DLL htri_t H5P_exist_plist(H5P_mt_list_t *plist, const char *name);
+
+#else
 H5_DLL htri_t H5P_exist_plist(const H5P_genplist_t *plist, const char *name);
 H5_DLL htri_t H5P_class_isa(const H5P_genclass_t *pclass1, const H5P_genclass_t *pclass2);
+#endif
 H5_DLL char  *H5P_get_class_name(H5P_genclass_t *pclass);
 
 /* Internal helper routines */
@@ -295,7 +334,12 @@ H5_DLL herr_t      H5P_set_driver_by_name(H5P_genplist_t *plist, const char *dri
 H5_DLL herr_t      H5P_set_driver_by_value(H5P_genplist_t *plist, H5FD_class_value_t driver_value,
                                            const char *driver_config, hbool_t app_ref);
 H5_DLL herr_t      H5P_set_vol(H5P_genplist_t *plist, hid_t vol_id, const void *vol_info);
+
+#ifdef H5_HAVE_MULTITHREAD
+H5_DLL herr_t H5P_reset_vol_class(H5P_genclass_t *pclass, struct H5VL_connector_prop_t *vol_prop);
+#else
 H5_DLL herr_t H5P_reset_vol_class(const H5P_genclass_t *pclass, const struct H5VL_connector_prop_t *vol_prop);
+#endif
 H5_DLL herr_t H5P_set_vlen_mem_manager(H5P_genplist_t *plist, H5MM_allocate_t alloc_func, void *alloc_info,
                                        H5MM_free_t free_func, void *free_info);
 H5_DLL herr_t H5P_is_fill_value_defined(const struct H5O_fill_t *fill, H5D_fill_value_t *status);

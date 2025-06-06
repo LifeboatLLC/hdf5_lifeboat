@@ -1528,6 +1528,20 @@ typedef struct H5P_mt_list_prop_ref_t
  *      Finally, the version of the host property list is incremented to make these 
  *      chagnes visible.
  * 
+ * first_ver_of_curr (_Atomic uint64_t first_ver_of_curr):
+ *      Due to curr being updated to point to and store the version number of the most 
+ *      current version of property curr points to, the LFSLL may be iterated for no
+ *      reason. This would happen if the version of the list we are searching in is older 
+ *      than curr.ver the LFSLL must be iterated to check if there is an older version of 
+ *      the property that is valid for the version we are searching for. If there winds 
+ *      up not being a valid property for the version we are in, then the base property
+ *      must be used. 
+ * 
+ *      The atomic uint64_t first_ver_of_curr eliminates that needless iteration, by 
+ *      comparing to the version we are searching in. If first_ver_of_curr is greater 
+ *      than the version we need, we know there is no valid version in the LFSLL and we
+ *      must use the base property, and no longer need to iterate the LFSLL to check.      
+ * 
  ****************************************************************************************
  */
 typedef struct H5P_mt_list_table_entry_t
@@ -1537,6 +1551,7 @@ typedef struct H5P_mt_list_table_entry_t
     _Atomic H5P_mt_list_prop_ref_t  base;
     _Atomic uint64_t                base_delete_version;
     _Atomic H5P_mt_list_prop_ref_t  curr;
+    _Atomic uint64_t                first_ver_of_curr;
 
 } H5P_mt_list_table_entry_t;
 
@@ -2138,5 +2153,169 @@ typedef struct H5P_mt_t
 /* Package Private Prototypes */
 /******************************/
 
+herr_t H5P_mt_init(void);
+
+H5P_mt_class_t * 
+    H5P__mt_create_class(H5P_mt_class_t *parent, const char *name, 
+                         H5P_plist_type_t type, uint64_t test_version,
+                         H5P_cls_create_func_t create_func, void *create_data,
+                         H5P_cls_copy_func_t copy_func, void *copy_data,
+                         H5P_cls_close_func_t close_func, void *close_data);
+
+H5P_mt_class_t * 
+    H5P__mt_alloc_class(void);
+
+H5P_mt_list_t * 
+    H5P__mt_create_list(H5P_mt_class_t *parent, H5P_mt_list_t* old_list, 
+                        bool copy, uint64_t test_version, bool app_ref);
+
+H5P_mt_list_t * 
+    H5P__mt_alloc_list(void);
+
+herr_t 
+    H5P__init_lkup_tbl(H5P_mt_class_t *parent, uint64_t version, H5P_mt_list_t *list);
+
+herr_t
+    H5P__init_lkup_tbl_copy(H5P_mt_list_t* old_list, uint64_t version, 
+                            H5P_mt_list_t* new_list);
+
+H5P_mt_prop_t * 
+    H5P__create_sentinels(bool in_prop_class);
+
+H5P_mt_prop_t * 
+    H5P__mt_create_prop(const char *name, const void *value_ptr, size_t value_size, 
+                        bool in_prop_class, uint64_t create_version,
+                        H5P_prp_create_func_t prp_create, H5P_prp_set_func_t prp_set, 
+                        H5P_prp_get_func_t prp_get, H5P_prp_encode_func_t prp_encode,
+                        H5P_prp_decode_func_t prp_decode, H5P_prp_delete_func_t prp_del,
+                        H5P_prp_copy_func_t prp_copy, H5P_prp_compare_func_t prp_cmp,
+                        H5P_prp_close_func_t prp_close);
+
+H5P_mt_prop_t * 
+    H5P__mt_alloc_prop(void);
+
+herr_t
+    H5P__mt_copy_lfsll(void* param, H5P_mt_prop_t* old_prop, uint64_t version);
+
+herr_t 
+    H5P__mt_ins_or_mod_prop__main(void *param, const char *name, void *value, 
+                        size_t size, bool create, bool copy,
+                        H5P_prp_create_func_t prp_create, H5P_prp_set_func_t prp_set, 
+                        H5P_prp_get_func_t prp_get, H5P_prp_encode_func_t prp_encode,
+                        H5P_prp_decode_func_t prp_decode, H5P_prp_delete_func_t prp_del,
+                        H5P_prp_copy_func_t prp_copy, H5P_prp_compare_func_t prp_cmp,
+                        H5P_prp_close_func_t prp_close);
+
+herr_t 
+    H5P__mt_ins_or_mod_prop__lfsll_ins(H5P_mt_prop_t *pl_head, H5P_mt_prop_t *new_prop, 
+                                       uint32_t *deletes_ptr, uint32_t *nodes_visited_ptr, 
+                                       uint32_t *thrd_cols_ptr);
+
+herr_t 
+    H5P__set_delete_version(void *param, H5P_mt_prop_t *target_prop);
+
+H5P_mt_prop_t * 
+    H5P__mt_search_prop(void *param, int64_t chksum, const char *name);
+
+H5P_mt_list_table_entry_t * 
+    H5P__mt_search_lkup_tbl(H5P_mt_list_table_entry_t * lkup_tbl, 
+                            uint32_t left_entry,
+                            uint32_t right_entry,
+                            int64_t  chksum);
+
+H5P_mt_prop_t *
+    H5P__mt_search_lfsll(H5P_mt_prop_t *pl_head, int64_t chksum, uint64_t version);
+
+H5P_mt_prop_t * 
+    H5P__mt_entry_find_version(H5P_mt_list_table_entry_t * entry, uint64_t version, 
+                               bool *base_flag);
+
+herr_t 
+    H5P__find_mod_point(H5P_mt_prop_t *pl_head, H5P_mt_prop_t **first_ptr_ptr, 
+                           H5P_mt_prop_t **second_ptr_ptr, uint32_t *deletes_ptr, 
+                           uint32_t *nodes_visited_ptr, uint32_t *thrd_cols_ptr, 
+                           H5P_mt_prop_t *target_prop);
+
+H5P_mt_prop_t * 
+    H5P__get_next_valid_prop(H5P_mt_prop_t *prop, uint64_t version);
+
+H5P_mt_prop_t * 
+    H5P__find_valid_version(H5P_mt_prop_t *prop, uint64_t version);
+
+int32_t 
+    H5P__is_valid(H5P_mt_prop_t *prop, uint64_t version);
+
+int32_t
+    H5P__mt_compare_prop(H5P_mt_prop_t *prop1, H5P_mt_prop_t *prop2);
+
+int32_t
+    H5P__mt_is_equal(H5P_mt_prop_t *prop1, H5P_mt_prop_t *prop2);
+
+int32_t
+    H5P__mt_cmp_list_or_class(void *param1, void *param2);
+
+uint64_t
+    H5P__mt_get_version(void *param);
+
+herr_t 
+    H5P__mt_close_prop(H5P_mt_prop_t *prop);
+
+H5P_mt_prop_t * 
+    H5P__clear_mt_prop(H5P_mt_prop_t *prop);
+
+herr_t
+    H5P__mt_close_class(H5P_mt_class_t *class);
+
+H5P_mt_class_t *
+    H5P__clear_mt_class(H5P_mt_class_t *class);
+
+herr_t
+    H5P__mt_close_list(H5P_mt_list_t *list);
+
+H5P_mt_list_t * 
+    H5P__clear_mt_list(H5P_mt_list_t *list);
+
+
+uint64_t H5P__mt_version_check(void *param, uint64_t curr_version, 
+                               uint64_t next_version);
+
+herr_t H5P__inc_thrd_count(void *param);
+
+herr_t H5P__dec_thrd_count(void *param);
+
+herr_t H5P__inc_ref_count(H5P_mt_class_t *parent, bool plc);
+
+herr_t H5P__dec_ref_count(H5P_mt_class_t *parent, bool plc);
+
+int64_t H5P__calc_checksum(const char *name);
+
+herr_t H5P__mt_get_value(H5P_mt_list_t *list, int64_t chksum, const char *name,
+                         void *value_ptr);
+
+herr_t H5P__mt_encode(H5P_mt_list_t *list, uint64_t version, 
+                   void *buf, size_t *nalloc);
+
+herr_t H5P__mt_encode_prop(H5P_mt_prop_t *prop, bool encode, 
+                        size_t *encode_size, uint8_t **p);
+
+/* Stats functions */
+herr_t H5P__reset_stats_global(void);
+
+herr_t H5P__init_stats_class(H5P_mt_class_t *class);
+
+herr_t H5P__reset_stats_class(H5P_mt_class_t *class);
+
+herr_t H5P__init_stats_list(H5P_mt_list_t *list);
+
+herr_t H5P__reset_stats_list(H5P_mt_list_t *list);
+
+herr_t H5P__dump_stats_global(FILE *file_ptr);
+
+herr_t H5P__dump_stats_class(FILE *file_ptr, H5P_mt_class_t *class);
+
+herr_t H5P__dump_stats_list(FILE *file_ptr, H5P_mt_list_t *list);
+
+/* shutdown function for internal testing */
+void H5P__shutdown(void);
 
 #endif /* H5Ppkg_mt_H */

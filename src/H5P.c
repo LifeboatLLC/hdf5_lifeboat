@@ -31,7 +31,7 @@
 
 #ifdef H5_HAVE_MULTITHREAD
 #include "H5Ppkg_mt.h"   /* MT Safe Property List structures */
-#include "H5Pint_mt.c"   /* MT Safe property List functions */
+//#include "H5Pint_mt.c"   /* MT Safe property List functions */
 #endif
 
 /****************/
@@ -42,7 +42,7 @@
 /* Local Typedefs */
 /******************/
 
-#if H5_HAVE_MULTITHREAD
+#ifdef H5_HAVE_MULTITHREAD
 
 typedef H5P_mt_list_t H5P_genplist_t;
 typedef H5P_mt_class_t H5P_genclass_t;
@@ -97,7 +97,7 @@ typedef struct {
 hid_t
 H5Pcopy(hid_t id)
 {
-#if H5_HAVE_MULTITHREAD
+#ifdef H5_HAVE_MULTITHREAD
     H5P_mt_class_t * copy_class;
     H5P_mt_active_thread_count_t thrd;
 #else
@@ -118,7 +118,7 @@ H5Pcopy(hid_t id)
     if (NULL == (obj = H5I_object(id)))
         HGOTO_ERROR(H5E_PLIST, H5E_NOTFOUND, H5I_INVALID_HID, "property object doesn't exist");
 
-#if H5_HAVE_MULTITHREAD
+#ifdef H5_HAVE_MULTITHREAD
 
     /* Compare property lists */
     if (H5I_GENPROP_LST == H5I_get_type(id)) 
@@ -220,7 +220,7 @@ H5Pcreate_class(hid_t parent, const char *name, H5P_cls_create_func_t cls_create
                 H5P_cls_copy_func_t cls_copy, void *copy_data, H5P_cls_close_func_t cls_close,
                 void *close_data)
 {
-#if H5_HAVE_MULTITHREAD
+#ifdef H5_HAVE_MULTITHREAD
     H5P_mt_class_t * par_class = NULL;
     H5P_mt_class_t * pclass    = NULL;
     H5P_mt_active_thread_count_t thrd;
@@ -244,7 +244,7 @@ H5Pcreate_class(hid_t parent, const char *name, H5P_cls_create_func_t cls_create
         (close_data != NULL && cls_close == NULL))
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, H5I_INVALID_HID, "data specified, but no callback provided");
 
-#if H5_HAVE_MULTITHREAD
+#ifdef H5_HAVE_MULTITHREAD
     /* Get the pointer to the MT parent class */
     if (parent == H5P_DEFAULT)
         par_class = NULL;
@@ -274,7 +274,7 @@ H5Pcreate_class(hid_t parent, const char *name, H5P_cls_create_func_t cls_create
         HGOTO_ERROR(H5E_PLIST, H5E_CANTREGISTER, H5I_INVALID_HID, "unable to register property list class");
 
 
-#if H5_HAVE_MULTITHREAD
+#ifdef H5_HAVE_MULTITHREAD
 
     /* Now that the class has an ID, the opening process is complete. Set opening flag to FALSE */
     thrd.count = 0;
@@ -287,7 +287,7 @@ H5Pcreate_class(hid_t parent, const char *name, H5P_cls_create_func_t cls_create
 
 done:
 
-#if H5_HAVE_MULTITHREAD
+#ifdef H5_HAVE_MULTITHREAD
     if (H5I_INVALID_HID == ret_value && pclass)
         H5P__mt_close_class(pclass);
 #else
@@ -323,7 +323,7 @@ done:
 hid_t
 H5Pcreate(hid_t cls_id)
 {
-#if H5_HAVE_MULTITHREAD
+#ifdef H5_HAVE_MULTITHREAD
     H5P_mt_class_t * pclass;
 #else
     H5P_genclass_t *pclass;                      /* Property list class to modify */
@@ -334,7 +334,7 @@ H5Pcreate(hid_t cls_id)
     H5TRACE1("i", "i", cls_id);
 
     /* Check arguments, and get class to derive the list from */
-#if H5_HAVE_MULTITHREAD
+#ifdef H5_HAVE_MULTITHREAD
     if ( NULL == (pclass = (H5P_mt_class_t *)H5I_object_verify(cls_id, H5I_GENPROP_CLS)))
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5I_INVALID_HID, "not a MT property list class");
 #else
@@ -510,7 +510,7 @@ H5Pregister2(hid_t cls_id, const char *name, size_t size, void *def_value, H5P_p
              H5P_prp_set_func_t prp_set, H5P_prp_get_func_t prp_get, H5P_prp_delete_func_t prp_delete,
              H5P_prp_copy_func_t prp_copy, H5P_prp_compare_func_t prp_cmp, H5P_prp_close_func_t prp_close)
 {
-#if H5_HAVE_MULTITHREAD
+#ifdef H5_HAVE_MULTITHREAD
     H5P_mt_class_t * pclass;
 #else
     H5P_genclass_t *pclass;      /* Property list class to modify */
@@ -522,7 +522,7 @@ H5Pregister2(hid_t cls_id, const char *name, size_t size, void *def_value, H5P_p
     H5TRACE11("e", "i*sz*xPCPSPGPDPOPMPL", cls_id, name, size, def_value, prp_create, prp_set, prp_get,
               prp_delete, prp_copy, prp_cmp, prp_close);
 
-#if H5_HAVE_MULTITHREAD
+#ifdef H5_HAVE_MULTITHREAD
     /* Check arguments. */
     if (NULL == (pclass = (H5P_mt_class_t *)H5I_object_verify(cls_id, H5I_GENPROP_CLS)))
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a property list class");
@@ -536,7 +536,7 @@ H5Pregister2(hid_t cls_id, const char *name, size_t size, void *def_value, H5P_p
     if (size > 0 && def_value == NULL)
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "properties >0 size must have default");
 
-#if H5_HAVE_MULTITHREAD
+#ifdef H5_HAVE_MULTITHREAD
     
     if (( ret_value = H5P__mt_ins_or_mod_prop__main(pclass, name, def_value, size, FALSE, FALSE, 
                                                     prp_create, prp_set, prp_get, NULL, NULL, 
@@ -713,7 +713,7 @@ H5Pinsert2(hid_t plist_id, const char *name, size_t size, void *value, H5P_prp_s
            H5P_prp_get_func_t prp_get, H5P_prp_delete_func_t prp_delete, H5P_prp_copy_func_t prp_copy,
            H5P_prp_compare_func_t prp_cmp, H5P_prp_close_func_t prp_close)
 {
-#if H5_HAVE_MULTITHREAD
+#ifdef H5_HAVE_MULTITHREAD
     H5P_mt_list_t * plist;
 #else
     H5P_genplist_t *plist;     /* Property list to modify */
@@ -724,7 +724,7 @@ H5Pinsert2(hid_t plist_id, const char *name, size_t size, void *value, H5P_prp_s
     H5TRACE10("e", "i*sz*xPSPGPDPOPMPL", plist_id, name, size, value, prp_set, prp_get, prp_delete, prp_copy,
               prp_cmp, prp_close);
 
-#if H5_HAVE_MULTITHREAD
+#ifdef H5_HAVE_MULTITHREAD
     /* Check arguments. */
     if (NULL == (plist = (H5P_mt_list_t *)H5I_object_verify(plist_id, H5I_GENPROP_LST)))
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a MT property list");
@@ -793,7 +793,7 @@ done:
 herr_t
 H5Pset(hid_t plist_id, const char *name, const void *value)
 {
-#if H5_HAVE_MULTITHREAD
+#ifdef H5_HAVE_MULTITHREAD
     H5P_mt_list_t * plist;
 #else
     H5P_genplist_t *plist;               /* Property list to modify */
@@ -803,7 +803,7 @@ H5Pset(hid_t plist_id, const char *name, const void *value)
     FUNC_ENTER_API(FAIL)
     H5TRACE3("e", "i*s*x", plist_id, name, value);
 
-#if H5_HAVE_MULTITHREAD
+#ifdef H5_HAVE_MULTITHREAD
     /* Check arguments. */
     if (NULL == (plist = (H5P_mt_list_t *)H5I_object_verify(plist_id, H5I_GENPROP_LST)))
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a property list");
@@ -850,7 +850,7 @@ done:
 htri_t
 H5Pexist(hid_t id, const char *name)
 {
-#if H5_HAVE_MULTITHREAD
+#ifdef H5_HAVE_MULTITHREAD
     H5P_mt_class_t * pclass;
     H5P_mt_list_t  * plist;
     int64_t          chksum;
@@ -869,7 +869,7 @@ H5Pexist(hid_t id, const char *name)
     if (!name || !*name)
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "invalid property name");
 
-#if H5_HAVE_MULTITHREAD
+#ifdef H5_HAVE_MULTITHREAD
     chksum = H5_checksum_metadata(name, strlen(name), 0);
 
     /* Check for the existence of the MT property in the MT list or MT class */
@@ -946,7 +946,7 @@ done:
 herr_t
 H5Pget_size(hid_t id, const char *name, size_t *size /*out*/)
 {
-#if H5_HAVE_MULTITHREAD
+#ifdef H5_HAVE_MULTITHREAD
     H5P_mt_class_t * pclass;
     H5P_mt_list_t  * plist;
     H5P_mt_prop_t  * prop;
@@ -969,7 +969,7 @@ H5Pget_size(hid_t id, const char *name, size_t *size /*out*/)
     if (size == NULL)
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "invalid property size");
 
-#if H5_HAVE_MULTITHREAD
+#ifdef H5_HAVE_MULTITHREAD
     chksum = H5_checksum_metadata(name, strlen(name), 0);
 
     if (H5I_GENPROP_LST == H5I_get_type(id)) 
@@ -1140,7 +1140,7 @@ done:
 hid_t
 H5Pget_class(hid_t plist_id)
 {
-#if H5_HAVE_MULTITHREAD
+#ifdef H5_HAVE_MULTITHREAD
     H5P_mt_class_t * pclass;
     H5P_mt_list_t  * plist;
 #else
@@ -1152,7 +1152,7 @@ H5Pget_class(hid_t plist_id)
     FUNC_ENTER_API(H5I_INVALID_HID)
     H5TRACE1("i", "i", plist_id);
 
-#if H5_HAVE_MULTITHREAD
+#ifdef H5_HAVE_MULTITHREAD
 
     /* Check arguments. */
     if (NULL == (plist = (H5P_mt_list_t *)H5I_object_verify(plist_id, H5I_GENPROP_LST)))
@@ -1185,7 +1185,7 @@ H5Pget_class(hid_t plist_id)
 
 done:
 
-#if H5_HAVE_MULTITHREAD
+#ifdef H5_HAVE_MULTITHREAD
     /**
      * The multithread version doesn't increment the reference count of the class 
      * the same way, thus it doesn't need to call a close function to decrement it.
@@ -1224,7 +1224,7 @@ done:
 herr_t
 H5Pget_nprops(hid_t id, size_t *nprops /*out*/)
 {
-#if H5_HAVE_MULTITHREAD
+#ifdef H5_HAVE_MULTITHREAD
     H5P_mt_class_t * pclass;
     H5P_mt_list_t  * plist;
     size_t           tmp_nprops;
@@ -1243,7 +1243,7 @@ H5Pget_nprops(hid_t id, size_t *nprops /*out*/)
     if (nprops == NULL)
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "invalid property nprops pointer");
 
-#if H5_HAVE_MULTITHREAD
+#ifdef H5_HAVE_MULTITHREAD
 
     if ( H5I_GENPROP_LST == H5I_get_type(id) )
     {
@@ -1334,33 +1334,30 @@ H5Pequal(hid_t id1, hid_t id2)
     if (NULL == (obj1 = H5I_object(id1)) || NULL == (obj2 = H5I_object(id2)))
         HGOTO_ERROR(H5E_PLIST, H5E_NOTFOUND, FAIL, "property object doesn't exist");
 
-#if H5_HAVE_MULTITHREAD
-
-    if ( 0 > ( cmp_ret = H5P__mt_cmp_list_or_class(obj1, obj2) ) )
-        HGOTO_ERROR(H5E_PLIST, H5E_CANTCOMPARE, FAIL, 
-                    "can't compare MT property lists or MT property classes");
-
-    if ( cmp_ret == 0 )
-        ret_value = TRUE;
-
-#else
-
     /* Compare property lists */
     if (H5I_GENPROP_LST == H5I_get_type(id1)) {
 
+#ifdef H5_HAVE_MULTITHREAD
+        if (H5P__cmp_plist((H5P_genplist_t *)obj1, (H5P_genplist_t *)obj2, &cmp_ret) < 0)
+            HGOTO_ERROR(H5E_PLIST, H5E_CANTCOMPARE, FAIL, "can't compare property lists");
+#else
         if (H5P__cmp_plist((const H5P_genplist_t *)obj1, (const H5P_genplist_t *)obj2, &cmp_ret) < 0)
             HGOTO_ERROR(H5E_PLIST, H5E_CANTCOMPARE, FAIL, "can't compare property lists");
+#endif
 
         /* Set return value */
         ret_value = cmp_ret == 0 ? TRUE : FALSE;
     } /* end if */
     /* Must be property classes */
     else {
+#ifdef H5_HAVE_MULTITHREAD
+        if (H5P__cmp_class((H5P_genclass_t *)obj1, (H5P_genclass_t *)obj2) == 0)
+            ret_value = TRUE;
+#else
         if (H5P__cmp_class((const H5P_genclass_t *)obj1, (const H5P_genclass_t *)obj2) == 0)
             ret_value = TRUE;
-    } /* end else */
-
 #endif
+    } /* end else */
 
 done:
     FUNC_LEAVE_API(ret_value)
@@ -1410,6 +1407,7 @@ H5Pisa_class(hid_t plist_id, hid_t pclass_id)
 done:
     FUNC_LEAVE_API(ret_value)
 } /* H5Pisa_class() */
+
 
 /*--------------------------------------------------------------------------
  NAME
@@ -1527,7 +1525,7 @@ H5Piterate(hid_t id, int *idx, H5P_iterate_t iter_func, void *iter_data)
     udata.id        = id;
     udata.iter_data = iter_data;
 
-#if H5_HAVE_MULTITHREAD
+#ifdef H5_HAVE_MULTITHREAD
 
     if (H5I_GENPROP_LST == H5I_get_type(id)) 
     {
@@ -1563,6 +1561,7 @@ done:
     FUNC_LEAVE_API(ret_value)
 } /* H5Piterate() */
 
+
 /*--------------------------------------------------------------------------
  NAME
     H5Pget
@@ -1594,49 +1593,25 @@ done:
 herr_t
 H5Pget(hid_t plist_id, const char *name, void *value /*out*/)
 {
-#if H5_HAVE_MULTITHREAD
-    H5P_mt_list_t * plist;
-    H5P_mt_prop_t * prop;
-    H5P_mt_prop_value_t prop_value;
-    int64_t         chksum;
-#else
     H5P_genplist_t *plist;               /* Property list pointer */
-#endif
+
     herr_t          ret_value = SUCCEED; /* return value */
 
     FUNC_ENTER_API(FAIL)
     H5TRACE3("e", "i*sx", plist_id, name, value);
 
     /* Check arguments. */
-#if H5_HAVE_MULTITHREAD
-    if (NULL == (plist = (H5P_mt_list_t *)H5I_object_verify(plist_id, H5I_GENPROP_LST)))
-        HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a MT property list");
-#else
     if (NULL == (plist = (H5P_genplist_t *)H5I_object_verify(plist_id, H5I_GENPROP_LST)))
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a property list");
-#endif
     if (!name || !*name)
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "invalid property name");
     if (value == NULL)
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "invalid property value");
 
-#if H5_HAVE_MULTITHREAD
-    /* Gets the value from the property in the list */
-
-    chksum = H5_checksum_metadata(name, strlen(name), 0);
-
-    if ( NULL == (prop = H5P__mt_search_prop(plist, chksum, name)) )
-        HGOTO_ERROR(H5E_PLIST, H5E_CANTGET, FAIL, "MT property isn't in MT list");
-
-    prop_value = atomic_load(&(prop->value));
-
-    value = prop_value.ptr;
-
-#else
     /* Go get the value */
     if (H5P_get(plist, name, value) < 0)
         HGOTO_ERROR(H5E_PLIST, H5E_CANTGET, FAIL, "unable to query property value");
-#endif
+
 
 done:
     FUNC_LEAVE_API(ret_value)
@@ -1671,7 +1646,7 @@ done:
 herr_t
 H5Premove(hid_t plist_id, const char *name)
 {
-#if H5_HAVE_MULTITHREAD
+#ifdef H5_HAVE_MULTITHREAD
     H5P_mt_list_t * plist;
 #else
     H5P_genplist_t *plist;     /* Property list to modify */
@@ -1681,7 +1656,7 @@ H5Premove(hid_t plist_id, const char *name)
     FUNC_ENTER_API(FAIL)
     H5TRACE2("e", "i*s", plist_id, name);
 
-#if H5_HAVE_MULTITHREAD
+#ifdef H5_HAVE_MULTITHREAD
     /* Check arguments. */
     if ( NULL == (plist = (H5P_mt_list_t *)H5I_object_verify(plist_id, H5I_GENPROP_LST)))
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a MT property list");
@@ -1801,7 +1776,7 @@ done:
 herr_t
 H5Punregister(hid_t pclass_id, const char *name)
 {
-#if H5_HAVE_MULTITHREAD
+#ifdef H5_HAVE_MULTITHREAD
     H5P_mt_class_t * pclass;
     H5P_mt_prop_t  * prop;
     int64_t          chksum;
@@ -1814,7 +1789,7 @@ H5Punregister(hid_t pclass_id, const char *name)
     H5TRACE2("e", "i*s", pclass_id, name);
 
     /* Check arguments. */
-#if H5_HAVE_MULTITHREAD
+#ifdef H5_HAVE_MULTITHREAD
     if (NULL == (pclass = (H5P_mt_class_t *)H5I_object_verify(pclass_id, H5I_GENPROP_CLS)))
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a property list class");
 #else
@@ -1824,7 +1799,7 @@ H5Punregister(hid_t pclass_id, const char *name)
     if (!name || !*name)
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "invalid property name");
 
-#if H5_HAVE_MULTITHREAD
+#ifdef H5_HAVE_MULTITHREAD
     chksum = H5_checksum_metadata(name, strlen(name), 0);
 
     if (( prop = H5P__mt_search_prop(pclass, chksum, name)) == NULL)
@@ -1910,7 +1885,7 @@ done:
 char *
 H5Pget_class_name(hid_t pclass_id)
 {
-#if H5_HAVE_MULTITHREAD
+#ifdef H5_HAVE_MULTITHREAD
     H5P_mt_class_t * pclass;
 #else
     H5P_genclass_t *pclass;    /* Property class to query */
@@ -1920,12 +1895,12 @@ H5Pget_class_name(hid_t pclass_id)
     FUNC_ENTER_API(NULL)
     H5TRACE1("*s", "i", pclass_id);
 
-#if H5_HAVE_MULTITHREAD
+#ifdef H5_HAVE_MULTITHREAD
     /* Check arguments. */
     if (NULL == (pclass = (H5P_mt_class_t *)H5I_object_verify(pclass_id, H5I_GENPROP_CLS)))
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, NULL, "not a MT property class");
 
-    ret_value = H5MM_xstrdup(pclass->name);
+    ret_value = strdup(pclass->name);
 
     if ( ! ret_value )
         HGOTO_ERROR(H5E_PLIST, H5E_NOTFOUND, NULL, "unable to query name of MT class");
@@ -1965,7 +1940,7 @@ done:
 hid_t
 H5Pget_class_parent(hid_t pclass_id)
 {
-#if H5_HAVE_MULTITHREAD
+#ifdef H5_HAVE_MULTITHREAD
     H5P_mt_class_t * pclass;
 #else
     H5P_genclass_t *pclass;                      /* Property class to query */
@@ -1976,7 +1951,7 @@ H5Pget_class_parent(hid_t pclass_id)
     FUNC_ENTER_API(H5I_INVALID_HID)
     H5TRACE1("i", "i", pclass_id);
 
-#if H5_HAVE_MULTITHREAD
+#ifdef H5_HAVE_MULTITHREAD
     /* Check arguments. */
     if (NULL == (pclass = (H5P_mt_class_t *)H5I_object_verify(pclass_id, H5I_GENPROP_CLS)))
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5I_INVALID_HID, "not a MT property class");
@@ -2002,7 +1977,7 @@ H5Pget_class_parent(hid_t pclass_id)
 #endif
 
 done:
-#if H5_HAVE_MULTITHREAD
+#ifdef H5_HAVE_MULTITHREAD
     /**
      * The multithread version doesn't increment the reference count of the class 
      * the same way, thus it doesn't need to call a close function to decrement it.

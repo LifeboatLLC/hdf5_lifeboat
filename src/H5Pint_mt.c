@@ -54,174 +54,6 @@ typedef enum {
 /* Local Prototypes */
 /********************/
 
-herr_t H5P_mt_init(void);
-
-H5P_mt_class_t * 
-    H5P__mt_create_class(H5P_mt_class_t *parent, const char *name, 
-                         H5P_plist_type_t type, uint64_t test_version,
-                         H5P_cls_create_func_t create_func, void *create_data,
-                         H5P_cls_copy_func_t copy_func, void *copy_data,
-                         H5P_cls_close_func_t close_func, void *close_data);
-
-H5P_mt_class_t * 
-    H5P__mt_alloc_class(void);
-
-H5P_mt_list_t * 
-    H5P__mt_create_list(H5P_mt_class_t *parent, H5P_mt_list_t* old_list, bool copy,
-                        uint64_t test_version, bool app_ref);
-
-H5P_mt_list_t * 
-    H5P__mt_alloc_list(void);
-
-herr_t 
-    H5P__init_lkup_tbl(H5P_mt_class_t *parent, uint64_t version, H5P_mt_list_t *list);
-
-herr_t
-    H5P__init_lkup_tbl_copy(H5P_mt_list_t* old_list, uint64_t version, 
-                            H5P_mt_list_t* new_list);
-
-H5P_mt_prop_t * 
-    H5P__create_sentinels(bool in_prop_class);
-
-H5P_mt_prop_t * 
-    H5P__mt_create_prop(const char *name, void *value_ptr, size_t value_size, 
-                        bool in_prop_class, uint64_t create_version,
-                        H5P_prp_create_func_t prp_create, H5P_prp_set_func_t prp_set, 
-                        H5P_prp_get_func_t prp_get, H5P_prp_encode_func_t prp_encode,
-                        H5P_prp_decode_func_t prp_decode, H5P_prp_delete_func_t prp_del,
-                        H5P_prp_copy_func_t prp_copy, H5P_prp_compare_func_t prp_cmp,
-                        H5P_prp_close_func_t prp_close);
-
-H5P_mt_prop_t * 
-    H5P__mt_alloc_prop(void);
-
-herr_t
-    H5P__mt_copy_lfsll(void* param, H5P_mt_prop_t* old_prop, uint64_t version);
-
-herr_t 
-    H5P__mt_ins_or_mod_prop__main(void *param, const char *name, void *value, 
-                        size_t size, bool create, bool copy,
-                        H5P_prp_create_func_t prp_create, H5P_prp_set_func_t prp_set, 
-                        H5P_prp_get_func_t prp_get, H5P_prp_encode_func_t prp_encode,
-                        H5P_prp_decode_func_t prp_decode, H5P_prp_delete_func_t prp_del,
-                        H5P_prp_copy_func_t prp_copy, H5P_prp_compare_func_t prp_cmp,
-                        H5P_prp_close_func_t prp_close);
-
-herr_t 
-    H5P__mt_ins_or_mod_prop__lfsll_ins(H5P_mt_prop_t *pl_head, H5P_mt_prop_t *new_prop, 
-                                       uint32_t *deletes_ptr, uint32_t *nodes_visited_ptr, 
-                                       uint32_t *thrd_cols_ptr);
-
-herr_t 
-    H5P__set_delete_version(void *param, H5P_mt_prop_t *target_prop);
-
-H5P_mt_prop_t * 
-    H5P__mt_search_prop(void *param, int64_t chksum, const char *name);
-
-H5P_mt_list_table_entry_t * 
-    H5P__mt_search_lkup_tbl(H5P_mt_list_table_entry_t * lkup_tbl, 
-                            uint32_t left_entry,
-                            uint32_t right_entry,
-                            int64_t  chksum);
-
-H5P_mt_prop_t *
-    H5P__mt_search_lfsll(H5P_mt_prop_t *pl_head, int64_t chksum, uint64_t version);
-
-H5P_mt_prop_t * 
-    H5P__mt_entry_find_version(H5P_mt_list_table_entry_t * entry, uint64_t version, 
-                               bool *base_flag);
-
-herr_t 
-    H5P__find_mod_point(H5P_mt_prop_t *pl_head, H5P_mt_prop_t **first_ptr_ptr, 
-                           H5P_mt_prop_t **second_ptr_ptr, uint32_t *deletes_ptr, 
-                           uint32_t *nodes_visited_ptr, uint32_t *thrd_cols_ptr, 
-                           H5P_mt_prop_t *target_prop);
-
-H5P_mt_prop_t * 
-    H5P__get_next_valid_prop(H5P_mt_prop_t *prop, uint64_t version);
-
-H5P_mt_prop_t * 
-    H5P__find_valid_version(H5P_mt_prop_t *prop, uint64_t version);
-
-int32_t 
-    H5P__is_valid(H5P_mt_prop_t *prop, uint64_t version);
-
-int32_t
-    H5P__mt_compare_prop(H5P_mt_prop_t *prop1, H5P_mt_prop_t *prop2);
-
-int32_t
-    H5P__mt_is_equal(H5P_mt_prop_t *prop1, H5P_mt_prop_t *prop2);
-
-int32_t
-    H5P__mt_cmp_list_or_class(void *param1, void *param2);
-
-uint64_t
-    H5P__mt_get_version(void *param);
-
-herr_t 
-    H5P__mt_close_prop(H5P_mt_prop_t *prop);
-
-H5P_mt_prop_t * 
-    H5P__clear_mt_prop(H5P_mt_prop_t *prop);
-
-herr_t
-    H5P__mt_close_class(H5P_mt_class_t *class);
-
-H5P_mt_class_t *
-    H5P__clear_mt_class(H5P_mt_class_t *class);
-
-herr_t
-    H5P__mt_close_list(H5P_mt_list_t *list);
-
-H5P_mt_list_t * 
-    H5P__clear_mt_list(H5P_mt_list_t *list);
-
-
-uint64_t H5P__mt_version_check(void *param, uint64_t curr_version, 
-                               uint64_t next_version);
-
-herr_t H5P__inc_thrd_count(void *param);
-
-herr_t H5P__dec_thrd_count(void *param);
-
-herr_t H5P__inc_ref_count(H5P_mt_class_t *parent, bool plc);
-
-herr_t H5P__dec_ref_count(H5P_mt_class_t *parent, bool plc);
-
-int64_t H5P__calc_checksum(const char *name);
-
-herr_t H5P__mt_get_value(H5P_mt_list_t *list, int64_t chksum, const char *name,
-                         void *value_ptr);
-
-herr_t H5P__mt_encode(H5P_mt_list_t *list, uint64_t version, 
-                   void *buf, size_t *nalloc);
-
-herr_t H5P__mt_encode_prop(H5P_mt_prop_t *prop, bool encode, 
-                        size_t *encode_size, uint8_t **p);
-
-/* Stats functions */
-herr_t H5P__reset_stats_global(void);
-
-herr_t H5P__init_stats_class(H5P_mt_class_t *class);
-
-herr_t H5P__reset_stats_class(H5P_mt_class_t *class);
-
-herr_t H5P__init_stats_list(H5P_mt_list_t *list);
-
-herr_t H5P__reset_stats_list(H5P_mt_list_t *list);
-
-herr_t H5P__dump_stats_global(FILE *file_ptr);
-
-herr_t H5P__dump_stats_class(FILE *file_ptr, H5P_mt_class_t *class);
-
-herr_t H5P__dump_stats_list(FILE *file_ptr, H5P_mt_list_t *list);
-
-/* shutdown function for internal testing */
-void H5P__shutdown(void);
-
-
-
-
 /*********************/
 /* Package Variables */
 /*********************/
@@ -517,6 +349,11 @@ H5P__mt_create_class(H5P_mt_class_t *parent, const char *name, H5P_plist_type_t 
      */
     if ( test_version > 0 )
     {
+        if ( test_version <= parent_version )
+        {
+            printf("test_version: %ld\nparent_version: %ld\n", test_version, parent_version);
+        }
+
         assert(test_version <= parent_version);
 
         parent_version = test_version;
@@ -628,13 +465,14 @@ H5P__mt_create_class(H5P_mt_class_t *parent, const char *name, H5P_plist_type_t 
      */
 
 
-
+#if 0 /* Must be done outside this function, after being registered in the index */
     /* update thrd struct of the new_class to reflect it is no longer opening */
     thrd.count   = 0;
     thrd.opening = FALSE;
     thrd.closing = FALSE;
 
     atomic_store(&(new_class->thrd), thrd);
+#endif
 
 
     ret_value = new_class;
@@ -715,6 +553,9 @@ H5P__mt_alloc_class(void)
             {
                 /* failed, update stats and try again */
                 atomic_fetch_add(&(H5P_mt_g.class_fl_head_update_cols), 1);
+
+                /* assert is to not get stuck in an infinite loop while testing */
+                assert(H5P_MT_ASSERT_FAIL);
             }
             else
             {
@@ -743,7 +584,7 @@ done:
 
 
 /****************************************************************************************
- * Function:    H5P__create_list
+ * Function:    H5P__mt_create_list
  *
  * Purpose:     Function to create a new property list (H5P_mt_list_t) derived from a 
  *              property list class (H5P_mt_class_t), or to create a new property list
@@ -825,8 +666,8 @@ done:
  ****************************************************************************************
  */
 H5P_mt_list_t *
-H5P__mt_create_list(H5P_mt_class_t *parent, H5P_mt_list_t *old_list, bool copy,
-                    uint64_t test_version, bool app_ref)
+H5P__mt_create_list(H5P_mt_class_t *parent, H5P_mt_list_t *old_list, 
+                    bool copy, uint64_t test_version, bool app_ref)
 {
     H5P_mt_list_t              * new_list = NULL;
     hid_t                        parent_id;
@@ -1122,6 +963,9 @@ H5P__mt_alloc_list(void)
             {
                 /* failed, update stats and try again */
                 atomic_fetch_add(&(H5P_mt_g.list_fl_head_update_cols), 1);
+
+                /* assert is to not get stuck in an infinite loop while testing */
+                assert(H5P_MT_ASSERT_FAIL);
             }
             else
             {
@@ -1232,17 +1076,21 @@ H5P__init_lkup_tbl(H5P_mt_class_t *parent, uint64_t version, H5P_mt_list_t *new_
     } while ( valid_prop );
 
 
-    /* Allocate the lkup_tbl array */
-
-    assert(new_list->nprops_inherited > 0);
-
-    /* Allocates the number of entries needed in the lkup_tbl */
-    new_list->lkup_tbl = (H5P_mt_list_table_entry_t *)malloc(new_list->nprops_inherited * 
-                                                      sizeof(H5P_mt_list_table_entry_t));
-    if ( NULL == new_list->lkup_tbl )
-    {    
-        assert(H5P_MT_ASSERT_FAIL);
-        HGOTO_ERROR(H5E_PLIST, H5E_CANTALLOC, FAIL, "lkup_tbl allocation failed");
+    /* Allocate the lkup_tbl array, as long as there are inherited props */
+    if ( new_list->nprops_inherited > 0 )
+    {
+        /* Allocates the number of entries needed in the lkup_tbl */
+        new_list->lkup_tbl = (H5P_mt_list_table_entry_t *)malloc(new_list->nprops_inherited * 
+                                                        sizeof(H5P_mt_list_table_entry_t));
+        if ( NULL == new_list->lkup_tbl )
+        {    
+            assert(H5P_MT_ASSERT_FAIL);
+            HGOTO_ERROR(H5E_PLIST, H5E_CANTALLOC, FAIL, "lkup_tbl allocation failed");
+        }
+    }
+    else 
+    {
+        new_list->lkup_tbl = NULL;
     }
 
     nprops = 0;
@@ -1250,101 +1098,104 @@ H5P__init_lkup_tbl(H5P_mt_class_t *parent, uint64_t version, H5P_mt_list_t *new_
     parent_prop = parent->pl_head;
 
     /* Set up each lkup_tbl entry to the valid properties in the parent's LFSLL */
-    do
+    if ( new_list->lkup_tbl )
     {
-        valid_prop = H5P__get_next_valid_prop(parent_prop, version);
-
-        if ( valid_prop )
+        do
         {
-            /* Initialize the entry's fields */
+            valid_prop = H5P__get_next_valid_prop(parent_prop, version);
 
-            entry = &new_list->lkup_tbl[nprops];
-
-            entry->chksum = valid_prop->chksum;
-            entry->name   = strdup(valid_prop->name);
-
-            /** 
-             * If the valid_prop has the create callback, set the base.ptr to NULL and
-             * create a new prop struct. Call the create callback and insert new_prop 
-             * into the new list's LFSLL.
-             */
-            if ( valid_prop->create )
+            if ( valid_prop )
             {
-                base.ptr = NULL;
-                base.ver = 1;
-                atomic_store(&(entry->base), base);
+                /* Initialize the entry's fields */
 
-                atomic_store(&(entry->base_delete_version), 0);
+                entry = &new_list->lkup_tbl[nprops];
 
-                valid_prop_value = atomic_load(&(valid_prop->value));
+                entry->chksum = valid_prop->chksum;
+                entry->name   = strdup(valid_prop->name);
 
-                new_prop = H5P__mt_create_prop(valid_prop->name, valid_prop_value.ptr,
-                                               valid_prop_value.size, FALSE, 1,
-                                               valid_prop->create, valid_prop->set, 
-                                               valid_prop->get, valid_prop->encode, 
-                                               valid_prop->decode, valid_prop->del, 
-                                               valid_prop->copy, valid_prop->cmp, 
-                                               valid_prop->close);
-                if ( NULL == new_prop )
-                    HGOTO_ERROR(H5E_PLIST, H5E_CANTINIT, FAIL, 
-                                "Failed creating property for property list.");
-
-
-                /* Call the create callback */
-                if ( (new_prop->create)(new_prop->name, valid_prop_value.size,
-                                                        valid_prop_value.ptr) < 0 )
+                /** 
+                 * If the valid_prop has the create callback, set the base.ptr to NULL and
+                 * create a new prop struct. Call the create callback and insert new_prop 
+                 * into the new list's LFSLL.
+                 */
+                if ( valid_prop->create )
                 {
-                    assert(H5P_MT_ASSERT_FAIL);
-                    HGOTO_ERROR(H5E_PLIST, H5E_CANTCREATE, FAIL, "Can't create property");
+                    base.ptr = NULL;
+                    base.ver = 1;
+                    atomic_store(&(entry->base), base);
+
+                    atomic_store(&(entry->base_delete_version), 0);
+
+                    valid_prop_value = atomic_load(&(valid_prop->value));
+
+                    new_prop = H5P__mt_create_prop(valid_prop->name, valid_prop_value.ptr,
+                                                valid_prop_value.size, FALSE, 1,
+                                                valid_prop->create, valid_prop->set, 
+                                                valid_prop->get, valid_prop->encode, 
+                                                valid_prop->decode, valid_prop->del, 
+                                                valid_prop->copy, valid_prop->cmp, 
+                                                valid_prop->close);
+                    if ( NULL == new_prop )
+                        HGOTO_ERROR(H5E_PLIST, H5E_CANTINIT, FAIL, 
+                                    "Failed creating property for property list.");
+
+
+                    /* Call the create callback */
+                    if ( (new_prop->create)(new_prop->name, valid_prop_value.size,
+                                                            valid_prop_value.ptr) < 0 )
+                    {
+                        assert(H5P_MT_ASSERT_FAIL);
+                        HGOTO_ERROR(H5E_PLIST, H5E_CANTCREATE, FAIL, "Can't create property");
+                    }
+
+                    new_prop->in_lkup_tbl = TRUE;
+
+                    /* Inserts the new_prop into the new_list's LFSLL */
+                    H5P__mt_ins_or_mod_prop__lfsll_ins(new_list->pl_head,
+                                                    new_prop,
+                                                    &deletes,
+                                                    &nodes_visited,
+                                                    &thrd_cols);
+
+                    atomic_fetch_add(&(new_list->log_pl_len), 1);
+                    atomic_fetch_add(&(new_list->phys_pl_len), 1);
+
+                    curr.ptr = new_prop;
+                    curr.ver = 1;
+                    atomic_store(&(entry->curr), curr);
+
+                } /* end if ( valid_prop->create ) */
+
+                /** 
+                 * If new prop doesn't have the create callback set base.ptr to point to the
+                 * parent and curr.ptr to NULL
+                 */
+                else
+                {
+                    base.ptr = atomic_load(&(valid_prop));
+                    base.ver = 1;
+                    atomic_store(&(entry->base), base);
+        
+                    atomic_fetch_add(&(valid_prop->ref_count), 1);
+                    
+                    atomic_store(&(entry->base_delete_version), 0);
+        
+                    curr.ptr = NULL;
+                    curr.ver = 0;
+                    atomic_store(&(entry->curr), curr);
                 }
 
-                new_prop->in_lkup_tbl = TRUE;
+                /* Increment number of properties */
+                nprops++;
+                assert(nprops <= new_list->nprops_inherited);
 
-                /* Inserts the new_prop into the new_list's LFSLL */
-                H5P__mt_ins_or_mod_prop__lfsll_ins(new_list->pl_head,
-                                                   new_prop,
-                                                   &deletes,
-                                                   &nodes_visited,
-                                                   &thrd_cols);
+                /* Iterate in the parent's LFSLL to look for the next valid_prop */
+                parent_prop = valid_prop;
+            
+            } /* end if ( valid_prop ) */
 
-                atomic_fetch_add(&(new_list->log_pl_len), 1);
-                atomic_fetch_add(&(new_list->phys_pl_len), 1);
-
-                curr.ptr = new_prop;
-                curr.ver = 1;
-                atomic_store(&(entry->curr), curr);
-
-            } /* end if ( valid_prop->create ) */
-
-            /** 
-             * If new prop doesn't have the create callback set base.ptr to point to the
-             * parent and curr.ptr to NULL
-             */
-            else
-            {
-                base.ptr = atomic_load(&(valid_prop));
-                base.ver = 1;
-                atomic_store(&(entry->base), base);
-    
-                atomic_fetch_add(&(valid_prop->ref_count), 1);
-                
-                atomic_store(&(entry->base_delete_version), 0);
-    
-                curr.ptr = NULL;
-                curr.ver = 0;
-                atomic_store(&(entry->curr), curr);
-            }
-
-            /* Increment number of properties */
-            nprops++;
-            assert(nprops <= new_list->nprops_inherited);
-
-            /* Iterate in the parent's LFSLL to look for the next valid_prop */
-            parent_prop = valid_prop;
-        
-        } /* end if ( valid_prop ) */
-
-    } while ( valid_prop );
+        } while ( valid_prop );
+    }
     
     assert(nprops == new_list->nprops_inherited);
 
@@ -1493,6 +1344,9 @@ H5P__init_lkup_tbl_copy(H5P_mt_list_t* old_list, uint64_t version,
                 {
                     /* failed, update stats and try again */
                     atomic_fetch_add(&(parent->num_prop_ref_count_cols), 1);
+
+                    /* assert is to not get stuck in an infinite loop while testing */
+                    assert(H5P_MT_ASSERT_FAIL);
                 }
                 else
                 {
@@ -1541,6 +1395,7 @@ H5P__init_lkup_tbl_copy(H5P_mt_list_t* old_list, uint64_t version,
                 if ( NULL == new_prop )
                     HGOTO_ERROR(H5E_PLIST, H5E_CANTINIT, FAIL, 
                                 "Failed creating property for property list.");
+
 
 #if H5P_MT_SINGLE_THREAD_TESTING
 #else
@@ -1735,7 +1590,7 @@ done:
  ****************************************************************************************
  */
 H5P_mt_prop_t *
-H5P__mt_create_prop(const char *name, void *value_ptr, size_t value_size, 
+H5P__mt_create_prop(const char *name, const void *value_ptr, size_t value_size, 
                     bool in_prop_class, uint64_t version,
                     H5P_prp_create_func_t prp_create, H5P_prp_set_func_t prp_set, 
                     H5P_prp_get_func_t prp_get, H5P_prp_encode_func_t prp_encode,
@@ -1882,6 +1737,9 @@ H5P__mt_alloc_prop(void)
             {
                 /* failed, update stats and try again */
                 atomic_fetch_add(&(H5P_mt_g.prop_fl_head_update_cols), 1);
+
+                /* assert is to not get stuck in an infinite loop while testing */
+                assert(H5P_MT_ASSERT_FAIL);
             }
             else
             {
@@ -2284,7 +2142,11 @@ H5P__mt_ins_or_mod_prop__main(void *param, const char *name, void *value, size_t
                 }
             }
         }
-    #if 0
+/**
+ * This section is currently be done in H5P_set() in H5Pint.c,
+ * and if it works well there this will be removed.
+ */
+#if 0
         /* If set is TRUE and a set callback exists call it */
         else if ( set )
         {
@@ -2370,6 +2232,9 @@ H5P__mt_ins_or_mod_prop__main(void *param, const char *name, void *value, size_t
                     {
                         /* attempt failed, update stats and try again */
                         atomic_fetch_add(&(list->num_insert_update_entry_cols), 1);
+
+                        /* assert is to not get stuck in an infinite loop while testing */
+                        assert(H5P_MT_ASSERT_FAIL);
                     }
                     else
                     {
@@ -2576,7 +2441,10 @@ H5P__mt_ins_or_mod_prop__lfsll_ins(H5P_mt_prop_t *pl_head,
         if ( ! atomic_compare_exchange_strong(&(first_prop->next),
                                                 &next, updated_next) )
         {
-            thrd_cols++;                    
+            thrd_cols++;
+            
+            /* assert is to not get stuck in an infinite loop while testing */
+            assert(H5P_MT_ASSERT_FAIL);
         }
         else /* The attempt was successful update stats mark done */
         {
@@ -3057,9 +2925,12 @@ H5P__mt_search_prop(void *param, int64_t chksum, const char *name)
                     assert(base.ptr);
 
                     /* If the base_delete_version isn't set then ret_value = base.ptr */
-                    if ( entry->base_delete_version == 0 )
+                    if ( entry->base_delete_version == 0  || 
+                         entry->base_delete_version > curr_version )
                     {
-                        ret_value = base.ptr;
+                        prop = base.ptr;
+
+                        ret_value = prop;
 
                         atomic_fetch_add(&(list->num_search_success), 1);
 
@@ -3239,10 +3110,10 @@ H5P__mt_entry_find_version(H5P_mt_list_table_entry_t * entry, uint64_t version,
     uint64_t               curr_create_ver;
     uint64_t               curr_delete_ver;
     uint64_t               base_delete_ver;
-    bool                   done = FALSE;
-    bool                   is_base = FALSE;
+    bool                   done      = FALSE;
+    bool                   is_base   = FALSE;
 
-    H5P_mt_prop_t        * ret_value;
+    H5P_mt_prop_t        * ret_value = NULL;
 
     FUNC_ENTER_NOAPI_NOERR
 
@@ -3250,7 +3121,12 @@ H5P__mt_entry_find_version(H5P_mt_list_table_entry_t * entry, uint64_t version,
     curr = atomic_load(&(entry->curr));
     base = atomic_load(&(entry->base));
 
-    if ( curr.ptr )
+    /**
+     * If curr isn't NULL and the version being searched for isn't less than
+     * the version at which curr first was created, search for the valid 
+     * version in the LFSLL.
+     */
+    if ( curr.ptr && (version >= (atomic_load(&(entry->first_ver_of_curr)))) )
     {
         /**
          * Ensure the prop curr is the correct version, and not marked deleted
@@ -3297,7 +3173,7 @@ H5P__mt_entry_find_version(H5P_mt_list_table_entry_t * entry, uint64_t version,
 
     } /* end if ( curr.ptr ) */
 
-    /* If done is FALSE when we get here, check the base */
+    /* If done is FALSE when we get here, check the base isn't deleted for our version */
     if ( ! done )
     {
         base_delete_ver = atomic_load(&(entry->base_delete_version));
@@ -3520,16 +3396,16 @@ H5P__mt_search_lfsll(H5P_mt_prop_t *pl_head, int64_t chksum, uint64_t version)
     {
         valid_prop = H5P__get_next_valid_prop(lfsll_prop, version);
 
+        /* If valid prop is NULL we searched the lfsll and there isn't a valid version */
+        if ( valid_prop == NULL )
+        {
+            done = TRUE;
+        }
         /* If the valid prop chksum matches the target chksum return valid prop */
-        if (valid_prop->chksum == chksum)
+        else if (valid_prop->chksum == chksum)
         {
             ret_value = valid_prop;
             
-            done = TRUE;
-        }
-        /* If valid prop is NULL we searched the lfsll and there isn't a valid version */
-        else if ( valid_prop == NULL )
-        {
             done = TRUE;
         }
         else
@@ -4897,6 +4773,9 @@ H5P__mt_close_prop(H5P_mt_prop_t *prop)
             {
                 /* failed, update stats and try again */
                 atomic_fetch_add(&(H5P_mt_g.prop_fl_next_update_cols), 1);
+
+                /* assert is to not get stuck in an infinite loop while testing */
+                assert(H5P_MT_ASSERT_FAIL);
             }
             else
             {
@@ -4925,6 +4804,9 @@ H5P__mt_close_prop(H5P_mt_prop_t *prop)
         {
             /* failed, updated stats and try again */
             atomic_fetch_add(&(H5P_mt_g.prop_fl_tail_update_cols), 1);
+
+            /* assert is to not get stuck in an infinite loop while testing */
+            assert(H5P_MT_ASSERT_FAIL);
         }
         else
         {
@@ -4961,6 +4843,9 @@ H5P__mt_close_prop(H5P_mt_prop_t *prop)
             {
                 /* failed, updated stats and try again */
                 atomic_fetch_add(&(H5P_mt_g.prop_fl_head_update_cols), 1);
+
+                /* assert is to not get stuck in an infinite loop while testing */
+                assert(H5P_MT_ASSERT_FAIL);
             }
             else
             {
@@ -5068,6 +4953,9 @@ H5P__mt_close_class(H5P_mt_class_t * class)
             {
                 /* failed, update stats */
                 atomic_fetch_add(&(class->num_ref_count_cols), 1);
+
+                /* assert is to not get stuck in an infinite loop while testing */
+                assert(H5P_MT_ASSERT_FAIL);
             }
             else
             {
@@ -5109,8 +4997,7 @@ H5P__mt_close_class(H5P_mt_class_t * class)
         /* Set the closing flag to TRUE to prevent new threads from entering the struct */
         do 
         {
-            assert(local_thrd.opening == FALSE);
-            assert(local_thrd.count == 0);
+            local_thrd = atomic_load(&(class->thrd));
 
             closing_thrd = local_thrd;
             closing_thrd.closing = TRUE;
@@ -5120,6 +5007,9 @@ H5P__mt_close_class(H5P_mt_class_t * class)
             {
                 /* failed, update stats and try again */
                 atomic_fetch_add(&(class->num_thrd_update_cols), 1);
+
+                /* assert is to not get stuck in an infinite loop while testing */
+                assert(H5P_MT_ASSERT_FAIL);
             }
             else
             {
@@ -5134,6 +5024,9 @@ H5P__mt_close_class(H5P_mt_class_t * class)
         assert(done);
         done = FALSE;
 
+        local_thrd = atomic_load(&(class->thrd));
+        assert(local_thrd.closing);
+
         /* If the struct is opening or has other threads wait and try again */
         do 
         {
@@ -5141,11 +5034,18 @@ H5P__mt_close_class(H5P_mt_class_t * class)
             if ( local_thrd.opening )
             {
                 atomic_fetch_add(&(class->num_thrd_opening_flag_set), 1);
+
+                /** NOTE: This assert is to prevent an infinite loop while testing */
+                assert(H5P_MT_ASSERT_FAIL);
+                
                 sleep(1);
             }
             /* If there are any other threads in the struct, wait for them to drain out */
             else if ( local_thrd.count > 0 )
             {
+                /** NOTE: This assert is to prevent an infinite loop while testing */
+                assert(H5P_MT_ASSERT_FAIL);
+
                 sleep(1);
             }
             else
@@ -5212,6 +5112,9 @@ H5P__mt_close_class(H5P_mt_class_t * class)
                 {
                     /* failed, update stats and try again */
                     atomic_fetch_add(&(H5P_mt_g.class_fl_next_update_cols), 1);
+
+                    /* assert is to not get stuck in an infinite loop while testing */
+                    assert(H5P_MT_ASSERT_FAIL);
                 }
                 else
                 {
@@ -5242,6 +5145,9 @@ H5P__mt_close_class(H5P_mt_class_t * class)
             {
                 /* failed, updated stats and try again */
                 atomic_fetch_add(&(H5P_mt_g.class_fl_tail_update_cols), 1);
+
+                /* assert is to not get stuck in an infinite loop while testing */
+                assert(H5P_MT_ASSERT_FAIL);
             }
             else
             {
@@ -5280,6 +5186,9 @@ H5P__mt_close_class(H5P_mt_class_t * class)
                 {
                     /* failed, updated stats and try again */
                     atomic_fetch_add(&(H5P_mt_g.class_fl_head_update_cols), 1);
+
+                    /* assert is to not get stuck in an infinite loop while testing */
+                    assert(H5P_MT_ASSERT_FAIL);
                 }
                 else
                 {
@@ -5501,8 +5410,7 @@ H5P__mt_close_list(H5P_mt_list_t * list)
     /* Atomically set the closing to be TRUE */
     do
     {
-        assert(local_thrd.opening == FALSE);
-        assert(local_thrd.count == 0);
+        local_thrd = atomic_load(&(list->thrd));
 
         closing_thrd = local_thrd;
         closing_thrd.closing = TRUE;
@@ -5512,6 +5420,10 @@ H5P__mt_close_list(H5P_mt_list_t * list)
         {
             /* failed, update stats and try again */
             atomic_fetch_add(&(list->num_thrd_update_cols), 1);
+
+
+            /* assert is to not get stuck in an infinite loop while testing */
+            assert(H5P_MT_ASSERT_FAIL);
         }
         else
         {
@@ -5523,10 +5435,11 @@ H5P__mt_close_list(H5P_mt_list_t * list)
         
     } while ( ! done );
 
-
     assert(done);
     done = FALSE;
 
+    local_thrd = atomic_load(&(list->thrd));
+    assert(local_thrd.closing);
 
     /* Ensure struct isn't opening, and that it's empty of other threads */
     do
@@ -5535,11 +5448,18 @@ H5P__mt_close_list(H5P_mt_list_t * list)
         if ( local_thrd.opening )
         {
             atomic_fetch_add(&(list->num_thrd_opening_flag_set), 1);
+
+            /** NOTE: This assert is to prevent an infinite loop while testing */
+            assert(H5P_MT_ASSERT_FAIL);
+
             sleep(1);
         }
         /* If there are any other threads in the struct, wait for them to drain out */
         else if ( local_thrd.count > 0 )
         {
+            /** NOTE: This assert is to prevent an infinite loop while testing */
+            assert(H5P_MT_ASSERT_FAIL);
+
             sleep(1);
         }
         else
@@ -5731,6 +5651,9 @@ H5P__mt_close_list(H5P_mt_list_t * list)
             {
                 /* failed, updated stats and try again */
                 atomic_fetch_add(&(H5P_mt_g.list_fl_next_update_cols), 1);
+
+                /* assert is to not get stuck in an infinite loop while testing */
+                assert(H5P_MT_ASSERT_FAIL);
             }
             else
             {
@@ -5761,6 +5684,9 @@ H5P__mt_close_list(H5P_mt_list_t * list)
         {
             /* failed, updated stats and try again */
             atomic_fetch_add(&(H5P_mt_g.list_fl_tail_update_cols), 1);
+
+            /* assert is to not get stuck in an infinite loop while testing */
+            assert(H5P_MT_ASSERT_FAIL);
         }
         else
         {
@@ -5778,7 +5704,7 @@ H5P__mt_close_list(H5P_mt_list_t * list)
 
     
     /**
-     * If this is the first class added to the class free list, have the
+     * If this is the first list added to the list free list, have the
      * head pointer point to it as well.
      */
     fl_head = atomic_load(&(H5P_mt_g.list_fl_head));
@@ -5799,6 +5725,9 @@ H5P__mt_close_list(H5P_mt_list_t * list)
             {
                 /* failed, updated stats and try again */
                 atomic_fetch_add(&(H5P_mt_g.list_fl_head_update_cols), 1);
+
+                /* assert is to not get stuck in an infinite loop while testing */
+                assert(H5P_MT_ASSERT_FAIL);
             }
             else
             {
@@ -6236,6 +6165,9 @@ H5P__inc_thrd_count(void *param)
                 {
                     /* attempt failed, update stats and try again */
                     atomic_fetch_add(&(class->num_thrd_update_cols), 1);
+
+                    /* assert is to not get stuck in an infinite loop while testing */
+                    assert(H5P_MT_ASSERT_FAIL);
                 }
                 else
                 {
@@ -6252,6 +6184,9 @@ H5P__inc_thrd_count(void *param)
                 {
                     /* attempt failed, update stats and try again */
                     atomic_fetch_add(&(list->num_thrd_update_cols), 1);
+
+                    /* assert is to not get stuck in an infinite loop while testing */
+                    assert(H5P_MT_ASSERT_FAIL);
                 }
                 else
                 {
@@ -6354,6 +6289,9 @@ H5P__dec_thrd_count(void *param)
             {
                 /* attempt failed, update stats and try again */
                 atomic_fetch_add(&(class->num_thrd_update_cols), 1);
+
+                /* assert is to not get stuck in an infinite loop while testing */
+                assert(H5P_MT_ASSERT_FAIL);
             }
             else
             {
@@ -6370,6 +6308,9 @@ H5P__dec_thrd_count(void *param)
             {
                 /* attempt failed, update stats and try again */
                 atomic_fetch_add(&(list->num_thrd_update_cols), 1);
+
+                /* assert is to not get stuck in an infinite loop while testing */
+                assert(H5P_MT_ASSERT_FAIL);
             }
             else
             {
@@ -6435,6 +6376,9 @@ H5P__inc_ref_count(H5P_mt_class_t *parent, bool plc)
         {
             /* attempt failed, update stats and try again */
             atomic_fetch_add(&(parent->num_ref_count_cols), 1);
+
+            /* assert is to not get stuck in an infinite loop while testing */
+            assert(H5P_MT_ASSERT_FAIL);
         }
         else /* Attempt was successful */
         {
@@ -6500,6 +6444,9 @@ H5P__dec_ref_count(H5P_mt_class_t *parent, bool plc)
         {
             /* attempt failed, update stats and try again */
             atomic_fetch_add(&(parent->num_ref_count_cols), 1);
+
+            /* assert is to not get stuck in an infinite loop while testing */
+            assert(H5P_MT_ASSERT_FAIL);
         }
         else /* Attempt was successful */
         {
