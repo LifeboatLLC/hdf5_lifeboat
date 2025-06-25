@@ -93,6 +93,10 @@ static herr_t         H5VL__new_vol_wrapper(const H5VL_object_t *vol_obj, H5VL_w
 
 #ifdef H5_HAVE_MULTITHREAD
 static herr_t H5VL__get_registered_connector_mt(H5VL_get_connector_ud_t *op_data, bool inc_ref, bool app_ref);
+static herr_t H5VL__init_H5VL_mt_g(void);
+static H5VL_object_t * H5VL__alloc_vol_obj(void);
+static herr_t H5VL__clear_vol_obj_free_list(void);
+static herr_t H5VL__discard_vol_obj(H5VL_object_t * vol_obj_ptr);
 #else
 static int    H5VL__get_connector_cb(void *obj, hid_t id, void *_op_data);
 static herr_t H5VL__get_registered_connector_st(H5VL_get_connector_ud_t *op_data, bool inc_ref, bool app_ref);
@@ -122,6 +126,14 @@ static herr_t H5VL__get_registered_connector(H5VL_get_connector_ud_t *op_data, b
 /*****************************/
 /* Library Private Variables */
 /*****************************/
+
+/* Declared extern in H5VLpkg.h and documented there */
+#ifdef H5_HAVE_MULTITHREAD
+
+H5VL_mt_t              H5VL_mt_g;
+
+#endif /* H5_HAVE_MULTITHREAD */                                      
+
 
 /*******************/
 /* Local Variables */
@@ -174,6 +186,13 @@ H5VL_init_phase1(void)
     /* Initialize the ID group for the VL IDs */
     if (H5I_register_type(H5I_VOL_CLS) < 0)
         HGOTO_ERROR(H5E_VOL, H5E_CANTINIT, FAIL, "unable to initialize H5VL interface");
+
+#ifdef H5_HAVE_MULTITHREAD
+
+    if (H5VL__init_H5VL_mt_g() < 0)
+        HGOTO_ERROR(H5E_VOL, H5E_CANTINIT, FAIL, "unable to initialize H5VL_mt_g");
+
+#endif /* H5_HAVE_MULTITHREAD */
 
 done:
     FUNC_LEAVE_NOAPI(ret_value)
@@ -285,6 +304,38 @@ H5VL_term_package(void)
             } /* end else */
         }     /* end else */
     }         /* end else */
+
+#ifdef H5_HAVE_MULTITHREAD
+    {
+        herr_t result;
+        int64_t vol_objs_active;
+
+        vol_objs_active = atomic_load(&(H5VL_mt_g.vol_objs_active));
+
+        assert(vol_objs_active >= 0);
+
+        if ( 0 == vol_objs_active ) {
+
+            /* the number of active instances of H5VL_object_t has dropped to zero.
+             * If we have not done so already we can take down the vol object free
+             * list.
+             *
+             * Note the hidden assumption that we are running single thread by 
+             * the time we get to this point.
+             */
+            H5VL_mt_vol_obj_sptr_t vol_obj_fl_shead;
+
+            vol_obj_fl_shead = atomic_load(&(H5VL_mt_g.vol_obj_fl_shead));
+
+            if ( vol_obj_fl_shead.ptr ) { /* i.e. the free list still exists */
+
+                /* discard the contents of the vol object free list */
+                result = H5VL__clear_vol_obj_free_list();
+                assert( result >= 0 );
+            }
+        }
+    }
+#endif /* H5_HAVE_MULTITHREAD */
 
     FUNC_LEAVE_NOAPI(n)
 } /* end H5VL_term_package() */
@@ -541,8 +592,21 @@ H5VL__new_vol_obj(H5I_type_t type, void *object, H5VL_t *vol_connector, hbool_t 
     conn_rc_incr = TRUE;
 
     /* Create the new VOL object */
+#ifdef H5_HAVE_MULTITHREAD
+
+    if ( NULL == (new_vol_obj = H5VL__alloc_vol_obj()) )
+        HGOTO_ERROR(H5E_VOL, H5E_CANTALLOC, NULL, "can't allocate memory for VOL object");
+
+    assert(H5VL__VOL_OBJ_TAG == new_vol_obj->tag);
+    assert(!atomic_load(&(new_vol_obj->on_fl)));
+
+#else /* H5_HAVE_MULTITHREAD */
+
     if (NULL == (new_vol_obj = H5FL_CALLOC_MT(H5VL_object_t)))
         HGOTO_ERROR(H5E_VOL, H5E_CANTALLOC, NULL, "can't allocate memory for VOL object");
+
+#endif /* H5_HAVE_MULTITHREAD */
+
     new_vol_obj->connector = vol_connector;
     if (wrap_obj) {
         if (NULL == (new_vol_obj->data = H5VL__wrap_obj(object, type)))
@@ -903,8 +967,21 @@ H5VL_create_object(void *object, H5VL_t *vol_connector)
 
     /* Set up VOL object for the passed-in data */
     /* (Does not wrap object, since it's from a VOL callback) */
+
+#ifdef H5_HAVE_MULTITHREAD
+
+    if (NULL == (ret_value = H5VL__alloc_vol_obj()) )
+        HGOTO_ERROR(H5E_VOL, H5E_CANTALLOC, NULL, "can't allocate memory for VOL object");
+
+    assert(H5VL__VOL_OBJ_TAG == ret_value->tag);
+    assert(!atomic_load(&(ret_value->on_fl)));
+
+#else /* H5_HAVE_MULTITHREAD */
+
     if (NULL == (ret_value = H5FL_CALLOC_MT(H5VL_object_t)))
         HGOTO_ERROR(H5E_VOL, H5E_CANTALLOC, NULL, "can't allocate memory for VOL object");
+
+#endif /* H5_HAVE_MULTITHREAD */
 
     /* Bump the reference count on the VOL connector */
     H5VL_conn_inc_rc(vol_connector);
@@ -912,7 +989,7 @@ H5VL_create_object(void *object, H5VL_t *vol_connector)
     ret_value->connector = vol_connector;
     ret_value->data      = object;
 #ifdef H5_HAVE_MULTITHREAD
-    atomic_init(&ret_value->rc, 1);
+    atomic_store(&ret_value->rc, 1);
 #else
     ret_value->rc   = 1;
 #endif
@@ -1167,8 +1244,12 @@ H5VL_free_object(H5VL_object_t *vol_obj)
 
         /* Sanity Check */
         assert(atomic_load(&vol_obj->rc) == 0);
-
+#if 1 /* JRM */
+        if ( H5VL__discard_vol_obj(vol_obj) < 0 )
+            HGOTO_ERROR(H5E_VOL, H5E_SYSTEM, FAIL, "unable to release vol object to the mt free list");
+#else /* JRM */
         vol_obj = H5FL_FREE_MT(H5VL_object_t, vol_obj); 
+#endif /* JRM */
     }
 
 #else
@@ -2187,10 +2268,84 @@ done:
 void *
 H5VL_object_data(const H5VL_object_t *vol_obj)
 {
+    bool  done = FALSE;
+#ifdef H5_HAVE_MULTITHREAD
+    bool  decrement_ref_count = FALSE;
+#endif /* H5_HAVE_MULTITHREAD */
     void *ret_value = NULL;
 
     FUNC_ENTER_NOAPI_NOINIT_NOERR
 
+    /* added code to validate the supplied *vol_obj.  
+     *
+     * Prior to these updated, this function was causing seg faults when 
+     * the vol_obj field pointed to an instance of H5VL_object_t that 
+     * had been deallocated.
+     *
+     * Repaired this in two ways:
+     *
+     * First set up a multi-thread safe free list to avoid referencing 
+     * deallocated instance of H5VL_object_t in this function.
+     *
+     * Second, we check the ref count on the supplied instance of 
+     * H5VL_object_t.  If it has dropped to zero, the instance of 
+     * H5VL_object_t has been discarded.  According to comments 
+     * elsewhere which I have not validated, this is a one way 
+     * process -- so in this case, we simply return NULL.
+     */
+    if ( NULL == vol_obj ) {
+
+        done = TRUE;
+
+#ifdef H5_HAVE_MULTITHREAD
+    } else if ( atomic_load(&(vol_obj->rc)) <= 0 ) {
+
+        assert(H5VL__VOL_OBJ_TAG == vol_obj->tag);
+
+#else /* H5_HAVE_MULTITHREAD */
+    } else if ( vol_obj->rc <= 0 ) {
+#endif /* H5_HAVE_MULTITHREAD */
+
+        done = TRUE;
+
+    } else {
+
+#ifdef H5_HAVE_MULTITHREAD
+
+        /* *vol_obj has (or had) a positive ref count.  
+         * To avoid the possibility of the entry being 
+         * deleted out from under us, increment the 
+         * ref count if this is a multi-thread build,
+         * and decrement it again before returning.
+         *
+         * This is only possible in the multi-thread 
+         * build, so only compile this code in that case.
+         */
+
+        if ( atomic_fetch_add(&(vol_obj->rc), 1) <= 0 ) {
+
+            /* the reference count was decremented out from under us.  
+             *
+             * Increment the ref count and set done to TRUE.
+             */
+            atomic_fetch_sub(&(vol_obj->rc), 1);
+
+            done = TRUE;
+
+        } else {
+
+            decrement_ref_count = TRUE;
+        } 
+
+#endif /* H5_HAVE_MULTITHREAD */
+    }
+    
+    if ( done ) { 
+
+        /* error detected above -- set ret_value to NULL */
+        ret_value = NULL;
+
+    } else 
     /* Check for 'get_object' callback in connector with checks for NULL
      * pointers along the way.  If found, return NULL -- otherwise 
      * proceed as before.
@@ -2207,6 +2362,15 @@ H5VL_object_data(const H5VL_object_t *vol_obj)
 
         ret_value = vol_obj->data;
     }
+
+
+#ifdef H5_HAVE_MULTITHREAD
+    if ( decrement_ref_count ) {
+
+        atomic_fetch_sub(&(vol_obj->rc), 1);
+
+    }
+#endif /* H5_HAVE_MULTITHREAD */
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5VL_object_data() */
@@ -3395,3 +3559,652 @@ H5VL_get_cap_flags(const H5VL_connector_prop_t *connector_prop, uint64_t *cap_fl
 done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5VL_get_cap_flags() */
+
+#ifdef H5_HAVE_MULTITHREAD 
+
+/*-------------------------------------------------------------------------
+ * Function:    H5VL__init_H5VL_mt_g()
+ *
+ * Purpose:     Initialize the various fields of H5VL_mt_g.  
+ *
+ *              In particular, set up the free list.
+ *
+ * Return:      Success:        Non-negative
+ *              Failure:        Negative
+ *
+ *-------------------------------------------------------------------------
+ */
+static herr_t
+H5VL__init_H5VL_mt_g(void) 
+{
+    H5VL_object_t * vol_obj_ptr = NULL;
+    H5VL_mt_vol_obj_sptr_t init_vol_obj_sptr = {NULL, 0ULL};
+    herr_t ret_value = SUCCEED; /* Return value */
+
+    FUNC_ENTER_NOAPI(FAIL)
+
+    /* initialize the id info free list */
+
+    atomic_init(&(H5VL_mt_g.vol_obj_fl_shead), init_vol_obj_sptr);
+    atomic_init(&(H5VL_mt_g.vol_obj_fl_stail), init_vol_obj_sptr);
+    atomic_init(&(H5VL_mt_g.vol_obj_fl_len), 0ULL);
+    atomic_init(&(H5VL_mt_g.max_desired_vol_obj_fl_len), H5VL__MAX_DESIRED_OBJECT_FL_LEN);
+    atomic_init(&(H5VL_mt_g.vol_obj_next_sn), 1ULL);
+    atomic_init(&(H5VL_mt_g.vol_obj_max_realloc_sn), 0ULL);
+
+    /* allocate the initial entry in the vol object free list and initialize the vol object free list */
+    vol_obj_ptr = H5VL__alloc_vol_obj();
+    if ( NULL == vol_obj_ptr)
+        HGOTO_ERROR(H5E_VOL, H5E_CANTINIT, FAIL, "Can't initialize vol object free list -- 1");
+
+    assert(H5VL__VOL_OBJ_TAG == vol_obj_ptr->tag);
+
+    atomic_store(&(vol_obj_ptr->serial_num), 1);
+
+    atomic_store(&(vol_obj_ptr->on_fl), TRUE);
+    atomic_store(&(vol_obj_ptr->serial_num), 1ULL);
+
+    init_vol_obj_sptr.ptr = vol_obj_ptr;
+    init_vol_obj_sptr.sn  = 1ULL;
+
+    atomic_store(&(H5VL_mt_g.vol_obj_fl_shead), init_vol_obj_sptr);
+    atomic_store(&(H5VL_mt_g.vol_obj_fl_stail), init_vol_obj_sptr);
+    atomic_store(&(H5VL_mt_g.vol_obj_fl_len), 1ULL);
+    atomic_store(&(H5VL_mt_g.vol_obj_next_sn), 2ULL);
+    atomic_init(&(H5VL_mt_g.vol_objs_active), 0LL);
+
+
+    /* initialize stats */
+    atomic_init(&(H5VL_mt_g.max_vol_obj_fl_len), 0ULL);
+    atomic_init(&(H5VL_mt_g.num_vol_obj_structs_alloced_from_heap), 0ULL);
+    atomic_init(&(H5VL_mt_g.num_vol_obj_structs_alloced_from_fl), 0ULL);
+    atomic_init(&(H5VL_mt_g.num_vol_obj_structs_freed), 0ULL);
+    atomic_init(&(H5VL_mt_g.num_vol_obj_structs_added_to_fl), 0ULL);
+    atomic_init(&(H5VL_mt_g.num_vol_obj_fl_tail_update_cols), 0ULL);
+    atomic_init(&(H5VL_mt_g.num_vol_obj_fl_head_update_cols), 0ULL);
+    atomic_init(&(H5VL_mt_g.num_vol_obj_fl_append_cols), 0ULL);
+    atomic_init(&(H5VL_mt_g.num_vol_obj_fl_alloc_req_denied_due_to_empty), 0ULL);
+    atomic_init(&(H5VL_mt_g.num_vol_obj_fl_head_sn_is_zero), 0ULL);
+    atomic_init(&(H5VL_mt_g.num_vol_obj_sn_assigned), 0ULL);
+    atomic_init(&(H5VL_mt_g.num_vol_obj_serial_num_resets), 0ULL);
+    atomic_init(&(H5VL_mt_g.num_vol_obj_structs_alloced_from_heap), 0ULL);
+    atomic_init(&(H5VL_mt_g.num_vol_obj_fl_alloc_req_denied_due_to_no_reallocable_entries), 0ULL);
+    atomic_init(&(H5VL_mt_g.num_vol_obj_fl_alloc_req_denied_due_to_empty), 0ULL);
+    atomic_init(&(H5VL_mt_g.num_vol_obj_fl_frees_skipped_due_to_empty), 0ULL);
+    atomic_init(&(H5VL_mt_g.num_vol_obj_fl_frees_skipped_due_to_fl_too_small), 0ULL);
+    atomic_init(&(H5VL_mt_g.num_vol_obj_fl_frees_skipped_due_to_no_reallocable_entries), 0ULL);
+    atomic_init(&(H5VL_mt_g.H5VL__alloc_vol_obj__num_calls), 0ULL);
+    atomic_init(&(H5VL_mt_g.H5VL__clear_vol_obj_free_list__num_calls), 0ULL);
+    atomic_init(&(H5VL_mt_g.H5VL__discard_vol_obj__num_calls), 0ULL);
+
+done:
+
+    FUNC_LEAVE_NOAPI(ret_value)
+
+} /* H5VLL__init_H5VL_mt_g() */
+
+
+/************************************************************************
+ *
+ * H5VL__alloc_vol_obj
+ *
+ *     Test to see if an instance of H5VL_mt_id_info_t is available on the
+ *     vol object free list.  If there is, remove it from the free list, 
+ *     re-initialize it, and return a pointer to it.
+ *
+ *     Otherwise, allocate and initialize an instance of struct
+ *     H5VL_object_t and return a pointer to the instance of
+ *     H5VL_object_t to the caller.
+ *
+ *     Return a pointer to the new instance on success, and NULL on
+ *     failure.
+ *
+ *                                          JRM -- 6/14/25
+ *
+ ************************************************************************/
+
+static H5VL_object_t * 
+H5VL__alloc_vol_obj(void)
+{
+    hbool_t fl_search_done = FALSE;;
+    hbool_t result;
+    H5VL_object_t * vol_obj_ptr = NULL;
+    H5VL_mt_vol_obj_sptr_t fl_shead;
+    H5VL_mt_vol_obj_sptr_t new_fl_shead;
+    H5VL_mt_vol_obj_sptr_t test_fl_shead;
+    H5VL_mt_vol_obj_sptr_t fl_stail;
+    H5VL_mt_vol_obj_sptr_t new_fl_stail;
+    H5VL_mt_vol_obj_sptr_t snext;
+    H5VL_mt_vol_obj_sptr_t new_snext;
+    H5VL_object_t * ret_value = NULL; /* Return value */
+
+    FUNC_ENTER_NOAPI(NULL)
+
+    atomic_fetch_add(&(H5VL_mt_g.H5VL__alloc_vol_obj__num_calls), 1ULL);
+
+    fl_shead = atomic_load(&(H5VL_mt_g.vol_obj_fl_shead));
+
+    /* test to see if the free list has been initialized */
+
+    if ( NULL == fl_shead.ptr ) {
+
+        /* free list is not yet initialized */
+        fl_search_done = TRUE;
+    }
+
+
+    while ( ! fl_search_done ) {
+
+        fl_shead = atomic_load(&(H5VL_mt_g.vol_obj_fl_shead));
+        fl_stail = atomic_load(&(H5VL_mt_g.vol_obj_fl_stail));
+
+        assert(fl_shead.ptr);
+        assert(fl_stail.ptr);
+
+        snext = atomic_load(&(fl_shead.ptr->fl_snext));
+
+        test_fl_shead = atomic_load(&(H5VL_mt_g.vol_obj_fl_shead));
+
+        if ( ( test_fl_shead.ptr == fl_shead.ptr ) && ( test_fl_shead.sn == fl_shead.sn ) ) {
+
+            uint64_t serial_num;
+
+            if ( fl_shead.ptr == fl_stail.ptr ) {
+
+                if ( NULL == snext.ptr ) {
+
+                    /* the free list is empty */
+                    atomic_fetch_add(&(H5VL_mt_g.num_vol_obj_fl_alloc_req_denied_due_to_empty), 1);
+                    fl_search_done = TRUE;
+                    break;
+                }
+
+                /* attempt to set H5VL_mt_g.vol_obj_fl_stail to snext.  It doesn't
+                 * matter whether we succeed or fail, as if we fail, it
+                 * just means that some other thread beat us to it.
+                 *
+                 * that said, it doesn't hurt to collect stats
+                 */
+                new_fl_stail.ptr = snext.ptr;
+                new_fl_stail.sn  = fl_stail.sn + 1;
+                if ( ! atomic_compare_exchange_strong(&(H5VL_mt_g.vol_obj_fl_stail), &fl_stail, new_fl_stail) ) {
+
+                    atomic_fetch_add(&(H5VL_mt_g.num_vol_obj_fl_tail_update_cols), 1ULL);
+                }
+            } else if ( ( 0 < (serial_num = atomic_load(&(fl_shead.ptr->serial_num))) ) &&
+                        ( serial_num >= atomic_load(&(H5VL_mt_g.vol_obj_max_realloc_sn)) ) ) {
+
+                /* if serial_num is zero, it should have already been removed from the free
+                 * list by another thread -- if so, the following attempt to remove if from
+                 * the free list will fail.  If this is not the case, we will catch the error
+                 * after we successfully remove the entry.
+                 */
+
+                /* No reallocable entries available -- just update stats and quit */
+                atomic_fetch_add(&(H5VL_mt_g.num_vol_obj_fl_alloc_req_denied_due_to_no_reallocable_entries), 1ULL);
+                fl_search_done = TRUE; 
+
+            } else {
+
+                /* set up new_fl_shead now in case we need it later.  */
+                new_fl_shead.ptr = snext.ptr;
+                new_fl_shead.sn  = fl_shead.sn + 1;
+
+                if ( ! atomic_compare_exchange_strong(&(H5VL_mt_g.vol_obj_fl_shead), &fl_shead, new_fl_shead) ) {
+
+                    /* the attempt to remove the first item from the free list
+                     * failed.  Update stats and try again.
+                     */
+                    atomic_fetch_add(&(H5VL_mt_g.num_vol_obj_fl_head_update_cols), 1ULL);
+
+                } else {
+
+                    /* first has been removed from the free list.  Set fl_node_ptr to first,
+                     * update stats, and exit the loop by setting fl_search_done to true.
+                     */
+                    vol_obj_ptr = fl_shead.ptr;
+
+                    assert(H5VL__VOL_OBJ_TAG == vol_obj_ptr->tag);
+
+                    assert(atomic_load(&(vol_obj_ptr->on_fl)));
+                    atomic_store(&(vol_obj_ptr->on_fl), FALSE);
+
+                    assert( 0 < atomic_load(&(vol_obj_ptr->serial_num ) ) );
+
+                    /* the above assert only exists in production builds.  If vol_obj_ptr->serial_num
+                     * is zero and we get this far, increment H5VL_mt_g.num_vol_obj_fl_head_sn_is_zero.
+                     */
+                    if ( 0 == atomic_load(&(vol_obj_ptr->serial_num)) ) {
+
+                        atomic_fetch_add(&(H5VL_mt_g.num_vol_obj_fl_head_sn_is_zero), 1ULL);
+
+                        /* should we throw an error here? */
+                    }
+                    atomic_store(&(vol_obj_ptr->serial_num), 0ULL);
+
+                    new_snext.ptr = NULL;
+                    new_snext.sn  = snext.sn + 1;
+
+                    result = atomic_compare_exchange_strong(&(vol_obj_ptr->fl_snext), &snext, new_snext);
+                    assert(result);
+
+                    /* instance of H5VL_object_t removed from the free list -- update stats */
+                    atomic_fetch_add(&(H5VL_mt_g.num_vol_obj_structs_alloced_from_fl), 1ULL);
+
+                    /* the following assignements should be safe, as only one thread 
+                     * (this one) should be able to access *vol_obj_ptr at this time.
+                     * 
+                     * That said, don't be surprised if thread sanitizers whine at this point.
+                     */
+                    vol_obj_ptr->data = NULL;
+                    vol_obj_ptr->connector = NULL;
+                    assert(0 == atomic_load(&(vol_obj_ptr->rc)));
+
+                    fl_search_done = true;
+                }
+            }
+        }
+    } /* while ( ! fl_search_done ) */
+
+    if ( NULL == vol_obj_ptr ) {
+
+        H5VL_mt_vol_obj_sptr_t init_object_sptr = {NULL, 0ULL};
+
+        vol_obj_ptr = (H5VL_object_t *)malloc(sizeof(H5VL_object_t));
+
+        if ( NULL == vol_obj_ptr )
+            HGOTO_ERROR(H5E_ID, H5E_CANTALLOC, NULL, "ID info allocation failed");
+
+        vol_obj_ptr->tag = H5VL__VOL_OBJ_TAG;
+        atomic_init(&(vol_obj_ptr->on_fl), FALSE);
+        atomic_init(&(vol_obj_ptr->fl_snext), init_object_sptr);
+        atomic_init(&(vol_obj_ptr->serial_num), 0ULL);
+        vol_obj_ptr->data = NULL;
+        vol_obj_ptr->connector = NULL;
+        atomic_init(&vol_obj_ptr->rc, 0);
+
+        /* instance of H5VL_object_t allocated -- update stats */
+        atomic_fetch_add(&(H5VL_mt_g.num_vol_obj_structs_alloced_from_heap), 1ULL);
+    }
+
+    assert(vol_obj_ptr);
+
+    /* Set return value */
+    ret_value = vol_obj_ptr;
+
+    if ( ret_value ) {
+
+        int64_t old_vol_objs_active;
+
+        old_vol_objs_active = atomic_fetch_add(&(H5VL_mt_g.vol_objs_active), 1LL);
+
+        assert( 0 <= old_vol_objs_active );
+    } 
+
+done:
+
+    FUNC_LEAVE_NOAPI(ret_value)
+
+} /* H5VL__alloc_vol_obj() */
+
+
+/************************************************************************
+ *
+ * H5VL__clear_vol_obj_free_list
+ *
+ *     Discard all entries on the vol object free list in preparation for 
+ *     shutdown.  
+ *
+ *     Note that this function assumes that no other threads are active 
+ *     in H5VL, and that it is therefore safe to ignore 
+ *     H5VL_mt_g.id_max_realloc_sn and H5VL_mt_g.type_max_realloc_sn. 
+ *
+ *                                          JRM -- 6/15/25
+ *
+ ************************************************************************/
+
+static herr_t
+H5VL__clear_vol_obj_free_list(void)
+{
+    uint64_t               test_val;
+    H5VL_mt_vol_obj_sptr_t fl_head;
+    H5VL_mt_vol_obj_sptr_t null_snext = {NULL, 0ULL};
+    H5VL_object_t        * fl_head_ptr;
+    H5VL_object_t        * vol_obj_ptr;;
+    herr_t                 ret_value = SUCCEED; /* Return value */
+
+    FUNC_ENTER_NOAPI(FAIL)
+
+    atomic_fetch_add(&(H5VL_mt_g.H5VL__clear_vol_obj_free_list__num_calls), 1ULL);
+
+    fl_head = atomic_load(&(H5VL_mt_g.vol_obj_fl_shead));
+    fl_head_ptr = fl_head.ptr;
+
+    if ( ( ! fl_head_ptr ) ||  ( 0ULL == atomic_load(&(H5VL_mt_g.vol_obj_fl_len)) ) )
+
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "H5VL_mt_g.vol_obj_fl_shead.ptr == NULL -- H5VL_mt_g not initialized?");
+
+
+    while ( fl_head_ptr ) {
+
+        vol_obj_ptr = fl_head_ptr;
+
+        assert(H5VL__VOL_OBJ_TAG == vol_obj_ptr->tag);
+        assert(atomic_load(&(vol_obj_ptr->on_fl)));
+
+        fl_head = atomic_load(&(vol_obj_ptr->fl_snext));
+        fl_head_ptr = fl_head.ptr;
+
+        /* prepare *vol_obj_ptr for discard */
+        vol_obj_ptr->tag = H5VL__INVALID_VOL_OBJ_TAG;
+        atomic_store(&(vol_obj_ptr->fl_snext), null_snext);
+
+        free(vol_obj_ptr);
+
+        atomic_fetch_add(&(H5VL_mt_g.num_vol_obj_structs_freed), 1ULL);
+        test_val = atomic_fetch_sub(&(H5VL_mt_g.vol_obj_fl_len), 1ULL);
+        assert( test_val > 0ULL);
+    }
+
+    atomic_store(&(H5VL_mt_g.vol_obj_fl_shead), null_snext);
+    atomic_store(&(H5VL_mt_g.vol_obj_fl_stail), null_snext);
+
+    assert(0 == atomic_load(&(H5VL_mt_g.vol_obj_fl_len)));
+    assert(0 == atomic_load(&(H5VL_mt_g.vol_obj_fl_len)));
+
+done:
+
+    FUNC_LEAVE_NOAPI(ret_value)
+
+} /* H5VL__clear_vol_obj_free_list() */
+
+
+/************************************************************************
+ *
+ * H5VL__discard_vol_obj
+ *
+ *     Append the supplied instance of H5VL_object_t to the vol object
+ *     free list and increment H5VL_mt_g.vol_obj_fl_len.
+ *
+ *     If the free list length exceeds H5VL_mt_g.max_desired_vol_obj_fl_len, 
+ *     attempt the remove the entry at the head of the vol object free 
+ *     list from the free list, and discard it and decrement 
+ *     H5VL_mt_g.vol_obj_fl_len if successful.
+ *
+ *                                          JRM -- 6/15/25
+ *
+ ************************************************************************/
+
+static herr_t 
+H5VL__discard_vol_obj(H5VL_object_t * vol_obj_ptr)
+{
+    hbool_t done = FALSE;
+    hbool_t on_fl = FALSE;
+    hbool_t try_to_free_an_entry = FALSE;
+    hbool_t result;
+    int64_t old_vol_objs_active;
+    uint64_t fl_len;
+    uint64_t max_fl_len;
+    uint64_t test_val;
+    H5VL_mt_vol_obj_sptr_t snext = {NULL, 0ULL};
+    H5VL_mt_vol_obj_sptr_t new_snext;
+    H5VL_mt_vol_obj_sptr_t fl_shead;
+    H5VL_mt_vol_obj_sptr_t fl_stail;
+    H5VL_mt_vol_obj_sptr_t fl_snext;
+    H5VL_mt_vol_obj_sptr_t new_fl_snext;
+    H5VL_mt_vol_obj_sptr_t new_fl_shead;
+    H5VL_mt_vol_obj_sptr_t new_fl_stail;
+    H5VL_mt_vol_obj_sptr_t test_fl_shead;
+    H5VL_mt_vol_obj_sptr_t test_fl_stail;
+    herr_t ret_value = SUCCEED; /* Return value */
+
+    FUNC_ENTER_NOAPI_NOERR
+
+    atomic_fetch_add(&(H5VL_mt_g.H5VL__discard_vol_obj__num_calls), 1ULL);
+
+    assert(vol_obj_ptr);
+    assert(H5VL__VOL_OBJ_TAG == vol_obj_ptr->tag);
+    assert(0 == atomic_load(&(vol_obj_ptr->rc)));
+
+    assert(!atomic_load(&(vol_obj_ptr->on_fl)));
+    assert(0 == atomic_load(&(vol_obj_ptr->serial_num)));
+
+    snext = atomic_load(&(vol_obj_ptr->fl_snext));
+    new_snext.ptr = NULL;
+    new_snext.sn = snext.sn + 1;
+
+    atomic_store(&(vol_obj_ptr->fl_snext), new_snext);
+
+    result = atomic_compare_exchange_strong(&(vol_obj_ptr->on_fl), &on_fl, TRUE);
+    assert( result );
+
+    atomic_store(&(vol_obj_ptr->serial_num), atomic_fetch_add(&(H5VL_mt_g.vol_obj_next_sn), 1ULL));
+
+    /* update stats */
+    atomic_fetch_add(&(H5VL_mt_g.num_vol_obj_sn_assigned), 1ULL);
+
+    while ( ! done ) {
+
+        fl_stail = atomic_load(&(H5VL_mt_g.vol_obj_fl_stail));
+
+        assert(fl_stail.ptr);
+
+        fl_snext = atomic_load(&(fl_stail.ptr->fl_snext));
+
+        test_fl_stail = atomic_load(&(H5VL_mt_g.vol_obj_fl_stail));
+
+        if ( ( test_fl_stail.ptr == fl_stail.ptr ) && ( test_fl_stail.sn == fl_stail.sn ) ) {
+
+            if ( NULL == fl_snext.ptr ) {
+
+                /* attempt to append vol_obj_ptr by setting fl_tail->fl_snext.ptr to vol_obj_ptr.
+                 * If this succeeds, update stats and attempt to set H5VL_mt_g.vol_obj_fl_stail.ptr
+                 * to vol_obj_ptr as well.  This may or may not succeed, but in either
+                 * case we are done.
+                 */
+                new_fl_snext.ptr = vol_obj_ptr;
+                new_fl_snext.sn  = fl_snext.sn + 1;
+                if ( atomic_compare_exchange_strong(&(fl_stail.ptr->fl_snext), &fl_snext, new_fl_snext) ) {
+
+                    atomic_fetch_add(&(H5VL_mt_g.vol_obj_fl_len), 1);
+                    atomic_fetch_add(&(H5VL_mt_g.num_vol_obj_structs_added_to_fl), 1);
+
+                    new_fl_stail.ptr = vol_obj_ptr;
+                    new_fl_stail.sn  = fl_stail.sn + 1;
+                    if ( ! atomic_compare_exchange_strong(&(H5VL_mt_g.vol_obj_fl_stail), 
+                                                          &fl_stail, new_fl_stail) ) {
+
+                        atomic_fetch_add(&(H5VL_mt_g.num_vol_obj_fl_tail_update_cols), 1);
+                    }
+
+                    /* if appropriate, attempt to update H5VL_mt_g.max_vol_obj_fl_len.  In the
+                     * event of a collision, just ignore it and go on, as I don't see any
+                     * reasonable way to recover.
+                     */
+                    if ( (fl_len = atomic_load(&(H5VL_mt_g.vol_obj_fl_len))) >
+                         (max_fl_len = atomic_load(&(H5VL_mt_g.max_vol_obj_fl_len))) ) {
+
+                        atomic_compare_exchange_strong(&(H5VL_mt_g.max_vol_obj_fl_len), &max_fl_len, fl_len);
+                    }
+
+                    done = true;
+
+                } else {
+
+                    /* append failed -- update stats and try again */
+                    atomic_fetch_add(&(H5VL_mt_g.num_vol_obj_fl_append_cols), 1);
+
+                }
+            } else {
+
+                /* attempt to set lfht_ptr->fl_stail to fl_next.  It doesn't
+                 * matter whether we succeed or fail, as if we fail, it
+                 * just means that some other thread beat us to it.
+                 *
+                 * that said, it doesn't hurt to collect stats
+                 */
+                new_fl_stail.ptr = fl_snext.ptr;
+                new_fl_stail.sn  = fl_stail.sn + 1;
+                if ( ! atomic_compare_exchange_strong(&(H5VL_mt_g.vol_obj_fl_stail), &fl_stail, new_fl_stail) ) {
+
+                    atomic_fetch_add(&(H5VL_mt_g.num_vol_obj_fl_tail_update_cols), 1);
+                }
+            }
+        }
+    }
+
+    /* update the number of active instances of H5VL_object_t */
+
+    old_vol_objs_active = atomic_fetch_sub(&(H5VL_mt_g.vol_objs_active), 1LL);
+
+    assert( 1 <= old_vol_objs_active );
+
+
+    /* Test to see if H5VL_mt_g.vol_obj_fl_len is greater than H5VL_mt_g.max_desired_vol_obj_fl_len.
+     *
+     * Note that this doesn't mean that there is a entry available for discard -- we will check this 
+     * later.
+     */
+
+    /* must rework this assert for the possibility that these fields will wrap around */
+    assert(atomic_load(&(H5VL_mt_g.vol_obj_max_realloc_sn)) <= atomic_load(&(H5VL_mt_g.vol_obj_next_sn)));
+
+    if ( atomic_load(&(H5VL_mt_g.vol_obj_fl_len)) > atomic_load(&(H5VL_mt_g.max_desired_vol_obj_fl_len)) ) {
+
+        try_to_free_an_entry = TRUE;
+
+    } else {
+
+        atomic_fetch_add(&(H5VL_mt_g.num_vol_obj_fl_frees_skipped_due_to_fl_too_small), 1ULL);
+    }
+
+    if ( try_to_free_an_entry ) {
+
+        uint64_t serial_num;
+
+        done = FALSE;
+
+        while ( ! done ) {
+
+            fl_shead = atomic_load(&(H5VL_mt_g.vol_obj_fl_shead));
+            fl_stail = atomic_load(&(H5VL_mt_g.vol_obj_fl_stail));
+
+            assert(fl_shead.ptr);
+            assert(fl_stail.ptr);
+
+            fl_snext = atomic_load(&(fl_shead.ptr->fl_snext));
+
+            test_fl_shead = atomic_load(&(H5VL_mt_g.vol_obj_fl_shead));
+
+            if ( ( test_fl_shead.ptr == fl_shead.ptr ) && ( test_fl_shead.sn == fl_shead.sn ) ) {
+
+                if ( fl_shead.ptr == fl_stail.ptr ) {
+
+                    if ( NULL == fl_snext.ptr ) {
+
+                        /* the free list is empty */
+                        atomic_fetch_add(&(H5VL_mt_g.num_vol_obj_fl_frees_skipped_due_to_empty), 1);
+                        done = TRUE;
+                        break;
+                    }
+
+                    /* attempt to set H5VL_mt_g.vol_obj_fl_stail to fl_snext.  It doesn't
+                     * matter whether we succeed or fail, as if we fail, it
+                     * just means that some other thread beat us to it.
+                     *
+                     * that said, it doesn't hurt to collect stats
+                     */
+                    assert(fl_snext.ptr);
+                    new_fl_stail.ptr = fl_snext.ptr;
+                    new_fl_stail.sn  = fl_stail.sn + 1;
+                    if ( ! atomic_compare_exchange_strong(&(H5VL_mt_g.vol_obj_fl_stail), &fl_stail, 
+                                                          new_fl_stail) ) {
+
+                        atomic_fetch_add(&(H5VL_mt_g.num_vol_obj_fl_tail_update_cols), 1ULL);
+                    }
+                } else if ( ( 0 < (serial_num = atomic_load(&(fl_shead.ptr->serial_num))) ) &&
+                            ( serial_num >= atomic_load(&(H5VL_mt_g.vol_obj_max_realloc_sn)) ) ) {
+
+                    /* if serial_num is zero, it should have already been removed from the free
+                     * list by another thread -- if so, the following attempt to remove if from
+                     * the free list will fail.  If this is not the case, we will catch the error
+                     * after we successfully remove the entry.
+                     */
+
+                    /* No reallocable entries available -- just update stats and quit */
+                    atomic_fetch_add(&(H5VL_mt_g.num_vol_obj_fl_frees_skipped_due_to_no_reallocable_entries), 1ULL);
+                    done = TRUE; 
+
+                } else {
+
+                    /* set up new_fl_shead */
+                    assert(fl_snext.ptr);
+                    new_fl_shead.ptr = fl_snext.ptr;
+                    new_fl_shead.sn  = fl_shead.sn + 1;
+
+                    if ( ! atomic_compare_exchange_strong(&(H5VL_mt_g.vol_obj_fl_shead), 
+                                                          &fl_shead, new_fl_shead) ) {
+
+                        /* the attempt to remove the first item from the free list
+                         * failed.  Update stats and try again.
+                         */
+                        atomic_fetch_add(&(H5VL_mt_g.num_vol_obj_fl_head_update_cols), 1ULL);
+
+                    } else {
+
+                        H5VL_mt_vol_obj_sptr_t null_snext = {NULL, 0ULL};
+
+                        /* first has been removed from the free list.  Set vol_obj_ptr to fl_shead.ptr,
+                         * discard *vol_obj_ptr, update stats, and exit the loop by setting done to true.
+                         */
+                        vol_obj_ptr = fl_shead.ptr;
+
+                        assert(H5VL__VOL_OBJ_TAG == vol_obj_ptr->tag);
+                        assert(atomic_load(&(vol_obj_ptr->on_fl)));
+                        assert(0 < atomic_load(&(vol_obj_ptr->serial_num)));
+
+                        /* the above assert only exists in production builds.  If vol_obj_ptr->serial_num
+                         * is zero and we get this far, increment H5VL_mt_g.num_vol_obj_fl_head_sn_is_zero.
+                         */
+                        if ( 0 == atomic_load(&(vol_obj_ptr->serial_num)) ) {
+
+                            atomic_fetch_add(&(H5VL_mt_g.num_vol_obj_fl_head_sn_is_zero), 1ULL);
+
+                            /* should we throw an error here? */
+                        }
+
+                        /* Note that we don't check to see if vol_obj_ptr->serial_num < 
+                         * H5VL_mt_g.id_max_realloc_sn.  This was already checked above.  
+                         * Further, the algorithm for maintaining H5VL_mt_g.id_max_realloc_sn
+                         * allows its value to bounce around a bit -- making it possible that 
+                         * we would get a false assertion failure.
+                         */
+
+                        atomic_store(&(vol_obj_ptr->serial_num), 0ULL);
+                        atomic_fetch_add(&(H5VL_mt_g.num_vol_obj_serial_num_resets), 1ULL);
+
+                        /* prepare *if_info_ptr for discard */
+                        vol_obj_ptr->tag = H5VL__INVALID_VOL_OBJ_TAG;
+                        atomic_store(&(vol_obj_ptr->fl_snext), null_snext);
+
+                        free(vol_obj_ptr);
+
+                        /* update stats */
+                        atomic_fetch_add(&(H5VL_mt_g.num_vol_obj_structs_freed), 1ULL);
+
+                        test_val = atomic_fetch_sub(&(H5VL_mt_g.vol_obj_fl_len), 1ULL);
+                        assert( test_val > 0ULL);
+
+                        done = true;
+                    }
+                }
+            }
+        } /* while ( ! done ) */
+    } /* if ( try_to_free_entry ) */
+
+    FUNC_LEAVE_NOAPI(ret_value)
+
+} /* H5VL__discard_vol_obj() */
+
+
+#endif /* H5_HAVE_MULTITHREAD */

@@ -9209,13 +9209,25 @@ H5I__find_id_cb(void *_item, void H5_ATTR_UNUSED *_key, void *_udata)
  * Return:      SUCCEED/FAIL
  *              (id will be set to H5I_INVALID_HID on errors or not found)
  *
+ * Changes:     Modified the function to increment the ref count on the
+ *              target entry before calling H5I__find_id_cb().  This 
+ *              should prevent IDs from being deleted out from under 
+ *              H5I__find_id_cb() absent other coding errors.
+ *
+ *              Note that this adds significant overhead.  However absent
+ *              an appropriate free list for VOL connectors, it is 
+ *              necessary.
+ *
+ *                                              JRM 6/2/25
+ *
  *-------------------------------------------------------------------------
  */
 herr_t
 H5I_find_id(const void *object, H5I_type_t type, hid_t *id)
 {
-    H5I_mt_type_info_t *type_info_ptr = NULL;    /* Pointer to the type */
-    herr_t              ret_value = SUCCEED;     /* Return value */
+    H5I_mt_type_info_t      *type_info_ptr = NULL;    /* Pointer to the type */
+    H5I_mt_id_info_kernel_t  info_k;
+    herr_t                   ret_value = SUCCEED;     /* Return value */
 
     FUNC_ENTER_NOAPI(FAIL)
 
@@ -9249,22 +9261,94 @@ H5I_find_id(const void *object, H5I_type_t type, hid_t *id)
         /* Iterate over IDs for the ID type */
         if ( lfht_get_first(&(type_info_ptr->lfht), &scan_id, &value) ) {
 
-            int ret;
+#if 1 /* test code */
 
             do {
+
                 id_info_ptr = (H5I_mt_id_info_t *)value;
 
+                assert(H5I__ID_INFO == id_info_ptr->tag);
+
+                info_k = atomic_load(&(id_info_ptr->k));
+
+                if (! info_k.marked) {
+
+                    /* Since this iteration may be called in parallel with other
+                     * operations on the target id type, it is possible that the
+                     * target ID will be deleted during the iterate callback.
+                     *
+                     * To prevent this, increment the ref count on the target ID
+                     * before we call the itterate callback, and decrement it again
+                     * when that call returns.
+                     *
+                     * While this isn't fool proof, it should work absent
+                     * coding errors elsewhere.
+                     *
+                     * At present, we do this with calls to H5I_inc_ref_internal()
+                     * and H5I__dec_ref().  This is very inefficient as it requires
+                     * two unnecessary calls to H5I__find_id(), in addition to
+                     * other issues.  This is acceptable for the prototype, but
+                     * we need to do better for the production version.
+                     *
+                     * Note also that the call to H5I_inc_ref_internal() may fail.
+                     * If it does, presume that this is due to the target ID being
+                     * deleted out from under the itteration, and just go on to the
+                     * next ID.
+                     */
+
+                    if ( -1 != H5I_inc_ref_internal(id_info_ptr->id, FALSE) ) {
+
+                        int ret;  /* return value for find id cb */
+
+                        /* inc ref was successful -- call the find callback */
+
+                        ret = H5I__find_id_cb((void *)id_info_ptr, NULL, (void *)&udata);
+
+                        /* decrement the ref count again before we check the find
+                         * callback return value.
+                         */
+                        if ( H5I__dec_ref(id_info_ptr->id, NULL, FALSE) < 0 )
+
+                            HGOTO_ERROR(H5E_ID, H5E_CANTDEC, (-1), "can't decrement ID ref count");
+
+                        /* Now check results of the iteration */
+
+                        if (H5_ITER_ERROR == ret)
+                            HGOTO_ERROR(H5E_ID, H5E_BADITER, FAIL, "iteration failed");
+
+                        if (H5_ITER_STOP == ret)
+                            break;
+
+                    } else {
+
+                        /* ID was deleted out from under us -- update stats and go on
+                         * to the next ID if it exists.
+                         */
+                    }
+                }
+            } while (lfht_get_next(&(type_info_ptr->lfht), scan_id, &scan_id, &value));
+
+#else /* original code */
+
+            int ret;
+ 
+            do {                                                             
+                id_info_ptr = (H5I_mt_id_info_t *)value;
+ 
                 ret = H5I__find_id_cb((void *)id_info_ptr, NULL, (void *)&udata);
-
+ 
                 if (H5_ITER_ERROR == ret)
-
+ 
                     HGOTO_ERROR(H5E_ID, H5E_BADITER, FAIL, "iteration failed");
 
                 if (H5_ITER_STOP == ret)
-
+ 
                     break;
 
             } while (lfht_get_next(&(type_info_ptr->lfht), scan_id, &scan_id, &value));
+
+#endif /* original */
+
         }
 
         *id = udata.ret_id;
@@ -10354,8 +10438,6 @@ H5I__new_mt_type_info(const H5I_class_t *cls, unsigned reserved)
     H5I_mt_type_info_sptr_t new_fl_stail;
     H5I_mt_type_info_sptr_t snext;
     H5I_mt_type_info_sptr_t new_snext;
-    uint64_t shead_sn;
-    uint64_t current_max_sn; 
     uint64_t test_val;
     H5I_mt_type_info_t * ret_value = NULL; /* Return value */
 
