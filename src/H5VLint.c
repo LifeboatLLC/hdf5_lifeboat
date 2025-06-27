@@ -2271,6 +2271,7 @@ H5VL_object_data(const H5VL_object_t *vol_obj)
     bool  done = FALSE;
 #ifdef H5_HAVE_MULTITHREAD
     bool  decrement_ref_count = FALSE;
+    _Atomic size_t * rc_ptr;
 #endif /* H5_HAVE_MULTITHREAD */
     void *ret_value = NULL;
 
@@ -2320,15 +2321,30 @@ H5VL_object_data(const H5VL_object_t *vol_obj)
          *
          * This is only possible in the multi-thread 
          * build, so only compile this code in that case.
+         *
+         * Since vol_obj is constant, we must cast 
+         * away the constant qualifier in this operation.
+         * Epicycles are to keep clang happy.
          */
+        size_t old_rc;
 
-        if ( atomic_fetch_add(&(vol_obj->rc), 1) <= 0 ) {
+        H5_GCC_CLANG_DIAG_OFF("cast-qual")
+        rc_ptr = (_Atomic size_t *)(&(vol_obj->rc));
+        H5_GCC_CLANG_DIAG_ON("cast-qual")
+
+        H5_GCC_CLANG_DIAG_OFF("cast-qual")
+        old_rc = atomic_fetch_add(rc_ptr, 1);
+        H5_GCC_CLANG_DIAG_ON("cast-qual")
+
+        if ( old_rc <= 0 ) {
 
             /* the reference count was decremented out from under us.  
              *
              * Increment the ref count and set done to TRUE.
              */
-            atomic_fetch_sub(&(vol_obj->rc), 1);
+            H5_GCC_CLANG_DIAG_OFF("cast-qual")
+            atomic_fetch_sub(rc_ptr, 1);
+            H5_GCC_CLANG_DIAG_ON("cast_qual")
 
             done = TRUE;
 
@@ -2367,7 +2383,9 @@ H5VL_object_data(const H5VL_object_t *vol_obj)
 #ifdef H5_HAVE_MULTITHREAD
     if ( decrement_ref_count ) {
 
-        atomic_fetch_sub(&(vol_obj->rc), 1);
+        H5_GCC_CLANG_DIAG_OFF("cast-qual")
+        atomic_fetch_sub(rc_ptr, 1);
+        H5_GCC_CLANG_DIAG_ON("cast-qual")
 
     }
 #endif /* H5_HAVE_MULTITHREAD */
