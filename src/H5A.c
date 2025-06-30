@@ -253,11 +253,11 @@ H5Acreate_async(const char *app_file, const char *app_func, unsigned app_line, h
                 const char *attr_name, hid_t type_id, hid_t space_id, hid_t acpl_id, hid_t aapl_id,
                 hid_t es_id)
 {
-    H5VL_object_t *vol_obj   = NULL;            /* Object for loc_id */
-    void          *token     = NULL;            /* Request token for async operation        */
-    void         **token_ptr = H5_REQUEST_NULL; /* Pointer to request token for async operation        */
-    hid_t          ret_value = H5I_INVALID_HID; /* Return value */
-    int            dec_ref_ret = 0;             /* Ref count decrement return value */
+    H5VL_object_t *vol_obj     = NULL;            /* Object for loc_id */
+    void          *token       = NULL;            /* Request token for async operation        */
+    void         **token_ptr   = H5_REQUEST_NULL; /* Pointer to request token for async operation        */
+    hid_t          ret_value   = H5I_INVALID_HID; /* Return value */
+    int            dec_ref_ret = 0;               /* Ref count decrement return value */
 
     FUNC_ENTER_API_NO_MUTEX(H5I_INVALID_HID)
     H5TRACE10("i", "*s*sIui*siiiii", app_file, app_func, app_line, loc_id, attr_name, type_id, space_id,
@@ -278,10 +278,8 @@ H5Acreate_async(const char *app_file, const char *app_func, unsigned app_line, h
         if (H5ES_insert(es_id, vol_obj->connector, token,
                         H5ARG_TRACE10(__func__, "*s*sIui*siiiii", app_file, app_func, app_line, loc_id, attr_name, type_id, space_id, acpl_id, aapl_id, es_id)) < 0) {
             /* clang-format on */
-            /* TBD: Retain lock to protect ID iteration */
-            H5_API_LOCK
+
             dec_ref_ret = H5I_dec_app_ref(ret_value);
-            H5_API_UNLOCK
 
             if (dec_ref_ret < 0)
                 HDONE_ERROR(H5E_ATTR, H5E_CANTDEC, H5I_INVALID_HID, "can't decrement count on attribute ID");
@@ -413,11 +411,11 @@ H5Acreate_by_name_async(const char *app_file, const char *app_func, unsigned app
                         const char *obj_name, const char *attr_name, hid_t type_id, hid_t space_id,
                         hid_t acpl_id, hid_t aapl_id, hid_t lapl_id, hid_t es_id)
 {
-    H5VL_object_t *vol_obj   = NULL;            /* Object for loc_id */
-    void          *token     = NULL;            /* Request token for async operation        */
-    void         **token_ptr = H5_REQUEST_NULL; /* Pointer to request token for async operation        */
-    hid_t          ret_value = H5I_INVALID_HID; /* Return value */
-    int            dec_ref_ret = 0;             /* Ref count decrement return value */
+    H5VL_object_t *vol_obj     = NULL;            /* Object for loc_id */
+    void          *token       = NULL;            /* Request token for async operation        */
+    void         **token_ptr   = H5_REQUEST_NULL; /* Pointer to request token for async operation        */
+    hid_t          ret_value   = H5I_INVALID_HID; /* Return value */
+    int            dec_ref_ret = 0;               /* Ref count decrement return value */
 
     FUNC_ENTER_API_NO_MUTEX(H5I_INVALID_HID)
     H5TRACE12("i", "*s*sIui*s*siiiiii", app_file, app_func, app_line, loc_id, obj_name, attr_name, type_id,
@@ -438,11 +436,9 @@ H5Acreate_by_name_async(const char *app_file, const char *app_func, unsigned app
         if (H5ES_insert(es_id, vol_obj->connector, token,
                         H5ARG_TRACE12(__func__, "*s*sIui*s*siiiiii", app_file, app_func, app_line, loc_id, obj_name, attr_name, type_id, space_id, acpl_id, aapl_id, lapl_id, es_id)) < 0) {
             /* clang-format on */
-            /* TBD: Retain lock to protect ID iteration */
-            H5_API_LOCK
+
             dec_ref_ret = H5I_dec_app_ref(ret_value);
-            H5_API_UNLOCK
-            
+
             if (dec_ref_ret < 0)
                 HDONE_ERROR(H5E_ATTR, H5E_CANTDEC, H5I_INVALID_HID, "can't decrement count on attribute ID");
 
@@ -585,11 +581,11 @@ hid_t
 H5Aopen_async(const char *app_file, const char *app_func, unsigned app_line, hid_t loc_id,
               const char *attr_name, hid_t aapl_id, hid_t es_id)
 {
-    H5VL_object_t *vol_obj   = NULL;            /* Object for loc_id */
-    void          *token     = NULL;            /* Request token for async operation        */
-    void         **token_ptr = H5_REQUEST_NULL; /* Pointer to request token for async operation        */
-    hid_t          ret_value = H5I_INVALID_HID; /* Return value */
-    int            dec_ref_ret = 0;             /* Ref count decrement return value */
+    H5VL_object_t *vol_obj     = NULL;            /* Object for loc_id */
+    void          *token       = NULL;            /* Request token for async operation        */
+    void         **token_ptr   = H5_REQUEST_NULL; /* Pointer to request token for async operation        */
+    hid_t          ret_value   = H5I_INVALID_HID; /* Return value */
+    int            dec_ref_ret = 0;               /* Ref count decrement return value */
 
     FUNC_ENTER_API_NO_MUTEX(H5I_INVALID_HID)
     H5TRACE7("i", "*s*sIui*sii", app_file, app_func, app_line, loc_id, attr_name, aapl_id, es_id);
@@ -608,10 +604,8 @@ H5Aopen_async(const char *app_file, const char *app_func, unsigned app_line, hid
         if (H5ES_insert(es_id, vol_obj->connector, token,
                         H5ARG_TRACE7(__func__, "*s*sIui*sii", app_file, app_func, app_line, loc_id, attr_name, aapl_id, es_id)) < 0) {
             /* clang-format on */
-            /* TBD: Retain lock to protect ID iteration */
-            H5_API_LOCK
+
             dec_ref_ret = H5I_dec_app_ref(ret_value);
-            H5_API_UNLOCK
 
             if (dec_ref_ret < 0)
                 HDONE_ERROR(H5E_ATTR, H5E_CANTDEC, H5I_INVALID_HID, "can't decrement count on attribute ID");
@@ -725,10 +719,10 @@ hid_t
 H5Aopen_by_name_async(const char *app_file, const char *app_func, unsigned app_line, hid_t loc_id,
                       const char *obj_name, const char *attr_name, hid_t aapl_id, hid_t lapl_id, hid_t es_id)
 {
-    H5VL_object_t *vol_obj   = NULL;            /* Object for loc_id */
-    void          *token     = NULL;            /* Request token for async operation        */
-    void         **token_ptr = H5_REQUEST_NULL; /* Pointer to request token for async operation        */
-    hid_t          ret_value = H5I_INVALID_HID;
+    H5VL_object_t *vol_obj     = NULL;            /* Object for loc_id */
+    void          *token       = NULL;            /* Request token for async operation        */
+    void         **token_ptr   = H5_REQUEST_NULL; /* Pointer to request token for async operation        */
+    hid_t          ret_value   = H5I_INVALID_HID;
     int            dec_ref_ret = 0; /* Ref count decrement return value */
 
     FUNC_ENTER_API_NO_MUTEX(H5I_INVALID_HID)
@@ -750,10 +744,8 @@ H5Aopen_by_name_async(const char *app_file, const char *app_func, unsigned app_l
         if (H5ES_insert(es_id, vol_obj->connector, token,
                         H5ARG_TRACE9(__func__, "*s*sIui*s*siii", app_file, app_func, app_line, loc_id, obj_name, attr_name, aapl_id, lapl_id, es_id)) < 0) {
             /* clang-format on */
-            /* TBD: Retain lock to protect ID iteration */
-            H5_API_LOCK
+
             dec_ref_ret = H5I_dec_app_ref(ret_value);
-            H5_API_UNLOCK
 
             if (dec_ref_ret < 0)
                 HDONE_ERROR(H5E_ATTR, H5E_CANTDEC, H5I_INVALID_HID, "can't decrement count on attribute ID");
@@ -807,7 +799,7 @@ H5A__open_by_idx_api_common(hid_t loc_id, const char *obj_name, H5_index_t idx_t
     H5_API_LOCK
     ret_value = H5CX_set_apl(&aapl_id, H5P_CLS_AACC, loc_id, FALSE);
     H5_API_UNLOCK
-    
+
     if (ret_value < 0)
         HGOTO_ERROR(H5E_ATTR, H5E_CANTSET, H5I_INVALID_HID, "can't set attribute access property list info");
 
@@ -876,10 +868,10 @@ H5Aopen_by_idx_async(const char *app_file, const char *app_func, unsigned app_li
                      const char *obj_name, H5_index_t idx_type, H5_iter_order_t order, hsize_t n,
                      hid_t aapl_id, hid_t lapl_id, hid_t es_id)
 {
-    H5VL_object_t *vol_obj   = NULL;            /* Object for loc_id */
-    void          *token     = NULL;            /* Request token for async operation        */
-    void         **token_ptr = H5_REQUEST_NULL; /* Pointer to request token for async operation        */
-    hid_t          ret_value = H5I_INVALID_HID;
+    H5VL_object_t *vol_obj     = NULL;            /* Object for loc_id */
+    void          *token       = NULL;            /* Request token for async operation        */
+    void         **token_ptr   = H5_REQUEST_NULL; /* Pointer to request token for async operation        */
+    hid_t          ret_value   = H5I_INVALID_HID;
     int            dec_ref_ret = 0; /* Ref count decrement return value */
 
     FUNC_ENTER_API_NO_MUTEX(H5I_INVALID_HID)
@@ -901,10 +893,8 @@ H5Aopen_by_idx_async(const char *app_file, const char *app_func, unsigned app_li
         if (H5ES_insert(es_id, vol_obj->connector, token,
                         H5ARG_TRACE11(__func__, "*s*sIui*sIiIohiii", app_file, app_func, app_line, loc_id, obj_name, idx_type, order, n, aapl_id, lapl_id, es_id)) < 0) {
             /* clang-format on */
-            /* TBD: Retain lock to protect ID iteration */
-            H5_API_LOCK
+
             dec_ref_ret = H5I_dec_app_ref(ret_value);
-            H5_API_UNLOCK
 
             if (dec_ref_ret < 0)
                 HDONE_ERROR(H5E_ATTR, H5E_CANTDEC, H5I_INVALID_HID, "can't decrement count on attribute ID");
@@ -2288,8 +2278,8 @@ done:
 herr_t
 H5Aclose(hid_t attr_id)
 {
-    herr_t ret_value = SUCCEED; /* Return value */
-    int    dec_ref_ret = 0;     /* Ref count decrement return value */
+    herr_t ret_value   = SUCCEED; /* Return value */
+    int    dec_ref_ret = 0;       /* Ref count decrement return value */
 
     FUNC_ENTER_API_NO_MUTEX(FAIL)
     H5TRACE1("e", "i", attr_id);
@@ -2301,10 +2291,8 @@ H5Aclose(hid_t attr_id)
     /* Decrement the counter on the attribute ID. It will be freed if the count
      * reaches zero.
      */
-    /* TBD: Retain lock to protect ID iteration */
-    H5_API_LOCK
+
     dec_ref_ret = H5I_dec_app_ref(attr_id);
-    H5_API_UNLOCK
 
     if (dec_ref_ret < 0)
         HGOTO_ERROR(H5E_ATTR, H5E_CANTDEC, FAIL, "decrementing attribute ID failed");
@@ -2325,12 +2313,12 @@ done:
 herr_t
 H5Aclose_async(const char *app_file, const char *app_func, unsigned app_line, hid_t attr_id, hid_t es_id)
 {
-    H5VL_object_t *vol_obj   = NULL;            /* Object for loc_id */
-    H5VL_t        *connector = NULL;            /* VOL connector */
-    void          *token     = NULL;            /* Request token for async operation        */
-    void         **token_ptr = H5_REQUEST_NULL; /* Pointer to request token for async operation        */
-    herr_t         ret_value = SUCCEED;         /* Return value */
-    int            dec_ref_ret = 0;             /* Ref count decrement return value */
+    H5VL_object_t *vol_obj     = NULL;            /* Object for loc_id */
+    H5VL_t        *connector   = NULL;            /* VOL connector */
+    void          *token       = NULL;            /* Request token for async operation        */
+    void         **token_ptr   = H5_REQUEST_NULL; /* Pointer to request token for async operation        */
+    herr_t         ret_value   = SUCCEED;         /* Return value */
+    int            dec_ref_ret = 0;               /* Ref count decrement return value */
 
     FUNC_ENTER_API_NO_MUTEX(FAIL)
     H5TRACE5("e", "*s*sIuii", app_file, app_func, app_line, attr_id, es_id);
@@ -2357,10 +2345,8 @@ H5Aclose_async(const char *app_file, const char *app_func, unsigned app_line, hi
     /* Decrement the counter on the attribute ID. It will be freed if the count
      * reaches zero.
      */
-    /* TBD: Retain lock to protect ID iteration */
-    H5_API_LOCK
+
     dec_ref_ret = H5I_dec_app_ref_async(attr_id, token_ptr);
-    H5_API_UNLOCK
 
     if (dec_ref_ret < 0)
         HGOTO_ERROR(H5E_ATTR, H5E_CANTDEC, FAIL, "decrementing attribute ID failed");

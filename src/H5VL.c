@@ -478,10 +478,8 @@ H5VLclose(hid_t vol_id)
         HGOTO_ERROR(H5E_VOL, H5E_BADTYPE, FAIL, "not a VOL connector");
 
     /* Decrement the ref count on the ID, possibly releasing the VOL connector */
-    /* TBD: Retain lock to protect ID iteration */
-    H5_API_LOCK
+
     dec_ref_ret = H5I_dec_app_ref(vol_id);
-    H5_API_UNLOCK
 
     if (dec_ref_ret < 0)
         HGOTO_ERROR(H5E_VOL, H5E_CANTDEC, FAIL, "unable to close VOL connector ID");
@@ -527,20 +525,16 @@ H5VLunregister_connector(hid_t vol_id)
         HGOTO_ERROR(H5E_VOL, H5E_BADVALUE, FAIL, "unregistering the native VOL connector is not allowed");
 
     /* The H5VL_class_t struct will be freed by this function */
-    /* TBD: Retain lock to protect ID iteration */
-    H5_API_LOCK
+
     dec_ref_ret = H5I_dec_app_ref(vol_id);
-    H5_API_UNLOCK
 
     if (dec_ref_ret < 0)
         HGOTO_ERROR(H5E_VOL, H5E_CANTDEC, FAIL, "unable to unregister VOL connector");
     
 done:
     if (native_id != H5I_INVALID_HID) {
-        /* TBD: Retain lock to protect ID iteration */
-        H5_API_LOCK
+
         dec_ref_ret = H5I_dec_ref(native_id);
-        H5_API_UNLOCK
 
         if (dec_ref_ret < 0)
             HDONE_ERROR(H5E_VOL, H5E_CANTDEC, FAIL, "unable to decrement count on native_id");

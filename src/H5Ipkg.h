@@ -29,6 +29,13 @@
 /* Package Private Macros */
 /**************************/
 
+/* To route around the HDF5 thread ID code (i.e. avoid the use of H5TS_thread_id() 
+ * set H5I_BYPASS_HDF5_TID to 1.  This configures the multi-thread version of H5I
+ * to use the pthreads thread ID facilities instead -- hopefully bypassing the 
+ * segfault in the multi-thread API tests.
+ */
+#define H5I_BYPASS_HDF5_TID 1
+
 /*
  * Number of bits to use for ID Type in each ID. Increase if more types
  * are needed (though this will decrease the number of available IDs per
@@ -893,6 +900,29 @@ typedef struct H5I_suint64_t {
  *      H5T_is_named().
  *
  *
+ * Statistics on the behaviour of the H5I_get_first/next() functions. 
+ *
+ * H5I_get_first__num_calls: Number of times that H5I_get_first() is called.
+ *
+ * H5I_get_first__type_empty; Number of times that H5I_get_first() is called 
+ *      on an empty id type.
+ *
+ * H5I_get_first__ids_deleted_in_progress: Number of times that an id is 
+ *      found as the first id in the type, and then deleted before the 
+ *      associated void pointer is un-wrapped.  Note that this condition
+ *      is only tested for if H5I__UNWRAP_IS_NOOP(type) is FALSE.
+ *
+ * H5I_get_next__num_calls; Number of times that H5I_get_next() is called.
+ *
+ * H5I_get_next__no_next_id: Number of times that H5I_get_next() is called
+ *      on an id type with no remaining un-visited ids.
+ *
+ * H5I_get_next__ids_deleted_in_progress: Number of times that an id is
+ *      found as the next id in the type, and then deleted before the
+ *      associated void pointer is un-wrapped.  Note that this condition
+ *      is only tested for if H5I__UNWRAP_IS_NOOP(type) is FALSE.
+ *
+ *
  * Statistics on operations on the do not disturb flag.  See the discussion of 
  * the this fields and the kernel in the comments on H5I_mt_id_info_t for further 
  * details.
@@ -913,8 +943,44 @@ typedef struct H5I_suint64_t {
  *      this operation will always succeed.  If it doesn't, it should trigger an 
  *      assertion failure.
  *
- * num_do_not_disturb_bypasses:  Number of times that a do_not_disturb has been 
- *      bypassed.  At present, this is permitted for read only accesses to IDs.
+ * num_do_not_disturb_recursions: Number of times that a thread skips setting 
+ *      and then re-setting the do_not_disturb flag because the do_not_disturb
+ *      flag is already set by the thread.
+ *
+ *      Note that at present, there must be no net change in the kernel of 
+ *      the target ID by the time the do_not_disturg flag is droped.
+ *
+ *
+ * Global mutex acquire / dealock avoidance stats 
+ *
+ * Interaction with the existing non multi-thread makes it impossible to maintain 
+ * lock ordering between the global mutex and the do not disturb flag on individual 
+ * IDs.  This in turn opens the possibility of deadlocks.
+ *
+ * To address this issue, we use H5TS_mutex_acquire() to obtain the global mutex
+ * whenever we already hold the do_not_disturb flag on the target ID.  This function
+ * attempts to obtain the global mutex, but returns immediately regardless of 
+ * success.  If this attempt to obtain the global mutex fails, we drop the 
+ * do_not_disturb flag on the target ID, wait a bit, and try again so as to 
+ * avoid the potential deadlock.
+ *
+ * The following fields are used to collect statistics on this method of deadlock
+ * avoidance.
+ *
+ * global_mutex_acquire_attempts: Number of calls to H5TS_mutex_acquire().
+ *
+ * global_mutex_acquire_successes: Number of times H5TS_mutex_acquire() successfully 
+ *      obtains the global mutex.
+ *
+ * global_mutex_acquire_failures: Number of times H5TS_mutex_acquire() fails to 
+ *      obtain the global mutex without reporting any errors.
+ *
+ * num_deadlock_evasions: Number of times a potential deadlock is detected and 
+ *      avoided.  At present this means that the do_not_disturb is held on an 
+ *      ID, that continued processing requires the global mutex, and that the 
+ *      attempt to obtain the global mutex via H5TS_mutex_acquire() fails.  In
+ *      this case, the do_not_disturb is droped to avoid the potential mutex,
+ *      and then retried.
  *
  *
  * Statistics on H5I entries and numbers of threads active in H5I.
@@ -1151,12 +1217,26 @@ typedef struct H5I_mt_t {
     _Atomic uint64_t H5I_is_file_object__global_mutex_locks_for_H5T_is_named;
     _Atomic uint64_t H5I_is_file_object__global_mutex_unlocks_for_H5T_is_named;
 
+    /* H5I_get_first/next() stats */
+    _Atomic uint64_t H5I_get_first__num_calls;
+    _Atomic uint64_t H5I_get_first__type_empty;
+    _Atomic uint64_t H5I_get_first__ids_deleted_in_progress;
+    _Atomic uint64_t H5I_get_next__num_calls;
+    _Atomic uint64_t H5I_get_next__no_next_id;
+    _Atomic uint64_t H5I_get_next__ids_deleted_in_progress;
+
     /* do not disturb flag stats */
     _Atomic uint64_t num_do_not_disturb_yields;
     _Atomic uint64_t num_successful_do_not_disturb_sets;
     _Atomic uint64_t num_failed_do_not_disturb_sets;
     _Atomic uint64_t num_do_not_disturb_resets;
-    _Atomic uint64_t num_do_not_disturb_bypasses;
+    _Atomic uint64_t num_do_not_disturb_recursions;
+
+    /* global mutex acquire / dealock avoidance stats */
+    _Atomic uint64_t global_mutex_acquire_attempts;
+    _Atomic uint64_t global_mutex_acquire_successes;
+    _Atomic uint64_t global_mutex_acquire_failures;
+    _Atomic uint64_t num_deadlock_evasions;
 
     /* active_threads stats */
     _Atomic uint64_t num_H5I_entries_via_public_API;
@@ -1244,6 +1324,13 @@ typedef struct H5I_mt_t {
  * 
  *      We do this by adding three flags to the kernel -- the already defined 
  *      marked flag, the new do_not_disturb flag, and the new have_global_mutex flag.
+ *
+ *      While it wasn't immediately apparent, this notion of locking IDs also introduced
+ *      lock ordering issues which appear unavoidable as long as portions of the HDF5 
+ *      library are not multi-thread safe.. Resolving these for the prototype required 
+ *      the additons of an additional thread ID field (tid), which is used to store the ID 
+ *      of the thread that set the the do_not_disturb flag.
+ *      
  *      We then proceed via the appropriate protocol as given below. 
  * 
  *      In the cases where roll backs are possible, proceed as follows: 
@@ -1253,16 +1340,17 @@ typedef struct H5I_mt_t {
  *       2) Check to see if the marked flag is set.  If so, issue an ID doesn’t exist 
  *          error and return. 
  * 
- *       3) Check to see if the do_not_disturb flag is set.  If so, and either the 
- *          have_global_mutex flag is not set, or the thread does not hold the 
- *          global mutex, do a thread yield or sleep, and return to 1) above. 
+ *       3) Check to see if the do_not_disturb flag is set.  
  *
- *          If the thread holds the global mutex, and the have_global_mutex flag
- *          is set, the current thread is the thread that caused the do_not_disturb
- *          flag to be set, and may proceed.  As shall be seen, while reading the 
- *          will not cause problems, modifying it will.  To date, this is not a 
- *          problem in all cases encounterd to date, but it will have to be addressed
- *          for the production version.
+ *          If it is, and k.tid does not match the ID of the current thread, 
+ *          do a thread yield or sleep, and return to 1) above.
+ *
+ *          If it is, and k.tid does match the ID of the current thread, the 
+ *          current thread is the thread that caused the do_not_disturb
+ *          flag to be set, and may proceed.  As shall be seen, while reading will
+ *          not cause problems, modifying the kernel will.  To date, this is not 
+ *          a problem in all cases encounterd to date, but it will have to be 
+ *          addressed for the production version.
  *  
  *       4) Perform the desired operations (i.e ref count increment or decrement, or 
  *          object pointer overwite on the local copy of the kernel.  If the ref 
@@ -1288,18 +1376,17 @@ typedef struct H5I_mt_t {
  *       2) Check to see if the marked flag is set.  If so, issue an ID doesn’t exist 
  *          error and return. 
  * 
- *       3) Check to see if the do_not_disturb flag is set.  If so, and either the
- *          have_global_mutex flag is not set, or the thread does not hold the
- *          global mutex, do a thread yield or sleep, and return to 1) above.
+ *       3) Check to see if the do_not_disturb flag is set.
  *
- *          If the thread holds the global mutex, and the have_global_mutex flag
- *          is set, the current thread is the thread that caused the do_not_disturb
- *          flag to be set, and may proceed.  As shall be seen, while reading the
- *          kernel will not cause problems, modifying it will.  As a result, such
- *          threads must skip the remainder of this protocol.  
+ *          If it is, and k.tid does not match the ID of the current thread,
+ *          do a thread yield or sleep, and return to 1) above.
  *
- *          To date, this is not a problem in all cases encounterd, but it will 
- *          have to be addressed in the production version.
+ *          If it is, and k.tid does match the ID of the current thread, the
+ *          current thread is the thread that caused the do_not_disturb
+ *          flag to be set, and may proceed.  As shall be seen, while reading will
+ *          not cause problems, modifying the kernel will.  To date, this is not  
+ *          a problem in all cases encounterd to date, but it will have to be 
+ *          addressed for the production version.
  * 
  *       4) Check to see if the desired operation is still pending (i.e. if the 
  *          operation is converting a future ID to a real ID, is the is_future flag 
@@ -1308,41 +1395,64 @@ typedef struct H5I_mt_t {
  * 
  *          Otherwise: 
  * 
- *       5) Set the do_not_disturb flag and the have_global_mutex flag as well if 
- *          either the global mutex is already held, or if the callback is not thread
- *          safe (always for now) in the local copy of the kernel, and attempt 
- *          to overwrite the global copy of the kernel with the local copy via a 
- *          compare_exchange_strong(). 
+ *       5) In the locak copy of the kernel, set the do_not_disturb flag to TRUE, 
+ *          and the tid field to the ID of the current thread.  
+ *
+ *          Also in the locka copy, set the have_global_mutex flag as well if either 
+ *          the global mutex is already held, or if the callback is not thread safe 
+ *          (always for now).  Then attempt to overwrite the global copy of the 
+ *          kernel with the local copy via a compare_exchange_strong().
  * 
  *          If this fails, do a thread yield or sleep, and return to 1. 
  * 
  *          If it succeeds, we know that a thread has exclusive access to the kernel until 
- *          we reset the do_not_disturb flag on the global copy, as no new thread 
+ *          we reset the do_not_disturb flag on the global copy, as no other thread
  *          looking at the kernel will proceed beyond reading the flag, and the 
  *          compare_exchange_strong() of any existing thread attempting to modify the 
  *          kernel will fail -- sending it back to step 1. 
  * 
- *       6) Attempt to perform the desired operation. 
+ *       6) If the callback is not thread safe, and the current thread doesn't 
+ *          already hold the global mutex, we must attempt to obtain it.  
  * 
- *          If this fails, reset the do_not_disturb and the have_global_mutex flags in 
- *          the local copy of the kernel, overwrite the global copy of the kernel with 
- *          the local copy via a compare_exchange_strong(), and report the failure of 
- *          the operation if appropriate.
+ *          If we could maintain lock ordering, we would simply block until we 
+ *          obtain it.  Unfortunately, because we have to interface with the 
+ *          non multi-thread safe sections of the HDF5 library, we can't maintian
+ *          lock ordering betwee locks on IDs and the global mutext.
  * 
- *          Observe that the call to compare_exchange_strong() must succeed, per the 
- *          argument given in the final paragraph in 5 above.  Note that we use 
- *          compare_exchange_strong() in this case only as a sanity check.  Assuming  
- *          my analysis is correct, we could simply use atomic_store() on  
- *          architectures where compare_exchange_strong() is not available.   
- *          Unfortunately, the rest of the algorithm does depend on 
- *          compare_exchange_strong(), so it will have to be re-worked for those
- *          architectures. 
+ *          Thus we must attempt to acquire the global mutext, and not block if 
+ *          it is not available.
  * 
- *          If the operation succeeds, update the kernel accordingly, reset the 
- *          do_not_disturb and have_global_mutex flags in the local copy of the kernel, 
- *          and overwrite the global copy of the kernel with the local copy via a 
- *          compare_exchange_strong().  As before this operation must succeed, and we
- *          are done. 
+ *          If the attempt to acquire the global mutex succeeeds, we proceed to 
+ *          7).  Otherwise, we reset the do_not_disturb flag, set the tid to zero,
+ *          and reset the have global mutex flag if they were modified in step 5).  
+ *          Do this with a compare exchange strong, which must succeed.  Then
+ *          do a thread yield or sleep, and goto 1).
+ *
+ *       7) Attempt to perform the desired operation.
+ *
+ *          If this fails, clean up as follwos:
+ *
+ *          a) If the kernel was modified in 5), reset the tid and the 
+ *             do_not_disturb and have_global_mutex flags in the local copy of 
+ *             the kernel, and overwrite the global copy of the kernel with the 
+ *             local copy via a compare_exchange_strong().  Note that this 
+ *             operation must succeed -- the compare_exchange_strong() is for 
+ *             sanity checking.
+ *
+ *          b) If the global mutext was obtained in 6), release it.
+ *
+ *          c) Report failure of the operation if appropriate.
+ *
+ *          if it succeeds: 
+ *
+ *          a) Update the local copy of the kernel as appropriate.  If the 
+ *             kernel was modified in 5) above, also reset the tid and the 
+ *             do_not_disturb and have_global_mutex flags in the local copy of 
+ *             the kernel, and overwrite the global copy of the kernel with the 
+ *             local copy via a compare_exchange_strong().  As before, this 
+ *             operation must succeed.
+ *
+ *          b) If the global mutext was obtained in 6), release it.
  * 
  *      An atomic instance of H5I_mt_id_info_kernel_t is used to instantiate the 
  *      kernel mentioned above.  It maintains its fields as a single atomic object. 
@@ -1351,12 +1461,12 @@ typedef struct H5I_mt_t {
  *      objective is to avoid explicit locking (and thus lock ordering concerns) this 
  *      is fine -- for now at least. 
  *
- *      Note that if we combined all the booleans in a flags field, 
+ *      Note that if we combined all the booleans in a flags field, removed the tid,
  *      and reduced the size of the count and app_count integers, we could fit the 
  *      H5I_mt_id_info_kernel_t into 128 bits, allowing true atomic operation on 
  *      many (most) more modern CPUs.  However, that is an optimization for another 
  *      day, as is re-working the future ID feature into something more multi-thread
- *      friendly.
+ *      friendly, and making the result of the free_func predictable..
  * 
  *      Since H5I_mt_id_info_kernel_t is only used either in H5I_mt_id_info_t, or to 
  *      stage reads and writes of the kernal in that structure, its fields are 
@@ -1373,6 +1483,16 @@ typedef struct H5I_mt_t {
  * 
  *      k.object: Pointer to void.  Points to the data (if any) associated with
  *           this ID. 
+ *
+ *      k.tid: ID of the thread that set the do_not_disturb flag.  This is necessary
+ *           for now to allow correct recursive access to an ID whose do_not_disturb
+ *           flag has been set.  
+ *
+ *           The ID stored in this field is obtained via calls to H5TS_thread_id(),
+ *           
+ *           The field is only valid wehn the do_not_distrub flag is set.  For 
+ *           clarity, the fields should be initialized to zero, and be returned 
+ *           to this value whenever the do_not_disturb flag is reset.
  * 
  *      k.marked: Boolean flag indicating whether this instance of H5I_mt_id_info_t 
  *           has been marked for deletion.  Once set, this flag is never re-set, and 
@@ -1391,21 +1511,13 @@ typedef struct H5I_mt_t {
  *           k.do_not_disturb is set to TRUE, and the setting thread has the HDF5
  *           global mutex at the time.
  * 
- *           This field is a temporary hack designed allow HDF5 callbacks to access 
- *           the index without deadlocking.  Thus, when the do_not_disturb flag is 
- *           detected, it can be ignored if the have_global_mutex flag is set and the 
- *           current thread has the global mutext.
- *
- *           If the do_not_disturb flag is not replaced with an off the shelf recursive
- *           lock, this field will almost certainly be replace with a thread ID stored in
- *           H5I_mt_id_info_t proper, and set whenever k.do_not_disturb is set.  While
- *           this will make k.do_not_disturb into a recursive lock, it will also 
- *           require additional logic to allow for the possibility that the kernel 
- *           has been modified while the k.do_not_disturb flag is set.
+ *           This field was a temporary hack designed allow HDF5 callbacks to access
+ *           the index without deadlocking.  For now, it has been replaced with the 
+ *           tid field, and it will probably be removed soon.
  * 
  *      If we followed the single thread version of H5I exactly, the realize_cb and 
  *      discard_cb would have to be atomic since they are set to NULL when is_future 
- *      is set to FALSE.  However, that doesn't seem necessary, so the are non-atomic 
+ *      is set to FALSE.  However, that doesn't seem necessary, so they are non-atomic
  *      fields in H5I_mt_id_info_t.  This should be OK, as the only time they are
  *      modified is when the instance of H5I_mt_id_info_t is being initialized prior 
  *      to insertion into the index.  Since only one thread has access at that point, 
@@ -1470,6 +1582,12 @@ typedef struct H5I_mt_id_info_kernel_t {
     unsigned                  count;      /* Ref. count for this ID */
     unsigned                  app_count;  /* Ref. count of application visible IDs */
     const void              * object;     /* Pointer associated with the ID */
+#if H5I_BYPASS_HDF5_TID
+    pthread_t   tid;
+    hbool_t     tid_valid;
+#else
+    uint64_t    tid;     
+#endif
 
     hbool_t                   marked;     /* Marked for deletion */
     hbool_t                   do_not_disturb;  

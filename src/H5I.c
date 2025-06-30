@@ -1846,11 +1846,12 @@ H5Iget_file_id(hid_t obj_id)
     else
         HGOTO_ERROR(H5E_ARGS, H5E_BADRANGE, H5I_INVALID_HID, "not an ID of a file object");
 
+done:
+
 #ifdef H5_HAVE_MULTITHREAD
     H5I__exit();
 #endif /* H5_HAVE_MULTITHREAD */
 
-done:
     FUNC_LEAVE_API(ret_value)
 } /* end H5Iget_file_id() */
 

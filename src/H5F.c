@@ -268,8 +268,6 @@ H5Fget_obj_count(hid_t file_id, unsigned types)
         udata.types     = types | H5F_OBJ_LOCAL;
         udata.obj_count = 0;
 
-        /* TBD: Retain lock to protect ID iteration */
-        H5_API_LOCK
         if (types & H5F_OBJ_FILE)
             iter_result = H5I_iterate(H5I_FILE, H5F__get_all_count_cb, &udata, TRUE);
         if (types & H5F_OBJ_DATASET)
@@ -280,7 +278,6 @@ H5Fget_obj_count(hid_t file_id, unsigned types)
             iter_result = H5I_iterate(H5I_DATATYPE, H5F__get_all_count_cb, &udata, TRUE);
         if (types & H5F_OBJ_ATTR)
             iter_result = H5I_iterate(H5I_ATTR, H5F__get_all_count_cb, &udata, TRUE);
-        H5_API_UNLOCK
 
         if (iter_result < 0)
             HGOTO_ERROR(H5E_FILE, H5E_BADITER, (-1), "iteration over IDs failed");
@@ -397,8 +394,6 @@ H5Fget_obj_ids(hid_t file_id, unsigned types, size_t max_objs, hid_t *oid_list /
         udata.oid_list  = oid_list;
         udata.obj_count = 0;
 
-        /* TBD: Retain lock to protect ID iteration */
-        H5_API_LOCK
         if (types & H5F_OBJ_FILE)
             iter_result = H5I_iterate(H5I_FILE, H5F__get_all_ids_cb, &udata, TRUE);
         if (types & H5F_OBJ_DATASET)
@@ -409,7 +404,6 @@ H5Fget_obj_ids(hid_t file_id, unsigned types, size_t max_objs, hid_t *oid_list /
             iter_result = H5I_iterate(H5I_DATATYPE, H5F__get_all_ids_cb, &udata, TRUE);
         if (types & H5F_OBJ_ATTR)
             iter_result = H5I_iterate(H5I_ATTR, H5F__get_all_ids_cb, &udata, TRUE);
-        H5_API_UNLOCK
 
         if (iter_result < 0)
             HGOTO_ERROR(H5E_FILE, H5E_BADITER, (-1), "iteration over IDs failed");
@@ -741,10 +735,8 @@ H5Fcreate_async(const char *app_file, const char *app_func, unsigned app_line, c
         if (H5ES_insert(es_id, vol_obj->connector, token,
                         H5ARG_TRACE8(__func__, "*s*sIu*sIuiii", app_file, app_func, app_line, filename, flags, fcpl_id, fapl_id, es_id)) < 0) {
             /* clang-format on */
-            /* TBD: Retain lock to protect ID iteration */
-            H5_API_LOCK
+
             dec_ref_ret = H5I_dec_app_ref(ret_value);
-            H5_API_UNLOCK
 
             if (dec_ref_ret < 0)
                 HDONE_ERROR(H5E_FILE, H5E_CANTDEC, H5I_INVALID_HID, "can't decrement count on file ID");
@@ -937,10 +929,8 @@ H5Fopen_async(const char *app_file, const char *app_func, unsigned app_line, con
         if (H5ES_insert(es_id, vol_obj->connector, token,
                         H5ARG_TRACE7(__func__, "*s*sIu*sIuii", app_file, app_func, app_line, filename, flags, fapl_id, es_id)) < 0) {
             /* clang-format on */
-            /* TBD: Retain lock to protect ID iteration */
-            H5_API_LOCK
+
             dec_ref_ret = H5I_dec_app_ref(ret_value);
-            H5_API_UNLOCK
 
             if (dec_ref_ret < 0)
                 HDONE_ERROR(H5E_FILE, H5E_CANTDEC, H5I_INVALID_HID, "can't decrement count on file ID");
@@ -1112,10 +1102,7 @@ H5Fclose(hid_t file_id)
      * When it reaches zero the file will be closed.
      */
 
-    /* TBD: Retain lock to protect ID iteration */
-    H5_API_LOCK
     dec_ref_ret = H5I_dec_app_ref(file_id);
-    H5_API_UNLOCK
 
     if (dec_ref_ret < 0)
         HGOTO_ERROR(H5E_FILE, H5E_CANTCLOSEFILE, FAIL, "decrementing file ID failed");
@@ -1168,10 +1155,8 @@ H5Fclose_async(const char *app_file, const char *app_func, unsigned app_line, hi
     /* Asynchronously decrement reference count on ID.
      * When it reaches zero the file will be closed.
      */
-    /* TBD: Retain lock to protect ID iteration */
-    H5_API_LOCK
+
     dec_ref_ret = H5I_dec_app_ref_async(file_id, token_ptr);
-    H5_API_UNLOCK
 
     if (dec_ref_ret < 0)
         HGOTO_ERROR(H5E_FILE, H5E_CANTCLOSEFILE, FAIL, "decrementing file ID failed");
@@ -1621,10 +1606,8 @@ H5Freopen_async(const char *app_file, const char *app_func, unsigned app_line, h
         if (H5ES_insert(es_id, vol_obj->connector, token,
                         H5ARG_TRACE5(__func__, "*s*sIuii", app_file, app_func, app_line, file_id, es_id)) < 0) {
             /* clang-format on */
-            /* TBD: Retain lock to protect ID iteration */
-            H5_API_LOCK
+
             dec_ref_ret = H5I_dec_app_ref_async(ret_value, NULL);
-            H5_API_UNLOCK
 
             if (dec_ref_ret < 0)
                 HDONE_ERROR(H5E_FILE, H5E_CANTDEC, H5I_INVALID_HID, "can't decrement count on file ID");
