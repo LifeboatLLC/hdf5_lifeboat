@@ -111,40 +111,37 @@ H5P__open_class_path_test(const char *path)
         HGOTO_ERROR(H5E_PLIST, H5E_CANTREGISTER, H5I_INVALID_HID, "unable to register property list class");
 
 #ifdef H5_HAVE_MULTITHREAD
-   H5P_mt_active_thread_count_t thrd;
-   H5P_mt_active_thread_count_t update_thrd;
-   bool                         done = FALSE;
+    H5P_mt_active_thread_count_t thrd;
+    H5P_mt_active_thread_count_t update_thrd;
+    bool                         done = FALSE;
 
-   atomic_store(&(pclass->id), ret_value);
+    atomic_store(&(pclass->id), ret_value);
 
-   do 
-   {
-      thrd = atomic_load(&(pclass->thrd));
+    do {
+        thrd = atomic_load(&(pclass->thrd));
 
-      assert(thrd.opening);
-      assert( ! thrd.closing);
+        assert(thrd.opening);
+        assert(!thrd.closing);
 
-      update_thrd.count = thrd.count;
-      update_thrd.opening = FALSE;
-      update_thrd.closing = FALSE;
+        update_thrd.count   = thrd.count;
+        update_thrd.opening = FALSE;
+        update_thrd.closing = FALSE;
 
-      if ( ! atomic_compare_exchange_strong(&(pclass->thrd), &thrd, update_thrd))
-      {
-         /* attempt failed, update stats and try again */
-         atomic_fetch_add(&(pclass->num_thrd_update_cols), 1);
+        if (!atomic_compare_exchange_strong(&(pclass->thrd), &thrd, update_thrd)) {
+            /* attempt failed, update stats and try again */
+            atomic_fetch_add(&(pclass->num_thrd_update_cols), 1);
 
-         /* assert is to not get stuck in an infinite loop while testing */
-         assert(H5P_MT_ASSERT_FAIL);
-      }
-      else
-      {
-         /* attempt succeded update stats and set done */
-         atomic_fetch_add(&(pclass->num_thrd_count_update), 1);
+            /* assert is to not get stuck in an infinite loop while testing */
+            assert(H5P_MT_ASSERT_FAIL);
+        }
+        else {
+            /* attempt succeded update stats and set done */
+            atomic_fetch_add(&(pclass->num_thrd_count_update), 1);
 
-         done = TRUE;
-      }
-   
-   } while ( ! done );
+            done = TRUE;
+        }
+
+    } while (!done);
 
 #endif
 

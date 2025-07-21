@@ -68,7 +68,6 @@
 
 #ifndef H5_NO_DEPRECATED_SYMBOLS
 
-
 /*--------------------------------------------------------------------------
  NAME
     H5Pregister1
@@ -231,7 +230,7 @@ H5Pregister1(hid_t cls_id, const char *name, size_t size, void *def_value, H5P_p
 
     /* Create the new property list class */
     orig_pclass = pclass;
-    
+
     if ((ret_value = H5P__register(&pclass, name, size, def_value, prp_create, prp_set, prp_get, NULL, NULL,
                                    prp_delete, prp_copy, NULL, prp_close)) < 0)
         HGOTO_ERROR(H5E_PLIST, H5E_CANTREGISTER, FAIL, "unable to register property in class");
@@ -254,7 +253,6 @@ H5Pregister1(hid_t cls_id, const char *name, size_t size, void *def_value, H5P_p
 done:
     FUNC_LEAVE_API(ret_value)
 } /* H5Pregister1() */
-
 
 /*--------------------------------------------------------------------------
  NAME

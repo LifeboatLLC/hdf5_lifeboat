@@ -36,7 +36,7 @@
 /* Package Private Typedefs */
 /****************************/
 
-#ifdef H5_HAVE_MULTITHREAD 
+#ifdef H5_HAVE_MULTITHREAD
 
 /* Forward declarations for anonymous MT H5P objects */
 typedef H5P_genclass_t H5P_mt_class_t;
@@ -205,12 +205,12 @@ H5_DLL H5P_genclass_t *H5P__get_class_parent(const H5P_genclass_t *pclass);
 H5_DLL herr_t          H5P__close_class(H5P_genclass_t *pclass);
 
 #ifdef H5_HAVE_MULTITHREAD
-H5_DLL H5P_genprop_t  *H5P__find_prop_plist(H5P_genplist_t *plist, const char *name);
+H5_DLL H5P_genprop_t *H5P__find_prop_plist(H5P_genplist_t *plist, const char *name);
 
 #else
-H5_DLL H5P_genprop_t  *H5P__find_prop_plist(const H5P_genplist_t *plist, const char *name);
+H5_DLL H5P_genprop_t *H5P__find_prop_plist(const H5P_genplist_t *plist, const char *name);
 #endif
-H5_DLL hid_t           H5P__new_plist_of_type(H5P_plist_type_t type);
+H5_DLL hid_t H5P__new_plist_of_type(H5P_plist_type_t type);
 
 /* Encode/decode routines */
 H5_DLL herr_t H5P__encode(const H5P_genplist_t *plist, hbool_t enc_all_prop, void *buf, size_t *nalloc);

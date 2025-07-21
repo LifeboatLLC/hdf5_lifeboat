@@ -2702,14 +2702,13 @@ H5F_decr_nopen_objs(H5F_t *f)
  * Return:      SUCCEED/FAIL
  *-------------------------------------------------------------------------
  */
-#ifdef H5_HAVE_MULTITHREAD 
+#ifdef H5_HAVE_MULTITHREAD
 /**
- * multithread version can't have fapl be const, 
- * due to tracking number of threads 
+ * multithread version can't have fapl be const,
+ * due to tracking number of threads
  */
 static herr_t
-H5F__build_actual_name(const H5F_t *f, H5P_genplist_t *fapl, const char *name,
-                       char **actual_name /*out*/)
+H5F__build_actual_name(const H5F_t *f, H5P_genplist_t *fapl, const char *name, char **actual_name /*out*/)
 #else
 static herr_t
 H5F__build_actual_name(const H5F_t *f, const H5P_genplist_t *fapl, const char *name,
