@@ -1926,6 +1926,7 @@ test_genprop_refcount(void)
 
 } /* ent test_genprop_refcount() */
 
+#ifndef H5_HAVE_MULTITHREAD
 /****************************************************************
 **
 ** test_set_default_plist_fail(): Test that the default property lists are unmodifiable
@@ -1999,6 +2000,7 @@ test_set_default_plist_fail(void)
 
     return;
 }
+#endif
 
 #ifndef H5_NO_DEPRECATED_SYMBOLS
 /****************************************************************
@@ -2241,7 +2243,9 @@ test_genprop(TestParams_t H5_ATTR_UNUSED *params)
     test_genprop_list_add_remove_prop(); /* Test adding and removing the same property several times to HDF5
                                             property list */
 
+#ifndef H5_HAVE_MULTITHREAD
     test_set_default_plist_fail(); /* Test that default property lists cannot be modified */
+#endif
 
     test_genprop_equal();    /* Tests for more H5Pequal verification */
     test_genprop_path();     /* Tests for class path verification */

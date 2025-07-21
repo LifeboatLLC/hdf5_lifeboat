@@ -67,13 +67,6 @@ typedef struct H5F_olist_t {
 /* Package Typedefs */
 /********************/
 
-#ifdef H5_HAVE_MULTITHREAD
-
-typedef H5P_mt_list_t  H5P_genplist_t;
-typedef H5P_mt_class_t H5P_genclass_t;
-
-#endif
-
 /********************/
 /* Local Prototypes */
 /********************/
@@ -88,8 +81,14 @@ static char  *H5F__getenv_prefix_name(char **env_prefix /*in,out*/);
 static H5F_t *H5F__new(H5F_shared_t *shared, unsigned flags, hid_t fcpl_id, hid_t fapl_id, H5FD_t *lf);
 static herr_t H5F__check_if_using_file_locks(H5P_genplist_t *fapl, hbool_t *use_file_locking);
 static herr_t H5F__dest(H5F_t *f, hbool_t flush);
+
+#ifdef H5_HAVE_MULTITHREAD /* multithread version fapl can't be const, must count thread numbers */
 static herr_t H5F__build_actual_name(const H5F_t *f, H5P_genplist_t *fapl, const char *name,
                                      char ** /*out*/ actual_name);
+#else
+static herr_t H5F__build_actual_name(const H5F_t *f, const H5P_genplist_t *fapl, const char *name,
+                                     char ** /*out*/ actual_name);
+#endif
 static herr_t H5F__flush_phase1(H5F_t *f);
 static herr_t H5F__flush_phase2(H5F_t *f, hbool_t closing);
 
@@ -2703,8 +2702,19 @@ H5F_decr_nopen_objs(H5F_t *f)
  * Return:      SUCCEED/FAIL
  *-------------------------------------------------------------------------
  */
+#ifdef H5_HAVE_MULTITHREAD 
+/**
+ * multithread version can't have fapl be const, 
+ * due to tracking number of threads 
+ */
 static herr_t
-H5F__build_actual_name(const H5F_t *f, H5P_genplist_t *fapl, const char *name, char **actual_name /*out*/)
+H5F__build_actual_name(const H5F_t *f, H5P_genplist_t *fapl, const char *name,
+                       char **actual_name /*out*/)
+#else
+static herr_t
+H5F__build_actual_name(const H5F_t *f, const H5P_genplist_t *fapl, const char *name,
+                       char **actual_name /*out*/)
+#endif
 {
     hid_t new_fapl_id = H5I_INVALID_HID; /* ID for duplicated FAPL */
 #ifdef H5_HAVE_SYMLINK

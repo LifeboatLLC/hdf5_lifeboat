@@ -273,6 +273,7 @@ H5P__encode_double(const void *value, void **_pp, size_t *size)
     FUNC_LEAVE_NOAPI(SUCCEED)
 } /* end H5P__encode_double() */
 
+
 #ifdef H5_HAVE_MULTITHREAD
 
 /*--------------------------------------------------------------------------
@@ -301,9 +302,9 @@ H5P__encode_double(const void *value, void **_pp, size_t *size)
 static int
 H5P__encode_cb(H5P_genprop_t *prop, void *_udata)
 {
-    H5P_enc_iter_ud_t  *udata = (H5P_enc_iter_ud_t *)_udata; /* Pointer to user data */
+    H5P_enc_iter_ud_t  *udata     = (H5P_enc_iter_ud_t *)_udata; /* Pointer to user data */
     H5P_mt_prop_value_t prop_value;
-    int                 ret_value = H5_ITER_CONT; /* Return value */
+    int                 ret_value = H5_ITER_CONT;                /* Return value */
 
     FUNC_ENTER_PACKAGE
 
@@ -453,6 +454,7 @@ H5P__encode(const H5P_genplist_t *plist, hbool_t enc_all_prop, void *buf, size_t
         *p++ = (uint8_t)H5P_ENCODE_VERS;
 
         /* Type of property list */
+        
 
         *p++ = (uint8_t)plist->pclass_ptr->type;
     } /* end if */
@@ -767,6 +769,7 @@ done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5P__decode_double() */
 
+
 #ifdef H5_HAVE_MULTITHREAD
 
 /*-------------------------------------------------------------------------
@@ -798,16 +801,16 @@ done:
 hid_t
 H5P__decode(const void *buf)
 {
-    H5P_genplist_t     *plist;                            /* Property list to decode into */
-    void               *value_buf = NULL;                 /* Pointer to buffer to use when decoding values */
-    const uint8_t      *p         = (const uint8_t *)buf; /* Current pointer into buffer */
-    H5P_plist_type_t    type;                             /* Type of encoded property list */
-    hid_t               plist_id       = -1;              /* ID of new property list */
-    size_t              value_buf_size = 0;               /* Size of current value buffer */
-    uint8_t             vers;                             /* Version of encoded property list */
+    H5P_genplist_t  *plist;                            /* Property list to decode into */
+    void            *value_buf = NULL;                 /* Pointer to buffer to use when decoding values */
+    const uint8_t   *p         = (const uint8_t *)buf; /* Current pointer into buffer */
+    H5P_plist_type_t type;                             /* Type of encoded property list */
+    hid_t            plist_id       = -1;              /* ID of new property list */
+    size_t           value_buf_size = 0;               /* Size of current value buffer */
+    uint8_t          vers;                             /* Version of encoded property list */
     H5P_mt_prop_value_t prop_value;
 
-    hid_t ret_value = H5I_INVALID_HID; /* Return value */
+    hid_t            ret_value = H5I_INVALID_HID;      /* Return value */
 
     FUNC_ENTER_PACKAGE
 
