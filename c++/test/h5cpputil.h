@@ -22,16 +22,12 @@
 #define H5cpputil_H
 
 #include "h5test.h"
+#include "testframe.h"
 
 using namespace H5;
 using std::cerr;
 using std::endl;
 
-#define MESSAGE(V, A)                                                                                        \
-    do {                                                                                                     \
-        if (HDGetTestVerbosity() > (V))                                                                      \
-            print_func A;                                                                                    \
-    } while (0)
 #define SUBTEST(TEST)                                                                                        \
     do {                                                                                                     \
         printf("   Subtest: %-52s", TEST);                                                                   \
@@ -142,36 +138,36 @@ verify_val(Type1 x, Type2 value, float epsilon, const char *msg, int line, const
 #ifdef __cplusplus
 extern "C" {
 #endif
-void test_array();
-void test_attr();
-void test_compound();
-void test_dsproplist();
-void test_file();
-void test_filters();
-void test_links();
-void test_h5s();
-void test_iterate();
-void test_object();
-void test_reference();
-void test_types();
-void test_vlstrings();
-void test_dset();
+herr_t test_array(TestParams_t *params);
+herr_t test_attr(TestParams_t *params);
+herr_t test_compound(TestParams_t *params);
+herr_t test_dsproplist(TestParams_t *params);
+herr_t test_file(TestParams_t *params);
+herr_t test_filters(TestParams_t *params);
+herr_t test_links(TestParams_t *params);
+herr_t test_h5s(TestParams_t *params);
+herr_t test_iterate(TestParams_t *params);
+herr_t test_object(TestParams_t *params);
+herr_t test_reference(TestParams_t *params);
+herr_t test_types(TestParams_t *params);
+herr_t test_vlstrings(TestParams_t *params);
+herr_t test_dset(TestParams_t *params);
 
 /* Prototypes for the cleanup routines */
-void cleanup_array();
-void cleanup_attr();
-void cleanup_compound();
-void cleanup_dsproplist();
-void cleanup_dsets();
-void cleanup_file();
-void cleanup_filters();
-void cleanup_h5s();
-void cleanup_iterate();
-void cleanup_links();
-void cleanup_object();
-void cleanup_reference();
-void cleanup_types();
-void cleanup_vlstrings();
+herr_t cleanup_array(TestParams_t *params);
+herr_t cleanup_attr(TestParams_t *params);
+herr_t cleanup_compound(TestParams_t *params);
+herr_t cleanup_dsproplist(TestParams_t *params);
+herr_t cleanup_dsets(TestParams_t *params);
+herr_t cleanup_file(TestParams_t *params);
+herr_t cleanup_filters(TestParams_t *params);
+herr_t cleanup_h5s(TestParams_t *params);
+herr_t cleanup_iterate(TestParams_t *params);
+herr_t cleanup_links(TestParams_t *params);
+herr_t cleanup_object(TestParams_t *params);
+herr_t cleanup_reference(TestParams_t *params);
+herr_t cleanup_types(TestParams_t *params);
+herr_t cleanup_vlstrings(TestParams_t *params);
 
 #ifdef __cplusplus
 }

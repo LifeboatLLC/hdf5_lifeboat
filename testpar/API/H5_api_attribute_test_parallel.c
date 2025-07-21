@@ -12,10 +12,11 @@
 
 #include "H5_api_attribute_test_parallel.h"
 
-static void print_attribute_test_header(void);
+#ifdef NOT_YET
+static herr_t print_attribute_test_header(TestParams_t *params);
 
-static void
-print_attribute_test_header(void)
+static herr_t
+print_attribute_test_header(TestParams_t H5_ATTR_UNUSED *params)
 {
     if (MAINPROCESS) {
         printf("\n");
@@ -25,13 +26,15 @@ print_attribute_test_header(void)
         printf("*                                            *\n");
         printf("**********************************************\n\n");
     }
+
+    return SUCCEED;
 }
+#endif
 
 void
 H5_api_attribute_test_parallel_add(void)
 {
-    /* Add a fake test to print out a header to distinguish different test interfaces */
-    AddTest("print_attribute_test_header", print_attribute_test_header, NULL, "Prints header for attribute tests", NULL);
 
     /* No tests yet */
+    return;
 }

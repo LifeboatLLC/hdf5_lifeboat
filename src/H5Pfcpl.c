@@ -331,7 +331,7 @@ H5Pset_userblock(hid_t plist_id, hsize_t size)
     } /* end if */
 
     /* Get the plist structure */
-    if (NULL == (plist = H5P_object_verify(plist_id, H5P_FILE_CREATE)))
+    if (NULL == (plist = H5P_object_verify(plist_id, H5P_FILE_CREATE, false)))
         HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
     /* Set value */
@@ -364,7 +364,7 @@ H5Pget_userblock(hid_t plist_id, hsize_t *size /*out*/)
     H5TRACE2("e", "ix", plist_id, size);
 
     /* Get the plist structure */
-    if (NULL == (plist = H5P_object_verify(plist_id, H5P_FILE_CREATE)))
+    if (NULL == (plist = H5P_object_verify(plist_id, H5P_FILE_CREATE, true)))
         HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
     /* Get value */
@@ -407,7 +407,7 @@ H5Pset_sizes(hid_t plist_id, size_t sizeof_addr, size_t sizeof_size)
     } /* end if */
 
     /* Get the plist structure */
-    if (NULL == (plist = H5P_object_verify(plist_id, H5P_FILE_CREATE)))
+    if (NULL == (plist = H5P_object_verify(plist_id, H5P_FILE_CREATE, false)))
         HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
     /* Set value */
@@ -450,7 +450,7 @@ H5Pget_sizes(hid_t plist_id, size_t *sizeof_addr /*out*/, size_t *sizeof_size /*
     H5TRACE3("e", "ixx", plist_id, sizeof_addr, sizeof_size);
 
     /* Get the plist structure */
-    if (NULL == (plist = H5P_object_verify(plist_id, H5P_FILE_CREATE)))
+    if (NULL == (plist = H5P_object_verify(plist_id, H5P_FILE_CREATE, true)))
         HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
     /* Get values */
@@ -506,7 +506,7 @@ H5Pset_sym_k(hid_t plist_id, unsigned ik, unsigned lk)
     H5TRACE3("e", "iIuIu", plist_id, ik, lk);
 
     /* Get the plist structure */
-    if (NULL == (plist = H5P_object_verify(plist_id, H5P_FILE_CREATE)))
+    if (NULL == (plist = H5P_object_verify(plist_id, H5P_FILE_CREATE, false)))
         HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
     /* Set values */
@@ -551,7 +551,7 @@ H5Pget_sym_k(hid_t plist_id, unsigned *ik /*out*/, unsigned *lk /*out*/)
     H5TRACE3("e", "ixx", plist_id, ik, lk);
 
     /* Get the plist structure */
-    if (NULL == (plist = H5P_object_verify(plist_id, H5P_FILE_CREATE)))
+    if (NULL == (plist = H5P_object_verify(plist_id, H5P_FILE_CREATE, true)))
         HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
     /* Get values */
@@ -597,7 +597,7 @@ H5Pset_istore_k(hid_t plist_id, unsigned ik)
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "istore IK value exceeds maximum B-tree entries");
 
     /* Get the plist structure */
-    if (NULL == (plist = H5P_object_verify(plist_id, H5P_FILE_CREATE)))
+    if (NULL == (plist = H5P_object_verify(plist_id, H5P_FILE_CREATE, false)))
         HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
     /* Set value */
@@ -635,7 +635,7 @@ H5Pget_istore_k(hid_t plist_id, unsigned *ik /*out*/)
     H5TRACE2("e", "ix", plist_id, ik);
 
     /* Get the plist structure */
-    if (NULL == (plist = H5P_object_verify(plist_id, H5P_FILE_CREATE)))
+    if (NULL == (plist = H5P_object_verify(plist_id, H5P_FILE_CREATE, true)))
         HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
     /* Get value */
@@ -763,7 +763,7 @@ H5Pset_shared_mesg_nindexes(hid_t plist_id, unsigned nindexes)
                     "number of indexes is greater than H5O_SHMESG_MAX_NINDEXES");
 
     /* Get the plist structure */
-    if (NULL == (plist = H5P_object_verify(plist_id, H5P_FILE_CREATE)))
+    if (NULL == (plist = H5P_object_verify(plist_id, H5P_FILE_CREATE, false)))
         HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
     if (H5P_set(plist, H5F_CRT_SHMSG_NINDEXES_NAME, &nindexes) < 0)
@@ -793,7 +793,7 @@ H5Pget_shared_mesg_nindexes(hid_t plist_id, unsigned *nindexes /*out*/)
     H5TRACE2("e", "ix", plist_id, nindexes);
 
     /* Get the plist structure */
-    if (NULL == (plist = H5P_object_verify(plist_id, H5P_FILE_CREATE)))
+    if (NULL == (plist = H5P_object_verify(plist_id, H5P_FILE_CREATE, true)))
         HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
     if (H5P_get(plist, H5F_CRT_SHMSG_NINDEXES_NAME, nindexes) < 0)
@@ -834,7 +834,7 @@ H5Pset_shared_mesg_index(hid_t plist_id, unsigned index_num, unsigned mesg_type_
         HGOTO_ERROR(H5E_ARGS, H5E_BADRANGE, FAIL, "unrecognized flags in mesg_type_flags");
 
     /* Get the plist structure */
-    if (NULL == (plist = H5P_object_verify(plist_id, H5P_FILE_CREATE)))
+    if (NULL == (plist = H5P_object_verify(plist_id, H5P_FILE_CREATE, false)))
         HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
     /* Read the current number of indexes */
@@ -890,7 +890,7 @@ H5Pget_shared_mesg_index(hid_t plist_id, unsigned index_num, unsigned *mesg_type
     H5TRACE4("e", "iIuxx", plist_id, index_num, mesg_type_flags, min_mesg_size);
 
     /* Get the plist structure */
-    if (NULL == (plist = H5P_object_verify(plist_id, H5P_FILE_CREATE)))
+    if (NULL == (plist = H5P_object_verify(plist_id, H5P_FILE_CREATE, true)))
         HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
     /* Read the current number of indexes */
@@ -1131,7 +1131,7 @@ H5Pset_shared_mesg_phase_change(hid_t plist_id, unsigned max_list, unsigned min_
         min_btree = 0;
 
     /* Get the plist structure */
-    if (NULL == (plist = H5P_object_verify(plist_id, H5P_FILE_CREATE)))
+    if (NULL == (plist = H5P_object_verify(plist_id, H5P_FILE_CREATE, false)))
         HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
     if (H5P_set(plist, H5F_CRT_SHMSG_LIST_MAX_NAME, &max_list) < 0)
@@ -1163,7 +1163,7 @@ H5Pget_shared_mesg_phase_change(hid_t plist_id, unsigned *max_list /*out*/, unsi
     H5TRACE3("e", "ixx", plist_id, max_list, min_btree);
 
     /* Get the plist structure */
-    if (NULL == (plist = H5P_object_verify(plist_id, H5P_FILE_CREATE)))
+    if (NULL == (plist = H5P_object_verify(plist_id, H5P_FILE_CREATE, true)))
         HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
     /* Get value(s) */
@@ -1204,7 +1204,7 @@ H5Pset_file_space_strategy(hid_t plist_id, H5F_fspace_strategy_t strategy, hbool
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "invalid strategy");
 
     /* Get the plist structure */
-    if (NULL == (plist = H5P_object_verify(plist_id, H5P_FILE_CREATE)))
+    if (NULL == (plist = H5P_object_verify(plist_id, H5P_FILE_CREATE, false)))
         HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
     /* Set value(s), if non-zero */
@@ -1245,7 +1245,7 @@ H5Pget_file_space_strategy(hid_t plist_id, H5F_fspace_strategy_t *strategy /*out
     H5TRACE4("e", "ixxx", plist_id, strategy, persist, threshold);
 
     /* Get the plist structure */
-    if (NULL == (plist = H5P_object_verify(plist_id, H5P_FILE_CREATE)))
+    if (NULL == (plist = H5P_object_verify(plist_id, H5P_FILE_CREATE, true)))
         HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
     /* Get value(s) */
@@ -1348,7 +1348,7 @@ H5Pset_file_space_page_size(hid_t plist_id, hsize_t fsp_size)
     H5TRACE2("e", "ih", plist_id, fsp_size);
 
     /* Get the plist structure */
-    if (NULL == (plist = H5P_object_verify(plist_id, H5P_FILE_CREATE)))
+    if (NULL == (plist = H5P_object_verify(plist_id, H5P_FILE_CREATE, false)))
         HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
     if (fsp_size < H5F_FILE_SPACE_PAGE_SIZE_MIN)
@@ -1385,7 +1385,7 @@ H5Pget_file_space_page_size(hid_t plist_id, hsize_t *fsp_size /*out*/)
     H5TRACE2("e", "ix", plist_id, fsp_size);
 
     /* Get the plist structure */
-    if (NULL == (plist = H5P_object_verify(plist_id, H5P_FILE_CREATE)))
+    if (NULL == (plist = H5P_object_verify(plist_id, H5P_FILE_CREATE, true)))
         HGOTO_ERROR(H5E_ID, H5E_BADID, FAIL, "can't find object for ID");
 
     /* Get value */

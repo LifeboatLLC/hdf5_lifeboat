@@ -949,7 +949,7 @@ mdc_api_call_smoke_check(int express_test, unsigned paged, hid_t fcpl_id)
 
     pass = TRUE;
 
-    if (express_test > 0) {
+    if (express_test > H5_TEST_EXPRESS_EXHAUSTIVE) {
 
         SKIPPED();
 
@@ -2149,7 +2149,7 @@ main(void)
 
     H5open();
 
-    express_test = GetTestExpress();
+    express_test = h5_get_testexpress();
 
     printf("===================================\n");
     printf("Cache API tests\n");

@@ -4003,8 +4003,17 @@ test_attr_big(hid_t fcpl, hid_t fapl)
 
     /* Create attribute */
     u = 2;
-    HDsnprintf(attrname, sizeof(attrname), "attr %02u", u);
-    attr = H5Acreate2(dataset, attrname, H5T_NATIVE_UINT, big_sid, H5P_DEFAULT, H5P_DEFAULT);
+    snprintf(attrname, sizeof(attrname), "attr %02u", u);
+
+    if (vol_is_native && low != H5F_LIBVER_LATEST) {
+        H5E_BEGIN_TRY
+        {
+            attr = H5Acreate2(dataset, attrname, H5T_NATIVE_UINT, big_sid, H5P_DEFAULT, H5P_DEFAULT);
+        }
+        H5E_END_TRY
+    }
+    else
+        attr = H5Acreate2(dataset, attrname, H5T_NATIVE_UINT, big_sid, H5P_DEFAULT, H5P_DEFAULT);
     if (low == H5F_LIBVER_LATEST) {
         CHECK(attr, FAIL, "H5Acreate2");
 
@@ -11923,8 +11932,8 @@ test_attr_delete_last_dense(hid_t fcpl, hid_t fapl)
 **  test_attr(): Main H5A (attribute) testing routine.
 **
 ****************************************************************/
-void
-test_attr(void)
+herr_t
+test_attr(TestParams_t H5_ATTR_UNUSED *params)
 {
     hid_t    fapl = (-1), fapl2 = (-1); /* File access property lists */
     hid_t    fcpl = (-1), fcpl2 = (-1); /* File creation property lists */
@@ -12141,6 +12150,8 @@ test_attr(void)
     CHECK(ret, FAIL, "H5Pclose");
     ret = H5Pclose(fapl2);
     CHECK(ret, FAIL, "H5Pclose");
+
+    return SUCCEED;
 } /* test_attr() */
 
 /*-------------------------------------------------------------------------
@@ -12152,12 +12163,16 @@ test_attr(void)
  *
  *-------------------------------------------------------------------------
  */
-void
-cleanup_attr(void)
+herr_t
+cleanup_attr(TestParams_t H5_ATTR_UNUSED *params)
 {
-    H5E_BEGIN_TRY
-    {
-        H5Fdelete(FILENAME, H5P_DEFAULT);
+    if (GetTestCleanup()) {
+        H5E_BEGIN_TRY
+        {
+            H5Fdelete(FILENAME, H5P_DEFAULT);
+        }
+        H5E_END_TRY
     }
-    H5E_END_TRY
+
+    return SUCCEED;
 }

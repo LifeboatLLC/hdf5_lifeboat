@@ -1384,7 +1384,7 @@ H5S_select_iterate(void *buf, const H5T_t *type, H5S_t *space, const H5S_sel_ite
         HGOTO_ERROR(H5E_DATATYPE, H5E_BADSIZE, FAIL, "datatype size invalid");
 
     /* Allocate the selection iterator */
-    if (NULL == (iter = H5FL_MALLOC(H5S_sel_iter_t)))
+    if (NULL == (iter = H5FL_MALLOC_MT(H5S_sel_iter_t)))
         HGOTO_ERROR(H5E_DATASPACE, H5E_CANTALLOC, FAIL, "can't allocate selection iterator");
 
     /* Initialize iterator */
@@ -1499,7 +1499,7 @@ done:
     if (iter_init && H5S_SELECT_ITER_RELEASE(iter) < 0)
         HDONE_ERROR(H5E_DATASPACE, H5E_CANTRELEASE, FAIL, "unable to release selection iterator");
     if (iter)
-        iter = H5FL_FREE(H5S_sel_iter_t, iter);
+        iter = H5FL_FREE_MT(H5S_sel_iter_t, iter);
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5S_select_iterate() */
@@ -1728,9 +1728,9 @@ H5S_select_shape_same(H5S_t *space1, H5S_t *space2)
             hbool_t  first_block = TRUE;    /* Flag to indicate the first block */
 
             /* Allocate the selection iterators */
-            if (NULL == (iter_a = H5FL_MALLOC(H5S_sel_iter_t)))
+            if (NULL == (iter_a = H5FL_MALLOC_MT(H5S_sel_iter_t)))
                 HGOTO_ERROR(H5E_DATASPACE, H5E_CANTALLOC, FAIL, "can't allocate selection iterator");
-            if (NULL == (iter_b = H5FL_MALLOC(H5S_sel_iter_t)))
+            if (NULL == (iter_b = H5FL_MALLOC_MT(H5S_sel_iter_t)))
                 HGOTO_ERROR(H5E_DATASPACE, H5E_CANTALLOC, FAIL, "can't allocate selection iterator");
 
             /* Initialize iterator for each dataspace selection
@@ -1848,11 +1848,11 @@ done:
     if (iter_a_init && H5S_SELECT_ITER_RELEASE(iter_a) < 0)
         HDONE_ERROR(H5E_DATASPACE, H5E_CANTRELEASE, FAIL, "unable to release selection iterator a");
     if (iter_a)
-        iter_a = H5FL_FREE(H5S_sel_iter_t, iter_a);
+        iter_a = H5FL_FREE_MT(H5S_sel_iter_t, iter_a);
     if (iter_b_init && H5S_SELECT_ITER_RELEASE(iter_b) < 0)
         HDONE_ERROR(H5E_DATASPACE, H5E_CANTRELEASE, FAIL, "unable to release selection iterator b");
     if (iter_b)
-        iter_b = H5FL_FREE(H5S_sel_iter_t, iter_b);
+        iter_b = H5FL_FREE_MT(H5S_sel_iter_t, iter_b);
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5S_select_shape_same() */
@@ -2312,7 +2312,7 @@ H5S_select_fill(const void *fill, size_t fill_size, H5S_t *space, void *_buf)
     assert(_buf);
 
     /* Allocate the selection iterator */
-    if (NULL == (iter = H5FL_MALLOC(H5S_sel_iter_t)))
+    if (NULL == (iter = H5FL_MALLOC_MT(H5S_sel_iter_t)))
         HGOTO_ERROR(H5E_DATASPACE, H5E_CANTALLOC, FAIL, "can't allocate selection iterator");
 
     /* Initialize iterator */
@@ -2371,7 +2371,7 @@ done:
     if (iter_init && H5S_SELECT_ITER_RELEASE(iter) < 0)
         HDONE_ERROR(H5E_DATASPACE, H5E_CANTRELEASE, FAIL, "unable to release selection iterator");
     if (iter)
-        iter = H5FL_FREE(H5S_sel_iter_t, iter);
+        iter = H5FL_FREE_MT(H5S_sel_iter_t, iter);
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5S_select_fill() */
@@ -2430,9 +2430,9 @@ H5S_select_project_intersection(H5S_t *src_space, H5S_t *dst_space, H5S_t *src_i
     assert(H5S_GET_SELECT_NPOINTS(src_space) == H5S_GET_SELECT_NPOINTS(dst_space));
     assert(H5S_GET_EXTENT_NDIMS(src_space) == H5S_GET_EXTENT_NDIMS(src_intersect_space));
 
-    if (NULL == (ss_iter = H5FL_CALLOC(H5S_sel_iter_t)))
+    if (NULL == (ss_iter = H5FL_CALLOC_MT(H5S_sel_iter_t)))
         HGOTO_ERROR(H5E_DATASPACE, H5E_CANTALLOC, FAIL, "can't allocate selection iterator");
-    if (NULL == (ds_iter = H5FL_CALLOC(H5S_sel_iter_t)))
+    if (NULL == (ds_iter = H5FL_CALLOC_MT(H5S_sel_iter_t)))
         HGOTO_ERROR(H5E_DATASPACE, H5E_CANTALLOC, FAIL, "can't allocate selection iterator");
 
     /* Create new space, using dst extent.  Start with "all" selection. */
@@ -2620,8 +2620,8 @@ done:
     if (ds_iter_init && H5S_SELECT_ITER_RELEASE(ds_iter) < 0)
         HDONE_ERROR(H5E_DATASPACE, H5E_CANTRELEASE, FAIL, "unable to release destination selection iterator");
 
-    ss_iter = H5FL_FREE(H5S_sel_iter_t, ss_iter);
-    ds_iter = H5FL_FREE(H5S_sel_iter_t, ds_iter);
+    ss_iter = H5FL_FREE_MT(H5S_sel_iter_t, ss_iter);
+    ds_iter = H5FL_FREE_MT(H5S_sel_iter_t, ds_iter);
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5S_select_project_intersection() */
@@ -2829,7 +2829,7 @@ H5Ssel_iter_create(hid_t space_id, size_t elmt_size, unsigned flags)
         HGOTO_ERROR(H5E_DATASPACE, H5E_BADVALUE, H5I_INVALID_HID, "invalid selection iterator flag");
 
     /* Allocate the iterator */
-    if (NULL == (sel_iter = H5FL_MALLOC(H5S_sel_iter_t)))
+    if (NULL == (sel_iter = H5FL_MALLOC_MT(H5S_sel_iter_t)))
         HGOTO_ERROR(H5E_DATASPACE, H5E_CANTALLOC, H5I_INVALID_HID, "can't allocate selection iterator");
 
     /* Add flag to indicate that this iterator is from an API call */
@@ -2971,7 +2971,7 @@ H5S_select_contig_block(H5S_t *space, hbool_t *is_contig, hsize_t *off, size_t *
     assert(space);
 
     /* Allocate and initialize the iterator */
-    if (NULL == (iter = H5FL_MALLOC(H5S_sel_iter_t)))
+    if (NULL == (iter = H5FL_MALLOC_MT(H5S_sel_iter_t)))
         HGOTO_ERROR(H5E_DATASPACE, H5E_CANTALLOC, FAIL, "can't allocate iterator");
     if (H5S_select_iter_init(iter, space, 1, 0) < 0)
         HGOTO_ERROR(H5E_DATASPACE, H5E_CANTINIT, FAIL, "unable to initialize memory selection information");
@@ -2999,7 +2999,7 @@ done:
     if (iter_init && H5S_SELECT_ITER_RELEASE(iter) < 0)
         HDONE_ERROR(H5E_DATASET, H5E_CANTFREE, FAIL, "Can't release selection iterator");
     if (iter)
-        iter = H5FL_FREE(H5S_sel_iter_t, iter);
+        iter = H5FL_FREE_MT(H5S_sel_iter_t, iter);
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5S_select_contig_block() */
@@ -3107,7 +3107,7 @@ H5S_sel_iter_close(H5S_sel_iter_t *sel_iter)
                     "problem releasing a selection iterator's type-specific info");
 
     /* Release the structure */
-    sel_iter = H5FL_FREE(H5S_sel_iter_t, sel_iter);
+    sel_iter = H5FL_FREE_MT(H5S_sel_iter_t, sel_iter);
 
 done:
     FUNC_LEAVE_NOAPI(ret_value)

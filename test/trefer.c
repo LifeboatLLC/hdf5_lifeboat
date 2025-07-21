@@ -2102,7 +2102,11 @@ test_reference_obj_deleted(void)
     CHECK(ret, FAIL, "H5Dread");
 
     /* Open deleted dataset object */
-    dset2 = H5Ropen_object(&oref, H5P_DEFAULT, H5P_DEFAULT);
+    H5E_BEGIN_TRY
+    {
+        dset2 = H5Ropen_object(&oref, H5P_DEFAULT, H5P_DEFAULT);
+    }
+    H5E_END_TRY
     VERIFY(dset2, H5I_INVALID_HID, "H5Ropen_object");
 
     /* Close Dataset */
@@ -3588,8 +3592,8 @@ test_reference_perf(void)
 **  test_reference(): Main H5R reference testing routine.
 **
 ****************************************************************/
-void
-test_reference(void)
+herr_t
+test_reference(TestParams_t H5_ATTR_UNUSED *params)
 {
     H5F_libver_t low, high;   /* Low and high bounds */
     const char  *env_h5_drvr; /* File Driver value from environment */
@@ -3633,6 +3637,7 @@ test_reference(void)
 
     test_reference_perf();
 
+    return SUCCEED;
 } /* test_reference() */
 
 /*-------------------------------------------------------------------------
@@ -3644,23 +3649,27 @@ test_reference(void)
  *
  *-------------------------------------------------------------------------
  */
-void
-cleanup_reference(void)
+herr_t
+cleanup_reference(TestParams_t H5_ATTR_UNUSED *params)
 {
-    H5E_BEGIN_TRY
-    {
-        H5Fdelete(FILE_REF_PARAM, H5P_DEFAULT);
-        H5Fdelete(FILE_REF_OBJ, H5P_DEFAULT);
-        H5Fdelete(FILE_REF_VL_OBJ, H5P_DEFAULT);
-        H5Fdelete(FILE_REF_CMPND_OBJ, H5P_DEFAULT);
-        H5Fdelete(FILE_REF_REG, H5P_DEFAULT);
-        H5Fdelete(FILE_REF_REG_1D, H5P_DEFAULT);
-        H5Fdelete(FILE_REF_OBJ_DEL, H5P_DEFAULT);
-        H5Fdelete(FILE_REF_GRP, H5P_DEFAULT);
-        H5Fdelete(FILE_REF_ATTR, H5P_DEFAULT);
-        H5Fdelete(FILE_REF_EXT1, H5P_DEFAULT);
-        H5Fdelete(FILE_REF_EXT2, H5P_DEFAULT);
-        H5Fdelete(FILE_REF_COMPAT, H5P_DEFAULT);
+    if (GetTestCleanup()) {
+        H5E_BEGIN_TRY
+        {
+            H5Fdelete(FILE_REF_PARAM, H5P_DEFAULT);
+            H5Fdelete(FILE_REF_OBJ, H5P_DEFAULT);
+            H5Fdelete(FILE_REF_VL_OBJ, H5P_DEFAULT);
+            H5Fdelete(FILE_REF_CMPND_OBJ, H5P_DEFAULT);
+            H5Fdelete(FILE_REF_REG, H5P_DEFAULT);
+            H5Fdelete(FILE_REF_REG_1D, H5P_DEFAULT);
+            H5Fdelete(FILE_REF_OBJ_DEL, H5P_DEFAULT);
+            H5Fdelete(FILE_REF_GRP, H5P_DEFAULT);
+            H5Fdelete(FILE_REF_ATTR, H5P_DEFAULT);
+            H5Fdelete(FILE_REF_EXT1, H5P_DEFAULT);
+            H5Fdelete(FILE_REF_EXT2, H5P_DEFAULT);
+            H5Fdelete(FILE_REF_COMPAT, H5P_DEFAULT);
+        }
+        H5E_END_TRY
     }
-    H5E_END_TRY
+
+    return SUCCEED;
 }

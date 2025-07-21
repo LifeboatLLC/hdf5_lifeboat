@@ -12,37 +12,38 @@
 
 #include "H5_api_object_test.h"
 
-static void print_object_test_header(void);
-static void test_open_object(void);
-static void test_open_object_invalid_params(void);
-static void test_object_exists(void);
-static void test_object_exists_invalid_params(void);
-static void test_get_object_info(void);
-static void test_get_object_info_invalid_params(void);
-static void test_link_object(void);
-static void test_link_object_invalid_params(void);
-static void test_incr_decr_object_refcount(void);
-static void test_incr_decr_object_refcount_invalid_params(void);
-static void test_object_copy_basic(void);
-static void test_object_copy_already_existing(void);
-static void test_object_copy_shallow_group_copy(void);
-static void test_object_copy_no_attributes(void);
-static void test_object_copy_by_soft_link(void);
-static void test_object_copy_group_with_soft_links(void);
-static void test_object_copy_between_files(void);
-static void test_object_copy_invalid_params(void);
-static void test_object_comments(void);
-static void test_object_comments_invalid_params(void);
-static void test_object_visit(void);
-static void test_object_visit_soft_link(void);
-static void test_object_visit_invalid_params(void);
-static void test_close_object(void);
-static void test_close_object_invalid_params(void);
-static void test_close_invalid_objects(void);
-static void test_flush_object(void);
-static void test_flush_object_invalid_params(void);
-static void test_refresh_object(void);
-static void test_refresh_object_invalid_params(void);
+static void print_object_test_header(TestParams_t *params);
+
+static herr_t test_open_object(TestParams_t *params);
+static herr_t test_open_object_invalid_params(TestParams_t *params);
+static herr_t test_object_exists(TestParams_t *params);
+static herr_t test_object_exists_invalid_params(TestParams_t *params);
+static herr_t test_get_object_info(TestParams_t *params);
+static herr_t test_get_object_info_invalid_params(TestParams_t *params);
+static herr_t test_link_object(TestParams_t *params);
+static herr_t test_link_object_invalid_params(TestParams_t *params);
+static herr_t test_incr_decr_object_refcount(TestParams_t *params);
+static herr_t test_incr_decr_object_refcount_invalid_params(TestParams_t *params);
+static herr_t test_object_copy_basic(TestParams_t *params);
+static herr_t test_object_copy_already_existing(TestParams_t *params);
+static herr_t test_object_copy_shallow_group_copy(TestParams_t *params);
+static herr_t test_object_copy_no_attributes(TestParams_t *params);
+static herr_t test_object_copy_by_soft_link(TestParams_t *params);
+static herr_t test_object_copy_group_with_soft_links(TestParams_t *params);
+static herr_t test_object_copy_between_files(TestParams_t *params);
+static herr_t test_object_copy_invalid_params(TestParams_t *params);
+static herr_t test_object_comments(TestParams_t *params);
+static herr_t test_object_comments_invalid_params(TestParams_t *params);
+static herr_t test_object_visit(TestParams_t *params);
+static herr_t test_object_visit_soft_link(TestParams_t *params);
+static herr_t test_object_visit_invalid_params(TestParams_t *params);
+static herr_t test_close_object(TestParams_t *params);
+static herr_t test_close_object_invalid_params(TestParams_t *params);
+static herr_t test_close_invalid_objects(TestParams_t *params);
+static herr_t test_flush_object(TestParams_t *params);
+static herr_t test_flush_object_invalid_params(TestParams_t *params);
+static herr_t test_refresh_object(TestParams_t *params);
+static herr_t test_refresh_object_invalid_params(TestParams_t *params);
 
 static herr_t object_copy_attribute_iter_callback(hid_t location_id, const char *attr_name,
                                                   const H5A_info_t *ainfo, void *op_data);
@@ -64,7 +65,7 @@ static herr_t object_visit_noop_callback(hid_t o_id, const char *name, const H5O
                                          void *op_data);
 
 static void
-print_object_test_header(void)
+print_object_test_header(TestParams_t H5_ATTR_UNUSED *params)
 {
     printf("\n");
     printf("**********************************************\n");
@@ -84,8 +85,8 @@ print_object_test_header(void)
  *
  * XXX: test opening through dangling and resolving soft links.
  */
-static void
-test_open_object(void)
+static herr_t
+test_open_object(TestParams_t *params)
 {
     hid_t file_id         = H5I_INVALID_HID;
     hid_t container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
@@ -95,286 +96,228 @@ test_open_object(void)
     hid_t type_id    = H5I_INVALID_HID;
     hid_t fspace_id  = H5I_INVALID_HID;
 
-    TESTING_MULTIPART("object opening");
-
-    TESTING_2("test setup");
-
     /* Make sure the connector supports the API functions being tested */
     if (!(vol_cap_flags_g & (H5VL_CAP_FLAG_FILE_BASIC)) || !(vol_cap_flags_g & H5VL_CAP_FLAG_GROUP_BASIC) ||
         !(vol_cap_flags_g & H5VL_CAP_FLAG_DATASET_BASIC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_OBJECT_BASIC) ||
         !(vol_cap_flags_g & H5VL_CAP_FLAG_STORED_DATATYPES)) {
-        SKIPPED();
         printf("    API functions for basic file, group, object, dataset, or stored datatype aren't "
                "supported with this connector\n");
-        return;
+        return SKIP;
     }
 
-    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME(params), H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME(params));
         goto error;
     }
 
     if ((container_group = H5Gopen2(file_id, OBJECT_TEST_GROUP_NAME, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't open container group '%s'\n", OBJECT_TEST_GROUP_NAME);
         goto error;
     }
 
     if ((group_id = H5Gcreate2(container_group, OBJECT_OPEN_TEST_GROUP_NAME, H5P_DEFAULT, H5P_DEFAULT,
                                H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't create container sub-group '%s'\n", OBJECT_OPEN_TEST_GROUP_NAME);
         goto error;
     }
 
-    if ((fspace_id = generate_random_dataspace(OBJECT_OPEN_TEST_SPACE_RANK, NULL, NULL, FALSE)) < 0)
-        TEST_ERROR;
+    if ((fspace_id = generate_random_dataspace(OBJECT_OPEN_TEST_SPACE_RANK, NULL, NULL, false)) < 0)
+        TESTFRAME_TEST_ERROR(params);
 
-    if ((dset_dtype = generate_random_datatype(H5T_NO_CLASS, FALSE)) < 0)
-        TEST_ERROR;
+    if ((dset_dtype = generate_random_datatype(H5T_NO_CLASS, false)) < 0)
+        TESTFRAME_TEST_ERROR(params);
 
-    PASSED();
-
-    BEGIN_MULTIPART
+    SUBTEST_BEGIN(params, "H5Oopen on a group")
     {
-        PART_BEGIN(H5Oopen_group)
+        if ((group_id2 = H5Gcreate2(group_id, OBJECT_OPEN_TEST_GRP_NAME, H5P_DEFAULT, H5P_DEFAULT,
+                                    H5P_DEFAULT)) < 0) {
+            printf("    couldn't create group '%s'\n", OBJECT_OPEN_TEST_GRP_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        H5E_BEGIN_TRY
         {
-            TESTING_2("H5Oopen on a group");
-
-            if ((group_id2 = H5Gcreate2(group_id, OBJECT_OPEN_TEST_GRP_NAME, H5P_DEFAULT, H5P_DEFAULT,
-                                        H5P_DEFAULT)) < 0) {
-                H5_FAILED();
-                printf("    couldn't create group '%s'\n", OBJECT_OPEN_TEST_GRP_NAME);
-                PART_ERROR(H5Oopen_group);
-            }
-
-            H5E_BEGIN_TRY
-            {
-                H5Gclose(group_id2);
-            }
-            H5E_END_TRY
-
-            if ((group_id2 = H5Oopen(group_id, OBJECT_OPEN_TEST_GRP_NAME, H5P_DEFAULT)) < 0) {
-                H5_FAILED();
-                printf("    couldn't open group '%s' with H5Oopen\n", OBJECT_OPEN_TEST_GRP_NAME);
-                PART_ERROR(H5Oopen_group);
-            }
-
-            if (H5Iget_type(group_id2) != H5I_GROUP) {
-                H5_FAILED();
-                printf("    ID is not a group\n");
-                PART_ERROR(H5Oopen_group);
-            }
-
-            if (H5Gclose(group_id2) < 0) {
-                H5_FAILED();
-                printf("    couldn't close group opened with H5Oopen\n");
-                PART_ERROR(H5Oopen_group);
-            }
-
-            PASSED();
+            H5Gclose(group_id2);
         }
-        PART_END(H5Oopen_group);
+        H5E_END_TRY
 
-        PART_BEGIN(H5Oopen_dset)
-        {
-            TESTING_2("H5Oopen on a dataset");
-
-            if ((dset_id = H5Dcreate2(group_id, OBJECT_OPEN_TEST_DSET_NAME, dset_dtype, fspace_id,
-                                      H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
-                H5_FAILED();
-                printf("    couldn't create dataset '%s'\n", OBJECT_OPEN_TEST_DSET_NAME);
-                PART_ERROR(H5Oopen_dset);
-            }
-
-            H5E_BEGIN_TRY
-            {
-                H5Dclose(dset_id);
-            }
-            H5E_END_TRY
-
-            if ((dset_id = H5Oopen(group_id, OBJECT_OPEN_TEST_DSET_NAME, H5P_DEFAULT)) < 0) {
-                H5_FAILED();
-                printf("    couldn't open dataset '%s' with H5Oopen\n", OBJECT_OPEN_TEST_DSET_NAME);
-                PART_ERROR(H5Oopen_dset);
-            }
-
-            if (H5Iget_type(dset_id) != H5I_DATASET) {
-                H5_FAILED();
-                printf("    ID is not a dataset\n");
-                PART_ERROR(H5Oopen_dset);
-            }
-
-            if (H5Dclose(dset_id) < 0) {
-                H5_FAILED();
-                printf("    couldn't close dataset opened with H5Oopen\n");
-                PART_ERROR(H5Oopen_dset);
-            }
-
-            PASSED();
-        }
-        PART_END(H5Oopen_dset);
-
-        PART_BEGIN(H5Oopen_dtype)
-        {
-            TESTING_2("H5Oopen on a committed datatype");
-
-            if ((type_id = generate_random_datatype(H5T_NO_CLASS, FALSE)) < 0) {
-                H5_FAILED();
-                printf("    couldn't create datatype '%s'\n", OBJECT_OPEN_TEST_TYPE_NAME);
-                PART_ERROR(H5Oopen_dtype);
-            }
-
-            if (H5Tcommit2(group_id, OBJECT_OPEN_TEST_TYPE_NAME, type_id, H5P_DEFAULT, H5P_DEFAULT,
-                           H5P_DEFAULT) < 0) {
-                H5_FAILED();
-                printf("    couldn't commit datatype '%s'\n", OBJECT_OPEN_TEST_TYPE_NAME);
-                PART_ERROR(H5Oopen_dtype);
-            }
-
-            H5E_BEGIN_TRY
-            {
-                H5Tclose(type_id);
-            }
-            H5E_END_TRY
-
-            if ((type_id = H5Oopen(group_id, OBJECT_OPEN_TEST_TYPE_NAME, H5P_DEFAULT)) < 0) {
-                H5_FAILED();
-                printf("    couldn't open datatype '%s' with H5Oopen\n", OBJECT_OPEN_TEST_TYPE_NAME);
-                PART_ERROR(H5Oopen_dtype);
-            }
-
-            if (H5Iget_type(type_id) != H5I_DATATYPE) {
-                H5_FAILED();
-                printf("    ID is not a dataset\n");
-                PART_ERROR(H5Oopen_dtype);
-            }
-
-            if (H5Tclose(type_id) < 0) {
-                H5_FAILED();
-                printf("    couldn't close committed datatype opened with H5Oopen\n");
-                PART_ERROR(H5Oopen_dtype);
-            }
-
-            PASSED();
-        }
-        PART_END(H5Oopen_dtype);
-
-        if (group_id2 >= 0) {
-            H5E_BEGIN_TRY
-            {
-                H5Gclose(group_id2);
-            }
-            H5E_END_TRY
-            group_id2 = H5I_INVALID_HID;
-        }
-        if (dset_id >= 0) {
-            H5E_BEGIN_TRY
-            {
-                H5Dclose(dset_id);
-            }
-            H5E_END_TRY
-            dset_id = H5I_INVALID_HID;
-        }
-        if (type_id >= 0) {
-            H5E_BEGIN_TRY
-            {
-                H5Tclose(type_id);
-            }
-            H5E_END_TRY
-            type_id = H5I_INVALID_HID;
+        if ((group_id2 = H5Oopen(group_id, OBJECT_OPEN_TEST_GRP_NAME, H5P_DEFAULT)) < 0) {
+            printf("    couldn't open group '%s' with H5Oopen\n", OBJECT_OPEN_TEST_GRP_NAME);
+            TESTFRAME_TEST_ERROR(params);
         }
 
-        PART_BEGIN(H5Oopen_by_idx_group)
-        {
-            TESTING_2("H5Oopen_by_idx on a group");
-
-            if ((group_id2 = H5Oopen_by_idx(container_group, OBJECT_OPEN_TEST_GROUP_NAME, H5_INDEX_NAME,
-                                            H5_ITER_INC, 1, H5P_DEFAULT)) < 0) {
-                H5_FAILED();
-                printf("    couldn't open group '%s' with H5Oopen_by_idx\n", OBJECT_OPEN_TEST_GRP_NAME);
-                PART_ERROR(H5Oopen_by_idx_group);
-            }
-
-            PASSED();
+        if (H5Iget_type(group_id2) != H5I_GROUP) {
+            printf("    ID is not a group\n");
+            TESTFRAME_TEST_ERROR(params);
         }
-        PART_END(H5Oopen_by_idx_group);
 
-        PART_BEGIN(H5Oopen_by_idx_dset)
-        {
-            TESTING_2("H5Oopen_by_idx on a dataset");
-
-            if ((dset_id = H5Oopen_by_idx(container_group, OBJECT_OPEN_TEST_GROUP_NAME, H5_INDEX_NAME,
-                                          H5_ITER_INC, 0, H5P_DEFAULT)) < 0) {
-                H5_FAILED();
-                printf("    couldn't open dataset '%s' with H5Oopen_by_idx\n", OBJECT_OPEN_TEST_DSET_NAME);
-                PART_ERROR(H5Oopen_by_idx_dset);
-            }
-
-            PASSED();
-        }
-        PART_END(H5Oopen_by_idx_dset);
-
-        PART_BEGIN(H5Oopen_by_idx_dtype)
-        {
-            TESTING_2("H5Oopen_by_idx on a committed datatype");
-
-            if ((type_id = H5Oopen_by_idx(container_group, OBJECT_OPEN_TEST_GROUP_NAME, H5_INDEX_NAME,
-                                          H5_ITER_INC, 2, H5P_DEFAULT)) < 0) {
-                H5_FAILED();
-                printf("    couldn't open committed datatype '%s' with H5Oopen_by_idx\n",
-                       OBJECT_OPEN_TEST_TYPE_NAME);
-                PART_ERROR(H5Oopen_by_idx_dtype);
-            }
-
-            PASSED();
-        }
-        PART_END(H5Oopen_by_idx_dtype);
-
-        if (group_id2 >= 0) {
-            H5E_BEGIN_TRY
-            {
-                H5Gclose(group_id2);
-            }
-            H5E_END_TRY
-            group_id2 = H5I_INVALID_HID;
-        }
-        if (dset_id >= 0) {
-            H5E_BEGIN_TRY
-            {
-                H5Dclose(dset_id);
-            }
-            H5E_END_TRY
-            dset_id = H5I_INVALID_HID;
-        }
-        if (type_id >= 0) {
-            H5E_BEGIN_TRY
-            {
-                H5Tclose(type_id);
-            }
-            H5E_END_TRY
-            type_id = H5I_INVALID_HID;
+        if (H5Gclose(group_id2) < 0) {
+            printf("    couldn't close group opened with H5Oopen\n");
+            TESTFRAME_TEST_ERROR(params);
         }
     }
-    END_MULTIPART;
+    SUBTEST_END(params);
 
-    TESTING_2("test cleanup");
+    SUBTEST_BEGIN(params, "H5Oopen on a dataset")
+    {
+        if ((dset_id = H5Dcreate2(group_id, OBJECT_OPEN_TEST_DSET_NAME, dset_dtype, fspace_id,
+                                  H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
+            printf("    couldn't create dataset '%s'\n", OBJECT_OPEN_TEST_DSET_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        H5E_BEGIN_TRY
+        {
+            H5Dclose(dset_id);
+        }
+        H5E_END_TRY
+
+        if ((dset_id = H5Oopen(group_id, OBJECT_OPEN_TEST_DSET_NAME, H5P_DEFAULT)) < 0) {
+            printf("    couldn't open dataset '%s' with H5Oopen\n", OBJECT_OPEN_TEST_DSET_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (H5Iget_type(dset_id) != H5I_DATASET) {
+            printf("    ID is not a dataset\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (H5Dclose(dset_id) < 0) {
+            printf("    couldn't close dataset opened with H5Oopen\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    SUBTEST_BEGIN(params, "H5Oopen on a committed datatype")
+    {
+        if ((type_id = generate_random_datatype(H5T_NO_CLASS, false)) < 0) {
+            printf("    couldn't create datatype '%s'\n", OBJECT_OPEN_TEST_TYPE_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (H5Tcommit2(group_id, OBJECT_OPEN_TEST_TYPE_NAME, type_id, H5P_DEFAULT, H5P_DEFAULT,
+                       H5P_DEFAULT) < 0) {
+            printf("    couldn't commit datatype '%s'\n", OBJECT_OPEN_TEST_TYPE_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        H5E_BEGIN_TRY
+        {
+            H5Tclose(type_id);
+        }
+        H5E_END_TRY
+
+        if ((type_id = H5Oopen(group_id, OBJECT_OPEN_TEST_TYPE_NAME, H5P_DEFAULT)) < 0) {
+            printf("    couldn't open datatype '%s' with H5Oopen\n", OBJECT_OPEN_TEST_TYPE_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (H5Iget_type(type_id) != H5I_DATATYPE) {
+            printf("    ID is not a dataset\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (H5Tclose(type_id) < 0) {
+            printf("    couldn't close committed datatype opened with H5Oopen\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    if (group_id2 >= 0) {
+        H5E_BEGIN_TRY
+        {
+            H5Gclose(group_id2);
+        }
+        H5E_END_TRY
+        group_id2 = H5I_INVALID_HID;
+    }
+    if (dset_id >= 0) {
+        H5E_BEGIN_TRY
+        {
+            H5Dclose(dset_id);
+        }
+        H5E_END_TRY
+        dset_id = H5I_INVALID_HID;
+    }
+    if (type_id >= 0) {
+        H5E_BEGIN_TRY
+        {
+            H5Tclose(type_id);
+        }
+        H5E_END_TRY
+        type_id = H5I_INVALID_HID;
+    }
+
+    SUBTEST_BEGIN(params, "H5Oopen_by_idx on a group")
+    {
+        if ((group_id2 = H5Oopen_by_idx(container_group, OBJECT_OPEN_TEST_GROUP_NAME, H5_INDEX_NAME,
+                                        H5_ITER_INC, 1, H5P_DEFAULT)) < 0) {
+            printf("    couldn't open group '%s' with H5Oopen_by_idx\n", OBJECT_OPEN_TEST_GRP_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    SUBTEST_BEGIN(params, "H5Oopen_by_idx on a dataset")
+    {
+        if ((dset_id = H5Oopen_by_idx(container_group, OBJECT_OPEN_TEST_GROUP_NAME, H5_INDEX_NAME,
+                                      H5_ITER_INC, 0, H5P_DEFAULT)) < 0) {
+            printf("    couldn't open dataset '%s' with H5Oopen_by_idx\n", OBJECT_OPEN_TEST_DSET_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    SUBTEST_BEGIN(params, "H5Oopen_by_idx on a committed datatype")
+    {
+        if ((type_id = H5Oopen_by_idx(container_group, OBJECT_OPEN_TEST_GROUP_NAME, H5_INDEX_NAME,
+                                      H5_ITER_INC, 2, H5P_DEFAULT)) < 0) {
+            printf("    couldn't open committed datatype '%s' with H5Oopen_by_idx\n",
+                   OBJECT_OPEN_TEST_TYPE_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    if (group_id2 >= 0) {
+        H5E_BEGIN_TRY
+        {
+            H5Gclose(group_id2);
+        }
+        H5E_END_TRY
+        group_id2 = H5I_INVALID_HID;
+    }
+    if (dset_id >= 0) {
+        H5E_BEGIN_TRY
+        {
+            H5Dclose(dset_id);
+        }
+        H5E_END_TRY
+        dset_id = H5I_INVALID_HID;
+    }
+    if (type_id >= 0) {
+        H5E_BEGIN_TRY
+        {
+            H5Tclose(type_id);
+        }
+        H5E_END_TRY
+        type_id = H5I_INVALID_HID;
+    }
 
     if (H5Sclose(fspace_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Tclose(dset_dtype) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Gclose(group_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Gclose(container_group) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Fclose(file_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
 
-    PASSED();
-
-    return;
+    return SUCCEED;
 
 error:
     H5E_BEGIN_TRY
@@ -390,7 +333,7 @@ error:
     }
     H5E_END_TRY
 
-    return;
+    return FAIL;
 }
 
 /*
@@ -398,48 +341,39 @@ error:
  * can't be opened when H5Oopen, H5Oopen_by_idx and H5Oopen_by_addr
  * are passed invalid parameters.
  */
-static void
-test_open_object_invalid_params(void)
+static herr_t
+test_open_object_invalid_params(TestParams_t *params)
 {
     hid_t file_id         = H5I_INVALID_HID;
     hid_t container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
     hid_t group_id2 = H5I_INVALID_HID;
     hid_t gcpl_id   = H5I_INVALID_HID;
 
-    TESTING_MULTIPART("object opening with invalid parameters");
-
     /* Make sure the connector supports the API functions being tested */
     if (!(vol_cap_flags_g & (H5VL_CAP_FLAG_FILE_BASIC)) || !(vol_cap_flags_g & H5VL_CAP_FLAG_GROUP_BASIC) ||
         !(vol_cap_flags_g & H5VL_CAP_FLAG_OBJECT_BASIC)) {
-        SKIPPED();
         printf("    API functions for basic file, group, or object aren't supported with "
                "this connector\n");
-        return;
+        return SKIP;
     }
 
-    TESTING_2("test setup");
-
-    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME(params), H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME(params));
         goto error;
     }
 
     if ((container_group = H5Gopen2(file_id, OBJECT_TEST_GROUP_NAME, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't open container group '%s'\n", OBJECT_TEST_GROUP_NAME);
         goto error;
     }
 
     if ((gcpl_id = H5Pcreate(H5P_GROUP_CREATE)) < 0) {
-        H5_FAILED();
         printf("    couldn't create a GCPL\n");
         goto error;
     }
 
     if (vol_cap_flags_g & H5VL_CAP_FLAG_CREATION_ORDER) {
         if (H5Pset_link_creation_order(gcpl_id, H5P_CRT_ORDER_TRACKED | H5P_CRT_ORDER_INDEXED) < 0) {
-            H5_FAILED();
             printf("    couldn't enable link creation order tracking and indexing on GCPL\n");
             goto error;
         }
@@ -447,309 +381,243 @@ test_open_object_invalid_params(void)
 
     if ((group_id = H5Gcreate2(container_group, OBJECT_OPEN_INVALID_PARAMS_TEST_GROUP_NAME, H5P_DEFAULT,
                                gcpl_id, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't create container sub-group '%s'\n", OBJECT_OPEN_INVALID_PARAMS_TEST_GROUP_NAME);
         goto error;
     }
 
     if ((group_id2 = H5Gcreate2(group_id, OBJECT_OPEN_INVALID_PARAMS_TEST_GRP_NAME, H5P_DEFAULT, H5P_DEFAULT,
                                 H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't create group '%s'\n", OBJECT_OPEN_INVALID_PARAMS_TEST_GRP_NAME);
         goto error;
     }
 
     if (H5Gclose(group_id2) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
 
-    PASSED();
-
-    BEGIN_MULTIPART
+    SUBTEST_BEGIN(params, "H5Oopen with an invalid location ID")
     {
-        PART_BEGIN(H5Oopen_invalid_loc_id)
+        H5E_BEGIN_TRY
         {
-            TESTING_2("H5Oopen with an invalid location ID");
-
-            H5E_BEGIN_TRY
-            {
-                group_id2 = H5Oopen(H5I_INVALID_HID, OBJECT_OPEN_INVALID_PARAMS_TEST_GRP_NAME, H5P_DEFAULT);
-            }
-            H5E_END_TRY
-
-            if (group_id2 >= 0) {
-                H5_FAILED();
-                printf("    H5Oopen succeeded with an invalid location ID!\n");
-                H5Gclose(group_id2);
-                PART_ERROR(H5Oopen_invalid_loc_id);
-            }
-
-            PASSED();
+            group_id2 = H5Oopen(H5I_INVALID_HID, OBJECT_OPEN_INVALID_PARAMS_TEST_GRP_NAME, H5P_DEFAULT);
         }
-        PART_END(H5Oopen_invalid_loc_id);
+        H5E_END_TRY
 
-        PART_BEGIN(H5Oopen_invalid_obj_name)
-        {
-            TESTING_2("H5Oopen with an invalid object name");
-
-            H5E_BEGIN_TRY
-            {
-                group_id2 = H5Oopen(group_id, NULL, H5P_DEFAULT);
-            }
-            H5E_END_TRY
-
-            if (group_id2 >= 0) {
-                H5_FAILED();
-                printf("    H5Oopen succeeded with a NULL object name!\n");
-                H5Gclose(group_id2);
-                PART_ERROR(H5Oopen_invalid_obj_name);
-            }
-
-            H5E_BEGIN_TRY
-            {
-                group_id2 = H5Oopen(group_id, "", H5P_DEFAULT);
-            }
-            H5E_END_TRY
-
-            if (group_id2 >= 0) {
-                H5_FAILED();
-                printf("    H5Oopen succeeded with an invalid object name of ''!\n");
-                H5Gclose(group_id2);
-                PART_ERROR(H5Oopen_invalid_obj_name);
-            }
-
-            PASSED();
+        if (group_id2 >= 0) {
+            printf("    H5Oopen succeeded with an invalid location ID!\n");
+            H5Gclose(group_id2);
+            TESTFRAME_TEST_ERROR(params);
         }
-        PART_END(H5Oopen_invalid_obj_name);
-
-        PART_BEGIN(H5Oopen_invalid_lapl)
-        {
-            TESTING_2("H5Oopen with an invalid LAPL");
-
-            H5E_BEGIN_TRY
-            {
-                group_id2 = H5Oopen(group_id, OBJECT_OPEN_INVALID_PARAMS_TEST_GRP_NAME, H5I_INVALID_HID);
-            }
-            H5E_END_TRY
-
-            if (group_id2 >= 0) {
-                H5_FAILED();
-                printf("    H5Oopen succeeded with an invalid LAPL!\n");
-                H5Gclose(group_id2);
-                PART_ERROR(H5Oopen_invalid_lapl);
-            }
-
-            PASSED();
-        }
-        PART_END(H5Oopen_invalid_lapl);
-
-        PART_BEGIN(H5Oopen_by_idx_invalid_loc_id)
-        {
-            TESTING_2("H5Oopen_by_idx with an invalid location ID");
-
-            H5E_BEGIN_TRY
-            {
-                group_id2 = H5Oopen_by_idx(H5I_INVALID_HID, OBJECT_OPEN_INVALID_PARAMS_TEST_GROUP_NAME,
-                                           H5_INDEX_NAME, H5_ITER_INC, 0, H5P_DEFAULT);
-            }
-            H5E_END_TRY
-
-            if (group_id2 >= 0) {
-                H5_FAILED();
-                printf("    H5Oopen_by_idx succeeded with an invalid location ID!\n");
-                H5Gclose(group_id2);
-                PART_ERROR(H5Oopen_by_idx_invalid_loc_id);
-            }
-
-            PASSED();
-        }
-        PART_END(H5Oopen_by_idx_invalid_loc_id);
-
-        PART_BEGIN(H5Oopen_by_idx_invalid_grp_name)
-        {
-            TESTING_2("H5Oopen_by_idx with an invalid group name");
-
-            H5E_BEGIN_TRY
-            {
-                group_id2 = H5Oopen_by_idx(container_group, NULL, H5_INDEX_NAME, H5_ITER_INC, 0, H5P_DEFAULT);
-            }
-            H5E_END_TRY
-
-            if (group_id2 >= 0) {
-                H5_FAILED();
-                printf("    H5Oopen_by_idx succeeded with a NULL group name!\n");
-                H5Gclose(group_id2);
-                PART_ERROR(H5Oopen_by_idx_invalid_grp_name);
-            }
-
-            H5E_BEGIN_TRY
-            {
-                group_id2 = H5Oopen_by_idx(container_group, "", H5_INDEX_NAME, H5_ITER_INC, 0, H5P_DEFAULT);
-            }
-            H5E_END_TRY
-
-            if (group_id2 >= 0) {
-                H5_FAILED();
-                printf("    H5Oopen_by_idx succeeded with an invalid group name of ''!\n");
-                H5Gclose(group_id2);
-                PART_ERROR(H5Oopen_by_idx_invalid_grp_name);
-            }
-
-            PASSED();
-        }
-        PART_END(H5Oopen_by_idx_invalid_grp_name);
-
-        PART_BEGIN(H5Oopen_by_idx_invalid_index_type)
-        {
-            TESTING_2("H5Oopen_by_idx with an invalid index type");
-
-            H5E_BEGIN_TRY
-            {
-                group_id2 = H5Oopen_by_idx(container_group, OBJECT_OPEN_INVALID_PARAMS_TEST_GROUP_NAME,
-                                           H5_INDEX_UNKNOWN, H5_ITER_INC, 0, H5P_DEFAULT);
-            }
-            H5E_END_TRY
-
-            if (group_id2 >= 0) {
-                H5_FAILED();
-                printf("    H5Oopen_by_idx succeeded with invalid index type H5_INDEX_UNKNOWN!\n");
-                H5Gclose(group_id2);
-                PART_ERROR(H5Oopen_by_idx_invalid_index_type);
-            }
-
-            H5E_BEGIN_TRY
-            {
-                group_id2 = H5Oopen_by_idx(container_group, OBJECT_OPEN_INVALID_PARAMS_TEST_GROUP_NAME,
-                                           H5_INDEX_N, H5_ITER_INC, 0, H5P_DEFAULT);
-            }
-            H5E_END_TRY
-
-            if (group_id2 >= 0) {
-                H5_FAILED();
-                printf("    H5Oopen_by_idx succeeded with invalid index type H5_INDEX_N!\n");
-                H5Gclose(group_id2);
-                PART_ERROR(H5Oopen_by_idx_invalid_index_type);
-            }
-
-            PASSED();
-        }
-        PART_END(H5Oopen_by_idx_invalid_index_type);
-
-        PART_BEGIN(H5Oopen_by_idx_invalid_iter_order)
-        {
-            TESTING_2("H5Oopen_by_idx with an invalid iteration order");
-
-            H5E_BEGIN_TRY
-            {
-                group_id2 = H5Oopen_by_idx(container_group, OBJECT_OPEN_INVALID_PARAMS_TEST_GROUP_NAME,
-                                           H5_INDEX_NAME, H5_ITER_UNKNOWN, 0, H5P_DEFAULT);
-            }
-            H5E_END_TRY
-
-            if (group_id2 >= 0) {
-                H5_FAILED();
-                printf("    H5Oopen_by_idx succeeded with an invalid iteration ordering H5_ITER_UNKNOWN!\n");
-                H5Gclose(group_id2);
-                PART_ERROR(H5Oopen_by_idx_invalid_iter_order);
-            }
-
-            H5E_BEGIN_TRY
-            {
-                group_id2 = H5Oopen_by_idx(container_group, OBJECT_OPEN_INVALID_PARAMS_TEST_GROUP_NAME,
-                                           H5_INDEX_NAME, H5_ITER_N, 0, H5P_DEFAULT);
-            }
-            H5E_END_TRY
-
-            if (group_id2 >= 0) {
-                H5_FAILED();
-                printf("    H5Oopen_by_idx succeeded with an invalid iteration ordering H5_ITER_N!\n");
-                H5Gclose(group_id2);
-                PART_ERROR(H5Oopen_by_idx_invalid_iter_order);
-            }
-
-            PASSED();
-        }
-        PART_END(H5Oopen_by_idx_invalid_iter_order);
-
-        PART_BEGIN(H5Oopen_by_idx_invalid_lapl)
-        {
-            TESTING_2("H5Oopen_by_idx with an invalid LAPL");
-
-            H5E_BEGIN_TRY
-            {
-                group_id2 = H5Oopen_by_idx(container_group, OBJECT_OPEN_INVALID_PARAMS_TEST_GROUP_NAME,
-                                           H5_INDEX_NAME, H5_ITER_INC, 0, H5I_INVALID_HID);
-            }
-            H5E_END_TRY
-
-            if (group_id2 >= 0) {
-                H5_FAILED();
-                printf("    H5Oopen_by_idx succeeded with an invalid LAPL!\n");
-                H5Gclose(group_id2);
-                PART_ERROR(H5Oopen_by_idx_invalid_lapl);
-            }
-
-            PASSED();
-        }
-        PART_END(H5Oopen_by_idx_invalid_lapl);
-
-        PART_BEGIN(H5Oopen_by_token_invalid_loc_id)
-        {
-            TESTING_2("H5Oopen_by_token with an invalid location ID");
-
-            H5E_BEGIN_TRY
-            {
-                group_id2 = H5Oopen_by_token(H5I_INVALID_HID, H5O_TOKEN_UNDEF);
-            }
-            H5E_END_TRY
-
-            if (group_id2 >= 0) {
-                H5_FAILED();
-                printf("    H5Oopen_by_token succeeded with an invalid location ID!\n");
-                H5Gclose(group_id2);
-                PART_ERROR(H5Oopen_by_token_invalid_loc_id);
-            }
-
-            PASSED();
-        }
-        PART_END(H5Oopen_by_token_invalid_loc_id);
-
-        PART_BEGIN(H5Oopen_by_token_invalid_token)
-        {
-            TESTING_2("H5Oopen_by_token with an invalid token");
-
-            H5E_BEGIN_TRY
-            {
-                group_id2 = H5Oopen_by_token(file_id, H5O_TOKEN_UNDEF);
-            }
-            H5E_END_TRY
-
-            if (group_id2 >= 0) {
-                H5_FAILED();
-                printf("    H5Oopen_by_token succeeded with an invalid token!\n");
-                H5Gclose(group_id2);
-                PART_ERROR(H5Oopen_by_token_invalid_token);
-            }
-
-            PASSED();
-        }
-        PART_END(H5Oopen_by_token_invalid_token);
     }
-    END_MULTIPART;
+    SUBTEST_END(params);
 
-    TESTING_2("test cleanup");
+    SUBTEST_BEGIN(params, "H5Oopen with an invalid object name")
+    {
+        H5E_BEGIN_TRY
+        {
+            group_id2 = H5Oopen(group_id, NULL, H5P_DEFAULT);
+        }
+        H5E_END_TRY
+
+        if (group_id2 >= 0) {
+            printf("    H5Oopen succeeded with a NULL object name!\n");
+            H5Gclose(group_id2);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        H5E_BEGIN_TRY
+        {
+            group_id2 = H5Oopen(group_id, "", H5P_DEFAULT);
+        }
+        H5E_END_TRY
+
+        if (group_id2 >= 0) {
+            printf("    H5Oopen succeeded with an invalid object name of ''!\n");
+            H5Gclose(group_id2);
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    SUBTEST_BEGIN(params, "H5Oopen with an invalid LAPL")
+    {
+        H5E_BEGIN_TRY
+        {
+            group_id2 = H5Oopen(group_id, OBJECT_OPEN_INVALID_PARAMS_TEST_GRP_NAME, H5I_INVALID_HID);
+        }
+        H5E_END_TRY
+
+        if (group_id2 >= 0) {
+            printf("    H5Oopen succeeded with an invalid LAPL!\n");
+            H5Gclose(group_id2);
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    SUBTEST_BEGIN(params, "H5Oopen_by_idx with an invalid location ID")
+    {
+        H5E_BEGIN_TRY
+        {
+            group_id2 = H5Oopen_by_idx(H5I_INVALID_HID, OBJECT_OPEN_INVALID_PARAMS_TEST_GROUP_NAME,
+                                       H5_INDEX_NAME, H5_ITER_INC, 0, H5P_DEFAULT);
+        }
+        H5E_END_TRY
+
+        if (group_id2 >= 0) {
+            printf("    H5Oopen_by_idx succeeded with an invalid location ID!\n");
+            H5Gclose(group_id2);
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    SUBTEST_BEGIN(params, "H5Oopen_by_idx with an invalid group name")
+    {
+        H5E_BEGIN_TRY
+        {
+            group_id2 = H5Oopen_by_idx(container_group, NULL, H5_INDEX_NAME, H5_ITER_INC, 0, H5P_DEFAULT);
+        }
+        H5E_END_TRY
+
+        if (group_id2 >= 0) {
+            printf("    H5Oopen_by_idx succeeded with a NULL group name!\n");
+            H5Gclose(group_id2);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        H5E_BEGIN_TRY
+        {
+            group_id2 = H5Oopen_by_idx(container_group, "", H5_INDEX_NAME, H5_ITER_INC, 0, H5P_DEFAULT);
+        }
+        H5E_END_TRY
+
+        if (group_id2 >= 0) {
+            printf("    H5Oopen_by_idx succeeded with an invalid group name of ''!\n");
+            H5Gclose(group_id2);
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    SUBTEST_BEGIN(params, "H5Oopen_by_idx with an invalid index type")
+    {
+        H5E_BEGIN_TRY
+        {
+            group_id2 = H5Oopen_by_idx(container_group, OBJECT_OPEN_INVALID_PARAMS_TEST_GROUP_NAME,
+                                       H5_INDEX_UNKNOWN, H5_ITER_INC, 0, H5P_DEFAULT);
+        }
+        H5E_END_TRY
+
+        if (group_id2 >= 0) {
+            printf("    H5Oopen_by_idx succeeded with invalid index type H5_INDEX_UNKNOWN!\n");
+            H5Gclose(group_id2);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        H5E_BEGIN_TRY
+        {
+            group_id2 = H5Oopen_by_idx(container_group, OBJECT_OPEN_INVALID_PARAMS_TEST_GROUP_NAME,
+                                       H5_INDEX_N, H5_ITER_INC, 0, H5P_DEFAULT);
+        }
+        H5E_END_TRY
+
+        if (group_id2 >= 0) {
+            printf("    H5Oopen_by_idx succeeded with invalid index type H5_INDEX_N!\n");
+            H5Gclose(group_id2);
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    SUBTEST_BEGIN(params, "H5Oopen_by_idx with an invalid iteration order")
+    {
+        H5E_BEGIN_TRY
+        {
+            group_id2 = H5Oopen_by_idx(container_group, OBJECT_OPEN_INVALID_PARAMS_TEST_GROUP_NAME,
+                                       H5_INDEX_NAME, H5_ITER_UNKNOWN, 0, H5P_DEFAULT);
+        }
+        H5E_END_TRY
+
+        if (group_id2 >= 0) {
+            printf("    H5Oopen_by_idx succeeded with an invalid iteration ordering H5_ITER_UNKNOWN!\n");
+            H5Gclose(group_id2);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        H5E_BEGIN_TRY
+        {
+            group_id2 = H5Oopen_by_idx(container_group, OBJECT_OPEN_INVALID_PARAMS_TEST_GROUP_NAME,
+                                       H5_INDEX_NAME, H5_ITER_N, 0, H5P_DEFAULT);
+        }
+        H5E_END_TRY
+
+        if (group_id2 >= 0) {
+            printf("    H5Oopen_by_idx succeeded with an invalid iteration ordering H5_ITER_N!\n");
+            H5Gclose(group_id2);
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    SUBTEST_BEGIN(params, "H5Oopen_by_idx with an invalid LAPL")
+    {
+        H5E_BEGIN_TRY
+        {
+            group_id2 = H5Oopen_by_idx(container_group, OBJECT_OPEN_INVALID_PARAMS_TEST_GROUP_NAME,
+                                       H5_INDEX_NAME, H5_ITER_INC, 0, H5I_INVALID_HID);
+        }
+        H5E_END_TRY
+
+        if (group_id2 >= 0) {
+            printf("    H5Oopen_by_idx succeeded with an invalid LAPL!\n");
+            H5Gclose(group_id2);
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    SUBTEST_BEGIN(params, "H5Oopen_by_token with an invalid location ID")
+    {
+        H5E_BEGIN_TRY
+        {
+            group_id2 = H5Oopen_by_token(H5I_INVALID_HID, H5O_TOKEN_UNDEF);
+        }
+        H5E_END_TRY
+
+        if (group_id2 >= 0) {
+            printf("    H5Oopen_by_token succeeded with an invalid location ID!\n");
+            H5Gclose(group_id2);
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    SUBTEST_BEGIN(params, "H5Oopen_by_token with an invalid token")
+    {
+        H5E_BEGIN_TRY
+        {
+            group_id2 = H5Oopen_by_token(file_id, H5O_TOKEN_UNDEF);
+        }
+        H5E_END_TRY
+
+        if (group_id2 >= 0) {
+            printf("    H5Oopen_by_token succeeded with an invalid token!\n");
+            H5Gclose(group_id2);
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
 
     if (H5Pclose(gcpl_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Gclose(group_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Gclose(container_group) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Fclose(file_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
 
-    PASSED();
-
-    return;
+    return SUCCEED;
 
 error:
     H5E_BEGIN_TRY
@@ -762,14 +630,14 @@ error:
     }
     H5E_END_TRY
 
-    return;
+    return FAIL;
 }
 
 /*
  * A test for H5Oexists_by_name.
  */
-static void
-test_object_exists(void)
+static herr_t
+test_object_exists(TestParams_t *params)
 {
     htri_t object_exists;
     hid_t  file_id         = H5I_INVALID_HID;
@@ -780,238 +648,182 @@ test_object_exists(void)
     hid_t  fspace_id  = H5I_INVALID_HID;
     hid_t  dset_dtype = H5I_INVALID_HID;
 
-    TESTING_MULTIPART("object existence");
-
     /* Make sure the connector supports the API functions being tested */
     if (!(vol_cap_flags_g & (H5VL_CAP_FLAG_FILE_BASIC)) || !(vol_cap_flags_g & H5VL_CAP_FLAG_GROUP_BASIC) ||
         !(vol_cap_flags_g & H5VL_CAP_FLAG_DATASET_BASIC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_OBJECT_BASIC) ||
         !(vol_cap_flags_g & H5VL_CAP_FLAG_STORED_DATATYPES) ||
         !(vol_cap_flags_g & H5VL_CAP_FLAG_SOFT_LINKS)) {
-        SKIPPED();
         printf("    API functions for basic file, group, object, dataset, stored datatype or soft link "
                "aren't supported with this connector\n");
-        return;
+        return SKIP;
     }
 
-    TESTING_2("test setup");
-
-    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME(params), H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME(params));
         goto error;
     }
 
     if ((container_group = H5Gopen2(file_id, OBJECT_TEST_GROUP_NAME, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't open container group '%s'\n", OBJECT_TEST_GROUP_NAME);
         goto error;
     }
 
     if ((group_id = H5Gcreate2(container_group, OBJECT_EXISTS_TEST_SUBGROUP_NAME, H5P_DEFAULT, H5P_DEFAULT,
                                H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't create container subgroup '%s'\n", OBJECT_EXISTS_TEST_SUBGROUP_NAME);
         goto error;
     }
 
-    if ((fspace_id = generate_random_dataspace(OBJECT_EXISTS_TEST_DSET_SPACE_RANK, NULL, NULL, FALSE)) < 0)
-        TEST_ERROR;
+    if ((fspace_id = generate_random_dataspace(OBJECT_EXISTS_TEST_DSET_SPACE_RANK, NULL, NULL, false)) < 0)
+        TESTFRAME_TEST_ERROR(params);
 
-    if ((dset_dtype = generate_random_datatype(H5T_NO_CLASS, FALSE)) < 0)
-        TEST_ERROR;
-
-    PASSED();
+    if ((dset_dtype = generate_random_datatype(H5T_NO_CLASS, false)) < 0)
+        TESTFRAME_TEST_ERROR(params);
 
     /*
      * NOTE: H5Oexists_by_name for hard links should always succeed.
      *       H5Oexists_by_name for a soft link may fail if the link doesn't resolve.
      */
-    BEGIN_MULTIPART
+
+    SUBTEST_BEGIN(params, "H5Oexists_by_name on a group")
     {
-        PART_BEGIN(H5Oexists_by_name_group)
-        {
-            TESTING_2("H5Oexists_by_name on a group");
-
-            if ((group_id2 = H5Gcreate2(group_id, OBJECT_EXISTS_TEST_GRP_NAME, H5P_DEFAULT, H5P_DEFAULT,
-                                        H5P_DEFAULT)) < 0) {
-                H5_FAILED();
-                printf("    couldn't create group '%s'\n", OBJECT_EXISTS_TEST_GRP_NAME);
-                PART_ERROR(H5Oexists_by_name_group);
-            }
-
-            if ((object_exists = H5Oexists_by_name(group_id, OBJECT_EXISTS_TEST_GRP_NAME, H5P_DEFAULT)) < 0) {
-                H5_FAILED();
-                printf("    couldn't determine if object '%s' exists\n", OBJECT_EXISTS_TEST_GRP_NAME);
-                PART_ERROR(H5Oexists_by_name_group);
-            }
-
-            if (!object_exists) {
-                H5_FAILED();
-                printf("    object '%s' didn't exist!\n", OBJECT_EXISTS_TEST_GRP_NAME);
-                PART_ERROR(H5Oexists_by_name_group);
-            }
-
-            if (H5Gclose(group_id2) < 0) {
-                H5_FAILED();
-                printf("    couldn't close group\n");
-                PART_ERROR(H5Oexists_by_name_group);
-            }
-
-            PASSED();
+        if ((group_id2 = H5Gcreate2(group_id, OBJECT_EXISTS_TEST_GRP_NAME, H5P_DEFAULT, H5P_DEFAULT,
+                                    H5P_DEFAULT)) < 0) {
+            printf("    couldn't create group '%s'\n", OBJECT_EXISTS_TEST_GRP_NAME);
+            TESTFRAME_TEST_ERROR(params);
         }
-        PART_END(H5Oexists_by_name_group);
 
-        PART_BEGIN(H5Oexists_by_name_dset)
-        {
-            TESTING_2("H5Oexists_by_name on a dataset");
-
-            if ((dset_id = H5Dcreate2(group_id, OBJECT_EXISTS_TEST_DSET_NAME, dset_dtype, fspace_id,
-                                      H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
-                H5_FAILED();
-                printf("    couldn't create dataset '%s'\n", OBJECT_EXISTS_TEST_DSET_NAME);
-                PART_ERROR(H5Oexists_by_name_dset);
-            }
-
-            if ((object_exists = H5Oexists_by_name(group_id, OBJECT_EXISTS_TEST_DSET_NAME, H5P_DEFAULT)) <
-                0) {
-                H5_FAILED();
-                printf("    couldn't determine if object '%s' exists\n", OBJECT_EXISTS_TEST_DSET_NAME);
-                PART_ERROR(H5Oexists_by_name_dset);
-            }
-
-            if (!object_exists) {
-                H5_FAILED();
-                printf("    object '%s' didn't exist!\n", OBJECT_EXISTS_TEST_DSET_NAME);
-                PART_ERROR(H5Oexists_by_name_dset);
-            }
-
-            if (H5Dclose(dset_id) < 0) {
-                H5_FAILED();
-                printf("    couldn't close dataset\n");
-                PART_ERROR(H5Oexists_by_name_dset);
-            }
-
-            PASSED();
+        if ((object_exists = H5Oexists_by_name(group_id, OBJECT_EXISTS_TEST_GRP_NAME, H5P_DEFAULT)) < 0) {
+            printf("    couldn't determine if object '%s' exists\n", OBJECT_EXISTS_TEST_GRP_NAME);
+            TESTFRAME_TEST_ERROR(params);
         }
-        PART_END(H5Oexists_by_name_dset);
 
-        PART_BEGIN(H5Oexists_by_name_dtype)
-        {
-            TESTING_2("H5Oexists_by_name on a committed datatype");
-
-            if ((dtype_id = generate_random_datatype(H5T_NO_CLASS, FALSE)) < 0) {
-                H5_FAILED();
-                printf("    couldn't create datatype '%s'\n", OBJECT_EXISTS_TEST_TYPE_NAME);
-                PART_ERROR(H5Oexists_by_name_dtype);
-            }
-
-            if (H5Tcommit2(group_id, OBJECT_EXISTS_TEST_TYPE_NAME, dtype_id, H5P_DEFAULT, H5P_DEFAULT,
-                           H5P_DEFAULT) < 0) {
-                H5_FAILED();
-                printf("    couldn't commit datatype '%s'\n", OBJECT_EXISTS_TEST_TYPE_NAME);
-                PART_ERROR(H5Oexists_by_name_dtype);
-            }
-
-            if ((object_exists = H5Oexists_by_name(group_id, OBJECT_EXISTS_TEST_TYPE_NAME, H5P_DEFAULT)) <
-                0) {
-                H5_FAILED();
-                printf("    couldn't determine if object '%s' exists\n", OBJECT_EXISTS_TEST_TYPE_NAME);
-                PART_ERROR(H5Oexists_by_name_dtype);
-            }
-
-            if (!object_exists) {
-                H5_FAILED();
-                printf("    object '%s' didn't exist!\n", OBJECT_EXISTS_TEST_TYPE_NAME);
-                PART_ERROR(H5Oexists_by_name_dtype);
-            }
-
-            if (H5Tclose(dtype_id) < 0) {
-                H5_FAILED();
-                printf("    couldn't close datatype\n");
-                PART_ERROR(H5Oexists_by_name_dtype);
-            }
-
-            PASSED();
+        if (!object_exists) {
+            printf("    object '%s' didn't exist!\n", OBJECT_EXISTS_TEST_GRP_NAME);
+            TESTFRAME_TEST_ERROR(params);
         }
-        PART_END(H5Oexists_by_name_dtype);
 
-        PART_BEGIN(H5Oexists_by_name_soft_link)
-        {
-            TESTING_2("H5Oexists_by_name for a soft link");
-
-            if (H5Lcreate_soft("/" OBJECT_TEST_GROUP_NAME "/" OBJECT_EXISTS_TEST_SUBGROUP_NAME, group_id,
-                               OBJECT_EXISTS_TEST_SOFT_LINK_NAME, H5P_DEFAULT, H5P_DEFAULT) < 0) {
-                H5_FAILED();
-                printf("    couldn't create soft link '%s'\n", OBJECT_EXISTS_TEST_SOFT_LINK_NAME);
-                PART_ERROR(H5Oexists_by_name_soft_link);
-            }
-
-            if ((object_exists =
-                     H5Oexists_by_name(group_id, OBJECT_EXISTS_TEST_SOFT_LINK_NAME, H5P_DEFAULT)) < 0) {
-                H5_FAILED();
-                printf("    couldn't determine if object '%s' exists\n", OBJECT_EXISTS_TEST_SOFT_LINK_NAME);
-                PART_ERROR(H5Oexists_by_name_soft_link);
-            }
-
-            if (!object_exists) {
-                H5_FAILED();
-                printf("    object '%s' didn't exist!\n", OBJECT_EXISTS_TEST_SOFT_LINK_NAME);
-                PART_ERROR(H5Oexists_by_name_soft_link);
-            }
-
-            PASSED();
+        if (H5Gclose(group_id2) < 0) {
+            printf("    couldn't close group\n");
+            TESTFRAME_TEST_ERROR(params);
         }
-        PART_END(H5Oexists_by_name_soft_link);
-
-        PART_BEGIN(H5Oexists_by_name_dangling_soft_link)
-        {
-            TESTING_2("H5Oexists_by_name for a dangling soft link");
-
-            if (H5Lcreate_soft(
-                    "/" OBJECT_TEST_GROUP_NAME "/" OBJECT_EXISTS_TEST_SUBGROUP_NAME "/non_existent_object",
-                    group_id, OBJECT_EXISTS_TEST_DANGLING_LINK_NAME, H5P_DEFAULT, H5P_DEFAULT) < 0) {
-                H5_FAILED();
-                printf("    couldn't create soft link '%s'\n", OBJECT_EXISTS_TEST_DANGLING_LINK_NAME);
-                PART_ERROR(H5Oexists_by_name_dangling_soft_link);
-            }
-
-            if ((object_exists =
-                     H5Oexists_by_name(group_id, OBJECT_EXISTS_TEST_DANGLING_LINK_NAME, H5P_DEFAULT)) < 0) {
-                H5_FAILED();
-                printf("    couldn't determine if object '%s' exists\n",
-                       "/" OBJECT_TEST_GROUP_NAME "/" OBJECT_EXISTS_TEST_SUBGROUP_NAME
-                       "/non_existent_object");
-                PART_ERROR(H5Oexists_by_name_dangling_soft_link);
-            }
-
-            if (object_exists) {
-                H5_FAILED();
-                printf("    object pointed to by dangling soft link should not have existed!\n");
-                PART_ERROR(H5Oexists_by_name_dangling_soft_link);
-            }
-
-            PASSED();
-        }
-        PART_END(H5Oexists_by_name_dangling_soft_link);
     }
-    END_MULTIPART;
+    SUBTEST_END(params);
 
-    TESTING_2("test cleanup");
+    SUBTEST_BEGIN(params, "H5Oexists_by_name on a dataset")
+    {
+        if ((dset_id = H5Dcreate2(group_id, OBJECT_EXISTS_TEST_DSET_NAME, dset_dtype, fspace_id,
+                                  H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
+            printf("    couldn't create dataset '%s'\n", OBJECT_EXISTS_TEST_DSET_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if ((object_exists = H5Oexists_by_name(group_id, OBJECT_EXISTS_TEST_DSET_NAME, H5P_DEFAULT)) <
+            0) {
+            printf("    couldn't determine if object '%s' exists\n", OBJECT_EXISTS_TEST_DSET_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (!object_exists) {
+            printf("    object '%s' didn't exist!\n", OBJECT_EXISTS_TEST_DSET_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (H5Dclose(dset_id) < 0) {
+            printf("    couldn't close dataset\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    SUBTEST_BEGIN(params, "H5Oexists_by_name on a committed datatype")
+    {
+        if ((dtype_id = generate_random_datatype(H5T_NO_CLASS, false)) < 0) {
+            printf("    couldn't create datatype '%s'\n", OBJECT_EXISTS_TEST_TYPE_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (H5Tcommit2(group_id, OBJECT_EXISTS_TEST_TYPE_NAME, dtype_id, H5P_DEFAULT, H5P_DEFAULT,
+                       H5P_DEFAULT) < 0) {
+            printf("    couldn't commit datatype '%s'\n", OBJECT_EXISTS_TEST_TYPE_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if ((object_exists = H5Oexists_by_name(group_id, OBJECT_EXISTS_TEST_TYPE_NAME, H5P_DEFAULT)) <
+            0) {
+            printf("    couldn't determine if object '%s' exists\n", OBJECT_EXISTS_TEST_TYPE_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (!object_exists) {
+            printf("    object '%s' didn't exist!\n", OBJECT_EXISTS_TEST_TYPE_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (H5Tclose(dtype_id) < 0) {
+            printf("    couldn't close datatype\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    SUBTEST_BEGIN(params, "H5Oexists_by_name for a soft link")
+    {
+        if (H5Lcreate_soft("/" OBJECT_TEST_GROUP_NAME "/" OBJECT_EXISTS_TEST_SUBGROUP_NAME, group_id,
+                           OBJECT_EXISTS_TEST_SOFT_LINK_NAME, H5P_DEFAULT, H5P_DEFAULT) < 0) {
+            printf("    couldn't create soft link '%s'\n", OBJECT_EXISTS_TEST_SOFT_LINK_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if ((object_exists =
+                 H5Oexists_by_name(group_id, OBJECT_EXISTS_TEST_SOFT_LINK_NAME, H5P_DEFAULT)) < 0) {
+            printf("    couldn't determine if object '%s' exists\n", OBJECT_EXISTS_TEST_SOFT_LINK_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (!object_exists) {
+            printf("    object '%s' didn't exist!\n", OBJECT_EXISTS_TEST_SOFT_LINK_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    SUBTEST_BEGIN(params, "H5Oexists_by_name for a dangling soft link")
+    {
+        if (H5Lcreate_soft(
+                "/" OBJECT_TEST_GROUP_NAME "/" OBJECT_EXISTS_TEST_SUBGROUP_NAME "/non_existent_object",
+                group_id, OBJECT_EXISTS_TEST_DANGLING_LINK_NAME, H5P_DEFAULT, H5P_DEFAULT) < 0) {
+            printf("    couldn't create soft link '%s'\n", OBJECT_EXISTS_TEST_DANGLING_LINK_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if ((object_exists =
+                 H5Oexists_by_name(group_id, OBJECT_EXISTS_TEST_DANGLING_LINK_NAME, H5P_DEFAULT)) < 0) {
+            printf("    couldn't determine if object '%s' exists\n",
+                   "/" OBJECT_TEST_GROUP_NAME "/" OBJECT_EXISTS_TEST_SUBGROUP_NAME
+                   "/non_existent_object");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (object_exists) {
+            printf("    object pointed to by dangling soft link should not have existed!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
 
     if (H5Sclose(fspace_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Tclose(dset_dtype) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Gclose(group_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Gclose(container_group) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Fclose(file_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
 
-    PASSED();
-
-    return;
+    return SUCCEED;
 
 error:
     H5E_BEGIN_TRY
@@ -1027,48 +839,40 @@ error:
     }
     H5E_END_TRY
 
-    return;
+    return FAIL;
 }
 
 /*
  * A test to check that H5Oexists_by_name fails
  * when it is passed invalid parameters.
  */
-static void
-test_object_exists_invalid_params(void)
+static herr_t
+test_object_exists_invalid_params(TestParams_t *params)
 {
     htri_t object_exists;
     hid_t  file_id         = H5I_INVALID_HID;
     hid_t  container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
     hid_t  group_id2 = H5I_INVALID_HID;
 
-    TESTING_MULTIPART("object existence with invalid parameters");
-
     /* Make sure the connector supports the API functions being tested */
     if (!(vol_cap_flags_g & (H5VL_CAP_FLAG_FILE_BASIC)) || !(vol_cap_flags_g & H5VL_CAP_FLAG_GROUP_BASIC) ||
         !(vol_cap_flags_g & H5VL_CAP_FLAG_OBJECT_BASIC)) {
-        SKIPPED();
         printf("    API functions for basic file, group, or object aren't supported with this connector\n");
-        return;
+        return SKIP;
     }
 
-    TESTING_2("test setup");
-
-    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME(params), H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME(params));
         goto error;
     }
 
     if ((container_group = H5Gopen2(file_id, OBJECT_TEST_GROUP_NAME, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't open container group '%s'\n", OBJECT_TEST_GROUP_NAME);
         goto error;
     }
 
     if ((group_id = H5Gcreate2(container_group, OBJECT_EXISTS_INVALID_PARAMS_TEST_SUBGROUP_NAME, H5P_DEFAULT,
                                H5P_DEFAULT, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't create container subgroup '%s'\n",
                OBJECT_EXISTS_INVALID_PARAMS_TEST_SUBGROUP_NAME);
         goto error;
@@ -1076,106 +880,79 @@ test_object_exists_invalid_params(void)
 
     if ((group_id2 = H5Gcreate2(group_id, OBJECT_EXISTS_INVALID_PARAMS_TEST_GRP_NAME, H5P_DEFAULT,
                                 H5P_DEFAULT, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't create group '%s'\n", OBJECT_EXISTS_INVALID_PARAMS_TEST_GRP_NAME);
         goto error;
     }
 
     if (H5Gclose(group_id2) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
 
-    PASSED();
-
-    BEGIN_MULTIPART
+    SUBTEST_BEGIN(params, "H5Oexists_by_name with an invalid location ID")
     {
-        PART_BEGIN(H5Oexists_by_name_invalid_loc_id)
+        H5E_BEGIN_TRY
         {
-            TESTING_2("H5Oexists_by_name with an invalid location ID");
-
-            H5E_BEGIN_TRY
-            {
-                object_exists = H5Oexists_by_name(H5I_INVALID_HID, OBJECT_EXISTS_INVALID_PARAMS_TEST_GRP_NAME,
-                                                  H5P_DEFAULT);
-            }
-            H5E_END_TRY
-
-            if (object_exists >= 0) {
-                H5_FAILED();
-                printf("    H5Oexists_by_name succeeded with an invalid location ID!\n");
-                PART_ERROR(H5Oexists_by_name_invalid_loc_id);
-            }
-
-            PASSED();
+            object_exists = H5Oexists_by_name(H5I_INVALID_HID, OBJECT_EXISTS_INVALID_PARAMS_TEST_GRP_NAME,
+                                              H5P_DEFAULT);
         }
-        PART_END(H5Oexists_by_name_invalid_loc_id);
+        H5E_END_TRY
 
-        PART_BEGIN(H5Oexists_by_name_invalid_obj_name)
-        {
-            TESTING_2("H5Oexists_by_name with an invalid object name");
-
-            H5E_BEGIN_TRY
-            {
-                object_exists = H5Oexists_by_name(group_id, NULL, H5P_DEFAULT);
-            }
-            H5E_END_TRY
-
-            if (object_exists >= 0) {
-                H5_FAILED();
-                printf("    H5Oexists_by_name succeeded with a NULL object name!\n");
-                PART_ERROR(H5Oexists_by_name_invalid_obj_name);
-            }
-
-            H5E_BEGIN_TRY
-            {
-                object_exists = H5Oexists_by_name(group_id, "", H5P_DEFAULT);
-            }
-            H5E_END_TRY
-
-            if (object_exists >= 0) {
-                H5_FAILED();
-                printf("    H5Oexists_by_name succeeded with an invalid object name of ''!\n");
-                PART_ERROR(H5Oexists_by_name_invalid_obj_name);
-            }
-
-            PASSED();
+        if (object_exists >= 0) {
+            printf("    H5Oexists_by_name succeeded with an invalid location ID!\n");
+            TESTFRAME_TEST_ERROR(params);
         }
-        PART_END(H5Oexists_by_name_invalid_obj_name);
-
-        PART_BEGIN(H5Oexists_by_name_invalid_lapl)
-        {
-            TESTING_2("H5Oexists_by_name with an invalid LAPL");
-
-            H5E_BEGIN_TRY
-            {
-                object_exists =
-                    H5Oexists_by_name(group_id, OBJECT_EXISTS_INVALID_PARAMS_TEST_GRP_NAME, H5I_INVALID_HID);
-            }
-            H5E_END_TRY
-
-            if (object_exists >= 0) {
-                H5_FAILED();
-                printf("    H5Oexists_by_name succeeded with an invalid LAPL!\n");
-                PART_ERROR(H5Oexists_by_name_invalid_lapl);
-            }
-
-            PASSED();
-        }
-        PART_END(H5Oexists_by_name_invalid_lapl);
     }
-    END_MULTIPART;
+    SUBTEST_END(params);
 
-    TESTING_2("test cleanup");
+    SUBTEST_BEGIN(params, "H5Oexists_by_name with an invalid object name")
+    {
+        H5E_BEGIN_TRY
+        {
+            object_exists = H5Oexists_by_name(group_id, NULL, H5P_DEFAULT);
+        }
+        H5E_END_TRY
+
+        if (object_exists >= 0) {
+            printf("    H5Oexists_by_name succeeded with a NULL object name!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        H5E_BEGIN_TRY
+        {
+            object_exists = H5Oexists_by_name(group_id, "", H5P_DEFAULT);
+        }
+        H5E_END_TRY
+
+        if (object_exists >= 0) {
+            printf("    H5Oexists_by_name succeeded with an invalid object name of ''!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    SUBTEST_BEGIN(params, "H5Oexists_by_name with an invalid LAPL")
+    {
+        H5E_BEGIN_TRY
+        {
+            object_exists =
+                H5Oexists_by_name(group_id, OBJECT_EXISTS_INVALID_PARAMS_TEST_GRP_NAME, H5I_INVALID_HID);
+        }
+        H5E_END_TRY
+
+        if (object_exists >= 0) {
+            printf("    H5Oexists_by_name succeeded with an invalid LAPL!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
 
     if (H5Gclose(group_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Gclose(container_group) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Fclose(file_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
 
-    PASSED();
-
-    return;
+    return SUCCEED;
 
 error:
     H5E_BEGIN_TRY
@@ -1187,20 +964,16 @@ error:
     }
     H5E_END_TRY
 
-    return;
+    return FAIL;
 }
 
 /*
  * A test for H5Oget_info(_by_name/_by_idx).
  */
-static void
-test_get_object_info(void)
+static herr_t
+test_get_object_info(TestParams_t H5_ATTR_UNUSED *params)
 {
-    TESTING("object info retrieval");
-
-    SKIPPED();
-
-    return;
+    return SKIP;
 }
 
 /*
@@ -1208,21 +981,17 @@ test_get_object_info(void)
  * when H5Oget_info(_by_name/_by_idx) are passed invalid
  * parameters.
  */
-static void
-test_get_object_info_invalid_params(void)
+static herr_t
+test_get_object_info_invalid_params(TestParams_t H5_ATTR_UNUSED *params)
 {
-    TESTING("object info retrieval with invalid parameters");
-
-    SKIPPED();
-
-    return;
+    return SKIP;
 }
 
 /*
  * A test for H5Olink.
  */
-static void
-test_link_object(void)
+static herr_t
+test_link_object(TestParams_t *params)
 {
     hid_t file_id         = H5I_INVALID_HID;
     hid_t container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
@@ -1232,131 +1001,95 @@ test_link_object(void)
     hid_t type_id    = H5I_INVALID_HID;
     hid_t fspace_id  = H5I_INVALID_HID;
 
-    TESTING_MULTIPART("object linking");
-
     /* Make sure the connector supports the API functions being tested */
     if (!(vol_cap_flags_g & (H5VL_CAP_FLAG_FILE_BASIC)) || !(vol_cap_flags_g & H5VL_CAP_FLAG_GROUP_BASIC) ||
         !(vol_cap_flags_g & H5VL_CAP_FLAG_DATASET_BASIC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_OBJECT_BASIC) ||
         !(vol_cap_flags_g & H5VL_CAP_FLAG_STORED_DATATYPES)) {
-        SKIPPED();
         printf("    API functions for basic file, group, object, dataset, or stored datatype aren't "
                "supported with this connector\n");
-        return;
+        return SKIP;
     }
 
-    TESTING_2("test setup");
-
-    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME(params), H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME(params));
         goto error;
     }
 
     if ((container_group = H5Gopen2(file_id, OBJECT_TEST_GROUP_NAME, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't open container group '%s'\n", OBJECT_TEST_GROUP_NAME);
         goto error;
     }
 
     if ((group_id = H5Gcreate2(container_group, OBJECT_LINK_TEST_GROUP_NAME, H5P_DEFAULT, H5P_DEFAULT,
                                H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't create container sub-group '%s'\n", OBJECT_LINK_TEST_GROUP_NAME);
         goto error;
     }
 
-    if ((fspace_id = generate_random_dataspace(OBJECT_LINK_TEST_SPACE_RANK, NULL, NULL, FALSE)) < 0)
-        TEST_ERROR;
+    if ((fspace_id = generate_random_dataspace(OBJECT_LINK_TEST_SPACE_RANK, NULL, NULL, false)) < 0)
+        TESTFRAME_TEST_ERROR(params);
 
-    if ((dset_dtype = generate_random_datatype(H5T_NO_CLASS, FALSE)) < 0)
-        TEST_ERROR;
+    if ((dset_dtype = generate_random_datatype(H5T_NO_CLASS, false)) < 0)
+        TESTFRAME_TEST_ERROR(params);
 
-    PASSED();
-
-    BEGIN_MULTIPART
+    SUBTEST_BEGIN(params, "H5Olink an anonymous group")
     {
-        PART_BEGIN(H5Olink_group)
-        {
-            TESTING_2("H5Olink an anonymous group");
-
-            if ((group_id2 = H5Gcreate_anon(group_id, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
-                H5_FAILED();
-                printf("    couldn't create an anonymous group\n");
-                PART_ERROR(H5Olink_group);
-            }
-
-            if (H5Olink(group_id2, group_id, OBJECT_LINK_TEST_GROUP_NAME2, H5P_DEFAULT, H5P_DEFAULT) < 0) {
-                H5_FAILED();
-                printf("    couldn't link the anonymous group\n");
-                PART_ERROR(H5Olink_group);
-            }
-
-            PASSED();
+        if ((group_id2 = H5Gcreate_anon(group_id, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
+            printf("    couldn't create an anonymous group\n");
+            TESTFRAME_TEST_ERROR(params);
         }
-        PART_END(H5Olink_group);
 
-        PART_BEGIN(H5Olink_dataset)
-        {
-            TESTING_2("H5Olink an anonymous dataset");
-
-            if ((dset_id = H5Dcreate_anon(group_id, dset_dtype, fspace_id, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
-                H5_FAILED();
-                printf("    couldn't create an anonymous dataset\n");
-                PART_ERROR(H5Olink_dataset);
-            }
-
-            if (H5Olink(dset_id, group_id, OBJECT_LINK_TEST_DSET_NAME, H5P_DEFAULT, H5P_DEFAULT) < 0) {
-                H5_FAILED();
-                printf("    couldn't link the anonymous dataset\n");
-                PART_ERROR(H5Olink_dataset);
-            }
-
-            PASSED();
+        if (H5Olink(group_id2, group_id, OBJECT_LINK_TEST_GROUP_NAME2, H5P_DEFAULT, H5P_DEFAULT) < 0) {
+            printf("    couldn't link the anonymous group\n");
+            TESTFRAME_TEST_ERROR(params);
         }
-        PART_END(H5Olink_dataset);
-
-        PART_BEGIN(H5Olink_datatype)
-        {
-            TESTING_2("H5Olink an anonymous datatype");
-
-            if (H5Tcommit_anon(group_id, dset_dtype, H5P_DEFAULT, H5P_DEFAULT) < 0) {
-                H5_FAILED();
-                printf("    couldn't create an anonymous datatype\n");
-                PART_ERROR(H5Olink_datatype);
-            }
-
-            if (H5Olink(dset_dtype, group_id, OBJECT_LINK_TEST_DTYPE_NAME, H5P_DEFAULT, H5P_DEFAULT) < 0) {
-                H5_FAILED();
-                printf("    couldn't link the anonymous datatype\n");
-                PART_ERROR(H5Olink_datatype);
-            }
-
-            PASSED();
-        }
-        PART_END(H5Olink_datatype);
     }
-    END_MULTIPART;
+    SUBTEST_END(params);
 
-    TESTING_2("test cleanup");
+    SUBTEST_BEGIN(params, "H5Olink an anonymous dataset")
+    {
+        if ((dset_id = H5Dcreate_anon(group_id, dset_dtype, fspace_id, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
+            printf("    couldn't create an anonymous dataset\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (H5Olink(dset_id, group_id, OBJECT_LINK_TEST_DSET_NAME, H5P_DEFAULT, H5P_DEFAULT) < 0) {
+            printf("    couldn't link the anonymous dataset\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    SUBTEST_BEGIN(params, "H5Olink an anonymous datatype")
+    {
+        if (H5Tcommit_anon(group_id, dset_dtype, H5P_DEFAULT, H5P_DEFAULT) < 0) {
+            printf("    couldn't create an anonymous datatype\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (H5Olink(dset_dtype, group_id, OBJECT_LINK_TEST_DTYPE_NAME, H5P_DEFAULT, H5P_DEFAULT) < 0) {
+            printf("    couldn't link the anonymous datatype\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
 
     if (H5Sclose(fspace_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Tclose(dset_dtype) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Dclose(dset_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Gclose(group_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Gclose(group_id2) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Gclose(container_group) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Fclose(file_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
 
-    PASSED();
-
-    return;
+    return SUCCEED;
 
 error:
     H5E_BEGIN_TRY
@@ -1372,7 +1105,7 @@ error:
     }
     H5E_END_TRY
 
-    return;
+    return FAIL;
 }
 
 /*
@@ -1380,187 +1113,142 @@ error:
  * the file structure when H5Olink is passed invalid
  * parameters.
  */
-static void
-test_link_object_invalid_params(void)
+static herr_t
+test_link_object_invalid_params(TestParams_t *params)
 {
     hid_t  file_id         = H5I_INVALID_HID;
     hid_t  container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
     hid_t  group_id2 = H5I_INVALID_HID;
     herr_t status;
 
-    TESTING_MULTIPART("object linking with invalid parameters");
-
     /* Make sure the connector supports the API functions being tested */
     if (!(vol_cap_flags_g & (H5VL_CAP_FLAG_FILE_BASIC)) || !(vol_cap_flags_g & H5VL_CAP_FLAG_GROUP_BASIC) ||
         !(vol_cap_flags_g & H5VL_CAP_FLAG_OBJECT_BASIC)) {
-        SKIPPED();
         printf("    API functions for basic file, group, or object aren't supported with this connector\n");
-        return;
+        return SKIP;
     }
 
-    TESTING_2("test setup");
-
-    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME(params), H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME(params));
         goto error;
     }
 
     if ((container_group = H5Gopen2(file_id, OBJECT_TEST_GROUP_NAME, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't open container group '%s'\n", OBJECT_TEST_GROUP_NAME);
         goto error;
     }
 
     if ((group_id = H5Gcreate2(container_group, OBJECT_LINK_INVALID_PARAMS_TEST_GROUP_NAME, H5P_DEFAULT,
                                H5P_DEFAULT, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't create container sub-group '%s'\n", OBJECT_LINK_TEST_GROUP_NAME);
         goto error;
     }
 
     if ((group_id2 = H5Gcreate_anon(group_id, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't create an anonymous group\n");
         goto error;
     }
 
-    PASSED();
-
-    BEGIN_MULTIPART
+    SUBTEST_BEGIN(params, "H5Olink with an invalid object ID")
     {
-        PART_BEGIN(H5Olink_invalid_object_id)
+        H5E_BEGIN_TRY
         {
-            TESTING_2("H5Olink with an invalid object ID");
-
-            H5E_BEGIN_TRY
-            {
-                status = H5Olink(H5I_INVALID_HID, group_id, OBJECT_LINK_TEST_GROUP_NAME2, H5P_DEFAULT,
-                                 H5P_DEFAULT);
-            }
-            H5E_END_TRY
-
-            if (status >= 0) {
-                H5_FAILED();
-                printf("    H5Olink succeeded with an invalid object ID!\n");
-                PART_ERROR(H5Olink_invalid_object_id);
-            }
-
-            PASSED();
+            status = H5Olink(H5I_INVALID_HID, group_id, OBJECT_LINK_TEST_GROUP_NAME2, H5P_DEFAULT,
+                             H5P_DEFAULT);
         }
-        PART_END(H5Olink_invalid_object_id);
+        H5E_END_TRY
 
-        PART_BEGIN(H5Olink_invalid_location)
-        {
-            TESTING_2("H5Olink with an invalid location ID");
-
-            H5E_BEGIN_TRY
-            {
-                status = H5Olink(group_id2, H5I_INVALID_HID, OBJECT_LINK_TEST_GROUP_NAME2, H5P_DEFAULT,
-                                 H5P_DEFAULT);
-            }
-            H5E_END_TRY
-
-            if (status >= 0) {
-                H5_FAILED();
-                printf("    H5Olink succeeded with an invalid location ID!\n");
-                PART_ERROR(H5Olink_invalid_location);
-            }
-
-            PASSED();
+        if (status >= 0) {
+            printf("    H5Olink succeeded with an invalid object ID!\n");
+            TESTFRAME_TEST_ERROR(params);
         }
-        PART_END(H5Olink_invalid_location);
-
-        PART_BEGIN(H5Olink_invalid_name)
-        {
-            TESTING_2("H5Olink with an invalid name");
-
-            H5E_BEGIN_TRY
-            {
-                status = H5Olink(group_id2, group_id, NULL, H5P_DEFAULT, H5P_DEFAULT);
-            }
-            H5E_END_TRY
-
-            if (status >= 0) {
-                H5_FAILED();
-                printf("    H5Olink succeeded with NULL as the object name!\n");
-                PART_ERROR(H5Olink_invalid_name);
-            }
-
-            H5E_BEGIN_TRY
-            {
-                status = H5Olink(group_id2, group_id, "", H5P_DEFAULT, H5P_DEFAULT);
-            }
-            H5E_END_TRY
-
-            if (status >= 0) {
-                H5_FAILED();
-                printf("    H5Olink succeeded with an invalid object name of ''!\n");
-                PART_ERROR(H5Olink_invalid_name);
-            }
-
-            PASSED();
-        }
-        PART_END(H5Olink_invalid_name);
-
-        PART_BEGIN(H5Olink_invalid_lcpl)
-        {
-            TESTING_2("H5Olink with an invalid LCPL");
-
-            H5E_BEGIN_TRY
-            {
-                status =
-                    H5Olink(group_id2, group_id, OBJECT_LINK_TEST_GROUP_NAME2, H5I_INVALID_HID, H5P_DEFAULT);
-            }
-            H5E_END_TRY
-
-            if (status >= 0) {
-                H5_FAILED();
-                printf("    H5Olink succeeded with an invalid LCPL!\n");
-                PART_ERROR(H5Olink_invalid_lcpl);
-            }
-
-            PASSED();
-        }
-        PART_END(H5Olink_invalid_lcpl);
-
-        PART_BEGIN(H5Olink_invalid_lapl)
-        {
-            TESTING_2("H5Olink with an invalid LAPL");
-
-            H5E_BEGIN_TRY
-            {
-                status =
-                    H5Olink(group_id2, group_id, OBJECT_LINK_TEST_GROUP_NAME2, H5P_DEFAULT, H5I_INVALID_HID);
-            }
-            H5E_END_TRY
-
-            if (status >= 0) {
-                H5_FAILED();
-                printf("    H5Olink succeeded with an invalid LAPL!\n");
-                PART_ERROR(H5Olink_invalid_lapl);
-            }
-
-            PASSED();
-        }
-        PART_END(H5Olink_invalid_lapl);
     }
-    END_MULTIPART;
+    SUBTEST_END(params);
 
-    TESTING_2("test cleanup");
+    SUBTEST_BEGIN(params, "H5Olink with an invalid location ID")
+    {
+        H5E_BEGIN_TRY
+        {
+            status = H5Olink(group_id2, H5I_INVALID_HID, OBJECT_LINK_TEST_GROUP_NAME2, H5P_DEFAULT,
+                             H5P_DEFAULT);
+        }
+        H5E_END_TRY
+
+        if (status >= 0) {
+            printf("    H5Olink succeeded with an invalid location ID!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    SUBTEST_BEGIN(params, "H5Olink with an invalid name")
+    {
+        H5E_BEGIN_TRY
+        {
+            status = H5Olink(group_id2, group_id, NULL, H5P_DEFAULT, H5P_DEFAULT);
+        }
+        H5E_END_TRY
+
+        if (status >= 0) {
+            printf("    H5Olink succeeded with NULL as the object name!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        H5E_BEGIN_TRY
+        {
+            status = H5Olink(group_id2, group_id, "", H5P_DEFAULT, H5P_DEFAULT);
+        }
+        H5E_END_TRY
+
+        if (status >= 0) {
+            printf("    H5Olink succeeded with an invalid object name of ''!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    SUBTEST_BEGIN(params, "H5Olink with an invalid LCPL")
+    {
+        H5E_BEGIN_TRY
+        {
+            status =
+                H5Olink(group_id2, group_id, OBJECT_LINK_TEST_GROUP_NAME2, H5I_INVALID_HID, H5P_DEFAULT);
+        }
+        H5E_END_TRY
+
+        if (status >= 0) {
+            printf("    H5Olink succeeded with an invalid LCPL!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    SUBTEST_BEGIN(params, "H5Olink with an invalid LAPL")
+    {
+        H5E_BEGIN_TRY
+        {
+            status =
+                H5Olink(group_id2, group_id, OBJECT_LINK_TEST_GROUP_NAME2, H5P_DEFAULT, H5I_INVALID_HID);
+        }
+        H5E_END_TRY
+
+        if (status >= 0) {
+            printf("    H5Olink succeeded with an invalid LAPL!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
 
     if (H5Gclose(group_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Gclose(group_id2) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Gclose(container_group) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Fclose(file_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
 
-    PASSED();
-
-    return;
+    return SUCCEED;
 
 error:
     H5E_BEGIN_TRY
@@ -1572,14 +1260,14 @@ error:
     }
     H5E_END_TRY
 
-    return;
+    return FAIL;
 }
 
 /*
  * A test for H5Oincr_refcount/H5Odecr_refcount.
  */
-static void
-test_incr_decr_object_refcount(void)
+static herr_t
+test_incr_decr_object_refcount(TestParams_t *params)
 {
     H5O_info2_t oinfo; /* Object info struct */
     hid_t       file_id         = H5I_INVALID_HID;
@@ -1589,273 +1277,219 @@ test_incr_decr_object_refcount(void)
     hid_t       fspace_id  = H5I_INVALID_HID;
     hid_t       dset_dtype = H5I_INVALID_HID;
 
-    TESTING_MULTIPART("increment/decrement the reference count of object");
-
     /* Make sure the connector supports the API functions being tested */
     if (!(vol_cap_flags_g & (H5VL_CAP_FLAG_FILE_BASIC)) || !(vol_cap_flags_g & H5VL_CAP_FLAG_GROUP_BASIC) ||
         !(vol_cap_flags_g & H5VL_CAP_FLAG_DATASET_BASIC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_OBJECT_BASIC) ||
         !(vol_cap_flags_g & H5VL_CAP_FLAG_OBJECT_MORE) ||
         !(vol_cap_flags_g & H5VL_CAP_FLAG_STORED_DATATYPES)) {
-        SKIPPED();
         printf("    API functions for basic file, group, dataset, stored datatype, or object  "
                "aren't supported with this connector\n");
-        return;
+        return SKIP;
     }
 
-    TESTING_2("test setup");
-
-    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME(params), H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME(params));
         goto error;
     }
 
     if ((container_group = H5Gopen2(file_id, OBJECT_TEST_GROUP_NAME, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't open container group '%s'\n", OBJECT_TEST_GROUP_NAME);
         goto error;
     }
 
     if ((group_id = H5Gcreate2(container_group, OBJECT_REF_COUNT_TEST_SUBGROUP_NAME, H5P_DEFAULT, H5P_DEFAULT,
                                H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't create container subgroup '%s'\n", OBJECT_REF_COUNT_TEST_SUBGROUP_NAME);
         goto error;
     }
 
-    if ((fspace_id = generate_random_dataspace(OBJECT_REF_COUNT_TEST_DSET_SPACE_RANK, NULL, NULL, FALSE)) < 0)
-        TEST_ERROR;
+    if ((fspace_id = generate_random_dataspace(OBJECT_REF_COUNT_TEST_DSET_SPACE_RANK, NULL, NULL, false)) < 0)
+        TESTFRAME_TEST_ERROR(params);
 
-    if ((dset_dtype = generate_random_datatype(H5T_NO_CLASS, FALSE)) < 0)
-        TEST_ERROR;
+    if ((dset_dtype = generate_random_datatype(H5T_NO_CLASS, false)) < 0)
+        TESTFRAME_TEST_ERROR(params);
 
-    PASSED();
-
-    BEGIN_MULTIPART
+    SUBTEST_BEGIN(params, "H5Oincr_refcount/H5Odecr_refcount on a group")
     {
-        PART_BEGIN(H5Oincr_decr_refcount_group)
-        {
-            TESTING_2("H5Oincr_refcount/H5Odecr_refcount on a group");
-
-            if ((group_id2 = H5Gcreate2(group_id, OBJECT_REF_COUNT_TEST_GRP_NAME, H5P_DEFAULT, H5P_DEFAULT,
-                                        H5P_DEFAULT)) < 0) {
-                H5_FAILED();
-                printf("    couldn't create group '%s'\n", OBJECT_REF_COUNT_TEST_GRP_NAME);
-                PART_ERROR(H5Oincr_decr_refcount_group);
-            }
-
-            /* Increment the reference count */
-            if (H5Oincr_refcount(group_id2) < 0) {
-                H5_FAILED();
-                printf("    couldn't increment reference count for the group '%s' \n",
-                       OBJECT_REF_COUNT_TEST_GRP_NAME);
-                PART_ERROR(H5Oincr_decr_refcount_group);
-            }
-
-            /* Verify that reference count is 2 now */
-            if (H5Oget_info_by_name3(group_id, OBJECT_REF_COUNT_TEST_GRP_NAME, &oinfo, H5O_INFO_BASIC,
-                                     H5P_DEFAULT) < 0) {
-                H5_FAILED();
-                printf("    couldn't get reference count for the group '%s' \n",
-                       OBJECT_REF_COUNT_TEST_GRP_NAME);
-                PART_ERROR(H5Oincr_decr_refcount_group);
-            }
-
-            if (oinfo.rc != 2) {
-                H5_FAILED();
-                printf("    the reference count for the group '%s' isn't 2: %d\n",
-                       OBJECT_REF_COUNT_TEST_GRP_NAME, oinfo.rc);
-                PART_ERROR(H5Oincr_decr_refcount_group);
-            }
-
-            /* Decrement the reference count */
-            if (H5Odecr_refcount(group_id2) < 0) {
-                H5_FAILED();
-                printf("    couldn't decrement reference count for the group '%s' \n",
-                       OBJECT_REF_COUNT_TEST_GRP_NAME);
-                PART_ERROR(H5Oincr_decr_refcount_group);
-            }
-
-            /* Verify that reference count is 1 now */
-            if (H5Oget_info_by_name3(group_id, OBJECT_REF_COUNT_TEST_GRP_NAME, &oinfo, H5O_INFO_BASIC,
-                                     H5P_DEFAULT) < 0) {
-                H5_FAILED();
-                printf("    couldn't get reference count for the group '%s' \n",
-                       OBJECT_REF_COUNT_TEST_GRP_NAME);
-                PART_ERROR(H5Oincr_decr_refcount_group);
-            }
-
-            if (oinfo.rc != 1) {
-                H5_FAILED();
-                printf("    the reference count for the group '%s' isn't 1: %d\n",
-                       OBJECT_REF_COUNT_TEST_GRP_NAME, oinfo.rc);
-                PART_ERROR(H5Oincr_decr_refcount_group);
-            }
-
-            if (H5Gclose(group_id2) < 0) {
-                H5_FAILED();
-                printf("    couldn't close group\n");
-                PART_ERROR(H5Oincr_decr_refcount_group);
-            }
-
-            PASSED();
+        if ((group_id2 = H5Gcreate2(group_id, OBJECT_REF_COUNT_TEST_GRP_NAME, H5P_DEFAULT, H5P_DEFAULT,
+                                    H5P_DEFAULT)) < 0) {
+            printf("    couldn't create group '%s'\n", OBJECT_REF_COUNT_TEST_GRP_NAME);
+            TESTFRAME_TEST_ERROR(params);
         }
-        PART_END(H5Oincr_decr_refcount_group);
 
-        PART_BEGIN(H5Oincr_decr_refcount_dset)
-        {
-            TESTING_2("H5Oincr_refcount/H5Odecr_refcount on a dataset");
-
-            if ((dset_id = H5Dcreate2(group_id, OBJECT_REF_COUNT_TEST_DSET_NAME, dset_dtype, fspace_id,
-                                      H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
-                H5_FAILED();
-                printf("    couldn't create dataset '%s'\n", OBJECT_REF_COUNT_TEST_DSET_NAME);
-                PART_ERROR(H5Oincr_decr_refcount_dset);
-            }
-
-            /* Increment the reference count */
-            if (H5Oincr_refcount(dset_id) < 0) {
-                H5_FAILED();
-                printf("    couldn't increment reference count for the dataset '%s' \n",
-                       OBJECT_REF_COUNT_TEST_DSET_NAME);
-                PART_ERROR(H5Oincr_decr_refcount_dset);
-            }
-
-            /* Verify that reference count is 2 now */
-            if (H5Oget_info_by_name3(group_id, OBJECT_REF_COUNT_TEST_DSET_NAME, &oinfo, H5O_INFO_BASIC,
-                                     H5P_DEFAULT) < 0) {
-                H5_FAILED();
-                printf("    couldn't get reference count for the dataset '%s' \n",
-                       OBJECT_REF_COUNT_TEST_DSET_NAME);
-                PART_ERROR(H5Oincr_decr_refcount_dset);
-            }
-
-            if (oinfo.rc != 2) {
-                H5_FAILED();
-                printf("    the reference count for the dataset '%s' isn't 2: %d\n",
-                       OBJECT_REF_COUNT_TEST_DSET_NAME, oinfo.rc);
-                PART_ERROR(H5Oincr_decr_refcount_dset);
-            }
-
-            /* Decrement the reference count */
-            if (H5Odecr_refcount(dset_id) < 0) {
-                H5_FAILED();
-                printf("    couldn't decrement reference count for the dataset '%s' \n",
-                       OBJECT_REF_COUNT_TEST_DSET_NAME);
-                PART_ERROR(H5Oincr_decr_refcount_dset);
-            }
-
-            /* Verify that reference count is 1 now */
-            if (H5Oget_info_by_name3(group_id, OBJECT_REF_COUNT_TEST_DSET_NAME, &oinfo, H5O_INFO_BASIC,
-                                     H5P_DEFAULT) < 0) {
-                H5_FAILED();
-                printf("    couldn't get reference count for the dataset '%s' \n",
-                       OBJECT_REF_COUNT_TEST_DSET_NAME);
-                PART_ERROR(H5Oincr_decr_refcount_dset);
-            }
-
-            if (oinfo.rc != 1) {
-                H5_FAILED();
-                printf("    the reference count for the dataset '%s' isn't 1: %d\n",
-                       OBJECT_REF_COUNT_TEST_DSET_NAME, oinfo.rc);
-                PART_ERROR(H5Oincr_decr_refcount_dset);
-            }
-
-            if (H5Dclose(dset_id) < 0) {
-                H5_FAILED();
-                printf("    couldn't close dataset\n");
-                PART_ERROR(H5Oincr_decr_refcount_dset);
-            }
-
-            PASSED();
+        /* Increment the reference count */
+        if (H5Oincr_refcount(group_id2) < 0) {
+            printf("    couldn't increment reference count for the group '%s' \n",
+                   OBJECT_REF_COUNT_TEST_GRP_NAME);
+            TESTFRAME_TEST_ERROR(params);
         }
-        PART_END(H5Oincr_decr_refcount_dset);
 
-        PART_BEGIN(H5Oincr / decr_refcount_dtype)
-        {
-            TESTING_2("H5Oincr_refcount/H5Odecr_refcount on a committed datatype");
-
-            if (H5Tcommit2(group_id, OBJECT_REF_COUNT_TEST_TYPE_NAME, dset_dtype, H5P_DEFAULT, H5P_DEFAULT,
-                           H5P_DEFAULT) < 0) {
-                H5_FAILED();
-                printf("    couldn't commit datatype '%s'\n", OBJECT_REF_COUNT_TEST_TYPE_NAME);
-                PART_ERROR(H5Oincr_decr_refcount_dtype);
-            }
-
-            /* Increment the reference count */
-            if (H5Oincr_refcount(dset_dtype) < 0) {
-                H5_FAILED();
-                printf("    couldn't increment reference count for the datatype '%s' \n",
-                       OBJECT_REF_COUNT_TEST_TYPE_NAME);
-                PART_ERROR(H5Oincr_decr_refcount_dtype);
-            }
-
-            /* Verify that reference count is 2 now */
-            if (H5Oget_info_by_name3(group_id, OBJECT_REF_COUNT_TEST_TYPE_NAME, &oinfo, H5O_INFO_BASIC,
-                                     H5P_DEFAULT) < 0) {
-                H5_FAILED();
-                printf("    couldn't get reference count for the datatype '%s' \n",
-                       OBJECT_REF_COUNT_TEST_TYPE_NAME);
-                PART_ERROR(H5Oincr_decr_refcount_dtype);
-            }
-
-            if (oinfo.rc != 2) {
-                H5_FAILED();
-                printf("    the reference count for the datatype '%s' isn't 2: %d\n",
-                       OBJECT_REF_COUNT_TEST_TYPE_NAME, oinfo.rc);
-                PART_ERROR(H5Oincr_decr_refcount_dtype);
-            }
-
-            /* Decrement the reference count */
-            if (H5Odecr_refcount(dset_dtype) < 0) {
-                H5_FAILED();
-                printf("    couldn't decrement reference count for the datatype '%s' \n",
-                       OBJECT_REF_COUNT_TEST_TYPE_NAME);
-                PART_ERROR(H5Oincr_decr_refcount_dtype);
-            }
-
-            /* Verify that reference count is 1 now */
-            if (H5Oget_info_by_name3(group_id, OBJECT_REF_COUNT_TEST_TYPE_NAME, &oinfo, H5O_INFO_BASIC,
-                                     H5P_DEFAULT) < 0) {
-                H5_FAILED();
-                printf("    couldn't get reference count for the datatype '%s' \n",
-                       OBJECT_REF_COUNT_TEST_TYPE_NAME);
-                PART_ERROR(H5Oincr_decr_refcount_dtype);
-            }
-
-            if (oinfo.rc != 1) {
-                H5_FAILED();
-                printf("    the reference count for the datatype '%s' isn't 1: %d\n",
-                       OBJECT_REF_COUNT_TEST_TYPE_NAME, oinfo.rc);
-                PART_ERROR(H5Oincr_decr_refcount_dtype);
-            }
-
-            if (H5Tclose(dset_dtype) < 0) {
-                H5_FAILED();
-                printf("    couldn't close datatype\n");
-                PART_ERROR(H5Oincr_decr_refcount_dtype);
-            }
-
-            PASSED();
+        /* Verify that reference count is 2 now */
+        if (H5Oget_info_by_name3(group_id, OBJECT_REF_COUNT_TEST_GRP_NAME, &oinfo, H5O_INFO_BASIC,
+                                 H5P_DEFAULT) < 0) {
+            printf("    couldn't get reference count for the group '%s' \n",
+                   OBJECT_REF_COUNT_TEST_GRP_NAME);
+            TESTFRAME_TEST_ERROR(params);
         }
-        PART_END(H5Oincr_decr_refcount_dtype);
+
+        if (oinfo.rc != 2) {
+            printf("    the reference count for the group '%s' isn't 2: %d\n",
+                   OBJECT_REF_COUNT_TEST_GRP_NAME, oinfo.rc);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        /* Decrement the reference count */
+        if (H5Odecr_refcount(group_id2) < 0) {
+            printf("    couldn't decrement reference count for the group '%s' \n",
+                   OBJECT_REF_COUNT_TEST_GRP_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        /* Verify that reference count is 1 now */
+        if (H5Oget_info_by_name3(group_id, OBJECT_REF_COUNT_TEST_GRP_NAME, &oinfo, H5O_INFO_BASIC,
+                                 H5P_DEFAULT) < 0) {
+            printf("    couldn't get reference count for the group '%s' \n",
+                   OBJECT_REF_COUNT_TEST_GRP_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (oinfo.rc != 1) {
+            printf("    the reference count for the group '%s' isn't 1: %d\n",
+                   OBJECT_REF_COUNT_TEST_GRP_NAME, oinfo.rc);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (H5Gclose(group_id2) < 0) {
+            printf("    couldn't close group\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
     }
-    END_MULTIPART;
+    SUBTEST_END(params);
 
-    TESTING_2("test cleanup");
+    SUBTEST_BEGIN(params, "H5Oincr_refcount/H5Odecr_refcount on a dataset")
+    {
+        if ((dset_id = H5Dcreate2(group_id, OBJECT_REF_COUNT_TEST_DSET_NAME, dset_dtype, fspace_id,
+                                  H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
+            printf("    couldn't create dataset '%s'\n", OBJECT_REF_COUNT_TEST_DSET_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        /* Increment the reference count */
+        if (H5Oincr_refcount(dset_id) < 0) {
+            printf("    couldn't increment reference count for the dataset '%s' \n",
+                   OBJECT_REF_COUNT_TEST_DSET_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        /* Verify that reference count is 2 now */
+        if (H5Oget_info_by_name3(group_id, OBJECT_REF_COUNT_TEST_DSET_NAME, &oinfo, H5O_INFO_BASIC,
+                                 H5P_DEFAULT) < 0) {
+            printf("    couldn't get reference count for the dataset '%s' \n",
+                   OBJECT_REF_COUNT_TEST_DSET_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (oinfo.rc != 2) {
+            printf("    the reference count for the dataset '%s' isn't 2: %d\n",
+                   OBJECT_REF_COUNT_TEST_DSET_NAME, oinfo.rc);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        /* Decrement the reference count */
+        if (H5Odecr_refcount(dset_id) < 0) {
+            printf("    couldn't decrement reference count for the dataset '%s' \n",
+                   OBJECT_REF_COUNT_TEST_DSET_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        /* Verify that reference count is 1 now */
+        if (H5Oget_info_by_name3(group_id, OBJECT_REF_COUNT_TEST_DSET_NAME, &oinfo, H5O_INFO_BASIC,
+                                 H5P_DEFAULT) < 0) {
+            printf("    couldn't get reference count for the dataset '%s' \n",
+                   OBJECT_REF_COUNT_TEST_DSET_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (oinfo.rc != 1) {
+            printf("    the reference count for the dataset '%s' isn't 1: %d\n",
+                   OBJECT_REF_COUNT_TEST_DSET_NAME, oinfo.rc);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (H5Dclose(dset_id) < 0) {
+            printf("    couldn't close dataset\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    SUBTEST_BEGIN(params, "H5Oincr_refcount/H5Odecr_refcount on a committed datatype")
+    {
+        if (H5Tcommit2(group_id, OBJECT_REF_COUNT_TEST_TYPE_NAME, dset_dtype, H5P_DEFAULT, H5P_DEFAULT,
+                       H5P_DEFAULT) < 0) {
+            printf("    couldn't commit datatype '%s'\n", OBJECT_REF_COUNT_TEST_TYPE_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        /* Increment the reference count */
+        if (H5Oincr_refcount(dset_dtype) < 0) {
+            printf("    couldn't increment reference count for the datatype '%s' \n",
+                   OBJECT_REF_COUNT_TEST_TYPE_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        /* Verify that reference count is 2 now */
+        if (H5Oget_info_by_name3(group_id, OBJECT_REF_COUNT_TEST_TYPE_NAME, &oinfo, H5O_INFO_BASIC,
+                                 H5P_DEFAULT) < 0) {
+            printf("    couldn't get reference count for the datatype '%s' \n",
+                   OBJECT_REF_COUNT_TEST_TYPE_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (oinfo.rc != 2) {
+            printf("    the reference count for the datatype '%s' isn't 2: %d\n",
+                   OBJECT_REF_COUNT_TEST_TYPE_NAME, oinfo.rc);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        /* Decrement the reference count */
+        if (H5Odecr_refcount(dset_dtype) < 0) {
+            printf("    couldn't decrement reference count for the datatype '%s' \n",
+                   OBJECT_REF_COUNT_TEST_TYPE_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        /* Verify that reference count is 1 now */
+        if (H5Oget_info_by_name3(group_id, OBJECT_REF_COUNT_TEST_TYPE_NAME, &oinfo, H5O_INFO_BASIC,
+                                 H5P_DEFAULT) < 0) {
+            printf("    couldn't get reference count for the datatype '%s' \n",
+                   OBJECT_REF_COUNT_TEST_TYPE_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (oinfo.rc != 1) {
+            printf("    the reference count for the datatype '%s' isn't 1: %d\n",
+                   OBJECT_REF_COUNT_TEST_TYPE_NAME, oinfo.rc);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (H5Tclose(dset_dtype) < 0) {
+            printf("    couldn't close datatype\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
 
     if (H5Sclose(fspace_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Gclose(group_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Gclose(container_group) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Fclose(file_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
 
-    PASSED();
-
-    return;
+    return SUCCEED;
 
 error:
     H5E_BEGIN_TRY
@@ -1870,82 +1504,65 @@ error:
     }
     H5E_END_TRY
 
-    return;
+    return FAIL;
 } /* test_incr_decr_object_refcount */
 
 /*
  * A test to check that H5Oincr_refcount/H5Odecr_refcount
  * fail when passed invalid parameters.
  */
-static void
-test_incr_decr_object_refcount_invalid_params(void)
+static herr_t
+test_incr_decr_object_refcount_invalid_params(TestParams_t *params)
 {
     herr_t status;
 
-    TESTING_MULTIPART("object reference count incr./decr. with an invalid parameter");
-
     /* Make sure the connector supports the API functions being tested */
     if (!(vol_cap_flags_g & H5VL_CAP_FLAG_OBJECT_MORE)) {
-        SKIPPED();
         printf("    API functions for more object aren't supported with this connector\n");
-        return;
+        return SKIP;
     }
 
-    BEGIN_MULTIPART
+    SUBTEST_BEGIN(params, "H5Oincr_refcount with invalid object ID")
     {
-        PART_BEGIN(H5Oincr_refcount_invalid_param)
+        H5E_BEGIN_TRY
         {
-            TESTING_2("H5Oincr_refcount with invalid object ID");
-
-            H5E_BEGIN_TRY
-            {
-                status = H5Oincr_refcount(H5I_INVALID_HID);
-            }
-            H5E_END_TRY
-
-            if (status >= 0) {
-                H5_FAILED();
-                printf("    incremented the reference count for an invalid object ID\n");
-                PART_ERROR(H5Oincr_refcount_invalid_param);
-            }
-
-            PASSED();
+            status = H5Oincr_refcount(H5I_INVALID_HID);
         }
-        PART_END(H5Oincr_refcount_invalid_param);
+        H5E_END_TRY
 
-        PART_BEGIN(H5Odecr_refcount_invalid_param)
-        {
-            TESTING_2("H5Odecr_refcount with invalid object ID");
-
-            H5E_BEGIN_TRY
-            {
-                status = H5Odecr_refcount(H5I_INVALID_HID);
-            }
-            H5E_END_TRY
-
-            if (status >= 0) {
-                H5_FAILED();
-                printf("    decremented the reference count for an invalid object ID\n");
-                PART_ERROR(H5Odecr_refcount_invalid_param);
-            }
-
-            PASSED();
+        if (status >= 0) {
+            printf("    incremented the reference count for an invalid object ID\n");
+            TESTFRAME_TEST_ERROR(params);
         }
-        PART_END(H5Odecr_refcount_invalid_param);
     }
-    END_MULTIPART;
+    SUBTEST_END(params);
 
-    return;
+    SUBTEST_BEGIN(params, "H5Odecr_refcount with invalid object ID")
+    {
+        H5E_BEGIN_TRY
+        {
+            status = H5Odecr_refcount(H5I_INVALID_HID);
+        }
+        H5E_END_TRY
+
+        if (status >= 0) {
+            printf("    decremented the reference count for an invalid object ID\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    return SUCCEED;
 
 error:
-    return;
+    return FAIL;
 }
 
 /*
  * Basic tests for H5Ocopy.
  */
-static void
-test_object_copy_basic(void)
+static herr_t
+test_object_copy_basic(TestParams_t *params)
 {
     H5O_info2_t object_info;
     H5G_info_t  group_info;
@@ -1965,53 +1582,44 @@ test_object_copy_basic(void)
     hid_t       attr_space_id   = H5I_INVALID_HID;
     hid_t       space_id        = H5I_INVALID_HID;
 
-    TESTING_MULTIPART("basic object copying");
-
     /* Make sure the connector supports the API functions being tested */
     if (!(vol_cap_flags_g & (H5VL_CAP_FLAG_FILE_BASIC)) || !(vol_cap_flags_g & H5VL_CAP_FLAG_GROUP_BASIC) ||
         !(vol_cap_flags_g & H5VL_CAP_FLAG_DATASET_BASIC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_OBJECT_BASIC) ||
         !(vol_cap_flags_g & H5VL_CAP_FLAG_OBJECT_MORE) || !(vol_cap_flags_g & H5VL_CAP_FLAG_LINK_BASIC) ||
         !(vol_cap_flags_g & H5VL_CAP_FLAG_ATTR_BASIC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_ITERATE) ||
         !(vol_cap_flags_g & H5VL_CAP_FLAG_STORED_DATATYPES)) {
-        SKIPPED();
         printf("    API functions for basic file, group, object, link, dataset, attribute, iterate, or "
                "stored datatype aren't supported with this connector\n");
-        return;
+        return SKIP;
     }
 
-    TESTING_2("test setup");
-
-    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME(params), H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME(params));
         goto error;
     }
 
     if ((container_group = H5Gopen2(file_id, OBJECT_TEST_GROUP_NAME, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't open container group '%s'\n", OBJECT_TEST_GROUP_NAME);
         goto error;
     }
 
     if ((group_id = H5Gcreate2(container_group, OBJECT_COPY_BASIC_TEST_SUBGROUP_NAME, H5P_DEFAULT,
                                H5P_DEFAULT, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't create container subgroup '%s'\n", OBJECT_COPY_BASIC_TEST_SUBGROUP_NAME);
         goto error;
     }
 
-    if ((space_id = generate_random_dataspace(OBJECT_COPY_BASIC_TEST_SPACE_RANK, NULL, NULL, FALSE)) < 0)
-        TEST_ERROR;
-    if ((attr_space_id = generate_random_dataspace(OBJECT_COPY_BASIC_TEST_SPACE_RANK, NULL, NULL, TRUE)) < 0)
-        TEST_ERROR;
+    if ((space_id = generate_random_dataspace(OBJECT_COPY_BASIC_TEST_SPACE_RANK, NULL, NULL, false)) < 0)
+        TESTFRAME_TEST_ERROR(params);
+    if ((attr_space_id = generate_random_dataspace(OBJECT_COPY_BASIC_TEST_SPACE_RANK, NULL, NULL, true)) < 0)
+        TESTFRAME_TEST_ERROR(params);
 
-    if ((dset_dtype = generate_random_datatype(H5T_NO_CLASS, FALSE)) < 0)
-        TEST_ERROR;
+    if ((dset_dtype = generate_random_datatype(H5T_NO_CLASS, false)) < 0)
+        TESTFRAME_TEST_ERROR(params);
 
     /* Create the test group object, along with its nested members and the attributes attached to it. */
     if ((group_id2 = H5Gcreate2(group_id, OBJECT_COPY_BASIC_TEST_GROUP_NAME, H5P_DEFAULT, H5P_DEFAULT,
                                 H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't create group '%s'\n", OBJECT_COPY_BASIC_TEST_GROUP_NAME);
         goto error;
     }
@@ -2022,7 +1630,6 @@ test_object_copy_basic(void)
         snprintf(grp_name, OBJECT_COPY_BASIC_TEST_BUF_SIZE, "grp%d", (int)i);
 
         if ((tmp_group_id = H5Gcreate2(group_id2, grp_name, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
-            H5_FAILED();
             printf("    couldn't create group '%s' under group '%s'\n", grp_name,
                    OBJECT_COPY_BASIC_TEST_GROUP_NAME);
             goto error;
@@ -2032,7 +1639,6 @@ test_object_copy_basic(void)
         if (i == (OBJECT_COPY_BASIC_TEST_NUM_NESTED_OBJS - 1)) {
             if (H5Gclose(H5Gcreate2(tmp_group_id, OBJECT_COPY_BASIC_TEST_DEEP_NESTED_GROUP_NAME, H5P_DEFAULT,
                                     H5P_DEFAULT, H5P_DEFAULT)) < 0) {
-                H5_FAILED();
                 printf("    couldn't create nested group '%s' under group '%s'\n",
                        OBJECT_COPY_BASIC_TEST_DEEP_NESTED_GROUP_NAME, grp_name);
                 goto error;
@@ -2040,7 +1646,6 @@ test_object_copy_basic(void)
         }
 
         if (H5Gclose(tmp_group_id) < 0) {
-            H5_FAILED();
             printf("    couldn't close group '%s'\n", grp_name);
             goto error;
         }
@@ -2053,14 +1658,12 @@ test_object_copy_basic(void)
 
         if ((tmp_attr_id = H5Acreate2(group_id2, attr_name, H5T_NATIVE_INT, attr_space_id, H5P_DEFAULT,
                                       H5P_DEFAULT)) < 0) {
-            H5_FAILED();
             printf("    couldn't create attribute '%s' on group '%s'\n", attr_name,
                    OBJECT_COPY_BASIC_TEST_GROUP_NAME);
             goto error;
         }
 
         if (H5Aclose(tmp_attr_id) < 0) {
-            H5_FAILED();
             printf("    couldn't close attribute '%s'\n", attr_name);
             goto error;
         }
@@ -2069,7 +1672,6 @@ test_object_copy_basic(void)
     /* Create the test dataset object, along with the attributes attached to it. */
     if ((dset_id = H5Dcreate2(group_id, OBJECT_COPY_BASIC_TEST_DSET_NAME, dset_dtype, space_id, H5P_DEFAULT,
                               H5P_DEFAULT, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't create dataset '%s'\n", OBJECT_COPY_BASIC_TEST_DSET_NAME);
         goto error;
     }
@@ -2081,29 +1683,25 @@ test_object_copy_basic(void)
 
         if ((tmp_attr_id = H5Acreate2(dset_id, attr_name, H5T_NATIVE_INT, attr_space_id, H5P_DEFAULT,
                                       H5P_DEFAULT)) < 0) {
-            H5_FAILED();
             printf("    couldn't create attribute '%s' on dataset '%s'\n", attr_name,
                    OBJECT_COPY_BASIC_TEST_DSET_NAME);
             goto error;
         }
 
         if (H5Aclose(tmp_attr_id) < 0) {
-            H5_FAILED();
             printf("    couldn't close attribute '%s'\n", attr_name);
             goto error;
         }
     }
 
     /* Create the test committed datatype object, along with the attributes attached to it. */
-    if ((dtype_id = generate_random_datatype(H5T_NO_CLASS, FALSE)) < 0) {
-        H5_FAILED();
+    if ((dtype_id = generate_random_datatype(H5T_NO_CLASS, false)) < 0) {
         printf("    couldn't create datatype\n");
         goto error;
     }
 
     if (H5Tcommit2(group_id, OBJECT_COPY_BASIC_TEST_DTYPE_NAME, dtype_id, H5P_DEFAULT, H5P_DEFAULT,
                    H5P_DEFAULT) < 0) {
-        H5_FAILED();
         printf("    couldn't commit datatype '%s'\n", OBJECT_COPY_BASIC_TEST_DTYPE_NAME);
         goto error;
     }
@@ -2115,55 +1713,116 @@ test_object_copy_basic(void)
 
         if ((tmp_attr_id = H5Acreate2(dtype_id, attr_name, H5T_NATIVE_INT, attr_space_id, H5P_DEFAULT,
                                       H5P_DEFAULT)) < 0) {
-            H5_FAILED();
             printf("    couldn't create attribute '%s' on committed datatype '%s'\n", attr_name,
                    OBJECT_COPY_BASIC_TEST_DTYPE_NAME);
             goto error;
         }
 
         if (H5Aclose(tmp_attr_id) < 0) {
-            H5_FAILED();
             printf("    couldn't close attribute '%s'\n", attr_name);
             goto error;
         }
     }
 
-    PASSED();
-
-    BEGIN_MULTIPART
+    SUBTEST_BEGIN(params, "H5Ocopy on a group (default copy options)")
     {
-        PART_BEGIN(H5Ocopy_group)
+        if (H5Ocopy(group_id, OBJECT_COPY_BASIC_TEST_GROUP_NAME, group_id,
+                    OBJECT_COPY_BASIC_TEST_NEW_GROUP_NAME, H5P_DEFAULT, H5P_DEFAULT) < 0) {
+            printf("    failed to copy group '%s' to '%s'\n", OBJECT_COPY_BASIC_TEST_GROUP_NAME,
+                   OBJECT_COPY_BASIC_TEST_NEW_GROUP_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if ((object_link_exists =
+                 H5Lexists(group_id, OBJECT_COPY_BASIC_TEST_NEW_GROUP_NAME, H5P_DEFAULT)) < 0) {
+            printf("    couldn't determine if link '%s' to copied group exists\n",
+                   OBJECT_COPY_BASIC_TEST_NEW_GROUP_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (!object_link_exists) {
+            printf("    link '%s' to copied group didn't exist!\n",
+                   OBJECT_COPY_BASIC_TEST_NEW_GROUP_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        /* Ensure that the new group has all the members of the copied group, and all its attributes */
+        if ((tmp_group_id = H5Gopen2(group_id, OBJECT_COPY_BASIC_TEST_NEW_GROUP_NAME, H5P_DEFAULT)) < 0) {
+            printf("    failed to open group copy '%s'\n", OBJECT_COPY_BASIC_TEST_NEW_GROUP_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        memset(&group_info, 0, sizeof(group_info));
+
+        /*
+         * Set link count to zero in case the connector doesn't support
+         * retrieval of group info.
+         */
+        group_info.nlinks = 0;
+
+        if (H5Gget_info(tmp_group_id, &group_info) < 0) {
+            printf("    failed to retrieve group info\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (group_info.nlinks != OBJECT_COPY_BASIC_TEST_NUM_NESTED_OBJS) {
+            printf("    copied group contained %d members instead of %d members after a deep copy!\n",
+                   (int)group_info.nlinks, OBJECT_COPY_BASIC_TEST_NUM_NESTED_OBJS);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        memset(&object_info, 0, sizeof(object_info));
+
+        /*
+         * Set attribute count to zero in case the connector doesn't
+         * support retrieval of object info.
+         */
+        object_info.num_attrs = 0;
+
+        if (H5Oget_info3(tmp_group_id, &object_info, H5O_INFO_ALL) < 0) {
+            printf("    failed to retrieve object info\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (object_info.num_attrs == 0) {
+            printf("    copied group didn't contain any attributes after copy operation!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        /* Check the attribute names, types, etc. */
+        i = 0;
+        if (H5Aiterate2(tmp_group_id, H5_INDEX_NAME, H5_ITER_INC, NULL,
+                        object_copy_attribute_iter_callback, &i) < 0) {
+            printf("    failed to iterate over copied group's attributes\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (i != OBJECT_COPY_BASIC_TEST_NUM_ATTRS) {
+            printf(
+                "    number of attributes on copied group (%llu) didn't match expected number (%llu)!\n",
+                (unsigned long long)i, (unsigned long long)OBJECT_COPY_BASIC_TEST_NUM_ATTRS);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (H5Gclose(tmp_group_id) < 0) {
+            printf("    failed to close group copy\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        /*
+         * Ensure that the last immediate member of the copied group
+         * contains its single member after the deep copy.
+         */
         {
-            TESTING_2("H5Ocopy on a group (default copy options)");
+            char grp_name[OBJECT_COPY_BASIC_TEST_BUF_SIZE];
 
-            if (H5Ocopy(group_id, OBJECT_COPY_BASIC_TEST_GROUP_NAME, group_id,
-                        OBJECT_COPY_BASIC_TEST_NEW_GROUP_NAME, H5P_DEFAULT, H5P_DEFAULT) < 0) {
-                H5_FAILED();
-                printf("    failed to copy group '%s' to '%s'\n", OBJECT_COPY_BASIC_TEST_GROUP_NAME,
-                       OBJECT_COPY_BASIC_TEST_NEW_GROUP_NAME);
-                PART_ERROR(H5Ocopy_group);
-            }
+            snprintf(grp_name, OBJECT_COPY_BASIC_TEST_BUF_SIZE,
+                     OBJECT_COPY_BASIC_TEST_NEW_GROUP_NAME "/grp%d",
+                     OBJECT_COPY_BASIC_TEST_NUM_NESTED_OBJS - 1);
 
-            if ((object_link_exists =
-                     H5Lexists(group_id, OBJECT_COPY_BASIC_TEST_NEW_GROUP_NAME, H5P_DEFAULT)) < 0) {
-                H5_FAILED();
-                printf("    couldn't determine if link '%s' to copied group exists\n",
-                       OBJECT_COPY_BASIC_TEST_NEW_GROUP_NAME);
-                PART_ERROR(H5Ocopy_group);
-            }
-
-            if (!object_link_exists) {
-                H5_FAILED();
-                printf("    link '%s' to copied group didn't exist!\n",
-                       OBJECT_COPY_BASIC_TEST_NEW_GROUP_NAME);
-                PART_ERROR(H5Ocopy_group);
-            }
-
-            /* Ensure that the new group has all the members of the copied group, and all its attributes */
-            if ((tmp_group_id = H5Gopen2(group_id, OBJECT_COPY_BASIC_TEST_NEW_GROUP_NAME, H5P_DEFAULT)) < 0) {
-                H5_FAILED();
-                printf("    failed to open group copy '%s'\n", OBJECT_COPY_BASIC_TEST_NEW_GROUP_NAME);
-                PART_ERROR(H5Ocopy_group);
+            if ((tmp_group_id = H5Gopen2(group_id, grp_name, H5P_DEFAULT)) < 0) {
+                printf("    failed to open group '%s'\n", OBJECT_COPY_BASIC_TEST_DEEP_NESTED_GROUP_NAME);
+                TESTFRAME_TEST_ERROR(params);
             }
 
             memset(&group_info, 0, sizeof(group_info));
@@ -2175,325 +1834,207 @@ test_object_copy_basic(void)
             group_info.nlinks = 0;
 
             if (H5Gget_info(tmp_group_id, &group_info) < 0) {
-                H5_FAILED();
                 printf("    failed to retrieve group info\n");
-                PART_ERROR(H5Ocopy_group);
+                TESTFRAME_TEST_ERROR(params);
             }
 
-            if (group_info.nlinks != OBJECT_COPY_BASIC_TEST_NUM_NESTED_OBJS) {
-                H5_FAILED();
-                printf("    copied group contained %d members instead of %d members after a deep copy!\n",
-                       (int)group_info.nlinks, OBJECT_COPY_BASIC_TEST_NUM_NESTED_OBJS);
-                PART_ERROR(H5Ocopy_group);
-            }
-
-            memset(&object_info, 0, sizeof(object_info));
-
-            /*
-             * Set attribute count to zero in case the connector doesn't
-             * support retrieval of object info.
-             */
-            object_info.num_attrs = 0;
-
-            if (H5Oget_info3(tmp_group_id, &object_info, H5O_INFO_ALL) < 0) {
-                H5_FAILED();
-                printf("    failed to retrieve object info\n");
-                PART_ERROR(H5Ocopy_group);
-            }
-
-            if (object_info.num_attrs == 0) {
-                H5_FAILED();
-                printf("    copied group didn't contain any attributes after copy operation!\n");
-                PART_ERROR(H5Ocopy_group);
-            }
-
-            /* Check the attribute names, types, etc. */
-            i = 0;
-            if (H5Aiterate2(tmp_group_id, H5_INDEX_NAME, H5_ITER_INC, NULL,
-                            object_copy_attribute_iter_callback, &i) < 0) {
-                H5_FAILED();
-                printf("    failed to iterate over copied group's attributes\n");
-                PART_ERROR(H5Ocopy_group);
-            }
-
-            if (i != OBJECT_COPY_BASIC_TEST_NUM_ATTRS) {
-                H5_FAILED();
-                printf(
-                    "    number of attributes on copied group (%llu) didn't match expected number (%llu)!\n",
-                    (unsigned long long)i, (unsigned long long)OBJECT_COPY_BASIC_TEST_NUM_ATTRS);
-                PART_ERROR(H5Ocopy_group);
+            if (group_info.nlinks != 1) {
+                printf("    copied group's immediate members didn't contain nested members after a "
+                       "deep copy!\n");
+                TESTFRAME_TEST_ERROR(params);
             }
 
             if (H5Gclose(tmp_group_id) < 0) {
-                H5_FAILED();
-                printf("    failed to close group copy\n");
-                PART_ERROR(H5Ocopy_group);
+                printf("    failed to close group '%s'\n", OBJECT_COPY_BASIC_TEST_DEEP_NESTED_GROUP_NAME);
+                TESTFRAME_TEST_ERROR(params);
             }
-
-            /*
-             * Ensure that the last immediate member of the copied group
-             * contains its single member after the deep copy.
-             */
-            {
-                char grp_name[OBJECT_COPY_BASIC_TEST_BUF_SIZE];
-
-                snprintf(grp_name, OBJECT_COPY_BASIC_TEST_BUF_SIZE,
-                         OBJECT_COPY_BASIC_TEST_NEW_GROUP_NAME "/grp%d",
-                         OBJECT_COPY_BASIC_TEST_NUM_NESTED_OBJS - 1);
-
-                if ((tmp_group_id = H5Gopen2(group_id, grp_name, H5P_DEFAULT)) < 0) {
-                    H5_FAILED();
-                    printf("    failed to open group '%s'\n", OBJECT_COPY_BASIC_TEST_DEEP_NESTED_GROUP_NAME);
-                    PART_ERROR(H5Ocopy_group);
-                }
-
-                memset(&group_info, 0, sizeof(group_info));
-
-                /*
-                 * Set link count to zero in case the connector doesn't support
-                 * retrieval of group info.
-                 */
-                group_info.nlinks = 0;
-
-                if (H5Gget_info(tmp_group_id, &group_info) < 0) {
-                    H5_FAILED();
-                    printf("    failed to retrieve group info\n");
-                    PART_ERROR(H5Ocopy_group);
-                }
-
-                if (group_info.nlinks != 1) {
-                    H5_FAILED();
-                    printf("    copied group's immediate members didn't contain nested members after a "
-                           "deep copy!\n");
-                    PART_ERROR(H5Ocopy_group);
-                }
-
-                if (H5Gclose(tmp_group_id) < 0) {
-                    H5_FAILED();
-                    printf("    failed to close group '%s'\n", OBJECT_COPY_BASIC_TEST_DEEP_NESTED_GROUP_NAME);
-                    PART_ERROR(H5Ocopy_group);
-                }
-            }
-
-            PASSED();
-        }
-        PART_END(H5Ocopy_group);
-
-        if (tmp_group_id >= 0) {
-            H5E_BEGIN_TRY
-            {
-                H5Gclose(tmp_group_id);
-            }
-            H5E_END_TRY
-            tmp_group_id = H5I_INVALID_HID;
-        }
-
-        PART_BEGIN(H5Ocopy_dset)
-        {
-            TESTING_2("H5Ocopy on a dataset (default copy options)");
-
-            if (H5Ocopy(group_id, OBJECT_COPY_BASIC_TEST_DSET_NAME, group_id,
-                        OBJECT_COPY_BASIC_TEST_NEW_DSET_NAME, H5P_DEFAULT, H5P_DEFAULT) < 0) {
-                H5_FAILED();
-                printf("    failed to copy dataset '%s' to '%s'\n", OBJECT_COPY_BASIC_TEST_DSET_NAME,
-                       OBJECT_COPY_BASIC_TEST_NEW_DSET_NAME);
-                PART_ERROR(H5Ocopy_dset);
-            }
-
-            if ((object_link_exists =
-                     H5Lexists(group_id, OBJECT_COPY_BASIC_TEST_NEW_DSET_NAME, H5P_DEFAULT)) < 0) {
-                H5_FAILED();
-                printf("    couldn't determine if link '%s' to copied dataset exists\n",
-                       OBJECT_COPY_BASIC_TEST_NEW_DSET_NAME);
-                PART_ERROR(H5Ocopy_dset);
-            }
-
-            if (!object_link_exists) {
-                H5_FAILED();
-                printf("    link '%s' to copied dataset didn't exist!\n",
-                       OBJECT_COPY_BASIC_TEST_NEW_DSET_NAME);
-                PART_ERROR(H5Ocopy_dset);
-            }
-
-            /* Ensure that the new dataset has all of the attributes of the copied dataset */
-            if ((tmp_dset_id = H5Dopen2(group_id, OBJECT_COPY_BASIC_TEST_NEW_DSET_NAME, H5P_DEFAULT)) < 0) {
-                H5_FAILED();
-                printf("    failed to open dataset copy '%s'\n", OBJECT_COPY_BASIC_TEST_NEW_DSET_NAME);
-                PART_ERROR(H5Ocopy_dset);
-            }
-
-            memset(&object_info, 0, sizeof(object_info));
-
-            /*
-             * Set attribute count to zero in case the connector doesn't
-             * support retrieval of object info.
-             */
-            object_info.num_attrs = 0;
-
-            if (H5Oget_info3(tmp_dset_id, &object_info, H5O_INFO_ALL) < 0) {
-                H5_FAILED();
-                printf("    failed to retrieve object info\n");
-                PART_ERROR(H5Ocopy_dset);
-            }
-
-            if (object_info.num_attrs == 0) {
-                H5_FAILED();
-                printf("    copied dataset didn't contain any attributes after copy operation!\n");
-                PART_ERROR(H5Ocopy_dset);
-            }
-
-            /* Check the attribute names, types, etc. */
-            i = 0;
-            if (H5Aiterate2(tmp_dset_id, H5_INDEX_NAME, H5_ITER_INC, NULL,
-                            object_copy_attribute_iter_callback, &i) < 0) {
-                H5_FAILED();
-                printf("    failed to iterate over copied dataset's attributes\n");
-                PART_ERROR(H5Ocopy_dset);
-            }
-
-            if (i != OBJECT_COPY_BASIC_TEST_NUM_ATTRS) {
-                H5_FAILED();
-                printf("    number of attributes on copied dataset (%llu) didn't match expected number "
-                       "(%llu)!\n",
-                       (unsigned long long)i, (unsigned long long)OBJECT_COPY_BASIC_TEST_NUM_ATTRS);
-                PART_ERROR(H5Ocopy_dset);
-            }
-
-            if (H5Dclose(tmp_dset_id) < 0) {
-                H5_FAILED();
-                printf("    failed to close dataset copy\n");
-                PART_ERROR(H5Ocopy_dset);
-            }
-
-            PASSED();
-        }
-        PART_END(H5Ocopy_dset);
-
-        if (tmp_dset_id >= 0) {
-            H5E_BEGIN_TRY
-            {
-                H5Dclose(tmp_dset_id);
-            }
-            H5E_END_TRY
-            tmp_dset_id = H5I_INVALID_HID;
-        }
-
-        PART_BEGIN(H5Ocopy_dtype)
-        {
-            TESTING_2("H5Ocopy on a committed datatype (default copy options)");
-
-            if (H5Ocopy(group_id, OBJECT_COPY_BASIC_TEST_DTYPE_NAME, group_id,
-                        OBJECT_COPY_BASIC_TEST_NEW_DTYPE_NAME, H5P_DEFAULT, H5P_DEFAULT) < 0) {
-                H5_FAILED();
-                printf("    failed to copy datatype '%s' to '%s'\n", OBJECT_COPY_BASIC_TEST_DTYPE_NAME,
-                       OBJECT_COPY_BASIC_TEST_NEW_DTYPE_NAME);
-                PART_ERROR(H5Ocopy_dtype);
-            }
-
-            if ((object_link_exists =
-                     H5Lexists(group_id, OBJECT_COPY_BASIC_TEST_NEW_DTYPE_NAME, H5P_DEFAULT)) < 0) {
-                H5_FAILED();
-                printf("    couldn't determine if link '%s' to copied datatype exists\n",
-                       OBJECT_COPY_BASIC_TEST_NEW_DTYPE_NAME);
-                PART_ERROR(H5Ocopy_dtype);
-            }
-
-            if (!object_link_exists) {
-                H5_FAILED();
-                printf("    link '%s' to copied datatype didn't exist!\n",
-                       OBJECT_COPY_BASIC_TEST_NEW_DTYPE_NAME);
-                PART_ERROR(H5Ocopy_dtype);
-            }
-
-            /* Ensure that the new committed datatype has all the attributes of the copied datatype */
-            if ((tmp_dtype_id = H5Topen2(group_id, OBJECT_COPY_BASIC_TEST_NEW_DTYPE_NAME, H5P_DEFAULT)) < 0) {
-                H5_FAILED();
-                printf("    failed to open datatype copy '%s'\n", OBJECT_COPY_BASIC_TEST_NEW_DTYPE_NAME);
-                PART_ERROR(H5Ocopy_dtype);
-            }
-
-            memset(&object_info, 0, sizeof(object_info));
-
-            /*
-             * Set attribute count to zero in case the connector doesn't
-             * support retrieval of object info.
-             */
-            object_info.num_attrs = 0;
-
-            if (H5Oget_info3(tmp_dtype_id, &object_info, H5O_INFO_ALL) < 0) {
-                H5_FAILED();
-                printf("    failed to retrieve object info\n");
-                PART_ERROR(H5Ocopy_dtype);
-            }
-
-            if (object_info.num_attrs == 0) {
-                H5_FAILED();
-                printf("    copied committed datatype didn't contain any attributes after copy operation!\n");
-                PART_ERROR(H5Ocopy_dtype);
-            }
-
-            /* Check the attribute names, types, etc. */
-            i = 0;
-            if (H5Aiterate2(tmp_dtype_id, H5_INDEX_NAME, H5_ITER_INC, NULL,
-                            object_copy_attribute_iter_callback, &i) < 0) {
-                H5_FAILED();
-                printf("    failed to iterate over copied datatype's attributes\n");
-                PART_ERROR(H5Ocopy_dtype);
-            }
-
-            if (i != OBJECT_COPY_BASIC_TEST_NUM_ATTRS) {
-                H5_FAILED();
-                printf("    number of attributes on copied datatype (%llu) didn't match expected number "
-                       "(%llu)!\n",
-                       (unsigned long long)i, (unsigned long long)OBJECT_COPY_BASIC_TEST_NUM_ATTRS);
-                PART_ERROR(H5Ocopy_dtype);
-            }
-
-            if (H5Tclose(tmp_dtype_id) < 0) {
-                H5_FAILED();
-                printf("    failed to close datatype copy\n");
-                PART_ERROR(H5Ocopy_dtype);
-            }
-
-            PASSED();
-        }
-        PART_END(H5Ocopy_dtype);
-
-        if (tmp_dtype_id >= 0) {
-            H5E_BEGIN_TRY
-            {
-                H5Tclose(tmp_dtype_id);
-            }
-            H5E_END_TRY
-            tmp_dtype_id = H5I_INVALID_HID;
         }
     }
-    END_MULTIPART;
+    SUBTEST_END(params);
 
-    TESTING_2("test cleanup");
+    if (tmp_group_id >= 0) {
+        H5E_BEGIN_TRY
+        {
+            H5Gclose(tmp_group_id);
+        }
+        H5E_END_TRY
+        tmp_group_id = H5I_INVALID_HID;
+    }
+
+    SUBTEST_BEGIN(params, "H5Ocopy on a dataset (default copy options)")
+    {
+        if (H5Ocopy(group_id, OBJECT_COPY_BASIC_TEST_DSET_NAME, group_id,
+                    OBJECT_COPY_BASIC_TEST_NEW_DSET_NAME, H5P_DEFAULT, H5P_DEFAULT) < 0) {
+            printf("    failed to copy dataset '%s' to '%s'\n", OBJECT_COPY_BASIC_TEST_DSET_NAME,
+                   OBJECT_COPY_BASIC_TEST_NEW_DSET_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if ((object_link_exists =
+                 H5Lexists(group_id, OBJECT_COPY_BASIC_TEST_NEW_DSET_NAME, H5P_DEFAULT)) < 0) {
+            printf("    couldn't determine if link '%s' to copied dataset exists\n",
+                   OBJECT_COPY_BASIC_TEST_NEW_DSET_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (!object_link_exists) {
+            printf("    link '%s' to copied dataset didn't exist!\n",
+                   OBJECT_COPY_BASIC_TEST_NEW_DSET_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        /* Ensure that the new dataset has all of the attributes of the copied dataset */
+        if ((tmp_dset_id = H5Dopen2(group_id, OBJECT_COPY_BASIC_TEST_NEW_DSET_NAME, H5P_DEFAULT)) < 0) {
+            printf("    failed to open dataset copy '%s'\n", OBJECT_COPY_BASIC_TEST_NEW_DSET_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        memset(&object_info, 0, sizeof(object_info));
+
+        /*
+         * Set attribute count to zero in case the connector doesn't
+         * support retrieval of object info.
+         */
+        object_info.num_attrs = 0;
+
+        if (H5Oget_info3(tmp_dset_id, &object_info, H5O_INFO_ALL) < 0) {
+            printf("    failed to retrieve object info\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (object_info.num_attrs == 0) {
+            printf("    copied dataset didn't contain any attributes after copy operation!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        /* Check the attribute names, types, etc. */
+        i = 0;
+        if (H5Aiterate2(tmp_dset_id, H5_INDEX_NAME, H5_ITER_INC, NULL,
+                        object_copy_attribute_iter_callback, &i) < 0) {
+            printf("    failed to iterate over copied dataset's attributes\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (i != OBJECT_COPY_BASIC_TEST_NUM_ATTRS) {
+            printf("    number of attributes on copied dataset (%llu) didn't match expected number "
+                   "(%llu)!\n",
+                   (unsigned long long)i, (unsigned long long)OBJECT_COPY_BASIC_TEST_NUM_ATTRS);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (H5Dclose(tmp_dset_id) < 0) {
+            printf("    failed to close dataset copy\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    if (tmp_dset_id >= 0) {
+        H5E_BEGIN_TRY
+        {
+            H5Dclose(tmp_dset_id);
+        }
+        H5E_END_TRY
+        tmp_dset_id = H5I_INVALID_HID;
+    }
+
+    SUBTEST_BEGIN(params, "H5Ocopy on a committed datatype (default copy options)")
+    {
+        if (H5Ocopy(group_id, OBJECT_COPY_BASIC_TEST_DTYPE_NAME, group_id,
+                    OBJECT_COPY_BASIC_TEST_NEW_DTYPE_NAME, H5P_DEFAULT, H5P_DEFAULT) < 0) {
+            printf("    failed to copy datatype '%s' to '%s'\n", OBJECT_COPY_BASIC_TEST_DTYPE_NAME,
+                   OBJECT_COPY_BASIC_TEST_NEW_DTYPE_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if ((object_link_exists =
+                 H5Lexists(group_id, OBJECT_COPY_BASIC_TEST_NEW_DTYPE_NAME, H5P_DEFAULT)) < 0) {
+            printf("    couldn't determine if link '%s' to copied datatype exists\n",
+                   OBJECT_COPY_BASIC_TEST_NEW_DTYPE_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (!object_link_exists) {
+            printf("    link '%s' to copied datatype didn't exist!\n",
+                   OBJECT_COPY_BASIC_TEST_NEW_DTYPE_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        /* Ensure that the new committed datatype has all the attributes of the copied datatype */
+        if ((tmp_dtype_id = H5Topen2(group_id, OBJECT_COPY_BASIC_TEST_NEW_DTYPE_NAME, H5P_DEFAULT)) < 0) {
+            printf("    failed to open datatype copy '%s'\n", OBJECT_COPY_BASIC_TEST_NEW_DTYPE_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        memset(&object_info, 0, sizeof(object_info));
+
+        /*
+         * Set attribute count to zero in case the connector doesn't
+         * support retrieval of object info.
+         */
+        object_info.num_attrs = 0;
+
+        if (H5Oget_info3(tmp_dtype_id, &object_info, H5O_INFO_ALL) < 0) {
+            printf("    failed to retrieve object info\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (object_info.num_attrs == 0) {
+            printf("    copied committed datatype didn't contain any attributes after copy operation!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        /* Check the attribute names, types, etc. */
+        i = 0;
+        if (H5Aiterate2(tmp_dtype_id, H5_INDEX_NAME, H5_ITER_INC, NULL,
+                        object_copy_attribute_iter_callback, &i) < 0) {
+            printf("    failed to iterate over copied datatype's attributes\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (i != OBJECT_COPY_BASIC_TEST_NUM_ATTRS) {
+            printf("    number of attributes on copied datatype (%llu) didn't match expected number "
+                   "(%llu)!\n",
+                   (unsigned long long)i, (unsigned long long)OBJECT_COPY_BASIC_TEST_NUM_ATTRS);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (H5Tclose(tmp_dtype_id) < 0) {
+            printf("    failed to close datatype copy\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    if (tmp_dtype_id >= 0) {
+        H5E_BEGIN_TRY
+        {
+            H5Tclose(tmp_dtype_id);
+        }
+        H5E_END_TRY
+        tmp_dtype_id = H5I_INVALID_HID;
+    }
 
     if (H5Sclose(attr_space_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Sclose(space_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Tclose(dset_dtype) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Tclose(dtype_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Dclose(dset_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Gclose(group_id2) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Gclose(group_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Gclose(container_group) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Fclose(file_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
 
-    PASSED();
-
-    return;
+    return SUCCEED;
 
 error:
     H5E_BEGIN_TRY
@@ -2514,15 +2055,15 @@ error:
     }
     H5E_END_TRY
 
-    return;
+    return FAIL;
 }
 
 /*
  * Tests to ensure that H5Ocopy fails when attempting to copy
  * an object to a destination where the object already exists.
  */
-static void
-test_object_copy_already_existing(void)
+static herr_t
+test_object_copy_already_existing(TestParams_t *params)
 {
     herr_t err_ret;
     hid_t  file_id         = H5I_INVALID_HID;
@@ -2534,51 +2075,42 @@ test_object_copy_already_existing(void)
     hid_t  dset_dtype      = H5I_INVALID_HID;
     hid_t  space_id        = H5I_INVALID_HID;
 
-    TESTING_MULTIPART("object copying to location where objects already exist");
-
     /* Make sure the connector supports the API functions being tested */
     if (!(vol_cap_flags_g & (H5VL_CAP_FLAG_FILE_BASIC)) || !(vol_cap_flags_g & H5VL_CAP_FLAG_GROUP_BASIC) ||
         !(vol_cap_flags_g & H5VL_CAP_FLAG_DATASET_BASIC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_OBJECT_BASIC) ||
         !(vol_cap_flags_g & H5VL_CAP_FLAG_OBJECT_MORE) ||
         !(vol_cap_flags_g & H5VL_CAP_FLAG_STORED_DATATYPES)) {
-        SKIPPED();
         printf("    API functions for basic file, group, object, dataset, or stored datatype aren't "
                "supported with this connector\n");
-        return;
+        return SKIP;
     }
 
-    TESTING_2("test setup");
-
-    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME(params), H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME(params));
         goto error;
     }
 
     if ((container_group = H5Gopen2(file_id, OBJECT_TEST_GROUP_NAME, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't open container group '%s'\n", OBJECT_TEST_GROUP_NAME);
         goto error;
     }
 
     if ((group_id = H5Gcreate2(container_group, OBJECT_COPY_ALREADY_EXISTING_TEST_SUBGROUP_NAME, H5P_DEFAULT,
                                H5P_DEFAULT, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't create container subgroup '%s'\n",
                OBJECT_COPY_ALREADY_EXISTING_TEST_SUBGROUP_NAME);
         goto error;
     }
 
     if ((space_id =
-             generate_random_dataspace(OBJECT_COPY_ALREADY_EXISTING_TEST_SPACE_RANK, NULL, NULL, FALSE)) < 0)
-        TEST_ERROR;
-    if ((dset_dtype = generate_random_datatype(H5T_NO_CLASS, FALSE)) < 0)
-        TEST_ERROR;
+             generate_random_dataspace(OBJECT_COPY_ALREADY_EXISTING_TEST_SPACE_RANK, NULL, NULL, false)) < 0)
+        TESTFRAME_TEST_ERROR(params);
+    if ((dset_dtype = generate_random_datatype(H5T_NO_CLASS, false)) < 0)
+        TESTFRAME_TEST_ERROR(params);
 
     /* Create the test group object */
     if ((group_id2 = H5Gcreate2(group_id, OBJECT_COPY_ALREADY_EXISTING_TEST_GROUP_NAME, H5P_DEFAULT,
                                 H5P_DEFAULT, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't create group '%s'\n", OBJECT_COPY_ALREADY_EXISTING_TEST_GROUP_NAME);
         goto error;
     }
@@ -2586,117 +2118,89 @@ test_object_copy_already_existing(void)
     /* Create the test dataset object */
     if ((dset_id = H5Dcreate2(group_id, OBJECT_COPY_ALREADY_EXISTING_TEST_DSET_NAME, dset_dtype, space_id,
                               H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't create dataset '%s'\n", OBJECT_COPY_ALREADY_EXISTING_TEST_DSET_NAME);
         goto error;
     }
 
     /* Create the test committed datatype object */
-    if ((dtype_id = generate_random_datatype(H5T_NO_CLASS, FALSE)) < 0) {
-        H5_FAILED();
+    if ((dtype_id = generate_random_datatype(H5T_NO_CLASS, false)) < 0) {
         printf("    couldn't create datatype\n");
         goto error;
     }
 
     if (H5Tcommit2(group_id, OBJECT_COPY_ALREADY_EXISTING_TEST_DTYPE_NAME, dtype_id, H5P_DEFAULT, H5P_DEFAULT,
                    H5P_DEFAULT) < 0) {
-        H5_FAILED();
         printf("    couldn't commit datatype '%s'\n", OBJECT_COPY_ALREADY_EXISTING_TEST_DTYPE_NAME);
         goto error;
     }
 
-    PASSED();
-
-    BEGIN_MULTIPART
+    SUBTEST_BEGIN(params, "H5Ocopy group to location where group already exists")
     {
-        PART_BEGIN(H5Ocopy_already_existing_group)
+        H5E_BEGIN_TRY
         {
-            TESTING_2("H5Ocopy group to location where group already exists");
-
-            H5E_BEGIN_TRY
-            {
-                err_ret = H5Ocopy(group_id, OBJECT_COPY_ALREADY_EXISTING_TEST_GROUP_NAME, group_id,
-                                  OBJECT_COPY_ALREADY_EXISTING_TEST_GROUP_NAME, H5P_DEFAULT, H5P_DEFAULT);
-            }
-            H5E_END_TRY
-
-            if (err_ret >= 0) {
-                H5_FAILED();
-                printf("    group copy succeeded in location where group already exists!\n");
-                PART_ERROR(H5Ocopy_already_existing_group);
-            }
-
-            PASSED();
+            err_ret = H5Ocopy(group_id, OBJECT_COPY_ALREADY_EXISTING_TEST_GROUP_NAME, group_id,
+                              OBJECT_COPY_ALREADY_EXISTING_TEST_GROUP_NAME, H5P_DEFAULT, H5P_DEFAULT);
         }
-        PART_END(H5Ocopy_already_existing_group);
+        H5E_END_TRY
 
-        PART_BEGIN(H5Ocopy_already_existing_dset)
-        {
-            TESTING_2("H5Ocopy dataset to location where dataset already exists");
-
-            H5E_BEGIN_TRY
-            {
-                err_ret = H5Ocopy(group_id, OBJECT_COPY_ALREADY_EXISTING_TEST_DSET_NAME, group_id,
-                                  OBJECT_COPY_ALREADY_EXISTING_TEST_DSET_NAME, H5P_DEFAULT, H5P_DEFAULT);
-            }
-            H5E_END_TRY
-
-            if (err_ret >= 0) {
-                H5_FAILED();
-                printf("    dataset copy succeeded in location where dataset already exists!\n");
-                PART_ERROR(H5Ocopy_already_existing_dset);
-            }
-
-            PASSED();
+        if (err_ret >= 0) {
+            printf("    group copy succeeded in location where group already exists!\n");
+            TESTFRAME_TEST_ERROR(params);
         }
-        PART_END(H5Ocopy_already_existing_dset);
-
-        PART_BEGIN(H5Ocopy_already_existing_dtype)
-        {
-            TESTING_2("H5Ocopy committed datatype to location where committed datatype already exists");
-
-            H5E_BEGIN_TRY
-            {
-                err_ret = H5Ocopy(group_id, OBJECT_COPY_ALREADY_EXISTING_TEST_DTYPE_NAME, group_id,
-                                  OBJECT_COPY_ALREADY_EXISTING_TEST_DTYPE_NAME, H5P_DEFAULT, H5P_DEFAULT);
-            }
-            H5E_END_TRY
-
-            if (err_ret >= 0) {
-                H5_FAILED();
-                printf("    committed datatype copy succeeded in location where committed datatype already "
-                       "exists!\n");
-                PART_ERROR(H5Ocopy_already_existing_dtype);
-            }
-
-            PASSED();
-        }
-        PART_END(H5Ocopy_already_existing_dtype);
     }
-    END_MULTIPART;
+    SUBTEST_END(params);
 
-    TESTING_2("test cleanup");
+    SUBTEST_BEGIN(params, "H5Ocopy dataset to location where dataset already exists")
+    {
+        H5E_BEGIN_TRY
+        {
+            err_ret = H5Ocopy(group_id, OBJECT_COPY_ALREADY_EXISTING_TEST_DSET_NAME, group_id,
+                              OBJECT_COPY_ALREADY_EXISTING_TEST_DSET_NAME, H5P_DEFAULT, H5P_DEFAULT);
+        }
+        H5E_END_TRY
+
+        if (err_ret >= 0) {
+            printf("    dataset copy succeeded in location where dataset already exists!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    SUBTEST_BEGIN(params, "H5Ocopy committed datatype to location where committed datatype already exists")
+    {
+        H5E_BEGIN_TRY
+        {
+            err_ret = H5Ocopy(group_id, OBJECT_COPY_ALREADY_EXISTING_TEST_DTYPE_NAME, group_id,
+                              OBJECT_COPY_ALREADY_EXISTING_TEST_DTYPE_NAME, H5P_DEFAULT, H5P_DEFAULT);
+        }
+        H5E_END_TRY
+
+        if (err_ret >= 0) {
+            printf("    committed datatype copy succeeded in location where committed datatype already "
+                   "exists!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
 
     if (H5Sclose(space_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Tclose(dset_dtype) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Tclose(dtype_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Dclose(dset_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Gclose(group_id2) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Gclose(group_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Gclose(container_group) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Fclose(file_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
 
-    PASSED();
-
-    return;
+    return SUCCEED;
 
 error:
     H5E_BEGIN_TRY
@@ -2712,15 +2216,15 @@ error:
     }
     H5E_END_TRY
 
-    return;
+    return FAIL;
 }
 
 /*
  * A test to exercise the H5O_COPY_SHALLOW_HIERARCHY_FLAG flag
  * for H5Ocopy.
  */
-static void
-test_object_copy_shallow_group_copy(void)
+static herr_t
+test_object_copy_shallow_group_copy(TestParams_t *params)
 {
     H5G_info_t group_info;
     htri_t     object_link_exists;
@@ -2732,33 +2236,27 @@ test_object_copy_shallow_group_copy(void)
     hid_t      tmp_group_id    = H5I_INVALID_HID;
     hid_t      ocpypl_id       = H5I_INVALID_HID;
 
-    TESTING("object copying with H5O_COPY_SHALLOW_HIERARCHY_FLAG flag");
-
     /* Make sure the connector supports the API functions being tested */
     if (!(vol_cap_flags_g & (H5VL_CAP_FLAG_FILE_BASIC)) || !(vol_cap_flags_g & H5VL_CAP_FLAG_GROUP_BASIC) ||
         !(vol_cap_flags_g & H5VL_CAP_FLAG_GROUP_MORE) || !(vol_cap_flags_g & H5VL_CAP_FLAG_OBJECT_BASIC) ||
         !(vol_cap_flags_g & H5VL_CAP_FLAG_LINK_BASIC)) {
-        SKIPPED();
         printf("    API functions for basic file, group, object, or link aren't supported with this "
                "connector\n");
-        return;
+        return SKIP;
     }
 
-    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME(params), H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME(params));
         goto error;
     }
 
     if ((container_group = H5Gopen2(file_id, OBJECT_TEST_GROUP_NAME, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't open container group '%s'\n", OBJECT_TEST_GROUP_NAME);
         goto error;
     }
 
     if ((group_id = H5Gcreate2(container_group, OBJECT_COPY_SHALLOW_TEST_SUBGROUP_NAME, H5P_DEFAULT,
                                H5P_DEFAULT, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't create container subgroup '%s'\n", OBJECT_COPY_SHALLOW_TEST_SUBGROUP_NAME);
         goto error;
     }
@@ -2766,7 +2264,6 @@ test_object_copy_shallow_group_copy(void)
     /* Create the test group object, along with its nested members. */
     if ((group_id2 = H5Gcreate2(group_id, OBJECT_COPY_SHALLOW_TEST_GROUP_NAME, H5P_DEFAULT, H5P_DEFAULT,
                                 H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't create group '%s'\n", OBJECT_COPY_SHALLOW_TEST_GROUP_NAME);
         goto error;
     }
@@ -2777,7 +2274,6 @@ test_object_copy_shallow_group_copy(void)
         snprintf(grp_name, OBJECT_COPY_SHALLOW_TEST_BUF_SIZE, "grp%d", (int)i);
 
         if ((tmp_group_id = H5Gcreate2(group_id2, grp_name, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
-            H5_FAILED();
             printf("    couldn't create group '%s' under group '%s'\n", grp_name,
                    OBJECT_COPY_SHALLOW_TEST_GROUP_NAME);
             goto error;
@@ -2787,7 +2283,6 @@ test_object_copy_shallow_group_copy(void)
         if (i == (OBJECT_COPY_SHALLOW_TEST_NUM_NESTED_OBJS - 1)) {
             if (H5Gclose(H5Gcreate2(tmp_group_id, OBJECT_COPY_SHALLOW_TEST_DEEP_NESTED_GROUP_NAME,
                                     H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
-                H5_FAILED();
                 printf("    couldn't create nested group '%s' under group '%s'\n",
                        OBJECT_COPY_SHALLOW_TEST_DEEP_NESTED_GROUP_NAME, grp_name);
                 goto error;
@@ -2795,27 +2290,23 @@ test_object_copy_shallow_group_copy(void)
         }
 
         if (H5Gclose(tmp_group_id) < 0) {
-            H5_FAILED();
             printf("    couldn't close group '%s'\n", grp_name);
             goto error;
         }
     }
 
     if ((ocpypl_id = H5Pcreate(H5P_OBJECT_COPY)) < 0) {
-        H5_FAILED();
         printf("    couldn't create OCopyPL\n");
         goto error;
     }
 
     if (H5Pset_copy_object(ocpypl_id, H5O_COPY_SHALLOW_HIERARCHY_FLAG) < 0) {
-        H5_FAILED();
         printf("    couldn't set object copying options\n");
         goto error;
     }
 
     if (H5Ocopy(group_id, OBJECT_COPY_SHALLOW_TEST_GROUP_NAME, group_id,
                 OBJECT_COPY_SHALLOW_TEST_NEW_GROUP_NAME, ocpypl_id, H5P_DEFAULT) < 0) {
-        H5_FAILED();
         printf("    failed to copy group '%s' to '%s'\n", OBJECT_COPY_SHALLOW_TEST_GROUP_NAME,
                OBJECT_COPY_SHALLOW_TEST_NEW_GROUP_NAME);
         goto error;
@@ -2823,14 +2314,12 @@ test_object_copy_shallow_group_copy(void)
 
     if ((object_link_exists = H5Lexists(group_id, OBJECT_COPY_SHALLOW_TEST_NEW_GROUP_NAME, H5P_DEFAULT)) <
         0) {
-        H5_FAILED();
         printf("    couldn't determine if link '%s' to copied group exists\n",
                OBJECT_COPY_SHALLOW_TEST_NEW_GROUP_NAME);
         goto error;
     }
 
     if (!object_link_exists) {
-        H5_FAILED();
         printf("    link '%s' to copied group didn't exist!\n", OBJECT_COPY_SHALLOW_TEST_NEW_GROUP_NAME);
         goto error;
     }
@@ -2839,7 +2328,6 @@ test_object_copy_shallow_group_copy(void)
      * Ensure that the new group has only the immediate members of the copied group.
      */
     if ((tmp_group_id = H5Gopen2(group_id, OBJECT_COPY_SHALLOW_TEST_NEW_GROUP_NAME, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    failed to open group copy '%s'\n", OBJECT_COPY_SHALLOW_TEST_NEW_GROUP_NAME);
         goto error;
     }
@@ -2853,20 +2341,18 @@ test_object_copy_shallow_group_copy(void)
     group_info.nlinks = 0;
 
     if (H5Gget_info(tmp_group_id, &group_info) < 0) {
-        H5_FAILED();
         printf("    failed to retrieve group info\n");
         goto error;
     }
 
     if (group_info.nlinks != OBJECT_COPY_SHALLOW_TEST_NUM_NESTED_OBJS) {
-        H5_FAILED();
         printf("    copied group contained %d members instead of %d members after a shallow copy!\n",
                (int)group_info.nlinks, OBJECT_COPY_SHALLOW_TEST_NUM_NESTED_OBJS);
         goto error;
     }
 
     if (H5Gclose(tmp_group_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
 
     /*
      * Ensure that the last immediate member of the copied group doesn't
@@ -2880,7 +2366,6 @@ test_object_copy_shallow_group_copy(void)
                  OBJECT_COPY_SHALLOW_TEST_NUM_NESTED_OBJS - 1);
 
         if ((tmp_group_id = H5Gopen2(group_id, grp_name, H5P_DEFAULT)) < 0) {
-            H5_FAILED();
             printf("    failed to open group '%s'\n", grp_name);
             goto error;
         }
@@ -2894,38 +2379,33 @@ test_object_copy_shallow_group_copy(void)
         group_info.nlinks = 1;
 
         if (H5Gget_info(tmp_group_id, &group_info) < 0) {
-            H5_FAILED();
             printf("    failed to retrieve group info\n");
             goto error;
         }
 
         if (group_info.nlinks != 0) {
-            H5_FAILED();
             printf("    copied group's immediate members contained nested members after a shallow copy!\n");
             goto error;
         }
 
         if (H5Gclose(tmp_group_id) < 0) {
-            H5_FAILED();
             printf("    failed to close group '%s'\n", grp_name);
             goto error;
         }
     }
 
     if (H5Pclose(ocpypl_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Gclose(group_id2) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Gclose(group_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Gclose(container_group) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Fclose(file_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
 
-    PASSED();
-
-    return;
+    return SUCCEED;
 
 error:
     H5E_BEGIN_TRY
@@ -2939,15 +2419,15 @@ error:
     }
     H5E_END_TRY
 
-    return;
+    return FAIL;
 }
 
 /*
  * Tests to exercise the H5O_COPY_WITHOUT_ATTR_FLAG flag
  * of H5Ocopy.
  */
-static void
-test_object_copy_no_attributes(void)
+static herr_t
+test_object_copy_no_attributes(TestParams_t *params)
 {
     H5O_info2_t object_info;
     htri_t      object_link_exists;
@@ -2967,54 +2447,45 @@ test_object_copy_no_attributes(void)
     hid_t       space_id        = H5I_INVALID_HID;
     hid_t       ocpypl_id       = H5I_INVALID_HID;
 
-    TESTING_MULTIPART("object copying with H5O_COPY_WITHOUT_ATTR_FLAG flag");
-
     /* Make sure the connector supports the API functions being tested */
     if (!(vol_cap_flags_g & (H5VL_CAP_FLAG_FILE_BASIC)) || !(vol_cap_flags_g & H5VL_CAP_FLAG_GROUP_BASIC) ||
         !(vol_cap_flags_g & H5VL_CAP_FLAG_DATASET_BASIC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_OBJECT_BASIC) ||
         !(vol_cap_flags_g & H5VL_CAP_FLAG_OBJECT_MORE) || !(vol_cap_flags_g & H5VL_CAP_FLAG_LINK_BASIC) ||
         !(vol_cap_flags_g & H5VL_CAP_FLAG_ATTR_BASIC) ||
         !(vol_cap_flags_g & H5VL_CAP_FLAG_STORED_DATATYPES)) {
-        SKIPPED();
         printf("    API functions for basic file, group, object, link, dataset, attribute, or stored "
                "datatype aren't supported with this connector\n");
-        return;
+        return SKIP;
     }
 
-    TESTING_2("test setup");
-
-    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME(params), H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME(params));
         goto error;
     }
 
     if ((container_group = H5Gopen2(file_id, OBJECT_TEST_GROUP_NAME, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't open container group '%s'\n", OBJECT_TEST_GROUP_NAME);
         goto error;
     }
 
     if ((group_id = H5Gcreate2(container_group, OBJECT_COPY_NO_ATTRS_TEST_SUBGROUP_NAME, H5P_DEFAULT,
                                H5P_DEFAULT, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't create container subgroup '%s'\n", OBJECT_COPY_NO_ATTRS_TEST_SUBGROUP_NAME);
         goto error;
     }
 
-    if ((space_id = generate_random_dataspace(OBJECT_COPY_NO_ATTRS_TEST_SPACE_RANK, NULL, NULL, FALSE)) < 0)
-        TEST_ERROR;
-    if ((attr_space_id = generate_random_dataspace(OBJECT_COPY_NO_ATTRS_TEST_SPACE_RANK, NULL, NULL, TRUE)) <
+    if ((space_id = generate_random_dataspace(OBJECT_COPY_NO_ATTRS_TEST_SPACE_RANK, NULL, NULL, false)) < 0)
+        TESTFRAME_TEST_ERROR(params);
+    if ((attr_space_id = generate_random_dataspace(OBJECT_COPY_NO_ATTRS_TEST_SPACE_RANK, NULL, NULL, true)) <
         0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
 
-    if ((dset_dtype = generate_random_datatype(H5T_NO_CLASS, FALSE)) < 0)
-        TEST_ERROR;
+    if ((dset_dtype = generate_random_datatype(H5T_NO_CLASS, false)) < 0)
+        TESTFRAME_TEST_ERROR(params);
 
     /* Create the test group object, along with the attributes attached to it. */
     if ((group_id2 = H5Gcreate2(group_id, OBJECT_COPY_NO_ATTRS_TEST_GROUP_NAME, H5P_DEFAULT, H5P_DEFAULT,
                                 H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't create group '%s'\n", OBJECT_COPY_NO_ATTRS_TEST_GROUP_NAME);
         goto error;
     }
@@ -3026,14 +2497,12 @@ test_object_copy_no_attributes(void)
 
         if ((attr_id = H5Acreate2(group_id2, attr_name, H5T_NATIVE_INT, attr_space_id, H5P_DEFAULT,
                                   H5P_DEFAULT)) < 0) {
-            H5_FAILED();
             printf("    couldn't create attribute '%s' on group '%s'\n", attr_name,
                    OBJECT_COPY_NO_ATTRS_TEST_GROUP_NAME);
             goto error;
         }
 
         if (H5Aclose(attr_id) < 0) {
-            H5_FAILED();
             printf("    couldn't close attribute '%s'\n", attr_name);
             goto error;
         }
@@ -3042,7 +2511,6 @@ test_object_copy_no_attributes(void)
     /* Create the test dataset object, along with the attributes attached to it. */
     if ((dset_id = H5Dcreate2(group_id, OBJECT_COPY_NO_ATTRS_TEST_DSET_NAME, dset_dtype, space_id,
                               H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't create dataset '%s'\n", OBJECT_COPY_NO_ATTRS_TEST_DSET_NAME);
         goto error;
     }
@@ -3054,29 +2522,25 @@ test_object_copy_no_attributes(void)
 
         if ((attr_id = H5Acreate2(dset_id, attr_name, H5T_NATIVE_INT, attr_space_id, H5P_DEFAULT,
                                   H5P_DEFAULT)) < 0) {
-            H5_FAILED();
             printf("    couldn't create attribute '%s' on dataset '%s'\n", attr_name,
                    OBJECT_COPY_NO_ATTRS_TEST_DSET_NAME);
             goto error;
         }
 
         if (H5Aclose(attr_id) < 0) {
-            H5_FAILED();
             printf("    couldn't close attribute '%s'\n", attr_name);
             goto error;
         }
     }
 
     /* Create the test committed datatype object, along with the attributes attached to it. */
-    if ((dtype_id = generate_random_datatype(H5T_NO_CLASS, FALSE)) < 0) {
-        H5_FAILED();
+    if ((dtype_id = generate_random_datatype(H5T_NO_CLASS, false)) < 0) {
         printf("    couldn't create datatype\n");
         goto error;
     }
 
     if (H5Tcommit2(group_id, OBJECT_COPY_NO_ATTRS_TEST_DTYPE_NAME, dtype_id, H5P_DEFAULT, H5P_DEFAULT,
                    H5P_DEFAULT) < 0) {
-        H5_FAILED();
         printf("    couldn't commit datatype '%s'\n", OBJECT_COPY_NO_ATTRS_TEST_DTYPE_NAME);
         goto error;
     }
@@ -3088,349 +2552,295 @@ test_object_copy_no_attributes(void)
 
         if ((attr_id = H5Acreate2(dtype_id, attr_name, H5T_NATIVE_INT, attr_space_id, H5P_DEFAULT,
                                   H5P_DEFAULT)) < 0) {
-            H5_FAILED();
             printf("    couldn't create attribute '%s' on committed datatype '%s'\n", attr_name,
                    OBJECT_COPY_NO_ATTRS_TEST_DTYPE_NAME);
             goto error;
         }
 
         if (H5Aclose(attr_id) < 0) {
-            H5_FAILED();
             printf("    couldn't close attribute '%s'\n", attr_name);
             goto error;
         }
     }
 
-    PASSED();
-
-    BEGIN_MULTIPART
+    SUBTEST_BEGIN(params, "H5Ocopy on a group (without attributes)")
     {
-        PART_BEGIN(H5Ocopy_group_no_attributes)
-        {
-            TESTING_2("H5Ocopy on a group (without attributes)");
-
-            if ((ocpypl_id = H5Pcreate(H5P_OBJECT_COPY)) < 0) {
-                H5_FAILED();
-                printf("    couldn't create OCopyPL\n");
-                PART_ERROR(H5Ocopy_group_no_attributes);
-            }
-
-            if (H5Pset_copy_object(ocpypl_id, H5O_COPY_WITHOUT_ATTR_FLAG) < 0) {
-                H5_FAILED();
-                printf("    couldn't set object copying options\n");
-                PART_ERROR(H5Ocopy_group_no_attributes);
-            }
-
-            if (H5Ocopy(group_id, OBJECT_COPY_NO_ATTRS_TEST_GROUP_NAME, group_id,
-                        OBJECT_COPY_NO_ATTRS_TEST_NEW_GROUP_NAME, ocpypl_id, H5P_DEFAULT) < 0) {
-                H5_FAILED();
-                printf("    failed to copy group '%s' to '%s'\n", OBJECT_COPY_NO_ATTRS_TEST_GROUP_NAME,
-                       OBJECT_COPY_NO_ATTRS_TEST_NEW_GROUP_NAME);
-                PART_ERROR(H5Ocopy_group_no_attributes);
-            }
-
-            if ((object_link_exists =
-                     H5Lexists(group_id, OBJECT_COPY_NO_ATTRS_TEST_NEW_GROUP_NAME, H5P_DEFAULT)) < 0) {
-                H5_FAILED();
-                printf("    couldn't determine if link '%s' to copied group exists\n",
-                       OBJECT_COPY_NO_ATTRS_TEST_NEW_GROUP_NAME);
-                PART_ERROR(H5Ocopy_group_no_attributes);
-            }
-
-            if (!object_link_exists) {
-                H5_FAILED();
-                printf("    link '%s' to copied group didn't exist!\n",
-                       OBJECT_COPY_NO_ATTRS_TEST_NEW_GROUP_NAME);
-                PART_ERROR(H5Ocopy_group_no_attributes);
-            }
-
-            /* Ensure that the new group has no attributes */
-            if ((tmp_group_id = H5Gopen2(group_id, OBJECT_COPY_NO_ATTRS_TEST_NEW_GROUP_NAME, H5P_DEFAULT)) <
-                0) {
-                H5_FAILED();
-                printf("    failed to open group copy '%s'\n", OBJECT_COPY_NO_ATTRS_TEST_NEW_GROUP_NAME);
-                PART_ERROR(H5Ocopy_group_no_attributes);
-            }
-
-            memset(&object_info, 0, sizeof(object_info));
-
-            /*
-             * Set attribute count to non-zero in case the connector doesn't
-             * support retrieval of object info.
-             */
-            object_info.num_attrs = 1;
-
-            if (H5Oget_info3(tmp_group_id, &object_info, H5O_INFO_ALL) < 0) {
-                H5_FAILED();
-                printf("    failed to retrieve object info\n");
-                PART_ERROR(H5Ocopy_group_no_attributes);
-            }
-
-            if (object_info.num_attrs != 0) {
-                H5_FAILED();
-                printf("    copied group contained attributes after a non-attribute copy!\n");
-                PART_ERROR(H5Ocopy_group_no_attributes);
-            }
-
-            if (H5Pclose(ocpypl_id) < 0) {
-                H5_FAILED();
-                printf("    failed to close OCopyPL\n");
-                PART_ERROR(H5Ocopy_group_no_attributes);
-            }
-
-            if (H5Gclose(tmp_group_id) < 0) {
-                H5_FAILED();
-                printf("    failed to close group copy\n");
-                PART_ERROR(H5Ocopy_group_no_attributes);
-            }
-
-            PASSED();
-        }
-        PART_END(H5Ocopy_group_no_attributes);
-
-        if (ocpypl_id >= 0) {
-            H5E_BEGIN_TRY
-            {
-                H5Pclose(ocpypl_id);
-            }
-            H5E_END_TRY
-            ocpypl_id = H5I_INVALID_HID;
-        }
-        if (tmp_group_id >= 0) {
-            H5E_BEGIN_TRY
-            {
-                H5Gclose(tmp_group_id);
-            }
-            H5E_END_TRY
-            tmp_group_id = H5I_INVALID_HID;
+        if ((ocpypl_id = H5Pcreate(H5P_OBJECT_COPY)) < 0) {
+            printf("    couldn't create OCopyPL\n");
+            TESTFRAME_TEST_ERROR(params);
         }
 
-        PART_BEGIN(H5Ocopy_dset_no_attributes)
-        {
-            TESTING_2("H5Ocopy on a dataset (without attributes)");
-
-            if ((ocpypl_id = H5Pcreate(H5P_OBJECT_COPY)) < 0) {
-                H5_FAILED();
-                printf("    couldn't create OCopyPL\n");
-                PART_ERROR(H5Ocopy_dset_no_attributes);
-            }
-
-            if (H5Pset_copy_object(ocpypl_id, H5O_COPY_WITHOUT_ATTR_FLAG) < 0) {
-                H5_FAILED();
-                printf("    couldn't set object copying options\n");
-                PART_ERROR(H5Ocopy_dset_no_attributes);
-            }
-
-            if (H5Ocopy(group_id, OBJECT_COPY_NO_ATTRS_TEST_DSET_NAME, group_id,
-                        OBJECT_COPY_NO_ATTRS_TEST_NEW_DSET_NAME, ocpypl_id, H5P_DEFAULT) < 0) {
-                H5_FAILED();
-                printf("    failed to copy dataset '%s' to '%s'\n", OBJECT_COPY_NO_ATTRS_TEST_DSET_NAME,
-                       OBJECT_COPY_NO_ATTRS_TEST_NEW_DSET_NAME);
-                PART_ERROR(H5Ocopy_dset_no_attributes);
-            }
-
-            if ((object_link_exists =
-                     H5Lexists(group_id, OBJECT_COPY_NO_ATTRS_TEST_NEW_DSET_NAME, H5P_DEFAULT)) < 0) {
-                H5_FAILED();
-                printf("    couldn't determine if link '%s' to copied dataset exists\n",
-                       OBJECT_COPY_NO_ATTRS_TEST_NEW_DSET_NAME);
-                PART_ERROR(H5Ocopy_dset_no_attributes);
-            }
-
-            if (!object_link_exists) {
-                H5_FAILED();
-                printf("    link '%s' to copied dataset didn't exist!\n",
-                       OBJECT_COPY_NO_ATTRS_TEST_NEW_DSET_NAME);
-                PART_ERROR(H5Ocopy_dset_no_attributes);
-            }
-
-            /* Ensure that the new dataset doesn't have any attributes */
-            if ((tmp_dset_id = H5Dopen2(group_id, OBJECT_COPY_NO_ATTRS_TEST_NEW_DSET_NAME, H5P_DEFAULT)) <
-                0) {
-                H5_FAILED();
-                printf("    failed to open dataset copy '%s'\n", OBJECT_COPY_NO_ATTRS_TEST_NEW_DSET_NAME);
-                PART_ERROR(H5Ocopy_dset_no_attributes);
-            }
-
-            memset(&object_info, 0, sizeof(object_info));
-
-            /*
-             * Set attribute count to non-zero in case the connector doesn't
-             * support retrieval of object info.
-             */
-            object_info.num_attrs = 1;
-
-            if (H5Oget_info3(tmp_dset_id, &object_info, H5O_INFO_ALL) < 0) {
-                H5_FAILED();
-                printf("    failed to retrieve object info\n");
-                PART_ERROR(H5Ocopy_dset_no_attributes);
-            }
-
-            if (object_info.num_attrs != 0) {
-                H5_FAILED();
-                printf("    copied dataset contained attributes after a non-attribute copy!\n");
-                PART_ERROR(H5Ocopy_dset_no_attributes);
-            }
-
-            if (H5Pclose(ocpypl_id) < 0) {
-                H5_FAILED();
-                printf("    failed to close OCopyPL\n");
-                PART_ERROR(H5Ocopy_dset_no_attributes);
-            }
-
-            if (H5Dclose(tmp_dset_id) < 0) {
-                H5_FAILED();
-                printf("    failed to close dataset copy\n");
-                PART_ERROR(H5Ocopy_dset_no_attributes);
-            }
-
-            PASSED();
-        }
-        PART_END(H5Ocopy_dset_no_attributes);
-
-        if (ocpypl_id >= 0) {
-            H5E_BEGIN_TRY
-            {
-                H5Pclose(ocpypl_id);
-            }
-            H5E_END_TRY
-            ocpypl_id = H5I_INVALID_HID;
-        }
-        if (tmp_dset_id >= 0) {
-            H5E_BEGIN_TRY
-            {
-                H5Dclose(tmp_dset_id);
-            }
-            H5E_END_TRY
-            tmp_dset_id = H5I_INVALID_HID;
+        if (H5Pset_copy_object(ocpypl_id, H5O_COPY_WITHOUT_ATTR_FLAG) < 0) {
+            printf("    couldn't set object copying options\n");
+            TESTFRAME_TEST_ERROR(params);
         }
 
-        PART_BEGIN(H5Ocopy_dtype_no_attributes)
-        {
-            TESTING_2("H5Ocopy on a committed datatype (without attributes)");
-
-            if ((ocpypl_id = H5Pcreate(H5P_OBJECT_COPY)) < 0) {
-                H5_FAILED();
-                printf("    couldn't create OCopyPL\n");
-                PART_ERROR(H5Ocopy_dtype_no_attributes);
-            }
-
-            if (H5Pset_copy_object(ocpypl_id, H5O_COPY_WITHOUT_ATTR_FLAG) < 0) {
-                H5_FAILED();
-                printf("    couldn't set object copying options\n");
-                PART_ERROR(H5Ocopy_dtype_no_attributes);
-            }
-
-            if (H5Ocopy(group_id, OBJECT_COPY_NO_ATTRS_TEST_DTYPE_NAME, group_id,
-                        OBJECT_COPY_NO_ATTRS_TEST_NEW_DTYPE_NAME, ocpypl_id, H5P_DEFAULT) < 0) {
-                H5_FAILED();
-                printf("    failed to copy datatype '%s' to '%s'\n", OBJECT_COPY_NO_ATTRS_TEST_DTYPE_NAME,
-                       OBJECT_COPY_NO_ATTRS_TEST_NEW_DTYPE_NAME);
-                PART_ERROR(H5Ocopy_dtype_no_attributes);
-            }
-
-            if ((object_link_exists =
-                     H5Lexists(group_id, OBJECT_COPY_NO_ATTRS_TEST_NEW_DTYPE_NAME, H5P_DEFAULT)) < 0) {
-                H5_FAILED();
-                printf("    couldn't determine if link '%s' to copied datatype exists\n",
-                       OBJECT_COPY_NO_ATTRS_TEST_NEW_DTYPE_NAME);
-                PART_ERROR(H5Ocopy_dtype_no_attributes);
-            }
-
-            if (!object_link_exists) {
-                H5_FAILED();
-                printf("    link '%s' to copied datatype didn't exist!\n",
-                       OBJECT_COPY_NO_ATTRS_TEST_NEW_DTYPE_NAME);
-                PART_ERROR(H5Ocopy_dtype_no_attributes);
-            }
-
-            /* Ensure that the new committed datatype doesn't have any attributes */
-            if ((tmp_dtype_id = H5Topen2(group_id, OBJECT_COPY_NO_ATTRS_TEST_NEW_DTYPE_NAME, H5P_DEFAULT)) <
-                0) {
-                H5_FAILED();
-                printf("    failed to open dataset copy '%s'\n", OBJECT_COPY_NO_ATTRS_TEST_NEW_DTYPE_NAME);
-                PART_ERROR(H5Ocopy_dtype_no_attributes);
-            }
-
-            memset(&object_info, 0, sizeof(object_info));
-
-            /*
-             * Set attribute count to non-zero in case the connector doesn't
-             * support retrieval of object info.
-             */
-            object_info.num_attrs = 1;
-
-            if (H5Oget_info3(tmp_dtype_id, &object_info, H5O_INFO_ALL) < 0) {
-                H5_FAILED();
-                printf("    failed to retrieve object info\n");
-                PART_ERROR(H5Ocopy_dtype_no_attributes);
-            }
-
-            if (object_info.num_attrs != 0) {
-                H5_FAILED();
-                printf("    copied committed datatype contained attributes after a non-attribute copy!\n");
-                PART_ERROR(H5Ocopy_dtype_no_attributes);
-            }
-
-            if (H5Pclose(ocpypl_id) < 0) {
-                H5_FAILED();
-                printf("    failed to close OCopyPL\n");
-                PART_ERROR(H5Ocopy_dtype_no_attributes);
-            }
-
-            if (H5Tclose(tmp_dtype_id) < 0) {
-                H5_FAILED();
-                printf("    failed to close datatype copy\n");
-                PART_ERROR(H5Ocopy_dtype_no_attributes);
-            }
-
-            PASSED();
+        if (H5Ocopy(group_id, OBJECT_COPY_NO_ATTRS_TEST_GROUP_NAME, group_id,
+                    OBJECT_COPY_NO_ATTRS_TEST_NEW_GROUP_NAME, ocpypl_id, H5P_DEFAULT) < 0) {
+            printf("    failed to copy group '%s' to '%s'\n", OBJECT_COPY_NO_ATTRS_TEST_GROUP_NAME,
+                   OBJECT_COPY_NO_ATTRS_TEST_NEW_GROUP_NAME);
+            TESTFRAME_TEST_ERROR(params);
         }
-        PART_END(H5Ocopy_dtype_no_attributes);
 
-        if (ocpypl_id >= 0) {
-            H5E_BEGIN_TRY
-            {
-                H5Pclose(ocpypl_id);
-            }
-            H5E_END_TRY
-            ocpypl_id = H5I_INVALID_HID;
+        if ((object_link_exists =
+                 H5Lexists(group_id, OBJECT_COPY_NO_ATTRS_TEST_NEW_GROUP_NAME, H5P_DEFAULT)) < 0) {
+            printf("    couldn't determine if link '%s' to copied group exists\n",
+                   OBJECT_COPY_NO_ATTRS_TEST_NEW_GROUP_NAME);
+            TESTFRAME_TEST_ERROR(params);
         }
-        if (tmp_dtype_id >= 0) {
-            H5E_BEGIN_TRY
-            {
-                H5Tclose(tmp_dtype_id);
-            }
-            H5E_END_TRY
-            tmp_dtype_id = H5I_INVALID_HID;
+
+        if (!object_link_exists) {
+            printf("    link '%s' to copied group didn't exist!\n",
+                   OBJECT_COPY_NO_ATTRS_TEST_NEW_GROUP_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        /* Ensure that the new group has no attributes */
+        if ((tmp_group_id = H5Gopen2(group_id, OBJECT_COPY_NO_ATTRS_TEST_NEW_GROUP_NAME, H5P_DEFAULT)) <
+            0) {
+            printf("    failed to open group copy '%s'\n", OBJECT_COPY_NO_ATTRS_TEST_NEW_GROUP_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        memset(&object_info, 0, sizeof(object_info));
+
+        /*
+         * Set attribute count to non-zero in case the connector doesn't
+         * support retrieval of object info.
+         */
+        object_info.num_attrs = 1;
+
+        if (H5Oget_info3(tmp_group_id, &object_info, H5O_INFO_ALL) < 0) {
+            printf("    failed to retrieve object info\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (object_info.num_attrs != 0) {
+            printf("    copied group contained attributes after a non-attribute copy!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (H5Pclose(ocpypl_id) < 0) {
+            printf("    failed to close OCopyPL\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (H5Gclose(tmp_group_id) < 0) {
+            printf("    failed to close group copy\n");
+            TESTFRAME_TEST_ERROR(params);
         }
     }
-    END_MULTIPART;
+    SUBTEST_END(params);
 
-    TESTING_2("test cleanup");
+    if (ocpypl_id >= 0) {
+        H5E_BEGIN_TRY
+        {
+            H5Pclose(ocpypl_id);
+        }
+        H5E_END_TRY
+        ocpypl_id = H5I_INVALID_HID;
+    }
+    if (tmp_group_id >= 0) {
+        H5E_BEGIN_TRY
+        {
+            H5Gclose(tmp_group_id);
+        }
+        H5E_END_TRY
+        tmp_group_id = H5I_INVALID_HID;
+    }
+
+    SUBTEST_BEGIN(params, "H5Ocopy on a dataset (without attributes)")
+    {
+        if ((ocpypl_id = H5Pcreate(H5P_OBJECT_COPY)) < 0) {
+            printf("    couldn't create OCopyPL\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (H5Pset_copy_object(ocpypl_id, H5O_COPY_WITHOUT_ATTR_FLAG) < 0) {
+            printf("    couldn't set object copying options\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (H5Ocopy(group_id, OBJECT_COPY_NO_ATTRS_TEST_DSET_NAME, group_id,
+                    OBJECT_COPY_NO_ATTRS_TEST_NEW_DSET_NAME, ocpypl_id, H5P_DEFAULT) < 0) {
+            printf("    failed to copy dataset '%s' to '%s'\n", OBJECT_COPY_NO_ATTRS_TEST_DSET_NAME,
+                   OBJECT_COPY_NO_ATTRS_TEST_NEW_DSET_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if ((object_link_exists =
+                 H5Lexists(group_id, OBJECT_COPY_NO_ATTRS_TEST_NEW_DSET_NAME, H5P_DEFAULT)) < 0) {
+            printf("    couldn't determine if link '%s' to copied dataset exists\n",
+                   OBJECT_COPY_NO_ATTRS_TEST_NEW_DSET_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (!object_link_exists) {
+            printf("    link '%s' to copied dataset didn't exist!\n",
+                   OBJECT_COPY_NO_ATTRS_TEST_NEW_DSET_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        /* Ensure that the new dataset doesn't have any attributes */
+        if ((tmp_dset_id = H5Dopen2(group_id, OBJECT_COPY_NO_ATTRS_TEST_NEW_DSET_NAME, H5P_DEFAULT)) <
+            0) {
+            printf("    failed to open dataset copy '%s'\n", OBJECT_COPY_NO_ATTRS_TEST_NEW_DSET_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        memset(&object_info, 0, sizeof(object_info));
+
+        /*
+         * Set attribute count to non-zero in case the connector doesn't
+         * support retrieval of object info.
+         */
+        object_info.num_attrs = 1;
+
+        if (H5Oget_info3(tmp_dset_id, &object_info, H5O_INFO_ALL) < 0) {
+            printf("    failed to retrieve object info\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (object_info.num_attrs != 0) {
+            printf("    copied dataset contained attributes after a non-attribute copy!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (H5Pclose(ocpypl_id) < 0) {
+            printf("    failed to close OCopyPL\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (H5Dclose(tmp_dset_id) < 0) {
+            printf("    failed to close dataset copy\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    if (ocpypl_id >= 0) {
+        H5E_BEGIN_TRY
+        {
+            H5Pclose(ocpypl_id);
+        }
+        H5E_END_TRY
+        ocpypl_id = H5I_INVALID_HID;
+    }
+    if (tmp_dset_id >= 0) {
+        H5E_BEGIN_TRY
+        {
+            H5Dclose(tmp_dset_id);
+        }
+        H5E_END_TRY
+        tmp_dset_id = H5I_INVALID_HID;
+    }
+
+    SUBTEST_BEGIN(params, "H5Ocopy on a committed datatype (without attributes)")
+    {
+        if ((ocpypl_id = H5Pcreate(H5P_OBJECT_COPY)) < 0) {
+            printf("    couldn't create OCopyPL\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (H5Pset_copy_object(ocpypl_id, H5O_COPY_WITHOUT_ATTR_FLAG) < 0) {
+            printf("    couldn't set object copying options\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (H5Ocopy(group_id, OBJECT_COPY_NO_ATTRS_TEST_DTYPE_NAME, group_id,
+                    OBJECT_COPY_NO_ATTRS_TEST_NEW_DTYPE_NAME, ocpypl_id, H5P_DEFAULT) < 0) {
+            printf("    failed to copy datatype '%s' to '%s'\n", OBJECT_COPY_NO_ATTRS_TEST_DTYPE_NAME,
+                   OBJECT_COPY_NO_ATTRS_TEST_NEW_DTYPE_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if ((object_link_exists =
+                 H5Lexists(group_id, OBJECT_COPY_NO_ATTRS_TEST_NEW_DTYPE_NAME, H5P_DEFAULT)) < 0) {
+            printf("    couldn't determine if link '%s' to copied datatype exists\n",
+                   OBJECT_COPY_NO_ATTRS_TEST_NEW_DTYPE_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (!object_link_exists) {
+            printf("    link '%s' to copied datatype didn't exist!\n",
+                   OBJECT_COPY_NO_ATTRS_TEST_NEW_DTYPE_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        /* Ensure that the new committed datatype doesn't have any attributes */
+        if ((tmp_dtype_id = H5Topen2(group_id, OBJECT_COPY_NO_ATTRS_TEST_NEW_DTYPE_NAME, H5P_DEFAULT)) <
+            0) {
+            printf("    failed to open dataset copy '%s'\n", OBJECT_COPY_NO_ATTRS_TEST_NEW_DTYPE_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        memset(&object_info, 0, sizeof(object_info));
+
+        /*
+         * Set attribute count to non-zero in case the connector doesn't
+         * support retrieval of object info.
+         */
+        object_info.num_attrs = 1;
+
+        if (H5Oget_info3(tmp_dtype_id, &object_info, H5O_INFO_ALL) < 0) {
+            printf("    failed to retrieve object info\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (object_info.num_attrs != 0) {
+            printf("    copied committed datatype contained attributes after a non-attribute copy!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (H5Pclose(ocpypl_id) < 0) {
+            printf("    failed to close OCopyPL\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (H5Tclose(tmp_dtype_id) < 0) {
+            printf("    failed to close datatype copy\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    if (ocpypl_id >= 0) {
+        H5E_BEGIN_TRY
+        {
+            H5Pclose(ocpypl_id);
+        }
+        H5E_END_TRY
+        ocpypl_id = H5I_INVALID_HID;
+    }
+    if (tmp_dtype_id >= 0) {
+        H5E_BEGIN_TRY
+        {
+            H5Tclose(tmp_dtype_id);
+        }
+        H5E_END_TRY
+        tmp_dtype_id = H5I_INVALID_HID;
+    }
 
     if (H5Sclose(attr_space_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Sclose(space_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Tclose(dset_dtype) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Tclose(dtype_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Dclose(dset_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Gclose(group_id2) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Gclose(group_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Gclose(container_group) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Fclose(file_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
 
-    PASSED();
-
-    return;
+    return SUCCEED;
 
 error:
     H5E_BEGIN_TRY
@@ -3452,15 +2862,15 @@ error:
     }
     H5E_END_TRY
 
-    return;
+    return FAIL;
 }
 
 /*
  * Tests to exercise the behavior of H5Ocopy when the source
  * object specified is a soft link or dangling soft link.
  */
-static void
-test_object_copy_by_soft_link(void)
+static herr_t
+test_object_copy_by_soft_link(TestParams_t *params)
 {
     H5O_info2_t object_info;
     H5G_info_t  group_info;
@@ -3475,49 +2885,40 @@ test_object_copy_by_soft_link(void)
     hid_t       attr_id         = H5I_INVALID_HID;
     hid_t       attr_space_id   = H5I_INVALID_HID;
 
-    TESTING_MULTIPART("object copying through use of soft links");
-
     /* Make sure the connector supports the API functions being tested */
     if (!(vol_cap_flags_g & (H5VL_CAP_FLAG_FILE_BASIC)) || !(vol_cap_flags_g & H5VL_CAP_FLAG_GROUP_BASIC) ||
         !(vol_cap_flags_g & H5VL_CAP_FLAG_OBJECT_BASIC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_OBJECT_MORE) ||
         !(vol_cap_flags_g & H5VL_CAP_FLAG_LINK_BASIC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_LINK_MORE) ||
         !(vol_cap_flags_g & H5VL_CAP_FLAG_ATTR_BASIC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_ITERATE) ||
         !(vol_cap_flags_g & H5VL_CAP_FLAG_SOFT_LINKS)) {
-        SKIPPED();
         printf("    API functions for basic file, group, object, link, dataset, attribute, iterate, or "
                "soft link aren't supported with this connector\n");
-        return;
+        return SKIP;
     }
 
-    TESTING_2("test setup");
-
-    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME(params), H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME(params));
         goto error;
     }
 
     if ((container_group = H5Gopen2(file_id, OBJECT_TEST_GROUP_NAME, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't open container group '%s'\n", OBJECT_TEST_GROUP_NAME);
         goto error;
     }
 
     if ((group_id = H5Gcreate2(container_group, OBJECT_COPY_SOFT_LINK_TEST_SUBGROUP_NAME, H5P_DEFAULT,
                                H5P_DEFAULT, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't create container subgroup '%s'\n", OBJECT_COPY_SOFT_LINK_TEST_SUBGROUP_NAME);
         goto error;
     }
 
-    if ((attr_space_id = generate_random_dataspace(OBJECT_COPY_SOFT_LINK_TEST_SPACE_RANK, NULL, NULL, TRUE)) <
+    if ((attr_space_id = generate_random_dataspace(OBJECT_COPY_SOFT_LINK_TEST_SPACE_RANK, NULL, NULL, true)) <
         0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
 
     /* Create the test group object, along with its nested members and the attributes attached to it. */
     if ((group_id2 = H5Gcreate2(group_id, OBJECT_COPY_SOFT_LINK_TEST_GROUP_NAME, H5P_DEFAULT, H5P_DEFAULT,
                                 H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't create group '%s'\n", OBJECT_COPY_SOFT_LINK_TEST_GROUP_NAME);
         goto error;
     }
@@ -3528,7 +2929,6 @@ test_object_copy_by_soft_link(void)
         snprintf(grp_name, OBJECT_COPY_SOFT_LINK_TEST_BUF_SIZE, "grp%d", (int)i);
 
         if ((tmp_group_id = H5Gcreate2(group_id2, grp_name, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
-            H5_FAILED();
             printf("    couldn't create group '%s' under group '%s'\n", grp_name,
                    OBJECT_COPY_SOFT_LINK_TEST_GROUP_NAME);
             goto error;
@@ -3538,7 +2938,6 @@ test_object_copy_by_soft_link(void)
         if (i == (OBJECT_COPY_SOFT_LINK_TEST_NUM_NESTED_OBJS - 1)) {
             if (H5Gclose(H5Gcreate2(tmp_group_id, OBJECT_COPY_SOFT_LINK_TEST_DEEP_NESTED_GROUP_NAME,
                                     H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
-                H5_FAILED();
                 printf("    couldn't create nested group '%s' under group '%s'\n",
                        OBJECT_COPY_SOFT_LINK_TEST_DEEP_NESTED_GROUP_NAME, grp_name);
                 goto error;
@@ -3546,7 +2945,6 @@ test_object_copy_by_soft_link(void)
         }
 
         if (H5Gclose(tmp_group_id) < 0) {
-            H5_FAILED();
             printf("    couldn't close group '%s'\n", grp_name);
             goto error;
         }
@@ -3559,217 +2957,181 @@ test_object_copy_by_soft_link(void)
 
         if ((attr_id = H5Acreate2(group_id2, attr_name, H5T_NATIVE_INT, attr_space_id, H5P_DEFAULT,
                                   H5P_DEFAULT)) < 0) {
-            H5_FAILED();
             printf("    couldn't create attribute '%s' on group '%s'\n", attr_name,
                    OBJECT_COPY_SOFT_LINK_TEST_GROUP_NAME);
             goto error;
         }
 
         if (H5Aclose(attr_id) < 0) {
-            H5_FAILED();
             printf("    couldn't close attribute '%s'\n", attr_name);
             goto error;
         }
     }
 
-    PASSED();
-
-    BEGIN_MULTIPART
+    SUBTEST_BEGIN(params, "H5Ocopy through use of a soft link")
     {
-        PART_BEGIN(H5Ocopy_through_soft_link)
-        {
-            TESTING_2("H5Ocopy through use of a soft link");
-
-            if (H5Lcreate_soft("/" OBJECT_TEST_GROUP_NAME "/" OBJECT_COPY_SOFT_LINK_TEST_SUBGROUP_NAME
-                               "/" OBJECT_COPY_SOFT_LINK_TEST_GROUP_NAME,
-                               group_id, OBJECT_COPY_SOFT_LINK_TEST_SOFT_LINK_NAME, H5P_DEFAULT,
-                               H5P_DEFAULT) < 0) {
-                H5_FAILED();
-                printf("    failed to create soft link '%s' to group for copying\n",
-                       OBJECT_COPY_SOFT_LINK_TEST_SOFT_LINK_NAME);
-                PART_ERROR(H5Ocopy_through_soft_link);
-            }
-
-            if (H5Ocopy(group_id, OBJECT_COPY_SOFT_LINK_TEST_SOFT_LINK_NAME, group_id,
-                        OBJECT_COPY_SOFT_LINK_TEST_NEW_GROUP_NAME, H5P_DEFAULT, H5P_DEFAULT) < 0) {
-                H5_FAILED();
-                printf("    failed to copy group '%s' to '%s'\n", OBJECT_COPY_SOFT_LINK_TEST_GROUP_NAME,
-                       OBJECT_COPY_SOFT_LINK_TEST_NEW_GROUP_NAME);
-                PART_ERROR(H5Ocopy_through_soft_link);
-            }
-
-            if ((object_link_exists =
-                     H5Lexists(group_id, OBJECT_COPY_SOFT_LINK_TEST_NEW_GROUP_NAME, H5P_DEFAULT)) < 0) {
-                H5_FAILED();
-                printf("    couldn't determine if link '%s' to copied group exists\n",
-                       OBJECT_COPY_SOFT_LINK_TEST_NEW_GROUP_NAME);
-                PART_ERROR(H5Ocopy_through_soft_link);
-            }
-
-            if (!object_link_exists) {
-                H5_FAILED();
-                printf("    link '%s' to copied group didn't exist!\n",
-                       OBJECT_COPY_SOFT_LINK_TEST_NEW_GROUP_NAME);
-                PART_ERROR(H5Ocopy_through_soft_link);
-            }
-
-            /* Make sure the new object is an actual group and not another soft link */
-            memset(&link_info, 0, sizeof(link_info));
-            if (H5Lget_info2(group_id, OBJECT_COPY_SOFT_LINK_TEST_NEW_GROUP_NAME, &link_info, H5P_DEFAULT) <
-                0) {
-                H5_FAILED();
-                printf("    failed to retrieve info for link '%s'\n",
-                       OBJECT_COPY_SOFT_LINK_TEST_NEW_GROUP_NAME);
-                PART_ERROR(H5Ocopy_through_soft_link);
-            }
-
-            if (link_info.type != H5L_TYPE_HARD) {
-                H5_FAILED();
-                printf(
-                    "    after group copy through soft link, group's new link type wasn't H5L_TYPE_HARD!\n");
-                PART_ERROR(H5Ocopy_through_soft_link);
-            }
-
-            /*
-             * Ensure that the new group doesn't have any attributes and only the
-             * immediate members of the copied group.
-             */
-            if ((tmp_group_id = H5Gopen2(group_id, OBJECT_COPY_SOFT_LINK_TEST_NEW_GROUP_NAME, H5P_DEFAULT)) <
-                0) {
-                H5_FAILED();
-                printf("    failed to open group copy '%s'\n", OBJECT_COPY_SOFT_LINK_TEST_NEW_GROUP_NAME);
-                PART_ERROR(H5Ocopy_through_soft_link);
-            }
-
-            memset(&group_info, 0, sizeof(group_info));
-
-            /*
-             * Set link count to zero in case the connector doesn't support
-             * retrieval of group info.
-             */
-            group_info.nlinks = 0;
-
-            if (H5Gget_info(tmp_group_id, &group_info) < 0) {
-                H5_FAILED();
-                printf("    failed to retrieve group info\n");
-                PART_ERROR(H5Ocopy_through_soft_link);
-            }
-
-            if (group_info.nlinks != OBJECT_COPY_SOFT_LINK_TEST_NUM_NESTED_OBJS) {
-                H5_FAILED();
-                printf("    copied group contained %d members instead of %d members after a shallow copy!\n",
-                       (int)group_info.nlinks, OBJECT_COPY_SOFT_LINK_TEST_NUM_NESTED_OBJS);
-                PART_ERROR(H5Ocopy_through_soft_link);
-            }
-
-            memset(&object_info, 0, sizeof(object_info));
-
-            /*
-             * Set attribute count to zero in case the connector doesn't
-             * support retrieval of object info.
-             */
-            object_info.num_attrs = 0;
-
-            if (H5Oget_info3(tmp_group_id, &object_info, H5O_INFO_ALL) < 0) {
-                H5_FAILED();
-                printf("    failed to retrieve object info\n");
-                PART_ERROR(H5Ocopy_through_soft_link);
-            }
-
-            if (object_info.num_attrs == 0) {
-                H5_FAILED();
-                printf("    copied group didn't contain any attributes after copy operation!\n");
-                PART_ERROR(H5Ocopy_through_soft_link);
-            }
-
-            /* Check the attribute names, types, etc. */
-            i = 0;
-            if (H5Aiterate2(tmp_group_id, H5_INDEX_NAME, H5_ITER_INC, NULL,
-                            object_copy_attribute_iter_callback, &i) < 0) {
-                H5_FAILED();
-                printf("    failed to iterate over copied group's attributes\n");
-                PART_ERROR(H5Ocopy_through_soft_link);
-            }
-
-            if (i != OBJECT_COPY_SOFT_LINK_TEST_NUM_ATTRS) {
-                H5_FAILED();
-                printf(
-                    "    number of attributes on copied group (%llu) didn't match expected number (%llu)!\n",
-                    (unsigned long long)i, (unsigned long long)OBJECT_COPY_SOFT_LINK_TEST_NUM_ATTRS);
-                PART_ERROR(H5Ocopy_through_soft_link);
-            }
-
-            if (H5Gclose(tmp_group_id) < 0) {
-                H5_FAILED();
-                printf("    failed to close group copy\n");
-                PART_ERROR(H5Ocopy_through_soft_link);
-            }
-
-            PASSED();
-        }
-        PART_END(H5Ocopy_through_soft_link);
-
-        if (tmp_group_id >= 0) {
-            H5E_BEGIN_TRY
-            {
-                H5Gclose(tmp_group_id);
-            }
-            H5E_END_TRY
-            tmp_group_id = H5I_INVALID_HID;
+        if (H5Lcreate_soft("/" OBJECT_TEST_GROUP_NAME "/" OBJECT_COPY_SOFT_LINK_TEST_SUBGROUP_NAME
+                           "/" OBJECT_COPY_SOFT_LINK_TEST_GROUP_NAME,
+                           group_id, OBJECT_COPY_SOFT_LINK_TEST_SOFT_LINK_NAME, H5P_DEFAULT,
+                           H5P_DEFAULT) < 0) {
+            printf("    failed to create soft link '%s' to group for copying\n",
+                   OBJECT_COPY_SOFT_LINK_TEST_SOFT_LINK_NAME);
+            TESTFRAME_TEST_ERROR(params);
         }
 
-        PART_BEGIN(H5Ocopy_through_dangling_soft_link)
-        {
-            herr_t err_ret;
-
-            TESTING_2("H5Ocopy through use of a dangling soft link");
-
-            if (H5Lcreate_soft("/" OBJECT_TEST_GROUP_NAME "/" OBJECT_COPY_SOFT_LINK_TEST_SUBGROUP_NAME
-                               "/nonexistent_object",
-                               group_id, OBJECT_COPY_SOFT_LINK_TEST_DANGLING_LINK_NAME, H5P_DEFAULT,
-                               H5P_DEFAULT) < 0) {
-                H5_FAILED();
-                printf("    failed to create dangling soft link '%s'\n",
-                       OBJECT_COPY_SOFT_LINK_TEST_DANGLING_LINK_NAME);
-                PART_ERROR(H5Ocopy_through_dangling_soft_link);
-            }
-
-            H5E_BEGIN_TRY
-            {
-                err_ret =
-                    H5Ocopy(group_id, OBJECT_COPY_SOFT_LINK_TEST_DANGLING_LINK_NAME, group_id,
-                            OBJECT_COPY_SOFT_LINK_TEST_DANGLING_LINK_NAME "2", H5P_DEFAULT, H5P_DEFAULT);
-            }
-            H5E_END_TRY
-
-            if (err_ret >= 0) {
-                H5_FAILED();
-                printf("    copied non-existent object through use of a dangling soft link!\n");
-                PART_ERROR(H5Ocopy_through_dangling_soft_link);
-            }
-
-            PASSED();
+        if (H5Ocopy(group_id, OBJECT_COPY_SOFT_LINK_TEST_SOFT_LINK_NAME, group_id,
+                    OBJECT_COPY_SOFT_LINK_TEST_NEW_GROUP_NAME, H5P_DEFAULT, H5P_DEFAULT) < 0) {
+            printf("    failed to copy group '%s' to '%s'\n", OBJECT_COPY_SOFT_LINK_TEST_GROUP_NAME,
+                   OBJECT_COPY_SOFT_LINK_TEST_NEW_GROUP_NAME);
+            TESTFRAME_TEST_ERROR(params);
         }
-        PART_END(H5Ocopy_through_dangling_soft_link);
+
+        if ((object_link_exists =
+                 H5Lexists(group_id, OBJECT_COPY_SOFT_LINK_TEST_NEW_GROUP_NAME, H5P_DEFAULT)) < 0) {
+            printf("    couldn't determine if link '%s' to copied group exists\n",
+                   OBJECT_COPY_SOFT_LINK_TEST_NEW_GROUP_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (!object_link_exists) {
+            printf("    link '%s' to copied group didn't exist!\n",
+                   OBJECT_COPY_SOFT_LINK_TEST_NEW_GROUP_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        /* Make sure the new object is an actual group and not another soft link */
+        memset(&link_info, 0, sizeof(link_info));
+        if (H5Lget_info2(group_id, OBJECT_COPY_SOFT_LINK_TEST_NEW_GROUP_NAME, &link_info, H5P_DEFAULT) <
+            0) {
+            printf("    failed to retrieve info for link '%s'\n",
+                   OBJECT_COPY_SOFT_LINK_TEST_NEW_GROUP_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (link_info.type != H5L_TYPE_HARD) {
+            printf(
+                "    after group copy through soft link, group's new link type wasn't H5L_TYPE_HARD!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        /*
+         * Ensure that the new group doesn't have any attributes and only the
+         * immediate members of the copied group.
+         */
+        if ((tmp_group_id = H5Gopen2(group_id, OBJECT_COPY_SOFT_LINK_TEST_NEW_GROUP_NAME, H5P_DEFAULT)) <
+            0) {
+            printf("    failed to open group copy '%s'\n", OBJECT_COPY_SOFT_LINK_TEST_NEW_GROUP_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        memset(&group_info, 0, sizeof(group_info));
+
+        /*
+         * Set link count to zero in case the connector doesn't support
+         * retrieval of group info.
+         */
+        group_info.nlinks = 0;
+
+        if (H5Gget_info(tmp_group_id, &group_info) < 0) {
+            printf("    failed to retrieve group info\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (group_info.nlinks != OBJECT_COPY_SOFT_LINK_TEST_NUM_NESTED_OBJS) {
+            printf("    copied group contained %d members instead of %d members after a shallow copy!\n",
+                   (int)group_info.nlinks, OBJECT_COPY_SOFT_LINK_TEST_NUM_NESTED_OBJS);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        memset(&object_info, 0, sizeof(object_info));
+
+        /*
+         * Set attribute count to zero in case the connector doesn't
+         * support retrieval of object info.
+         */
+        object_info.num_attrs = 0;
+
+        if (H5Oget_info3(tmp_group_id, &object_info, H5O_INFO_ALL) < 0) {
+            printf("    failed to retrieve object info\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (object_info.num_attrs == 0) {
+            printf("    copied group didn't contain any attributes after copy operation!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        /* Check the attribute names, types, etc. */
+        i = 0;
+        if (H5Aiterate2(tmp_group_id, H5_INDEX_NAME, H5_ITER_INC, NULL,
+                        object_copy_attribute_iter_callback, &i) < 0) {
+            printf("    failed to iterate over copied group's attributes\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (i != OBJECT_COPY_SOFT_LINK_TEST_NUM_ATTRS) {
+            printf(
+                "    number of attributes on copied group (%llu) didn't match expected number (%llu)!\n",
+                (unsigned long long)i, (unsigned long long)OBJECT_COPY_SOFT_LINK_TEST_NUM_ATTRS);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (H5Gclose(tmp_group_id) < 0) {
+            printf("    failed to close group copy\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
     }
-    END_MULTIPART;
+    SUBTEST_END(params);
 
-    TESTING_2("test cleanup");
+    if (tmp_group_id >= 0) {
+        H5E_BEGIN_TRY
+        {
+            H5Gclose(tmp_group_id);
+        }
+        H5E_END_TRY
+        tmp_group_id = H5I_INVALID_HID;
+    }
+
+    SUBTEST_BEGIN(params, "H5Ocopy through use of a dangling soft link")
+    {
+        herr_t err_ret;
+
+        if (H5Lcreate_soft("/" OBJECT_TEST_GROUP_NAME "/" OBJECT_COPY_SOFT_LINK_TEST_SUBGROUP_NAME
+                           "/nonexistent_object",
+                           group_id, OBJECT_COPY_SOFT_LINK_TEST_DANGLING_LINK_NAME, H5P_DEFAULT,
+                           H5P_DEFAULT) < 0) {
+            printf("    failed to create dangling soft link '%s'\n",
+                   OBJECT_COPY_SOFT_LINK_TEST_DANGLING_LINK_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        H5E_BEGIN_TRY
+        {
+            err_ret =
+                H5Ocopy(group_id, OBJECT_COPY_SOFT_LINK_TEST_DANGLING_LINK_NAME, group_id,
+                        OBJECT_COPY_SOFT_LINK_TEST_DANGLING_LINK_NAME "2", H5P_DEFAULT, H5P_DEFAULT);
+        }
+        H5E_END_TRY
+
+        if (err_ret >= 0) {
+            printf("    copied non-existent object through use of a dangling soft link!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
 
     if (H5Sclose(attr_space_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Gclose(group_id2) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Gclose(group_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Gclose(container_group) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Fclose(file_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
 
-    PASSED();
-
-    return;
+    return SUCCEED;
 
 error:
     H5E_BEGIN_TRY
@@ -3784,7 +3146,7 @@ error:
     }
     H5E_END_TRY
 
-    return;
+    return FAIL;
 }
 
 /*
@@ -3792,8 +3154,8 @@ error:
  * H5Ocopy. Also tested is the H5O_COPY_EXPAND_SOFT_LINK_FLAG
  * flag.
  */
-static void
-test_object_copy_group_with_soft_links(void)
+static herr_t
+test_object_copy_group_with_soft_links(TestParams_t *params)
 {
     H5G_info_t group_info;
     htri_t     object_link_exists;
@@ -3805,37 +3167,29 @@ test_object_copy_group_with_soft_links(void)
     hid_t      tmp_group_id    = H5I_INVALID_HID;
     hid_t      ocpypl_id       = H5I_INVALID_HID;
 
-    TESTING_MULTIPART("group copying when group contains soft links");
-
     /* Make sure the connector supports the API functions being tested */
     if (!(vol_cap_flags_g & (H5VL_CAP_FLAG_FILE_BASIC)) || !(vol_cap_flags_g & H5VL_CAP_FLAG_GROUP_BASIC) ||
         !(vol_cap_flags_g & H5VL_CAP_FLAG_OBJECT_BASIC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_OBJECT_MORE) ||
         !(vol_cap_flags_g & H5VL_CAP_FLAG_LINK_BASIC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_LINK_MORE) ||
         !(vol_cap_flags_g & H5VL_CAP_FLAG_ITERATE) || !(vol_cap_flags_g & H5VL_CAP_FLAG_SOFT_LINKS)) {
-        SKIPPED();
         printf("    API functions for basic file, group, object, link, iterate, or soft link aren't "
                "supported with "
                "this connector\n");
-        return;
+        return SKIP;
     }
 
-    TESTING_2("test setup");
-
-    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME(params), H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME(params));
         goto error;
     }
 
     if ((container_group = H5Gopen2(file_id, OBJECT_TEST_GROUP_NAME, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't open container group '%s'\n", OBJECT_TEST_GROUP_NAME);
         goto error;
     }
 
     if ((group_id = H5Gcreate2(container_group, OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_SUBGROUP_NAME,
                                H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't create container subgroup '%s'\n",
                OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_SUBGROUP_NAME);
         goto error;
@@ -3844,7 +3198,6 @@ test_object_copy_group_with_soft_links(void)
     /* Create the test group object. */
     if ((group_id2 = H5Gcreate2(group_id, OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_GROUP_NAME, H5P_DEFAULT,
                                 H5P_DEFAULT, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't create group '%s'\n", OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_GROUP_NAME);
         goto error;
     }
@@ -3864,272 +3217,230 @@ test_object_copy_group_with_soft_links(void)
                  grp_name);
 
         if ((tmp_group_id = H5Gcreate2(group_id, grp_name, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
-            H5_FAILED();
             printf("    couldn't create group '%s' under group '%s'\n", grp_name,
                    OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_SUBGROUP_NAME);
             goto error;
         }
 
         if (H5Lcreate_soft(lnk_target, group_id2, lnk_name, H5P_DEFAULT, H5P_DEFAULT) < 0) {
-            H5_FAILED();
             printf("    failed to create soft link '%s'\n", lnk_name);
             goto error;
         }
 
         if (H5Gclose(tmp_group_id) < 0) {
-            H5_FAILED();
             printf("    couldn't close group '%s'\n", grp_name);
             goto error;
         }
     }
 
-    PASSED();
-
-    BEGIN_MULTIPART
+    SUBTEST_BEGIN(params, "H5Ocopy on group with soft links (soft links not expanded)")
     {
-        PART_BEGIN(H5Ocopy_dont_expand_soft_links)
-        {
-            TESTING_2("H5Ocopy on group with soft links (soft links not expanded)");
-
-            if (H5Ocopy(group_id, OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_GROUP_NAME, group_id,
-                        OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_NON_EXPAND_GROUP_NAME, H5P_DEFAULT,
-                        H5P_DEFAULT) < 0) {
-                H5_FAILED();
-                printf("    failed to copy group '%s' to '%s'\n",
-                       OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_GROUP_NAME,
-                       OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_NON_EXPAND_GROUP_NAME);
-                PART_ERROR(H5Ocopy_dont_expand_soft_links);
-            }
-
-            if ((object_link_exists =
-                     H5Lexists(group_id, OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_NON_EXPAND_GROUP_NAME,
-                               H5P_DEFAULT)) < 0) {
-                H5_FAILED();
-                printf("    couldn't determine if link '%s' to copied group exists\n",
-                       OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_NON_EXPAND_GROUP_NAME);
-                PART_ERROR(H5Ocopy_dont_expand_soft_links);
-            }
-
-            if (!object_link_exists) {
-                H5_FAILED();
-                printf("    link '%s' to copied group didn't exist!\n",
-                       OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_NON_EXPAND_GROUP_NAME);
-                PART_ERROR(H5Ocopy_dont_expand_soft_links);
-            }
-
-            /* Ensure that the number of links is the same */
-            if ((tmp_group_id =
-                     H5Gopen2(group_id, OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_NON_EXPAND_GROUP_NAME,
-                              H5P_DEFAULT)) < 0) {
-                H5_FAILED();
-                printf("    failed to open group copy '%s'\n",
-                       OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_NON_EXPAND_GROUP_NAME);
-                PART_ERROR(H5Ocopy_dont_expand_soft_links);
-            }
-
-            memset(&group_info, 0, sizeof(group_info));
-
-            /*
-             * Set link count to zero in case the connector doesn't support
-             * retrieval of group info.
-             */
-            group_info.nlinks = 0;
-
-            if (H5Gget_info(tmp_group_id, &group_info) < 0) {
-                H5_FAILED();
-                printf("    failed to retrieve group info\n");
-                PART_ERROR(H5Ocopy_dont_expand_soft_links);
-            }
-
-            if (group_info.nlinks != OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_NUM_NESTED_OBJS) {
-                H5_FAILED();
-                printf("    copied group contained %d members instead of %d members after copy!\n",
-                       (int)group_info.nlinks, OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_NUM_NESTED_OBJS);
-                PART_ERROR(H5Ocopy_dont_expand_soft_links);
-            }
-
-            /*
-             * Iterate over the links in the copied group and ensure that they're all
-             * still soft links with their original values.
-             */
-            i = 0;
-            if (H5Literate2(tmp_group_id, H5_INDEX_NAME, H5_ITER_INC, NULL,
-                            object_copy_soft_link_non_expand_callback, &i) < 0) {
-                H5_FAILED();
-                printf("    failed to iterate over links in group '%s'\n",
-                       OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_NON_EXPAND_GROUP_NAME);
-                PART_ERROR(H5Ocopy_dont_expand_soft_links);
-            }
-
-            if (i != OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_NUM_NESTED_OBJS) {
-                H5_FAILED();
-                printf("    number of links in copied group (%llu) didn't match expected number (%llu)!\n",
-                       (unsigned long long)i,
-                       (unsigned long long)OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_NUM_NESTED_OBJS);
-                PART_ERROR(H5Ocopy_dont_expand_soft_links);
-            }
-
-            if (H5Gclose(tmp_group_id) < 0) {
-                H5_FAILED();
-                printf("    failed to close group copy\n");
-                PART_ERROR(H5Ocopy_dont_expand_soft_links);
-            }
-
-            PASSED();
-        }
-        PART_END(H5Ocopy_dont_expand_soft_links);
-
-        if (tmp_group_id >= 0) {
-            H5E_BEGIN_TRY
-            {
-                H5Gclose(tmp_group_id);
-            }
-            H5E_END_TRY
-            tmp_group_id = H5I_INVALID_HID;
+        if (H5Ocopy(group_id, OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_GROUP_NAME, group_id,
+                    OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_NON_EXPAND_GROUP_NAME, H5P_DEFAULT,
+                    H5P_DEFAULT) < 0) {
+            printf("    failed to copy group '%s' to '%s'\n",
+                   OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_GROUP_NAME,
+                   OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_NON_EXPAND_GROUP_NAME);
+            TESTFRAME_TEST_ERROR(params);
         }
 
-        PART_BEGIN(H5Ocopy_expand_soft_links)
-        {
-            TESTING_2("H5Ocopy on group with soft links (soft links expanded)");
-
-            if ((ocpypl_id = H5Pcreate(H5P_OBJECT_COPY)) < 0) {
-                H5_FAILED();
-                printf("    couldn't create OCopyPL\n");
-                PART_ERROR(H5Ocopy_expand_soft_links);
-            }
-
-            if (H5Pset_copy_object(ocpypl_id, H5O_COPY_EXPAND_SOFT_LINK_FLAG) < 0) {
-                H5_FAILED();
-                printf("    couldn't set object copying options\n");
-                PART_ERROR(H5Ocopy_expand_soft_links);
-            }
-
-            if (H5Ocopy(group_id, OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_GROUP_NAME, group_id,
-                        OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_EXPAND_GROUP_NAME, ocpypl_id,
-                        H5P_DEFAULT) < 0) {
-                H5_FAILED();
-                printf("    failed to copy group '%s' to '%s'\n",
-                       OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_GROUP_NAME,
-                       OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_EXPAND_GROUP_NAME);
-                PART_ERROR(H5Ocopy_expand_soft_links);
-            }
-
-            if ((object_link_exists = H5Lexists(
-                     group_id, OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_EXPAND_GROUP_NAME, H5P_DEFAULT)) < 0) {
-                H5_FAILED();
-                printf("    couldn't determine if link '%s' to copied group exists\n",
-                       OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_EXPAND_GROUP_NAME);
-                PART_ERROR(H5Ocopy_expand_soft_links);
-            }
-
-            if (!object_link_exists) {
-                H5_FAILED();
-                printf("    link '%s' to copied group didn't exist!\n",
-                       OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_EXPAND_GROUP_NAME);
-                PART_ERROR(H5Ocopy_expand_soft_links);
-            }
-
-            /* Ensure that the number of links is the same */
-            if ((tmp_group_id = H5Gopen2(group_id, OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_EXPAND_GROUP_NAME,
-                                         H5P_DEFAULT)) < 0) {
-                H5_FAILED();
-                printf("    failed to open group copy '%s'\n",
-                       OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_EXPAND_GROUP_NAME);
-                PART_ERROR(H5Ocopy_expand_soft_links);
-            }
-
-            memset(&group_info, 0, sizeof(group_info));
-
-            /*
-             * Set link count to zero in case the connector doesn't support
-             * retrieval of group info.
-             */
-            group_info.nlinks = 0;
-
-            if (H5Gget_info(tmp_group_id, &group_info) < 0) {
-                H5_FAILED();
-                printf("    failed to retrieve group info\n");
-                PART_ERROR(H5Ocopy_expand_soft_links);
-            }
-
-            if (group_info.nlinks != OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_NUM_NESTED_OBJS) {
-                H5_FAILED();
-                printf("    copied group contained %d members instead of %d members after copy!\n",
-                       (int)group_info.nlinks, OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_NUM_NESTED_OBJS);
-                PART_ERROR(H5Ocopy_expand_soft_links);
-            }
-
-            /*
-             * Iterate over the links in the copied group and ensure that they've all
-             * been expanded into hard links corresponding to the top-level groups
-             * created.
-             */
-            i = 0;
-            if (H5Literate2(tmp_group_id, H5_INDEX_NAME, H5_ITER_INC, NULL,
-                            object_copy_soft_link_expand_callback, &i) < 0) {
-                H5_FAILED();
-                printf("    failed to iterate over links in group '%s'\n",
-                       OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_EXPAND_GROUP_NAME);
-                PART_ERROR(H5Ocopy_expand_soft_links);
-            }
-
-            if (i != OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_NUM_NESTED_OBJS) {
-                H5_FAILED();
-                printf("    number of links in copied group (%llu) didn't match expected number (%llu)!\n",
-                       (unsigned long long)i,
-                       (unsigned long long)OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_NUM_NESTED_OBJS);
-                PART_ERROR(H5Ocopy_expand_soft_links);
-            }
-
-            if (H5Pclose(ocpypl_id) < 0) {
-                H5_FAILED();
-                printf("    failed to close OCopyPL\n");
-                PART_ERROR(H5Ocopy_expand_soft_links);
-            }
-
-            if (H5Gclose(tmp_group_id) < 0) {
-                H5_FAILED();
-                printf("    failed to close group copy\n");
-                PART_ERROR(H5Ocopy_expand_soft_links);
-            }
-
-            PASSED();
+        if ((object_link_exists =
+                 H5Lexists(group_id, OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_NON_EXPAND_GROUP_NAME,
+                           H5P_DEFAULT)) < 0) {
+            printf("    couldn't determine if link '%s' to copied group exists\n",
+                   OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_NON_EXPAND_GROUP_NAME);
+            TESTFRAME_TEST_ERROR(params);
         }
-        PART_END(H5Ocopy_expand_soft_links);
 
-        if (ocpypl_id >= 0) {
-            H5E_BEGIN_TRY
-            {
-                H5Gclose(ocpypl_id);
-            }
-            H5E_END_TRY
-            ocpypl_id = H5I_INVALID_HID;
+        if (!object_link_exists) {
+            printf("    link '%s' to copied group didn't exist!\n",
+                   OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_NON_EXPAND_GROUP_NAME);
+            TESTFRAME_TEST_ERROR(params);
         }
-        if (tmp_group_id >= 0) {
-            H5E_BEGIN_TRY
-            {
-                H5Gclose(tmp_group_id);
-            }
-            H5E_END_TRY
-            tmp_group_id = H5I_INVALID_HID;
+
+        /* Ensure that the number of links is the same */
+        if ((tmp_group_id =
+                 H5Gopen2(group_id, OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_NON_EXPAND_GROUP_NAME,
+                          H5P_DEFAULT)) < 0) {
+            printf("    failed to open group copy '%s'\n",
+                   OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_NON_EXPAND_GROUP_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        memset(&group_info, 0, sizeof(group_info));
+
+        /*
+         * Set link count to zero in case the connector doesn't support
+         * retrieval of group info.
+         */
+        group_info.nlinks = 0;
+
+        if (H5Gget_info(tmp_group_id, &group_info) < 0) {
+            printf("    failed to retrieve group info\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (group_info.nlinks != OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_NUM_NESTED_OBJS) {
+            printf("    copied group contained %d members instead of %d members after copy!\n",
+                   (int)group_info.nlinks, OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_NUM_NESTED_OBJS);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        /*
+         * Iterate over the links in the copied group and ensure that they're all
+         * still soft links with their original values.
+         */
+        i = 0;
+        if (H5Literate2(tmp_group_id, H5_INDEX_NAME, H5_ITER_INC, NULL,
+                        object_copy_soft_link_non_expand_callback, &i) < 0) {
+            printf("    failed to iterate over links in group '%s'\n",
+                   OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_NON_EXPAND_GROUP_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (i != OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_NUM_NESTED_OBJS) {
+            printf("    number of links in copied group (%llu) didn't match expected number (%llu)!\n",
+                   (unsigned long long)i,
+                   (unsigned long long)OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_NUM_NESTED_OBJS);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (H5Gclose(tmp_group_id) < 0) {
+            printf("    failed to close group copy\n");
+            TESTFRAME_TEST_ERROR(params);
         }
     }
-    END_MULTIPART;
+    SUBTEST_END(params);
 
-    TESTING_2("test cleanup");
+    if (tmp_group_id >= 0) {
+        H5E_BEGIN_TRY
+        {
+            H5Gclose(tmp_group_id);
+        }
+        H5E_END_TRY
+        tmp_group_id = H5I_INVALID_HID;
+    }
+
+    SUBTEST_BEGIN(params, "H5Ocopy on group with soft links (soft links expanded)")
+    {
+        if ((ocpypl_id = H5Pcreate(H5P_OBJECT_COPY)) < 0) {
+            printf("    couldn't create OCopyPL\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (H5Pset_copy_object(ocpypl_id, H5O_COPY_EXPAND_SOFT_LINK_FLAG) < 0) {
+            printf("    couldn't set object copying options\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (H5Ocopy(group_id, OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_GROUP_NAME, group_id,
+                    OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_EXPAND_GROUP_NAME, ocpypl_id,
+                    H5P_DEFAULT) < 0) {
+            printf("    failed to copy group '%s' to '%s'\n",
+                   OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_GROUP_NAME,
+                   OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_EXPAND_GROUP_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if ((object_link_exists = H5Lexists(
+                 group_id, OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_EXPAND_GROUP_NAME, H5P_DEFAULT)) < 0) {
+            printf("    couldn't determine if link '%s' to copied group exists\n",
+                   OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_EXPAND_GROUP_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (!object_link_exists) {
+            printf("    link '%s' to copied group didn't exist!\n",
+                   OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_EXPAND_GROUP_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        /* Ensure that the number of links is the same */
+        if ((tmp_group_id = H5Gopen2(group_id, OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_EXPAND_GROUP_NAME,
+                                     H5P_DEFAULT)) < 0) {
+            printf("    failed to open group copy '%s'\n",
+                   OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_EXPAND_GROUP_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        memset(&group_info, 0, sizeof(group_info));
+
+        /*
+         * Set link count to zero in case the connector doesn't support
+         * retrieval of group info.
+         */
+        group_info.nlinks = 0;
+
+        if (H5Gget_info(tmp_group_id, &group_info) < 0) {
+            printf("    failed to retrieve group info\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (group_info.nlinks != OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_NUM_NESTED_OBJS) {
+            printf("    copied group contained %d members instead of %d members after copy!\n",
+                   (int)group_info.nlinks, OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_NUM_NESTED_OBJS);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        /*
+         * Iterate over the links in the copied group and ensure that they've all
+         * been expanded into hard links corresponding to the top-level groups
+         * created.
+         */
+        i = 0;
+        if (H5Literate2(tmp_group_id, H5_INDEX_NAME, H5_ITER_INC, NULL,
+                        object_copy_soft_link_expand_callback, &i) < 0) {
+            printf("    failed to iterate over links in group '%s'\n",
+                   OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_EXPAND_GROUP_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (i != OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_NUM_NESTED_OBJS) {
+            printf("    number of links in copied group (%llu) didn't match expected number (%llu)!\n",
+                   (unsigned long long)i,
+                   (unsigned long long)OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_NUM_NESTED_OBJS);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (H5Pclose(ocpypl_id) < 0) {
+            printf("    failed to close OCopyPL\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (H5Gclose(tmp_group_id) < 0) {
+            printf("    failed to close group copy\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    if (ocpypl_id >= 0) {
+        H5E_BEGIN_TRY
+        {
+            H5Gclose(ocpypl_id);
+        }
+        H5E_END_TRY
+        ocpypl_id = H5I_INVALID_HID;
+    }
+    if (tmp_group_id >= 0) {
+        H5E_BEGIN_TRY
+        {
+            H5Gclose(tmp_group_id);
+        }
+        H5E_END_TRY
+        tmp_group_id = H5I_INVALID_HID;
+    }
 
     if (H5Gclose(group_id2) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Gclose(group_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Gclose(container_group) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Fclose(file_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
 
-    PASSED();
-
-    return;
+    return SUCCEED;
 
 error:
     H5E_BEGIN_TRY
@@ -4143,15 +3454,15 @@ error:
     }
     H5E_END_TRY
 
-    return;
+    return FAIL;
 }
 
 /*
  * Tests for copying objects between two different files using
  * H5Ocopy.
  */
-static void
-test_object_copy_between_files(void)
+static herr_t
+test_object_copy_between_files(TestParams_t *params)
 {
     H5O_info2_t object_info;
     H5G_info_t  group_info;
@@ -4174,8 +3485,6 @@ test_object_copy_between_files(void)
     hid_t       ocpypl_id         = H5I_INVALID_HID;
     char       *obj_copy_filename = NULL;
 
-    TESTING_MULTIPART("object copying between files");
-
     /* Make sure the connector supports the API functions being tested */
     if (!(vol_cap_flags_g & (H5VL_CAP_FLAG_FILE_BASIC)) || !(vol_cap_flags_g & H5VL_CAP_FLAG_GROUP_BASIC) ||
         !(vol_cap_flags_g & H5VL_CAP_FLAG_OBJECT_BASIC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_OBJECT_MORE) ||
@@ -4183,62 +3492,54 @@ test_object_copy_between_files(void)
         !(vol_cap_flags_g & H5VL_CAP_FLAG_DATASET_BASIC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_ATTR_BASIC) ||
         !(vol_cap_flags_g & H5VL_CAP_FLAG_GROUP_MORE) ||
         !(vol_cap_flags_g & H5VL_CAP_FLAG_STORED_DATATYPES)) {
-        SKIPPED();
         printf("    API functions for basic file, group, object, link, dataset, attribute, stored "
                "datatype, or iterate aren't supported with this connector\n");
-        return;
+        return SKIP;
     }
-
-    TESTING_2("test setup");
 
     /*
      * Create the second file for the between file copying tests.
      */
-    if (prefix_filename(test_path_prefix, OBJECT_COPY_BETWEEN_FILES_TEST_FILE_NAME, &obj_copy_filename) < 0) {
-        H5_FAILED();
+    if (prefix_test_filename(params, test_path_prefix, OBJECT_COPY_BETWEEN_FILES_TEST_FILE_NAME,
+                             &obj_copy_filename) < 0) {
         printf("    couldn't create filename for object copy test file\n");
         goto error;
     }
 
     if ((file_id2 = H5Fcreate(obj_copy_filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
-        printf("    couldn't create file '%s'\n", H5_API_TEST_FILENAME);
+        printf("    couldn't create file '%s'\n", H5_API_TEST_FILENAME(params));
         goto error;
     }
 
-    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME(params), H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME(params));
         goto error;
     }
 
     if ((container_group = H5Gopen2(file_id, OBJECT_TEST_GROUP_NAME, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't open container group '%s'\n", OBJECT_TEST_GROUP_NAME);
         goto error;
     }
 
     if ((group_id = H5Gcreate2(container_group, OBJECT_COPY_BETWEEN_FILES_TEST_SUBGROUP_NAME, H5P_DEFAULT,
                                H5P_DEFAULT, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't create container subgroup '%s'\n", OBJECT_COPY_BETWEEN_FILES_TEST_SUBGROUP_NAME);
         goto error;
     }
 
-    if ((space_id = generate_random_dataspace(OBJECT_COPY_BETWEEN_FILES_TEST_SPACE_RANK, NULL, NULL, FALSE)) <
+    if ((space_id = generate_random_dataspace(OBJECT_COPY_BETWEEN_FILES_TEST_SPACE_RANK, NULL, NULL, false)) <
         0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if ((attr_space_id =
-             generate_random_dataspace(OBJECT_COPY_BETWEEN_FILES_TEST_SPACE_RANK, NULL, NULL, TRUE)) < 0)
-        TEST_ERROR;
+             generate_random_dataspace(OBJECT_COPY_BETWEEN_FILES_TEST_SPACE_RANK, NULL, NULL, true)) < 0)
+        TESTFRAME_TEST_ERROR(params);
 
-    if ((dset_dtype = generate_random_datatype(H5T_NO_CLASS, FALSE)) < 0)
-        TEST_ERROR;
+    if ((dset_dtype = generate_random_datatype(H5T_NO_CLASS, false)) < 0)
+        TESTFRAME_TEST_ERROR(params);
 
     /* Create the test group object, along with its nested members and the attributes attached to it. */
     if ((group_id2 = H5Gcreate2(group_id, OBJECT_COPY_BETWEEN_FILES_TEST_GROUP_NAME, H5P_DEFAULT, H5P_DEFAULT,
                                 H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't create group '%s'\n", OBJECT_COPY_BETWEEN_FILES_TEST_GROUP_NAME);
         goto error;
     }
@@ -4249,7 +3550,6 @@ test_object_copy_between_files(void)
         snprintf(grp_name, OBJECT_COPY_BETWEEN_FILES_TEST_BUF_SIZE, "grp%d", (int)i);
 
         if ((tmp_group_id = H5Gcreate2(group_id2, grp_name, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
-            H5_FAILED();
             printf("    couldn't create group '%s' under group '%s'\n", grp_name,
                    OBJECT_COPY_BETWEEN_FILES_TEST_GROUP_NAME);
             goto error;
@@ -4259,7 +3559,6 @@ test_object_copy_between_files(void)
         if (i == (OBJECT_COPY_BETWEEN_FILES_TEST_NUM_NESTED_OBJS - 1)) {
             if (H5Gclose(H5Gcreate2(tmp_group_id, OBJECT_COPY_BETWEEN_FILES_TEST_DEEP_NESTED_GROUP_NAME,
                                     H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
-                H5_FAILED();
                 printf("    couldn't create nested group '%s' under group '%s'\n",
                        OBJECT_COPY_BETWEEN_FILES_TEST_DEEP_NESTED_GROUP_NAME, grp_name);
                 goto error;
@@ -4267,7 +3566,6 @@ test_object_copy_between_files(void)
         }
 
         if (H5Gclose(tmp_group_id) < 0) {
-            H5_FAILED();
             printf("    couldn't close group '%s'\n", grp_name);
             goto error;
         }
@@ -4280,14 +3578,12 @@ test_object_copy_between_files(void)
 
         if ((attr_id = H5Acreate2(group_id2, attr_name, H5T_NATIVE_INT, attr_space_id, H5P_DEFAULT,
                                   H5P_DEFAULT)) < 0) {
-            H5_FAILED();
             printf("    couldn't create attribute '%s' on group '%s'\n", attr_name,
                    OBJECT_COPY_BETWEEN_FILES_TEST_GROUP_NAME);
             goto error;
         }
 
         if (H5Aclose(attr_id) < 0) {
-            H5_FAILED();
             printf("    couldn't close attribute '%s'\n", attr_name);
             goto error;
         }
@@ -4296,7 +3592,6 @@ test_object_copy_between_files(void)
     /* Create the test dataset object, along with the attributes attached to it. */
     if ((dset_id = H5Dcreate2(group_id, OBJECT_COPY_BETWEEN_FILES_TEST_DSET_NAME, dset_dtype, space_id,
                               H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't create dataset '%s'\n", OBJECT_COPY_BETWEEN_FILES_TEST_DSET_NAME);
         goto error;
     }
@@ -4308,29 +3603,25 @@ test_object_copy_between_files(void)
 
         if ((attr_id = H5Acreate2(dset_id, attr_name, H5T_NATIVE_INT, attr_space_id, H5P_DEFAULT,
                                   H5P_DEFAULT)) < 0) {
-            H5_FAILED();
             printf("    couldn't create attribute '%s' on dataset '%s'\n", attr_name,
                    OBJECT_COPY_BETWEEN_FILES_TEST_DSET_NAME);
             goto error;
         }
 
         if (H5Aclose(attr_id) < 0) {
-            H5_FAILED();
             printf("    couldn't close attribute '%s'\n", attr_name);
             goto error;
         }
     }
 
     /* Create the test committed datatype object, along with the attributes attached to it. */
-    if ((dtype_id = generate_random_datatype(H5T_NO_CLASS, FALSE)) < 0) {
-        H5_FAILED();
+    if ((dtype_id = generate_random_datatype(H5T_NO_CLASS, false)) < 0) {
         printf("    couldn't create datatype\n");
         goto error;
     }
 
     if (H5Tcommit2(group_id, OBJECT_COPY_BETWEEN_FILES_TEST_DTYPE_NAME, dtype_id, H5P_DEFAULT, H5P_DEFAULT,
                    H5P_DEFAULT) < 0) {
-        H5_FAILED();
         printf("    couldn't commit datatype '%s'\n", OBJECT_COPY_BETWEEN_FILES_TEST_DTYPE_NAME);
         goto error;
     }
@@ -4342,57 +3633,118 @@ test_object_copy_between_files(void)
 
         if ((attr_id = H5Acreate2(dtype_id, attr_name, H5T_NATIVE_INT, attr_space_id, H5P_DEFAULT,
                                   H5P_DEFAULT)) < 0) {
-            H5_FAILED();
             printf("    couldn't create attribute '%s' on committed datatype '%s'\n", attr_name,
                    OBJECT_COPY_BETWEEN_FILES_TEST_DTYPE_NAME);
             goto error;
         }
 
         if (H5Aclose(attr_id) < 0) {
-            H5_FAILED();
             printf("    couldn't close attribute '%s'\n", attr_name);
             goto error;
         }
     }
 
-    PASSED();
-
-    BEGIN_MULTIPART
+    SUBTEST_BEGIN(params, "H5Ocopy on group between different files")
     {
-        PART_BEGIN(H5Ocopy_group_between_files)
+        if (H5Ocopy(group_id, OBJECT_COPY_BETWEEN_FILES_TEST_GROUP_NAME, file_id2,
+                    OBJECT_COPY_BETWEEN_FILES_TEST_NEW_GROUP_NAME, H5P_DEFAULT, H5P_DEFAULT) < 0) {
+            printf("    failed to copy group '%s' to second file '%s'\n",
+                   OBJECT_COPY_BETWEEN_FILES_TEST_GROUP_NAME,
+                   OBJECT_COPY_BETWEEN_FILES_TEST_NEW_GROUP_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if ((object_link_exists =
+                 H5Lexists(file_id2, OBJECT_COPY_BETWEEN_FILES_TEST_NEW_GROUP_NAME, H5P_DEFAULT)) < 0) {
+            printf("    couldn't determine if link '%s' to copied group exists\n",
+                   OBJECT_COPY_BETWEEN_FILES_TEST_NEW_GROUP_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (!object_link_exists) {
+            printf("    link '%s' to copied group in second file '%s' didn't exist!\n",
+                   OBJECT_COPY_BETWEEN_FILES_TEST_NEW_GROUP_NAME, obj_copy_filename);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        /* Ensure that the new group has all the members of the copied group, and all its attributes */
+        if ((tmp_group_id =
+                 H5Gopen2(file_id2, OBJECT_COPY_BETWEEN_FILES_TEST_NEW_GROUP_NAME, H5P_DEFAULT)) < 0) {
+            printf("    failed to open group copy '%s'\n", OBJECT_COPY_BETWEEN_FILES_TEST_NEW_GROUP_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        memset(&group_info, 0, sizeof(group_info));
+
+        /*
+         * Set link count to zero in case the connector doesn't support
+         * retrieval of group info.
+         */
+        group_info.nlinks = 0;
+
+        if (H5Gget_info(tmp_group_id, &group_info) < 0) {
+            printf("    failed to retrieve group info\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (group_info.nlinks != OBJECT_COPY_BETWEEN_FILES_TEST_NUM_NESTED_OBJS) {
+            printf("    copied group contained %d members instead of %d members after a deep copy!\n",
+                   (int)group_info.nlinks, OBJECT_COPY_BETWEEN_FILES_TEST_NUM_NESTED_OBJS);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        memset(&object_info, 0, sizeof(object_info));
+
+        /*
+         * Set attribute count to zero in case the connector doesn't
+         * support retrieval of object info.
+         */
+        object_info.num_attrs = 0;
+
+        if (H5Oget_info3(tmp_group_id, &object_info, H5O_INFO_ALL) < 0) {
+            printf("    failed to retrieve object info\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (object_info.num_attrs == 0) {
+            printf("    copied group didn't contain any attributes after copy operation!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        /* Check the attribute names, types, etc. */
+        i = 0;
+        if (H5Aiterate2(tmp_group_id, H5_INDEX_NAME, H5_ITER_INC, NULL,
+                        object_copy_attribute_iter_callback, &i) < 0) {
+            printf("    failed to iterate over copied group's attributes\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (i != OBJECT_COPY_BETWEEN_FILES_TEST_NUM_ATTRS) {
+            printf(
+                "    number of attributes on copied group (%llu) didn't match expected number (%llu)!\n",
+                (unsigned long long)i, (unsigned long long)OBJECT_COPY_BETWEEN_FILES_TEST_NUM_ATTRS);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (H5Gclose(tmp_group_id) < 0) {
+            printf("    failed to close group copy\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        /*
+         * Ensure that the last immediate member of the copied group
+         * contains its single member after the deep copy.
+         */
         {
-            TESTING_2("H5Ocopy on group between different files");
+            char grp_name[OBJECT_COPY_BETWEEN_FILES_TEST_BUF_SIZE];
 
-            if (H5Ocopy(group_id, OBJECT_COPY_BETWEEN_FILES_TEST_GROUP_NAME, file_id2,
-                        OBJECT_COPY_BETWEEN_FILES_TEST_NEW_GROUP_NAME, H5P_DEFAULT, H5P_DEFAULT) < 0) {
-                H5_FAILED();
-                printf("    failed to copy group '%s' to second file '%s'\n",
-                       OBJECT_COPY_BETWEEN_FILES_TEST_GROUP_NAME,
-                       OBJECT_COPY_BETWEEN_FILES_TEST_NEW_GROUP_NAME);
-                PART_ERROR(H5Ocopy_group_between_files);
-            }
+            snprintf(grp_name, OBJECT_COPY_BETWEEN_FILES_TEST_BUF_SIZE,
+                     "/" OBJECT_COPY_BETWEEN_FILES_TEST_NEW_GROUP_NAME "/grp%d",
+                     OBJECT_COPY_BETWEEN_FILES_TEST_NUM_NESTED_OBJS - 1);
 
-            if ((object_link_exists =
-                     H5Lexists(file_id2, OBJECT_COPY_BETWEEN_FILES_TEST_NEW_GROUP_NAME, H5P_DEFAULT)) < 0) {
-                H5_FAILED();
-                printf("    couldn't determine if link '%s' to copied group exists\n",
-                       OBJECT_COPY_BETWEEN_FILES_TEST_NEW_GROUP_NAME);
-                PART_ERROR(H5Ocopy_group_between_files);
-            }
-
-            if (!object_link_exists) {
-                H5_FAILED();
-                printf("    link '%s' to copied group in second file '%s' didn't exist!\n",
-                       OBJECT_COPY_BETWEEN_FILES_TEST_NEW_GROUP_NAME, obj_copy_filename);
-                PART_ERROR(H5Ocopy_group_between_files);
-            }
-
-            /* Ensure that the new group has all the members of the copied group, and all its attributes */
-            if ((tmp_group_id =
-                     H5Gopen2(file_id2, OBJECT_COPY_BETWEEN_FILES_TEST_NEW_GROUP_NAME, H5P_DEFAULT)) < 0) {
-                H5_FAILED();
-                printf("    failed to open group copy '%s'\n", OBJECT_COPY_BETWEEN_FILES_TEST_NEW_GROUP_NAME);
-                PART_ERROR(H5Ocopy_group_between_files);
+            if ((tmp_group_id = H5Gopen2(file_id2, grp_name, H5P_DEFAULT)) < 0) {
+                printf("    failed to open group '%s'\n", grp_name);
+                TESTFRAME_TEST_ERROR(params);
             }
 
             memset(&group_info, 0, sizeof(group_info));
@@ -4404,336 +3756,219 @@ test_object_copy_between_files(void)
             group_info.nlinks = 0;
 
             if (H5Gget_info(tmp_group_id, &group_info) < 0) {
-                H5_FAILED();
                 printf("    failed to retrieve group info\n");
-                PART_ERROR(H5Ocopy_group_between_files);
+                TESTFRAME_TEST_ERROR(params);
             }
 
-            if (group_info.nlinks != OBJECT_COPY_BETWEEN_FILES_TEST_NUM_NESTED_OBJS) {
-                H5_FAILED();
-                printf("    copied group contained %d members instead of %d members after a deep copy!\n",
-                       (int)group_info.nlinks, OBJECT_COPY_BETWEEN_FILES_TEST_NUM_NESTED_OBJS);
-                PART_ERROR(H5Ocopy_group_between_files);
-            }
-
-            memset(&object_info, 0, sizeof(object_info));
-
-            /*
-             * Set attribute count to zero in case the connector doesn't
-             * support retrieval of object info.
-             */
-            object_info.num_attrs = 0;
-
-            if (H5Oget_info3(tmp_group_id, &object_info, H5O_INFO_ALL) < 0) {
-                H5_FAILED();
-                printf("    failed to retrieve object info\n");
-                PART_ERROR(H5Ocopy_group_between_files);
-            }
-
-            if (object_info.num_attrs == 0) {
-                H5_FAILED();
-                printf("    copied group didn't contain any attributes after copy operation!\n");
-                PART_ERROR(H5Ocopy_group_between_files);
-            }
-
-            /* Check the attribute names, types, etc. */
-            i = 0;
-            if (H5Aiterate2(tmp_group_id, H5_INDEX_NAME, H5_ITER_INC, NULL,
-                            object_copy_attribute_iter_callback, &i) < 0) {
-                H5_FAILED();
-                printf("    failed to iterate over copied group's attributes\n");
-                PART_ERROR(H5Ocopy_group_between_files);
-            }
-
-            if (i != OBJECT_COPY_BETWEEN_FILES_TEST_NUM_ATTRS) {
-                H5_FAILED();
-                printf(
-                    "    number of attributes on copied group (%llu) didn't match expected number (%llu)!\n",
-                    (unsigned long long)i, (unsigned long long)OBJECT_COPY_BETWEEN_FILES_TEST_NUM_ATTRS);
-                PART_ERROR(H5Ocopy_group_between_files);
+            if (group_info.nlinks != 1) {
+                printf("    copied group's immediate members didn't contain nested members after a "
+                       "deep copy!\n");
+                TESTFRAME_TEST_ERROR(params);
             }
 
             if (H5Gclose(tmp_group_id) < 0) {
-                H5_FAILED();
-                printf("    failed to close group copy\n");
-                PART_ERROR(H5Ocopy_group_between_files);
+                printf("    failed to close group '%s'\n", grp_name);
+                TESTFRAME_TEST_ERROR(params);
             }
-
-            /*
-             * Ensure that the last immediate member of the copied group
-             * contains its single member after the deep copy.
-             */
-            {
-                char grp_name[OBJECT_COPY_BETWEEN_FILES_TEST_BUF_SIZE];
-
-                snprintf(grp_name, OBJECT_COPY_BETWEEN_FILES_TEST_BUF_SIZE,
-                         "/" OBJECT_COPY_BETWEEN_FILES_TEST_NEW_GROUP_NAME "/grp%d",
-                         OBJECT_COPY_BETWEEN_FILES_TEST_NUM_NESTED_OBJS - 1);
-
-                if ((tmp_group_id = H5Gopen2(file_id2, grp_name, H5P_DEFAULT)) < 0) {
-                    H5_FAILED();
-                    printf("    failed to open group '%s'\n", grp_name);
-                    PART_ERROR(H5Ocopy_group_between_files);
-                }
-
-                memset(&group_info, 0, sizeof(group_info));
-
-                /*
-                 * Set link count to zero in case the connector doesn't support
-                 * retrieval of group info.
-                 */
-                group_info.nlinks = 0;
-
-                if (H5Gget_info(tmp_group_id, &group_info) < 0) {
-                    H5_FAILED();
-                    printf("    failed to retrieve group info\n");
-                    PART_ERROR(H5Ocopy_group_between_files);
-                }
-
-                if (group_info.nlinks != 1) {
-                    H5_FAILED();
-                    printf("    copied group's immediate members didn't contain nested members after a "
-                           "deep copy!\n");
-                    PART_ERROR(H5Ocopy_group_between_files);
-                }
-
-                if (H5Gclose(tmp_group_id) < 0) {
-                    H5_FAILED();
-                    printf("    failed to close group '%s'\n", grp_name);
-                    PART_ERROR(H5Ocopy_group_between_files);
-                }
-            }
-
-            PASSED();
-        }
-        PART_END(H5Ocopy_group_between_files);
-
-        if (tmp_group_id >= 0) {
-            H5E_BEGIN_TRY
-            {
-                H5Gclose(tmp_group_id);
-            }
-            H5E_END_TRY
-            tmp_group_id = H5I_INVALID_HID;
-        }
-
-        PART_BEGIN(H5Ocopy_dset_between_files)
-        {
-            TESTING_2("H5Ocopy on dataset between different files");
-
-            if (H5Ocopy(group_id, OBJECT_COPY_BETWEEN_FILES_TEST_DSET_NAME, file_id2,
-                        OBJECT_COPY_BETWEEN_FILES_TEST_NEW_DSET_NAME, H5P_DEFAULT, H5P_DEFAULT) < 0) {
-                H5_FAILED();
-                printf("    failed to copy dataset '%s' to second file '%s'\n",
-                       OBJECT_COPY_BETWEEN_FILES_TEST_DSET_NAME,
-                       OBJECT_COPY_BETWEEN_FILES_TEST_NEW_DSET_NAME);
-                PART_ERROR(H5Ocopy_dset_between_files);
-            }
-
-            if ((object_link_exists =
-                     H5Lexists(file_id2, OBJECT_COPY_BETWEEN_FILES_TEST_NEW_DSET_NAME, H5P_DEFAULT)) < 0) {
-                H5_FAILED();
-                printf("    couldn't determine if link '%s' to copied dataset exists\n",
-                       OBJECT_COPY_BETWEEN_FILES_TEST_NEW_DSET_NAME);
-                PART_ERROR(H5Ocopy_dset_between_files);
-            }
-
-            if (!object_link_exists) {
-                H5_FAILED();
-                printf("    link '%s' to copied dataset in second file '%s' didn't exist!\n",
-                       OBJECT_COPY_BETWEEN_FILES_TEST_NEW_DSET_NAME, obj_copy_filename);
-                PART_ERROR(H5Ocopy_dset_between_files);
-            }
-
-            /* Ensure that the new dataset has all the attributes of the copied dataset */
-            if ((tmp_dset_id =
-                     H5Dopen2(file_id2, OBJECT_COPY_BETWEEN_FILES_TEST_NEW_DSET_NAME, H5P_DEFAULT)) < 0) {
-                H5_FAILED();
-                printf("    failed to open dataset copy '%s'\n",
-                       OBJECT_COPY_BETWEEN_FILES_TEST_NEW_DSET_NAME);
-                PART_ERROR(H5Ocopy_dset_between_files);
-            }
-
-            memset(&object_info, 0, sizeof(object_info));
-
-            /*
-             * Set attribute count to zero in case the connector doesn't
-             * support retrieval of object info.
-             */
-            object_info.num_attrs = 0;
-
-            if (H5Oget_info3(tmp_dset_id, &object_info, H5O_INFO_ALL) < 0) {
-                H5_FAILED();
-                printf("    failed to retrieve object info\n");
-                PART_ERROR(H5Ocopy_dset_between_files);
-            }
-
-            if (object_info.num_attrs == 0) {
-                H5_FAILED();
-                printf("    copied dataset didn't contain any attributes after copy operation!\n");
-                PART_ERROR(H5Ocopy_dset_between_files);
-            }
-
-            /* Check the attribute names, types, etc. */
-            i = 0;
-            if (H5Aiterate2(tmp_dset_id, H5_INDEX_NAME, H5_ITER_INC, NULL,
-                            object_copy_attribute_iter_callback, &i) < 0) {
-                H5_FAILED();
-                printf("    failed to iterate over copied dataset's attributes\n");
-                PART_ERROR(H5Ocopy_dset_between_files);
-            }
-
-            if (i != OBJECT_COPY_BETWEEN_FILES_TEST_NUM_ATTRS) {
-                H5_FAILED();
-                printf("    number of attributes on copied dataset (%llu) didn't match expected number "
-                       "(%llu)!\n",
-                       (unsigned long long)i, (unsigned long long)OBJECT_COPY_BETWEEN_FILES_TEST_NUM_ATTRS);
-                PART_ERROR(H5Ocopy_dset_between_files);
-            }
-
-            if (H5Dclose(tmp_dset_id) < 0) {
-                H5_FAILED();
-                printf("    failed to close dataset copy\n");
-                PART_ERROR(H5Ocopy_dset_between_files);
-            }
-
-            PASSED();
-        }
-        PART_END(H5Ocopy_dset_between_files);
-
-        if (tmp_dset_id >= 0) {
-            H5E_BEGIN_TRY
-            {
-                H5Dclose(tmp_dset_id);
-            }
-            H5E_END_TRY
-            tmp_dset_id = H5I_INVALID_HID;
-        }
-
-        PART_BEGIN(H5Ocopy_dtype_between_files)
-        {
-            TESTING_2("H5Ocopy on committed datatype between different files");
-
-            if (H5Ocopy(group_id, OBJECT_COPY_BETWEEN_FILES_TEST_DTYPE_NAME, file_id2,
-                        OBJECT_COPY_BETWEEN_FILES_TEST_NEW_DTYPE_NAME, H5P_DEFAULT, H5P_DEFAULT) < 0) {
-                H5_FAILED();
-                printf("    failed to copy committed datatype '%s' to second file '%s'\n",
-                       OBJECT_COPY_BETWEEN_FILES_TEST_DTYPE_NAME,
-                       OBJECT_COPY_BETWEEN_FILES_TEST_NEW_DTYPE_NAME);
-                PART_ERROR(H5Ocopy_dtype_between_files);
-            }
-
-            if ((object_link_exists =
-                     H5Lexists(file_id2, OBJECT_COPY_BETWEEN_FILES_TEST_NEW_DTYPE_NAME, H5P_DEFAULT)) < 0) {
-                H5_FAILED();
-                printf("    couldn't determine if link '%s' to copied committed datatype exists\n",
-                       OBJECT_COPY_BETWEEN_FILES_TEST_NEW_DTYPE_NAME);
-                PART_ERROR(H5Ocopy_dtype_between_files);
-            }
-
-            if (!object_link_exists) {
-                H5_FAILED();
-                printf("    link '%s' to copied committed datatype in second file '%s' didn't exist!\n",
-                       OBJECT_COPY_BETWEEN_FILES_TEST_NEW_DTYPE_NAME, obj_copy_filename);
-                PART_ERROR(H5Ocopy_dtype_between_files);
-            }
-
-            /* Ensure that the new committed datatype has all the attributes of the copied committed datatype
-             */
-            if ((tmp_dtype_id =
-                     H5Topen2(file_id2, OBJECT_COPY_BETWEEN_FILES_TEST_NEW_DTYPE_NAME, H5P_DEFAULT)) < 0) {
-                H5_FAILED();
-                printf("    failed to open committed datatype copy '%s'\n",
-                       OBJECT_COPY_BETWEEN_FILES_TEST_NEW_DTYPE_NAME);
-                PART_ERROR(H5Ocopy_dtype_between_files);
-            }
-
-            memset(&object_info, 0, sizeof(object_info));
-
-            /*
-             * Set attribute count to zero in case the connector doesn't
-             * support retrieval of object info.
-             */
-            object_info.num_attrs = 0;
-
-            if (H5Oget_info3(tmp_dtype_id, &object_info, H5O_INFO_ALL) < 0) {
-                H5_FAILED();
-                printf("    failed to retrieve object info\n");
-                PART_ERROR(H5Ocopy_dtype_between_files);
-            }
-
-            if (object_info.num_attrs == 0) {
-                H5_FAILED();
-                printf("    copied committed datatype didn't contain any attributes after copy operation!\n");
-                PART_ERROR(H5Ocopy_dtype_between_files);
-            }
-
-            /* Check the attribute names, types, etc. */
-            i = 0;
-            if (H5Aiterate2(tmp_dtype_id, H5_INDEX_NAME, H5_ITER_INC, NULL,
-                            object_copy_attribute_iter_callback, &i) < 0) {
-                H5_FAILED();
-                printf("    failed to iterate over copied datatype's attributes\n");
-                PART_ERROR(H5Ocopy_dtype_between_files);
-            }
-
-            if (i != OBJECT_COPY_BETWEEN_FILES_TEST_NUM_ATTRS) {
-                H5_FAILED();
-                printf("    number of attributes on copied datatype (%llu) didn't match expected number "
-                       "(%llu)!\n",
-                       (unsigned long long)i, (unsigned long long)OBJECT_COPY_BETWEEN_FILES_TEST_NUM_ATTRS);
-                PART_ERROR(H5Ocopy_dtype_between_files);
-            }
-
-            if (H5Tclose(tmp_dtype_id) < 0) {
-                H5_FAILED();
-                printf("    failed to close committed datatype copy\n");
-                PART_ERROR(H5Ocopy_dtype_between_files);
-            }
-
-            PASSED();
-        }
-        PART_END(H5Ocopy_dtype_between_files);
-
-        if (tmp_dtype_id >= 0) {
-            H5E_BEGIN_TRY
-            {
-                H5Tclose(tmp_dtype_id);
-            }
-            H5E_END_TRY
-            tmp_dtype_id = H5I_INVALID_HID;
         }
     }
-    END_MULTIPART;
+    SUBTEST_END(params);
 
-    TESTING_2("test cleanup");
+    if (tmp_group_id >= 0) {
+        H5E_BEGIN_TRY
+        {
+            H5Gclose(tmp_group_id);
+        }
+        H5E_END_TRY
+        tmp_group_id = H5I_INVALID_HID;
+    }
+
+    SUBTEST_BEGIN(params, "H5Ocopy on dataset between different files")
+    {
+        if (H5Ocopy(group_id, OBJECT_COPY_BETWEEN_FILES_TEST_DSET_NAME, file_id2,
+                    OBJECT_COPY_BETWEEN_FILES_TEST_NEW_DSET_NAME, H5P_DEFAULT, H5P_DEFAULT) < 0) {
+            printf("    failed to copy dataset '%s' to second file '%s'\n",
+                   OBJECT_COPY_BETWEEN_FILES_TEST_DSET_NAME,
+                   OBJECT_COPY_BETWEEN_FILES_TEST_NEW_DSET_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if ((object_link_exists =
+                 H5Lexists(file_id2, OBJECT_COPY_BETWEEN_FILES_TEST_NEW_DSET_NAME, H5P_DEFAULT)) < 0) {
+            printf("    couldn't determine if link '%s' to copied dataset exists\n",
+                   OBJECT_COPY_BETWEEN_FILES_TEST_NEW_DSET_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (!object_link_exists) {
+            printf("    link '%s' to copied dataset in second file '%s' didn't exist!\n",
+                   OBJECT_COPY_BETWEEN_FILES_TEST_NEW_DSET_NAME, obj_copy_filename);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        /* Ensure that the new dataset has all the attributes of the copied dataset */
+        if ((tmp_dset_id =
+                 H5Dopen2(file_id2, OBJECT_COPY_BETWEEN_FILES_TEST_NEW_DSET_NAME, H5P_DEFAULT)) < 0) {
+            printf("    failed to open dataset copy '%s'\n",
+                   OBJECT_COPY_BETWEEN_FILES_TEST_NEW_DSET_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        memset(&object_info, 0, sizeof(object_info));
+
+        /*
+         * Set attribute count to zero in case the connector doesn't
+         * support retrieval of object info.
+         */
+        object_info.num_attrs = 0;
+
+        if (H5Oget_info3(tmp_dset_id, &object_info, H5O_INFO_ALL) < 0) {
+            printf("    failed to retrieve object info\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (object_info.num_attrs == 0) {
+            printf("    copied dataset didn't contain any attributes after copy operation!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        /* Check the attribute names, types, etc. */
+        i = 0;
+        if (H5Aiterate2(tmp_dset_id, H5_INDEX_NAME, H5_ITER_INC, NULL,
+                        object_copy_attribute_iter_callback, &i) < 0) {
+            printf("    failed to iterate over copied dataset's attributes\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (i != OBJECT_COPY_BETWEEN_FILES_TEST_NUM_ATTRS) {
+            printf("    number of attributes on copied dataset (%llu) didn't match expected number "
+                   "(%llu)!\n",
+                   (unsigned long long)i, (unsigned long long)OBJECT_COPY_BETWEEN_FILES_TEST_NUM_ATTRS);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (H5Dclose(tmp_dset_id) < 0) {
+            printf("    failed to close dataset copy\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    if (tmp_dset_id >= 0) {
+        H5E_BEGIN_TRY
+        {
+            H5Dclose(tmp_dset_id);
+        }
+        H5E_END_TRY
+        tmp_dset_id = H5I_INVALID_HID;
+    }
+
+    SUBTEST_BEGIN(params, "H5Ocopy on committed datatype between different files")
+    {
+        if (H5Ocopy(group_id, OBJECT_COPY_BETWEEN_FILES_TEST_DTYPE_NAME, file_id2,
+                    OBJECT_COPY_BETWEEN_FILES_TEST_NEW_DTYPE_NAME, H5P_DEFAULT, H5P_DEFAULT) < 0) {
+            printf("    failed to copy committed datatype '%s' to second file '%s'\n",
+                   OBJECT_COPY_BETWEEN_FILES_TEST_DTYPE_NAME,
+                   OBJECT_COPY_BETWEEN_FILES_TEST_NEW_DTYPE_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if ((object_link_exists =
+                 H5Lexists(file_id2, OBJECT_COPY_BETWEEN_FILES_TEST_NEW_DTYPE_NAME, H5P_DEFAULT)) < 0) {
+            printf("    couldn't determine if link '%s' to copied committed datatype exists\n",
+                   OBJECT_COPY_BETWEEN_FILES_TEST_NEW_DTYPE_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (!object_link_exists) {
+            printf("    link '%s' to copied committed datatype in second file '%s' didn't exist!\n",
+                   OBJECT_COPY_BETWEEN_FILES_TEST_NEW_DTYPE_NAME, obj_copy_filename);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        /* Ensure that the new committed datatype has all the attributes of the copied committed datatype
+         */
+        if ((tmp_dtype_id =
+                 H5Topen2(file_id2, OBJECT_COPY_BETWEEN_FILES_TEST_NEW_DTYPE_NAME, H5P_DEFAULT)) < 0) {
+            printf("    failed to open committed datatype copy '%s'\n",
+                   OBJECT_COPY_BETWEEN_FILES_TEST_NEW_DTYPE_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        memset(&object_info, 0, sizeof(object_info));
+
+        /*
+         * Set attribute count to zero in case the connector doesn't
+         * support retrieval of object info.
+         */
+        object_info.num_attrs = 0;
+
+        if (H5Oget_info3(tmp_dtype_id, &object_info, H5O_INFO_ALL) < 0) {
+            printf("    failed to retrieve object info\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (object_info.num_attrs == 0) {
+            printf("    copied committed datatype didn't contain any attributes after copy operation!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        /* Check the attribute names, types, etc. */
+        i = 0;
+        if (H5Aiterate2(tmp_dtype_id, H5_INDEX_NAME, H5_ITER_INC, NULL,
+                        object_copy_attribute_iter_callback, &i) < 0) {
+            printf("    failed to iterate over copied datatype's attributes\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (i != OBJECT_COPY_BETWEEN_FILES_TEST_NUM_ATTRS) {
+            printf("    number of attributes on copied datatype (%llu) didn't match expected number "
+                   "(%llu)!\n",
+                   (unsigned long long)i, (unsigned long long)OBJECT_COPY_BETWEEN_FILES_TEST_NUM_ATTRS);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (H5Tclose(tmp_dtype_id) < 0) {
+            printf("    failed to close committed datatype copy\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    if (tmp_dtype_id >= 0) {
+        H5E_BEGIN_TRY
+        {
+            H5Tclose(tmp_dtype_id);
+        }
+        H5E_END_TRY
+        tmp_dtype_id = H5I_INVALID_HID;
+    }
 
     if (H5Sclose(attr_space_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Sclose(space_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Tclose(dset_dtype) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Tclose(dtype_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Dclose(dset_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Gclose(group_id2) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Gclose(group_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Gclose(container_group) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Fclose(file_id2) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Fclose(file_id) < 0)
-        TEST_ERROR;
-    if (remove_test_file(NULL, obj_copy_filename) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
+    if (remove_test_file(obj_copy_filename) < 0)
+        TESTFRAME_TEST_ERROR(params);
     free(obj_copy_filename);
-    PASSED();
 
-    return;
+    return SUCCEED;
 
 error:
     H5E_BEGIN_TRY
@@ -4753,53 +3988,45 @@ error:
         H5Gclose(container_group);
         H5Fclose(file_id2);
         H5Fclose(file_id);
-        remove_test_file(NULL, obj_copy_filename);
+        remove_test_file(obj_copy_filename);
         free(obj_copy_filename);
     }
     H5E_END_TRY
 
-    return;
+    return FAIL;
 }
 
 /*
  * A test to check that H5Ocopy fails when it
  * is passed invalid parameters.
  */
-static void
-test_object_copy_invalid_params(void)
+static herr_t
+test_object_copy_invalid_params(TestParams_t *params)
 {
     herr_t err_ret         = -1;
     hid_t  file_id         = H5I_INVALID_HID;
     hid_t  container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
     hid_t  group_id2 = H5I_INVALID_HID;
 
-    TESTING_MULTIPART("object copying with invalid parameters");
-
     /* Make sure the connector supports the API functions being tested */
     if (!(vol_cap_flags_g & (H5VL_CAP_FLAG_FILE_BASIC)) || !(vol_cap_flags_g & H5VL_CAP_FLAG_GROUP_BASIC) ||
         !(vol_cap_flags_g & H5VL_CAP_FLAG_OBJECT_MORE)) {
-        SKIPPED();
         printf("    API functions for basic file, group, or object aren't supported with this connector\n");
-        return;
+        return SKIP;
     }
 
-    TESTING_2("test setup");
-
-    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME(params), H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME(params));
         goto error;
     }
 
     if ((container_group = H5Gopen2(file_id, OBJECT_TEST_GROUP_NAME, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't open container group '%s'\n", OBJECT_TEST_GROUP_NAME);
         goto error;
     }
 
     if ((group_id = H5Gcreate2(container_group, OBJECT_COPY_INVALID_PARAMS_TEST_SUBGROUP_NAME, H5P_DEFAULT,
                                H5P_DEFAULT, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't create container subgroup '%s'\n",
                OBJECT_COPY_INVALID_PARAMS_TEST_SUBGROUP_NAME);
         goto error;
@@ -4807,183 +4034,140 @@ test_object_copy_invalid_params(void)
 
     if ((group_id2 = H5Gcreate2(group_id, OBJECT_COPY_INVALID_PARAMS_TEST_GROUP_NAME, H5P_DEFAULT,
                                 H5P_DEFAULT, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't create group '%s'\n", OBJECT_COPY_INVALID_PARAMS_TEST_GROUP_NAME);
         goto error;
     }
 
-    PASSED();
-
-    BEGIN_MULTIPART
+    SUBTEST_BEGIN(params, "H5Ocopy with an invalid source location ID")
     {
-        PART_BEGIN(H5Ocopy_invalid_src_loc_id)
+        H5E_BEGIN_TRY
         {
-            TESTING_2("H5Ocopy with an invalid source location ID");
-
-            H5E_BEGIN_TRY
-            {
-                err_ret = H5Ocopy(H5I_INVALID_HID, OBJECT_COPY_INVALID_PARAMS_TEST_GROUP_NAME, group_id,
-                                  OBJECT_COPY_INVALID_PARAMS_TEST_GROUP_NAME2, H5P_DEFAULT, H5P_DEFAULT);
-            }
-            H5E_END_TRY
-
-            if (err_ret >= 0) {
-                H5_FAILED();
-                printf("    H5Ocopy succeeded with an invalid source location ID!\n");
-                PART_ERROR(H5Ocopy_invalid_src_loc_id);
-            }
-
-            PASSED();
+            err_ret = H5Ocopy(H5I_INVALID_HID, OBJECT_COPY_INVALID_PARAMS_TEST_GROUP_NAME, group_id,
+                              OBJECT_COPY_INVALID_PARAMS_TEST_GROUP_NAME2, H5P_DEFAULT, H5P_DEFAULT);
         }
-        PART_END(H5Ocopy_invalid_src_loc_id);
+        H5E_END_TRY
 
-        PART_BEGIN(H5Ocopy_invalid_src_obj_name)
-        {
-            TESTING_2("H5Ocopy with an invalid source object name");
-
-            H5E_BEGIN_TRY
-            {
-                err_ret = H5Ocopy(group_id, NULL, group_id, OBJECT_COPY_INVALID_PARAMS_TEST_GROUP_NAME2,
-                                  H5P_DEFAULT, H5P_DEFAULT);
-            }
-            H5E_END_TRY
-
-            if (err_ret >= 0) {
-                H5_FAILED();
-                printf("    H5Ocopy succeeded with a NULL source object name!\n");
-                PART_ERROR(H5Ocopy_invalid_src_obj_name);
-            }
-
-            H5E_BEGIN_TRY
-            {
-                err_ret = H5Ocopy(group_id, "", group_id, OBJECT_COPY_INVALID_PARAMS_TEST_GROUP_NAME2,
-                                  H5P_DEFAULT, H5P_DEFAULT);
-            }
-            H5E_END_TRY
-
-            if (err_ret >= 0) {
-                H5_FAILED();
-                printf("    H5Ocopy succeeded with an invalid source object name of ''!\n");
-                PART_ERROR(H5Ocopy_invalid_src_obj_name);
-            }
-
-            PASSED();
+        if (err_ret >= 0) {
+            printf("    H5Ocopy succeeded with an invalid source location ID!\n");
+            TESTFRAME_TEST_ERROR(params);
         }
-        PART_END(H5Ocopy_invalid_src_obj_name);
-
-        PART_BEGIN(H5Ocopy_invalid_dst_loc_id)
-        {
-            TESTING_2("H5Ocopy with an invalid destination location ID");
-
-            H5E_BEGIN_TRY
-            {
-                err_ret = H5Ocopy(group_id, OBJECT_COPY_INVALID_PARAMS_TEST_GROUP_NAME, H5I_INVALID_HID,
-                                  OBJECT_COPY_INVALID_PARAMS_TEST_GROUP_NAME2, H5P_DEFAULT, H5P_DEFAULT);
-            }
-            H5E_END_TRY
-
-            if (err_ret >= 0) {
-                H5_FAILED();
-                printf("    H5Ocopy succeeded with an invalid destination location ID!\n");
-                PART_ERROR(H5Ocopy_invalid_dst_loc_id);
-            }
-
-            PASSED();
-        }
-        PART_END(H5Ocopy_invalid_dst_loc_id);
-
-        PART_BEGIN(H5Ocopy_invalid_dst_obj_name)
-        {
-            TESTING_2("H5Ocopy with an invalid destination object name");
-
-            H5E_BEGIN_TRY
-            {
-                err_ret = H5Ocopy(group_id, OBJECT_COPY_INVALID_PARAMS_TEST_GROUP_NAME, group_id, NULL,
-                                  H5P_DEFAULT, H5P_DEFAULT);
-            }
-            H5E_END_TRY
-
-            if (err_ret >= 0) {
-                H5_FAILED();
-                printf("    H5Ocopy succeeded with a NULL destination object name!\n");
-                PART_ERROR(H5Ocopy_invalid_dst_obj_name);
-            }
-
-            H5E_BEGIN_TRY
-            {
-                err_ret = H5Ocopy(group_id, OBJECT_COPY_INVALID_PARAMS_TEST_GROUP_NAME, group_id, "",
-                                  H5P_DEFAULT, H5P_DEFAULT);
-            }
-            H5E_END_TRY
-
-            if (err_ret >= 0) {
-                H5_FAILED();
-                printf("    H5Ocopy succeeded with an invalid destination object name of ''!\n");
-                PART_ERROR(H5Ocopy_invalid_dst_obj_name);
-            }
-
-            PASSED();
-        }
-        PART_END(H5Ocopy_invalid_dst_obj_name);
-
-        PART_BEGIN(H5Ocopy_invalid_ocpypl)
-        {
-            TESTING_2("H5Ocopy with an invalid OcpyPL");
-
-            H5E_BEGIN_TRY
-            {
-                err_ret = H5Ocopy(group_id, OBJECT_COPY_INVALID_PARAMS_TEST_GROUP_NAME, group_id,
-                                  OBJECT_COPY_INVALID_PARAMS_TEST_GROUP_NAME2, H5I_INVALID_HID, H5P_DEFAULT);
-            }
-            H5E_END_TRY
-
-            if (err_ret >= 0) {
-                H5_FAILED();
-                printf("    H5Ocopy succeeded with an invalid OcpyPL!\n");
-                PART_ERROR(H5Ocopy_invalid_ocpypl);
-            }
-
-            PASSED();
-        }
-        PART_END(H5Ocopy_invalid_ocpypl);
-
-        PART_BEGIN(H5Ocopy_invalid_lcpl)
-        {
-            TESTING_2("H5Ocopy with an invalid LCPL");
-
-            H5E_BEGIN_TRY
-            {
-                err_ret = H5Ocopy(group_id, OBJECT_COPY_INVALID_PARAMS_TEST_GROUP_NAME, group_id,
-                                  OBJECT_COPY_INVALID_PARAMS_TEST_GROUP_NAME2, H5P_DEFAULT, H5I_INVALID_HID);
-            }
-            H5E_END_TRY
-
-            if (err_ret >= 0) {
-                H5_FAILED();
-                printf("    H5Ocopy succeeded with an invalid LCPL!\n");
-                PART_ERROR(H5Ocopy_invalid_lcpl);
-            }
-
-            PASSED();
-        }
-        PART_END(H5Ocopy_invalid_lcpl);
     }
-    END_MULTIPART;
+    SUBTEST_END(params);
 
-    TESTING_2("test cleanup");
+    SUBTEST_BEGIN(params, "H5Ocopy with an invalid source object name")
+    {
+        H5E_BEGIN_TRY
+        {
+            err_ret = H5Ocopy(group_id, NULL, group_id, OBJECT_COPY_INVALID_PARAMS_TEST_GROUP_NAME2,
+                              H5P_DEFAULT, H5P_DEFAULT);
+        }
+        H5E_END_TRY
+
+        if (err_ret >= 0) {
+            printf("    H5Ocopy succeeded with a NULL source object name!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        H5E_BEGIN_TRY
+        {
+            err_ret = H5Ocopy(group_id, "", group_id, OBJECT_COPY_INVALID_PARAMS_TEST_GROUP_NAME2,
+                              H5P_DEFAULT, H5P_DEFAULT);
+        }
+        H5E_END_TRY
+
+        if (err_ret >= 0) {
+            printf("    H5Ocopy succeeded with an invalid source object name of ''!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    SUBTEST_BEGIN(params, "H5Ocopy with an invalid destination location ID")
+    {
+        H5E_BEGIN_TRY
+        {
+            err_ret = H5Ocopy(group_id, OBJECT_COPY_INVALID_PARAMS_TEST_GROUP_NAME, H5I_INVALID_HID,
+                              OBJECT_COPY_INVALID_PARAMS_TEST_GROUP_NAME2, H5P_DEFAULT, H5P_DEFAULT);
+        }
+        H5E_END_TRY
+
+        if (err_ret >= 0) {
+            printf("    H5Ocopy succeeded with an invalid destination location ID!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    SUBTEST_BEGIN(params, "H5Ocopy with an invalid destination object name")
+    {
+        H5E_BEGIN_TRY
+        {
+            err_ret = H5Ocopy(group_id, OBJECT_COPY_INVALID_PARAMS_TEST_GROUP_NAME, group_id, NULL,
+                              H5P_DEFAULT, H5P_DEFAULT);
+        }
+        H5E_END_TRY
+
+        if (err_ret >= 0) {
+            printf("    H5Ocopy succeeded with a NULL destination object name!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        H5E_BEGIN_TRY
+        {
+            err_ret = H5Ocopy(group_id, OBJECT_COPY_INVALID_PARAMS_TEST_GROUP_NAME, group_id, "",
+                              H5P_DEFAULT, H5P_DEFAULT);
+        }
+        H5E_END_TRY
+
+        if (err_ret >= 0) {
+            printf("    H5Ocopy succeeded with an invalid destination object name of ''!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    SUBTEST_BEGIN(params, "H5Ocopy with an invalid OcpyPL")
+    {
+        H5E_BEGIN_TRY
+        {
+            err_ret = H5Ocopy(group_id, OBJECT_COPY_INVALID_PARAMS_TEST_GROUP_NAME, group_id,
+                              OBJECT_COPY_INVALID_PARAMS_TEST_GROUP_NAME2, H5I_INVALID_HID, H5P_DEFAULT);
+        }
+        H5E_END_TRY
+
+        if (err_ret >= 0) {
+            printf("    H5Ocopy succeeded with an invalid OcpyPL!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    SUBTEST_BEGIN(params, "H5Ocopy with an invalid LCPL")
+    {
+        H5E_BEGIN_TRY
+        {
+            err_ret = H5Ocopy(group_id, OBJECT_COPY_INVALID_PARAMS_TEST_GROUP_NAME, group_id,
+                              OBJECT_COPY_INVALID_PARAMS_TEST_GROUP_NAME2, H5P_DEFAULT, H5I_INVALID_HID);
+        }
+        H5E_END_TRY
+
+        if (err_ret >= 0) {
+            printf("    H5Ocopy succeeded with an invalid LCPL!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
 
     if (H5Gclose(group_id2) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Gclose(group_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Gclose(container_group) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Fclose(file_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
 
-    PASSED();
-
-    return;
+    return SUCCEED;
 
 error:
     H5E_BEGIN_TRY
@@ -4995,34 +4179,26 @@ error:
     }
     H5E_END_TRY
 
-    return;
+    return FAIL;
 }
 
 /*
  * A test for H5Oset_comment(_by_name)/H5Oget_comment(_by_name).
  */
-static void
-test_object_comments(void)
+static herr_t
+test_object_comments(TestParams_t H5_ATTR_UNUSED *params)
 {
-    TESTING("object comments");
-
-    SKIPPED();
-
-    return;
+    return SKIP;
 }
 
 /*
  * A test to check that H5Oset_comment(_by_name)/H5Oget_comment(_by_name)
  * fail when passed invalid parameters.
  */
-static void
-test_object_comments_invalid_params(void)
+static herr_t
+test_object_comments_invalid_params(TestParams_t H5_ATTR_UNUSED *params)
 {
-    TESTING("object comments with invalid parameters");
-
-    SKIPPED();
-
-    return;
+    return SKIP;
 }
 
 /*
@@ -5030,8 +4206,8 @@ test_object_comments_invalid_params(void)
  *
  * XXX: Should have test for checking nested object's names/paths.
  */
-static void
-test_object_visit(void)
+static herr_t
+test_object_visit(TestParams_t *params)
 {
     size_t   i;
     hid_t    file_id         = H5I_INVALID_HID;
@@ -5051,54 +4227,44 @@ test_object_visit(void)
     size_t   elem_size  = 0;
     char     *visit_filename = NULL;
 
-    TESTING_MULTIPART("object visiting");
-
     /* Make sure the connector supports the API functions being tested */
     if (!(vol_cap_flags_g & (H5VL_CAP_FLAG_FILE_BASIC)) || !(vol_cap_flags_g & H5VL_CAP_FLAG_GROUP_BASIC) ||
         !(vol_cap_flags_g & H5VL_CAP_FLAG_OBJECT_BASIC) ||
         !(vol_cap_flags_g & H5VL_CAP_FLAG_STORED_DATATYPES) || !(vol_cap_flags_g & H5VL_CAP_FLAG_ITERATE) ||
         !(vol_cap_flags_g & H5VL_CAP_FLAG_DATASET_BASIC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_ATTR_BASIC)) {
-        SKIPPED();
         printf("    API functions for basic file, group, object, dataset, attribute, stored datatype, or "
                "iterate aren't supported with this connector\n");
-        return;
+        return SKIP;
     }
 
-    TESTING_2("test setup");
-
-    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME(params), H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME(params));
         goto error;
     }
 
-    if (prefix_filename(test_path_prefix, OBJECT_VISIT_TEST_FILE_NAME, &visit_filename) < 0) {
-        H5_FAILED();
+    if (prefix_test_filename(params, test_path_prefix, OBJECT_VISIT_TEST_FILE_NAME,
+                             &visit_filename) < 0) {
         printf("    couldn't create filename for visiting test file\n");
         goto error;
     }
 
     if ((file_id2 = H5Fcreate(visit_filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't open file '%s'\n", OBJECT_VISIT_TEST_FILE_NAME);
         goto error;
     }
 
     if ((container_group = H5Gopen2(file_id, OBJECT_TEST_GROUP_NAME, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't open container group '%s'\n", OBJECT_TEST_GROUP_NAME);
         goto error;
     }
 
     if ((gcpl_id = H5Pcreate(H5P_GROUP_CREATE)) < 0) {
-        H5_FAILED();
         printf("    couldn't create a GCPL\n");
         goto error;
     }
 
     if (vol_cap_flags_g & H5VL_CAP_FLAG_CREATION_ORDER) {
         if (H5Pset_link_creation_order(gcpl_id, H5P_CRT_ORDER_TRACKED | H5P_CRT_ORDER_INDEXED) < 0) {
-            H5_FAILED();
             printf("    couldn't enable link creation order tracking and indexing on GCPL\n");
             goto error;
         }
@@ -5106,7 +4272,6 @@ test_object_visit(void)
 
     if ((group_id = H5Gcreate2(container_group, OBJECT_VISIT_TEST_SUBGROUP_NAME, H5P_DEFAULT, gcpl_id,
                                H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't create container sub-group '%s'\n", OBJECT_VISIT_TEST_SUBGROUP_NAME);
         goto error;
     }
@@ -5119,31 +4284,29 @@ test_object_visit(void)
         if (dset_dtype != H5I_INVALID_HID)
             H5Tclose(dset_dtype);
 
-        if ((fspace_id = generate_random_dataspace(OBJECT_VISIT_TEST_SPACE_RANK, NULL, NULL, FALSE)) < 0) {
-            TEST_ERROR;
+        if ((fspace_id = generate_random_dataspace(OBJECT_VISIT_TEST_SPACE_RANK, NULL, NULL, false)) < 0) {
+            TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((dset_dtype = generate_random_datatype(H5T_NO_CLASS, FALSE)) < 0) {
-            TEST_ERROR;
+        if ((dset_dtype = generate_random_datatype(H5T_NO_CLASS, false)) < 0) {
+            TESTFRAME_TEST_ERROR(params);
         }
 
         if ((num_elems = H5Sget_simple_extent_npoints(fspace_id)) < 0)
-            TEST_ERROR;
+            TESTFRAME_TEST_ERROR(params);
 
         if ((elem_size = H5Tget_size(dset_dtype)) == 0)
-            TEST_ERROR;
+            TESTFRAME_TEST_ERROR(params);
 
     } while (((long unsigned int)num_elems * elem_size) > OBJECT_VISIT_TEST_TOTAL_DATA_SIZE_LIMIT);
 
-    if ((type_id = generate_random_datatype(H5T_NO_CLASS, FALSE)) < 0) {
-        H5_FAILED();
+    if ((type_id = generate_random_datatype(H5T_NO_CLASS, false)) < 0) {
         printf("    couldn't create datatype '%s'\n", OBJECT_VISIT_TEST_TYPE_NAME);
         goto error;
     }
 
     if ((attr_id = H5Acreate2(group_id, OBJECT_VISIT_TEST_ATTR_NAME, dset_dtype, fspace_id, H5P_DEFAULT,
                               H5P_DEFAULT)) == H5I_INVALID_HID) {
-        H5_FAILED();
         printf("    couldn't create attribute '%s' on group '%s'\n", OBJECT_VISIT_TEST_ATTR_NAME,
                OBJECT_VISIT_TEST_SUBGROUP_NAME);
         goto error;
@@ -5151,556 +4314,430 @@ test_object_visit(void)
 
     if ((group_id2 = H5Gcreate2(group_id, OBJECT_VISIT_TEST_GROUP_NAME, H5P_DEFAULT, gcpl_id, H5P_DEFAULT)) <
         0) {
-        H5_FAILED();
         printf("    couldn't create group '%s'\n", OBJECT_VISIT_TEST_GROUP_NAME);
         goto error;
     }
 
     if ((group_id3 = H5Gcreate2(file_id2, OBJECT_VISIT_TEST_GROUP_NAME_PARENT, H5P_DEFAULT, gcpl_id,
                                 H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't create group '%s'\n", OBJECT_VISIT_TEST_GROUP_NAME_PARENT);
         goto error;
     }
 
     if ((group_id4 = H5Gcreate2(group_id3, OBJECT_VISIT_TEST_GROUP_NAME_CHILD, H5P_DEFAULT, gcpl_id,
                                 H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't create group '%s'\n", OBJECT_VISIT_TEST_GROUP_NAME_CHILD);
         goto error;
     }
 
     if ((group_id5 = H5Gcreate2(group_id4, OBJECT_VISIT_TEST_GROUP_NAME_GRANDCHILD, H5P_DEFAULT, gcpl_id,
                                 H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't create group '%s'\n", OBJECT_VISIT_TEST_GROUP_NAME_GRANDCHILD);
         goto error;
     }
 
     if ((dset_id = H5Dcreate2(group_id, OBJECT_VISIT_TEST_DSET_NAME, dset_dtype, fspace_id, H5P_DEFAULT,
                               H5P_DEFAULT, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't create dataset '%s'\n", OBJECT_VISIT_TEST_DSET_NAME);
         goto error;
     }
 
     if (H5Tcommit2(group_id, OBJECT_VISIT_TEST_TYPE_NAME, type_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT) <
         0) {
-        H5_FAILED();
         printf("    couldn't commit datatype '%s'\n", OBJECT_VISIT_TEST_TYPE_NAME);
         goto error;
     }
 
-    PASSED();
+    /*
+     * NOTE: A counter is passed to the iteration callback to try to match up
+     * the expected objects with a given step throughout all of the following
+     * iterations. This is to try and check that the objects are indeed being
+     * returned in the correct order.
+     */
 
-    BEGIN_MULTIPART
+    SUBTEST_BEGIN(params, "H5Ovisit by object name in increasing order")
     {
-        /*
-         * NOTE: A counter is passed to the iteration callback to try to match up
-         * the expected objects with a given step throughout all of the following
-         * iterations. This is to try and check that the objects are indeed being
-         * returned in the correct order.
-         */
+        i = 0;
 
-        PART_BEGIN(H5Ovisit_obj_name_increasing)
-        {
-            TESTING_2("H5Ovisit by object name in increasing order");
-
-            i = 0;
-
-            if (H5Ovisit3(group_id, H5_INDEX_NAME, H5_ITER_INC, object_visit_callback, &i, H5O_INFO_ALL) <
-                0) {
-                H5_FAILED();
-                printf("    H5Ovisit by object name in increasing order failed\n");
-                PART_ERROR(H5Ovisit_obj_name_increasing);
-            }
-
-            if (i != OBJECT_VISIT_TEST_NUM_OBJS_VISITED) {
-                H5_FAILED();
-                printf("    some objects were not visited!\n");
-                PART_ERROR(H5Ovisit_obj_name_increasing);
-            }
-
-            PASSED();
+        if (H5Ovisit3(group_id, H5_INDEX_NAME, H5_ITER_INC, object_visit_callback, &i, H5O_INFO_ALL) <
+            0) {
+            printf("    H5Ovisit by object name in increasing order failed\n");
+            TESTFRAME_TEST_ERROR(params);
         }
-        PART_END(H5Ovisit_obj_name_increasing);
 
-        PART_BEGIN(H5Ovisit_obj_name_decreasing)
-        {
-            TESTING_2("H5Ovisit by object name in decreasing order");
-
-            /* Reset the counter to the appropriate value for the next test */
-            i = OBJECT_VISIT_TEST_NUM_OBJS_VISITED;
-
-            if (H5Ovisit3(group_id, H5_INDEX_NAME, H5_ITER_DEC, object_visit_callback, &i, H5O_INFO_ALL) <
-                0) {
-                H5_FAILED();
-                printf("    H5Ovisit by object name in decreasing order failed\n");
-                PART_ERROR(H5Ovisit_obj_name_decreasing);
-            }
-
-            if (i != 2 * OBJECT_VISIT_TEST_NUM_OBJS_VISITED) {
-                H5_FAILED();
-                printf("    some objects were not visited!\n");
-                PART_ERROR(H5Ovisit_obj_name_decreasing);
-            }
-
-            PASSED();
+        if (i != OBJECT_VISIT_TEST_NUM_OBJS_VISITED) {
+            printf("    some objects were not visited!\n");
+            TESTFRAME_TEST_ERROR(params);
         }
-        PART_END(H5Ovisit_obj_name_decreasing);
-
-        PART_BEGIN(H5Ovisit_create_order_increasing)
-        {
-            TESTING_2("H5Ovisit by creation order in increasing order");
-
-            if (!(vol_cap_flags_g & H5VL_CAP_FLAG_CREATION_ORDER)) {
-                SKIPPED();
-                printf("    creation order tracking isn't supported with this VOL connector\n");
-                PART_EMPTY(H5Ovisit_create_order_increasing);
-            }
-
-            /* Reset the counter to the appropriate value for the next test */
-            i = 2 * OBJECT_VISIT_TEST_NUM_OBJS_VISITED;
-
-            if (H5Ovisit3(group_id, H5_INDEX_CRT_ORDER, H5_ITER_INC, object_visit_callback, &i,
-                          H5O_INFO_ALL) < 0) {
-                H5_FAILED();
-                printf("    H5Ovisit by creation order in increasing order failed\n");
-                PART_ERROR(H5Ovisit_create_order_increasing);
-            }
-
-            if (i != 3 * OBJECT_VISIT_TEST_NUM_OBJS_VISITED) {
-                H5_FAILED();
-                printf("    some objects were not visited!\n");
-                PART_ERROR(H5Ovisit_create_order_increasing);
-            }
-
-            PASSED();
-        }
-        PART_END(H5Ovisit_create_order_increasing);
-
-        PART_BEGIN(H5Ovisit_create_order_decreasing)
-        {
-            TESTING_2("H5Ovisit by creation order in decreasing order");
-
-            if (!(vol_cap_flags_g & H5VL_CAP_FLAG_CREATION_ORDER)) {
-                SKIPPED();
-                printf("    creation order tracking isn't supported with this VOL connector\n");
-                PART_EMPTY(H5Ovisit_create_order_decreasing);
-            }
-
-            /* Reset the counter to the appropriate value for the next test */
-            i = 3 * OBJECT_VISIT_TEST_NUM_OBJS_VISITED;
-
-            if (H5Ovisit3(group_id, H5_INDEX_CRT_ORDER, H5_ITER_DEC, object_visit_callback, &i,
-                          H5O_INFO_ALL) < 0) {
-                H5_FAILED();
-                printf("    H5Ovisit by creation order in decreasing order failed\n");
-                PART_ERROR(H5Ovisit_create_order_decreasing);
-            }
-
-            if (i != 4 * OBJECT_VISIT_TEST_NUM_OBJS_VISITED) {
-                H5_FAILED();
-                printf("    some objects were not visited!\n");
-                PART_ERROR(H5Ovisit_create_order_decreasing);
-            }
-
-            PASSED();
-        }
-        PART_END(H5Ovisit_create_order_decreasing);
-
-        PART_BEGIN(H5Ovisit_group)
-        {
-            TESTING_2("H5Ovisit on a group");
-
-            i = 0;
-
-            if (H5Ovisit3(group_id3, H5_INDEX_CRT_ORDER, H5_ITER_INC, object_visit_simple_callback, &i,
-                          H5O_INFO_ALL) < 0) {
-                H5_FAILED();
-                printf("    H5Ovisit on a group failed!\n");
-                PART_ERROR(H5Ovisit_group);
-            }
-
-            if (i != OBJECT_VISIT_TEST_SUBGROUP_LAYERS) {
-                H5_FAILED();
-                printf("    some objects were not visited!\n");
-                PART_ERROR(H5Ovisit_group);
-            }
-
-            PASSED();
-        }
-        PART_END(H5Ovisit_group);
-
-        PART_BEGIN(H5Ovisit_file)
-        {
-            TESTING_2("H5Ovisit on a file ID");
-
-            i = 0;
-
-            if (H5Ovisit3(file_id2, H5_INDEX_CRT_ORDER, H5_ITER_INC, object_visit_simple_callback, &i,
-                          H5O_INFO_ALL) < 0) {
-                H5_FAILED();
-                printf("    H5Ovisit on a file ID failed!\n");
-                PART_ERROR(H5Ovisit_file);
-            }
-
-            if (i != OBJECT_VISIT_TEST_NUM_OBJS_VISITED) {
-                H5_FAILED();
-                printf("    some objects were not visited!\n");
-                PART_ERROR(H5Ovisit_file);
-            }
-
-            PASSED();
-        }
-        PART_END(H5Ovisit_file);
-
-        PART_BEGIN(H5Ovisit_dset)
-        {
-            TESTING_2("H5Ovisit on a dataset ID");
-
-            if (H5Ovisit3(dset_id, H5_INDEX_NAME, H5_ITER_INC, object_visit_dset_callback, NULL,
-                          H5O_INFO_ALL) < 0) {
-                H5_FAILED();
-                printf("    H5Ovisit failed\n");
-                PART_ERROR(H5Ovisit_dset);
-            }
-
-            PASSED();
-        }
-        PART_END(H5Ovisit_dset);
-
-        PART_BEGIN(H5Ovisit_dtype)
-        {
-            TESTING_2("H5Ovisit on a committed datatype ID");
-
-            if (H5Ovisit3(type_id, H5_INDEX_NAME, H5_ITER_INC, object_visit_dtype_callback, NULL,
-                          H5O_INFO_ALL) < 0) {
-                H5_FAILED();
-                printf("    H5Ovisit failed\n");
-                PART_ERROR(H5Ovisit_dtype);
-            }
-
-            PASSED();
-        }
-        PART_END(H5Ovisit_dtype);
-
-        PART_BEGIN(H5Ovisit_attr)
-        {
-            TESTING_2("H5Ovisit on an attribute");
-
-            i = 0;
-
-            if (H5Ovisit3(attr_id, H5_INDEX_CRT_ORDER, H5_ITER_INC, object_visit_simple_callback, &i,
-                          H5O_INFO_ALL) < 0) {
-                H5_FAILED();
-                printf("    H5Ovisit on an attribute failed!\n");
-                PART_ERROR(H5Ovisit_attr);
-            }
-
-            /* Should have same effect as calling H5Ovisit on group_id */
-            if (i != OBJECT_VISIT_TEST_NUM_OBJS_VISITED) {
-                H5_FAILED();
-                printf("    some objects were not visited!\n");
-                PART_ERROR(H5Ovisit_attr);
-            }
-
-            PASSED();
-        }
-        PART_END(H5Ovisit_attr);
-
-        PART_BEGIN(H5Ovisit_by_name_obj_name_increasing)
-        {
-            TESTING_2("H5Ovisit_by_name by object name in increasing order");
-
-            /* Reset the counter to the appropriate value for the next test */
-            i = 0;
-
-            /* First, test visiting using "." for the object name */
-            if (H5Ovisit_by_name3(group_id, ".", H5_INDEX_NAME, H5_ITER_INC, object_visit_callback, &i,
-                                  H5O_INFO_ALL, H5P_DEFAULT) < 0) {
-                H5_FAILED();
-                printf("    H5Ovisit_by_name by object name in increasing order failed\n");
-                PART_ERROR(H5Ovisit_by_name_obj_name_increasing);
-            }
-
-            if (i != OBJECT_VISIT_TEST_NUM_OBJS_VISITED) {
-                H5_FAILED();
-                printf("    some objects were not visited!\n");
-                PART_ERROR(H5Ovisit_by_name_obj_name_increasing);
-            }
-
-            /* Reset the special counter and repeat the test using an indirect object name. */
-            i = 0;
-
-            if (H5Ovisit_by_name3(container_group, OBJECT_VISIT_TEST_SUBGROUP_NAME, H5_INDEX_NAME,
-                                  H5_ITER_INC, object_visit_callback, &i, H5O_INFO_ALL, H5P_DEFAULT) < 0) {
-                H5_FAILED();
-                printf("    H5Ovisit_by_name by object name in increasing order failed\n");
-                PART_ERROR(H5Ovisit_by_name_obj_name_increasing);
-            }
-
-            if (i != OBJECT_VISIT_TEST_NUM_OBJS_VISITED) {
-                H5_FAILED();
-                printf("    some objects were not visited!\n");
-                PART_ERROR(H5Ovisit_by_name_obj_name_increasing);
-            }
-
-            PASSED();
-        }
-        PART_END(H5Ovisit_by_name_obj_name_increasing);
-
-        PART_BEGIN(H5Ovisit_by_name_obj_name_decreasing)
-        {
-            TESTING_2("H5Ovisit_by_name by object name in decreasing order");
-
-            /* Reset the counter to the appropriate value for the next test */
-            i = OBJECT_VISIT_TEST_NUM_OBJS_VISITED;
-
-            /* First, test visiting using "." for the object name */
-            if (H5Ovisit_by_name3(group_id, ".", H5_INDEX_NAME, H5_ITER_DEC, object_visit_callback, &i,
-                                  H5O_INFO_ALL, H5P_DEFAULT) < 0) {
-                H5_FAILED();
-                printf("    H5Ovisit_by_name by object name in decreasing order failed\n");
-                PART_ERROR(H5Ovisit_by_name_obj_name_decreasing);
-            }
-
-            if (i != 2 * OBJECT_VISIT_TEST_NUM_OBJS_VISITED) {
-                H5_FAILED();
-                printf("    some objects were not visited!\n");
-                PART_ERROR(H5Ovisit_by_name_obj_name_decreasing);
-            }
-
-            /* Reset the special counter and repeat the test using an indirect object name. */
-            i = OBJECT_VISIT_TEST_NUM_OBJS_VISITED;
-
-            if (H5Ovisit_by_name3(container_group, OBJECT_VISIT_TEST_SUBGROUP_NAME, H5_INDEX_NAME,
-                                  H5_ITER_DEC, object_visit_callback, &i, H5O_INFO_ALL, H5P_DEFAULT) < 0) {
-                H5_FAILED();
-                printf("    H5Ovisit_by_name by object name in decreasing order failed\n");
-                PART_ERROR(H5Ovisit_by_name_obj_name_decreasing);
-            }
-
-            if (i != 2 * OBJECT_VISIT_TEST_NUM_OBJS_VISITED) {
-                H5_FAILED();
-                printf("    some objects were not visited!\n");
-                PART_ERROR(H5Ovisit_by_name_obj_name_decreasing);
-            }
-
-            PASSED();
-        }
-        PART_END(H5Ovisit_by_name_obj_name_decreasing);
-
-        PART_BEGIN(H5Ovisit_by_name_create_order_increasing)
-        {
-            TESTING_2("H5Ovisit_by_name by creation order in increasing order");
-
-            if (!(vol_cap_flags_g & H5VL_CAP_FLAG_CREATION_ORDER)) {
-                SKIPPED();
-                printf("    creation order tracking isn't supported with this VOL connector\n");
-                PART_EMPTY(H5Ovisit_by_name_create_order_increasing);
-            }
-
-            /* Reset the counter to the appropriate value for the next test */
-            i = 2 * OBJECT_VISIT_TEST_NUM_OBJS_VISITED;
-
-            /* First, test visiting using "." for the object name */
-            if (H5Ovisit_by_name3(group_id, ".", H5_INDEX_CRT_ORDER, H5_ITER_INC, object_visit_callback, &i,
-                                  H5O_INFO_ALL, H5P_DEFAULT) < 0) {
-                H5_FAILED();
-                printf("    H5Ovisit_by_name by creation order in increasing order failed\n");
-                PART_ERROR(H5Ovisit_by_name_create_order_increasing);
-            }
-
-            if (i != 3 * OBJECT_VISIT_TEST_NUM_OBJS_VISITED) {
-                H5_FAILED();
-                printf("    some objects were not visited!\n");
-                PART_ERROR(H5Ovisit_by_name_create_order_increasing);
-            }
-
-            /* Reset the special counter and repeat the test using an indirect object name. */
-            i = 2 * OBJECT_VISIT_TEST_NUM_OBJS_VISITED;
-
-            if (H5Ovisit_by_name3(container_group, OBJECT_VISIT_TEST_SUBGROUP_NAME, H5_INDEX_CRT_ORDER,
-                                  H5_ITER_INC, object_visit_callback, &i, H5O_INFO_ALL, H5P_DEFAULT) < 0) {
-                H5_FAILED();
-                printf("    H5Ovisit_by_name by creation order in increasing order failed\n");
-                PART_ERROR(H5Ovisit_by_name_create_order_increasing);
-            }
-
-            if (i != 3 * OBJECT_VISIT_TEST_NUM_OBJS_VISITED) {
-                H5_FAILED();
-                printf("    some objects were not visited!\n");
-                PART_ERROR(H5Ovisit_by_name_create_order_increasing);
-            }
-
-            PASSED();
-        }
-        PART_END(H5Ovisit_by_name_create_order_increasing);
-
-        PART_BEGIN(H5Ovisit_by_name_create_order_decreasing)
-        {
-            TESTING_2("H5Ovisit_by_name by creation order in decreasing order");
-
-            if (!(vol_cap_flags_g & H5VL_CAP_FLAG_CREATION_ORDER)) {
-                SKIPPED();
-                printf("    creation order tracking isn't supported with this VOL connector\n");
-                PART_EMPTY(H5Ovisit_by_name_create_order_decreasing);
-            }
-
-            /* Reset the counter to the appropriate value for the next test */
-            i = 3 * OBJECT_VISIT_TEST_NUM_OBJS_VISITED;
-
-            /* First, test visiting using "." for the object name */
-            if (H5Ovisit_by_name3(group_id, ".", H5_INDEX_CRT_ORDER, H5_ITER_DEC, object_visit_callback, &i,
-                                  H5O_INFO_ALL, H5P_DEFAULT) < 0) {
-                H5_FAILED();
-                printf("    H5Ovisit_by_name by creation order in decreasing order failed\n");
-                PART_ERROR(H5Ovisit_by_name_create_order_decreasing);
-            }
-
-            if (i != 4 * OBJECT_VISIT_TEST_NUM_OBJS_VISITED) {
-                H5_FAILED();
-                printf("    some objects were not visited!\n");
-                PART_ERROR(H5Ovisit_by_name_create_order_decreasing);
-            }
-
-            /* Reset the special counter and repeat the test using an indirect object name. */
-            i = 3 * OBJECT_VISIT_TEST_NUM_OBJS_VISITED;
-
-            if (H5Ovisit_by_name3(container_group, OBJECT_VISIT_TEST_SUBGROUP_NAME, H5_INDEX_CRT_ORDER,
-                                  H5_ITER_DEC, object_visit_callback, &i, H5O_INFO_ALL, H5P_DEFAULT) < 0) {
-                H5_FAILED();
-                printf("    H5Ovisit_by_name by creation order in decreasing order failed\n");
-                PART_ERROR(H5Ovisit_by_name_create_order_decreasing);
-            }
-
-            if (i != 4 * OBJECT_VISIT_TEST_NUM_OBJS_VISITED) {
-                H5_FAILED();
-                printf("    some objects were not visited!\n");
-                PART_ERROR(H5Ovisit_by_name_create_order_decreasing);
-            }
-
-            PASSED();
-        }
-        PART_END(H5Ovisit_by_name_create_order_decreasing);
-
-        PART_BEGIN(H5Ovisit_by_name_file)
-        {
-            TESTING_2("H5Ovisit_by_name on a file ID");
-
-            i = 0;
-
-            if (H5Ovisit_by_name3(file_id2, "/", H5_INDEX_CRT_ORDER, H5_ITER_INC,
-                                  object_visit_simple_callback, &i, H5O_INFO_ALL, H5P_DEFAULT) < 0) {
-                H5_FAILED();
-                printf("    H5Ovisit on a file ID failed!\n");
-                PART_ERROR(H5Ovisit_by_name_file);
-            }
-
-            if (i != OBJECT_VISIT_TEST_NUM_OBJS_VISITED) {
-                H5_FAILED();
-                printf("    some objects were not visited!\n");
-                PART_ERROR(H5Ovisit_by_name_file);
-            }
-
-            PASSED();
-        }
-        PART_END(H5Ovisit_by_name_file);
-
-        PART_BEGIN(H5Ovisit_by_name_dset)
-        {
-            TESTING_2("H5Ovisit_by_name on a dataset ID");
-
-            if (H5Ovisit_by_name3(group_id, OBJECT_VISIT_TEST_DSET_NAME, H5_INDEX_NAME, H5_ITER_INC,
-                                  object_visit_dset_callback, NULL, H5O_INFO_ALL, H5P_DEFAULT) < 0) {
-                H5_FAILED();
-                printf("    H5Ovisit_by_name failed\n");
-                PART_ERROR(H5Ovisit_by_name_dset);
-            }
-
-            PASSED();
-        }
-        PART_END(H5Ovisit_by_name_dset);
-
-        PART_BEGIN(H5Ovisit_by_name_dtype)
-        {
-            TESTING_2("H5Ovisit_by_name on a committed datatype ID");
-
-            if (H5Ovisit_by_name3(group_id, OBJECT_VISIT_TEST_TYPE_NAME, H5_INDEX_NAME, H5_ITER_INC,
-                                  object_visit_dtype_callback, NULL, H5O_INFO_ALL, H5P_DEFAULT) < 0) {
-                H5_FAILED();
-                printf("    H5Ovisit_by_name failed\n");
-                PART_ERROR(H5Ovisit_by_name_dtype);
-            }
-
-            PASSED();
-        }
-        PART_END(H5Ovisit_by_name_dtype);
-
-        PART_BEGIN(H5Ovisit_by_name_attr)
-        {
-            TESTING_2("H5Ovisit_by_name on an attribute");
-
-            i = 0;
-
-            if (H5Ovisit_by_name(attr_id, ".", H5_INDEX_CRT_ORDER, H5_ITER_INC, object_visit_simple_callback,
-                                 &i, H5O_INFO_ALL, H5P_DEFAULT) < 0) {
-                H5_FAILED();
-                printf("    H5Ovisit_by_name on an attribute failed!\n");
-                PART_ERROR(H5Ovisit_by_name_attr);
-            }
-
-            /* Should have same effect as calling H5Ovisit on group_id */
-            if (i != OBJECT_VISIT_TEST_NUM_OBJS_VISITED) {
-                H5_FAILED();
-                printf("    some objects were not visited!\n");
-                PART_ERROR(H5Ovisit_by_name_attr);
-            }
-
-            PASSED();
-        }
-        PART_END(H5Ovisit_by_name_attr);
     }
-    END_MULTIPART;
+    SUBTEST_END(params);
 
-    TESTING_2("test cleanup");
+    SUBTEST_BEGIN(params, "H5Ovisit by object name in decreasing order")
+    {
+        /* Reset the counter to the appropriate value for the next test */
+        i = OBJECT_VISIT_TEST_NUM_OBJS_VISITED;
+
+        if (H5Ovisit3(group_id, H5_INDEX_NAME, H5_ITER_DEC, object_visit_callback, &i, H5O_INFO_ALL) <
+            0) {
+            printf("    H5Ovisit by object name in decreasing order failed\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (i != 2 * OBJECT_VISIT_TEST_NUM_OBJS_VISITED) {
+            printf("    some objects were not visited!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    SUBTEST_BEGIN(params, "H5Ovisit by creation order in increasing order")
+    {
+        if (!(vol_cap_flags_g & H5VL_CAP_FLAG_CREATION_ORDER)) {
+            TESTFRAME_SKIPPED(params);
+            printf("    creation order tracking isn't supported with this VOL connector\n");
+        }
+
+        /* Reset the counter to the appropriate value for the next test */
+        i = 2 * OBJECT_VISIT_TEST_NUM_OBJS_VISITED;
+
+        if (H5Ovisit3(group_id, H5_INDEX_CRT_ORDER, H5_ITER_INC, object_visit_callback, &i,
+                      H5O_INFO_ALL) < 0) {
+            printf("    H5Ovisit by creation order in increasing order failed\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (i != 3 * OBJECT_VISIT_TEST_NUM_OBJS_VISITED) {
+            printf("    some objects were not visited!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    SUBTEST_BEGIN(params, "H5Ovisit by creation order in decreasing order")
+    {
+        if (!(vol_cap_flags_g & H5VL_CAP_FLAG_CREATION_ORDER)) {
+            TESTFRAME_SKIPPED(params);
+            printf("    creation order tracking isn't supported with this VOL connector\n");
+        }
+
+        /* Reset the counter to the appropriate value for the next test */
+        i = 3 * OBJECT_VISIT_TEST_NUM_OBJS_VISITED;
+
+        if (H5Ovisit3(group_id, H5_INDEX_CRT_ORDER, H5_ITER_DEC, object_visit_callback, &i,
+                      H5O_INFO_ALL) < 0) {
+            printf("    H5Ovisit by creation order in decreasing order failed\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (i != 4 * OBJECT_VISIT_TEST_NUM_OBJS_VISITED) {
+            printf("    some objects were not visited!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    SUBTEST_BEGIN(params, "H5Ovisit on a group")
+    {
+        i = 0;
+
+        if (H5Ovisit3(group_id3, H5_INDEX_CRT_ORDER, H5_ITER_INC, object_visit_simple_callback, &i,
+                      H5O_INFO_ALL) < 0) {
+            printf("    H5Ovisit on a group failed!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (i != OBJECT_VISIT_TEST_SUBGROUP_LAYERS) {
+            printf("    some objects were not visited!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    SUBTEST_BEGIN(params, "H5Ovisit on a file ID")
+    {
+        i = 0;
+
+        if (H5Ovisit3(file_id2, H5_INDEX_CRT_ORDER, H5_ITER_INC, object_visit_simple_callback, &i,
+                      H5O_INFO_ALL) < 0) {
+            printf("    H5Ovisit on a file ID failed!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (i != OBJECT_VISIT_TEST_NUM_OBJS_VISITED) {
+            printf("    some objects were not visited!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    SUBTEST_BEGIN(params, "H5Ovisit on a dataset ID")
+    {
+        if (H5Ovisit3(dset_id, H5_INDEX_NAME, H5_ITER_INC, object_visit_dset_callback, NULL,
+                      H5O_INFO_ALL) < 0) {
+            printf("    H5Ovisit failed\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    SUBTEST_BEGIN(params, "H5Ovisit on a committed datatype ID")
+    {
+        if (H5Ovisit3(type_id, H5_INDEX_NAME, H5_ITER_INC, object_visit_dtype_callback, NULL,
+                      H5O_INFO_ALL) < 0) {
+            printf("    H5Ovisit failed\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    SUBTEST_BEGIN(params, "H5Ovisit on an attribute")
+    {
+        i = 0;
+
+        if (H5Ovisit3(attr_id, H5_INDEX_CRT_ORDER, H5_ITER_INC, object_visit_simple_callback, &i,
+                      H5O_INFO_ALL) < 0) {
+            printf("    H5Ovisit on an attribute failed!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        /* Should have same effect as calling H5Ovisit on group_id */
+        if (i != OBJECT_VISIT_TEST_NUM_OBJS_VISITED) {
+            printf("    some objects were not visited!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    SUBTEST_BEGIN(params, "H5Ovisit_by_name by object name in increasing order")
+    {
+        /* Reset the counter to the appropriate value for the next test */
+        i = 0;
+
+        /* First, test visiting using "." for the object name */
+        if (H5Ovisit_by_name3(group_id, ".", H5_INDEX_NAME, H5_ITER_INC, object_visit_callback, &i,
+                              H5O_INFO_ALL, H5P_DEFAULT) < 0) {
+            printf("    H5Ovisit_by_name by object name in increasing order failed\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (i != OBJECT_VISIT_TEST_NUM_OBJS_VISITED) {
+            printf("    some objects were not visited!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        /* Reset the special counter and repeat the test using an indirect object name. */
+        i = 0;
+
+        if (H5Ovisit_by_name3(container_group, OBJECT_VISIT_TEST_SUBGROUP_NAME, H5_INDEX_NAME,
+                              H5_ITER_INC, object_visit_callback, &i, H5O_INFO_ALL, H5P_DEFAULT) < 0) {
+            printf("    H5Ovisit_by_name by object name in increasing order failed\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (i != OBJECT_VISIT_TEST_NUM_OBJS_VISITED) {
+            printf("    some objects were not visited!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    SUBTEST_BEGIN(params, "H5Ovisit_by_name by object name in decreasing order")
+    {
+        /* Reset the counter to the appropriate value for the next test */
+        i = OBJECT_VISIT_TEST_NUM_OBJS_VISITED;
+
+        /* First, test visiting using "." for the object name */
+        if (H5Ovisit_by_name3(group_id, ".", H5_INDEX_NAME, H5_ITER_DEC, object_visit_callback, &i,
+                              H5O_INFO_ALL, H5P_DEFAULT) < 0) {
+            printf("    H5Ovisit_by_name by object name in decreasing order failed\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (i != 2 * OBJECT_VISIT_TEST_NUM_OBJS_VISITED) {
+            printf("    some objects were not visited!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        /* Reset the special counter and repeat the test using an indirect object name. */
+        i = OBJECT_VISIT_TEST_NUM_OBJS_VISITED;
+
+        if (H5Ovisit_by_name3(container_group, OBJECT_VISIT_TEST_SUBGROUP_NAME, H5_INDEX_NAME,
+                              H5_ITER_DEC, object_visit_callback, &i, H5O_INFO_ALL, H5P_DEFAULT) < 0) {
+            printf("    H5Ovisit_by_name by object name in decreasing order failed\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (i != 2 * OBJECT_VISIT_TEST_NUM_OBJS_VISITED) {
+            printf("    some objects were not visited!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    SUBTEST_BEGIN(params, "H5Ovisit_by_name by creation order in increasing order")
+    {
+        if (!(vol_cap_flags_g & H5VL_CAP_FLAG_CREATION_ORDER)) {
+            TESTFRAME_SKIPPED(params);
+            printf("    creation order tracking isn't supported with this VOL connector\n");
+        }
+
+        /* Reset the counter to the appropriate value for the next test */
+        i = 2 * OBJECT_VISIT_TEST_NUM_OBJS_VISITED;
+
+        /* First, test visiting using "." for the object name */
+        if (H5Ovisit_by_name3(group_id, ".", H5_INDEX_CRT_ORDER, H5_ITER_INC, object_visit_callback, &i,
+                              H5O_INFO_ALL, H5P_DEFAULT) < 0) {
+            printf("    H5Ovisit_by_name by creation order in increasing order failed\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (i != 3 * OBJECT_VISIT_TEST_NUM_OBJS_VISITED) {
+            printf("    some objects were not visited!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        /* Reset the special counter and repeat the test using an indirect object name. */
+        i = 2 * OBJECT_VISIT_TEST_NUM_OBJS_VISITED;
+
+        if (H5Ovisit_by_name3(container_group, OBJECT_VISIT_TEST_SUBGROUP_NAME, H5_INDEX_CRT_ORDER,
+                              H5_ITER_INC, object_visit_callback, &i, H5O_INFO_ALL, H5P_DEFAULT) < 0) {
+            printf("    H5Ovisit_by_name by creation order in increasing order failed\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (i != 3 * OBJECT_VISIT_TEST_NUM_OBJS_VISITED) {
+            printf("    some objects were not visited!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    SUBTEST_BEGIN(params, "H5Ovisit_by_name by creation order in decreasing order")
+    {
+        if (!(vol_cap_flags_g & H5VL_CAP_FLAG_CREATION_ORDER)) {
+            TESTFRAME_SKIPPED(params);
+            printf("    creation order tracking isn't supported with this VOL connector\n");
+        }
+
+        /* Reset the counter to the appropriate value for the next test */
+        i = 3 * OBJECT_VISIT_TEST_NUM_OBJS_VISITED;
+
+        /* First, test visiting using "." for the object name */
+        if (H5Ovisit_by_name3(group_id, ".", H5_INDEX_CRT_ORDER, H5_ITER_DEC, object_visit_callback, &i,
+                              H5O_INFO_ALL, H5P_DEFAULT) < 0) {
+            printf("    H5Ovisit_by_name by creation order in decreasing order failed\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (i != 4 * OBJECT_VISIT_TEST_NUM_OBJS_VISITED) {
+            printf("    some objects were not visited!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        /* Reset the special counter and repeat the test using an indirect object name. */
+        i = 3 * OBJECT_VISIT_TEST_NUM_OBJS_VISITED;
+
+        if (H5Ovisit_by_name3(container_group, OBJECT_VISIT_TEST_SUBGROUP_NAME, H5_INDEX_CRT_ORDER,
+                              H5_ITER_DEC, object_visit_callback, &i, H5O_INFO_ALL, H5P_DEFAULT) < 0) {
+            printf("    H5Ovisit_by_name by creation order in decreasing order failed\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (i != 4 * OBJECT_VISIT_TEST_NUM_OBJS_VISITED) {
+            printf("    some objects were not visited!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    SUBTEST_BEGIN(params, "H5Ovisit_by_name on a file ID")
+    {
+        i = 0;
+
+        if (H5Ovisit_by_name3(file_id2, "/", H5_INDEX_CRT_ORDER, H5_ITER_INC,
+                              object_visit_simple_callback, &i, H5O_INFO_ALL, H5P_DEFAULT) < 0) {
+            printf("    H5Ovisit on a file ID failed!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (i != OBJECT_VISIT_TEST_NUM_OBJS_VISITED) {
+            printf("    some objects were not visited!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    SUBTEST_BEGIN(params, "H5Ovisit_by_name on a dataset ID")
+    {
+        if (H5Ovisit_by_name3(group_id, OBJECT_VISIT_TEST_DSET_NAME, H5_INDEX_NAME, H5_ITER_INC,
+                              object_visit_dset_callback, NULL, H5O_INFO_ALL, H5P_DEFAULT) < 0) {
+            printf("    H5Ovisit_by_name failed\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    SUBTEST_BEGIN(params, "H5Ovisit_by_name on a committed datatype ID")
+    {
+        if (H5Ovisit_by_name3(group_id, OBJECT_VISIT_TEST_TYPE_NAME, H5_INDEX_NAME, H5_ITER_INC,
+                              object_visit_dtype_callback, NULL, H5O_INFO_ALL, H5P_DEFAULT) < 0) {
+            printf("    H5Ovisit_by_name failed\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    SUBTEST_BEGIN(params, "H5Ovisit_by_name on an attribute")
+    {
+        i = 0;
+
+        if (H5Ovisit_by_name(attr_id, ".", H5_INDEX_CRT_ORDER, H5_ITER_INC, object_visit_simple_callback,
+                             &i, H5O_INFO_ALL, H5P_DEFAULT) < 0) {
+            printf("    H5Ovisit_by_name on an attribute failed!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        /* Should have same effect as calling H5Ovisit on group_id */
+        if (i != OBJECT_VISIT_TEST_NUM_OBJS_VISITED) {
+            printf("    some objects were not visited!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
 
     if (H5Sclose(fspace_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Tclose(dset_dtype) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Tclose(type_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Dclose(dset_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Pclose(gcpl_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Gclose(group_id2) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Gclose(group_id3) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Gclose(group_id4) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Gclose(group_id5) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Aclose(attr_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Gclose(group_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Gclose(container_group) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Fclose(file_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Fclose(file_id2) < 0)
-        TEST_ERROR;
-    if (remove_test_file(NULL, visit_filename) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
+    if (remove_test_file(visit_filename) < 0)
+        TESTFRAME_TEST_ERROR(params);
     free(visit_filename);
 
-    PASSED();
-
-    return;
+    return SUCCEED;
 
 error:
     H5E_BEGIN_TRY
@@ -5719,12 +4756,12 @@ error:
         H5Gclose(container_group);
         H5Fclose(file_id);
         H5Fclose(file_id2);
-        remove_test_file(NULL, visit_filename);
+        remove_test_file(visit_filename);
         free(visit_filename);
     }
     H5E_END_TRY;
 
-    return;
+    return FAIL;
 }
 
 /*
@@ -5736,8 +4773,8 @@ error:
  * the links to ensure that the objects in the other group
  * do not get visited.
  */
-static void
-test_object_visit_soft_link(void)
+static herr_t
+test_object_visit_soft_link(TestParams_t *params)
 {
     size_t i;
     hid_t  file_id         = H5I_INVALID_HID;
@@ -5746,41 +4783,32 @@ test_object_visit_soft_link(void)
     hid_t  linked_group_id = H5I_INVALID_HID;
     hid_t  gcpl_id         = H5I_INVALID_HID;
 
-    TESTING_MULTIPART("object visiting with soft links");
-
     /* Make sure the connector supports the API functions being tested */
     if (!(vol_cap_flags_g & (H5VL_CAP_FLAG_FILE_BASIC)) || !(vol_cap_flags_g & H5VL_CAP_FLAG_GROUP_BASIC) ||
         !(vol_cap_flags_g & H5VL_CAP_FLAG_OBJECT_BASIC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_ITERATE) ||
         !(vol_cap_flags_g & H5VL_CAP_FLAG_SOFT_LINKS)) {
-        SKIPPED();
         printf("    API functions for basic file, group, object, soft link, or iterate "
                "aren't supported with this connector\n");
-        return;
+        return SKIP;
     }
 
-    TESTING_2("test setup");
-
-    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME(params), H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME(params));
         goto error;
     }
 
     if ((container_group = H5Gopen2(file_id, OBJECT_TEST_GROUP_NAME, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't open container group '%s'\n", OBJECT_TEST_GROUP_NAME);
         goto error;
     }
 
     if ((gcpl_id = H5Pcreate(H5P_GROUP_CREATE)) < 0) {
-        H5_FAILED();
         printf("    couldn't create a GCPL\n");
         goto error;
     }
 
     if (vol_cap_flags_g & H5VL_CAP_FLAG_CREATION_ORDER) {
         if (H5Pset_link_creation_order(gcpl_id, H5P_CRT_ORDER_TRACKED | H5P_CRT_ORDER_INDEXED) < 0) {
-            H5_FAILED();
             printf("    couldn't enable link creation order tracking and indexing on GCPL\n");
             goto error;
         }
@@ -5788,7 +4816,6 @@ test_object_visit_soft_link(void)
 
     if ((group_id = H5Gcreate2(container_group, OBJECT_VISIT_SOFT_LINK_TEST_SUBGROUP_NAME, H5P_DEFAULT,
                                gcpl_id, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't create container sub-group '%s'\n", OBJECT_VISIT_SOFT_LINK_TEST_SUBGROUP_NAME);
         goto error;
     }
@@ -5796,7 +4823,6 @@ test_object_visit_soft_link(void)
     /* Create group to hold soft links */
     if ((subgroup_id = H5Gcreate2(group_id, OBJECT_VISIT_SOFT_LINK_TEST_GROUP_NAME1, H5P_DEFAULT, gcpl_id,
                                   H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't create group '%s'\n", OBJECT_VISIT_SOFT_LINK_TEST_GROUP_NAME1);
         goto error;
     }
@@ -5804,7 +4830,6 @@ test_object_visit_soft_link(void)
     /* Create group to hold objects pointed to by soft links */
     if ((subgroup_id2 = H5Gcreate2(group_id, OBJECT_VISIT_SOFT_LINK_TEST_GROUP_NAME2, H5P_DEFAULT, gcpl_id,
                                    H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't create group '%s'\n", OBJECT_VISIT_SOFT_LINK_TEST_GROUP_NAME2);
         goto error;
     }
@@ -5812,45 +4837,38 @@ test_object_visit_soft_link(void)
     /* Create objects under subgroup 2 */
     if ((linked_group_id = H5Gcreate2(subgroup_id2, OBJECT_VISIT_SOFT_LINK_TEST_OBJ_NAME1, H5P_DEFAULT,
                                       gcpl_id, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't create group '%s'\n", OBJECT_VISIT_SOFT_LINK_TEST_OBJ_NAME1);
         goto error;
     }
 
     if (H5Gclose(linked_group_id) < 0) {
-        H5_FAILED();
         printf("    couldn't close group '%s'\n", OBJECT_VISIT_SOFT_LINK_TEST_OBJ_NAME1);
         goto error;
     }
 
     if ((linked_group_id = H5Gcreate2(subgroup_id2, OBJECT_VISIT_SOFT_LINK_TEST_OBJ_NAME2, H5P_DEFAULT,
                                       gcpl_id, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't create group '%s'\n", OBJECT_VISIT_SOFT_LINK_TEST_OBJ_NAME2);
         goto error;
     }
 
     if (H5Gclose(linked_group_id) < 0) {
-        H5_FAILED();
         printf("    couldn't close group '%s'\n", OBJECT_VISIT_SOFT_LINK_TEST_OBJ_NAME2);
         goto error;
     }
 
     if ((linked_group_id = H5Gcreate2(subgroup_id2, OBJECT_VISIT_SOFT_LINK_TEST_OBJ_NAME3, H5P_DEFAULT,
                                       gcpl_id, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't create group '%s'\n", OBJECT_VISIT_SOFT_LINK_TEST_OBJ_NAME3);
         goto error;
     }
 
     if (H5Gclose(linked_group_id) < 0) {
-        H5_FAILED();
         printf("    couldn't close group '%s'\n", OBJECT_VISIT_SOFT_LINK_TEST_OBJ_NAME3);
         goto error;
     }
 
     if (H5Gclose(subgroup_id2) < 0) {
-        H5_FAILED();
         printf("    couldn't close group '%s'\n", OBJECT_VISIT_SOFT_LINK_TEST_GROUP_NAME2);
         goto error;
     }
@@ -5859,7 +4877,6 @@ test_object_visit_soft_link(void)
     if (H5Lcreate_soft("/" OBJECT_TEST_GROUP_NAME "/" OBJECT_VISIT_SOFT_LINK_TEST_SUBGROUP_NAME
                        "/" OBJECT_VISIT_SOFT_LINK_TEST_GROUP_NAME2 "/" OBJECT_VISIT_SOFT_LINK_TEST_OBJ_NAME1,
                        subgroup_id, OBJECT_VISIT_SOFT_LINK_TEST_LINK_NAME1, H5P_DEFAULT, H5P_DEFAULT) < 0) {
-        H5_FAILED();
         printf("    couldn't create soft link '%s'\n", OBJECT_VISIT_SOFT_LINK_TEST_LINK_NAME1);
         goto error;
     }
@@ -5867,7 +4884,6 @@ test_object_visit_soft_link(void)
     if (H5Lcreate_soft("/" OBJECT_TEST_GROUP_NAME "/" OBJECT_VISIT_SOFT_LINK_TEST_SUBGROUP_NAME
                        "/" OBJECT_VISIT_SOFT_LINK_TEST_GROUP_NAME2 "/" OBJECT_VISIT_SOFT_LINK_TEST_OBJ_NAME2,
                        subgroup_id, OBJECT_VISIT_SOFT_LINK_TEST_LINK_NAME2, H5P_DEFAULT, H5P_DEFAULT) < 0) {
-        H5_FAILED();
         printf("    couldn't create soft link '%s'\n", OBJECT_VISIT_SOFT_LINK_TEST_LINK_NAME2);
         goto error;
     }
@@ -5875,331 +4891,260 @@ test_object_visit_soft_link(void)
     if (H5Lcreate_soft("/" OBJECT_TEST_GROUP_NAME "/" OBJECT_VISIT_SOFT_LINK_TEST_SUBGROUP_NAME
                        "/" OBJECT_VISIT_SOFT_LINK_TEST_GROUP_NAME2 "/" OBJECT_VISIT_SOFT_LINK_TEST_OBJ_NAME3,
                        subgroup_id, OBJECT_VISIT_SOFT_LINK_TEST_LINK_NAME3, H5P_DEFAULT, H5P_DEFAULT) < 0) {
-        H5_FAILED();
         printf("    couldn't create soft link '%s'\n", OBJECT_VISIT_SOFT_LINK_TEST_LINK_NAME3);
         goto error;
     }
 
-    PASSED();
+    /*
+     * NOTE: A counter is passed to the iteration callback to try to match up
+     * the expected objects with a given step throughout all of the following
+     * iterations. This is to try and check that the objects are indeed being
+     * returned in the correct order.
+     */
 
-    BEGIN_MULTIPART
+    SUBTEST_BEGIN(params, "H5Ovisit by object name in increasing order")
     {
-        /*
-         * NOTE: A counter is passed to the iteration callback to try to match up
-         * the expected objects with a given step throughout all of the following
-         * iterations. This is to try and check that the objects are indeed being
-         * returned in the correct order.
-         */
+        i = 0;
 
-        PART_BEGIN(H5Ovisit_obj_name_increasing)
-        {
-            TESTING_2("H5Ovisit by object name in increasing order");
-
-            i = 0;
-
-            if (H5Ovisit3(subgroup_id, H5_INDEX_NAME, H5_ITER_INC, object_visit_soft_link_callback, &i,
-                          H5O_INFO_ALL) < 0) {
-                H5_FAILED();
-                printf("    H5Ovisit by object name in increasing order failed\n");
-                PART_ERROR(H5Ovisit_obj_name_increasing);
-            }
-
-            if (i != OBJECT_VISIT_SOFT_LINK_TEST_NUM_OBJS_VISITED) {
-                H5_FAILED();
-                printf("    some objects were not visited!\n");
-                PART_ERROR(H5Ovisit_obj_name_increasing);
-            }
-
-            PASSED();
+        if (H5Ovisit3(subgroup_id, H5_INDEX_NAME, H5_ITER_INC, object_visit_soft_link_callback, &i,
+                      H5O_INFO_ALL) < 0) {
+            printf("    H5Ovisit by object name in increasing order failed\n");
+            TESTFRAME_TEST_ERROR(params);
         }
-        PART_END(H5Ovisit_obj_name_increasing);
 
-        PART_BEGIN(H5Ovisit_obj_name_decreasing)
-        {
-            TESTING_2("H5Ovisit by object name in decreasing order");
-
-            /* Reset the counter to the appropriate value for the next test */
-            i = OBJECT_VISIT_SOFT_LINK_TEST_NUM_OBJS_VISITED;
-
-            if (H5Ovisit3(subgroup_id, H5_INDEX_NAME, H5_ITER_DEC, object_visit_soft_link_callback, &i,
-                          H5O_INFO_ALL) < 0) {
-                H5_FAILED();
-                printf("    H5Ovisit by object name in decreasing order failed\n");
-                PART_ERROR(H5Ovisit_obj_name_decreasing);
-            }
-
-            if (i != 2 * OBJECT_VISIT_SOFT_LINK_TEST_NUM_OBJS_VISITED) {
-                H5_FAILED();
-                printf("    some objects were not visited!\n");
-                PART_ERROR(H5Ovisit_obj_name_decreasing);
-            }
-
-            PASSED();
+        if (i != OBJECT_VISIT_SOFT_LINK_TEST_NUM_OBJS_VISITED) {
+            printf("    some objects were not visited!\n");
+            TESTFRAME_TEST_ERROR(params);
         }
-        PART_END(H5Ovisit_obj_name_decreasing);
-
-        PART_BEGIN(H5Ovisit_create_order_increasing)
-        {
-            TESTING_2("H5Ovisit by creation order in increasing order");
-
-            if (!(vol_cap_flags_g & H5VL_CAP_FLAG_CREATION_ORDER)) {
-                SKIPPED();
-                printf("    creation order tracking isn't supported with this VOL connector\n");
-                PART_EMPTY(H5Ovisit_create_order_increasing);
-            }
-
-            /* Reset the counter to the appropriate value for the next test */
-            i = 2 * OBJECT_VISIT_SOFT_LINK_TEST_NUM_OBJS_VISITED;
-
-            if (H5Ovisit3(subgroup_id, H5_INDEX_CRT_ORDER, H5_ITER_INC, object_visit_soft_link_callback, &i,
-                          H5O_INFO_ALL) < 0) {
-                H5_FAILED();
-                printf("    H5Ovisit by creation order in increasing order failed\n");
-                PART_ERROR(H5Ovisit_create_order_increasing);
-            }
-
-            if (i != 3 * OBJECT_VISIT_SOFT_LINK_TEST_NUM_OBJS_VISITED) {
-                H5_FAILED();
-                printf("    some objects were not visited!\n");
-                PART_ERROR(H5Ovisit_create_order_increasing);
-            }
-
-            PASSED();
-        }
-        PART_END(H5Ovisit_create_order_increasing);
-
-        PART_BEGIN(H5Ovisit_create_order_decreasing)
-        {
-            TESTING_2("H5Ovisit by creation order in decreasing order");
-
-            if (!(vol_cap_flags_g & H5VL_CAP_FLAG_CREATION_ORDER)) {
-                SKIPPED();
-                printf("    creation order tracking isn't supported with this VOL connector\n");
-                PART_EMPTY(H5Ovisit_create_order_decreasing);
-            }
-
-            /* Reset the counter to the appropriate value for the next test */
-            i = 3 * OBJECT_VISIT_SOFT_LINK_TEST_NUM_OBJS_VISITED;
-
-            if (H5Ovisit3(subgroup_id, H5_INDEX_CRT_ORDER, H5_ITER_DEC, object_visit_soft_link_callback, &i,
-                          H5O_INFO_ALL) < 0) {
-                H5_FAILED();
-                printf("    H5Ovisit by creation order in decreasing order failed\n");
-                PART_ERROR(H5Ovisit_create_order_decreasing);
-            }
-
-            if (i != 4 * OBJECT_VISIT_SOFT_LINK_TEST_NUM_OBJS_VISITED) {
-                H5_FAILED();
-                printf("    some objects were not visited!\n");
-                PART_ERROR(H5Ovisit_create_order_decreasing);
-            }
-
-            PASSED();
-        }
-        PART_END(H5Ovisit_create_order_decreasing);
-
-        PART_BEGIN(H5Ovisit_by_name_obj_name_increasing)
-        {
-            TESTING_2("H5Ovisit_by_name by object name in increasing order");
-
-            /* Reset the counter to the appropriate value for the next test */
-            i = 0;
-
-            /* First, test visiting using "." for the object name */
-            if (H5Ovisit_by_name3(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_INC,
-                                  object_visit_soft_link_callback, &i, H5O_INFO_ALL, H5P_DEFAULT) < 0) {
-                H5_FAILED();
-                printf("    H5Ovisit_by_name by object name in increasing order failed\n");
-                PART_ERROR(H5Ovisit_by_name_obj_name_increasing);
-            }
-
-            if (i != OBJECT_VISIT_SOFT_LINK_TEST_NUM_OBJS_VISITED) {
-                H5_FAILED();
-                printf("    some objects were not visited!\n");
-                PART_ERROR(H5Ovisit_by_name_obj_name_increasing);
-            }
-
-            /* Reset the special counter and repeat the test using an indirect object name. */
-            i = 0;
-
-            /* Repeat the test using an indirect object name */
-            if (H5Ovisit_by_name3(group_id, OBJECT_VISIT_SOFT_LINK_TEST_GROUP_NAME1, H5_INDEX_NAME,
-                                  H5_ITER_INC, object_visit_soft_link_callback, &i, H5O_INFO_ALL,
-                                  H5P_DEFAULT) < 0) {
-                H5_FAILED();
-                printf("    H5Ovisit_by_name by object name in increasing order failed\n");
-                PART_ERROR(H5Ovisit_by_name_obj_name_increasing);
-            }
-
-            if (i != OBJECT_VISIT_SOFT_LINK_TEST_NUM_OBJS_VISITED) {
-                H5_FAILED();
-                printf("    some objects were not visited!\n");
-                PART_ERROR(H5Ovisit_by_name_obj_name_increasing);
-            }
-
-            PASSED();
-        }
-        PART_END(H5Ovisit_by_name_obj_name_increasing);
-
-        PART_BEGIN(H5Ovisit_by_name_obj_name_decreasing)
-        {
-            TESTING_2("H5Ovisit_by_name by object name in decreasing order");
-
-            /* Reset the counter to the appropriate value for the next test */
-            i = OBJECT_VISIT_SOFT_LINK_TEST_NUM_OBJS_VISITED;
-
-            /* First, test visiting using "." for the object name */
-            if (H5Ovisit_by_name3(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_DEC,
-                                  object_visit_soft_link_callback, &i, H5O_INFO_ALL, H5P_DEFAULT) < 0) {
-                H5_FAILED();
-                printf("    H5Ovisit_by_name by object name in decreasing order failed\n");
-                PART_ERROR(H5Ovisit_by_name_obj_name_decreasing);
-            }
-
-            if (i != 2 * OBJECT_VISIT_SOFT_LINK_TEST_NUM_OBJS_VISITED) {
-                H5_FAILED();
-                printf("    some objects were not visited!\n");
-                PART_ERROR(H5Ovisit_by_name_obj_name_decreasing);
-            }
-
-            /* Reset the special counter and repeat the test using an indirect object name. */
-            i = OBJECT_VISIT_SOFT_LINK_TEST_NUM_OBJS_VISITED;
-
-            /* Repeat the test using an indirect object name */
-            if (H5Ovisit_by_name3(group_id, OBJECT_VISIT_SOFT_LINK_TEST_GROUP_NAME1, H5_INDEX_NAME,
-                                  H5_ITER_DEC, object_visit_soft_link_callback, &i, H5O_INFO_ALL,
-                                  H5P_DEFAULT) < 0) {
-                H5_FAILED();
-                printf("    H5Ovisit_by_name by object name in decreasing order failed\n");
-                PART_ERROR(H5Ovisit_by_name_obj_name_decreasing);
-            }
-
-            if (i != 2 * OBJECT_VISIT_SOFT_LINK_TEST_NUM_OBJS_VISITED) {
-                H5_FAILED();
-                printf("    some objects were not visited!\n");
-                PART_ERROR(H5Ovisit_by_name_obj_name_decreasing);
-            }
-
-            PASSED();
-        }
-        PART_END(H5Ovisit_by_name_obj_name_decreasing);
-
-        PART_BEGIN(H5Ovisit_by_name_create_order_increasing)
-        {
-            TESTING_2("H5Ovisit_by_name by creation order in increasing order");
-
-            if (!(vol_cap_flags_g & H5VL_CAP_FLAG_CREATION_ORDER)) {
-                SKIPPED();
-                printf("    creation order tracking isn't supported with this VOL connector\n");
-                PART_EMPTY(H5Ovisit_by_name_create_order_increasing);
-            }
-
-            /* Reset the counter to the appropriate value for the next test */
-            i = 2 * OBJECT_VISIT_SOFT_LINK_TEST_NUM_OBJS_VISITED;
-
-            /* First, test visiting using "." for the object name */
-            if (H5Ovisit_by_name3(subgroup_id, ".", H5_INDEX_CRT_ORDER, H5_ITER_INC,
-                                  object_visit_soft_link_callback, &i, H5O_INFO_ALL, H5P_DEFAULT) < 0) {
-                H5_FAILED();
-                printf("    H5Ovisit_by_name by creation order in increasing order failed\n");
-                PART_ERROR(H5Ovisit_by_name_create_order_increasing);
-            }
-
-            if (i != 3 * OBJECT_VISIT_SOFT_LINK_TEST_NUM_OBJS_VISITED) {
-                H5_FAILED();
-                printf("    some objects were not visited!\n");
-                PART_ERROR(H5Ovisit_by_name_create_order_increasing);
-            }
-
-            /* Reset the special counter and repeat the test using an indirect object name. */
-            i = 2 * OBJECT_VISIT_SOFT_LINK_TEST_NUM_OBJS_VISITED;
-
-            /* Repeat the test using an indirect object name */
-            if (H5Ovisit_by_name3(group_id, OBJECT_VISIT_SOFT_LINK_TEST_GROUP_NAME1, H5_INDEX_CRT_ORDER,
-                                  H5_ITER_INC, object_visit_soft_link_callback, &i, H5O_INFO_ALL,
-                                  H5P_DEFAULT) < 0) {
-                H5_FAILED();
-                printf("    H5Ovisit_by_name by creation order in increasing order failed\n");
-                PART_ERROR(H5Ovisit_by_name_create_order_increasing);
-            }
-
-            if (i != 3 * OBJECT_VISIT_SOFT_LINK_TEST_NUM_OBJS_VISITED) {
-                H5_FAILED();
-                printf("    some objects were not visited!\n");
-                PART_ERROR(H5Ovisit_by_name_create_order_increasing);
-            }
-
-            PASSED();
-        }
-        PART_END(H5Ovisit_by_name_create_order_increasing);
-
-        PART_BEGIN(H5Ovisit_by_name_create_order_decreasing)
-        {
-            TESTING_2("H5Ovisit_by_name by creation order in decreasing order");
-
-            if (!(vol_cap_flags_g & H5VL_CAP_FLAG_CREATION_ORDER)) {
-                SKIPPED();
-                printf("    creation order tracking isn't supported with this VOL connector\n");
-                PART_EMPTY(H5Ovisit_by_name_create_order_decreasing);
-            }
-
-            /* Reset the counter to the appropriate value for the next test */
-            i = 3 * OBJECT_VISIT_SOFT_LINK_TEST_NUM_OBJS_VISITED;
-
-            /* First, test visiting using "." for the object name */
-            if (H5Ovisit_by_name3(subgroup_id, ".", H5_INDEX_CRT_ORDER, H5_ITER_DEC,
-                                  object_visit_soft_link_callback, &i, H5O_INFO_ALL, H5P_DEFAULT) < 0) {
-                H5_FAILED();
-                printf("    H5Ovisit_by_name by creation order in decreasing order failed\n");
-                PART_ERROR(H5Ovisit_by_name_create_order_decreasing);
-            }
-
-            if (i != 4 * OBJECT_VISIT_SOFT_LINK_TEST_NUM_OBJS_VISITED) {
-                H5_FAILED();
-                printf("    some objects were not visited!\n");
-                PART_ERROR(H5Ovisit_by_name_create_order_decreasing);
-            }
-
-            /* Reset the special counter and repeat the test using an indirect object name. */
-            i = 3 * OBJECT_VISIT_SOFT_LINK_TEST_NUM_OBJS_VISITED;
-
-            /* Repeat the test using an indirect object name */
-            if (H5Ovisit_by_name3(group_id, OBJECT_VISIT_SOFT_LINK_TEST_GROUP_NAME1, H5_INDEX_CRT_ORDER,
-                                  H5_ITER_DEC, object_visit_soft_link_callback, &i, H5O_INFO_ALL,
-                                  H5P_DEFAULT) < 0) {
-                H5_FAILED();
-                printf("    H5Ovisit_by_name by creation order in decreasing order failed\n");
-                PART_ERROR(H5Ovisit_by_name_create_order_decreasing);
-            }
-
-            if (i != 4 * OBJECT_VISIT_SOFT_LINK_TEST_NUM_OBJS_VISITED) {
-                H5_FAILED();
-                printf("    some objects were not visited!\n");
-                PART_ERROR(H5Ovisit_by_name_create_order_decreasing);
-            }
-
-            PASSED();
-        }
-        PART_END(H5Ovisit_by_name_create_order_decreasing);
     }
-    END_MULTIPART;
+    SUBTEST_END(params);
 
-    TESTING_2("test cleanup");
+    SUBTEST_BEGIN(params, "H5Ovisit by object name in decreasing order")
+    {
+        /* Reset the counter to the appropriate value for the next test */
+        i = OBJECT_VISIT_SOFT_LINK_TEST_NUM_OBJS_VISITED;
+
+        if (H5Ovisit3(subgroup_id, H5_INDEX_NAME, H5_ITER_DEC, object_visit_soft_link_callback, &i,
+                      H5O_INFO_ALL) < 0) {
+            printf("    H5Ovisit by object name in decreasing order failed\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (i != 2 * OBJECT_VISIT_SOFT_LINK_TEST_NUM_OBJS_VISITED) {
+            printf("    some objects were not visited!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    SUBTEST_BEGIN(params, "H5Ovisit by creation order in increasing order")
+    {
+        if (!(vol_cap_flags_g & H5VL_CAP_FLAG_CREATION_ORDER)) {
+            TESTFRAME_SKIPPED(params);
+            printf("    creation order tracking isn't supported with this VOL connector\n");
+        }
+
+        /* Reset the counter to the appropriate value for the next test */
+        i = 2 * OBJECT_VISIT_SOFT_LINK_TEST_NUM_OBJS_VISITED;
+
+        if (H5Ovisit3(subgroup_id, H5_INDEX_CRT_ORDER, H5_ITER_INC, object_visit_soft_link_callback, &i,
+                      H5O_INFO_ALL) < 0) {
+            printf("    H5Ovisit by creation order in increasing order failed\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (i != 3 * OBJECT_VISIT_SOFT_LINK_TEST_NUM_OBJS_VISITED) {
+            printf("    some objects were not visited!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    SUBTEST_BEGIN(params, "H5Ovisit by creation order in decreasing order")
+    {
+        if (!(vol_cap_flags_g & H5VL_CAP_FLAG_CREATION_ORDER)) {
+            TESTFRAME_SKIPPED(params);
+            printf("    creation order tracking isn't supported with this VOL connector\n");
+        }
+
+        /* Reset the counter to the appropriate value for the next test */
+        i = 3 * OBJECT_VISIT_SOFT_LINK_TEST_NUM_OBJS_VISITED;
+
+        if (H5Ovisit3(subgroup_id, H5_INDEX_CRT_ORDER, H5_ITER_DEC, object_visit_soft_link_callback, &i,
+                      H5O_INFO_ALL) < 0) {
+            printf("    H5Ovisit by creation order in decreasing order failed\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (i != 4 * OBJECT_VISIT_SOFT_LINK_TEST_NUM_OBJS_VISITED) {
+            printf("    some objects were not visited!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    SUBTEST_BEGIN(params, "H5Ovisit_by_name by object name in increasing order")
+    {
+        /* Reset the counter to the appropriate value for the next test */
+        i = 0;
+
+        /* First, test visiting using "." for the object name */
+        if (H5Ovisit_by_name3(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_INC,
+                              object_visit_soft_link_callback, &i, H5O_INFO_ALL, H5P_DEFAULT) < 0) {
+            printf("    H5Ovisit_by_name by object name in increasing order failed\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (i != OBJECT_VISIT_SOFT_LINK_TEST_NUM_OBJS_VISITED) {
+            printf("    some objects were not visited!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        /* Reset the special counter and repeat the test using an indirect object name. */
+        i = 0;
+
+        /* Repeat the test using an indirect object name */
+        if (H5Ovisit_by_name3(group_id, OBJECT_VISIT_SOFT_LINK_TEST_GROUP_NAME1, H5_INDEX_NAME,
+                              H5_ITER_INC, object_visit_soft_link_callback, &i, H5O_INFO_ALL,
+                              H5P_DEFAULT) < 0) {
+            printf("    H5Ovisit_by_name by object name in increasing order failed\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (i != OBJECT_VISIT_SOFT_LINK_TEST_NUM_OBJS_VISITED) {
+            printf("    some objects were not visited!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    SUBTEST_BEGIN(params, "H5Ovisit_by_name by object name in decreasing order")
+    {
+        /* Reset the counter to the appropriate value for the next test */
+        i = OBJECT_VISIT_SOFT_LINK_TEST_NUM_OBJS_VISITED;
+
+        /* First, test visiting using "." for the object name */
+        if (H5Ovisit_by_name3(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_DEC,
+                              object_visit_soft_link_callback, &i, H5O_INFO_ALL, H5P_DEFAULT) < 0) {
+            printf("    H5Ovisit_by_name by object name in decreasing order failed\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (i != 2 * OBJECT_VISIT_SOFT_LINK_TEST_NUM_OBJS_VISITED) {
+            printf("    some objects were not visited!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        /* Reset the special counter and repeat the test using an indirect object name. */
+        i = OBJECT_VISIT_SOFT_LINK_TEST_NUM_OBJS_VISITED;
+
+        /* Repeat the test using an indirect object name */
+        if (H5Ovisit_by_name3(group_id, OBJECT_VISIT_SOFT_LINK_TEST_GROUP_NAME1, H5_INDEX_NAME,
+                              H5_ITER_DEC, object_visit_soft_link_callback, &i, H5O_INFO_ALL,
+                              H5P_DEFAULT) < 0) {
+            printf("    H5Ovisit_by_name by object name in decreasing order failed\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (i != 2 * OBJECT_VISIT_SOFT_LINK_TEST_NUM_OBJS_VISITED) {
+            printf("    some objects were not visited!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    SUBTEST_BEGIN(params, "H5Ovisit_by_name by creation order in increasing order")
+    {
+        if (!(vol_cap_flags_g & H5VL_CAP_FLAG_CREATION_ORDER)) {
+            TESTFRAME_SKIPPED(params);
+            printf("    creation order tracking isn't supported with this VOL connector\n");
+        }
+
+        /* Reset the counter to the appropriate value for the next test */
+        i = 2 * OBJECT_VISIT_SOFT_LINK_TEST_NUM_OBJS_VISITED;
+
+        /* First, test visiting using "." for the object name */
+        if (H5Ovisit_by_name3(subgroup_id, ".", H5_INDEX_CRT_ORDER, H5_ITER_INC,
+                              object_visit_soft_link_callback, &i, H5O_INFO_ALL, H5P_DEFAULT) < 0) {
+            printf("    H5Ovisit_by_name by creation order in increasing order failed\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (i != 3 * OBJECT_VISIT_SOFT_LINK_TEST_NUM_OBJS_VISITED) {
+            printf("    some objects were not visited!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        /* Reset the special counter and repeat the test using an indirect object name. */
+        i = 2 * OBJECT_VISIT_SOFT_LINK_TEST_NUM_OBJS_VISITED;
+
+        /* Repeat the test using an indirect object name */
+        if (H5Ovisit_by_name3(group_id, OBJECT_VISIT_SOFT_LINK_TEST_GROUP_NAME1, H5_INDEX_CRT_ORDER,
+                              H5_ITER_INC, object_visit_soft_link_callback, &i, H5O_INFO_ALL,
+                              H5P_DEFAULT) < 0) {
+            printf("    H5Ovisit_by_name by creation order in increasing order failed\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (i != 3 * OBJECT_VISIT_SOFT_LINK_TEST_NUM_OBJS_VISITED) {
+            printf("    some objects were not visited!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    SUBTEST_BEGIN(params, "H5Ovisit_by_name by creation order in decreasing order")
+    {
+        if (!(vol_cap_flags_g & H5VL_CAP_FLAG_CREATION_ORDER)) {
+            TESTFRAME_SKIPPED(params);
+            printf("    creation order tracking isn't supported with this VOL connector\n");
+        }
+
+        /* Reset the counter to the appropriate value for the next test */
+        i = 3 * OBJECT_VISIT_SOFT_LINK_TEST_NUM_OBJS_VISITED;
+
+        /* First, test visiting using "." for the object name */
+        if (H5Ovisit_by_name3(subgroup_id, ".", H5_INDEX_CRT_ORDER, H5_ITER_DEC,
+                              object_visit_soft_link_callback, &i, H5O_INFO_ALL, H5P_DEFAULT) < 0) {
+            printf("    H5Ovisit_by_name by creation order in decreasing order failed\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (i != 4 * OBJECT_VISIT_SOFT_LINK_TEST_NUM_OBJS_VISITED) {
+            printf("    some objects were not visited!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        /* Reset the special counter and repeat the test using an indirect object name. */
+        i = 3 * OBJECT_VISIT_SOFT_LINK_TEST_NUM_OBJS_VISITED;
+
+        /* Repeat the test using an indirect object name */
+        if (H5Ovisit_by_name3(group_id, OBJECT_VISIT_SOFT_LINK_TEST_GROUP_NAME1, H5_INDEX_CRT_ORDER,
+                              H5_ITER_DEC, object_visit_soft_link_callback, &i, H5O_INFO_ALL,
+                              H5P_DEFAULT) < 0) {
+            printf("    H5Ovisit_by_name by creation order in decreasing order failed\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (i != 4 * OBJECT_VISIT_SOFT_LINK_TEST_NUM_OBJS_VISITED) {
+            printf("    some objects were not visited!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
 
     if (H5Pclose(gcpl_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Gclose(subgroup_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Gclose(group_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Gclose(container_group) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Fclose(file_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
 
-    PASSED();
-
-    return;
+    return SUCCEED;
 
 error:
     H5E_BEGIN_TRY
@@ -6214,48 +5159,40 @@ error:
     }
     H5E_END_TRY
 
-    return;
+    return FAIL;
 }
 
 /*
  * A test to check that H5Ovisit(_by_name) fails when
  * it is passed invalid parameters.
  */
-static void
-test_object_visit_invalid_params(void)
+static herr_t
+test_object_visit_invalid_params(TestParams_t *params)
 {
     herr_t err_ret         = -1;
     hid_t  file_id         = H5I_INVALID_HID;
     hid_t  container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
     hid_t  group_id2 = H5I_INVALID_HID;
 
-    TESTING_MULTIPART("object visiting with invalid parameters");
-
     /* Make sure the connector supports the API functions being tested */
     if (!(vol_cap_flags_g & H5VL_CAP_FLAG_FILE_BASIC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_GROUP_BASIC) ||
         !(vol_cap_flags_g & H5VL_CAP_FLAG_ITERATE)) {
-        SKIPPED();
         printf("    API functions for basic file, group, or iterate aren't supported with this connector\n");
-        return;
+        return SKIP;
     }
 
-    TESTING_2("test setup");
-
-    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME(params), H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME(params));
         goto error;
     }
 
     if ((container_group = H5Gopen2(file_id, OBJECT_TEST_GROUP_NAME, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't open container group '%s'\n", OBJECT_TEST_GROUP_NAME);
         goto error;
     }
 
     if ((group_id = H5Gcreate2(container_group, OBJECT_VISIT_INVALID_PARAMS_TEST_SUBGROUP_NAME, H5P_DEFAULT,
                                H5P_DEFAULT, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't create container sub-group '%s'\n",
                OBJECT_VISIT_INVALID_PARAMS_TEST_SUBGROUP_NAME);
         goto error;
@@ -6263,264 +5200,208 @@ test_object_visit_invalid_params(void)
 
     if ((group_id2 = H5Gcreate2(group_id, OBJECT_VISIT_INVALID_PARAMS_TEST_GROUP_NAME, H5P_DEFAULT,
                                 H5P_DEFAULT, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't create group '%s'\n", OBJECT_VISIT_INVALID_PARAMS_TEST_GROUP_NAME);
         goto error;
     }
 
-    PASSED();
-
-    BEGIN_MULTIPART
+    SUBTEST_BEGIN(params, "H5Ovisit with an invalid object ID")
     {
-        PART_BEGIN(H5Ovisit_invalid_obj_id)
+        H5E_BEGIN_TRY
         {
-            TESTING_2("H5Ovisit with an invalid object ID");
-
-            H5E_BEGIN_TRY
-            {
-                err_ret = H5Ovisit3(H5I_INVALID_HID, H5_INDEX_NAME, H5_ITER_INC, object_visit_noop_callback,
-                                    NULL, H5O_INFO_ALL);
-            }
-            H5E_END_TRY
-
-            if (err_ret >= 0) {
-                H5_FAILED();
-                printf("    H5Ovisit succeeded with an invalid object ID!\n");
-                PART_ERROR(H5Ovisit_invalid_obj_id);
-            }
-
-            PASSED();
+            err_ret = H5Ovisit3(H5I_INVALID_HID, H5_INDEX_NAME, H5_ITER_INC, object_visit_noop_callback,
+                                NULL, H5O_INFO_ALL);
         }
-        PART_END(H5Ovisit_invalid_obj_id);
+        H5E_END_TRY
 
-        PART_BEGIN(H5Ovisit_invalid_index_type)
-        {
-            TESTING_2("H5Ovisit with an invalid index type");
-
-            H5E_BEGIN_TRY
-            {
-                err_ret = H5Ovisit3(group_id, H5_INDEX_UNKNOWN, H5_ITER_INC, object_visit_noop_callback, NULL,
-                                    H5O_INFO_ALL);
-            }
-            H5E_END_TRY
-
-            if (err_ret >= 0) {
-                H5_FAILED();
-                printf("    H5Ovisit succeeded with invalid index type H5_INDEX_UNKNOWN!\n");
-                PART_ERROR(H5Ovisit_invalid_index_type);
-            }
-
-            H5E_BEGIN_TRY
-            {
-                err_ret = H5Ovisit3(group_id, H5_INDEX_N, H5_ITER_INC, object_visit_noop_callback, NULL,
-                                    H5O_INFO_ALL);
-            }
-            H5E_END_TRY
-
-            if (err_ret >= 0) {
-                H5_FAILED();
-                printf("    H5Ovisit succeeded with invalid index type H5_INDEX_N!\n");
-                PART_ERROR(H5Ovisit_invalid_index_type);
-            }
-
-            PASSED();
+        if (err_ret >= 0) {
+            printf("    H5Ovisit succeeded with an invalid object ID!\n");
+            TESTFRAME_TEST_ERROR(params);
         }
-        PART_END(H5Ovisit_invalid_index_type);
-
-        PART_BEGIN(H5Ovisit_invalid_iter_order)
-        {
-            TESTING_2("H5Ovisit with an invalid iteration ordering");
-
-            H5E_BEGIN_TRY
-            {
-                err_ret = H5Ovisit3(group_id, H5_INDEX_NAME, H5_ITER_UNKNOWN, object_visit_noop_callback,
-                                    NULL, H5O_INFO_ALL);
-            }
-            H5E_END_TRY
-
-            if (err_ret >= 0) {
-                H5_FAILED();
-                printf("    H5Ovisit succeeded with invalid iteration ordering H5_ITER_UNKNOWN!\n");
-                PART_ERROR(H5Ovisit_invalid_iter_order);
-            }
-
-            H5E_BEGIN_TRY
-            {
-                err_ret = H5Ovisit3(group_id, H5_INDEX_NAME, H5_ITER_N, object_visit_noop_callback, NULL,
-                                    H5O_INFO_ALL);
-            }
-            H5E_END_TRY
-
-            if (err_ret >= 0) {
-                H5_FAILED();
-                printf("    H5Ovisit succeeded with invalid iteration ordering H5_ITER_N!\n");
-                PART_ERROR(H5Ovisit_invalid_iter_order);
-            }
-
-            PASSED();
-        }
-        PART_END(H5Ovisit_invalid_iter_order);
-
-        PART_BEGIN(H5Ovisit_by_name_invalid_loc_id)
-        {
-            TESTING_2("H5Ovisit_by_name with an invalid location ID");
-
-            H5E_BEGIN_TRY
-            {
-                err_ret = H5Ovisit_by_name3(H5I_INVALID_HID, ".", H5_INDEX_NAME, H5_ITER_N,
-                                            object_visit_noop_callback, NULL, H5O_INFO_ALL, H5P_DEFAULT);
-            }
-            H5E_END_TRY
-
-            if (err_ret >= 0) {
-                H5_FAILED();
-                printf("    H5Ovisit_by_name succeeded with an invalid location ID!\n");
-                PART_ERROR(H5Ovisit_by_name_invalid_loc_id);
-            }
-
-            PASSED();
-        }
-        PART_END(H5Ovisit_by_name_invalid_loc_id);
-
-        PART_BEGIN(H5Ovisit_by_name_invalid_obj_name)
-        {
-            TESTING_2("H5Ovisit_by_name with an invalid object name");
-
-            H5E_BEGIN_TRY
-            {
-                err_ret = H5Ovisit_by_name3(group_id, NULL, H5_INDEX_NAME, H5_ITER_N,
-                                            object_visit_noop_callback, NULL, H5O_INFO_ALL, H5P_DEFAULT);
-            }
-            H5E_END_TRY
-
-            if (err_ret >= 0) {
-                H5_FAILED();
-                printf("    H5Ovisit_by_name succeeded with a NULL object name!\n");
-                PART_ERROR(H5Ovisit_by_name_invalid_obj_name);
-            }
-
-            H5E_BEGIN_TRY
-            {
-                err_ret = H5Ovisit_by_name3(group_id, "", H5_INDEX_NAME, H5_ITER_N,
-                                            object_visit_noop_callback, NULL, H5O_INFO_ALL, H5P_DEFAULT);
-            }
-            H5E_END_TRY
-
-            if (err_ret >= 0) {
-                H5_FAILED();
-                printf("    H5Ovisit_by_name succeeded with an invalid object name of ''!\n");
-                PART_ERROR(H5Ovisit_by_name_invalid_obj_name);
-            }
-
-            PASSED();
-        }
-        PART_END(H5Ovisit_by_name_invalid_obj_name);
-
-        PART_BEGIN(H5Ovisit_by_name_invalid_index_type)
-        {
-            TESTING_2("H5Ovisit_by_name with an invalid index type");
-
-            H5E_BEGIN_TRY
-            {
-                err_ret = H5Ovisit_by_name3(group_id, ".", H5_INDEX_UNKNOWN, H5_ITER_N,
-                                            object_visit_noop_callback, NULL, H5O_INFO_ALL, H5P_DEFAULT);
-            }
-            H5E_END_TRY
-
-            if (err_ret >= 0) {
-                H5_FAILED();
-                printf("    H5Ovisit_by_name succeeded with invalid index type H5_INDEX_UNKNOWN!\n");
-                PART_ERROR(H5Ovisit_by_name_invalid_index_type);
-            }
-
-            H5E_BEGIN_TRY
-            {
-                err_ret = H5Ovisit_by_name3(group_id, ".", H5_INDEX_N, H5_ITER_N, object_visit_noop_callback,
-                                            NULL, H5O_INFO_ALL, H5P_DEFAULT);
-            }
-            H5E_END_TRY
-
-            if (err_ret >= 0) {
-                H5_FAILED();
-                printf("    H5Ovisit_by_name succeeded with invalid index type H5_INDEX_N!\n");
-                PART_ERROR(H5Ovisit_by_name_invalid_index_type);
-            }
-
-            PASSED();
-        }
-        PART_END(H5Ovisit_by_name_invalid_index_type);
-
-        PART_BEGIN(H5Ovisit_by_name_invalid_iter_order)
-        {
-            TESTING_2("H5Ovisit_by_name with an invalid iteration ordering");
-
-            H5E_BEGIN_TRY
-            {
-                err_ret = H5Ovisit_by_name3(group_id, ".", H5_INDEX_NAME, H5_ITER_UNKNOWN,
-                                            object_visit_noop_callback, NULL, H5O_INFO_ALL, H5P_DEFAULT);
-            }
-            H5E_END_TRY
-
-            if (err_ret >= 0) {
-                H5_FAILED();
-                printf("    H5Ovisit_by_name succeeded with invalid iteration ordering H5_ITER_UNKNOWN!\n");
-                PART_ERROR(H5Ovisit_by_name_invalid_iter_order);
-            }
-
-            H5E_BEGIN_TRY
-            {
-                err_ret = H5Ovisit_by_name3(group_id, ".", H5_INDEX_NAME, H5_ITER_N,
-                                            object_visit_noop_callback, NULL, H5O_INFO_ALL, H5P_DEFAULT);
-            }
-            H5E_END_TRY
-
-            if (err_ret >= 0) {
-                H5_FAILED();
-                printf("    H5Ovisit_by_name succeeded with invalid iteration ordering H5_ITER_N!\n");
-                PART_ERROR(H5Ovisit_by_name_invalid_iter_order);
-            }
-
-            PASSED();
-        }
-        PART_END(H5Ovisit_by_name_invalid_iter_order);
-
-        PART_BEGIN(H5Ovisit_by_name_invalid_lapl)
-        {
-            TESTING_2("H5Ovisit_by_name with an invalid LAPL");
-
-            H5E_BEGIN_TRY
-            {
-                err_ret = H5Ovisit_by_name3(group_id, ".", H5_INDEX_NAME, H5_ITER_INC,
-                                            object_visit_noop_callback, NULL, H5O_INFO_ALL, H5I_INVALID_HID);
-            }
-            H5E_END_TRY
-
-            if (err_ret >= 0) {
-                H5_FAILED();
-                printf("    H5Ovisit_by_name succeeded with an invalid LAPL!\n");
-                PART_ERROR(H5Ovisit_by_name_invalid_lapl);
-            }
-
-            PASSED();
-        }
-        PART_END(H5Ovisit_by_name_invalid_lapl);
     }
-    END_MULTIPART;
+    SUBTEST_END(params);
 
-    TESTING_2("test cleanup");
+    SUBTEST_BEGIN(params, "H5Ovisit with an invalid index type")
+    {
+        H5E_BEGIN_TRY
+        {
+            err_ret = H5Ovisit3(group_id, H5_INDEX_UNKNOWN, H5_ITER_INC, object_visit_noop_callback, NULL,
+                                H5O_INFO_ALL);
+        }
+        H5E_END_TRY
+
+        if (err_ret >= 0) {
+            printf("    H5Ovisit succeeded with invalid index type H5_INDEX_UNKNOWN!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        H5E_BEGIN_TRY
+        {
+            err_ret = H5Ovisit3(group_id, H5_INDEX_N, H5_ITER_INC, object_visit_noop_callback, NULL,
+                                H5O_INFO_ALL);
+        }
+        H5E_END_TRY
+
+        if (err_ret >= 0) {
+            printf("    H5Ovisit succeeded with invalid index type H5_INDEX_N!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    SUBTEST_BEGIN(params, "H5Ovisit with an invalid iteration ordering")
+    {
+        H5E_BEGIN_TRY
+        {
+            err_ret = H5Ovisit3(group_id, H5_INDEX_NAME, H5_ITER_UNKNOWN, object_visit_noop_callback,
+                                NULL, H5O_INFO_ALL);
+        }
+        H5E_END_TRY
+
+        if (err_ret >= 0) {
+            printf("    H5Ovisit succeeded with invalid iteration ordering H5_ITER_UNKNOWN!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        H5E_BEGIN_TRY
+        {
+            err_ret = H5Ovisit3(group_id, H5_INDEX_NAME, H5_ITER_N, object_visit_noop_callback, NULL,
+                                H5O_INFO_ALL);
+        }
+        H5E_END_TRY
+
+        if (err_ret >= 0) {
+            printf("    H5Ovisit succeeded with invalid iteration ordering H5_ITER_N!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    SUBTEST_BEGIN(params, "H5Ovisit_by_name with an invalid location ID")
+    {
+        H5E_BEGIN_TRY
+        {
+            err_ret = H5Ovisit_by_name3(H5I_INVALID_HID, ".", H5_INDEX_NAME, H5_ITER_N,
+                                        object_visit_noop_callback, NULL, H5O_INFO_ALL, H5P_DEFAULT);
+        }
+        H5E_END_TRY
+
+        if (err_ret >= 0) {
+            printf("    H5Ovisit_by_name succeeded with an invalid location ID!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    SUBTEST_BEGIN(params, "H5Ovisit_by_name with an invalid object name")
+    {
+        H5E_BEGIN_TRY
+        {
+            err_ret = H5Ovisit_by_name3(group_id, NULL, H5_INDEX_NAME, H5_ITER_N,
+                                        object_visit_noop_callback, NULL, H5O_INFO_ALL, H5P_DEFAULT);
+        }
+        H5E_END_TRY
+
+        if (err_ret >= 0) {
+            printf("    H5Ovisit_by_name succeeded with a NULL object name!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        H5E_BEGIN_TRY
+        {
+            err_ret = H5Ovisit_by_name3(group_id, "", H5_INDEX_NAME, H5_ITER_N,
+                                        object_visit_noop_callback, NULL, H5O_INFO_ALL, H5P_DEFAULT);
+        }
+        H5E_END_TRY
+
+        if (err_ret >= 0) {
+            printf("    H5Ovisit_by_name succeeded with an invalid object name of ''!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    SUBTEST_BEGIN(params, "H5Ovisit_by_name with an invalid index type")
+    {
+        H5E_BEGIN_TRY
+        {
+            err_ret = H5Ovisit_by_name3(group_id, ".", H5_INDEX_UNKNOWN, H5_ITER_N,
+                                        object_visit_noop_callback, NULL, H5O_INFO_ALL, H5P_DEFAULT);
+        }
+        H5E_END_TRY
+
+        if (err_ret >= 0) {
+            printf("    H5Ovisit_by_name succeeded with invalid index type H5_INDEX_UNKNOWN!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        H5E_BEGIN_TRY
+        {
+            err_ret = H5Ovisit_by_name3(group_id, ".", H5_INDEX_N, H5_ITER_N, object_visit_noop_callback,
+                                        NULL, H5O_INFO_ALL, H5P_DEFAULT);
+        }
+        H5E_END_TRY
+
+        if (err_ret >= 0) {
+            printf("    H5Ovisit_by_name succeeded with invalid index type H5_INDEX_N!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    SUBTEST_BEGIN(params, "H5Ovisit_by_name with an invalid iteration ordering")
+    {
+        H5E_BEGIN_TRY
+        {
+            err_ret = H5Ovisit_by_name3(group_id, ".", H5_INDEX_NAME, H5_ITER_UNKNOWN,
+                                        object_visit_noop_callback, NULL, H5O_INFO_ALL, H5P_DEFAULT);
+        }
+        H5E_END_TRY
+
+        if (err_ret >= 0) {
+            printf("    H5Ovisit_by_name succeeded with invalid iteration ordering H5_ITER_UNKNOWN!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        H5E_BEGIN_TRY
+        {
+            err_ret = H5Ovisit_by_name3(group_id, ".", H5_INDEX_NAME, H5_ITER_N,
+                                        object_visit_noop_callback, NULL, H5O_INFO_ALL, H5P_DEFAULT);
+        }
+        H5E_END_TRY
+
+        if (err_ret >= 0) {
+            printf("    H5Ovisit_by_name succeeded with invalid iteration ordering H5_ITER_N!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    SUBTEST_BEGIN(params, "H5Ovisit_by_name with an invalid LAPL")
+    {
+        H5E_BEGIN_TRY
+        {
+            err_ret = H5Ovisit_by_name3(group_id, ".", H5_INDEX_NAME, H5_ITER_INC,
+                                        object_visit_noop_callback, NULL, H5O_INFO_ALL, H5I_INVALID_HID);
+        }
+        H5E_END_TRY
+
+        if (err_ret >= 0) {
+            printf("    H5Ovisit_by_name succeeded with an invalid LAPL!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
 
     if (H5Gclose(group_id2) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Gclose(group_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Gclose(container_group) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Fclose(file_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
 
-    PASSED();
-
-    return;
+    return SUCCEED;
 
 error:
     H5E_BEGIN_TRY
@@ -6532,14 +5413,14 @@ error:
     }
     H5E_END_TRY
 
-    return;
+    return FAIL;
 }
 
 /*
  * A test for H5Oclose.
  */
-static void
-test_close_object(void)
+static herr_t
+test_close_object(TestParams_t *params)
 {
     hid_t file_id         = H5I_INVALID_HID;
     hid_t container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
@@ -6549,173 +5430,133 @@ test_close_object(void)
     hid_t dset_dtype = H5I_INVALID_HID;
     hid_t fspace_id  = H5I_INVALID_HID;
 
-    TESTING_MULTIPART("H5Oclose");
-
     /* Make sure the connector supports the API functions being tested */
     if (!(vol_cap_flags_g & (H5VL_CAP_FLAG_FILE_BASIC)) || !(vol_cap_flags_g & H5VL_CAP_FLAG_GROUP_BASIC) ||
         !(vol_cap_flags_g & H5VL_CAP_FLAG_OBJECT_BASIC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_DATASET_BASIC) ||
         !(vol_cap_flags_g & H5VL_CAP_FLAG_ATTR_BASIC) ||
         !(vol_cap_flags_g & H5VL_CAP_FLAG_STORED_DATATYPES)) {
-        SKIPPED();
         printf("    API functions for basic file, group, object, dataset, attribute, or stored datatype "
                "aren't supported with this connector\n");
-        return;
+        return SKIP;
     }
 
-    TESTING_2("test setup");
-
-    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME(params), H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME(params));
         goto error;
     }
 
     if ((container_group = H5Gopen2(file_id, OBJECT_TEST_GROUP_NAME, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't open container group '%s'\n", OBJECT_TEST_GROUP_NAME);
         goto error;
     }
 
     if ((group_id = H5Gcreate2(container_group, OBJECT_CLOSE_TEST_GROUP_NAME, H5P_DEFAULT, H5P_DEFAULT,
                                H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't create container subgroup '%s'\n", OBJECT_CLOSE_TEST_GROUP_NAME);
         goto error;
     }
 
-    if ((fspace_id = generate_random_dataspace(OBJECT_CLOSE_TEST_SPACE_RANK, NULL, NULL, FALSE)) < 0)
-        TEST_ERROR;
+    if ((fspace_id = generate_random_dataspace(OBJECT_CLOSE_TEST_SPACE_RANK, NULL, NULL, false)) < 0)
+        TESTFRAME_TEST_ERROR(params);
 
-    if ((dset_dtype = generate_random_datatype(H5T_NO_CLASS, FALSE)) < 0)
-        TEST_ERROR;
+    if ((dset_dtype = generate_random_datatype(H5T_NO_CLASS, false)) < 0)
+        TESTFRAME_TEST_ERROR(params);
 
-    PASSED();
-
-    BEGIN_MULTIPART
+    SUBTEST_BEGIN(params, "H5Oclose on a group")
     {
-        PART_BEGIN(H5Oclose_group)
-        {
-            TESTING_2("H5Oclose on a group");
-
-            if ((group_id2 = H5Gcreate2(group_id, OBJECT_CLOSE_TEST_GRP_NAME, H5P_DEFAULT, H5P_DEFAULT,
-                                        H5P_DEFAULT)) < 0) {
-                H5_FAILED();
-                printf("    couldn't create group '%s'\n", OBJECT_CLOSE_TEST_GRP_NAME);
-                PART_ERROR(H5Oclose_group);
-            }
-
-            H5E_BEGIN_TRY
-            {
-                H5Gclose(group_id2);
-            }
-            H5E_END_TRY
-
-            if ((group_id2 = H5Oopen(group_id, OBJECT_CLOSE_TEST_GRP_NAME, H5P_DEFAULT)) < 0) {
-                H5_FAILED();
-                printf("    couldn't open group '%s' with H5Oopen\n", OBJECT_CLOSE_TEST_GRP_NAME);
-                PART_ERROR(H5Oclose_group);
-            }
-
-            if (H5Oclose(group_id2) < 0) {
-                H5_FAILED();
-                printf("    couldn't close group '%s' with H5Oclose\n", OBJECT_CLOSE_TEST_GRP_NAME);
-                PART_ERROR(H5Oclose_group);
-            }
-
-            PASSED();
+        if ((group_id2 = H5Gcreate2(group_id, OBJECT_CLOSE_TEST_GRP_NAME, H5P_DEFAULT, H5P_DEFAULT,
+                                    H5P_DEFAULT)) < 0) {
+            printf("    couldn't create group '%s'\n", OBJECT_CLOSE_TEST_GRP_NAME);
+            TESTFRAME_TEST_ERROR(params);
         }
-        PART_END(H5Oclose_group);
 
-        PART_BEGIN(H5Oclose_dset)
+        H5E_BEGIN_TRY
         {
-            TESTING_2("H5Oclose on a dataset");
-
-            if ((dset_id = H5Dcreate2(group_id, OBJECT_CLOSE_TEST_DSET_NAME, dset_dtype, fspace_id,
-                                      H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
-                H5_FAILED();
-                printf("    couldn't create dataset '%s'\n", OBJECT_CLOSE_TEST_DSET_NAME);
-                PART_ERROR(H5Oclose_dset);
-            }
-
-            H5E_BEGIN_TRY
-            {
-                H5Dclose(dset_id);
-            }
-            H5E_END_TRY
-
-            if ((dset_id = H5Oopen(group_id, OBJECT_CLOSE_TEST_DSET_NAME, H5P_DEFAULT)) < 0) {
-                H5_FAILED();
-                printf("    couldn't open dataset '%s' with H5Oopen\n", OBJECT_CLOSE_TEST_DSET_NAME);
-                PART_ERROR(H5Oclose_dset);
-            }
-
-            if (H5Oclose(dset_id) < 0) {
-                H5_FAILED();
-                printf("    couldn't close dataset '%s' with H5Oclose\n", OBJECT_CLOSE_TEST_DSET_NAME);
-                PART_ERROR(H5Oclose_dset);
-            }
-
-            PASSED();
+            H5Gclose(group_id2);
         }
-        PART_END(H5Oclose_dset);
+        H5E_END_TRY
 
-        PART_BEGIN(H5Oclose_dtype)
-        {
-            TESTING_2("H5Oclose on a committed datatype");
-
-            if ((dtype_id = generate_random_datatype(H5T_NO_CLASS, FALSE)) < 0) {
-                H5_FAILED();
-                printf("    couldn't create datatype '%s'\n", OBJECT_CLOSE_TEST_TYPE_NAME);
-                PART_ERROR(H5Oclose_dtype);
-            }
-
-            if (H5Tcommit2(group_id, OBJECT_CLOSE_TEST_TYPE_NAME, dtype_id, H5P_DEFAULT, H5P_DEFAULT,
-                           H5P_DEFAULT) < 0) {
-                H5_FAILED();
-                printf("    couldn't commit datatype '%s'\n", OBJECT_CLOSE_TEST_TYPE_NAME);
-                PART_ERROR(H5Oclose_dtype);
-            }
-
-            H5E_BEGIN_TRY
-            {
-                H5Tclose(dtype_id);
-            }
-            H5E_END_TRY
-
-            if ((dtype_id = H5Oopen(group_id, OBJECT_CLOSE_TEST_TYPE_NAME, H5P_DEFAULT)) < 0) {
-                H5_FAILED();
-                printf("    couldn't open datatype '%s' with H5Oopen\n", OBJECT_CLOSE_TEST_TYPE_NAME);
-                PART_ERROR(H5Oclose_dtype);
-            }
-
-            if (H5Oclose(dtype_id) < 0) {
-                H5_FAILED();
-                printf("    couldn't close datatype '%s' with H5Oclose\n", OBJECT_CLOSE_TEST_TYPE_NAME);
-                PART_ERROR(H5Oclose_dtype);
-            }
-
-            PASSED();
+        if ((group_id2 = H5Oopen(group_id, OBJECT_CLOSE_TEST_GRP_NAME, H5P_DEFAULT)) < 0) {
+            printf("    couldn't open group '%s' with H5Oopen\n", OBJECT_CLOSE_TEST_GRP_NAME);
+            TESTFRAME_TEST_ERROR(params);
         }
-        PART_END(H5Oclose_dtype);
+
+        if (H5Oclose(group_id2) < 0) {
+            printf("    couldn't close group '%s' with H5Oclose\n", OBJECT_CLOSE_TEST_GRP_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
     }
-    END_MULTIPART;
+    SUBTEST_END(params);
 
-    TESTING_2("test cleanup");
+    SUBTEST_BEGIN(params, "H5Oclose on a dataset")
+    {
+        if ((dset_id = H5Dcreate2(group_id, OBJECT_CLOSE_TEST_DSET_NAME, dset_dtype, fspace_id,
+                                  H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
+            printf("    couldn't create dataset '%s'\n", OBJECT_CLOSE_TEST_DSET_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        H5E_BEGIN_TRY
+        {
+            H5Dclose(dset_id);
+        }
+        H5E_END_TRY
+
+        if ((dset_id = H5Oopen(group_id, OBJECT_CLOSE_TEST_DSET_NAME, H5P_DEFAULT)) < 0) {
+            printf("    couldn't open dataset '%s' with H5Oopen\n", OBJECT_CLOSE_TEST_DSET_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (H5Oclose(dset_id) < 0) {
+            printf("    couldn't close dataset '%s' with H5Oclose\n", OBJECT_CLOSE_TEST_DSET_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    SUBTEST_BEGIN(params, "H5Oclose on a committed datatype")
+    {
+        if ((dtype_id = generate_random_datatype(H5T_NO_CLASS, false)) < 0) {
+            printf("    couldn't create datatype '%s'\n", OBJECT_CLOSE_TEST_TYPE_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (H5Tcommit2(group_id, OBJECT_CLOSE_TEST_TYPE_NAME, dtype_id, H5P_DEFAULT, H5P_DEFAULT,
+                       H5P_DEFAULT) < 0) {
+            printf("    couldn't commit datatype '%s'\n", OBJECT_CLOSE_TEST_TYPE_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        H5E_BEGIN_TRY
+        {
+            H5Tclose(dtype_id);
+        }
+        H5E_END_TRY
+
+        if ((dtype_id = H5Oopen(group_id, OBJECT_CLOSE_TEST_TYPE_NAME, H5P_DEFAULT)) < 0) {
+            printf("    couldn't open datatype '%s' with H5Oopen\n", OBJECT_CLOSE_TEST_TYPE_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+
+        if (H5Oclose(dtype_id) < 0) {
+            printf("    couldn't close datatype '%s' with H5Oclose\n", OBJECT_CLOSE_TEST_TYPE_NAME);
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
 
     if (H5Sclose(fspace_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Tclose(dset_dtype) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Gclose(group_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Gclose(container_group) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Fclose(file_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
 
-    PASSED();
-
-    return;
+    return SUCCEED;
 
 error:
     H5E_BEGIN_TRY
@@ -6731,31 +5572,27 @@ error:
     }
     H5E_END_TRY
 
-    return;
+    return FAIL;
 }
 
 /*
  * A test to check that H5Oclose fails when it
  * is passed invalid parameters.
  */
-static void
-test_close_object_invalid_params(void)
+static herr_t
+test_close_object_invalid_params(TestParams_t *params)
 {
     herr_t err_ret = -1;
     hid_t  file_id = H5I_INVALID_HID;
 
-    TESTING("H5Oclose with an invalid object ID");
-
     /* Make sure the connector supports the API functions being tested */
     if (!(vol_cap_flags_g & (H5VL_CAP_FLAG_FILE_BASIC)) || !(vol_cap_flags_g & H5VL_CAP_FLAG_OBJECT_BASIC)) {
-        SKIPPED();
         printf("    API functions for basic file or object aren't supported with this connector\n");
-        return;
+        return SKIP;
     }
 
-    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME(params), H5F_ACC_RDWR, H5P_DEFAULT)) < 0) {
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME(params));
         goto error;
     }
 
@@ -6766,17 +5603,14 @@ test_close_object_invalid_params(void)
     H5E_END_TRY
 
     if (err_ret >= 0) {
-        H5_FAILED();
         printf("    H5Oclose succeeded with an invalid object ID!\n");
         goto error;
     }
 
     if (H5Fclose(file_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
 
-    PASSED();
-
-    return;
+    return SUCCEED;
 
 error:
     H5E_BEGIN_TRY
@@ -6785,15 +5619,15 @@ error:
     }
     H5E_END_TRY
 
-    return;
+    return FAIL;
 }
 
 /*
  * A test to check that various objects (file, dataspace, property list,
  * and attribute) can't be closed with H5Oclose.
  */
-static void
-test_close_invalid_objects(void)
+static herr_t
+test_close_invalid_objects(TestParams_t *params)
 {
     hid_t  file_id         = H5I_INVALID_HID;
     hid_t  container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
@@ -6803,158 +5637,120 @@ test_close_invalid_objects(void)
     hid_t  attr_id       = H5I_INVALID_HID;
     herr_t status;
 
-    TESTING_MULTIPART("H5Oclose invalid objects");
-
     /* Make sure the connector supports the API functions being tested */
     if (!(vol_cap_flags_g & (H5VL_CAP_FLAG_FILE_BASIC)) || !(vol_cap_flags_g & H5VL_CAP_FLAG_GROUP_BASIC) ||
         !(vol_cap_flags_g & H5VL_CAP_FLAG_OBJECT_BASIC)) {
-        SKIPPED();
         printf("    API functions for basic file, group, or object "
                "aren't supported with this connector\n");
-        return;
+        return SKIP;
     }
 
-    TESTING_2("test setup");
-
     if ((fapl_id = H5Pcreate(H5P_FILE_ACCESS)) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
 
-    if ((file_id = H5Fopen(H5_API_TEST_FILENAME, H5F_ACC_RDWR, fapl_id)) < 0) {
-        H5_FAILED();
-        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME);
+    if ((file_id = H5Fopen(H5_API_TEST_FILENAME(params), H5F_ACC_RDWR, fapl_id)) < 0) {
+        printf("    couldn't open file '%s'\n", H5_API_TEST_FILENAME(params));
         goto error;
     }
 
     if ((container_group = H5Gopen2(file_id, OBJECT_TEST_GROUP_NAME, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't open container group '%s'\n", OBJECT_TEST_GROUP_NAME);
         goto error;
     }
 
     if ((group_id = H5Gcreate2(container_group, OBJECT_CLOSE_INVALID_TEST_GROUP_NAME, H5P_DEFAULT,
                                H5P_DEFAULT, H5P_DEFAULT)) < 0) {
-        H5_FAILED();
         printf("    couldn't create container sub-group '%s'\n", OBJECT_OPEN_TEST_GROUP_NAME);
         goto error;
     }
 
-    if ((attr_space_id = generate_random_dataspace(OBJECT_CLOSE_INVALID_TEST_SPACE_RANK, NULL, NULL, TRUE)) <
+    if ((attr_space_id = generate_random_dataspace(OBJECT_CLOSE_INVALID_TEST_SPACE_RANK, NULL, NULL, true)) <
         0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
 
-    if ((attr_dtype = generate_random_datatype(H5T_NO_CLASS, TRUE)) < 0)
-        TEST_ERROR;
+    if ((attr_dtype = generate_random_datatype(H5T_NO_CLASS, true)) < 0)
+        TESTFRAME_TEST_ERROR(params);
 
     if ((attr_id = H5Acreate2(group_id, OBJECT_CLOSE_INVALID_TEST_ATTRIBUTE_NAME, attr_dtype, attr_space_id,
                               H5P_DEFAULT, H5P_DEFAULT)) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
 
-    PASSED();
-
-    BEGIN_MULTIPART
+    SUBTEST_BEGIN(params, "H5Oclose with an invalid object - file")
     {
-        PART_BEGIN(H5Oclose_file)
+        H5E_BEGIN_TRY
         {
-            TESTING_2("H5Oclose with an invalid object - file");
-
-            H5E_BEGIN_TRY
-            {
-                status = H5Oclose(file_id);
-            }
-            H5E_END_TRY
-
-            if (status >= 0) {
-                H5_FAILED();
-                printf("    H5Oclose succeeded with an invalid object (file)!\n");
-                PART_ERROR(H5Oclose_file);
-            }
-
-            PASSED();
+            status = H5Oclose(file_id);
         }
-        PART_END(H5Oclose_file);
+        H5E_END_TRY
 
-        PART_BEGIN(H5Oclose_plist)
-        {
-            TESTING_2("H5Oclose with an invalid object - property list");
-
-            H5E_BEGIN_TRY
-            {
-                status = H5Oclose(fapl_id);
-            }
-            H5E_END_TRY
-
-            if (status >= 0) {
-                H5_FAILED();
-                printf("    H5Oclose succeeded with an invalid object (property list)!\n");
-                PART_ERROR(H5Oclose_plist);
-            }
-
-            PASSED();
+        if (status >= 0) {
+            printf("    H5Oclose succeeded with an invalid object (file)!\n");
+            TESTFRAME_TEST_ERROR(params);
         }
-        PART_END(H5Oclose_plist);
-
-        PART_BEGIN(H5Oclose_dspace)
-        {
-            TESTING_2("H5Oclose with an invalid object - data space");
-
-            H5E_BEGIN_TRY
-            {
-                status = H5Oclose(attr_space_id);
-            }
-            H5E_END_TRY
-
-            if (status >= 0) {
-                H5_FAILED();
-                printf("    H5Oclose succeeded with an invalid object (data space)!\n");
-                PART_ERROR(H5Oclose_dspace);
-            }
-
-            PASSED();
-        }
-        PART_END(H5Oclose_dspace);
-
-        PART_BEGIN(H5Oclose_attribute)
-        {
-            TESTING_2("H5Oclose with an invalid object - attribute");
-
-            H5E_BEGIN_TRY
-            {
-                status = H5Oclose(attr_id);
-            }
-            H5E_END_TRY
-
-            if (status >= 0) {
-                H5_FAILED();
-                printf("    H5Oclose succeeded with an invalid object (attribute)!\n");
-                PART_ERROR(H5Oclose_attribute);
-            }
-
-            PASSED();
-        }
-        PART_END(H5Oclose_attribute);
     }
-    END_MULTIPART;
+    SUBTEST_END(params);
 
-    TESTING_2("test cleanup");
+    SUBTEST_BEGIN(params, "H5Oclose with an invalid object - property list")
+    {
+        H5E_BEGIN_TRY
+        {
+            status = H5Oclose(fapl_id);
+        }
+        H5E_END_TRY
+
+        if (status >= 0) {
+            printf("    H5Oclose succeeded with an invalid object (property list)!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    SUBTEST_BEGIN(params, "H5Oclose with an invalid object - data space")
+    {
+        H5E_BEGIN_TRY
+        {
+            status = H5Oclose(attr_space_id);
+        }
+        H5E_END_TRY
+
+        if (status >= 0) {
+            printf("    H5Oclose succeeded with an invalid object (data space)!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
+
+    SUBTEST_BEGIN(params, "H5Oclose with an invalid object - attribute")
+    {
+        H5E_BEGIN_TRY
+        {
+            status = H5Oclose(attr_id);
+        }
+        H5E_END_TRY
+
+        if (status >= 0) {
+            printf("    H5Oclose succeeded with an invalid object (attribute)!\n");
+            TESTFRAME_TEST_ERROR(params);
+        }
+    }
+    SUBTEST_END(params);
 
     if (H5Tclose(attr_dtype) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Aclose(attr_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Sclose(attr_space_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Gclose(group_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Gclose(container_group) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Fclose(file_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
     if (H5Pclose(fapl_id) < 0)
-        TEST_ERROR;
+        TESTFRAME_TEST_ERROR(params);
 
-    PASSED();
-
-    return;
+    return SUCCEED;
 
 error:
     H5E_BEGIN_TRY
@@ -6969,61 +5765,45 @@ error:
     }
     H5E_END_TRY
 
-    return;
+    return FAIL;
 } /* test_close_invalid_objects */
 
 /*
  * A test for H5Oflush.
  */
-static void
-test_flush_object(void)
+static herr_t
+test_flush_object(TestParams_t H5_ATTR_UNUSED *params)
 {
-    TESTING("H5Oflush");
-
-    SKIPPED();
-
-    return;
+    return SKIP;
 }
 
 /*
  * A test to check that H5Oflush fails when
  * it is passed invalid parameters.
  */
-static void
-test_flush_object_invalid_params(void)
+static herr_t
+test_flush_object_invalid_params(TestParams_t H5_ATTR_UNUSED *params)
 {
-    TESTING("H5Oflush with invalid parameters");
-
-    SKIPPED();
-
-    return;
+    return SKIP;
 }
 
 /*
  * A test for H5Orefresh.
  */
-static void
-test_refresh_object(void)
+static herr_t
+test_refresh_object(TestParams_t H5_ATTR_UNUSED *params)
 {
-    TESTING("H5Orefresh");
-
-    SKIPPED();
-
-    return;
+    return SKIP;
 }
 
 /*
  * A test to check that H5Orefresh fails when
  * it is passed invalid parameters.
  */
-static void
-test_refresh_object_invalid_params(void)
+static herr_t
+test_refresh_object_invalid_params(TestParams_t H5_ATTR_UNUSED *params)
 {
-    TESTING("H5Orefresh with invalid parameters");
-
-    SKIPPED();
-
-    return;
+    return SKIP;
 }
 
 /*
@@ -7046,7 +5826,7 @@ object_copy_attribute_iter_callback(hid_t location_id, const char *attr_name, co
 
     snprintf(expected_name, 256, "attr%d", (int)(*counter));
 
-    if (HDstrncmp(attr_name, expected_name, 256)) {
+    if (strncmp(attr_name, expected_name, 256)) {
         printf("    attribute name '%s' did not match expected name '%s'\n", attr_name, expected_name);
         ret_value = H5_ITER_ERROR;
         goto done;
@@ -7126,7 +5906,7 @@ object_copy_soft_link_non_expand_callback(hid_t group, const char *name, const H
              "/" OBJECT_TEST_GROUP_NAME "/" OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_SUBGROUP_NAME "/grp%d",
              (int)(*counter));
 
-    if (HDstrncmp(link_val_buf, expected_link_val, OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_BUF_SIZE)) {
+    if (strncmp(link_val_buf, expected_link_val, OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_BUF_SIZE)) {
         printf("    value '%s' for link '%s' did not match expected value '%s'\n", (char *)link_val_buf, name,
                expected_link_val);
         ret_value = H5_ITER_ERROR;
@@ -7166,7 +5946,7 @@ object_copy_soft_link_expand_callback(hid_t group, const char *name, const H5L_i
     /* Ensure that the link's name still follows the 'link1', 'link2', etc. pattern */
     snprintf(expected_link_name, OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_BUF_SIZE, "link%d", (int)(*counter));
 
-    if (HDstrncmp(name, expected_link_name, OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_BUF_SIZE)) {
+    if (strncmp(name, expected_link_name, OBJECT_COPY_GROUP_WITH_SOFT_LINKS_TEST_BUF_SIZE)) {
         printf("    link name '%s' did not match expected name '%s'\n", name, expected_link_name);
         ret_value = H5_ITER_ERROR;
         goto done;
@@ -7191,28 +5971,28 @@ object_visit_callback(hid_t o_id, const char *name, const H5O_info2_t *object_in
 
     UNUSED(o_id);
 
-    if (!HDstrncmp(name, ".", strlen(".") + 1) &&
+    if (!strncmp(name, ".", strlen(".") + 1) &&
         (counter_val == 0 || counter_val == 4 || counter_val == 8 || counter_val == 12)) {
         if (H5O_TYPE_GROUP == object_info->type)
             goto done;
         else
             printf("    type for object '%s' was not H5O_TYPE_GROUP\n", name);
     }
-    else if (!HDstrncmp(name, OBJECT_VISIT_TEST_GROUP_NAME, strlen(OBJECT_VISIT_TEST_GROUP_NAME) + 1) &&
+    else if (!strncmp(name, OBJECT_VISIT_TEST_GROUP_NAME, strlen(OBJECT_VISIT_TEST_GROUP_NAME) + 1) &&
              (counter_val == 2 || counter_val == 6 || counter_val == 9 || counter_val == 15)) {
         if (H5O_TYPE_GROUP == object_info->type)
             goto done;
         else
             printf("    type for object '%s' was not H5O_TYPE_GROUP\n", name);
     }
-    else if (!HDstrncmp(name, OBJECT_VISIT_TEST_DSET_NAME, strlen(OBJECT_VISIT_TEST_DSET_NAME) + 1) &&
+    else if (!strncmp(name, OBJECT_VISIT_TEST_DSET_NAME, strlen(OBJECT_VISIT_TEST_DSET_NAME) + 1) &&
              (counter_val == 1 || counter_val == 7 || counter_val == 10 || counter_val == 14)) {
         if (H5O_TYPE_DATASET == object_info->type)
             goto done;
         else
             printf("    type for object '%s' was not H5O_TYPE_DATASET\n", name);
     }
-    else if (!HDstrncmp(name, OBJECT_VISIT_TEST_TYPE_NAME, strlen(OBJECT_VISIT_TEST_TYPE_NAME) + 1) &&
+    else if (!strncmp(name, OBJECT_VISIT_TEST_TYPE_NAME, strlen(OBJECT_VISIT_TEST_TYPE_NAME) + 1) &&
              (counter_val == 3 || counter_val == 5 || counter_val == 11 || counter_val == 13)) {
         if (H5O_TYPE_NAMED_DATATYPE == object_info->type)
             goto done;
@@ -7264,7 +6044,7 @@ object_visit_dset_callback(hid_t o_id, const char *name, const H5O_info2_t *obje
     UNUSED(o_id);
     UNUSED(op_data);
 
-    if (HDstrncmp(name, ".", strlen(".") + 1)) {
+    if (strncmp(name, ".", strlen(".") + 1)) {
         printf("    object '%s' didn't match known names\n", name);
         return -1;
     }
@@ -7288,7 +6068,7 @@ object_visit_dtype_callback(hid_t o_id, const char *name, const H5O_info2_t *obj
     UNUSED(o_id);
     UNUSED(op_data);
 
-    if (HDstrncmp(name, ".", strlen(".") + 1)) {
+    if (strncmp(name, ".", strlen(".") + 1)) {
         printf("    object '%s' didn't match known names\n", name);
         return -1;
     }
@@ -7357,59 +6137,70 @@ object_visit_noop_callback(hid_t o_id, const char *name, const H5O_info2_t *obje
 void
 H5_api_object_test_add(void)
 {
-    int64_t testframe_flags = ALLOW_MULTITHREAD;
+    uint64_t testframe_flags = ALLOW_MULTITHREAD;
 
-    /* Add a fake test to print out a header to distinguish different test interfaces */
-    AddTest("print_object_test_header", print_object_test_header, NULL, "Prints header for object tests",
-            NULL, 0);
+    AddTest("test_open_object", test_open_object, NULL, NULL, NULL, 0,
+            testframe_flags, "object opening");
 
-    AddTest("test_open_object",  test_open_object,  NULL,  "object opening",  NULL, testframe_flags);
-    AddTest("test_open_object_invalid_params", test_open_object_invalid_params, NULL,
-            "object opening with invalid parameters", NULL, testframe_flags);
-    AddTest("test_object_exists",  test_object_exists,  NULL,  "object existence",  NULL, testframe_flags);
-    AddTest("test_object_exists_invalid_params", test_object_exists_invalid_params, NULL,
-            "object existence with invalid parameters", NULL, testframe_flags);
-    AddTest("test_get_object_info",  test_get_object_info,  NULL,  "object info retrieval",  NULL, testframe_flags);
-    AddTest("test_get_object_info_invalid_params", test_get_object_info_invalid_params, NULL,
-            "object info retrieval with invalid parameters", NULL, testframe_flags);
-    AddTest("test_link_object",  test_link_object,  NULL,  "object linking",  NULL, testframe_flags);
-    AddTest("test_link_object_invalid_params", test_link_object_invalid_params, NULL,
-            "object linking with invalid parameters", NULL, testframe_flags);
-    AddTest("test_incr_decr_object_refcount", test_incr_decr_object_refcount, NULL,
-            "increment/decrement the reference count of object", NULL, testframe_flags);
+    /* Add a header to the first object test to distinguish different test interfaces */
+    AddTestHeaderFunc("test_open_object", print_object_test_header);
+
+    AddTest("test_open_object_invalid_params", test_open_object_invalid_params, NULL, NULL, NULL, 0,
+            testframe_flags, "object opening with invalid parameters");
+    AddTest("test_object_exists", test_object_exists, NULL, NULL, NULL, 0,
+            testframe_flags, "object existence");
+    AddTest("test_object_exists_invalid_params", test_object_exists_invalid_params, NULL, NULL, NULL, 0,
+            testframe_flags, "object existence with invalid parameters");
+    AddTest("test_get_object_info", test_get_object_info, NULL, NULL, NULL, 0,
+            testframe_flags, "object info retrieval");
+    AddTest("test_get_object_info_invalid_params", test_get_object_info_invalid_params, NULL, NULL, NULL, 0,
+            testframe_flags, "object info retrieval with invalid parameters");
+    AddTest("test_link_object", test_link_object, NULL, NULL, NULL, 0,
+            testframe_flags, "object linking");
+    AddTest("test_link_object_invalid_params", test_link_object_invalid_params, NULL, NULL, NULL, 0,
+            testframe_flags, "object linking with invalid parameters");
+    AddTest("test_incr_decr_object_refcount", test_incr_decr_object_refcount, NULL, NULL, NULL, 0,
+            testframe_flags, "increment/decrement the reference count of object");
     AddTest("test_incr_decr_object_refcount_invalid_params", test_incr_decr_object_refcount_invalid_params,
-            NULL, "object reference count incr./decr. with an invalid parameter", NULL, testframe_flags);
-    AddTest("test_object_copy_basic",  test_object_copy_basic,  NULL,  "basic object copying",  NULL, testframe_flags);
-    AddTest("test_object_copy_already_existing", test_object_copy_already_existing, NULL,
-            "object copying to location where objects already exist", NULL, testframe_flags);
-    AddTest("test_object_copy_shallow_group_copy", test_object_copy_shallow_group_copy, NULL,
-            "object copying with H5O_COPY_SHALLOW_HIERARCHY_FLAG flag", NULL, testframe_flags);
-    AddTest("test_object_copy_no_attributes", test_object_copy_no_attributes, NULL,
-            "object copying with H5O_COPY_WITHOUT_ATTR_FLAG flag", NULL, testframe_flags);
-    AddTest("test_object_copy_by_soft_link", test_object_copy_by_soft_link, NULL,
-            "object copying through use of soft links", NULL, testframe_flags);
-    AddTest("test_object_copy_group_with_soft_links", test_object_copy_group_with_soft_links, NULL,
-            "group copying when group contains soft links", NULL, testframe_flags);
-    AddTest("test_object_copy_between_files", test_object_copy_between_files, NULL,
-            "object copying between files", NULL, testframe_flags);
-    AddTest("test_object_copy_invalid_params", test_object_copy_invalid_params, NULL,
-            "object copying with invalid parameters", NULL, testframe_flags);
-    AddTest("test_object_comments",  test_object_comments,  NULL,  "object comments",  NULL, testframe_flags);
-    AddTest("test_object_comments_invalid_params", test_object_comments_invalid_params, NULL,
-            "object comments with invalid parameters", NULL, testframe_flags);
-    AddTest("test_object_visit",  test_object_visit,  NULL,  "object visiting",  NULL, testframe_flags);
-    AddTest("test_object_visit_soft_link", test_object_visit_soft_link, NULL,
-            "object visiting with soft links", NULL, testframe_flags);
-    AddTest("test_object_visit_invalid_params", test_object_visit_invalid_params, NULL,
-            "object visiting with invalid parameters", NULL, testframe_flags);
-    AddTest("test_close_object",  test_close_object,  NULL,  "H5Oclose",  NULL, testframe_flags);
-    AddTest("test_close_object_invalid_params", test_close_object_invalid_params, NULL,
-            "H5Oclose with an invalid object ID", NULL, testframe_flags);
-    AddTest("test_close_invalid_objects",  test_close_invalid_objects,  NULL,  "H5Oclose invalid objects",  NULL, testframe_flags);
-    AddTest("test_flush_object",  test_flush_object,  NULL,  "H5Oflush",  NULL, testframe_flags);
-    AddTest("test_flush_object_invalid_params", test_flush_object_invalid_params, NULL,
-            "H5Oflush with invalid parameters", NULL, testframe_flags);
-    AddTest("test_refresh_object",  test_refresh_object,  NULL,  "H5Orefresh",  NULL, testframe_flags);
-    AddTest("test_refresh_object_invalid_params", test_refresh_object_invalid_params, NULL,
-            "H5Orefresh with invalid parameters", NULL, testframe_flags);
+            NULL, NULL, NULL, 0, testframe_flags, "object reference count incr./decr. with an invalid parameter");
+    AddTest("test_object_copy_basic", test_object_copy_basic, NULL, NULL, NULL, 0,
+            testframe_flags, "basic object copying");
+    AddTest("test_object_copy_already_existing", test_object_copy_already_existing, NULL, NULL, NULL, 0,
+            testframe_flags, "object copying to location where objects already exist");
+    AddTest("test_object_copy_shallow_group_copy", test_object_copy_shallow_group_copy, NULL, NULL, NULL, 0,
+            testframe_flags, "object copying with H5O_COPY_SHALLOW_HIERARCHY_FLAG flag");
+    AddTest("test_object_copy_no_attributes", test_object_copy_no_attributes, NULL, NULL, NULL, 0,
+            testframe_flags, "object copying with H5O_COPY_WITHOUT_ATTR_FLAG flag");
+    AddTest("test_object_copy_by_soft_link", test_object_copy_by_soft_link, NULL, NULL, NULL, 0,
+            testframe_flags, "object copying through use of soft links");
+    AddTest("test_object_copy_group_with_soft_links", test_object_copy_group_with_soft_links, NULL, NULL,
+            NULL, 0, testframe_flags, "group copying when group contains soft links");
+    AddTest("test_object_copy_between_files", test_object_copy_between_files, NULL, NULL, NULL, 0,
+            testframe_flags, "object copying between files");
+    AddTest("test_object_copy_invalid_params", test_object_copy_invalid_params, NULL, NULL, NULL, 0,
+            testframe_flags, "object copying with invalid parameters");
+    AddTest("test_object_comments", test_object_comments, NULL, NULL, NULL, 0,
+            testframe_flags, "object comments");
+    AddTest("test_object_comments_invalid_params", test_object_comments_invalid_params, NULL, NULL, NULL, 0,
+            testframe_flags, "object comments with invalid parameters");
+    AddTest("test_object_visit", test_object_visit, NULL, NULL, NULL, 0,
+            testframe_flags, "object visiting");
+    AddTest("test_object_visit_soft_link", test_object_visit_soft_link, NULL, NULL, NULL, 0,
+            testframe_flags, "object visiting with soft links");
+    AddTest("test_object_visit_invalid_params", test_object_visit_invalid_params, NULL, NULL, NULL, 0,
+            testframe_flags, "object visiting with invalid parameters");
+    AddTest("test_close_object", test_close_object, NULL, NULL, NULL, 0,
+            testframe_flags, "H5Oclose");
+    AddTest("test_close_object_invalid_params", test_close_object_invalid_params, NULL, NULL, NULL, 0,
+            testframe_flags, "H5Oclose with an invalid object ID");
+    AddTest("test_close_invalid_objects", test_close_invalid_objects, NULL, NULL, NULL, 0,
+            testframe_flags, "H5Oclose invalid objects");
+    AddTest("test_flush_object", test_flush_object, NULL, NULL, NULL, 0,
+            testframe_flags, "H5Oflush");
+    AddTest("test_flush_object_invalid_params", test_flush_object_invalid_params, NULL, NULL, NULL, 0,
+            testframe_flags, "H5Oflush with invalid parameters");
+    AddTest("test_refresh_object", test_refresh_object, NULL, NULL, NULL, 0,
+            testframe_flags, "H5Orefresh");
+    AddTest("test_refresh_object_invalid_params", test_refresh_object_invalid_params, NULL, NULL, NULL, 0,
+            testframe_flags, "H5Orefresh with invalid parameters");
 }

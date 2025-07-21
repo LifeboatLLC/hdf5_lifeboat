@@ -1377,7 +1377,7 @@ H5D__typeinfo_init_phase3(H5D_io_info_t *io_info)
              * on the free list.  Should we change this to a regular malloc?  Would require
              * keeping track of which version of free() to call. -NAF */
             if (io_info->tconv_buf_size > 0) {
-                if (NULL == (io_info->tconv_buf = H5FL_BLK_MALLOC(type_conv, io_info->tconv_buf_size)))
+                if (NULL == (io_info->tconv_buf = H5FL_BLK_MALLOC_MT(type_conv, io_info->tconv_buf_size)))
                     HGOTO_ERROR(H5E_RESOURCE, H5E_NOSPACE, FAIL,
                                 "memory allocation failed for type conversion");
                 io_info->tconv_buf_allocated = TRUE;
@@ -1385,7 +1385,7 @@ H5D__typeinfo_init_phase3(H5D_io_info_t *io_info)
 
             /* Allocate global background buffer (if any) */
             if (io_info->bkg_buf_size > 0) {
-                if (NULL == (io_info->bkg_buf = H5FL_BLK_MALLOC(type_conv, io_info->bkg_buf_size)))
+                if (NULL == (io_info->bkg_buf = H5FL_BLK_MALLOC_MT(type_conv, io_info->bkg_buf_size)))
                     HGOTO_ERROR(H5E_RESOURCE, H5E_NOSPACE, FAIL,
                                 "memory allocation failed for type conversion");
                 io_info->bkg_buf_allocated = TRUE;
@@ -1431,7 +1431,7 @@ H5D__typeinfo_init_phase3(H5D_io_info_t *io_info)
              * buffer is shared among all datasets in the operation. */
             if (NULL == (io_info->tconv_buf = (uint8_t *)tconv_buf)) {
                 /* Allocate temporary buffer */
-                if (NULL == (io_info->tconv_buf = H5FL_BLK_MALLOC(type_conv, target_size)))
+                if (NULL == (io_info->tconv_buf = H5FL_BLK_MALLOC_MT(type_conv, target_size)))
                     HGOTO_ERROR(H5E_RESOURCE, H5E_NOSPACE, FAIL,
                                 "memory allocation failed for type conversion");
                 io_info->tconv_buf_allocated = TRUE;
@@ -1452,7 +1452,7 @@ H5D__typeinfo_init_phase3(H5D_io_info_t *io_info)
                      * this since the number of elements that fit in the type conversion buffer will never be
                      * larger than the number that could fit in a background buffer of equal size, since the
                      * tconv element size is max(src, dst) and the bkg element size is dst */
-                    if (NULL == (io_info->bkg_buf = H5FL_BLK_MALLOC(type_conv, target_size)))
+                    if (NULL == (io_info->bkg_buf = H5FL_BLK_MALLOC_MT(type_conv, target_size)))
                         HGOTO_ERROR(H5E_RESOURCE, H5E_NOSPACE, FAIL,
                                     "memory allocation failed for background conversion");
                     io_info->bkg_buf_allocated = TRUE;
@@ -1482,11 +1482,11 @@ H5D__typeinfo_term(H5D_io_info_t *io_info)
     /* Check for releasing datatype conversion & background buffers */
     if (io_info->tconv_buf_allocated) {
         assert(io_info->tconv_buf);
-        (void)H5FL_BLK_FREE(type_conv, io_info->tconv_buf);
+        (void)H5FL_BLK_FREE_MT(type_conv, io_info->tconv_buf);
     } /* end if */
     if (io_info->bkg_buf_allocated) {
         assert(io_info->bkg_buf);
-        (void)H5FL_BLK_FREE(type_conv, io_info->bkg_buf);
+        (void)H5FL_BLK_FREE_MT(type_conv, io_info->bkg_buf);
     } /* end if */
 
     FUNC_LEAVE_NOAPI(SUCCEED)

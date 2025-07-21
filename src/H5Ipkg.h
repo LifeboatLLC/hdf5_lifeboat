@@ -29,6 +29,13 @@
 /* Package Private Macros */
 /**************************/
 
+/* To route around the HDF5 thread ID code (i.e. avoid the use of H5TS_thread_id() 
+ * set H5I_BYPASS_HDF5_TID to 1.  This configures the multi-thread version of H5I
+ * to use the pthreads thread ID facilities instead -- hopefully bypassing the 
+ * segfault in the multi-thread API tests.
+ */
+#define H5I_BYPASS_HDF5_TID 1
+
 /*
  * Number of bits to use for ID Type in each ID. Increase if more types
  * are needed (though this will decrease the number of available IDs per
@@ -220,14 +227,13 @@ typedef struct H5I_suint64_t {
  *      Second, instead of booleans, the cells are integers to allow for 
  *      multiple threads setting and re-setting it.
  *
- *      The primary impetus for this change to to prevent interference between 
- *      different threads working on different types interfering with each other 
- *      via a shared marking flag.  While this doesn't seem to be much of a 
- *      problem in normal operation, it can cause major memory leaks during 
- *      type destroys.
+ *      The primary impetus for this change is to prevent different threads 
+ *      working on different types interfering with each other via a shared marking 
+ *      flag.  While this doesn't seem to be much of a problem in normal operation, 
+ *      it can cause major memory leaks during type destroys.
  *
  *      Note that the introduction of the marking_array doesn't completely solve
- *      the problem, as there is still the possibility of interverience between 
+ *      the problem, as there is still the possibility of interference between 
  *      multiple threads acting on the same type.  However, it does greatly 
  *      ameliorate the issue.
  *
@@ -271,12 +277,20 @@ typedef struct H5I_suint64_t {
  *      id info free list length.  This is of necessity a soft limit as entries cannot
  *      be removed from the head of the free list unless they are re-allocable.
  *
- * num_id_info_fl_entries_reallocable:  Atomic uint64_t containing the number of entries 
- *      in the id info free list that are known to have no remaining threads in H5I
- *      that retain pointers to them, and are thus reallocable.  If this field is positive,
- *      any thread may decrement it, and take the next entry off the head of the id info 
- *      free list and re-use it.
- *
+ * id_next_sn: Atomic uint64_t containing the serial number for the next entry on the ID 
+ *      info free list. Whenever an entry is added to the id info free list, that entry's
+ *      serial_num field is set equal to id_next_sn and id_next_sn gets incremented. The
+ *      entry's serial_num field is compared to the id_max_realloc_sn field below and if
+ *      serial_num is smaller than it can be reallocated.
+ * 
+ *      For this iteration the assumption is made that id_next_sn will not be incremented
+ *      enough to overflow, but eventually this must be taken into account.
+ * 
+ * id_max_realloc_sn: Atomic uint64_t containing one plus the maximum serial number that
+ *      can be reallocated. When an entry's serial number gets compared to this field, if
+ *      it is less than this field, then it can be reallocated. This field is updated 
+ *      in H5I__exit() if there are not other threads in H5I -- in which case it is 
+ *      set to one greater than id_next_sn.
  *
  * type_info_fl_shead: Atomic instance of struct H5I_mt_type_info_sptr_t, which contains 
  *      a pointer (ptr) to the head of the type info free list, and a serial number (sn) 
@@ -307,11 +321,20 @@ typedef struct H5I_suint64_t {
  *      type info free list length.  This is of necessity a soft limit as entries cannot
  *      be removed from the head of the free list unless they are re-allocable.
  *
- * num_type_info_fl_entries_reallocable:  Atomic uint64_t containing the number of entries 
- *      in the type info free list that are known to have no remaining threads in H5I
- *      that retain pointers to them, and are thus reallocable.  If this field is positive, 
- *      any thread may decrement it, and then take the next entry off the head of the type
- *      info list and re-use it.
+ * type_next_sn: Atomic uint64_t containing the serial number for the next entry on the 
+ *      type info free list. Whenever an entry is added to the type info free list, that 
+ *      entry's serial_num field is set equal to type_next_sn and type_next_sn gets 
+ *      incremented. The entry's serial_num field is compared to the type_max_realloc_sn 
+ *      field below and if serial_num is smaller than it can be reallocated.
+ * 
+ *      For this iteration the assumption is made that type_next_sn will not be incremented
+ *      enough to overflow, but eventually this must be taken into account.
+ * 
+ * type_max_realloc_sn: Atomic uint64_t containing one plus the maximum serial number that
+ *      can be reallocated. When an entry's serial number gets compared to this field, if
+ *      it is less than this field, then it can be reallocated. This field is updated
+ *      in H5I__exit() if there are not other threads in H5I -- in which case it is
+ *      set to one greater than id_next_sn.
  *
  *
  * Statistics:
@@ -355,14 +378,6 @@ typedef struct H5I_suint64_t {
  * num_id_info_fl_append_cols: Number of collisions when appending an instance of 
  *     H5I_mt_id_info_t to the id info free list.
  *
- * num_id_info_structs_marked_reallocatable: Each instance of H5I_mt_id_info_t has its 
- *      reallocatable field set to FALSE when it is allocated, or it is inserted
- *      on the id info free list. This field is set to TRUE when it is known that all
- *      threads that might have a pointer to the instance of H5I_mt_id_info_t have left
- *      H5I.  num_id_info_structs_marked_reallocatable is incremented each time the 
- *      reallocatable field of an instance of H5I_mt_id_info_t is set to TRUE.  Note
- *      that this should only happen when an instance is on the id info free list.
- *
  * num_id_info_fl_alloc_req_denied_due_to_empty:  Number of times an alloc request
  *      for an instance of H5I_mt_id_info_t has had to be satisfied from the heap
  *      instead of the free list because the id info free list is empty.  Recall 
@@ -371,7 +386,8 @@ typedef struct H5I_suint64_t {
  *
  * num_id_info_fl_alloc_req_denied_due_to_no_reallocable_entries:  Number of times an 
  *      alloc request for an instance of H5I_mt_id_info_t has had to be satisfied from
- *      the heap because num_id_info_fl_entries_reallocable is zero.
+ *      the heap because the entry at the head of the free list has a serial number 
+ *      greater than or equal to id_max_realloc_sn.
  *
  * num_id_info_fl_frees_skipped_due_to_empty: Number of times that an instance of 
  *      H5I_mt_id_info_t on the id info free list is not released to the heap because
@@ -384,26 +400,9 @@ typedef struct H5I_suint64_t {
  *
  * num_id_info_fl_frees_skipped_due_to_no_reallocable_entries: Number of times that an 
  *      instance of H5I_mt_id_info_t on the id info free list is not released to the heap 
- *      because num_id_info_fl_entries_reallocable is zero.
- *
- * num_id_info_fl_num_reallocable_update_aborts:  Number of times that an attempt to 
- *      update the number of reallocable entries on the id info free list has had to 
- *      be aborted due to the entry of another thread into H5I during the collection 
- *      of data needed to compute the new value of num_id_info_fl_entries_reallocable.
- *
- * num_id_info_fl_num_reallocable_update_noops: Number of times that an attempt to
- *      update the number of reallocable entries on the id info free list has been 
- *      skipped because all entries on the list are already reallocable.
- *
- * num_id_info_fl_num_reallocable_update_collisions: Number of collisions while attempting
- *      to update num_id_info_fl_entries_reallocable.
- *
- * num_id_info_fl_num_reallocable_updates: Number of successful updates of 
- *      num_id_info_fl_entries_reallocable.
- *
- * num_id_info_fl_num_reallocable_total; Sum of all the deltas added to 
- *      num_id_info_fl_entries_reallocable.
- *
+ *      because the entry at the head of the free list has serial number greater than 
+ *      or equal to id_max_realloc_sn.
+ * 
  * H5I__discard_mt_id_info__num_calls: Number of times that H5I__discard_mt_id_info() is 
  *      called.
  *
@@ -411,6 +410,45 @@ typedef struct H5I_suint64_t {
  *
  * H5I__clear_mt_id_info_free_list__num_calls: Number of times that 
  *      H5I__clear_mt_id_info_free_list() is called.
+ *
+ * num_id_next_sn_assigned: Number of times the serial_num field of an instance of
+ *      H5I_mt_id_info_t is successfully set to H5I_mt_t.id_next_sn on append to the 
+ *      id free list.
+ * 
+ * num_id_serial_num_resets: Number of times the serial_num field of an instance of
+ *      H5I_mt_id_info_t is successfully set to zero on removal of the struct from 
+ *      the free list either for reallocation or release to the heap.
+ * 
+ * num_id_info_fl_head_sn_is_zero: Number of times that the head of the id info free 
+ *      list is found to have a zero serial number. 
+ *
+ *      This should be impossible.  The statistic is kept to verify this.
+ * 
+ * num_id_info_fl_max_sn_update_noops: Number of times that an attempt to update the 
+ *      maximum reallocable serial number on the id info free list has been skipped 
+ *      because all entries on the list are already reallocable.
+ * 
+ * num_id_info_fl_max_sn_update_aborts: Number of times that an attempt to update the
+ *      maximum reallocable serial number on the id free list has had to be aborted due to
+ *      the entry of another thread into H5I during the collection of data needed to compute 
+ *      the new value of id_max_realloc_sn.
+ * 
+ * num_id_info_fl_max_sn_updates: Number of successful updates of id_max_realloc_sn.
+ * 
+ * num_id_info_fl_max_sn_update_decrement: Number of times that the maximum reallocable
+ *      serial number was updated and the max prior to the update was larger than 
+ *      id_next_sn field.
+ * 
+ * num_id_info_fl_max_sn_update_cols: Number of collisions while attempting to update 
+ *      id_max_realloc_sn.
+ * 
+ * max_id_info_fl_max_sn_update_col_delta: Maximum positive difference between the 
+ *      expected and actual values of id_max_realloc_sn found on a id_max_realloc_sn
+ *      collision.
+ *
+ * min_id_info_fl_max_sn_update_col_delta; Maximum negative difference between the
+ *      expected and actual values of id_max_realloc_sn found on a id_max_realloc_sn
+ *      update collision.
  *
  *
  * Type Info Free List Statistics:
@@ -438,14 +476,6 @@ typedef struct H5I_suint64_t {
  * num_type_info_fl_append_cols: Number of collisions when appending an instance of 
  *     H5I_mt_type_info_t to the type info free list.
  *
- * num_type_info_structs_marked_reallocatable: Each instance of H5I_mt_type_info_t has its 
- *      reallocatable field set to FALSE when it is allocated, or it is inserted
- *      on the type info free list. This field is set to TRUE when it is known that all
- *      threads that might have a pointer to the instance of H5I_mt_type_info_t have left
- *      H5I.  num_type_info_structs_marked_reallocatable is incremented each time the 
- *      reallocatable field of an instance of H5I_mt_type_info_t is set to TRUE.  Note
- *      that this should only happen when an instance is on the type info free list.
- *
  * num_type_info_fl_alloc_req_denied_due_to_empty:  Number of times an alloc request
  *      for an instance of H5I_mt_type_info_t has had to be satisfied from the heap
  *      instead of the free list because the type info free list is empty.  Recall 
@@ -454,7 +484,8 @@ typedef struct H5I_suint64_t {
  *
  * num_type_info_fl_alloc_req_denied_due_to_no_reallocable_entries:  Number of times an 
  *      alloc request for an instance of H5I_mt_type_info_t has had to be satisfied from
- *      the heap because num_type_info_fl_entries_reallocable is zero.
+ *      the heap because the entry at the head of the free list has serial number greater
+ *      than or equal to type_max_realloc_sn.
  *
  * num_type_info_fl_frees_skipped_due_to_empty: Number of times that an instance of 
  *      H5I_mt_type_info_t on the type info free list is not released to the heap because
@@ -467,26 +498,9 @@ typedef struct H5I_suint64_t {
  *
  * num_type_info_fl_frees_skipped_due_to_no_reallocable_entries: Number of times that an 
  *      instance of H5I_mt_type_info_t on the type info free list is not released to the heap 
- *      because num_type_info_fl_entries_reallocable is zero.
- *
- * num_type_info_fl_num_reallocable_update_aborts:  Number of times that an attempt to 
- *      update the number of reallocable entries on the type info free list has had to 
- *      be aborted due to the entry of another thread into H5I during the collection 
- *      of data needed to compute the new value of num_type_info_fl_entries_reallocable.
- *
- * num_type_info_fl_num_reallocable_update_noops: Number of times that an attempt to
- *      update the number of reallocable entries on the type info free list has been 
- *      skipped because all entries on the list are already reallocable.
- *
- * num_type_info_fl_num_reallocable_update_collisions: Number of collisions while attempting
- *      to update num_type_info_fl_entries_reallocable.
- *
- * num_type_info_fl_num_reallocable_updates: Number of successful updates of 
- *      num_type_info_fl_entries_reallocable.
- *
- * num_type_info_fl_num_reallocable_total; Sum of all the deltas added to 
- *      num_type_info_fl_entries_reallocable.
- *
+ *      because the entry at the head of the free list has serial number greater than 
+ *      or equal to type_max_realloc_sn.
+ * 
  * H5I__discard_mt_type_info__num_calls: Number of times that H5I__discard_mt_type_info() is 
  *      called.
  *
@@ -494,6 +508,50 @@ typedef struct H5I_suint64_t {
  *
  * H5I__clear_mt_type_info_free_list__num_calls: Number of times that 
  *      H5I__clear_mt_type_info_free_list() is called.
+ *
+ * num_type_info_fl_num_reallocable_update_aborts: Number of times that an attempt to update the
+ *      maximum reallocable serial number on the type info free list has had to be aborted due to
+ *      the entry of another thread into H5I during the collection of data needed to compute 
+ *      the new value of type_max_realloc_sn.
+ * 
+ * num_type_next_sn_assigned: Number of times the serial_num field of an instance of
+ *      H5I_mt_type_info_t is successfully set to H5I_mt_t.type_next_sn on append to the 
+ *      type free list.
+ * 
+ * num_type_serial_num_resets: Number of times the serial_num field of an instance of
+ *      H5I_mt_type_info_t is successfully set to zero on removal of the struct from 
+ *      the type free list.
+ * 
+ * num_type_info_fl_head_sn_is_zero: Number of times that the head of the type info free 
+ *      list is found to have a zero serial number. 
+ *
+ *      This should be impossible.  The statistic is kept to verify this.
+ * 
+ * num_type_info_fl_max_sn_update_noops: Number of times that an attempt to update the 
+ *      maximum reallocable serial number on the type info free list has been skipped 
+ *      because all entries on the list are already reallocable.
+ * 
+ * num_type_info_fl_max_sn_update_aborts: Number of times that an attempt to update the
+ *      maximum reallocable serial number on the type free list has had to be aborted due to
+ *      the entry of another thread into H5I during the collection of data needed to compute 
+ *      the new value of type_max_realloc_sn.
+ * 
+ * num_type_info_fl_max_sn_updates: Number of successful updates of type_max_realloc_sn.
+ * 
+ * num_type_info_fl_max_sn_update_decrement: Number of times that the maximum reallocable
+ *      serial number was updated and the max prior to the update was larger than 
+ *      type_next_sn field.
+ * 
+ * num_type_info_fl_max_sn_update_cols: Number of collisions while attempting to update 
+ *      type_max_realloc_sn.
+ * 
+ * max_type_info_fl_max_sn_update_col_delta: Maximum positive difference between the 
+ *      expected and actual values of type_max_realloc_sn found on a type_max_realloc_sn
+ *      collision.
+ *
+ * min_type_info_fl_max_sn_update_col_delta; Maximum negative difference between the
+ *      expected and actual values of type_max_realloc_sn found on a type_max_realloc_sn
+ *      update collision.
  *
  * 
  *
@@ -842,6 +900,29 @@ typedef struct H5I_suint64_t {
  *      H5T_is_named().
  *
  *
+ * Statistics on the behaviour of the H5I_get_first/next() functions. 
+ *
+ * H5I_get_first__num_calls: Number of times that H5I_get_first() is called.
+ *
+ * H5I_get_first__type_empty; Number of times that H5I_get_first() is called 
+ *      on an empty id type.
+ *
+ * H5I_get_first__ids_deleted_in_progress: Number of times that an id is 
+ *      found as the first id in the type, and then deleted before the 
+ *      associated void pointer is un-wrapped.  Note that this condition
+ *      is only tested for if H5I__UNWRAP_IS_NOOP(type) is FALSE.
+ *
+ * H5I_get_next__num_calls; Number of times that H5I_get_next() is called.
+ *
+ * H5I_get_next__no_next_id: Number of times that H5I_get_next() is called
+ *      on an id type with no remaining un-visited ids.
+ *
+ * H5I_get_next__ids_deleted_in_progress: Number of times that an id is
+ *      found as the next id in the type, and then deleted before the
+ *      associated void pointer is un-wrapped.  Note that this condition
+ *      is only tested for if H5I__UNWRAP_IS_NOOP(type) is FALSE.
+ *
+ *
  * Statistics on operations on the do not disturb flag.  See the discussion of 
  * the this fields and the kernel in the comments on H5I_mt_id_info_t for further 
  * details.
@@ -862,8 +943,44 @@ typedef struct H5I_suint64_t {
  *      this operation will always succeed.  If it doesn't, it should trigger an 
  *      assertion failure.
  *
- * num_do_not_disturb_bypasses:  Number of times that a do_not_disturb has been 
- *      bypassed.  At present, this is permitted for read only accesses to IDs.
+ * num_do_not_disturb_recursions: Number of times that a thread skips setting 
+ *      and then re-setting the do_not_disturb flag because the do_not_disturb
+ *      flag is already set by the thread.
+ *
+ *      Note that at present, there must be no net change in the kernel of 
+ *      the target ID by the time the do_not_disturg flag is droped.
+ *
+ *
+ * Global mutex acquire / dealock avoidance stats 
+ *
+ * Interaction with the existing non multi-thread makes it impossible to maintain 
+ * lock ordering between the global mutex and the do not disturb flag on individual 
+ * IDs.  This in turn opens the possibility of deadlocks.
+ *
+ * To address this issue, we use H5TS_mutex_acquire() to obtain the global mutex
+ * whenever we already hold the do_not_disturb flag on the target ID.  This function
+ * attempts to obtain the global mutex, but returns immediately regardless of 
+ * success.  If this attempt to obtain the global mutex fails, we drop the 
+ * do_not_disturb flag on the target ID, wait a bit, and try again so as to 
+ * avoid the potential deadlock.
+ *
+ * The following fields are used to collect statistics on this method of deadlock
+ * avoidance.
+ *
+ * global_mutex_acquire_attempts: Number of calls to H5TS_mutex_acquire().
+ *
+ * global_mutex_acquire_successes: Number of times H5TS_mutex_acquire() successfully 
+ *      obtains the global mutex.
+ *
+ * global_mutex_acquire_failures: Number of times H5TS_mutex_acquire() fails to 
+ *      obtain the global mutex without reporting any errors.
+ *
+ * num_deadlock_evasions: Number of times a potential deadlock is detected and 
+ *      avoided.  At present this means that the do_not_disturb is held on an 
+ *      ID, that continued processing requires the global mutex, and that the 
+ *      attempt to obtain the global mutex via H5TS_mutex_acquire() fails.  In
+ *      this case, the do_not_disturb is droped to avoid the potential mutex,
+ *      and then retried.
  *
  *
  * Statistics on H5I entries and numbers of threads active in H5I.
@@ -905,13 +1022,15 @@ typedef struct H5I_mt_t {
     _Atomic H5I_mt_id_info_sptr_t   id_info_fl_stail;
     _Atomic uint64_t                id_info_fl_len;
     _Atomic uint64_t                max_desired_id_info_fl_len;
-    _Atomic uint64_t                num_id_info_fl_entries_reallocable;
+    _Atomic uint64_t                id_next_sn;
+    _Atomic uint64_t                id_max_realloc_sn;
 
     _Atomic H5I_mt_type_info_sptr_t type_info_fl_shead;
     _Atomic H5I_mt_type_info_sptr_t type_info_fl_stail;
     _Atomic uint64_t                type_info_fl_len;
     _Atomic uint64_t                max_desired_type_info_fl_len;
-    _Atomic uint64_t                num_type_info_fl_entries_reallocable;
+    _Atomic uint64_t                type_next_sn;
+    _Atomic uint64_t                type_max_realloc_sn;
 
     /* Statistics: */
 
@@ -931,20 +1050,24 @@ typedef struct H5I_mt_t {
     _Atomic uint64_t num_id_info_fl_head_update_cols;
     _Atomic uint64_t num_id_info_fl_tail_update_cols;
     _Atomic uint64_t num_id_info_fl_append_cols;
-    _Atomic uint64_t num_id_info_structs_marked_reallocatable;
     _Atomic uint64_t num_id_info_fl_alloc_req_denied_due_to_empty;
     _Atomic uint64_t num_id_info_fl_alloc_req_denied_due_to_no_reallocable_entries;
     _Atomic uint64_t num_id_info_fl_frees_skipped_due_to_empty;
     _Atomic uint64_t num_id_info_fl_frees_skipped_due_to_fl_too_small;
     _Atomic uint64_t num_id_info_fl_frees_skipped_due_to_no_reallocable_entries;
-    _Atomic uint64_t num_id_info_fl_num_reallocable_update_aborts;
-    _Atomic uint64_t num_id_info_fl_num_reallocable_update_noops;
-    _Atomic uint64_t num_id_info_fl_num_reallocable_update_collisions;
-    _Atomic uint64_t num_id_info_fl_num_reallocable_updates;
-    _Atomic uint64_t num_id_info_fl_num_reallocable_total;
     _Atomic uint64_t H5I__discard_mt_id_info__num_calls;
     _Atomic uint64_t H5I__new_mt_id_info__num_calls;
     _Atomic uint64_t H5I__clear_mt_id_info_free_list__num_calls;
+
+    _Atomic uint64_t num_id_next_sn_assigned;
+    _Atomic uint64_t num_id_serial_num_resets;
+    _Atomic uint64_t num_id_info_fl_head_sn_is_zero;
+    _Atomic uint64_t num_id_info_fl_max_sn_update_noops;
+    _Atomic uint64_t num_id_info_fl_max_sn_update_aborts;
+    _Atomic uint64_t num_id_info_fl_max_sn_updates;
+    _Atomic uint64_t num_id_info_fl_max_sn_update_cols;
+    _Atomic uint64_t max_id_info_fl_max_sn_update_col_delta;
+    _Atomic uint64_t min_id_info_fl_max_sn_update_col_delta;
 
 
     /* type info free list stats */
@@ -956,20 +1079,25 @@ typedef struct H5I_mt_t {
     _Atomic uint64_t num_type_info_fl_head_update_cols;
     _Atomic uint64_t num_type_info_fl_tail_update_cols;
     _Atomic uint64_t num_type_info_fl_append_cols;
-    _Atomic uint64_t num_type_info_structs_marked_reallocatable;
     _Atomic uint64_t num_type_info_fl_alloc_req_denied_due_to_empty;
     _Atomic uint64_t num_type_info_fl_alloc_req_denied_due_to_no_reallocable_entries;
     _Atomic uint64_t num_type_info_fl_frees_skipped_due_to_empty;
     _Atomic uint64_t num_type_info_fl_frees_skipped_due_to_fl_too_small;
     _Atomic uint64_t num_type_info_fl_frees_skipped_due_to_no_reallocable_entries;
-    _Atomic uint64_t num_type_info_fl_num_reallocable_update_aborts;
-    _Atomic uint64_t num_type_info_fl_num_reallocable_update_noops;
-    _Atomic uint64_t num_type_info_fl_num_reallocable_update_collisions;
-    _Atomic uint64_t num_type_info_fl_num_reallocable_updates;
-    _Atomic uint64_t num_type_info_fl_num_reallocable_total;
     _Atomic uint64_t H5I__discard_mt_type_info__num_calls;
     _Atomic uint64_t H5I__new_mt_type_info__num_calls;
     _Atomic uint64_t H5I__clear_mt_type_info_free_list__num_calls;
+
+    _Atomic uint64_t num_type_next_sn_assigned;
+    _Atomic uint64_t num_type_serial_num_resets;
+    _Atomic uint64_t num_type_info_fl_head_sn_is_zero;
+    _Atomic uint64_t num_type_info_fl_max_sn_update_noops;
+    _Atomic uint64_t num_type_info_fl_max_sn_update_aborts;
+    _Atomic uint64_t num_type_info_fl_max_sn_updates;
+    _Atomic uint64_t num_type_info_fl_max_sn_update_decrement;
+    _Atomic uint64_t num_type_info_fl_max_sn_update_cols;
+    _Atomic uint64_t max_type_info_fl_max_sn_update_col_delta;
+    _Atomic uint64_t min_type_info_fl_max_sn_update_col_delta;
 
 
     /* H5I__mark_node() stats */
@@ -1089,12 +1217,26 @@ typedef struct H5I_mt_t {
     _Atomic uint64_t H5I_is_file_object__global_mutex_locks_for_H5T_is_named;
     _Atomic uint64_t H5I_is_file_object__global_mutex_unlocks_for_H5T_is_named;
 
+    /* H5I_get_first/next() stats */
+    _Atomic uint64_t H5I_get_first__num_calls;
+    _Atomic uint64_t H5I_get_first__type_empty;
+    _Atomic uint64_t H5I_get_first__ids_deleted_in_progress;
+    _Atomic uint64_t H5I_get_next__num_calls;
+    _Atomic uint64_t H5I_get_next__no_next_id;
+    _Atomic uint64_t H5I_get_next__ids_deleted_in_progress;
+
     /* do not disturb flag stats */
     _Atomic uint64_t num_do_not_disturb_yields;
     _Atomic uint64_t num_successful_do_not_disturb_sets;
     _Atomic uint64_t num_failed_do_not_disturb_sets;
     _Atomic uint64_t num_do_not_disturb_resets;
-    _Atomic uint64_t num_do_not_disturb_bypasses;
+    _Atomic uint64_t num_do_not_disturb_recursions;
+
+    /* global mutex acquire / dealock avoidance stats */
+    _Atomic uint64_t global_mutex_acquire_attempts;
+    _Atomic uint64_t global_mutex_acquire_successes;
+    _Atomic uint64_t global_mutex_acquire_failures;
+    _Atomic uint64_t num_deadlock_evasions;
 
     /* active_threads stats */
     _Atomic uint64_t num_H5I_entries_via_public_API;
@@ -1129,7 +1271,6 @@ typedef struct H5I_mt_t {
  * 
  * id:  ID associated with this instance of H5I_mt_id_info_t.  This is the id used to 
  *      locate the instance in the lock free hash table. 
- * 
  * 
  * k:   The non-MT version of H5I_mt_id_info_t has a number of variables that must be
  *      kept in synchronization.  The obvious way of doing this would be to protect
@@ -1183,6 +1324,13 @@ typedef struct H5I_mt_t {
  * 
  *      We do this by adding three flags to the kernel -- the already defined 
  *      marked flag, the new do_not_disturb flag, and the new have_global_mutex flag.
+ *
+ *      While it wasn't immediately apparent, this notion of locking IDs also introduced
+ *      lock ordering issues which appear unavoidable as long as portions of the HDF5 
+ *      library are not multi-thread safe.. Resolving these for the prototype required 
+ *      the additons of an additional thread ID field (tid), which is used to store the ID 
+ *      of the thread that set the the do_not_disturb flag.
+ *      
  *      We then proceed via the appropriate protocol as given below. 
  * 
  *      In the cases where roll backs are possible, proceed as follows: 
@@ -1192,16 +1340,17 @@ typedef struct H5I_mt_t {
  *       2) Check to see if the marked flag is set.  If so, issue an ID doesn’t exist 
  *          error and return. 
  * 
- *       3) Check to see if the do_not_disturb flag is set.  If so, and either the 
- *          have_global_mutex flag is not set, or the thread does not hold the 
- *          global mutex, do a thread yield or sleep, and return to 1) above. 
+ *       3) Check to see if the do_not_disturb flag is set.  
  *
- *          If the thread holds the global mutex, and the have_global_mutex flag
- *          is set, the current thread is the thread that caused the do_not_disturb
- *          flag to be set, and may proceed.  As shall be seen, while reading the 
- *          will not cause problems, modifying it will.  To date, this is not a 
- *          problem in all cases encounterd to date, but it will have to be addressed
- *          for the production version.
+ *          If it is, and k.tid does not match the ID of the current thread, 
+ *          do a thread yield or sleep, and return to 1) above.
+ *
+ *          If it is, and k.tid does match the ID of the current thread, the 
+ *          current thread is the thread that caused the do_not_disturb
+ *          flag to be set, and may proceed.  As shall be seen, while reading will
+ *          not cause problems, modifying the kernel will.  To date, this is not 
+ *          a problem in all cases encounterd to date, but it will have to be 
+ *          addressed for the production version.
  *  
  *       4) Perform the desired operations (i.e ref count increment or decrement, or 
  *          object pointer overwite on the local copy of the kernel.  If the ref 
@@ -1227,18 +1376,17 @@ typedef struct H5I_mt_t {
  *       2) Check to see if the marked flag is set.  If so, issue an ID doesn’t exist 
  *          error and return. 
  * 
- *       3) Check to see if the do_not_disturb flag is set.  If so, and either the
- *          have_global_mutex flag is not set, or the thread does not hold the
- *          global mutex, do a thread yield or sleep, and return to 1) above.
+ *       3) Check to see if the do_not_disturb flag is set.
  *
- *          If the thread holds the global mutex, and the have_global_mutex flag
- *          is set, the current thread is the thread that caused the do_not_disturb
- *          flag to be set, and may proceed.  As shall be seen, while reading the
- *          kernel will not cause problems, modifying it will.  As a result, such
- *          threads must skip the remainder of this protocol.  
+ *          If it is, and k.tid does not match the ID of the current thread,
+ *          do a thread yield or sleep, and return to 1) above.
  *
- *          To date, this is not a problem in all cases encounterd, but it will 
- *          have to be addressed in the production version.
+ *          If it is, and k.tid does match the ID of the current thread, the
+ *          current thread is the thread that caused the do_not_disturb
+ *          flag to be set, and may proceed.  As shall be seen, while reading will
+ *          not cause problems, modifying the kernel will.  To date, this is not  
+ *          a problem in all cases encounterd to date, but it will have to be 
+ *          addressed for the production version.
  * 
  *       4) Check to see if the desired operation is still pending (i.e. if the 
  *          operation is converting a future ID to a real ID, is the is_future flag 
@@ -1247,41 +1395,64 @@ typedef struct H5I_mt_t {
  * 
  *          Otherwise: 
  * 
- *       5) Set the do_not_disturb flag and the hsve_global_mutex flag as well if 
- *          either the global mutex is already held, or if the callback is not thread
- *          safe (always for now) in the local copy of the kernel, and attempt 
- *          to overwrite the global copy of the kernel with the local copy via a 
- *          compare_exchange_strong(). 
+ *       5) In the locak copy of the kernel, set the do_not_disturb flag to TRUE, 
+ *          and the tid field to the ID of the current thread.  
+ *
+ *          Also in the locka copy, set the have_global_mutex flag as well if either 
+ *          the global mutex is already held, or if the callback is not thread safe 
+ *          (always for now).  Then attempt to overwrite the global copy of the 
+ *          kernel with the local copy via a compare_exchange_strong().
  * 
  *          If this fails, do a thread yield or sleep, and return to 1. 
  * 
- *          If it succeeds, we know that s thread has exclusive access to the kernel until 
- *          we reset the do_not_disturb flag on the global copy, as no new thread 
+ *          If it succeeds, we know that a thread has exclusive access to the kernel until 
+ *          we reset the do_not_disturb flag on the global copy, as no other thread
  *          looking at the kernel will proceed beyond reading the flag, and the 
  *          compare_exchange_strong() of any existing thread attempting to modify the 
  *          kernel will fail -- sending it back to step 1. 
  * 
- *       6) Attempt to perform the desired operation. 
+ *       6) If the callback is not thread safe, and the current thread doesn't 
+ *          already hold the global mutex, we must attempt to obtain it.  
  * 
- *          If this fails, reset the do_not_disturb and the have_global_mutex flags in 
- *          the local copy of the kernel, overwrite the global copy of the kernel with 
- *          the local copy via a compare_exchange_strong(), and report the failure of 
- *          the operation if appropriate.
+ *          If we could maintain lock ordering, we would simply block until we 
+ *          obtain it.  Unfortunately, because we have to interface with the 
+ *          non multi-thread safe sections of the HDF5 library, we can't maintian
+ *          lock ordering betwee locks on IDs and the global mutext.
  * 
- *          Observe that the call to compare_exchange_strong() must succeed, per the 
- *          argument given in the final paragraph in 5 above.  Note that we use 
- *          compare_exchange_strong() in this case only as a sanity check.  Assuming  
- *          my analysis is correct, we could simply use atomic_store() on  
- *          architectures where compare_exchange_strong() is not available.   
- *          Unfortunately, the rest of the algorithm does depend on 
- *          compare_exchange_strong(), so it will have to be re-worked for those
- *          architectures. 
+ *          Thus we must attempt to acquire the global mutext, and not block if 
+ *          it is not available.
  * 
- *          If the operation succeeds, update the kernel accordingly, reset the 
- *          do_not_disturb and have_global_mutex flags in the local copy of the kernel, 
- *          and overwrite the global copy of the kernel with the local copy via a 
- *          compare_exchange_strong().  As before this operation must succeed, and we
- *          are done. 
+ *          If the attempt to acquire the global mutex succeeeds, we proceed to 
+ *          7).  Otherwise, we reset the do_not_disturb flag, set the tid to zero,
+ *          and reset the have global mutex flag if they were modified in step 5).  
+ *          Do this with a compare exchange strong, which must succeed.  Then
+ *          do a thread yield or sleep, and goto 1).
+ *
+ *       7) Attempt to perform the desired operation.
+ *
+ *          If this fails, clean up as follwos:
+ *
+ *          a) If the kernel was modified in 5), reset the tid and the 
+ *             do_not_disturb and have_global_mutex flags in the local copy of 
+ *             the kernel, and overwrite the global copy of the kernel with the 
+ *             local copy via a compare_exchange_strong().  Note that this 
+ *             operation must succeed -- the compare_exchange_strong() is for 
+ *             sanity checking.
+ *
+ *          b) If the global mutext was obtained in 6), release it.
+ *
+ *          c) Report failure of the operation if appropriate.
+ *
+ *          if it succeeds: 
+ *
+ *          a) Update the local copy of the kernel as appropriate.  If the 
+ *             kernel was modified in 5) above, also reset the tid and the 
+ *             do_not_disturb and have_global_mutex flags in the local copy of 
+ *             the kernel, and overwrite the global copy of the kernel with the 
+ *             local copy via a compare_exchange_strong().  As before, this 
+ *             operation must succeed.
+ *
+ *          b) If the global mutext was obtained in 6), release it.
  * 
  *      An atomic instance of H5I_mt_id_info_kernel_t is used to instantiate the 
  *      kernel mentioned above.  It maintains its fields as a single atomic object. 
@@ -1290,12 +1461,12 @@ typedef struct H5I_mt_t {
  *      objective is to avoid explicit locking (and thus lock ordering concerns) this 
  *      is fine -- for now at least. 
  *
- *      Note that if we combined all the booleans in a flags field, 
+ *      Note that if we combined all the booleans in a flags field, removed the tid,
  *      and reduced the size of the count and app_count integers, we could fit the 
  *      H5I_mt_id_info_kernel_t into 128 bits, allowing true atomic operation on 
  *      many (most) more modern CPUs.  However, that is an optimization for another 
  *      day, as is re-working the future ID feature into something more multi-thread
- *      friendly.
+ *      friendly, and making the result of the free_func predictable..
  * 
  *      Since H5I_mt_id_info_kernel_t is only used either in H5I_mt_id_info_t, or to 
  *      stage reads and writes of the kernal in that structure, its fields are 
@@ -1312,6 +1483,16 @@ typedef struct H5I_mt_t {
  * 
  *      k.object: Pointer to void.  Points to the data (if any) associated with
  *           this ID. 
+ *
+ *      k.tid: ID of the thread that set the do_not_disturb flag.  This is necessary
+ *           for now to allow correct recursive access to an ID whose do_not_disturb
+ *           flag has been set.  
+ *
+ *           The ID stored in this field is obtained via calls to H5TS_thread_id(),
+ *           
+ *           The field is only valid wehn the do_not_distrub flag is set.  For 
+ *           clarity, the fields should be initialized to zero, and be returned 
+ *           to this value whenever the do_not_disturb flag is reset.
  * 
  *      k.marked: Boolean flag indicating whether this instance of H5I_mt_id_info_t 
  *           has been marked for deletion.  Once set, this flag is never re-set, and 
@@ -1330,21 +1511,13 @@ typedef struct H5I_mt_t {
  *           k.do_not_disturb is set to TRUE, and the setting thread has the HDF5
  *           global mutex at the time.
  * 
- *           This field is a temporary hack designed allow HDF5 callbacks to access 
- *           the index without deadlocking.  Thus, when the do_not_disturb flag is 
- *           detected, it can be ignored if the have_global_mutex flag is set and the 
- *           current thread has the global mutext.
- *
- *           If the do_not_disturb flag is not replaced with an off the shelf recursive
- *           lock, this field will almost certainly be replace with a thread ID stored in
- *           H5I_mt_id_info_t proper, and set whenever k.do_not_disturb is set.  While
- *           this will make k.do_not_disturb into a recursive lock, it will also 
- *           require additional logic to allow for the possibility that the kernel 
- *           has been modified while the k.do_not_disturb flag is set.
+ *           This field was a temporary hack designed allow HDF5 callbacks to access
+ *           the index without deadlocking.  For now, it has been replaced with the 
+ *           tid field, and it will probably be removed soon.
  * 
  *      If we followed the single thread version of H5I exactly, the realize_cb and 
  *      discard_cb would have to be atomic since they are set to NULL when is_future 
- *      is set to FALSE.  However, that doesn't seem necessary, so the are non-atomic 
+ *      is set to FALSE.  However, that doesn't seem necessary, so they are non-atomic
  *      fields in H5I_mt_id_info_t.  This should be OK, as the only time they are
  *      modified is when the instance of H5I_mt_id_info_t is being initialized prior 
  *      to insertion into the index.  Since only one thread has access at that point, 
@@ -1381,6 +1554,23 @@ typedef struct H5I_mt_t {
  *      id info free list.  The structure contains both a pointer and a serial   
  *      number, which facilitates the avoidance of ABA bugs when managing the free
  *      list. 
+ *
+ * serial_num: unsigned int 64 that is always 0 when not on the ID free list.
+ *      When added to the free list this value is set equal to H5I_mt_g's 
+ *      id_next_sn field, and that field is then incremented. The value of serial_num
+ *      is used by the free list to determine if an entry can be reallocated. 
+ *
+ *      When a new instance of H5I_mt_id_info_t is needed, the free list is checked.
+ *      If the list contains more than one entry, and the serial_num field of the 
+ *      entry at the head of the list is less than H5I_mt_g.id_max_realloc_sn, the 
+ *      entry at the head of the free list may be removed from the free list and 
+ *      reallocated.  
+ *
+ *      The serial_num field is set to zero on removal from the free list, 
+ * 
+ *      At present, there is no provision for the case in which H5I_mt_g.id_next_sn 
+ *      wraps around.  While it is unlikely that this will be a problem any time 
+ *      soon, this issue must be addressed in the production version.
  * 
  ************************************************************************************/
 
@@ -1392,6 +1582,12 @@ typedef struct H5I_mt_id_info_kernel_t {
     unsigned                  count;      /* Ref. count for this ID */
     unsigned                  app_count;  /* Ref. count of application visible IDs */
     const void              * object;     /* Pointer associated with the ID */
+#if H5I_BYPASS_HDF5_TID
+    pthread_t   tid;
+    hbool_t     tid_valid;
+#else
+    uint64_t    tid;     
+#endif
 
     hbool_t                   marked;     /* Marked for deletion */
     hbool_t                   do_not_disturb;  
@@ -1415,6 +1611,8 @@ typedef struct H5I_mt_id_info_t {
     _Atomic hbool_t on_fl;
 
     _Atomic H5I_mt_id_info_sptr_t fl_snext;
+
+    _Atomic uint64_t serial_num;
 
 } H5I_mt_id_info_t;
 
@@ -1467,6 +1665,24 @@ typedef struct H5I_mt_id_info_t {
  * fl_snext: Atomic instance of H5I_mt_type_info_sptr_t used in the maintenance of the 
  *      type info free list.  The structure contains both a pointer and a serial number,
  *      which facilitates the avoidance of ABA bugs when managing the free list.
+ *
+ * serial_num: unsigned int 64 that is always 0 when not on the type info free list.
+ *      When added to the free list this value is set equal to H5I_mt_g's 
+ *      type_next_sn field, and that field is then incremented. The value of serial_num
+ *      is used by the free list to determine if an entry can be reallocated. 
+ *
+ *      When a new instance of H5I_mt_type_info_t is needed, the free list is checked.
+ *      If the list contains more than one entry, and the serial_num field of the 
+ *      entry at the head of the list is less than H5I_mt_g.type_max_realloc_sn, the 
+ *      entry at the head of the free list may be removed from the free list and 
+ *      reallocated.  
+ *
+ *      The serial_num field is set to zero on removal from the free list, 
+ * 
+ *      At present, there is no provision for the case in which H5I_mt_g.type_next_sn 
+ *      wraps around.  While it is unlikely that this will be a problem any time 
+ *      soon, this issue must be addressed in the production version.
+ * 
  * 
  ****************************************************************************************/
 
@@ -1485,6 +1701,9 @@ typedef struct H5I_mt_type_info_t {
     lfht_t                          lfht;         /* lock free hash table for this ID type */
     _Atomic hbool_t                 on_fl;
     _Atomic H5I_mt_type_info_sptr_t fl_snext;
+
+    _Atomic uint64_t                serial_num;
+
 } H5I_type_info_t;
 
 #else /* H5_HAVE_MULTITHREAD */ /********************************************************************************/
@@ -1544,9 +1763,9 @@ H5_DLLVAR H5I_type_info_t *H5I_type_info_array_g[H5I_MAX_NUM_TYPES];
 H5_DLLVAR int H5I_next_type_g;
 #endif /* H5_HAVE_MULTITHREAD */
 
-/******************************/
-/* Package Private Prototypes */
-/******************************/
+/*****************************/
+/* Package Private Variables */
+/*****************************/
 
 H5_DLL hid_t          H5I__register(H5I_type_t type, const void *object, hbool_t app_ref,
                                     H5I_future_realize_func_t realize_cb, H5I_future_discard_func_t discard_cb);

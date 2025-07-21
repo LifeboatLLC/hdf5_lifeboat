@@ -212,7 +212,11 @@ test_h5s_basic(void)
         fid1 = H5Fopen(testfile, H5F_ACC_RDONLY, H5P_DEFAULT);
         CHECK_I(fid1, "H5Fopen");
         if (fid1 >= 0) {
-            dset1 = H5Dopen2(fid1, "dset", H5P_DEFAULT);
+            H5E_BEGIN_TRY
+            {
+                dset1 = H5Dopen2(fid1, "dset", H5P_DEFAULT);
+            }
+            H5E_END_TRY;
             VERIFY(dset1, FAIL, "H5Dopen2");
             ret = H5Fclose(fid1);
             CHECK_I(ret, "H5Fclose");
@@ -3472,8 +3476,8 @@ test_versionbounds(void)
 **  test_h5s(): Main H5S (dataspace) testing routine.
 **
 ****************************************************************/
-void
-test_h5s(void)
+herr_t
+test_h5s(TestParams_t H5_ATTR_UNUSED *params)
 {
     H5F_libver_t low, high; /* Low and high bounds */
 
@@ -3519,6 +3523,8 @@ test_h5s(void)
     test_h5s_bug1();         /* Test bug in offset initialization */
     test_h5s_bug2();         /* Test bug found in H5S__hyper_update_diminfo() */
     test_versionbounds();    /* Test version bounds with dataspace */
+
+    return SUCCEED;
 } /* test_h5s() */
 
 /*-------------------------------------------------------------------------
@@ -3530,16 +3536,20 @@ test_h5s(void)
  *
  *-------------------------------------------------------------------------
  */
-void
-cleanup_h5s(void)
+herr_t
+cleanup_h5s(TestParams_t H5_ATTR_UNUSED *params)
 {
-    H5E_BEGIN_TRY
-    {
-        H5Fdelete(DATAFILE, H5P_DEFAULT);
-        H5Fdelete(NULLFILE, H5P_DEFAULT);
-        H5Fdelete(BASICFILE, H5P_DEFAULT);
-        H5Fdelete(ZEROFILE, H5P_DEFAULT);
-        H5Fdelete(VERBFNAME, H5P_DEFAULT);
+    if (GetTestCleanup()) {
+        H5E_BEGIN_TRY
+        {
+            H5Fdelete(DATAFILE, H5P_DEFAULT);
+            H5Fdelete(NULLFILE, H5P_DEFAULT);
+            H5Fdelete(BASICFILE, H5P_DEFAULT);
+            H5Fdelete(ZEROFILE, H5P_DEFAULT);
+            H5Fdelete(VERBFNAME, H5P_DEFAULT);
+        }
+        H5E_END_TRY
     }
-    H5E_END_TRY
+
+    return SUCCEED;
 }

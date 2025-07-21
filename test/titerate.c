@@ -322,7 +322,12 @@ test_iter_group(hid_t fapl, hbool_t new_format)
     i            = 0;
     idx          = 0;
     memset(info.name, 0, NAMELEN);
-    while ((ret = H5Literate2(file, H5_INDEX_NAME, H5_ITER_INC, &idx, liter_cb, &info)) > 0) {
+    H5E_BEGIN_TRY
+    {
+        ret = H5Literate2(file, H5_INDEX_NAME, H5_ITER_INC, &idx, liter_cb, &info);
+    }
+    H5E_END_TRY
+    while (ret > 0) {
         /* Verify return value from iterator gets propagated correctly */
         VERIFY(ret, 2, "H5Literate2");
 
@@ -341,7 +346,13 @@ test_iter_group(hid_t fapl, hbool_t new_format)
             TestErrPrintf(
                 "Group iteration function didn't return name correctly for link - lnames[%u] = '%s'!\n",
                 (unsigned)(idx - 1), lnames[(size_t)(idx - 1)]);
-    } /* end while */
+
+        H5E_BEGIN_TRY
+        {
+            ret = H5Literate2(file, H5_INDEX_NAME, H5_ITER_INC, &idx, liter_cb, &info);
+        }
+        H5E_END_TRY
+    }
     VERIFY(ret, -1, "H5Literate2");
 
     if (i != (NDATASETS + 2))
@@ -354,7 +365,12 @@ test_iter_group(hid_t fapl, hbool_t new_format)
     i            = 0;
     idx          = 0;
     memset(info.name, 0, NAMELEN);
-    while ((ret = H5Literate2(file, H5_INDEX_NAME, H5_ITER_INC, &idx, liter_cb, &info)) >= 0) {
+    H5E_BEGIN_TRY
+    {
+        ret = H5Literate2(file, H5_INDEX_NAME, H5_ITER_INC, &idx, liter_cb, &info);
+    }
+    H5E_END_TRY
+    while (ret >= 0) {
         /* Verify return value from iterator gets propagated correctly */
         VERIFY(ret, 1, "H5Literate2");
 
@@ -373,6 +389,12 @@ test_iter_group(hid_t fapl, hbool_t new_format)
             TestErrPrintf(
                 "Group iteration function didn't return name correctly for link - lnames[%u] = '%s'!\n",
                 (unsigned)(idx - 1), lnames[(size_t)(idx - 1)]);
+
+        H5E_BEGIN_TRY
+        {
+            ret = H5Literate2(file, H5_INDEX_NAME, H5_ITER_INC, &idx, liter_cb, &info);
+        }
+        H5E_END_TRY
     } /* end while */
     VERIFY(ret, -1, "H5Literate2");
 
@@ -1220,8 +1242,8 @@ test_links_deprec(hid_t fapl)
 **  test_iterate(): Main iteration testing routine.
 **
 ****************************************************************/
-void
-test_iterate(void)
+herr_t
+test_iterate(TestParams_t H5_ATTR_UNUSED *params)
 {
     hid_t    fapl, fapl2; /* File access property lists */
     unsigned new_format;  /* Whether to use the new format or not */
@@ -1262,6 +1284,8 @@ test_iterate(void)
     CHECK(ret, FAIL, "H5Pclose");
     ret = H5Pclose(fapl2);
     CHECK(ret, FAIL, "H5Pclose");
+
+    return SUCCEED;
 } /* test_iterate() */
 
 /*-------------------------------------------------------------------------
@@ -1273,12 +1297,16 @@ test_iterate(void)
  *
  *-------------------------------------------------------------------------
  */
-void
-cleanup_iterate(void)
+herr_t
+cleanup_iterate(TestParams_t H5_ATTR_UNUSED *params)
 {
-    H5E_BEGIN_TRY
-    {
-        H5Fdelete(DATAFILE, H5P_DEFAULT);
+    if (GetTestCleanup()) {
+        H5E_BEGIN_TRY
+        {
+            H5Fdelete(DATAFILE, H5P_DEFAULT);
+        }
+        H5E_END_TRY
     }
-    H5E_END_TRY
+
+    return SUCCEED;
 }
