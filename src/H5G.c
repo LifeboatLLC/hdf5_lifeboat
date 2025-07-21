@@ -150,7 +150,7 @@ H5G__create_api_common(hid_t loc_id, const char *name, hid_t lcpl_id, hid_t gcpl
         (_vol_obj_ptr ? _vol_obj_ptr : &tmp_vol_obj); /* Ptr to object ptr for loc_id */
     H5VL_loc_params_t loc_params;                     /* Location parameters for object access */
     hid_t             ret_value = H5I_INVALID_HID;    /* Return value */
-    htri_t            ret = FALSE;                    /* Return value from H5P comparisons */
+    htri_t            ret       = FALSE;              /* Return value from H5P comparisons */
     FUNC_ENTER_PACKAGE
 
     /* Check arguments */
@@ -262,11 +262,11 @@ hid_t
 H5Gcreate_async(const char *app_file, const char *app_func, unsigned app_line, hid_t loc_id, const char *name,
                 hid_t lcpl_id, hid_t gcpl_id, hid_t gapl_id, hid_t es_id)
 {
-    H5VL_object_t *vol_obj   = NULL;            /* Object for loc_id */
-    void          *token     = NULL;            /* Request token for async operation        */
-    void         **token_ptr = H5_REQUEST_NULL; /* Pointer to request token for async operation        */
-    hid_t          ret_value = H5I_INVALID_HID; /* Return value */
-    int dec_ref_ret = 0;                        /* Ref count decrement return value */
+    H5VL_object_t *vol_obj     = NULL;            /* Object for loc_id */
+    void          *token       = NULL;            /* Request token for async operation        */
+    void         **token_ptr   = H5_REQUEST_NULL; /* Pointer to request token for async operation        */
+    hid_t          ret_value   = H5I_INVALID_HID; /* Return value */
+    int            dec_ref_ret = 0;               /* Ref count decrement return value */
 
     FUNC_ENTER_API_NO_MUTEX(H5I_INVALID_HID)
     H5TRACE9("i", "*s*sIui*siiii", app_file, app_func, app_line, loc_id, name, lcpl_id, gcpl_id, gapl_id,
@@ -289,7 +289,7 @@ H5Gcreate_async(const char *app_file, const char *app_func, unsigned app_line, h
             /* clang-format on */
 
             dec_ref_ret = H5I_dec_app_ref_always_close(ret_value);
-            
+
             if (dec_ref_ret < 0)
                 HDONE_ERROR(H5E_SYM, H5E_CANTDEC, H5I_INVALID_HID, "can't decrement count on group ID");
 
@@ -339,7 +339,7 @@ H5Gcreate_anon(hid_t loc_id, hid_t gcpl_id, hid_t gapl_id)
     H5VL_object_t    *vol_obj = NULL;              /* Object for loc_id */
     H5VL_loc_params_t loc_params;                  /* Location parameters for object access */
     hid_t             ret_value = H5I_INVALID_HID; /* Return value */
-    htri_t            ret = FALSE;                 /* Return value from H5P comparisons */
+    htri_t            ret       = FALSE;           /* Return value from H5P comparisons */
 
     FUNC_ENTER_API_NO_MUTEX(H5I_INVALID_HID)
     H5TRACE3("i", "iii", loc_id, gcpl_id, gapl_id);
@@ -495,11 +495,11 @@ hid_t
 H5Gopen_async(const char *app_file, const char *app_func, unsigned app_line, hid_t loc_id, const char *name,
               hid_t gapl_id, hid_t es_id)
 {
-    H5VL_object_t *vol_obj   = NULL;            /* Object for loc_id */
-    void          *token     = NULL;            /* Request token for async operation        */
-    void         **token_ptr = H5_REQUEST_NULL; /* Pointer to request token for async operation        */
-    hid_t          ret_value = H5I_INVALID_HID; /* Return value */
-    int            dec_ref_ret = 0;             /* Ref count decrement return value */
+    H5VL_object_t *vol_obj     = NULL;            /* Object for loc_id */
+    void          *token       = NULL;            /* Request token for async operation        */
+    void         **token_ptr   = H5_REQUEST_NULL; /* Pointer to request token for async operation        */
+    hid_t          ret_value   = H5I_INVALID_HID; /* Return value */
+    int            dec_ref_ret = 0;               /* Ref count decrement return value */
 
     FUNC_ENTER_API_NO_MUTEX(H5I_INVALID_HID)
     H5TRACE7("i", "*s*sIui*sii", app_file, app_func, app_line, loc_id, name, gapl_id, es_id);
@@ -523,7 +523,7 @@ H5Gopen_async(const char *app_file, const char *app_func, unsigned app_line, hid
 
             if (dec_ref_ret < 0)
                 HDONE_ERROR(H5E_SYM, H5E_CANTDEC, H5I_INVALID_HID, "can't decrement count on group ID");
-            
+
             HGOTO_ERROR(H5E_SYM, H5E_CANTINSERT, H5I_INVALID_HID, "can't insert token into event set");
         } /* end if */
 
@@ -918,8 +918,8 @@ done:
 herr_t
 H5Gclose(hid_t group_id)
 {
-    herr_t ret_value = SUCCEED; /* Return value                     */
-    int    dec_ref_ret = 0;         /* Ref count decrement return value */
+    herr_t ret_value   = SUCCEED; /* Return value                     */
+    int    dec_ref_ret = 0;       /* Ref count decrement return value */
 
     FUNC_ENTER_API_NO_MUTEX(FAIL)
     H5TRACE1("e", "i", group_id);
@@ -933,7 +933,7 @@ H5Gclose(hid_t group_id)
      */
 
     dec_ref_ret = H5I_dec_app_ref(group_id);
-    
+
     if (dec_ref_ret < 0)
         HGOTO_ERROR(H5E_SYM, H5E_CANTDEC, FAIL, "decrementing group ID failed");
 
@@ -953,12 +953,12 @@ done:
 herr_t
 H5Gclose_async(const char *app_file, const char *app_func, unsigned app_line, hid_t group_id, hid_t es_id)
 {
-    H5VL_object_t *vol_obj   = NULL;            /* Object for loc_id */
-    H5VL_t        *connector = NULL;            /* VOL connector */
-    void          *token     = NULL;            /* Request token for async operation        */
-    void         **token_ptr = H5_REQUEST_NULL; /* Pointer to request token for async operation        */
-    herr_t         ret_value = SUCCEED;         /* Return value                     */
-    int            dec_ref_ret = 0;                 /* Ref count decrement return value */
+    H5VL_object_t *vol_obj     = NULL;            /* Object for loc_id */
+    H5VL_t        *connector   = NULL;            /* VOL connector */
+    void          *token       = NULL;            /* Request token for async operation        */
+    void         **token_ptr   = H5_REQUEST_NULL; /* Pointer to request token for async operation        */
+    herr_t         ret_value   = SUCCEED;         /* Return value                     */
+    int            dec_ref_ret = 0;               /* Ref count decrement return value */
 
     FUNC_ENTER_API_NO_MUTEX(FAIL)
     H5TRACE5("e", "*s*sIuii", app_file, app_func, app_line, group_id, es_id);

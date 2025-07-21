@@ -598,7 +598,7 @@ H5VL_pass_through_get_wrap_ctx(const void *obj, void **wrap_ctx)
 {
     const H5VL_pass_through_t    *o = (const H5VL_pass_through_t *)obj;
     H5VL_pass_through_wrap_ctx_t *new_wrap_ctx;
-    
+
 #ifdef ENABLE_PASSTHRU_LOGGING
     printf("------- PASS THROUGH VOL WRAP CTX Get\n");
 #endif

@@ -21,7 +21,7 @@
 #include "H5VLpublic.h" /* Virtual Object Layer                 */
 
 /* Characteristics of the multi-thread pass-through VOL connector */
-#define MT_PASSTHRU_WRAPPER_NAME "mt_passthru_wrapper_vol_connector"
+#define MT_PASSTHRU_WRAPPER_NAME  "mt_passthru_wrapper_vol_connector"
 #define MT_PASSTHRU_WRAPPER_VALUE ((H5VL_class_value_t)163)
 
 /* Pass-through VOL connector info */
@@ -33,4 +33,3 @@ typedef struct mt_pass_through_wrapper_info_t {
 H5_DLL hid_t mt_pass_through_wrapper_register(void);
 
 #endif /* H5VL_MT_PASSTHRU_WRAPPER_H */
-

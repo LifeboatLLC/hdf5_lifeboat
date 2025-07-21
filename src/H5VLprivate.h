@@ -33,9 +33,9 @@
 
 /* Internal struct to track VOL connector information for objects */
 typedef struct H5VL_t {
-    const H5VL_class_t *cls; /* Pointer to connector class struct                    */
+    const H5VL_class_t *cls;  /* Pointer to connector class struct                    */
     H5_ATOMIC(int64_t) nrefs; /* Number of references by objects using this struct    */
-    hid_t id; /* Identifier for the VOL connector                     */
+    hid_t id;                 /* Identifier for the VOL connector                     */
 } H5VL_t;
 
 #ifdef H5_HAVE_MULTITHREAD
@@ -61,22 +61,21 @@ typedef struct H5VL_object_t H5VL_object_t; /* forward declaration */
 
 typedef struct H5VL_mt_vol_obj_sptr_t {
 
-    H5VL_object_t * ptr;
-    uint64_t         sn;
+    H5VL_object_t *ptr;
+    uint64_t       sn;
 
 } H5VL_mt_vol_obj_sptr_t;
 
 #endif /* H5_HAVE_MULTITHREAD */
 
-
 /****************************************************************************************
  *
- * struct H5VL_object_t 
+ * struct H5VL_object_t
  *
- * This header comment discusses only fields added to H5VL_object_t for multi-thread 
- * operation.  
+ * This header comment discusses only fields added to H5VL_object_t for multi-thread
+ * operation.
  *
- * tag: unsigned int 32 set to H5VL__VOL_BJ_TAG when allocated, and to 
+ * tag: unsigned int 32 set to H5VL__VOL_BJ_TAG when allocated, and to
  *      H5VL__INVALID_OBJECT_TAG just before the instance of H5VL_object_t is deallocated.
  *
  * on_fl: Atomic boolean flag that is set to TRUE when the instance of H5VL_object_t
@@ -86,28 +85,28 @@ typedef struct H5VL_mt_vol_obj_sptr_t {
  * fl_snext: Atomic instance of H5VL_mt_vol_obj_sptr_t used in the maintenance of the
  *      object free list.  The structure contains both a pointer and a serial number,
  *      which facilitates the avoidance of ABA bugs when managing the free list.
- *  
+ *
  * serial_num: unsigned int 64 that is always 0 when not on the vol ovject free list.
  *      When added to the free list this value is set equal to H5I_mt_g's
  *      vol_obj_next_sn field, and that field is then incremented. The value of serial_num
  *      is used by the free list to determine if an entry can be reallocated.
- *  
+ *
  *      When a new instance of H5VL_object_t is needed, the free list is checked.
  *      If the list contains more than one entry, and the serial_num field of the
- *      entry at the head of the list is less than H5VL_mt_g.vol_obj_max_realloc_sn, 
+ *      entry at the head of the list is less than H5VL_mt_g.vol_obj_max_realloc_sn,
  *      the entry at the head of the free list may be removed from the free list and
- *      reallocated.  
- *  
+ *      reallocated.
+ *
  *      The serial_num field is set to zero on removal from the free list,
- *  
+ *
  *      At present, there is no provision for the case in which H5VL_mt_g.vol_obj_next_sn
  *      wraps around.  While it is unlikely that this will be a problem any time
  *      soon, this issue must be addressed in the production version.
- * 
+ *
  ****************************************************************************************/
 
-#define H5VL__VOL_OBJ_TAG                0x3033
-#define H5VL__INVALID_VOL_OBJ_TAG        0x0300
+#define H5VL__VOL_OBJ_TAG         0x3033
+#define H5VL__INVALID_VOL_OBJ_TAG 0x0300
 
 /* Internal vol object structure returned to the API */
 typedef struct H5VL_object_t {
@@ -121,8 +120,8 @@ typedef struct H5VL_object_t {
 
 #endif /* H5_HAVE_MULTITHREAD */
 
-    void   *data;      /* Pointer to connector-managed data for this object    */
-    H5VL_t *connector; /* Pointer to VOL connector struct                      */
+    void   *data;         /* Pointer to connector-managed data for this object    */
+    H5VL_t *connector;    /* Pointer to VOL connector struct                      */
     H5_ATOMIC(size_t) rc; /* Reference count                                      */
 
 } H5VL_object_t;

@@ -123,8 +123,7 @@ test_create_attribute_on_root(TestParams_t *params)
 
         /* Verify the attribute has been created */
         if ((attr_exists = H5Aexists(file_id, ATTRIBUTE_CREATE_ON_ROOT_ATTR_NAME)) < 0) {
-            printf("    couldn't determine if attribute '%s' exists\n",
-                   ATTRIBUTE_CREATE_ON_ROOT_ATTR_NAME);
+            printf("    couldn't determine if attribute '%s' exists\n", ATTRIBUTE_CREATE_ON_ROOT_ATTR_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -145,8 +144,7 @@ test_create_attribute_on_root(TestParams_t *params)
 
         /* Verify the attribute has been created */
         if ((attr_exists = H5Aexists(file_id, ATTRIBUTE_CREATE_ON_ROOT_ATTR_NAME2)) < 0) {
-            printf("    couldn't determine if attribute '%s' exists\n",
-                   ATTRIBUTE_CREATE_ON_ROOT_ATTR_NAME2);
+            printf("    couldn't determine if attribute '%s' exists\n", ATTRIBUTE_CREATE_ON_ROOT_ATTR_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -251,8 +249,8 @@ test_create_attribute_on_dataset(TestParams_t *params)
 
     SUBTEST_BEGIN(params, "H5Acreate on a dataset")
     {
-        if ((attr_id = H5Acreate2(dset_id, ATTRIBUTE_CREATE_ON_DATASET_ATTR_NAME, attr_dtype1,
-                                  attr_space_id, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
+        if ((attr_id = H5Acreate2(dset_id, ATTRIBUTE_CREATE_ON_DATASET_ATTR_NAME, attr_dtype1, attr_space_id,
+                                  H5P_DEFAULT, H5P_DEFAULT)) < 0) {
             printf("    couldn't create attribute\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -274,8 +272,8 @@ test_create_attribute_on_dataset(TestParams_t *params)
     SUBTEST_BEGIN(params, "H5Acreate_by_name on a dataset")
     {
         if ((attr_id2 = H5Acreate_by_name(group_id, ATTRIBUTE_CREATE_ON_DATASET_DSET_NAME,
-                                          ATTRIBUTE_CREATE_ON_DATASET_ATTR_NAME2, attr_dtype2,
-                                          attr_space_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
+                                          ATTRIBUTE_CREATE_ON_DATASET_ATTR_NAME2, attr_dtype2, attr_space_id,
+                                          H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
             printf("    couldn't create attribute on dataset by name\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -899,8 +897,8 @@ test_create_attribute_invalid_params(TestParams_t *params)
     {
         H5E_BEGIN_TRY
         {
-            attr_id = H5Acreate2(group_id, ATTRIBUTE_CREATE_INVALID_PARAMS_ATTR_NAME, attr_dtype,
-                                 space_id, H5I_INVALID_HID, H5P_DEFAULT);
+            attr_id = H5Acreate2(group_id, ATTRIBUTE_CREATE_INVALID_PARAMS_ATTR_NAME, attr_dtype, space_id,
+                                 H5I_INVALID_HID, H5P_DEFAULT);
         }
         H5E_END_TRY
 
@@ -916,8 +914,8 @@ test_create_attribute_invalid_params(TestParams_t *params)
     {
         H5E_BEGIN_TRY
         {
-            attr_id = H5Acreate2(group_id, ATTRIBUTE_CREATE_INVALID_PARAMS_ATTR_NAME, attr_dtype,
-                                 space_id, H5P_DEFAULT, H5I_INVALID_HID);
+            attr_id = H5Acreate2(group_id, ATTRIBUTE_CREATE_INVALID_PARAMS_ATTR_NAME, attr_dtype, space_id,
+                                 H5P_DEFAULT, H5I_INVALID_HID);
         }
         H5E_END_TRY
 
@@ -951,8 +949,8 @@ test_create_attribute_invalid_params(TestParams_t *params)
     {
         H5E_BEGIN_TRY
         {
-            attr_id = H5Acreate_by_name(group_id, NULL, ATTRIBUTE_CREATE_INVALID_PARAMS_ATTR_NAME,
-                                        attr_dtype, space_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+            attr_id = H5Acreate_by_name(group_id, NULL, ATTRIBUTE_CREATE_INVALID_PARAMS_ATTR_NAME, attr_dtype,
+                                        space_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
         }
         H5E_END_TRY
 
@@ -964,8 +962,8 @@ test_create_attribute_invalid_params(TestParams_t *params)
 
         H5E_BEGIN_TRY
         {
-            attr_id = H5Acreate_by_name(group_id, "", ATTRIBUTE_CREATE_INVALID_PARAMS_ATTR_NAME,
-                                        attr_dtype, space_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+            attr_id = H5Acreate_by_name(group_id, "", ATTRIBUTE_CREATE_INVALID_PARAMS_ATTR_NAME, attr_dtype,
+                                        space_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
         }
         H5E_END_TRY
 
@@ -1000,8 +998,7 @@ test_create_attribute_invalid_params(TestParams_t *params)
         H5E_END_TRY
 
         if (attr_id >= 0) {
-            printf(
-                "    created attribute using H5Acreate_by_name with an invalid attribute name of ''!\n");
+            printf("    created attribute using H5Acreate_by_name with an invalid attribute name of ''!\n");
             H5Aclose(attr_id);
             TESTFRAME_TEST_ERROR(params);
         }
@@ -1013,8 +1010,8 @@ test_create_attribute_invalid_params(TestParams_t *params)
         H5E_BEGIN_TRY
         {
             attr_id = H5Acreate_by_name(container_group, ATTRIBUTE_CREATE_INVALID_PARAMS_GROUP_NAME,
-                                        ATTRIBUTE_CREATE_INVALID_PARAMS_ATTR_NAME, H5I_INVALID_HID,
-                                        space_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+                                        ATTRIBUTE_CREATE_INVALID_PARAMS_ATTR_NAME, H5I_INVALID_HID, space_id,
+                                        H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
         }
         H5E_END_TRY
 
@@ -1227,8 +1224,7 @@ test_open_attribute(TestParams_t *params)
     {
         if ((attr_id = H5Aopen_by_name(container_group, ATTRIBUTE_OPEN_TEST_GROUP_NAME,
                                        ATTRIBUTE_OPEN_TEST_ATTR_NAME, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
-            printf("    couldn't open attribute '%s' using H5Aopen_by_name\n",
-                   ATTRIBUTE_OPEN_TEST_ATTR_NAME);
+            printf("    couldn't open attribute '%s' using H5Aopen_by_name\n", ATTRIBUTE_OPEN_TEST_ATTR_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -1573,9 +1569,8 @@ test_open_attribute_invalid_params(TestParams_t *params)
     {
         H5E_BEGIN_TRY
         {
-            attr_id =
-                H5Aopen_by_name(H5I_INVALID_HID, ATTRIBUTE_OPEN_INVALID_PARAMS_TEST_GROUP_NAME,
-                                ATTRIBUTE_OPEN_INVALID_PARAMS_TEST_ATTR_NAME, H5P_DEFAULT, H5P_DEFAULT);
+            attr_id = H5Aopen_by_name(H5I_INVALID_HID, ATTRIBUTE_OPEN_INVALID_PARAMS_TEST_GROUP_NAME,
+                                      ATTRIBUTE_OPEN_INVALID_PARAMS_TEST_ATTR_NAME, H5P_DEFAULT, H5P_DEFAULT);
         }
         H5E_END_TRY
 
@@ -1624,8 +1619,8 @@ test_open_attribute_invalid_params(TestParams_t *params)
     {
         H5E_BEGIN_TRY
         {
-            attr_id = H5Aopen_by_name(container_group, ATTRIBUTE_OPEN_INVALID_PARAMS_TEST_GROUP_NAME,
-                                      NULL, H5P_DEFAULT, H5P_DEFAULT);
+            attr_id = H5Aopen_by_name(container_group, ATTRIBUTE_OPEN_INVALID_PARAMS_TEST_GROUP_NAME, NULL,
+                                      H5P_DEFAULT, H5P_DEFAULT);
         }
         H5E_END_TRY
 
@@ -1644,9 +1639,8 @@ test_open_attribute_invalid_params(TestParams_t *params)
         H5E_END_TRY
 
         if (attr_id >= 0) {
-            printf(
-                "    opened attribute '%s' using H5Aopen_by_name with an invalid attribute name of ''!\n",
-                ATTRIBUTE_OPEN_INVALID_PARAMS_TEST_ATTR_NAME);
+            printf("    opened attribute '%s' using H5Aopen_by_name with an invalid attribute name of ''!\n",
+                   ATTRIBUTE_OPEN_INVALID_PARAMS_TEST_ATTR_NAME);
             H5Aclose(attr_id);
             TESTFRAME_TEST_ERROR(params);
         }
@@ -1657,9 +1651,9 @@ test_open_attribute_invalid_params(TestParams_t *params)
     {
         H5E_BEGIN_TRY
         {
-            attr_id = H5Aopen_by_name(container_group, ATTRIBUTE_OPEN_INVALID_PARAMS_TEST_GROUP_NAME,
-                                      ATTRIBUTE_OPEN_INVALID_PARAMS_TEST_ATTR_NAME, H5I_INVALID_HID,
-                                      H5P_DEFAULT);
+            attr_id =
+                H5Aopen_by_name(container_group, ATTRIBUTE_OPEN_INVALID_PARAMS_TEST_GROUP_NAME,
+                                ATTRIBUTE_OPEN_INVALID_PARAMS_TEST_ATTR_NAME, H5I_INVALID_HID, H5P_DEFAULT);
         }
         H5E_END_TRY
 
@@ -1676,9 +1670,9 @@ test_open_attribute_invalid_params(TestParams_t *params)
     {
         H5E_BEGIN_TRY
         {
-            attr_id = H5Aopen_by_name(container_group, ATTRIBUTE_OPEN_INVALID_PARAMS_TEST_GROUP_NAME,
-                                      ATTRIBUTE_OPEN_INVALID_PARAMS_TEST_ATTR_NAME, H5P_DEFAULT,
-                                      H5I_INVALID_HID);
+            attr_id =
+                H5Aopen_by_name(container_group, ATTRIBUTE_OPEN_INVALID_PARAMS_TEST_GROUP_NAME,
+                                ATTRIBUTE_OPEN_INVALID_PARAMS_TEST_ATTR_NAME, H5P_DEFAULT, H5I_INVALID_HID);
         }
         H5E_END_TRY
 
@@ -1727,8 +1721,8 @@ test_open_attribute_invalid_params(TestParams_t *params)
 
         H5E_BEGIN_TRY
         {
-            attr_id = H5Aopen_by_idx(container_group, "", H5_INDEX_NAME, H5_ITER_INC, 0, H5P_DEFAULT,
-                                     H5P_DEFAULT);
+            attr_id =
+                H5Aopen_by_idx(container_group, "", H5_INDEX_NAME, H5_ITER_INC, 0, H5P_DEFAULT, H5P_DEFAULT);
         }
         H5E_END_TRY
 
@@ -3175,14 +3169,12 @@ test_attribute_property_lists(TestParams_t *params)
 
     SUBTEST_BEGIN(params, "H5Aget_create_plist after re-opening an attribute")
     {
-        if ((attr_id1 = H5Aopen(group_id, ATTRIBUTE_PROPERTY_LIST_TEST_ATTRIBUTE_NAME1, H5P_DEFAULT)) <
-            0) {
+        if ((attr_id1 = H5Aopen(group_id, ATTRIBUTE_PROPERTY_LIST_TEST_ATTRIBUTE_NAME1, H5P_DEFAULT)) < 0) {
             printf("    couldn't open attribute '%s'\n", ATTRIBUTE_PROPERTY_LIST_TEST_ATTRIBUTE_NAME1);
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((attr_id2 = H5Aopen(group_id, ATTRIBUTE_PROPERTY_LIST_TEST_ATTRIBUTE_NAME2, H5P_DEFAULT)) <
-            0) {
+        if ((attr_id2 = H5Aopen(group_id, ATTRIBUTE_PROPERTY_LIST_TEST_ATTRIBUTE_NAME2, H5P_DEFAULT)) < 0) {
             printf("    couldn't open attribute '%s'\n", ATTRIBUTE_PROPERTY_LIST_TEST_ATTRIBUTE_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
@@ -3791,8 +3783,8 @@ test_get_attribute_name_invalid_params(TestParams_t *params)
     {
         H5E_BEGIN_TRY
         {
-            name_buf_size = H5Aget_name_by_idx(container_group, NULL, H5_INDEX_NAME, H5_ITER_INC, 0,
-                                               name_buf, (size_t)name_buf_size + 1, H5P_DEFAULT);
+            name_buf_size = H5Aget_name_by_idx(container_group, NULL, H5_INDEX_NAME, H5_ITER_INC, 0, name_buf,
+                                               (size_t)name_buf_size + 1, H5P_DEFAULT);
         }
         H5E_END_TRY
 
@@ -3803,8 +3795,8 @@ test_get_attribute_name_invalid_params(TestParams_t *params)
 
         H5E_BEGIN_TRY
         {
-            name_buf_size = H5Aget_name_by_idx(container_group, "", H5_INDEX_NAME, H5_ITER_INC, 0,
-                                               name_buf, (size_t)name_buf_size + 1, H5P_DEFAULT);
+            name_buf_size = H5Aget_name_by_idx(container_group, "", H5_INDEX_NAME, H5_ITER_INC, 0, name_buf,
+                                               (size_t)name_buf_size + 1, H5P_DEFAULT);
         }
         H5E_END_TRY
 
@@ -3835,8 +3827,8 @@ test_get_attribute_name_invalid_params(TestParams_t *params)
         H5E_BEGIN_TRY
         {
             name_buf_size = H5Aget_name_by_idx(
-                container_group, ATTRIBUTE_GET_NAME_INVALID_PARAMS_TEST_GROUP_NAME, H5_INDEX_N,
-                H5_ITER_INC, 0, name_buf, (size_t)name_buf_size + 1, H5P_DEFAULT);
+                container_group, ATTRIBUTE_GET_NAME_INVALID_PARAMS_TEST_GROUP_NAME, H5_INDEX_N, H5_ITER_INC,
+                0, name_buf, (size_t)name_buf_size + 1, H5P_DEFAULT);
         }
         H5E_END_TRY
 
@@ -3867,8 +3859,8 @@ test_get_attribute_name_invalid_params(TestParams_t *params)
         H5E_BEGIN_TRY
         {
             name_buf_size = H5Aget_name_by_idx(
-                container_group, ATTRIBUTE_GET_NAME_INVALID_PARAMS_TEST_GROUP_NAME, H5_INDEX_NAME,
-                H5_ITER_N, 0, name_buf, (size_t)name_buf_size + 1, H5P_DEFAULT);
+                container_group, ATTRIBUTE_GET_NAME_INVALID_PARAMS_TEST_GROUP_NAME, H5_INDEX_NAME, H5_ITER_N,
+                0, name_buf, (size_t)name_buf_size + 1, H5P_DEFAULT);
         }
         H5E_END_TRY
 
@@ -3885,15 +3877,14 @@ test_get_attribute_name_invalid_params(TestParams_t *params)
         H5E_BEGIN_TRY
         {
             name_buf_size = 1;
-            name_buf_size = H5Aget_name_by_idx(
-                container_group, ATTRIBUTE_GET_NAME_INVALID_PARAMS_TEST_GROUP_NAME, H5_INDEX_NAME,
-                H5_ITER_INC, 0, NULL, (size_t)name_buf_size, H5P_DEFAULT);
+            name_buf_size =
+                H5Aget_name_by_idx(container_group, ATTRIBUTE_GET_NAME_INVALID_PARAMS_TEST_GROUP_NAME,
+                                   H5_INDEX_NAME, H5_ITER_INC, 0, NULL, (size_t)name_buf_size, H5P_DEFAULT);
         }
         H5E_END_TRY
 
         if (name_buf_size >= 0) {
-            printf(
-                "    retrieved attribute name using H5Aget_name_by_idx with an invalid name buffer!\n");
+            printf("    retrieved attribute name using H5Aget_name_by_idx with an invalid name buffer!\n");
             TESTFRAME_TEST_ERROR(params);
         }
     }
@@ -4122,8 +4113,8 @@ test_get_attribute_info(TestParams_t *params)
     SUBTEST_BEGIN(params, "H5Aget_info_by_name")
     {
         memset(&attr_info, 0, sizeof(attr_info));
-        if (H5Aget_info_by_name(group_id, ".", ATTRIBUTE_GET_INFO_TEST_ATTR_NAME, &attr_info,
-                                H5P_DEFAULT) < 0) {
+        if (H5Aget_info_by_name(group_id, ".", ATTRIBUTE_GET_INFO_TEST_ATTR_NAME, &attr_info, H5P_DEFAULT) <
+            0) {
             printf("    couldn't get attribute info by name '%s'\n", ATTRIBUTE_GET_INFO_TEST_ATTR_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
@@ -4142,8 +4133,8 @@ test_get_attribute_info(TestParams_t *params)
         }
 
         memset(&attr_info, 0, sizeof(attr_info));
-        if (H5Aget_info_by_name(group_id, ".", ATTRIBUTE_GET_INFO_TEST_ATTR_NAME2, &attr_info,
-                                H5P_DEFAULT) < 0) {
+        if (H5Aget_info_by_name(group_id, ".", ATTRIBUTE_GET_INFO_TEST_ATTR_NAME2, &attr_info, H5P_DEFAULT) <
+            0) {
             printf("    couldn't get attribute info by name '%s'\n", ATTRIBUTE_GET_INFO_TEST_ATTR_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
@@ -4162,8 +4153,8 @@ test_get_attribute_info(TestParams_t *params)
         }
 
         memset(&attr_info, 0, sizeof(attr_info));
-        if (H5Aget_info_by_name(group_id, ".", ATTRIBUTE_GET_INFO_TEST_ATTR_NAME3, &attr_info,
-                                H5P_DEFAULT) < 0) {
+        if (H5Aget_info_by_name(group_id, ".", ATTRIBUTE_GET_INFO_TEST_ATTR_NAME3, &attr_info, H5P_DEFAULT) <
+            0) {
             printf("    couldn't get attribute info by name '%s'\n", ATTRIBUTE_GET_INFO_TEST_ATTR_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
@@ -4191,8 +4182,8 @@ test_get_attribute_info(TestParams_t *params)
         }
 
         memset(&attr_info, 0, sizeof(attr_info));
-        if (H5Aget_info_by_idx(group_id, ".", H5_INDEX_CRT_ORDER, H5_ITER_INC, 0, &attr_info,
-                               H5P_DEFAULT) < 0) {
+        if (H5Aget_info_by_idx(group_id, ".", H5_INDEX_CRT_ORDER, H5_ITER_INC, 0, &attr_info, H5P_DEFAULT) <
+            0) {
             printf("    couldn't get info for attribute at index %d using H5Aget_info_by_idx by "
                    "creation order in increasing order\n",
                    0);
@@ -4213,8 +4204,8 @@ test_get_attribute_info(TestParams_t *params)
         }
 
         memset(&attr_info, 0, sizeof(attr_info));
-        if (H5Aget_info_by_idx(group_id, ".", H5_INDEX_CRT_ORDER, H5_ITER_INC, 1, &attr_info,
-                               H5P_DEFAULT) < 0) {
+        if (H5Aget_info_by_idx(group_id, ".", H5_INDEX_CRT_ORDER, H5_ITER_INC, 1, &attr_info, H5P_DEFAULT) <
+            0) {
             printf("    couldn't get info for attribute at index %d using H5Aget_info_by_idx by "
                    "creation order in increasing order\n",
                    1);
@@ -4235,8 +4226,8 @@ test_get_attribute_info(TestParams_t *params)
         }
 
         memset(&attr_info, 0, sizeof(attr_info));
-        if (H5Aget_info_by_idx(group_id, ".", H5_INDEX_CRT_ORDER, H5_ITER_INC, 2, &attr_info,
-                               H5P_DEFAULT) < 0) {
+        if (H5Aget_info_by_idx(group_id, ".", H5_INDEX_CRT_ORDER, H5_ITER_INC, 2, &attr_info, H5P_DEFAULT) <
+            0) {
             printf("    couldn't get info for attribute at index %d using H5Aget_info_by_idx by "
                    "creation order in increasing order\n",
                    2);
@@ -4266,8 +4257,8 @@ test_get_attribute_info(TestParams_t *params)
         }
 
         memset(&attr_info, 0, sizeof(attr_info));
-        if (H5Aget_info_by_idx(group_id, ".", H5_INDEX_CRT_ORDER, H5_ITER_DEC, 2, &attr_info,
-                               H5P_DEFAULT) < 0) {
+        if (H5Aget_info_by_idx(group_id, ".", H5_INDEX_CRT_ORDER, H5_ITER_DEC, 2, &attr_info, H5P_DEFAULT) <
+            0) {
             printf("    couldn't get info for attribute at index %d using H5Aget_info_by_idx by "
                    "creation order in decreasing order\n",
                    2);
@@ -4288,8 +4279,8 @@ test_get_attribute_info(TestParams_t *params)
         }
 
         memset(&attr_info, 0, sizeof(attr_info));
-        if (H5Aget_info_by_idx(group_id, ".", H5_INDEX_CRT_ORDER, H5_ITER_DEC, 1, &attr_info,
-                               H5P_DEFAULT) < 0) {
+        if (H5Aget_info_by_idx(group_id, ".", H5_INDEX_CRT_ORDER, H5_ITER_DEC, 1, &attr_info, H5P_DEFAULT) <
+            0) {
             printf("    couldn't get info for attribute at index %d using H5Aget_info_by_idx by "
                    "creation order in decreasing order\n",
                    1);
@@ -4310,8 +4301,8 @@ test_get_attribute_info(TestParams_t *params)
         }
 
         memset(&attr_info, 0, sizeof(attr_info));
-        if (H5Aget_info_by_idx(group_id, ".", H5_INDEX_CRT_ORDER, H5_ITER_DEC, 0, &attr_info,
-                               H5P_DEFAULT) < 0) {
+        if (H5Aget_info_by_idx(group_id, ".", H5_INDEX_CRT_ORDER, H5_ITER_DEC, 0, &attr_info, H5P_DEFAULT) <
+            0) {
             printf("    couldn't get info for attribute at index %d using H5Aget_info_by_idx by "
                    "creation order in decreasing order\n",
                    0);
@@ -4336,8 +4327,7 @@ test_get_attribute_info(TestParams_t *params)
     SUBTEST_BEGIN(params, "H5Aget_info_by_idx by alphabetical order in increasing order")
     {
         memset(&attr_info, 0, sizeof(attr_info));
-        if (H5Aget_info_by_idx(group_id, ".", H5_INDEX_NAME, H5_ITER_INC, 0, &attr_info, H5P_DEFAULT) <
-            0) {
+        if (H5Aget_info_by_idx(group_id, ".", H5_INDEX_NAME, H5_ITER_INC, 0, &attr_info, H5P_DEFAULT) < 0) {
             printf("    couldn't get info for attribute at index %d using H5Aget_info_by_idx by "
                    "alphabetical order in increasing order\n",
                    0);
@@ -4358,8 +4348,7 @@ test_get_attribute_info(TestParams_t *params)
         }
 
         memset(&attr_info, 0, sizeof(attr_info));
-        if (H5Aget_info_by_idx(group_id, ".", H5_INDEX_NAME, H5_ITER_INC, 1, &attr_info, H5P_DEFAULT) <
-            0) {
+        if (H5Aget_info_by_idx(group_id, ".", H5_INDEX_NAME, H5_ITER_INC, 1, &attr_info, H5P_DEFAULT) < 0) {
             printf("    couldn't get info for attribute at index %d using H5Aget_info_by_idx by "
                    "alphabetical order in increasing order\n",
                    1);
@@ -4380,8 +4369,7 @@ test_get_attribute_info(TestParams_t *params)
         }
 
         memset(&attr_info, 0, sizeof(attr_info));
-        if (H5Aget_info_by_idx(group_id, ".", H5_INDEX_NAME, H5_ITER_INC, 2, &attr_info, H5P_DEFAULT) <
-            0) {
+        if (H5Aget_info_by_idx(group_id, ".", H5_INDEX_NAME, H5_ITER_INC, 2, &attr_info, H5P_DEFAULT) < 0) {
             printf("    couldn't get info for attribute at index %d using H5Aget_info_by_idx by "
                    "alphabetical order in increasing order\n",
                    2);
@@ -4406,8 +4394,7 @@ test_get_attribute_info(TestParams_t *params)
     SUBTEST_BEGIN(params, "H5Aget_info_by_idx by alphabetical order in decreasing order")
     {
         memset(&attr_info, 0, sizeof(attr_info));
-        if (H5Aget_info_by_idx(group_id, ".", H5_INDEX_NAME, H5_ITER_DEC, 2, &attr_info, H5P_DEFAULT) <
-            0) {
+        if (H5Aget_info_by_idx(group_id, ".", H5_INDEX_NAME, H5_ITER_DEC, 2, &attr_info, H5P_DEFAULT) < 0) {
             printf("    couldn't get info for attribute at index %d using H5Aget_info_by_idx by "
                    "alphabetical order in decreasing order\n",
                    2);
@@ -4428,8 +4415,7 @@ test_get_attribute_info(TestParams_t *params)
         }
 
         memset(&attr_info, 0, sizeof(attr_info));
-        if (H5Aget_info_by_idx(group_id, ".", H5_INDEX_NAME, H5_ITER_DEC, 1, &attr_info, H5P_DEFAULT) <
-            0) {
+        if (H5Aget_info_by_idx(group_id, ".", H5_INDEX_NAME, H5_ITER_DEC, 1, &attr_info, H5P_DEFAULT) < 0) {
             printf("    couldn't get info for attribute at index %d using H5Aget_info_by_idx by "
                    "alphabetical order in decreasing order\n",
                    1);
@@ -4450,8 +4436,7 @@ test_get_attribute_info(TestParams_t *params)
         }
 
         memset(&attr_info, 0, sizeof(attr_info));
-        if (H5Aget_info_by_idx(group_id, ".", H5_INDEX_NAME, H5_ITER_DEC, 0, &attr_info, H5P_DEFAULT) <
-            0) {
+        if (H5Aget_info_by_idx(group_id, ".", H5_INDEX_NAME, H5_ITER_DEC, 0, &attr_info, H5P_DEFAULT) < 0) {
             printf("    couldn't get info for attribute at index %d using H5Aget_info_by_idx by "
                    "alphabetical order in decreasing order\n",
                    0);
@@ -4604,9 +4589,9 @@ test_get_attribute_info_invalid_params(TestParams_t *params)
     {
         H5E_BEGIN_TRY
         {
-            err_ret = H5Aget_info_by_name(H5I_INVALID_HID, ".",
-                                          ATTRIBUTE_GET_INFO_INVALID_PARAMS_TEST_ATTR_NAME, &attr_info,
-                                          H5P_DEFAULT);
+            err_ret =
+                H5Aget_info_by_name(H5I_INVALID_HID, ".", ATTRIBUTE_GET_INFO_INVALID_PARAMS_TEST_ATTR_NAME,
+                                    &attr_info, H5P_DEFAULT);
         }
         H5E_END_TRY
 
@@ -4621,9 +4606,8 @@ test_get_attribute_info_invalid_params(TestParams_t *params)
     {
         H5E_BEGIN_TRY
         {
-            err_ret =
-                H5Aget_info_by_name(group_id, NULL, ATTRIBUTE_GET_INFO_INVALID_PARAMS_TEST_ATTR_NAME,
-                                    &attr_info, H5P_DEFAULT);
+            err_ret = H5Aget_info_by_name(group_id, NULL, ATTRIBUTE_GET_INFO_INVALID_PARAMS_TEST_ATTR_NAME,
+                                          &attr_info, H5P_DEFAULT);
         }
         H5E_END_TRY
 
@@ -4656,8 +4640,7 @@ test_get_attribute_info_invalid_params(TestParams_t *params)
         H5E_END_TRY
 
         if (err_ret >= 0) {
-            printf(
-                "    retrieved attribute info using H5Aget_info_by_name with a NULL attribute name!\n");
+            printf("    retrieved attribute info using H5Aget_info_by_name with a NULL attribute name!\n");
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -4728,8 +4711,8 @@ test_get_attribute_info_invalid_params(TestParams_t *params)
     {
         H5E_BEGIN_TRY
         {
-            err_ret = H5Aget_info_by_idx(group_id, NULL, H5_INDEX_NAME, H5_ITER_INC, 0, &attr_info,
-                                         H5P_DEFAULT);
+            err_ret =
+                H5Aget_info_by_idx(group_id, NULL, H5_INDEX_NAME, H5_ITER_INC, 0, &attr_info, H5P_DEFAULT);
         }
         H5E_END_TRY
 
@@ -4757,8 +4740,8 @@ test_get_attribute_info_invalid_params(TestParams_t *params)
     {
         H5E_BEGIN_TRY
         {
-            err_ret = H5Aget_info_by_idx(group_id, ".", H5_INDEX_UNKNOWN, H5_ITER_INC, 0, &attr_info,
-                                         H5P_DEFAULT);
+            err_ret =
+                H5Aget_info_by_idx(group_id, ".", H5_INDEX_UNKNOWN, H5_ITER_INC, 0, &attr_info, H5P_DEFAULT);
         }
         H5E_END_TRY
 
@@ -4770,8 +4753,7 @@ test_get_attribute_info_invalid_params(TestParams_t *params)
 
         H5E_BEGIN_TRY
         {
-            err_ret =
-                H5Aget_info_by_idx(group_id, ".", H5_INDEX_N, H5_ITER_INC, 0, &attr_info, H5P_DEFAULT);
+            err_ret = H5Aget_info_by_idx(group_id, ".", H5_INDEX_N, H5_ITER_INC, 0, &attr_info, H5P_DEFAULT);
         }
         H5E_END_TRY
 
@@ -4787,8 +4769,8 @@ test_get_attribute_info_invalid_params(TestParams_t *params)
     {
         H5E_BEGIN_TRY
         {
-            err_ret = H5Aget_info_by_idx(group_id, ".", H5_INDEX_NAME, H5_ITER_UNKNOWN, 0, &attr_info,
-                                         H5P_DEFAULT);
+            err_ret =
+                H5Aget_info_by_idx(group_id, ".", H5_INDEX_NAME, H5_ITER_UNKNOWN, 0, &attr_info, H5P_DEFAULT);
         }
         H5E_END_TRY
 
@@ -4800,8 +4782,7 @@ test_get_attribute_info_invalid_params(TestParams_t *params)
 
         H5E_BEGIN_TRY
         {
-            err_ret =
-                H5Aget_info_by_idx(group_id, ".", H5_INDEX_NAME, H5_ITER_N, 0, &attr_info, H5P_DEFAULT);
+            err_ret = H5Aget_info_by_idx(group_id, ".", H5_INDEX_NAME, H5_ITER_N, 0, &attr_info, H5P_DEFAULT);
         }
         H5E_END_TRY
 
@@ -4833,8 +4814,8 @@ test_get_attribute_info_invalid_params(TestParams_t *params)
     {
         H5E_BEGIN_TRY
         {
-            err_ret = H5Aget_info_by_idx(group_id, ".", H5_INDEX_NAME, H5_ITER_INC, 0, &attr_info,
-                                         H5I_INVALID_HID);
+            err_ret =
+                H5Aget_info_by_idx(group_id, ".", H5_INDEX_NAME, H5_ITER_INC, 0, &attr_info, H5I_INVALID_HID);
         }
         H5E_END_TRY
 
@@ -5202,9 +5183,8 @@ test_rename_attribute_invalid_params(TestParams_t *params)
     {
         H5E_BEGIN_TRY
         {
-            err_ret =
-                H5Arename_by_name(H5I_INVALID_HID, ".", ATTRIBUTE_RENAME_INVALID_PARAMS_TEST_ATTR_NAME,
-                                  ATTRIBUTE_RENAME_INVALID_PARAMS_TEST_NEW_NAME, H5P_DEFAULT);
+            err_ret = H5Arename_by_name(H5I_INVALID_HID, ".", ATTRIBUTE_RENAME_INVALID_PARAMS_TEST_ATTR_NAME,
+                                        ATTRIBUTE_RENAME_INVALID_PARAMS_TEST_NEW_NAME, H5P_DEFAULT);
         }
         H5E_END_TRY
 
@@ -5247,8 +5227,8 @@ test_rename_attribute_invalid_params(TestParams_t *params)
     {
         H5E_BEGIN_TRY
         {
-            err_ret = H5Arename_by_name(group_id, ".", NULL,
-                                        ATTRIBUTE_RENAME_INVALID_PARAMS_TEST_NEW_NAME, H5P_DEFAULT);
+            err_ret = H5Arename_by_name(group_id, ".", NULL, ATTRIBUTE_RENAME_INVALID_PARAMS_TEST_NEW_NAME,
+                                        H5P_DEFAULT);
         }
         H5E_END_TRY
 
@@ -5276,8 +5256,8 @@ test_rename_attribute_invalid_params(TestParams_t *params)
     {
         H5E_BEGIN_TRY
         {
-            err_ret = H5Arename_by_name(group_id, ".", ATTRIBUTE_RENAME_INVALID_PARAMS_TEST_ATTR_NAME,
-                                        NULL, H5P_DEFAULT);
+            err_ret = H5Arename_by_name(group_id, ".", ATTRIBUTE_RENAME_INVALID_PARAMS_TEST_ATTR_NAME, NULL,
+                                        H5P_DEFAULT);
         }
         H5E_END_TRY
 
@@ -5455,8 +5435,7 @@ test_attribute_iterate_group(TestParams_t *params)
         link_counter = 0;
 
         /* Test basic attribute iteration capability using both index types and both index orders */
-        if (H5Aiterate2(group_id, H5_INDEX_NAME, H5_ITER_INC, NULL, attr_iter_callback1, &link_counter) <
-            0) {
+        if (H5Aiterate2(group_id, H5_INDEX_NAME, H5_ITER_INC, NULL, attr_iter_callback1, &link_counter) < 0) {
             printf("    H5Aiterate2 by index type name in increasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -5475,8 +5454,7 @@ test_attribute_iterate_group(TestParams_t *params)
         /* Reset the counter to the appropriate value for the next test */
         link_counter = ATTRIBUTE_ITERATE_TEST_NUM_ATTRS;
 
-        if (H5Aiterate2(group_id, H5_INDEX_NAME, H5_ITER_DEC, NULL, attr_iter_callback1, &link_counter) <
-            0) {
+        if (H5Aiterate2(group_id, H5_INDEX_NAME, H5_ITER_DEC, NULL, attr_iter_callback1, &link_counter) < 0) {
             printf("    H5Aiterate2 by index type name in decreasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -5500,8 +5478,8 @@ test_attribute_iterate_group(TestParams_t *params)
         /* Reset the counter to the appropriate value for the next test */
         link_counter = 2 * ATTRIBUTE_ITERATE_TEST_NUM_ATTRS;
 
-        if (H5Aiterate2(group_id, H5_INDEX_CRT_ORDER, H5_ITER_INC, NULL, attr_iter_callback1,
-                        &link_counter) < 0) {
+        if (H5Aiterate2(group_id, H5_INDEX_CRT_ORDER, H5_ITER_INC, NULL, attr_iter_callback1, &link_counter) <
+            0) {
             printf("    H5Aiterate2 by index type creation order in increasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -5525,8 +5503,8 @@ test_attribute_iterate_group(TestParams_t *params)
         /* Reset the counter to the appropriate value for the next test */
         link_counter = 3 * ATTRIBUTE_ITERATE_TEST_NUM_ATTRS;
 
-        if (H5Aiterate2(group_id, H5_INDEX_CRT_ORDER, H5_ITER_DEC, NULL, attr_iter_callback1,
-                        &link_counter) < 0) {
+        if (H5Aiterate2(group_id, H5_INDEX_CRT_ORDER, H5_ITER_DEC, NULL, attr_iter_callback1, &link_counter) <
+            0) {
             printf("    H5Aiterate2 by index type creation order in decreasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -5592,10 +5570,9 @@ test_attribute_iterate_group(TestParams_t *params)
         /* Reset the counter to the appropriate value for the next test */
         link_counter = 2 * ATTRIBUTE_ITERATE_TEST_NUM_ATTRS;
 
-        if (H5Aiterate_by_name(file_id,
-                               "/" ATTRIBUTE_TEST_GROUP_NAME "/" ATTRIBUTE_ITERATE_TEST_GRP_SUBGROUP_NAME,
-                               H5_INDEX_CRT_ORDER, H5_ITER_INC, NULL, attr_iter_callback1, &link_counter,
-                               H5P_DEFAULT) < 0) {
+        if (H5Aiterate_by_name(
+                file_id, "/" ATTRIBUTE_TEST_GROUP_NAME "/" ATTRIBUTE_ITERATE_TEST_GRP_SUBGROUP_NAME,
+                H5_INDEX_CRT_ORDER, H5_ITER_INC, NULL, attr_iter_callback1, &link_counter, H5P_DEFAULT) < 0) {
             printf("    H5Aiterate_by_name by index type creation order in increasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -5619,10 +5596,9 @@ test_attribute_iterate_group(TestParams_t *params)
         /* Reset the counter to the appropriate value for the next test */
         link_counter = 3 * ATTRIBUTE_ITERATE_TEST_NUM_ATTRS;
 
-        if (H5Aiterate_by_name(file_id,
-                               "/" ATTRIBUTE_TEST_GROUP_NAME "/" ATTRIBUTE_ITERATE_TEST_GRP_SUBGROUP_NAME,
-                               H5_INDEX_CRT_ORDER, H5_ITER_DEC, NULL, attr_iter_callback1, &link_counter,
-                               H5P_DEFAULT) < 0) {
+        if (H5Aiterate_by_name(
+                file_id, "/" ATTRIBUTE_TEST_GROUP_NAME "/" ATTRIBUTE_ITERATE_TEST_GRP_SUBGROUP_NAME,
+                H5_INDEX_CRT_ORDER, H5_ITER_DEC, NULL, attr_iter_callback1, &link_counter, H5P_DEFAULT) < 0) {
             printf("    H5Aiterate_by_name by index type creation order in decreasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -5788,8 +5764,7 @@ test_attribute_iterate_dataset(TestParams_t *params)
         link_counter = 0;
 
         /* Test basic attribute iteration capability using both index types and both index orders */
-        if (H5Aiterate2(dset_id, H5_INDEX_NAME, H5_ITER_INC, NULL, attr_iter_callback1, &link_counter) <
-            0) {
+        if (H5Aiterate2(dset_id, H5_INDEX_NAME, H5_ITER_INC, NULL, attr_iter_callback1, &link_counter) < 0) {
             printf("    H5Aiterate2 by index type name in increasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -5808,8 +5783,7 @@ test_attribute_iterate_dataset(TestParams_t *params)
         /* Reset the counter to the appropriate value for the next test */
         link_counter = ATTRIBUTE_ITERATE_TEST_NUM_ATTRS;
 
-        if (H5Aiterate2(dset_id, H5_INDEX_NAME, H5_ITER_DEC, NULL, attr_iter_callback1, &link_counter) <
-            0) {
+        if (H5Aiterate2(dset_id, H5_INDEX_NAME, H5_ITER_DEC, NULL, attr_iter_callback1, &link_counter) < 0) {
             printf("    H5Aiterate2 by index type name in decreasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -5833,8 +5807,8 @@ test_attribute_iterate_dataset(TestParams_t *params)
         /* Reset the counter to the appropriate value for the next test */
         link_counter = 2 * ATTRIBUTE_ITERATE_TEST_NUM_ATTRS;
 
-        if (H5Aiterate2(dset_id, H5_INDEX_CRT_ORDER, H5_ITER_INC, NULL, attr_iter_callback1,
-                        &link_counter) < 0) {
+        if (H5Aiterate2(dset_id, H5_INDEX_CRT_ORDER, H5_ITER_INC, NULL, attr_iter_callback1, &link_counter) <
+            0) {
             printf("    H5Aiterate2 by index type creation order in increasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -5858,8 +5832,8 @@ test_attribute_iterate_dataset(TestParams_t *params)
         /* Reset the counter to the appropriate value for the next test */
         link_counter = 3 * ATTRIBUTE_ITERATE_TEST_NUM_ATTRS;
 
-        if (H5Aiterate2(dset_id, H5_INDEX_CRT_ORDER, H5_ITER_DEC, NULL, attr_iter_callback1,
-                        &link_counter) < 0) {
+        if (H5Aiterate2(dset_id, H5_INDEX_CRT_ORDER, H5_ITER_DEC, NULL, attr_iter_callback1, &link_counter) <
+            0) {
             printf("    H5Aiterate2 by index type creation order in decreasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -6131,8 +6105,7 @@ test_attribute_iterate_datatype(TestParams_t *params)
         link_counter = 0;
 
         /* Test basic attribute iteration capability using both index types and both index orders */
-        if (H5Aiterate2(type_id, H5_INDEX_NAME, H5_ITER_INC, NULL, attr_iter_callback1, &link_counter) <
-            0) {
+        if (H5Aiterate2(type_id, H5_INDEX_NAME, H5_ITER_INC, NULL, attr_iter_callback1, &link_counter) < 0) {
             printf("    H5Aiterate2 by index type name in increasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -6151,8 +6124,7 @@ test_attribute_iterate_datatype(TestParams_t *params)
         /* Reset the counter to the appropriate value for the next test */
         link_counter = ATTRIBUTE_ITERATE_TEST_NUM_ATTRS;
 
-        if (H5Aiterate2(type_id, H5_INDEX_NAME, H5_ITER_DEC, NULL, attr_iter_callback1, &link_counter) <
-            0) {
+        if (H5Aiterate2(type_id, H5_INDEX_NAME, H5_ITER_DEC, NULL, attr_iter_callback1, &link_counter) < 0) {
             printf("    H5Aiterate2 by index type name in decreasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -6176,8 +6148,8 @@ test_attribute_iterate_datatype(TestParams_t *params)
         /* Reset the counter to the appropriate value for the next test */
         link_counter = 2 * ATTRIBUTE_ITERATE_TEST_NUM_ATTRS;
 
-        if (H5Aiterate2(type_id, H5_INDEX_CRT_ORDER, H5_ITER_INC, NULL, attr_iter_callback1,
-                        &link_counter) < 0) {
+        if (H5Aiterate2(type_id, H5_INDEX_CRT_ORDER, H5_ITER_INC, NULL, attr_iter_callback1, &link_counter) <
+            0) {
             printf("    H5Aiterate2 by index type creation order in increasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -6201,8 +6173,8 @@ test_attribute_iterate_datatype(TestParams_t *params)
         /* Reset the counter to the appropriate value for the next test */
         link_counter = 3 * ATTRIBUTE_ITERATE_TEST_NUM_ATTRS;
 
-        if (H5Aiterate2(type_id, H5_INDEX_CRT_ORDER, H5_ITER_DEC, NULL, attr_iter_callback1,
-                        &link_counter) < 0) {
+        if (H5Aiterate2(type_id, H5_INDEX_CRT_ORDER, H5_ITER_DEC, NULL, attr_iter_callback1, &link_counter) <
+            0) {
             printf("    H5Aiterate2 by index type creation order in decreasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -6221,11 +6193,11 @@ test_attribute_iterate_datatype(TestParams_t *params)
         /* Reset the counter to the appropriate value for the next test */
         link_counter = 0;
 
-        if (H5Aiterate_by_name(
-                file_id,
-                "/" ATTRIBUTE_TEST_GROUP_NAME "/" ATTRIBUTE_ITERATE_TEST_DTYPE_SUBGROUP_NAME
-                "/" ATTRIBUTE_ITERATE_TEST_DTYPE_NAME,
-                H5_INDEX_NAME, H5_ITER_INC, NULL, attr_iter_callback1, &link_counter, H5P_DEFAULT) < 0) {
+        if (H5Aiterate_by_name(file_id,
+                               "/" ATTRIBUTE_TEST_GROUP_NAME "/" ATTRIBUTE_ITERATE_TEST_DTYPE_SUBGROUP_NAME
+                               "/" ATTRIBUTE_ITERATE_TEST_DTYPE_NAME,
+                               H5_INDEX_NAME, H5_ITER_INC, NULL, attr_iter_callback1, &link_counter,
+                               H5P_DEFAULT) < 0) {
             printf("    H5Aiterate_by_name by index type name in increasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -6244,11 +6216,11 @@ test_attribute_iterate_datatype(TestParams_t *params)
         /* Reset the counter to the appropriate value for the next test */
         link_counter = ATTRIBUTE_ITERATE_TEST_NUM_ATTRS;
 
-        if (H5Aiterate_by_name(
-                file_id,
-                "/" ATTRIBUTE_TEST_GROUP_NAME "/" ATTRIBUTE_ITERATE_TEST_DTYPE_SUBGROUP_NAME
-                "/" ATTRIBUTE_ITERATE_TEST_DTYPE_NAME,
-                H5_INDEX_NAME, H5_ITER_DEC, NULL, attr_iter_callback1, &link_counter, H5P_DEFAULT) < 0) {
+        if (H5Aiterate_by_name(file_id,
+                               "/" ATTRIBUTE_TEST_GROUP_NAME "/" ATTRIBUTE_ITERATE_TEST_DTYPE_SUBGROUP_NAME
+                               "/" ATTRIBUTE_ITERATE_TEST_DTYPE_NAME,
+                               H5_INDEX_NAME, H5_ITER_DEC, NULL, attr_iter_callback1, &link_counter,
+                               H5P_DEFAULT) < 0) {
             printf("    H5Aiterate_by_name by index type name in decreasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -6273,8 +6245,7 @@ test_attribute_iterate_datatype(TestParams_t *params)
         link_counter = 2 * ATTRIBUTE_ITERATE_TEST_NUM_ATTRS;
 
         if (H5Aiterate_by_name(file_id,
-                               "/" ATTRIBUTE_TEST_GROUP_NAME
-                               "/" ATTRIBUTE_ITERATE_TEST_DTYPE_SUBGROUP_NAME
+                               "/" ATTRIBUTE_TEST_GROUP_NAME "/" ATTRIBUTE_ITERATE_TEST_DTYPE_SUBGROUP_NAME
                                "/" ATTRIBUTE_ITERATE_TEST_DTYPE_NAME,
                                H5_INDEX_CRT_ORDER, H5_ITER_INC, NULL, attr_iter_callback1, &link_counter,
                                H5P_DEFAULT) < 0) {
@@ -6302,8 +6273,7 @@ test_attribute_iterate_datatype(TestParams_t *params)
         link_counter = 3 * ATTRIBUTE_ITERATE_TEST_NUM_ATTRS;
 
         if (H5Aiterate_by_name(file_id,
-                               "/" ATTRIBUTE_TEST_GROUP_NAME
-                               "/" ATTRIBUTE_ITERATE_TEST_DTYPE_SUBGROUP_NAME
+                               "/" ATTRIBUTE_TEST_GROUP_NAME "/" ATTRIBUTE_ITERATE_TEST_DTYPE_SUBGROUP_NAME
                                "/" ATTRIBUTE_ITERATE_TEST_DTYPE_NAME,
                                H5_INDEX_CRT_ORDER, H5_ITER_DEC, NULL, attr_iter_callback1, &link_counter,
                                H5P_DEFAULT) < 0) {
@@ -6500,8 +6470,7 @@ test_attribute_iterate_invalid_params(TestParams_t *params)
     {
         H5E_BEGIN_TRY
         {
-            err_ret =
-                H5Aiterate2(group_id, H5_INDEX_UNKNOWN, H5_ITER_INC, NULL, attr_iter_callback2, NULL);
+            err_ret = H5Aiterate2(group_id, H5_INDEX_UNKNOWN, H5_ITER_INC, NULL, attr_iter_callback2, NULL);
         }
         H5E_END_TRY
 
@@ -6528,8 +6497,7 @@ test_attribute_iterate_invalid_params(TestParams_t *params)
     {
         H5E_BEGIN_TRY
         {
-            err_ret =
-                H5Aiterate2(group_id, H5_INDEX_NAME, H5_ITER_UNKNOWN, NULL, attr_iter_callback2, NULL);
+            err_ret = H5Aiterate2(group_id, H5_INDEX_NAME, H5_ITER_UNKNOWN, NULL, attr_iter_callback2, NULL);
         }
         H5E_END_TRY
 
@@ -6546,8 +6514,7 @@ test_attribute_iterate_invalid_params(TestParams_t *params)
         H5E_END_TRY
 
         if (err_ret >= 0) {
-            printf(
-                "    iterated over attributes using H5Aiterate with invalid index ordering H5_ITER_N!\n");
+            printf("    iterated over attributes using H5Aiterate with invalid index ordering H5_ITER_N!\n");
             TESTFRAME_TEST_ERROR(params);
         }
     }
@@ -6585,8 +6552,8 @@ test_attribute_iterate_invalid_params(TestParams_t *params)
 
         H5E_BEGIN_TRY
         {
-            err_ret = H5Aiterate_by_name(group_id, "", H5_INDEX_NAME, H5_ITER_INC, NULL,
-                                         attr_iter_callback2, NULL, H5P_DEFAULT);
+            err_ret = H5Aiterate_by_name(group_id, "", H5_INDEX_NAME, H5_ITER_INC, NULL, attr_iter_callback2,
+                                         NULL, H5P_DEFAULT);
         }
         H5E_END_TRY
 
@@ -6615,8 +6582,8 @@ test_attribute_iterate_invalid_params(TestParams_t *params)
 
         H5E_BEGIN_TRY
         {
-            err_ret = H5Aiterate_by_name(group_id, ".", H5_INDEX_N, H5_ITER_INC, NULL,
-                                         attr_iter_callback2, NULL, H5P_DEFAULT);
+            err_ret = H5Aiterate_by_name(group_id, ".", H5_INDEX_N, H5_ITER_INC, NULL, attr_iter_callback2,
+                                         NULL, H5P_DEFAULT);
         }
         H5E_END_TRY
 
@@ -6645,8 +6612,8 @@ test_attribute_iterate_invalid_params(TestParams_t *params)
 
         H5E_BEGIN_TRY
         {
-            err_ret = H5Aiterate_by_name(group_id, ".", H5_INDEX_NAME, H5_ITER_N, NULL,
-                                         attr_iter_callback2, NULL, H5P_DEFAULT);
+            err_ret = H5Aiterate_by_name(group_id, ".", H5_INDEX_NAME, H5_ITER_N, NULL, attr_iter_callback2,
+                                         NULL, H5P_DEFAULT);
         }
         H5E_END_TRY
 
@@ -6662,8 +6629,8 @@ test_attribute_iterate_invalid_params(TestParams_t *params)
     {
         H5E_BEGIN_TRY
         {
-            err_ret = H5Aiterate_by_name(group_id, ".", H5_INDEX_NAME, H5_ITER_INC, NULL,
-                                         attr_iter_callback2, NULL, H5I_INVALID_HID);
+            err_ret = H5Aiterate_by_name(group_id, ".", H5_INDEX_NAME, H5_ITER_INC, NULL, attr_iter_callback2,
+                                         NULL, H5I_INVALID_HID);
         }
         H5E_END_TRY
 
@@ -7372,14 +7339,12 @@ test_delete_attribute(TestParams_t *params)
 
         /* Verify the attribute has been created */
         if ((attr_exists = H5Aexists(group_id, ATTRIBUTE_DELETION_TEST_ATTR_NAME)) < 0) {
-            printf("    couldn't determine if attribute '%s' exists\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME);
+            printf("    couldn't determine if attribute '%s' exists\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (!attr_exists) {
-            printf("    attribute '%s' didn't exist before deletion\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME);
+            printf("    attribute '%s' didn't exist before deletion\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -7391,8 +7356,7 @@ test_delete_attribute(TestParams_t *params)
 
         /* Verify the attribute has been deleted */
         if ((attr_exists = H5Aexists(group_id, ATTRIBUTE_DELETION_TEST_ATTR_NAME)) < 0) {
-            printf("    couldn't determine if attribute '%s' exists\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME);
+            printf("    couldn't determine if attribute '%s' exists\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -7426,14 +7390,12 @@ test_delete_attribute(TestParams_t *params)
 
         /* Verify the attribute has been created */
         if ((attr_exists = H5Aexists(group_id, ATTRIBUTE_DELETION_TEST_ATTR_NAME)) < 0) {
-            printf("    couldn't determine if attribute '%s' exists\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME);
+            printf("    couldn't determine if attribute '%s' exists\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (!attr_exists) {
-            printf("    attribute '%s' didn't exist before deletion\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME);
+            printf("    attribute '%s' didn't exist before deletion\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -7446,8 +7408,7 @@ test_delete_attribute(TestParams_t *params)
 
         /* Verify the attribute has been deleted */
         if ((attr_exists = H5Aexists(group_id, ATTRIBUTE_DELETION_TEST_ATTR_NAME)) < 0) {
-            printf("    couldn't determine if attribute '%s' exists\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME);
+            printf("    couldn't determine if attribute '%s' exists\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -7513,38 +7474,32 @@ test_delete_attribute(TestParams_t *params)
 
         /* Verify the attributes have been created */
         if ((attr_exists = H5Aexists(group_id, ATTRIBUTE_DELETION_TEST_ATTR_NAME)) < 0) {
-            printf("    couldn't determine if attribute '%s' exists\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME);
+            printf("    couldn't determine if attribute '%s' exists\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (!attr_exists) {
-            printf("    attribute '%s' didn't exist before deletion\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME);
+            printf("    attribute '%s' didn't exist before deletion\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if ((attr_exists = H5Aexists(group_id, ATTRIBUTE_DELETION_TEST_ATTR_NAME2)) < 0) {
-            printf("    couldn't determine if attribute '%s' exists\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME2);
+            printf("    couldn't determine if attribute '%s' exists\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (!attr_exists) {
-            printf("    attribute '%s' didn't exist before deletion\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME2);
+            printf("    attribute '%s' didn't exist before deletion\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if ((attr_exists = H5Aexists(group_id, ATTRIBUTE_DELETION_TEST_ATTR_NAME3)) < 0) {
-            printf("    couldn't determine if attribute '%s' exists\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME3);
+            printf("    couldn't determine if attribute '%s' exists\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (!attr_exists) {
-            printf("    attribute '%s' didn't exist before deletion\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME3);
+            printf("    attribute '%s' didn't exist before deletion\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -7558,8 +7513,7 @@ test_delete_attribute(TestParams_t *params)
 
         /* Ensure that the attribute is gone and others remain */
         if ((attr_exists = H5Aexists(group_id, ATTRIBUTE_DELETION_TEST_ATTR_NAME)) < 0) {
-            printf("    couldn't determine if attribute '%s' exists\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME);
+            printf("    couldn't determine if attribute '%s' exists\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -7569,8 +7523,7 @@ test_delete_attribute(TestParams_t *params)
         }
 
         if ((attr_exists = H5Aexists(group_id, ATTRIBUTE_DELETION_TEST_ATTR_NAME2)) < 0) {
-            printf("    couldn't determine if attribute '%s' exists\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME2);
+            printf("    couldn't determine if attribute '%s' exists\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -7581,8 +7534,7 @@ test_delete_attribute(TestParams_t *params)
         }
 
         if ((attr_exists = H5Aexists(group_id, ATTRIBUTE_DELETION_TEST_ATTR_NAME3)) < 0) {
-            printf("    couldn't determine if attribute '%s' exists\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME3);
+            printf("    couldn't determine if attribute '%s' exists\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -7601,8 +7553,7 @@ test_delete_attribute(TestParams_t *params)
         }
 
         if ((attr_exists = H5Aexists(group_id, ATTRIBUTE_DELETION_TEST_ATTR_NAME)) < 0) {
-            printf("    couldn't determine if attribute '%s' exists\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME);
+            printf("    couldn't determine if attribute '%s' exists\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -7612,8 +7563,7 @@ test_delete_attribute(TestParams_t *params)
         }
 
         if ((attr_exists = H5Aexists(group_id, ATTRIBUTE_DELETION_TEST_ATTR_NAME2)) < 0) {
-            printf("    couldn't determine if attribute '%s' exists\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME2);
+            printf("    couldn't determine if attribute '%s' exists\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -7623,8 +7573,7 @@ test_delete_attribute(TestParams_t *params)
         }
 
         if ((attr_exists = H5Aexists(group_id, ATTRIBUTE_DELETION_TEST_ATTR_NAME3)) < 0) {
-            printf("    couldn't determine if attribute '%s' exists\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME3);
+            printf("    couldn't determine if attribute '%s' exists\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -7642,8 +7591,7 @@ test_delete_attribute(TestParams_t *params)
         }
 
         if ((attr_exists = H5Aexists(group_id, ATTRIBUTE_DELETION_TEST_ATTR_NAME)) < 0) {
-            printf("    couldn't determine if attribute '%s' exists\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME);
+            printf("    couldn't determine if attribute '%s' exists\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -7653,8 +7601,7 @@ test_delete_attribute(TestParams_t *params)
         }
 
         if ((attr_exists = H5Aexists(group_id, ATTRIBUTE_DELETION_TEST_ATTR_NAME2)) < 0) {
-            printf("    couldn't determine if attribute '%s' exists\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME2);
+            printf("    couldn't determine if attribute '%s' exists\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -7664,8 +7611,7 @@ test_delete_attribute(TestParams_t *params)
         }
 
         if ((attr_exists = H5Aexists(group_id, ATTRIBUTE_DELETION_TEST_ATTR_NAME3)) < 0) {
-            printf("    couldn't determine if attribute '%s' exists\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME3);
+            printf("    couldn't determine if attribute '%s' exists\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -7726,38 +7672,32 @@ test_delete_attribute(TestParams_t *params)
 
         /* Verify the attributes have been created */
         if ((attr_exists = H5Aexists(group_id, ATTRIBUTE_DELETION_TEST_ATTR_NAME)) < 0) {
-            printf("    couldn't determine if attribute '%s' exists\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME);
+            printf("    couldn't determine if attribute '%s' exists\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (!attr_exists) {
-            printf("    attribute '%s' didn't exist before deletion\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME);
+            printf("    attribute '%s' didn't exist before deletion\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if ((attr_exists = H5Aexists(group_id, ATTRIBUTE_DELETION_TEST_ATTR_NAME2)) < 0) {
-            printf("    couldn't determine if attribute '%s' exists\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME2);
+            printf("    couldn't determine if attribute '%s' exists\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (!attr_exists) {
-            printf("    attribute '%s' didn't exist before deletion\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME2);
+            printf("    attribute '%s' didn't exist before deletion\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if ((attr_exists = H5Aexists(group_id, ATTRIBUTE_DELETION_TEST_ATTR_NAME3)) < 0) {
-            printf("    couldn't determine if attribute '%s' exists\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME3);
+            printf("    couldn't determine if attribute '%s' exists\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (!attr_exists) {
-            printf("    attribute '%s' didn't exist before deletion\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME3);
+            printf("    attribute '%s' didn't exist before deletion\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -7771,8 +7711,7 @@ test_delete_attribute(TestParams_t *params)
 
         /* Ensure that the attribute is gone and others remain */
         if ((attr_exists = H5Aexists(group_id, ATTRIBUTE_DELETION_TEST_ATTR_NAME)) < 0) {
-            printf("    couldn't determine if attribute '%s' exists\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME);
+            printf("    couldn't determine if attribute '%s' exists\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -7782,8 +7721,7 @@ test_delete_attribute(TestParams_t *params)
         }
 
         if ((attr_exists = H5Aexists(group_id, ATTRIBUTE_DELETION_TEST_ATTR_NAME2)) < 0) {
-            printf("    couldn't determine if attribute '%s' exists\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME2);
+            printf("    couldn't determine if attribute '%s' exists\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -7794,8 +7732,7 @@ test_delete_attribute(TestParams_t *params)
         }
 
         if ((attr_exists = H5Aexists(group_id, ATTRIBUTE_DELETION_TEST_ATTR_NAME3)) < 0) {
-            printf("    couldn't determine if attribute '%s' exists\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME3);
+            printf("    couldn't determine if attribute '%s' exists\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -7814,8 +7751,7 @@ test_delete_attribute(TestParams_t *params)
         }
 
         if ((attr_exists = H5Aexists(group_id, ATTRIBUTE_DELETION_TEST_ATTR_NAME)) < 0) {
-            printf("    couldn't determine if attribute '%s' exists\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME);
+            printf("    couldn't determine if attribute '%s' exists\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -7825,8 +7761,7 @@ test_delete_attribute(TestParams_t *params)
         }
 
         if ((attr_exists = H5Aexists(group_id, ATTRIBUTE_DELETION_TEST_ATTR_NAME2)) < 0) {
-            printf("    couldn't determine if attribute '%s' exists\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME2);
+            printf("    couldn't determine if attribute '%s' exists\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -7836,8 +7771,7 @@ test_delete_attribute(TestParams_t *params)
         }
 
         if ((attr_exists = H5Aexists(group_id, ATTRIBUTE_DELETION_TEST_ATTR_NAME3)) < 0) {
-            printf("    couldn't determine if attribute '%s' exists\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME3);
+            printf("    couldn't determine if attribute '%s' exists\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -7855,8 +7789,7 @@ test_delete_attribute(TestParams_t *params)
         }
 
         if ((attr_exists = H5Aexists(group_id, ATTRIBUTE_DELETION_TEST_ATTR_NAME)) < 0) {
-            printf("    couldn't determine if attribute '%s' exists\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME);
+            printf("    couldn't determine if attribute '%s' exists\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -7866,8 +7799,7 @@ test_delete_attribute(TestParams_t *params)
         }
 
         if ((attr_exists = H5Aexists(group_id, ATTRIBUTE_DELETION_TEST_ATTR_NAME2)) < 0) {
-            printf("    couldn't determine if attribute '%s' exists\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME2);
+            printf("    couldn't determine if attribute '%s' exists\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -7877,8 +7809,7 @@ test_delete_attribute(TestParams_t *params)
         }
 
         if ((attr_exists = H5Aexists(group_id, ATTRIBUTE_DELETION_TEST_ATTR_NAME3)) < 0) {
-            printf("    couldn't determine if attribute '%s' exists\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME3);
+            printf("    couldn't determine if attribute '%s' exists\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -7934,44 +7865,38 @@ test_delete_attribute(TestParams_t *params)
 
         /* Verify the attributes have been created */
         if ((attr_exists = H5Aexists(group_id, ATTRIBUTE_DELETION_TEST_ATTR_NAME)) < 0) {
-            printf("    couldn't determine if attribute '%s' exists\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME);
+            printf("    couldn't determine if attribute '%s' exists\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (!attr_exists) {
-            printf("    attribute '%s' didn't exist before deletion\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME);
+            printf("    attribute '%s' didn't exist before deletion\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if ((attr_exists = H5Aexists(group_id, ATTRIBUTE_DELETION_TEST_ATTR_NAME2)) < 0) {
-            printf("    couldn't determine if attribute '%s' exists\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME2);
+            printf("    couldn't determine if attribute '%s' exists\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (!attr_exists) {
-            printf("    attribute '%s' didn't exist before deletion\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME2);
+            printf("    attribute '%s' didn't exist before deletion\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if ((attr_exists = H5Aexists(group_id, ATTRIBUTE_DELETION_TEST_ATTR_NAME3)) < 0) {
-            printf("    couldn't determine if attribute '%s' exists\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME3);
+            printf("    couldn't determine if attribute '%s' exists\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (!attr_exists) {
-            printf("    attribute '%s' didn't exist before deletion\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME3);
+            printf("    attribute '%s' didn't exist before deletion\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
         /* Delete an attribute */
-        if (H5Adelete_by_idx(container_group, ATTRIBUTE_DELETION_TEST_GROUP_NAME, H5_INDEX_NAME,
-                             H5_ITER_INC, 0, H5P_DEFAULT) < 0) {
+        if (H5Adelete_by_idx(container_group, ATTRIBUTE_DELETION_TEST_GROUP_NAME, H5_INDEX_NAME, H5_ITER_INC,
+                             0, H5P_DEFAULT) < 0) {
             printf("    failed to delete attribute using H5Adelete_by_idx by alphabetical order in "
                    "increasing order\n");
             TESTFRAME_TEST_ERROR(params);
@@ -7979,8 +7904,7 @@ test_delete_attribute(TestParams_t *params)
 
         /* Ensure that the attribute is gone and others remain */
         if ((attr_exists = H5Aexists(group_id, ATTRIBUTE_DELETION_TEST_ATTR_NAME)) < 0) {
-            printf("    couldn't determine if attribute '%s' exists\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME);
+            printf("    couldn't determine if attribute '%s' exists\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -7990,8 +7914,7 @@ test_delete_attribute(TestParams_t *params)
         }
 
         if ((attr_exists = H5Aexists(group_id, ATTRIBUTE_DELETION_TEST_ATTR_NAME2)) < 0) {
-            printf("    couldn't determine if attribute '%s' exists\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME2);
+            printf("    couldn't determine if attribute '%s' exists\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -8002,8 +7925,7 @@ test_delete_attribute(TestParams_t *params)
         }
 
         if ((attr_exists = H5Aexists(group_id, ATTRIBUTE_DELETION_TEST_ATTR_NAME3)) < 0) {
-            printf("    couldn't determine if attribute '%s' exists\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME3);
+            printf("    couldn't determine if attribute '%s' exists\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -8014,16 +7936,15 @@ test_delete_attribute(TestParams_t *params)
         }
 
         /* Repeat until all attributes have been deleted */
-        if (H5Adelete_by_idx(container_group, ATTRIBUTE_DELETION_TEST_GROUP_NAME, H5_INDEX_NAME,
-                             H5_ITER_INC, 0, H5P_DEFAULT) < 0) {
+        if (H5Adelete_by_idx(container_group, ATTRIBUTE_DELETION_TEST_GROUP_NAME, H5_INDEX_NAME, H5_ITER_INC,
+                             0, H5P_DEFAULT) < 0) {
             printf("    failed to delete attribute using H5Adelete_by_idx by alphabetical order in "
                    "increasing order\n");
             TESTFRAME_TEST_ERROR(params);
         }
 
         if ((attr_exists = H5Aexists(group_id, ATTRIBUTE_DELETION_TEST_ATTR_NAME)) < 0) {
-            printf("    couldn't determine if attribute '%s' exists\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME);
+            printf("    couldn't determine if attribute '%s' exists\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -8033,8 +7954,7 @@ test_delete_attribute(TestParams_t *params)
         }
 
         if ((attr_exists = H5Aexists(group_id, ATTRIBUTE_DELETION_TEST_ATTR_NAME2)) < 0) {
-            printf("    couldn't determine if attribute '%s' exists\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME2);
+            printf("    couldn't determine if attribute '%s' exists\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -8044,8 +7964,7 @@ test_delete_attribute(TestParams_t *params)
         }
 
         if ((attr_exists = H5Aexists(group_id, ATTRIBUTE_DELETION_TEST_ATTR_NAME3)) < 0) {
-            printf("    couldn't determine if attribute '%s' exists\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME3);
+            printf("    couldn't determine if attribute '%s' exists\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -8055,16 +7974,15 @@ test_delete_attribute(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if (H5Adelete_by_idx(container_group, ATTRIBUTE_DELETION_TEST_GROUP_NAME, H5_INDEX_NAME,
-                             H5_ITER_INC, 0, H5P_DEFAULT) < 0) {
+        if (H5Adelete_by_idx(container_group, ATTRIBUTE_DELETION_TEST_GROUP_NAME, H5_INDEX_NAME, H5_ITER_INC,
+                             0, H5P_DEFAULT) < 0) {
             printf("    failed to delete attribute using H5Adelete_by_idx by alphabetical order in "
                    "increasing order\n");
             TESTFRAME_TEST_ERROR(params);
         }
 
         if ((attr_exists = H5Aexists(group_id, ATTRIBUTE_DELETION_TEST_ATTR_NAME)) < 0) {
-            printf("    couldn't determine if attribute '%s' exists\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME);
+            printf("    couldn't determine if attribute '%s' exists\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -8074,8 +7992,7 @@ test_delete_attribute(TestParams_t *params)
         }
 
         if ((attr_exists = H5Aexists(group_id, ATTRIBUTE_DELETION_TEST_ATTR_NAME2)) < 0) {
-            printf("    couldn't determine if attribute '%s' exists\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME2);
+            printf("    couldn't determine if attribute '%s' exists\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -8085,8 +8002,7 @@ test_delete_attribute(TestParams_t *params)
         }
 
         if ((attr_exists = H5Aexists(group_id, ATTRIBUTE_DELETION_TEST_ATTR_NAME3)) < 0) {
-            printf("    couldn't determine if attribute '%s' exists\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME3);
+            printf("    couldn't determine if attribute '%s' exists\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -8142,44 +8058,38 @@ test_delete_attribute(TestParams_t *params)
 
         /* Verify the attributes have been created */
         if ((attr_exists = H5Aexists(group_id, ATTRIBUTE_DELETION_TEST_ATTR_NAME)) < 0) {
-            printf("    couldn't determine if attribute '%s' exists\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME);
+            printf("    couldn't determine if attribute '%s' exists\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (!attr_exists) {
-            printf("    attribute '%s' didn't exist before deletion\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME);
+            printf("    attribute '%s' didn't exist before deletion\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if ((attr_exists = H5Aexists(group_id, ATTRIBUTE_DELETION_TEST_ATTR_NAME2)) < 0) {
-            printf("    couldn't determine if attribute '%s' exists\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME2);
+            printf("    couldn't determine if attribute '%s' exists\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (!attr_exists) {
-            printf("    attribute '%s' didn't exist before deletion\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME2);
+            printf("    attribute '%s' didn't exist before deletion\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if ((attr_exists = H5Aexists(group_id, ATTRIBUTE_DELETION_TEST_ATTR_NAME3)) < 0) {
-            printf("    couldn't determine if attribute '%s' exists\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME3);
+            printf("    couldn't determine if attribute '%s' exists\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (!attr_exists) {
-            printf("    attribute '%s' didn't exist before deletion\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME3);
+            printf("    attribute '%s' didn't exist before deletion\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
         /* Delete an attribute */
-        if (H5Adelete_by_idx(container_group, ATTRIBUTE_DELETION_TEST_GROUP_NAME, H5_INDEX_NAME,
-                             H5_ITER_DEC, 2, H5P_DEFAULT) < 0) {
+        if (H5Adelete_by_idx(container_group, ATTRIBUTE_DELETION_TEST_GROUP_NAME, H5_INDEX_NAME, H5_ITER_DEC,
+                             2, H5P_DEFAULT) < 0) {
             printf("    failed to delete attribute using H5Adelete_by_idx by alphabetical order in "
                    "decreasing order\n");
             TESTFRAME_TEST_ERROR(params);
@@ -8187,8 +8097,7 @@ test_delete_attribute(TestParams_t *params)
 
         /* Ensure that the attribute is gone and others remain */
         if ((attr_exists = H5Aexists(group_id, ATTRIBUTE_DELETION_TEST_ATTR_NAME)) < 0) {
-            printf("    couldn't determine if attribute '%s' exists\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME);
+            printf("    couldn't determine if attribute '%s' exists\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -8198,8 +8107,7 @@ test_delete_attribute(TestParams_t *params)
         }
 
         if ((attr_exists = H5Aexists(group_id, ATTRIBUTE_DELETION_TEST_ATTR_NAME2)) < 0) {
-            printf("    couldn't determine if attribute '%s' exists\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME2);
+            printf("    couldn't determine if attribute '%s' exists\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -8210,8 +8118,7 @@ test_delete_attribute(TestParams_t *params)
         }
 
         if ((attr_exists = H5Aexists(group_id, ATTRIBUTE_DELETION_TEST_ATTR_NAME3)) < 0) {
-            printf("    couldn't determine if attribute '%s' exists\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME3);
+            printf("    couldn't determine if attribute '%s' exists\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -8222,16 +8129,15 @@ test_delete_attribute(TestParams_t *params)
         }
 
         /* Repeat until all attributes have been deleted */
-        if (H5Adelete_by_idx(container_group, ATTRIBUTE_DELETION_TEST_GROUP_NAME, H5_INDEX_NAME,
-                             H5_ITER_DEC, 1, H5P_DEFAULT) < 0) {
+        if (H5Adelete_by_idx(container_group, ATTRIBUTE_DELETION_TEST_GROUP_NAME, H5_INDEX_NAME, H5_ITER_DEC,
+                             1, H5P_DEFAULT) < 0) {
             printf("    failed to delete attribute using H5Adelete_by_idx by alphabetical order in "
                    "decreasing order\n");
             TESTFRAME_TEST_ERROR(params);
         }
 
         if ((attr_exists = H5Aexists(group_id, ATTRIBUTE_DELETION_TEST_ATTR_NAME)) < 0) {
-            printf("    couldn't determine if attribute '%s' exists\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME);
+            printf("    couldn't determine if attribute '%s' exists\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -8241,8 +8147,7 @@ test_delete_attribute(TestParams_t *params)
         }
 
         if ((attr_exists = H5Aexists(group_id, ATTRIBUTE_DELETION_TEST_ATTR_NAME2)) < 0) {
-            printf("    couldn't determine if attribute '%s' exists\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME2);
+            printf("    couldn't determine if attribute '%s' exists\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -8252,8 +8157,7 @@ test_delete_attribute(TestParams_t *params)
         }
 
         if ((attr_exists = H5Aexists(group_id, ATTRIBUTE_DELETION_TEST_ATTR_NAME3)) < 0) {
-            printf("    couldn't determine if attribute '%s' exists\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME3);
+            printf("    couldn't determine if attribute '%s' exists\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -8263,16 +8167,15 @@ test_delete_attribute(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if (H5Adelete_by_idx(container_group, ATTRIBUTE_DELETION_TEST_GROUP_NAME, H5_INDEX_NAME,
-                             H5_ITER_DEC, 0, H5P_DEFAULT) < 0) {
+        if (H5Adelete_by_idx(container_group, ATTRIBUTE_DELETION_TEST_GROUP_NAME, H5_INDEX_NAME, H5_ITER_DEC,
+                             0, H5P_DEFAULT) < 0) {
             printf("    failed to delete attribute using H5Adelete_by_idx by alphabetical order in "
                    "decreasing order\n");
             TESTFRAME_TEST_ERROR(params);
         }
 
         if ((attr_exists = H5Aexists(group_id, ATTRIBUTE_DELETION_TEST_ATTR_NAME)) < 0) {
-            printf("    couldn't determine if attribute '%s' exists\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME);
+            printf("    couldn't determine if attribute '%s' exists\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -8282,8 +8185,7 @@ test_delete_attribute(TestParams_t *params)
         }
 
         if ((attr_exists = H5Aexists(group_id, ATTRIBUTE_DELETION_TEST_ATTR_NAME2)) < 0) {
-            printf("    couldn't determine if attribute '%s' exists\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME2);
+            printf("    couldn't determine if attribute '%s' exists\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -8293,8 +8195,7 @@ test_delete_attribute(TestParams_t *params)
         }
 
         if ((attr_exists = H5Aexists(group_id, ATTRIBUTE_DELETION_TEST_ATTR_NAME3)) < 0) {
-            printf("    couldn't determine if attribute '%s' exists\n",
-                   ATTRIBUTE_DELETION_TEST_ATTR_NAME3);
+            printf("    couldn't determine if attribute '%s' exists\n", ATTRIBUTE_DELETION_TEST_ATTR_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -8488,8 +8389,7 @@ test_delete_attribute_invalid_params(TestParams_t *params)
         H5E_END_TRY
 
         if (err_ret >= 0) {
-            printf(
-                "    deleted an attribute using H5Adelete_by_name with an invalid object name of ''!\n");
+            printf("    deleted an attribute using H5Adelete_by_name with an invalid object name of ''!\n");
             TESTFRAME_TEST_ERROR(params);
         }
     }
@@ -8573,8 +8473,7 @@ test_delete_attribute_invalid_params(TestParams_t *params)
         H5E_END_TRY
 
         if (err_ret >= 0) {
-            printf(
-                "    deleted an attribute using H5Adelete_by_idx with an invalid object name of ''!\n");
+            printf("    deleted an attribute using H5Adelete_by_idx with an invalid object name of ''!\n");
             TESTFRAME_TEST_ERROR(params);
         }
     }
@@ -8601,8 +8500,7 @@ test_delete_attribute_invalid_params(TestParams_t *params)
         H5E_END_TRY
 
         if (err_ret >= 0) {
-            printf(
-                "    deleted an attribute using H5Adelete_by_idx with invalid index type H5_INDEX_N!\n");
+            printf("    deleted an attribute using H5Adelete_by_idx with invalid index type H5_INDEX_N!\n");
             TESTFRAME_TEST_ERROR(params);
         }
     }
@@ -8915,8 +8813,8 @@ test_attribute_exists_invalid_params(TestParams_t *params)
     {
         H5E_BEGIN_TRY
         {
-            err_ret = H5Aexists_by_name(file_id, NULL, ATTRIBUTE_EXISTS_INVALID_PARAMS_TEST_ATTR_NAME,
-                                        H5P_DEFAULT);
+            err_ret =
+                H5Aexists_by_name(file_id, NULL, ATTRIBUTE_EXISTS_INVALID_PARAMS_TEST_ATTR_NAME, H5P_DEFAULT);
         }
         H5E_END_TRY
 
@@ -8927,8 +8825,8 @@ test_attribute_exists_invalid_params(TestParams_t *params)
 
         H5E_BEGIN_TRY
         {
-            err_ret = H5Aexists_by_name(file_id, "", ATTRIBUTE_EXISTS_INVALID_PARAMS_TEST_ATTR_NAME,
-                                        H5P_DEFAULT);
+            err_ret =
+                H5Aexists_by_name(file_id, "", ATTRIBUTE_EXISTS_INVALID_PARAMS_TEST_ATTR_NAME, H5P_DEFAULT);
         }
         H5E_END_TRY
 
@@ -8955,8 +8853,8 @@ test_attribute_exists_invalid_params(TestParams_t *params)
 
         H5E_BEGIN_TRY
         {
-            err_ret = H5Aexists_by_name(file_id, ATTRIBUTE_EXISTS_INVALID_PARAMS_TEST_GROUP_NAME, "",
-                                        H5P_DEFAULT);
+            err_ret =
+                H5Aexists_by_name(file_id, ATTRIBUTE_EXISTS_INVALID_PARAMS_TEST_GROUP_NAME, "", H5P_DEFAULT);
         }
         H5E_END_TRY
 
@@ -9310,8 +9208,8 @@ test_get_number_attributes(TestParams_t *params)
 
     SUBTEST_BEGIN(params, "H5Oget_info_by_idx")
     {
-        if (H5Oget_info_by_idx3(container_group, ".", H5_INDEX_NAME, H5_ITER_INC, 0, &obj_info,
-                                H5O_INFO_ALL, H5P_DEFAULT) < 0) {
+        if (H5Oget_info_by_idx3(container_group, ".", H5_INDEX_NAME, H5_ITER_INC, 0, &obj_info, H5O_INFO_ALL,
+                                H5P_DEFAULT) < 0) {
             printf("    couldn't retrieve group info using H5Oget_info_by_idx3\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -9605,41 +9503,39 @@ H5_api_attribute_test_add(void)
             NULL, 0, testframe_flags, "attribute creation with a space in attribute's name");
     AddTest("test_create_attribute_invalid_params", test_create_attribute_invalid_params, NULL, NULL, NULL, 0,
             testframe_flags, "attribute creation with invalid parameters");
-    AddTest("test_open_attribute", test_open_attribute, NULL, NULL, NULL, 0,
-            testframe_flags, "attribute opening");
+    AddTest("test_open_attribute", test_open_attribute, NULL, NULL, NULL, 0, testframe_flags,
+            "attribute opening");
     AddTest("test_open_attribute_invalid_params", test_open_attribute_invalid_params, NULL, NULL, NULL, 0,
             testframe_flags, "attribute opening with invalid parameters");
-    AddTest("test_write_attribute", test_write_attribute, NULL, NULL, NULL, 0,
-            testframe_flags, "H5Awrite");
+    AddTest("test_write_attribute", test_write_attribute, NULL, NULL, NULL, 0, testframe_flags, "H5Awrite");
     AddTest("test_write_attribute_invalid_params", test_write_attribute_invalid_params, NULL, NULL, NULL, 0,
             testframe_flags, "H5Awrite with invalid parameters");
-    AddTest("test_read_attribute", test_read_attribute, NULL, NULL, NULL, 0,
-            testframe_flags, "H5Aread");
+    AddTest("test_read_attribute", test_read_attribute, NULL, NULL, NULL, 0, testframe_flags, "H5Aread");
     AddTest("test_read_attribute_invalid_params", test_read_attribute_invalid_params, NULL, NULL, NULL, 0,
             testframe_flags, "H5Aread with invalid parameters");
-    AddTest("test_read_empty_attribute", test_read_empty_attribute, NULL, NULL, NULL, 0,
-            testframe_flags, "reading an empty attribute");
+    AddTest("test_read_empty_attribute", test_read_empty_attribute, NULL, NULL, NULL, 0, testframe_flags,
+            "reading an empty attribute");
     AddTest("test_close_attribute_invalid_id", test_close_attribute_invalid_id, NULL, NULL, NULL, 0,
             testframe_flags, "H5Aclose with an invalid attribute ID");
     AddTest("test_get_attribute_space_and_type", test_get_attribute_space_and_type, NULL, NULL, NULL, 0,
             testframe_flags, "retrieval of an attribute's dataspace and datatype");
     AddTest("test_get_attribute_space_and_type_invalid_params",
-            test_get_attribute_space_and_type_invalid_params, NULL, NULL, NULL, 0,
-            testframe_flags, "H5Aget_type/H5Aget_space with invalid parameters");
+            test_get_attribute_space_and_type_invalid_params, NULL, NULL, NULL, 0, testframe_flags,
+            "H5Aget_type/H5Aget_space with invalid parameters");
     AddTest("test_attribute_property_lists", test_attribute_property_lists, NULL, NULL, NULL, 0,
             testframe_flags, "attribute property list operations");
-    AddTest("test_get_attribute_name", test_get_attribute_name, NULL, NULL, NULL, 0,
-            testframe_flags, "retrieval of an attribute's name");
+    AddTest("test_get_attribute_name", test_get_attribute_name, NULL, NULL, NULL, 0, testframe_flags,
+            "retrieval of an attribute's name");
     AddTest("test_get_attribute_name_invalid_params", test_get_attribute_name_invalid_params, NULL, NULL,
             NULL, 0, testframe_flags, "retrieval of an attribute's name with invalid parameters");
     AddTest("test_get_attribute_storage_size", test_get_attribute_storage_size, NULL, NULL, NULL, 0,
             testframe_flags, "H5Aget_storage_size");
-    AddTest("test_get_attribute_info", test_get_attribute_info, NULL, NULL, NULL, 0,
-            testframe_flags, "retrieval of attribute info");
+    AddTest("test_get_attribute_info", test_get_attribute_info, NULL, NULL, NULL, 0, testframe_flags,
+            "retrieval of attribute info");
     AddTest("test_get_attribute_info_invalid_params", test_get_attribute_info_invalid_params, NULL, NULL,
             NULL, 0, testframe_flags, "retrieval of attribute info with invalid parameters");
-    AddTest("test_rename_attribute", test_rename_attribute, NULL, NULL, NULL, 0,
-            testframe_flags, "attribute renaming");
+    AddTest("test_rename_attribute", test_rename_attribute, NULL, NULL, NULL, 0, testframe_flags,
+            "attribute renaming");
     AddTest("test_rename_attribute_invalid_params", test_rename_attribute_invalid_params, NULL, NULL, NULL, 0,
             testframe_flags, "attribute renaming with invalid parameters");
     AddTest("test_attribute_iterate_group", test_attribute_iterate_group, NULL, NULL, NULL, 0,
@@ -9655,23 +9551,24 @@ H5_api_attribute_test_add(void)
     AddTest("test_attribute_iterate_0_attributes", test_attribute_iterate_0_attributes, NULL, NULL, NULL, 0,
             testframe_flags, "attribute iteration on object with 0 attributes");
     AddTest("test_attribute_compound_subset", test_attribute_compound_subset, NULL, NULL, NULL, 0,
-            testframe_flags, "verification of attribute data using H5Awrite then H5Aread with compound type subsets");
+            testframe_flags,
+            "verification of attribute data using H5Awrite then H5Aread with compound type subsets");
     AddTest("test_attribute_string_encodings", test_attribute_string_encodings, NULL, NULL, NULL, 0,
             testframe_flags, "string encoding read/write correctness on attributes");
-    AddTest("test_delete_attribute", test_delete_attribute, NULL, NULL, NULL, 0,
-            testframe_flags, "attribute deletion");
+    AddTest("test_delete_attribute", test_delete_attribute, NULL, NULL, NULL, 0, testframe_flags,
+            "attribute deletion");
     AddTest("test_delete_attribute_invalid_params", test_delete_attribute_invalid_params, NULL, NULL, NULL, 0,
             testframe_flags, "attribute deletion with invalid parameters");
-    AddTest("test_attribute_exists", test_attribute_exists, NULL, NULL, NULL, 0,
-            testframe_flags, "attribute existence");
+    AddTest("test_attribute_exists", test_attribute_exists, NULL, NULL, NULL, 0, testframe_flags,
+            "attribute existence");
     AddTest("test_attribute_exists_invalid_params", test_attribute_exists_invalid_params, NULL, NULL, NULL, 0,
             testframe_flags, "attribute existence with invalid parameters");
-    AddTest("test_attribute_duplicate_id", test_attribute_duplicate_id, NULL, NULL, NULL, 0,
-            testframe_flags, "duplicated IDs for an attribute");
-    AddTest("test_attribute_many", test_attribute_many, NULL, NULL, NULL, 0,
-            testframe_flags, "creating many attributes");
-    AddTest("test_get_number_attributes", test_get_number_attributes, NULL, NULL, NULL, 0,
-            testframe_flags, "retrieval of the number of attributes on an object");
-    AddTest("test_attr_shared_dtype", test_attr_shared_dtype, NULL, NULL, NULL, 0,
-            testframe_flags, "shared datatype for attributes");
+    AddTest("test_attribute_duplicate_id", test_attribute_duplicate_id, NULL, NULL, NULL, 0, testframe_flags,
+            "duplicated IDs for an attribute");
+    AddTest("test_attribute_many", test_attribute_many, NULL, NULL, NULL, 0, testframe_flags,
+            "creating many attributes");
+    AddTest("test_get_number_attributes", test_get_number_attributes, NULL, NULL, NULL, 0, testframe_flags,
+            "retrieval of the number of attributes on an object");
+    AddTest("test_attr_shared_dtype", test_attr_shared_dtype, NULL, NULL, NULL, 0, testframe_flags,
+            "shared datatype for attributes");
 }

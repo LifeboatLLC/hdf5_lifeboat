@@ -69,7 +69,7 @@ typedef struct H5F_olist_t {
 
 #ifdef H5_HAVE_MULTITHREAD
 
-typedef H5P_mt_list_t H5P_genplist_t;
+typedef H5P_mt_list_t  H5P_genplist_t;
 typedef H5P_mt_class_t H5P_genclass_t;
 
 #endif
@@ -2704,8 +2704,7 @@ H5F_decr_nopen_objs(H5F_t *f)
  *-------------------------------------------------------------------------
  */
 static herr_t
-H5F__build_actual_name(const H5F_t *f, H5P_genplist_t *fapl, const char *name,
-                       char **actual_name /*out*/)
+H5F__build_actual_name(const H5F_t *f, H5P_genplist_t *fapl, const char *name, char **actual_name /*out*/)
 {
     hid_t new_fapl_id = H5I_INVALID_HID; /* ID for duplicated FAPL */
 #ifdef H5_HAVE_SYMLINK

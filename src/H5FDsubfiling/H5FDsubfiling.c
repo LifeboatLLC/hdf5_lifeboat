@@ -2471,7 +2471,6 @@ H5FD__subfiling_del(const char *name, hid_t fapl)
     H5P_genplist_t                *plist     = NULL;
     herr_t                         ret_value = SUCCEED;
 
-
     if (NULL == (plist = H5P_object_verify(fapl, H5P_FILE_ACCESS, true)))
         H5_SUBFILING_GOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a file access property list");
 

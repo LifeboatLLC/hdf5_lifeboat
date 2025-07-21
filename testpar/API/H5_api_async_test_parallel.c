@@ -179,8 +179,7 @@ test_async_one_dataset_io(TestParams_t *params)
             ((int *)write_buf)[i] = mpi_rank;
 
         /* Write the dataset asynchronously */
-        if (H5Dwrite_async(dset_id, H5T_NATIVE_INT, mspace_id, space_id, H5P_DEFAULT, write_buf, es_id) <
-                0)
+        if (H5Dwrite_async(dset_id, H5T_NATIVE_INT, mspace_id, space_id, H5P_DEFAULT, write_buf, es_id) < 0)
             TESTFRAME_TEST_ERROR(params);
 
         /* Wait for the event stack to complete */
@@ -215,8 +214,7 @@ test_async_one_dataset_io(TestParams_t *params)
             ((int *)write_buf)[i] = (int)i;
 
         /* Write the dataset asynchronously */
-        if (H5Dwrite_async(dset_id, H5T_NATIVE_INT, mspace_id, space_id, H5P_DEFAULT, write_buf, es_id) <
-                0)
+        if (H5Dwrite_async(dset_id, H5T_NATIVE_INT, mspace_id, space_id, H5P_DEFAULT, write_buf, es_id) < 0)
             TESTFRAME_TEST_ERROR(params);
 
         /* Close the dataset synchronously */
@@ -255,8 +253,7 @@ test_async_one_dataset_io(TestParams_t *params)
             ((int *)write_buf)[i] = 10 * (int)i;
 
         /* Write the dataset asynchronously */
-        if (H5Dwrite_async(dset_id, H5T_NATIVE_INT, mspace_id, space_id, H5P_DEFAULT, write_buf, es_id) <
-                0)
+        if (H5Dwrite_async(dset_id, H5T_NATIVE_INT, mspace_id, space_id, H5P_DEFAULT, write_buf, es_id) < 0)
             TESTFRAME_TEST_ERROR(params);
 
         /* Flush the dataset asynchronously.  This will effectively work as a
@@ -291,8 +288,7 @@ test_async_one_dataset_io(TestParams_t *params)
             ((int *)write_buf)[i] = (int)i + 5;
 
         /* Write the dataset asynchronously */
-        if (H5Dwrite_async(dset_id, H5T_NATIVE_INT, mspace_id, space_id, H5P_DEFAULT, write_buf, es_id) <
-                0)
+        if (H5Dwrite_async(dset_id, H5T_NATIVE_INT, mspace_id, space_id, H5P_DEFAULT, write_buf, es_id) < 0)
             TESTFRAME_TEST_ERROR(params);
 
         /* Close the dataset asynchronously */
@@ -407,7 +403,7 @@ test_async_multi_dataset_io(TestParams_t *params)
     hid_t    file_id                               = H5I_INVALID_HID;
     hid_t    fapl_id                               = H5I_INVALID_HID;
     hid_t    dset_id[MULTI_DATASET_IO_TEST_NDSETS] = {H5I_INVALID_HID, H5I_INVALID_HID, H5I_INVALID_HID,
-                                                      H5I_INVALID_HID, H5I_INVALID_HID};
+                                                   H5I_INVALID_HID, H5I_INVALID_HID};
     hid_t    space_id                              = H5I_INVALID_HID;
     hid_t    mspace_id                             = H5I_INVALID_HID;
     hid_t    es_id                                 = H5I_INVALID_HID;
@@ -703,9 +699,9 @@ test_async_multi_file_dataset_io(TestParams_t *params)
     size_t   i, j, data_size, num_in_progress;
     hid_t    fapl_id                                    = H5I_INVALID_HID;
     hid_t    file_id[MULTI_FILE_DATASET_IO_TEST_NFILES] = {H5I_INVALID_HID, H5I_INVALID_HID, H5I_INVALID_HID,
-                                                           H5I_INVALID_HID, H5I_INVALID_HID};
+                                                        H5I_INVALID_HID, H5I_INVALID_HID};
     hid_t    dset_id[MULTI_FILE_DATASET_IO_TEST_NFILES] = {H5I_INVALID_HID, H5I_INVALID_HID, H5I_INVALID_HID,
-                                                           H5I_INVALID_HID, H5I_INVALID_HID};
+                                                        H5I_INVALID_HID, H5I_INVALID_HID};
     hid_t    space_id                                   = H5I_INVALID_HID;
     hid_t    mspace_id                                  = H5I_INVALID_HID;
     hid_t    es_id                                      = H5I_INVALID_HID;
@@ -1193,19 +1189,18 @@ test_async_multi_file_grp_dset_io(TestParams_t *params)
                 max_printf_file = (int)i;
 
             /* Create the group asynchronously */
-            if ((grp_id = H5Gcreate_async(file_id, "grp", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT, es_id)) <
-                    0)
+            if ((grp_id = H5Gcreate_async(file_id, "grp", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT, es_id)) < 0)
                 TESTFRAME_TEST_ERROR(params);
 
             /* Create the dataset asynchronously */
-            if ((dset_id = H5Dcreate_async(grp_id, "dset", H5T_NATIVE_INT, space_id, H5P_DEFAULT,
-                                           H5P_DEFAULT, H5P_DEFAULT, es_id)) < 0)
+            if ((dset_id = H5Dcreate_async(grp_id, "dset", H5T_NATIVE_INT, space_id, H5P_DEFAULT, H5P_DEFAULT,
+                                           H5P_DEFAULT, es_id)) < 0)
                 TESTFRAME_TEST_ERROR(params);
 
             /* Initialize write_buf.  Must use a new slice of write_buf for
              * each dset since we can't overwrite the buffers until I/O is done. */
             buf_start_idx = i * (data_size / MULTI_FILE_GRP_DSET_IO_TEST_NFILES / sizeof(int));
-            buf_end_idx = buf_start_idx + (data_size / MULTI_FILE_GRP_DSET_IO_TEST_NFILES / sizeof(int));
+            buf_end_idx   = buf_start_idx + (data_size / MULTI_FILE_GRP_DSET_IO_TEST_NFILES / sizeof(int));
             for (j = buf_start_idx; j < buf_end_idx; j++)
                 ((int *)write_buf)[j] = mpi_rank;
 
@@ -1302,19 +1297,18 @@ test_async_multi_file_grp_dset_io(TestParams_t *params)
                 max_printf_file = (int)i;
 
             /* Create the group asynchronously */
-            if ((grp_id = H5Gcreate_async(file_id, "grp", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT, es_id)) <
-                    0)
+            if ((grp_id = H5Gcreate_async(file_id, "grp", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT, es_id)) < 0)
                 TESTFRAME_TEST_ERROR(params);
 
             /* Create the dataset asynchronously */
-            if ((dset_id = H5Dcreate_async(grp_id, "dset", H5T_NATIVE_INT, space_id, H5P_DEFAULT,
-                                           H5P_DEFAULT, H5P_DEFAULT, es_id)) < 0)
+            if ((dset_id = H5Dcreate_async(grp_id, "dset", H5T_NATIVE_INT, space_id, H5P_DEFAULT, H5P_DEFAULT,
+                                           H5P_DEFAULT, es_id)) < 0)
                 TESTFRAME_TEST_ERROR(params);
 
             /* Initialize write_buf.  Must use a new slice of write_buf for
              * each dset since we can't overwrite the buffers until I/O is done. */
             buf_start_idx = i * (data_size / MULTI_FILE_GRP_DSET_IO_TEST_NFILES / sizeof(int));
-            buf_end_idx = buf_start_idx + (data_size / MULTI_FILE_GRP_DSET_IO_TEST_NFILES / sizeof(int));
+            buf_end_idx   = buf_start_idx + (data_size / MULTI_FILE_GRP_DSET_IO_TEST_NFILES / sizeof(int));
             for (j = buf_start_idx; j < buf_end_idx; j++)
                 ((int *)write_buf)[j] = mpi_rank;
 
@@ -1891,7 +1885,8 @@ test_async_attribute_exists(TestParams_t *params)
 
     /* Check if H5Aexists returned the correct values */
     if (exists1)
-        TESTFRAME_FAIL_PUTS_ERROR(params, "    H5Aexists returned true for an attribute that should not exist");
+        TESTFRAME_FAIL_PUTS_ERROR(params,
+                                  "    H5Aexists returned true for an attribute that should not exist");
     if (!exists2)
         TESTFRAME_FAIL_PUTS_ERROR(params, "    H5Aexists returned false for an attribute that should exist");
 
@@ -3415,26 +3410,27 @@ H5_api_async_test_parallel_add(void)
     AddTestHeaderFunc("test_async_one_dataset_io (coll)", print_async_test_header);
 
     AddTest("test_async_multi_dataset_io (coll)", test_async_multi_dataset_io, NULL, NULL,
-            &coll_metadata_read, sizeof(coll_metadata_read),
-            0, "async multi dataset I/O (collective metadata reads)");
+            &coll_metadata_read, sizeof(coll_metadata_read), 0,
+            "async multi dataset I/O (collective metadata reads)");
     AddTest("test_async_multi_file_dataset_io (coll)", test_async_multi_file_dataset_io, NULL, NULL,
-            &coll_metadata_read, sizeof(coll_metadata_read),
-            0, "async multi file dataset I/O (collective metadata reads)");
+            &coll_metadata_read, sizeof(coll_metadata_read), 0,
+            "async multi file dataset I/O (collective metadata reads)");
     AddTest("test_async_multi_file_grp_dset_io (coll)", test_async_multi_file_grp_dset_io, NULL, NULL,
-            &coll_metadata_read, sizeof(coll_metadata_read),
-            0, "async multi file dataset I/O with groups (collective metadata reads)");
+            &coll_metadata_read, sizeof(coll_metadata_read), 0,
+            "async multi file dataset I/O with groups (collective metadata reads)");
     AddTest("test_async_set_extent (coll)", test_async_set_extent, NULL, NULL, &coll_metadata_read,
             sizeof(coll_metadata_read), 0, "async extending dataset (collective metadata reads)");
     AddTest("test_async_attribute_exists (coll)", test_async_attribute_exists, NULL, NULL,
-            &coll_metadata_read, sizeof(coll_metadata_read), 0, "async H5Aexists() (collective metadata reads)");
+            &coll_metadata_read, sizeof(coll_metadata_read), 0,
+            "async H5Aexists() (collective metadata reads)");
     AddTest("test_async_attribute_io (coll)", test_async_attribute_io, NULL, NULL, &coll_metadata_read,
             sizeof(coll_metadata_read), 0, "async attribute I/O (collective metadata reads)");
     AddTest("test_async_attribute_io_tconv (coll)", test_async_attribute_io_tconv, NULL, NULL,
-            &coll_metadata_read, sizeof(coll_metadata_read),
-            0, "async attribute I/O with type conversion (collective metadata reads)");
+            &coll_metadata_read, sizeof(coll_metadata_read), 0,
+            "async attribute I/O with type conversion (collective metadata reads)");
     AddTest("test_async_attribute_io_compound (coll)", test_async_attribute_io_compound, NULL, NULL,
-            &coll_metadata_read, sizeof(coll_metadata_read),
-            0, "async attribute I/O with compound type conversion (collective metadata reads)");
+            &coll_metadata_read, sizeof(coll_metadata_read), 0,
+            "async attribute I/O with compound type conversion (collective metadata reads)");
     AddTest("test_async_group (coll)", test_async_group, NULL, NULL, &coll_metadata_read,
             sizeof(coll_metadata_read), 0, "async group operations (collective metadata reads)");
     AddTest("test_async_link (coll)", test_async_link, NULL, NULL, &coll_metadata_read,
@@ -3445,8 +3441,8 @@ H5_api_async_test_parallel_add(void)
             sizeof(coll_metadata_read), 0, "async H5Freopen() (collective metadata reads)");
 
     /* Add a fake test to cleanup test files due to current test interdependencies */
-    AddTest("test_async_file_cleanup (coll)", test_async_file_cleanup, NULL, NULL, NULL, 0,
-            0, "cleanup async test files");
+    AddTest("test_async_file_cleanup (coll)", test_async_file_cleanup, NULL, NULL, NULL, 0, 0,
+            "cleanup async test files");
 
     /* Re-run tests with independent metadata reads */
     coll_metadata_read = false;
@@ -3461,11 +3457,11 @@ H5_api_async_test_parallel_add(void)
     AddTest("test_async_multi_dataset_io (ind)", test_async_multi_dataset_io, NULL, NULL, &coll_metadata_read,
             sizeof(coll_metadata_read), 0, "async multi dataset I/O (independent metadata reads)");
     AddTest("test_async_multi_file_dataset_io (ind)", test_async_multi_file_dataset_io, NULL, NULL,
-            &coll_metadata_read, sizeof(coll_metadata_read),
-            0, "async multi file dataset I/O (independent metadata reads)");
+            &coll_metadata_read, sizeof(coll_metadata_read), 0,
+            "async multi file dataset I/O (independent metadata reads)");
     AddTest("test_async_multi_file_grp_dset_io (ind)", test_async_multi_file_grp_dset_io, NULL, NULL,
-            &coll_metadata_read, sizeof(coll_metadata_read),
-            0, "async multi file dataset I/O with groups (independent metadata reads)");
+            &coll_metadata_read, sizeof(coll_metadata_read), 0,
+            "async multi file dataset I/O with groups (independent metadata reads)");
     AddTest("test_async_set_extent (ind)", test_async_set_extent, NULL, NULL, &coll_metadata_read,
             sizeof(coll_metadata_read), 0, "async extending dataset (independent metadata reads)");
     AddTest("test_async_attribute_exists (ind)", test_async_attribute_exists, NULL, NULL, &coll_metadata_read,
@@ -3473,11 +3469,11 @@ H5_api_async_test_parallel_add(void)
     AddTest("test_async_attribute_io (ind)", test_async_attribute_io, NULL, NULL, &coll_metadata_read,
             sizeof(coll_metadata_read), 0, "async attribute I/O (independent metadata reads)");
     AddTest("test_async_attribute_io_tconv (ind)", test_async_attribute_io_tconv, NULL, NULL,
-            &coll_metadata_read, sizeof(coll_metadata_read),
-            0, "async attribute I/O with type conversion (independent metadata reads)");
+            &coll_metadata_read, sizeof(coll_metadata_read), 0,
+            "async attribute I/O with type conversion (independent metadata reads)");
     AddTest("test_async_attribute_io_compound (ind)", test_async_attribute_io_compound, NULL, NULL,
-            &coll_metadata_read, sizeof(coll_metadata_read),
-            0, "async attribute I/O with compound type conversion (independent metadata reads)");
+            &coll_metadata_read, sizeof(coll_metadata_read), 0,
+            "async attribute I/O with compound type conversion (independent metadata reads)");
     AddTest("test_async_group (ind)", test_async_group, NULL, NULL, &coll_metadata_read,
             sizeof(coll_metadata_read), 0, "async group operations (independent metadata reads)");
     AddTest("test_async_link (ind)", test_async_link, NULL, NULL, &coll_metadata_read,
@@ -3488,8 +3484,8 @@ H5_api_async_test_parallel_add(void)
             sizeof(coll_metadata_read), 0, "async H5Freopen() (independent metadata reads)");
 
     /* Add a fake test to cleanup test files due to current test interdependencies */
-    AddTest("test_async_file_cleanup (ind)", test_async_file_cleanup, NULL, NULL, NULL, 0,
-            0, "cleanup async test files");
+    AddTest("test_async_file_cleanup (ind)", test_async_file_cleanup, NULL, NULL, NULL, 0, 0,
+            "cleanup async test files");
 }
 
 #else /* H5_API_TEST_HAVE_ASYNC */

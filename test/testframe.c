@@ -34,16 +34,16 @@
  * Definitions for the testing structure.
  */
 typedef struct TestStruct {
-    char           Name[MAXTESTNAME];
-    char           Description[MAXTESTDESC];
-    herr_t       (*TestFunc)(TestParams_t *);
-    herr_t       (*TestSetupFunc)(TestParams_t *);
-    herr_t       (*TestCleanupFunc)(TestParams_t *);
-    void         (*HeaderFunc)(TestParams_t *);
-    TestParams_t   TestParameters;
+    char Name[MAXTESTNAME];
+    char Description[MAXTESTDESC];
+    herr_t (*TestFunc)(TestParams_t *);
+    herr_t (*TestSetupFunc)(TestParams_t *);
+    herr_t (*TestCleanupFunc)(TestParams_t *);
+    void (*HeaderFunc)(TestParams_t *);
+    TestParams_t TestParameters;
     H5_ATOMIC(int) TestNumErrors;
-    int            TestSkipFlag;
-    uint64_t       TestFlags;
+    int      TestSkipFlag;
+    uint64_t TestFlags;
 } TestStruct;
 
 #ifdef H5_HAVE_MULTITHREAD
@@ -73,8 +73,8 @@ static void (*TestPrivateUsage_g)(FILE *stream)              = NULL;
 static herr_t (*TestPrivateParser_g)(int argc, char *argv[]) = NULL;
 static herr_t (*TestCleanupFunc_g)(void)                     = NULL;
 
-static H5_ATOMIC(int) TestNumErrs_g        = 0;    /* Total number of errors that occurred for whole test program */
-static bool           TestEnableErrorStack = true; /* Whether to show error stacks from the library */
+static H5_ATOMIC(int) TestNumErrs_g = 0;    /* Total number of errors that occurred for whole test program */
+static bool TestEnableErrorStack    = true; /* Whether to show error stacks from the library */
 
 static int TestMaxNumThreads_g = -1; /* Max number of threads that can be spawned */
 
@@ -214,7 +214,7 @@ AddTestHeaderFunc(const char *TestName, void (*HeaderFunc)(TestParams_t *))
 
     for (unsigned Loop = 0; Loop < TestCount; Loop++) {
         if (0 == strcmp(TestName, TestArray[Loop].Name)) {
-            test_found = true;
+            test_found                 = true;
             TestArray[Loop].HeaderFunc = HeaderFunc;
             break;
         }
@@ -268,12 +268,13 @@ TestInit(const char *ProgName, void (*TestPrivateUsage)(FILE *stream),
     if ((env_var = getenv(HDF5_TEST_MAX_NUM_THREADS))) {
         long max_threads;
 
-        errno = 0;
+        errno       = 0;
         max_threads = strtol(env_var, NULL, 10);
 
         if (errno != 0) {
             if (TestFrameworkProcessID_g == 0)
-                fprintf(stderr,"error while parsing value (%s) specified for maximum number of threads\n", env_var);
+                fprintf(stderr, "error while parsing value (%s) specified for maximum number of threads\n",
+                        env_var);
             return FAIL;
         }
         if (max_threads > (long)INT_MAX) {
@@ -601,11 +602,10 @@ PerformTests(void)
 #endif
 
     for (unsigned Loop = 0; Loop < TestCount; Loop++) {
-        int    curr_num_errors;
-        bool   is_test_mt = (TestFrameworkFlags_g & H5_MULTITHREAD_TEST) &&
-                            (TestArray[Loop].TestFlags & ALLOW_MULTITHREAD) &&
-                            TEST_EXECUTION_THREADED;
-        herr_t test_ret   = SUCCEED;
+        int  curr_num_errors;
+        bool is_test_mt = (TestFrameworkFlags_g & H5_MULTITHREAD_TEST) &&
+                          (TestArray[Loop].TestFlags & ALLOW_MULTITHREAD) && TEST_EXECUTION_THREADED;
+        herr_t test_ret = SUCCEED;
 
         /* If test has a header function to call, do so now */
         if (TestArray[Loop].HeaderFunc)
@@ -620,7 +620,7 @@ PerformTests(void)
 #ifndef H5_HAVE_MULTITHREAD
         if (is_test_mt) {
             MESSAGE(2, ("HDF5 was not built with multi-threaded support; Skipping test %s (%s)\n",
-                    TestArray[Loop].Name, TestArray[Loop].Description));
+                        TestArray[Loop].Name, TestArray[Loop].Description));
             TestsSkipped_g++;
             continue;
         }
@@ -631,8 +631,8 @@ PerformTests(void)
         /* Print header with test description for default verbosity level. Add
          * in test name for higher verbosity level.
          */
-        MESSAGE(2, ("Testing %s-- %s ", (is_test_mt ? "(Multi-threaded) " : ""),
-                TestArray[Loop].Description));
+        MESSAGE(2,
+                ("Testing %s-- %s ", (is_test_mt ? "(Multi-threaded) " : ""), TestArray[Loop].Description));
         MESSAGE(4, ("(%s) ", TestArray[Loop].Name));
         MESSAGE(2, ("\n"));
         MESSAGE(5, ("===============================================\n"));
@@ -647,7 +647,7 @@ PerformTests(void)
                 setup_ret = TestArray[Loop].TestSetupFunc(&TestArray[Loop].TestParameters);
                 if (setup_ret < 0)
                     MESSAGE(2, ("Test setup failed for test %s (%s)\n", TestArray[Loop].Name,
-                            TestArray[Loop].Description));
+                                TestArray[Loop].Description));
             }
 
             if (setup_ret >= 0)
@@ -657,7 +657,7 @@ PerformTests(void)
                 cleanup_ret = TestArray[Loop].TestCleanupFunc(&TestArray[Loop].TestParameters);
                 if (cleanup_ret < 0)
                     MESSAGE(2, ("Test cleanup failed for test %s (%s)\n", TestArray[Loop].Name,
-                            TestArray[Loop].Description));
+                                TestArray[Loop].Description));
             }
 
             if (setup_ret < 0 || cleanup_ret < 0)
@@ -698,8 +698,8 @@ PerformTests(void)
                 /* If test didn't increment error count, store 1 error for it */
                 if (H5_ATOMIC_LOAD(TestArray[Loop].TestNumErrors) == 0)
                     H5_ATOMIC_STORE(TestArray[Loop].TestNumErrors, 1);
-                MESSAGE(2, ("Invalid return value (%d) from test %s (%s) \n",
-                    test_ret, TestArray[Loop].Name, TestArray[Loop].Description));
+                MESSAGE(2, ("Invalid return value (%d) from test %s (%s) \n", test_ret, TestArray[Loop].Name,
+                            TestArray[Loop].Description));
                 break;
         }
 
@@ -717,10 +717,8 @@ PerformTests(void)
             /* Fill buffer with leading message and blank space up to the
              * last few characters for the test results message
              */
-            if ((chars_written = snprintf(msg_buf, (size_t)msg_space,
-                                          "There %s %d error%s detected.",
-                                          n_err == 1 ? "was" : "were",
-                                          n_err, n_err == 1 ? "" : "s")) < 0) {
+            if ((chars_written = snprintf(msg_buf, (size_t)msg_space, "There %s %d error%s detected.",
+                                          n_err == 1 ? "was" : "were", n_err, n_err == 1 ? "" : "s")) < 0) {
                 MESSAGE(5, ("snprintf error\n"));
                 ret_value = FAIL;
                 goto done;
@@ -792,8 +790,7 @@ done:
 #ifdef H5_HAVE_MULTITHREAD
 
 static herr_t
-PerformThreadedTest(TestStruct *threaded_test, int num_threads, pthread_t *threads,
-                    herr_t *test_ret)
+PerformThreadedTest(TestStruct *threaded_test, int num_threads, pthread_t *threads, herr_t *test_ret)
 {
     struct ThreadPrivData_t *thread_priv  = NULL;
     TestThreadArgs_t        *thread_args  = NULL;
@@ -831,7 +828,7 @@ PerformThreadedTest(TestStruct *threaded_test, int num_threads, pthread_t *threa
             goto done;
         }
         args_ptr->ThreadLocalParams->MtTestParams.ThreadPrivData = thread_priv;
-        thread_priv = NULL;
+        thread_priv                                              = NULL;
 
         args_ptr->ThreadLocalParams->IsMtTest              = true;
         args_ptr->ThreadLocalParams->MtTestParams.ThreadID = thread_idx;
@@ -849,7 +846,7 @@ PerformThreadedTest(TestStruct *threaded_test, int num_threads, pthread_t *threa
          * so that we can determine which threads still need to be
          * joined if an error occurs in this function.
          */
-        ret = pthread_join(threads[thread_idx], NULL);
+        ret                 = pthread_join(threads[thread_idx], NULL);
         threads[thread_idx] = pthread_self();
 
         if (ret != 0) {
@@ -873,12 +870,11 @@ PerformThreadedTest(TestStruct *threaded_test, int num_threads, pthread_t *threa
         if (thread_args[thread_idx].TestRet != SKIP)
             all_skip = false;
 
-        if (thread_args[thread_idx].TestRet != SUCCEED &&
-            thread_args[thread_idx].TestRet != FAIL &&
+        if (thread_args[thread_idx].TestRet != SUCCEED && thread_args[thread_idx].TestRet != FAIL &&
             thread_args[thread_idx].TestRet != SKIP)
             MESSAGE(2, ("** invalid return value (%d) from thread %d for test %s (%s) \n",
-                thread_args[thread_idx].TestRet, thread_idx, threaded_test->Name,
-                threaded_test->Description));
+                        thread_args[thread_idx].TestRet, thread_idx, threaded_test->Name,
+                        threaded_test->Description));
 
         if (thread_idx == 0)
             min_subtests = priv_data->subtest_count;
@@ -924,7 +920,7 @@ done:
          * so that the threads are in a known state for the next
          * call to this function.
          */
-        ret = pthread_join(threads[thread_idx], NULL);
+        ret                 = pthread_join(threads[thread_idx], NULL);
         threads[thread_idx] = pthread_self();
 
         if (0 != ret)
@@ -935,9 +931,9 @@ done:
         for (int thread_idx = 0; thread_idx < num_threads; thread_idx++) {
             if (thread_args[thread_idx].ThreadLocalParams) {
                 if (thread_args[thread_idx].TestRet < 0 ||
-                        thread_args[thread_idx].ThreadLocalParams->MtTestParams.ThreadErrCnt != 0)
+                    thread_args[thread_idx].ThreadLocalParams->MtTestParams.ThreadErrCnt != 0)
                     MESSAGE(2, ("Error message from thread %d: %s\n", thread_idx,
-                            thread_args[thread_idx].ThreadLocalParams->MtTestParams.ThreadErrMsg));
+                                thread_args[thread_idx].ThreadLocalParams->MtTestParams.ThreadErrMsg));
 
                 free(thread_args[thread_idx].ThreadLocalParams->MtTestParams.ThreadPrivData);
             }
@@ -1029,14 +1025,11 @@ TestSummary(FILE *stream)
         size_t n_tests_failed  = GetTestsFailedCount();
         size_t n_tests_skipped = GetTestsSkippedCount();
 
-        fprintf(stream, "%zu/%zu (%.2f%%) tests passed\n",
-                n_tests_passed, (size_t)TestCount,
+        fprintf(stream, "%zu/%zu (%.2f%%) tests passed\n", n_tests_passed, (size_t)TestCount,
                 ((double)n_tests_passed / (double)TestCount * 100.0));
-        fprintf(stream, "%zu/%zu (%.2f%%) tests did not pass\n",
-                n_tests_failed, (size_t)TestCount,
+        fprintf(stream, "%zu/%zu (%.2f%%) tests did not pass\n", n_tests_failed, (size_t)TestCount,
                 ((double)n_tests_failed / (double)TestCount * 100.0));
-        fprintf(stream, "%zu/%zu (%.2f%%) tests were skipped\n",
-                n_tests_skipped, (size_t)TestCount,
+        fprintf(stream, "%zu/%zu (%.2f%%) tests were skipped\n", n_tests_skipped, (size_t)TestCount,
                 ((double)n_tests_skipped / (double)TestCount * 100.0));
         fputs("\n", stream);
     }

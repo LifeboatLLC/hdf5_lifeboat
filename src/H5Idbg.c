@@ -69,9 +69,9 @@ static int H5I__id_dump_cb(void *_item, void *_key, void *_udata);
  *
  * Purpose:     Dump the contents of an ID to stderr for debugging.
  *
- *              Updated for multi-thread.  
+ *              Updated for multi-thread.
  *
- *              Note new code to grab the global mutex for the duration of 
+ *              Note new code to grab the global mutex for the duration of
  *              call if it is not already held by the current thread.
  *
  * Return:      H5_ITER_CONT (always)
@@ -84,25 +84,25 @@ H5I__id_dump_cb(void *_item, void H5_ATTR_UNUSED *_key, void *_udata)
     hbool_t                 have_global_mutex = TRUE;  /* Trivially true in single thread builds */
     hbool_t                 drop_global_mutex = FALSE; /* Trivially false in single thread builds */
     H5I_mt_id_info_kernel_t info_k;
-    H5I_mt_id_info_t       *id_info_ptr   = (H5I_mt_id_info_t *)_item; /* Pointer to the ID node */
-    H5I_type_t              type          = *(H5I_type_t *)_udata;  /* User data */
-    const H5G_name_t       *path          = NULL;                   /* Path to file object */
-    void                   *object        = NULL;                   /* Pointer to VOL connector object */
+    H5I_mt_id_info_t       *id_info_ptr = (H5I_mt_id_info_t *)_item; /* Pointer to the ID node */
+    H5I_type_t              type        = *(H5I_type_t *)_udata;     /* User data */
+    const H5G_name_t       *path        = NULL;                      /* Path to file object */
+    void                   *object      = NULL;                      /* Pointer to VOL connector object */
 
     FUNC_ENTER_PACKAGE_NOERR
 
 #if defined(H5_HAVE_THREADSAFE) || defined(H5_HAVE_MULTITHREAD)
 
-    if ( H5TS_have_mutex(&H5_g.init_lock, &have_global_mutex) < 0 )
+    if (H5TS_have_mutex(&H5_g.init_lock, &have_global_mutex) < 0)
 
-        /* eventually, H5TS_have_mutex() should never fail.  But until this 
+        /* eventually, H5TS_have_mutex() should never fail.  But until this
          * is true, trigger an assertion failure if it does.
          */
         assert(FALSE);
 
 #endif /* defined(H5_HAVE_THREADSAFE) || defined(H5_HAVE_MULTITHREAD) */
 
-    if ( ! have_global_mutex ) {
+    if (!have_global_mutex) {
 
         H5_API_LOCK
         drop_global_mutex = TRUE;
@@ -177,7 +177,7 @@ H5I__id_dump_cb(void *_item, void H5_ATTR_UNUSED *_key, void *_udata)
             fprintf(stderr, "                full_path = %s\n", H5RS_get_str(path->full_path_r));
     }
 
-    if ( drop_global_mutex ) {
+    if (drop_global_mutex) {
 
         H5_API_UNLOCK
     }
@@ -309,20 +309,22 @@ H5I_dump_ids_for_type(H5I_type_t type)
     fprintf(stderr, "Dumping ID type %d\n", (int)type);
     type_info_ptr = atomic_load(&(H5I_mt_g.type_info_array[type]));
 
-    if ( type_info_ptr ) {
+    if (type_info_ptr) {
 
-        H5I_mt_id_info_t *id_info_ptr = NULL;
+        H5I_mt_id_info_t      *id_info_ptr = NULL;
         unsigned long long int id;
-        void * value;
+        void                  *value;
 
         /* Header */
         fprintf(stderr, "     init_count = %u\n", atomic_load(&(type_info_ptr->init_count)));
         fprintf(stderr, "     reserved   = %u\n", type_info_ptr->cls->reserved);
-        fprintf(stderr, "     id_count   = %llu\n", (unsigned long long)atomic_load(&(type_info_ptr->id_count)));
-        fprintf(stderr, "     nextid     = %llu\n", (unsigned long long)atomic_load(&(type_info_ptr->nextid)));
+        fprintf(stderr, "     id_count   = %llu\n",
+                (unsigned long long)atomic_load(&(type_info_ptr->id_count)));
+        fprintf(stderr, "     nextid     = %llu\n",
+                (unsigned long long)atomic_load(&(type_info_ptr->nextid)));
 
         /* List */
-        if ( atomic_load(&(type_info_ptr->id_count)) > 0 ) {
+        if (atomic_load(&(type_info_ptr->id_count)) > 0) {
 
             fprintf(stderr, "     List:\n");
 
@@ -334,7 +336,7 @@ H5I_dump_ids_for_type(H5I_type_t type)
              */
             fprintf(stderr, "     (HASH TABLE)\n");
 
-            if ( lfht_get_first(&(type_info_ptr->lfht), &id, &value) ) {
+            if (lfht_get_first(&(type_info_ptr->lfht), &id, &value)) {
 
                 do {
                     id_info_ptr = (H5I_mt_id_info_t *)value;
@@ -379,12 +381,12 @@ H5I_dump_ids_for_type(H5I_type_t type)
 
     if (type_info) {
 
-        H5I_id_info_t *item = NULL;
+        H5I_id_info_t         *item = NULL;
 #ifdef H5_HAVE_MULTITHREAD
         unsigned long long int id;
-        void * value;
-#else /* H5_HAVE_MULTITHREAD */
-        H5I_id_info_t *tmp  = NULL;
+        void                  *value;
+#else  /* H5_HAVE_MULTITHREAD */
+        H5I_id_info_t *tmp = NULL;
 #endif /* H5_HAVE_MULTITHREAD */
 
         /* Header */
@@ -404,7 +406,7 @@ H5I_dump_ids_for_type(H5I_type_t type)
              */
             fprintf(stderr, "     (HASH TABLE)\n");
 #ifdef H5_HAVE_MULTITHREAD
-            if ( lfht_get_first(&(type_info->lfht), &id, &value) ) {
+            if (lfht_get_first(&(type_info->lfht), &id, &value)) {
 
                 do {
                     item = (H5I_id_info_t *)value;
@@ -413,7 +415,7 @@ H5I_dump_ids_for_type(H5I_type_t type)
 
                 } while (lfht_get_next(&(type_info->lfht), id, &id, &value));
             }
-#else /* H5_HAVE_MULTITHREAD */
+#else  /* H5_HAVE_MULTITHREAD */
             HASH_ITER(hh, type_info->hash_table, item, tmp)
             {
                 H5I__id_dump_cb((void *)item, NULL, (void *)&type);
@@ -428,4 +430,3 @@ H5I_dump_ids_for_type(H5I_type_t type)
 } /* end H5I_dump_ids_for_type() */
 
 #endif /* H5_HAVE_MULTITHREAD */
-

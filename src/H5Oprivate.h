@@ -896,13 +896,12 @@ typedef struct {
 /* Forward declarations for prototype arguments */
 #if H5_HAVE_MULTITHREAD
 
-typedef H5P_mt_list_t H5P_genplist_t;
+typedef H5P_mt_list_t  H5P_genplist_t;
 typedef H5P_mt_class_t H5P_genclass_t;
 
 #else
 struct H5P_genplist_t;
 #endif
-
 
 /* Object header routines */
 H5_DLL herr_t H5O_init(void);

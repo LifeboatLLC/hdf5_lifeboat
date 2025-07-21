@@ -1505,14 +1505,12 @@ test_datatype_property_lists(TestParams_t *params)
 
     SUBTEST_BEGIN(params, "H5Tget_create_plist after re-opening committed datatype")
     {
-        if ((type_id1 = H5Topen2(group_id, DATATYPE_PROPERTY_LIST_TEST_DATATYPE_NAME1, H5P_DEFAULT)) <
-            0) {
+        if ((type_id1 = H5Topen2(group_id, DATATYPE_PROPERTY_LIST_TEST_DATATYPE_NAME1, H5P_DEFAULT)) < 0) {
             printf("    couldn't open datatype '%s'\n", DATATYPE_PROPERTY_LIST_TEST_DATATYPE_NAME1);
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((type_id2 = H5Topen2(group_id, DATATYPE_PROPERTY_LIST_TEST_DATATYPE_NAME2, H5P_DEFAULT)) <
-            0) {
+        if ((type_id2 = H5Topen2(group_id, DATATYPE_PROPERTY_LIST_TEST_DATATYPE_NAME2, H5P_DEFAULT)) < 0) {
             printf("    couldn't open datatype '%s'\n", DATATYPE_PROPERTY_LIST_TEST_DATATYPE_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
@@ -2234,8 +2232,8 @@ H5_api_datatype_test_add(void)
     AddTest("test_create_anonymous_committed_datatype", test_create_anonymous_committed_datatype, NULL, NULL,
             NULL, 0, testframe_flags, "creation of anonymous committed datatype");
     AddTest("test_create_anonymous_committed_datatype_invalid_params",
-            test_create_anonymous_committed_datatype_invalid_params, NULL, NULL, NULL, 0,
-            testframe_flags, "H5Tcommit_anon with invalid parameters");
+            test_create_anonymous_committed_datatype_invalid_params, NULL, NULL, NULL, 0, testframe_flags,
+            "H5Tcommit_anon with invalid parameters");
 
 #ifndef PROBLEMATIC_TESTS
     AddTest("test_create_committed_datatype_empty_types", test_create_committed_datatype_empty_types, NULL,
@@ -2258,10 +2256,10 @@ H5_api_datatype_test_add(void)
             NULL, 0, testframe_flags, "dataset creation with a committed datatype");
     AddTest("test_create_attribute_with_committed_type", test_create_attribute_with_committed_type, NULL,
             NULL, NULL, 0, testframe_flags, "attribute creation with a committed datatype");
-    AddTest("test_delete_committed_type", test_delete_committed_type, NULL, NULL, NULL, 0,
-            testframe_flags, "committed datatype deletion");
-    AddTest("test_resurrect_datatype", test_resurrect_datatype, NULL, NULL, NULL, 0,
-            testframe_flags, "resurrecting datatype after deletion");
+    AddTest("test_delete_committed_type", test_delete_committed_type, NULL, NULL, NULL, 0, testframe_flags,
+            "committed datatype deletion");
+    AddTest("test_resurrect_datatype", test_resurrect_datatype, NULL, NULL, NULL, 0, testframe_flags,
+            "resurrecting datatype after deletion");
     AddTest("test_flush_committed_datatype", test_flush_committed_datatype, NULL, NULL, NULL, 0,
             testframe_flags, "H5Tflush");
     AddTest("test_flush_committed_datatype_invalid_params", test_flush_committed_datatype_invalid_params,
@@ -2272,8 +2270,8 @@ H5_api_datatype_test_add(void)
             NULL, NULL, NULL, 0, testframe_flags, "H5Trefresh with invalid parameters");
 
 #ifndef PROBLEMATIC_TESTS
-    AddTest("test_cant_commit_predefined", test_cant_commit_predefined, NULL, NULL, NULL, 0,
-            testframe_flags, "inability to commit predefined types directly");
+    AddTest("test_cant_commit_predefined", test_cant_commit_predefined, NULL, NULL, NULL, 0, testframe_flags,
+            "inability to commit predefined types directly");
 #endif
 
     AddTest("test_cant_modify_committed_type", test_cant_modify_committed_type, NULL, NULL, NULL, 0,

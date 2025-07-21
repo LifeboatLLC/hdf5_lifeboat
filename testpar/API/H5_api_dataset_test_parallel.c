@@ -198,8 +198,7 @@ test_write_dataset_data_verification(TestParams_t *params)
             }
         }
 
-        if (MPI_SUCCESS !=
-            MPI_Allreduce(MPI_IN_PLACE, &op_failed, 1, MPI_C_BOOL, MPI_LAND, MPI_COMM_WORLD)) {
+        if (MPI_SUCCESS != MPI_Allreduce(MPI_IN_PLACE, &op_failed, 1, MPI_C_BOOL, MPI_LAND, MPI_COMM_WORLD)) {
             printf("    couldn't determine if dataset write on rank 0 succeeded\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -249,10 +248,9 @@ test_write_dataset_data_verification(TestParams_t *params)
             printf("    couldn't open container group '%s'\n", DATASET_TEST_GROUP_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
-        if ((group_id =
-                 H5Gopen2(container_group, DATASET_WRITE_DATA_VERIFY_TEST_GROUP_NAME, H5P_DEFAULT)) < 0) {
-            printf("    couldn't open container sub-group '%s'\n",
-                   DATASET_WRITE_DATA_VERIFY_TEST_GROUP_NAME);
+        if ((group_id = H5Gopen2(container_group, DATASET_WRITE_DATA_VERIFY_TEST_GROUP_NAME, H5P_DEFAULT)) <
+            0) {
+            printf("    couldn't open container sub-group '%s'\n", DATASET_WRITE_DATA_VERIFY_TEST_GROUP_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -271,8 +269,7 @@ test_write_dataset_data_verification(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if (NULL ==
-            (read_buf = malloc((hsize_t)space_npoints * DATASET_WRITE_DATA_VERIFY_TEST_DTYPE_SIZE))) {
+        if (NULL == (read_buf = malloc((hsize_t)space_npoints * DATASET_WRITE_DATA_VERIFY_TEST_DTYPE_SIZE))) {
             printf("    couldn't allocate buffer for dataset read\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -377,8 +374,8 @@ test_write_dataset_data_verification(TestParams_t *params)
             }
         }
 
-        if (H5Dwrite(dset_id, DATASET_WRITE_DATA_VERIFY_TEST_DSET_DTYPE, mspace_id, fspace_id,
-                     H5P_DEFAULT, write_buf) < 0) {
+        if (H5Dwrite(dset_id, DATASET_WRITE_DATA_VERIFY_TEST_DSET_DTYPE, mspace_id, fspace_id, H5P_DEFAULT,
+                     write_buf) < 0) {
             printf("    couldn't write to dataset '%s'\n", DATASET_WRITE_DATA_VERIFY_TEST_DSET_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
@@ -435,10 +432,9 @@ test_write_dataset_data_verification(TestParams_t *params)
             printf("    couldn't open container group '%s'\n", DATASET_TEST_GROUP_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
-        if ((group_id =
-                 H5Gopen2(container_group, DATASET_WRITE_DATA_VERIFY_TEST_GROUP_NAME, H5P_DEFAULT)) < 0) {
-            printf("    couldn't open container sub-group '%s'\n",
-                   DATASET_WRITE_DATA_VERIFY_TEST_GROUP_NAME);
+        if ((group_id = H5Gopen2(container_group, DATASET_WRITE_DATA_VERIFY_TEST_GROUP_NAME, H5P_DEFAULT)) <
+            0) {
+            printf("    couldn't open container sub-group '%s'\n", DATASET_WRITE_DATA_VERIFY_TEST_GROUP_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -457,8 +453,7 @@ test_write_dataset_data_verification(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if (NULL ==
-            (read_buf = malloc((hsize_t)space_npoints * DATASET_WRITE_DATA_VERIFY_TEST_DTYPE_SIZE))) {
+        if (NULL == (read_buf = malloc((hsize_t)space_npoints * DATASET_WRITE_DATA_VERIFY_TEST_DTYPE_SIZE))) {
             printf("    couldn't allocate buffer for dataset read\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -473,8 +468,7 @@ test_write_dataset_data_verification(TestParams_t *params)
             size_t j;
 
             for (j = 0; j < data_size / DATASET_WRITE_DATA_VERIFY_TEST_DTYPE_SIZE; j++) {
-                if (((int *)
-                         read_buf)[j + (i * (data_size / DATASET_WRITE_DATA_VERIFY_TEST_DTYPE_SIZE))] !=
+                if (((int *)read_buf)[j + (i * (data_size / DATASET_WRITE_DATA_VERIFY_TEST_DTYPE_SIZE))] !=
                     (int)i) {
                     printf("    hyperslab selection data verification failed\n");
                     TESTFRAME_TEST_ERROR(params);
@@ -537,9 +531,9 @@ test_write_dataset_data_verification(TestParams_t *params)
         for (i = 0; i < data_size / DATASET_WRITE_DATA_VERIFY_TEST_DTYPE_SIZE; i++)
             ((int *)write_buf)[i] = mpi_size - mpi_rank;
 
-        if (NULL == (points = malloc(DATASET_WRITE_DATA_VERIFY_TEST_SPACE_RANK *
-                                     (data_size / DATASET_WRITE_DATA_VERIFY_TEST_DTYPE_SIZE) *
-                                     sizeof(hsize_t)))) {
+        if (NULL ==
+            (points = malloc(DATASET_WRITE_DATA_VERIFY_TEST_SPACE_RANK *
+                             (data_size / DATASET_WRITE_DATA_VERIFY_TEST_DTYPE_SIZE) * sizeof(hsize_t)))) {
             printf("    couldn't allocate buffer for point selection\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -588,8 +582,8 @@ test_write_dataset_data_verification(TestParams_t *params)
             }
         }
 
-        if (H5Dwrite(dset_id, DATASET_WRITE_DATA_VERIFY_TEST_DSET_DTYPE, mspace_id, fspace_id,
-                     H5P_DEFAULT, write_buf) < 0) {
+        if (H5Dwrite(dset_id, DATASET_WRITE_DATA_VERIFY_TEST_DSET_DTYPE, mspace_id, fspace_id, H5P_DEFAULT,
+                     write_buf) < 0) {
             printf("    couldn't write to dataset '%s'\n", DATASET_WRITE_DATA_VERIFY_TEST_DSET_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
@@ -646,10 +640,9 @@ test_write_dataset_data_verification(TestParams_t *params)
             printf("    couldn't open container group '%s'\n", DATASET_TEST_GROUP_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
-        if ((group_id =
-                 H5Gopen2(container_group, DATASET_WRITE_DATA_VERIFY_TEST_GROUP_NAME, H5P_DEFAULT)) < 0) {
-            printf("    couldn't open container sub-group '%s'\n",
-                   DATASET_WRITE_DATA_VERIFY_TEST_GROUP_NAME);
+        if ((group_id = H5Gopen2(container_group, DATASET_WRITE_DATA_VERIFY_TEST_GROUP_NAME, H5P_DEFAULT)) <
+            0) {
+            printf("    couldn't open container sub-group '%s'\n", DATASET_WRITE_DATA_VERIFY_TEST_GROUP_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -668,8 +661,7 @@ test_write_dataset_data_verification(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if (NULL ==
-            (read_buf = malloc((hsize_t)space_npoints * DATASET_WRITE_DATA_VERIFY_TEST_DTYPE_SIZE))) {
+        if (NULL == (read_buf = malloc((hsize_t)space_npoints * DATASET_WRITE_DATA_VERIFY_TEST_DTYPE_SIZE))) {
             printf("    couldn't allocate buffer for dataset read\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -684,8 +676,7 @@ test_write_dataset_data_verification(TestParams_t *params)
             size_t j;
 
             for (j = 0; j < data_size / DATASET_WRITE_DATA_VERIFY_TEST_DTYPE_SIZE; j++) {
-                if (((int *)
-                         read_buf)[j + (i * (data_size / DATASET_WRITE_DATA_VERIFY_TEST_DTYPE_SIZE))] !=
+                if (((int *)read_buf)[j + (i * (data_size / DATASET_WRITE_DATA_VERIFY_TEST_DTYPE_SIZE))] !=
                     (mpi_size - (int)i)) {
                     printf("    point selection data verification failed\n");
                     TESTFRAME_TEST_ERROR(params);
@@ -7409,8 +7400,8 @@ H5_api_dataset_test_parallel_add(void)
     /* Add a header to the first dataset test to distinguish different test interfaces */
     AddTestHeaderFunc("test_write_dataset_data_verification", print_dataset_test_header);
 
-    AddTest("test_write_dataset_independent", test_write_dataset_independent, NULL, NULL, NULL, 0,
-            0, "independent writing to different datasets by different ranks");
+    AddTest("test_write_dataset_independent", test_write_dataset_independent, NULL, NULL, NULL, 0, 0,
+            "independent writing to different datasets by different ranks");
     AddTest("test_write_dataset_one_proc_0_selection", test_write_dataset_one_proc_0_selection, NULL, NULL,
             NULL, 0, 0, "write to dataset with one rank selecting 0 rows");
     AddTest("test_write_dataset_one_proc_none_selection", test_write_dataset_one_proc_none_selection, NULL,
@@ -7450,7 +7441,8 @@ H5_api_dataset_test_parallel_add(void)
     AddTest("test_write_multi_chunk_dataset_same_shape_read", test_write_multi_chunk_dataset_same_shape_read,
             NULL, NULL, NULL, 0, 0, "write to dataset with multiple chunks using same shaped dataspaces");
     AddTest("test_write_multi_chunk_dataset_diff_shape_read", test_write_multi_chunk_dataset_diff_shape_read,
-            NULL, NULL, NULL, 0, 0, "write to dataset with multiple chunks using differently shaped dataspaces");
+            NULL, NULL, NULL, 0, 0,
+            "write to dataset with multiple chunks using differently shaped dataspaces");
     AddTest("test_overwrite_multi_chunk_dataset_same_shape_read",
             test_overwrite_multi_chunk_dataset_same_shape_read, NULL, NULL, NULL, 0, 0,
             "several overwrites to dataset with multiple chunks using same shaped dataspaces");

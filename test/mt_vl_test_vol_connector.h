@@ -19,6 +19,6 @@
 #define H5VL_MT_VL_TEST_VOL_H
 
 #define MT_VL_TEST_VOL_CONNECTOR_VALUE ((H5VL_class_value_t)161)
-#define MT_VL_TEST_VOL_CONNECTOR_NAME "mt_vl_test_vol_connector"
+#define MT_VL_TEST_VOL_CONNECTOR_NAME  "mt_vl_test_vol_connector"
 
 #endif /* H5VL_MT_VL_TEST_VOL_H */

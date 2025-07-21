@@ -179,8 +179,8 @@ H5_api_test_setup_container_names(const char *prefix, const char *filename)
         goto done;
     }
 
-    if (HDsnprintf(H5_api_test_base_filename_g, H5_API_TEST_FILENAME_MAX_LENGTH,
-                   "%s%s", prefix, filename) < 0) {
+    if (HDsnprintf(H5_api_test_base_filename_g, H5_API_TEST_FILENAME_MAX_LENGTH, "%s%s", prefix, filename) <
+        0) {
         TestErrPrintf("Error while creating test file name\n");
         goto done;
     }
@@ -203,8 +203,8 @@ H5_api_test_setup_container_names(const char *prefix, const char *filename)
                 goto done;
             }
 
-            if (HDsnprintf(H5_api_test_filenames_g[i], H5_API_TEST_FILENAME_MAX_LENGTH,
-                           "%sThread%d%s", prefix, i, filename) < 0) {
+            if (HDsnprintf(H5_api_test_filenames_g[i], H5_API_TEST_FILENAME_MAX_LENGTH, "%sThread%d%s",
+                           prefix, i, filename) < 0) {
                 TestErrPrintf("Error while creating thread-local test file name %d\n", i);
                 goto done;
             }
@@ -345,8 +345,7 @@ main(int argc, char **argv)
         }
 
         if (!is_registered) {
-            TestErrPrintf("Specified VOL connector '%s' wasn't correctly registered!\n",
-                          vol_connector_name);
+            TestErrPrintf("Specified VOL connector '%s' wasn't correctly registered!\n", vol_connector_name);
             goto done;
         }
         else {
@@ -384,8 +383,8 @@ main(int argc, char **argv)
     /* Create the file(s) that will be used for all of the tests,
      * except for those which test file creation.
      */
-    if (H5_api_test_create_containers(H5_api_test_filenames_g, H5_api_test_num_filenames_g,
-                                      vol_cap_flags_g) < 0) {
+    if (H5_api_test_create_containers(H5_api_test_filenames_g, H5_api_test_num_filenames_g, vol_cap_flags_g) <
+        0) {
         TestErrPrintf("Unable to create testing container files\n");
         goto done;
     }
@@ -465,8 +464,8 @@ H5_api_test_create_containers(char **filenames, size_t num_filenames, uint64_t v
          * (group, attribute, dataset, etc.).
          */
         if (vol_cap_flags & H5VL_CAP_FLAG_GROUP_BASIC) {
-            if ((group_id = H5Gcreate2(file_id, GROUP_TEST_GROUP_NAME,
-                                       H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
+            if ((group_id =
+                     H5Gcreate2(file_id, GROUP_TEST_GROUP_NAME, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
                 TestErrPrintf("Couldn't create container group '%s'\n", GROUP_TEST_GROUP_NAME);
                 goto error;
             }
@@ -475,8 +474,8 @@ H5_api_test_create_containers(char **filenames, size_t num_filenames, uint64_t v
                 goto error;
             }
 
-            if ((group_id = H5Gcreate2(file_id, ATTRIBUTE_TEST_GROUP_NAME,
-                                       H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
+            if ((group_id = H5Gcreate2(file_id, ATTRIBUTE_TEST_GROUP_NAME, H5P_DEFAULT, H5P_DEFAULT,
+                                       H5P_DEFAULT)) < 0) {
                 TestErrPrintf("Couldn't create container group '%s'\n", ATTRIBUTE_TEST_GROUP_NAME);
                 goto error;
             }
@@ -485,8 +484,8 @@ H5_api_test_create_containers(char **filenames, size_t num_filenames, uint64_t v
                 goto error;
             }
 
-            if ((group_id = H5Gcreate2(file_id, DATASET_TEST_GROUP_NAME,
-                                       H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
+            if ((group_id = H5Gcreate2(file_id, DATASET_TEST_GROUP_NAME, H5P_DEFAULT, H5P_DEFAULT,
+                                       H5P_DEFAULT)) < 0) {
                 TestErrPrintf("Couldn't create container group '%s'\n", DATASET_TEST_GROUP_NAME);
                 goto error;
             }
@@ -495,8 +494,8 @@ H5_api_test_create_containers(char **filenames, size_t num_filenames, uint64_t v
                 goto error;
             }
 
-            if ((group_id = H5Gcreate2(file_id, DATATYPE_TEST_GROUP_NAME,
-                                       H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
+            if ((group_id = H5Gcreate2(file_id, DATATYPE_TEST_GROUP_NAME, H5P_DEFAULT, H5P_DEFAULT,
+                                       H5P_DEFAULT)) < 0) {
                 TestErrPrintf("Couldn't create container group '%s'\n", DATATYPE_TEST_GROUP_NAME);
                 goto error;
             }
@@ -505,8 +504,8 @@ H5_api_test_create_containers(char **filenames, size_t num_filenames, uint64_t v
                 goto error;
             }
 
-            if ((group_id = H5Gcreate2(file_id, LINK_TEST_GROUP_NAME,
-                                       H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
+            if ((group_id =
+                     H5Gcreate2(file_id, LINK_TEST_GROUP_NAME, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
                 TestErrPrintf("Couldn't create container group '%s'\n", LINK_TEST_GROUP_NAME);
                 goto error;
             }
@@ -515,8 +514,8 @@ H5_api_test_create_containers(char **filenames, size_t num_filenames, uint64_t v
                 goto error;
             }
 
-            if ((group_id = H5Gcreate2(file_id, OBJECT_TEST_GROUP_NAME,
-                                       H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
+            if ((group_id = H5Gcreate2(file_id, OBJECT_TEST_GROUP_NAME, H5P_DEFAULT, H5P_DEFAULT,
+                                       H5P_DEFAULT)) < 0) {
                 TestErrPrintf("Couldn't create container group '%s'\n", OBJECT_TEST_GROUP_NAME);
                 goto error;
             }
@@ -525,8 +524,8 @@ H5_api_test_create_containers(char **filenames, size_t num_filenames, uint64_t v
                 goto error;
             }
 
-            if ((group_id = H5Gcreate2(file_id, MISCELLANEOUS_TEST_GROUP_NAME,
-                                       H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
+            if ((group_id = H5Gcreate2(file_id, MISCELLANEOUS_TEST_GROUP_NAME, H5P_DEFAULT, H5P_DEFAULT,
+                                       H5P_DEFAULT)) < 0) {
                 TestErrPrintf("Couldn't create container group '%s'\n", MISCELLANEOUS_TEST_GROUP_NAME);
                 goto error;
             }

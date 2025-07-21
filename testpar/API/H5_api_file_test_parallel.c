@@ -284,6 +284,6 @@ H5_api_file_test_parallel_add(void)
     AddTestHeaderFunc("test_create_file", print_file_test_header);
 
     AddTest("test_open_file", test_open_file, NULL, NULL, NULL, 0, 0, "H5Fopen");
-    AddTest("test_split_comm_file_access", test_split_comm_file_access, NULL, NULL, NULL, 0,
-            0, "file access with a split communicator");
+    AddTest("test_split_comm_file_access", test_split_comm_file_access, NULL, NULL, NULL, 0, 0,
+            "file access with a split communicator");
 }

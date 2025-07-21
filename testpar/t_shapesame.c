@@ -4356,24 +4356,24 @@ main(int argc, char **argv)
     test_params.filename = PARATESTFILE;
 
     /* Shape Same tests using contiguous hyperslab */
-    AddTest("sscontig1", sscontig1, NULL, NULL, &test_params, sizeof(test_params),
-            0, "Cntg hslab, ind IO, cntg dsets");
-    AddTest("sscontig2", sscontig2, NULL, NULL, &test_params, sizeof(test_params),
-            0, "Cntg hslab, col IO, cntg dsets");
-    AddTest("sscontig3", sscontig3, NULL, NULL, &test_params, sizeof(test_params),
-            0, "Cntg hslab, ind IO, chnk dsets");
-    AddTest("sscontig4", sscontig4, NULL, NULL, &test_params, sizeof(test_params),
-            0, "Cntg hslab, col IO, chnk dsets");
+    AddTest("sscontig1", sscontig1, NULL, NULL, &test_params, sizeof(test_params), 0,
+            "Cntg hslab, ind IO, cntg dsets");
+    AddTest("sscontig2", sscontig2, NULL, NULL, &test_params, sizeof(test_params), 0,
+            "Cntg hslab, col IO, cntg dsets");
+    AddTest("sscontig3", sscontig3, NULL, NULL, &test_params, sizeof(test_params), 0,
+            "Cntg hslab, ind IO, chnk dsets");
+    AddTest("sscontig4", sscontig4, NULL, NULL, &test_params, sizeof(test_params), 0,
+            "Cntg hslab, col IO, chnk dsets");
 
     /* Shape Same tests using checker board hyperslab */
-    AddTest("sschecker1", sschecker1, NULL, NULL, &test_params, sizeof(test_params),
-            0, "Check hslab, ind IO, cntg dsets");
-    AddTest("sschecker2", sschecker2, NULL, NULL, &test_params, sizeof(test_params),
-            0, "Check hslab, col IO, cntg dsets");
-    AddTest("sschecker3", sschecker3, NULL, NULL, &test_params, sizeof(test_params),
-            0, "Check hslab, ind IO, chnk dsets");
-    AddTest("sschecker4", sschecker4, NULL, NULL, &test_params, sizeof(test_params),
-            0, "Check hslab, col IO, chnk dsets");
+    AddTest("sschecker1", sschecker1, NULL, NULL, &test_params, sizeof(test_params), 0,
+            "Check hslab, ind IO, cntg dsets");
+    AddTest("sschecker2", sschecker2, NULL, NULL, &test_params, sizeof(test_params), 0,
+            "Check hslab, col IO, cntg dsets");
+    AddTest("sschecker3", sschecker3, NULL, NULL, &test_params, sizeof(test_params), 0,
+            "Check hslab, ind IO, chnk dsets");
+    AddTest("sschecker4", sschecker4, NULL, NULL, &test_params, sizeof(test_params), 0,
+            "Check hslab, col IO, chnk dsets");
 
     /* Display testing information */
     TestInfo(stdout);
