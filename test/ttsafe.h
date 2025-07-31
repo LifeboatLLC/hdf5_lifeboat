@@ -30,7 +30,7 @@ extern char *gen_name(int);
 void tts_is_threadsafe(void);
 
 #if defined H5_HAVE_THREADSAFE || defined H5_HAVE_MULTITHREAD
-void tts_errstk(void);
+void                                      tts_errstk(void);
 #endif
 
 #ifdef H5_HAVE_THREADSAFE

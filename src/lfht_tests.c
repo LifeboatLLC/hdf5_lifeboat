@@ -5,10 +5,10 @@
 #include "lfht.h"
 #include "lfht.c"
 
-#define MAX_NUM_THREADS         32
+#define MAX_NUM_THREADS 32
 
-void lfht_verify_list_lens(struct lfht_t * lfht_ptr);
-void lfht_dump_interesting_stats(struct lfht_t * lfht_ptr);
+void lfht_verify_list_lens(struct lfht_t *lfht_ptr);
+void lfht_dump_interesting_stats(struct lfht_t *lfht_ptr);
 
 void lfht_hash_fcn_test(void);
 void lfht_hash_to_index_test(void);
@@ -21,8 +21,8 @@ void lfht_serial_test_1(void);
 void lfht_serial_test_2(void);
 void lfht_serial_test_3(void);
 
-void * lfht_mt_test_fcn_1(void * args);
-void * lfht_mt_test_fcn_2(void * args);
+void *lfht_mt_test_fcn_1(void *args);
+void *lfht_mt_test_fcn_2(void *args);
 
 void lfht_lfsll_mt_test_fcn_1__serial_test();
 void lfht_lfsll_mt_test_fcn_2__serial_test();
@@ -38,12 +38,11 @@ void lfht_mt_test_1(int run, int nthreads);
 void lfht_mt_test_2(int run, int nthreads);
 void lfht_mt_test_3(int run, int nthreads);
 
-
 /***********************************************************************************
  *
  * lfht_verify_list_lens()()
  *
- *     For the supplied instance of lfht_t, verify that the lfsll_phys_len and 
+ *     For the supplied instance of lfht_t, verify that the lfsll_phys_len and
  *     fl_len fields are correct.
  *
  *     Any discrepency will trigger an assertion.
@@ -56,39 +55,40 @@ void lfht_mt_test_3(int run, int nthreads);
  *
  ***********************************************************************************/
 
-void lfht_verify_list_lens(struct lfht_t * lfht_ptr)
+void
+lfht_verify_list_lens(struct lfht_t *lfht_ptr)
 {
-    bool marked_for_deletion;
-    int lfsll_log_len = 0;
-    int lfsll_phys_len = 0;
-    int num_sentinels = 0;
-    int fl_len = 0;
-    struct lfht_node_t * node_ptr;
-    struct lfht_node_t * next;
-    struct lfht_fl_node_t * fl_node_ptr;
-    struct lfht_flsptr_t fl_shead;
-    struct lfht_flsptr_t fl_stail;
-    struct lfht_flsptr_t snext;
+    bool                   marked_for_deletion;
+    int                    lfsll_log_len  = 0;
+    int                    lfsll_phys_len = 0;
+    int                    num_sentinels  = 0;
+    int                    fl_len         = 0;
+    struct lfht_node_t    *node_ptr;
+    struct lfht_node_t    *next;
+    struct lfht_fl_node_t *fl_node_ptr;
+    struct lfht_flsptr_t   fl_shead;
+    struct lfht_flsptr_t   fl_stail;
+    struct lfht_flsptr_t   snext;
 
     assert(lfht_ptr);
     assert(LFHT_VALID == lfht_ptr->tag);
 
     node_ptr = atomic_load(&(lfht_ptr->lfsll_root));
 
-    while ( node_ptr ) {
+    while (node_ptr) {
 
         lfsll_phys_len++;
 
         next = atomic_load(&(node_ptr->next));
 
-        marked_for_deletion = ( 1 == (((unsigned long long int)(next)) & 0x01ULL) );
+        marked_for_deletion = (1 == (((unsigned long long int)(next)) & 0x01ULL));
 
-        if ( node_ptr->sentinel ) {
+        if (node_ptr->sentinel) {
 
             num_sentinels++;
             assert(!marked_for_deletion);
-
-        } else if ( ! marked_for_deletion ) {
+        }
+        else if (!marked_for_deletion) {
 
             lfsll_log_len++;
         }
@@ -96,23 +96,23 @@ void lfht_verify_list_lens(struct lfht_t * lfht_ptr)
         node_ptr = (struct lfht_node_t *)(((unsigned long long)(next)) & (~0x01ULL));
     }
 
-    assert(num_sentinels  == atomic_load(&(lfht_ptr->buckets_initialized)) + 1);
-    assert(lfsll_log_len  == atomic_load(&(lfht_ptr->lfsll_log_len)));
+    assert(num_sentinels == atomic_load(&(lfht_ptr->buckets_initialized)) + 1);
+    assert(lfsll_log_len == atomic_load(&(lfht_ptr->lfsll_log_len)));
     assert(lfsll_phys_len == atomic_load(&(lfht_ptr->lfsll_phys_len)));
 
-    fl_shead = atomic_load(&(lfht_ptr->fl_shead));
-    fl_stail = atomic_load(&(lfht_ptr->fl_stail));
+    fl_shead    = atomic_load(&(lfht_ptr->fl_shead));
+    fl_stail    = atomic_load(&(lfht_ptr->fl_stail));
     fl_node_ptr = fl_shead.ptr;
 
-    if ( fl_shead.sn > fl_stail.sn ) {
+    if (fl_shead.sn > fl_stail.sn) {
         fprintf(stdout, "\n fl_shead.sn = %lld, fl_stail.sh = %lld\n", fl_shead.sn, fl_stail.sn);
     }
 
-    while( fl_node_ptr ) {
+    while (fl_node_ptr) {
 
         assert(0ULL == atomic_load(&(fl_node_ptr->ref_count)));
         fl_len++;
-        snext = atomic_load(&(fl_node_ptr->snext));
+        snext       = atomic_load(&(fl_node_ptr->snext));
         fl_node_ptr = snext.ptr;
     }
 
@@ -121,7 +121,6 @@ void lfht_verify_list_lens(struct lfht_t * lfht_ptr)
     return;
 
 } /* lfht_verify_list_lens() */
-
 
 /***********************************************************************************
  *
@@ -138,9 +137,10 @@ void lfht_verify_list_lens(struct lfht_t * lfht_ptr)
  *
  ***********************************************************************************/
 
-void lfht_dump_interesting_stats(struct lfht_t * lfht_ptr)
+void
+lfht_dump_interesting_stats(struct lfht_t *lfht_ptr)
 {
-    bool marked_for_deletion;
+    bool                   marked_for_deletion;
     unsigned long long int buckets_defined_update_cols;
     unsigned long long int buckets_defined_update_retries;
     unsigned long long int bucket_init_cols;
@@ -158,21 +158,20 @@ void lfht_dump_interesting_stats(struct lfht_t * lfht_ptr)
     recursive_bucket_inits         = atomic_load(&(lfht_ptr->recursive_bucket_inits));
     sentinels_traversed            = atomic_load(&(lfht_ptr->sentinels_traversed));
 
-    if ( ( buckets_defined_update_cols > 0 ) ||
-         ( buckets_defined_update_retries > 0 ) ) {
+    if ((buckets_defined_update_cols > 0) || (buckets_defined_update_retries > 0)) {
 
         fprintf(stdout, "\n\n");
 
-        if ( ( buckets_defined_update_cols > 0 ) || ( buckets_defined_update_retries ) ) {
+        if ((buckets_defined_update_cols > 0) || (buckets_defined_update_retries)) {
 
-            fprintf(stdout, "buckets_defined update cols / retries = %lld / %lld.\n", 
+            fprintf(stdout, "buckets_defined update cols / retries = %lld / %lld.\n",
                     buckets_defined_update_cols, buckets_defined_update_retries);
         }
 
-        if ( ( bucket_init_cols ) || ( bucket_init_col_sleeps ) ) {
+        if ((bucket_init_cols) || (bucket_init_col_sleeps)) {
 
-            fprintf(stdout, "bucket init cols / bucket init col sleeps = %lld / %lld.\n", 
-                    bucket_init_cols, bucket_init_col_sleeps);
+            fprintf(stdout, "bucket init cols / bucket init col sleeps = %lld / %lld.\n", bucket_init_cols,
+                    bucket_init_col_sleeps);
         }
 #if 0
         if ( ( recursive_bucket_inits ) || ( sentinels_traversed ) ) {
@@ -187,7 +186,6 @@ void lfht_dump_interesting_stats(struct lfht_t * lfht_ptr)
 
 } /* lfht_verify_list_lens() */
 
-
 /***********************************************************************************
  *
  * lfht_hash_fcn_test()
@@ -196,8 +194,8 @@ void lfht_dump_interesting_stats(struct lfht_t * lfht_ptr)
  *
  *     Any failure should trigger an assertion.
  *
- *     Note that the ids, and the expected values for the regular and sentinel hashes 
- *     depend on the value of LFHT__NUM_HASH_BITS -- and will have to be adjusted if 
+ *     Note that the ids, and the expected values for the regular and sentinel hashes
+ *     depend on the value of LFHT__NUM_HASH_BITS -- and will have to be adjusted if
  *     this constant changes.
  *
  *                                                   JRM -- 6/17/23
@@ -208,66 +206,64 @@ void lfht_dump_interesting_stats(struct lfht_t * lfht_ptr)
  *
  ***********************************************************************************/
 
-void lfht_hash_fcn_test(void)
+void
+lfht_hash_fcn_test(void)
 {
     int i;
     int num_tests = 17;
-#if ( LFHT__NUM_HASH_BITS == 48 )
-    unsigned long long int ids[] = { 
-        0x0000000000000ULL, 0x0000000000001ULL, 0x0000000000002ULL, 0x0000000000003ULL,
-        0x0000000000004ULL, 0x0000000000005ULL, 0x0000000000006ULL, 0x0000000000007ULL,
-        0x0000000000008ULL, 0x0000000000009ULL, 0x000000000000AULL, 0x000000000000BULL,
-        0x000000000000CULL, 0x000000000000DULL, 0x000000000000EULL, 0x000000000000FULL,
-        0x0FFFFFFFFFFFFULL };
-    unsigned long long int regular_hashes[] = { 
-        0x0000000000001ULL, 0x1000000000001ULL, 0x0800000000001ULL, 0x1800000000001ULL,
-        0x0400000000001ULL, 0x1400000000001ULL, 0x0C00000000001ULL, 0x1C00000000001ULL,
-        0x0200000000001ULL, 0x1200000000001ULL, 0x0A00000000001ULL, 0x1A00000000001ULL,
-        0x0600000000001ULL, 0x1600000000001ULL, 0x0E00000000001ULL, 0x1E00000000001ULL,
-        0x1FFFFFFFFFFFFULL };
-    unsigned long long int sentinel_hashes[] = { 
-        0x0000000000000ULL, 0x1000000000000ULL, 0x0800000000000ULL, 0x1800000000000ULL,
-        0x0400000000000ULL, 0x1400000000000ULL, 0x0C00000000000ULL, 0x1C00000000000ULL,
-        0x0200000000000ULL, 0x1200000000000ULL, 0x0A00000000000ULL, 0x1A00000000000ULL,
-        0x0600000000000ULL, 0x1600000000000ULL, 0x0E00000000000ULL, 0x1E00000000000ULL,
-        0x1FFFFFFFFFFFEULL };
-#else /* LFHT__NUM_HASH_BITS == 57 */
-    unsigned long long int ids[] = { 
-        0x0000000000000000ULL, 0x0000000000000001ULL, 0x0000000000000002ULL, 0x0000000000000003ULL,
-        0x0000000000000004ULL, 0x0000000000000005ULL, 0x0000000000000006ULL, 0x0000000000000007ULL,
-        0x0000000000000008ULL, 0x0000000000000009ULL, 0x000000000000000AULL, 0x000000000000000BULL,
-        0x000000000000000CULL, 0x000000000000000DULL, 0x000000000000000EULL, 0x000000000000000FULL,
-        0x01FFFFFFFFFFFFFFULL };
-    unsigned long long int regular_hashes[] = { 
+#if (LFHT__NUM_HASH_BITS == 48)
+    unsigned long long int ids[] = {
+        0x0000000000000ULL, 0x0000000000001ULL, 0x0000000000002ULL, 0x0000000000003ULL, 0x0000000000004ULL,
+        0x0000000000005ULL, 0x0000000000006ULL, 0x0000000000007ULL, 0x0000000000008ULL, 0x0000000000009ULL,
+        0x000000000000AULL, 0x000000000000BULL, 0x000000000000CULL, 0x000000000000DULL, 0x000000000000EULL,
+        0x000000000000FULL, 0x0FFFFFFFFFFFFULL};
+    unsigned long long int regular_hashes[] = {
+        0x0000000000001ULL, 0x1000000000001ULL, 0x0800000000001ULL, 0x1800000000001ULL, 0x0400000000001ULL,
+        0x1400000000001ULL, 0x0C00000000001ULL, 0x1C00000000001ULL, 0x0200000000001ULL, 0x1200000000001ULL,
+        0x0A00000000001ULL, 0x1A00000000001ULL, 0x0600000000001ULL, 0x1600000000001ULL, 0x0E00000000001ULL,
+        0x1E00000000001ULL, 0x1FFFFFFFFFFFFULL};
+    unsigned long long int sentinel_hashes[] = {
+        0x0000000000000ULL, 0x1000000000000ULL, 0x0800000000000ULL, 0x1800000000000ULL, 0x0400000000000ULL,
+        0x1400000000000ULL, 0x0C00000000000ULL, 0x1C00000000000ULL, 0x0200000000000ULL, 0x1200000000000ULL,
+        0x0A00000000000ULL, 0x1A00000000000ULL, 0x0600000000000ULL, 0x1600000000000ULL, 0x0E00000000000ULL,
+        0x1E00000000000ULL, 0x1FFFFFFFFFFFEULL};
+#else  /* LFHT__NUM_HASH_BITS == 57 */
+    unsigned long long int ids[] = {0x0000000000000000ULL, 0x0000000000000001ULL, 0x0000000000000002ULL,
+                                    0x0000000000000003ULL, 0x0000000000000004ULL, 0x0000000000000005ULL,
+                                    0x0000000000000006ULL, 0x0000000000000007ULL, 0x0000000000000008ULL,
+                                    0x0000000000000009ULL, 0x000000000000000AULL, 0x000000000000000BULL,
+                                    0x000000000000000CULL, 0x000000000000000DULL, 0x000000000000000EULL,
+                                    0x000000000000000FULL, 0x01FFFFFFFFFFFFFFULL};
+    unsigned long long int regular_hashes[] = {
         0x0000000000000001ULL, 0x0200000000000001ULL, 0x0100000000000001ULL, 0x0300000000000001ULL,
         0x0080000000000001ULL, 0x0280000000000001ULL, 0x0180000000000001ULL, 0x0380000000000001ULL,
         0x0040000000000001ULL, 0x0240000000000001ULL, 0x0140000000000001ULL, 0x0340000000000001ULL,
         0x00c0000000000001ULL, 0x02C0000000000001ULL, 0x01C0000000000001ULL, 0x03C0000000000001ULL,
-        0x03FFFFFFFFFFFFFFULL };
-    unsigned long long int sentinel_hashes[] = { 
+        0x03FFFFFFFFFFFFFFULL};
+    unsigned long long int sentinel_hashes[] = {
         0x0000000000000000ULL, 0x0200000000000000ULL, 0x0100000000000000ULL, 0x0300000000000000ULL,
         0x0080000000000000ULL, 0x0280000000000000ULL, 0x0180000000000000ULL, 0x0380000000000000ULL,
         0x0040000000000000ULL, 0x0240000000000000ULL, 0x0140000000000000ULL, 0x0340000000000000ULL,
         0x00c0000000000000ULL, 0x02C0000000000000ULL, 0x01C0000000000000ULL, 0x03C0000000000000ULL,
-        0x03FFFFFFFFFFFFFEULL };
+        0x03FFFFFFFFFFFFFEULL};
 
     assert(LFHT__NUM_HASH_BITS == 57);
 #endif /* LFHT__NUM_HASH_BITS == 57 */
 
     fprintf(stdout, "LFHT hash function test ...");
 
-    for (i = 0; i < num_tests; i++ ) {
+    for (i = 0; i < num_tests; i++) {
 
-        if ( regular_hashes[i] != lfht_id_to_hash(ids[i], false) ) {
+        if (regular_hashes[i] != lfht_id_to_hash(ids[i], false)) {
 
-            fprintf(stdout, "\nhash test %d: regular hassh of 0x%llx = 0x%llx (0x%llx expected)\n",
-                    i, ids[i], lfht_id_to_hash(ids[i], false), regular_hashes[i]);
+            fprintf(stdout, "\nhash test %d: regular hassh of 0x%llx = 0x%llx (0x%llx expected)\n", i, ids[i],
+                    lfht_id_to_hash(ids[i], false), regular_hashes[i]);
         }
 
-        if ( sentinel_hashes[i] != lfht_id_to_hash(ids[i], true) ) {
+        if (sentinel_hashes[i] != lfht_id_to_hash(ids[i], true)) {
 
-            fprintf(stdout, "\nhash test %d: sentinel hassh of 0x%llx = 0x%llx (0x%llx expected)\n",
-                    i, ids[i], lfht_id_to_hash(ids[i], true), sentinel_hashes[i]);
+            fprintf(stdout, "\nhash test %d: sentinel hassh of 0x%llx = 0x%llx (0x%llx expected)\n", i,
+                    ids[i], lfht_id_to_hash(ids[i], true), sentinel_hashes[i]);
         }
     }
 
@@ -279,16 +275,15 @@ void lfht_hash_fcn_test(void)
 
 } /* lfht_hash_fcn_test() */
 
-
 /***********************************************************************************
  *
  * lfht_hash_to_index_test()
  *
  *     Test functioning of the hash to index function
- *     
+ *
  *     Compute the hash values for ids 0 to 1023 and store in an array.
  *
- *     For each hash value, and for index_bits 0 to 3, compute the index of 
+ *     For each hash value, and for index_bits 0 to 3, compute the index of
  *     the hash bucket each hash value maps to.
  *
  *     Verify that the computed index values are expected.
@@ -305,34 +300,33 @@ void lfht_hash_fcn_test(void)
  *
  ***********************************************************************************/
 
-void lfht_hash_to_index_test(void)
+void
+lfht_hash_to_index_test(void)
 {
-    void * value = NULL;
+    void                  *value = NULL;
     unsigned long long int i;
-    int index_bits; 
+    int                    index_bits;
     unsigned long long int hash[16];
     unsigned long long int index[4][16];
-    unsigned long long int expected_index[4][16] = 
-    {
-       /* 0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15 */
-        { 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0 },
-        { 0,  1,  0,  1,  0,  1,  0,  1,  0,  1,  0,  1,  0,  1,  0,  1 },
-        { 0,  1,  2,  3,  0,  1,  2,  3,  0,  1,  2,  3,  0,  1,  2,  3 },
-        { 0,  1,  2,  3,  4,  5,  6,  7,  0,  1,  2,  3,  4,  5,  6,  7 }
-    };
+    unsigned long long int expected_index[4][16] = {
+        /* 0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15 */
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1},
+        {0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3},
+        {0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7}};
 
     fprintf(stdout, "LFHT hash to index test ...");
 
     fflush(stdout);
 
-    for ( i = 0; i < 16; i++ ) {
+    for (i = 0; i < 16; i++) {
 
         hash[i] = lfht_id_to_hash(i, false);
     }
 
-    for ( index_bits = 0; index_bits < 4; index_bits++ ) {
+    for (index_bits = 0; index_bits < 4; index_bits++) {
 
-        for ( i = 0; i < 16; i++ ) {
+        for (i = 0; i < 16; i++) {
 
             index[index_bits][i] = lfht_hash_to_idx(hash[i], index_bits);
         }
@@ -354,9 +348,9 @@ void lfht_hash_to_index_test(void)
         fprintf(stdout, "\n");
     }
 #endif
- 
-    for ( i = 0; i < 16; i++ ) {
-        for ( index_bits = 0; index_bits < 4; index_bits++ ) {
+
+    for (i = 0; i < 16; i++) {
+        for (index_bits = 0; index_bits < 4; index_bits++) {
             assert(index[index_bits][i] == expected_index[index_bits][i]);
         }
     }
@@ -367,12 +361,11 @@ void lfht_hash_to_index_test(void)
 
 } /* lfht_hash_to_index_test() */
 
-
 /***********************************************************************************
  *
  * lfht_lfsll_serial_test_1()
  *
- *     Initial smoke check.  
+ *     Initial smoke check.
  *
  *     Setup the hash table, but set max_index_bits to zero, which has the effect
  *     of converting the lock free hash table into a lock free singly linked list.
@@ -380,7 +373,7 @@ void lfht_hash_to_index_test(void)
  *     Insert a node and verify that the inserion succeeds.  Do it again and
  *     verify that it fails.
  *
- *     Search for the node just inserted, and verify that it succeeds.  Search 
+ *     Search for the node just inserted, and verify that it succeeds.  Search
  *     for a non-existant node and verify that the search fails.
  *
  *     Search for the node just inserted by value and verify that it succeeds.
@@ -388,14 +381,14 @@ void lfht_hash_to_index_test(void)
  *
  *     Do a value swap on the node just inserted -- verify that it succeeds.
  *
- *     Start an itteration on the hash table -- verify that the id and value 
+ *     Start an itteration on the hash table -- verify that the id and value
  *     (after the swap) are returned.
  *
  *     Attempt to get the next node in the itteration -- verity that it fails.
  *
  *     Delete a non-existant node and verify that it fails.
  *
- *     Delete a real node and verify that it succeeds.  Do it again and verify 
+ *     Delete a real node and verify that it succeeds.  Do it again and verify
  *     that it fails.
  *
  *     Check statistics, and verify that they are as expected.
@@ -412,11 +405,12 @@ void lfht_hash_to_index_test(void)
  *
  ***********************************************************************************/
 
-void lfht_lfsll_serial_test_1(void)
+void
+lfht_lfsll_serial_test_1(void)
 {
     unsigned long long int id;
-    void * value = NULL;
-    struct lfht_t lfht;
+    void                  *value = NULL;
+    struct lfht_t          lfht;
 
     fprintf(stdout, "LFHT LFSLL serial test 1 ...");
 
@@ -424,12 +418,11 @@ void lfht_lfsll_serial_test_1(void)
 
     lfht_init(&lfht);
 
-    /* set lfht.max_index_bits to zero -- which forces the lock free hash table 
-     * to funtion as a lock free singly linked list, as it forces all entries 
+    /* set lfht.max_index_bits to zero -- which forces the lock free hash table
+     * to funtion as a lock free singly linked list, as it forces all entries
      * into a single hash bucket.
      */
     lfht.max_index_bits = 0;
-
 
     /* insert 1 -- should succeed */
     assert(lfht_add(&lfht, 0x01ULL, (void *)(0x01ULL)));
@@ -462,7 +455,7 @@ void lfht_lfsll_serial_test_1(void)
 
     /* get next -- should fail */
     assert(!lfht_get_next(&lfht, 0x01ULL, &id, &value));
- 
+
     /* attempt to delete 2 -- should fail */
     assert(!lfht_delete(&lfht, 0x02ULL));
 
@@ -472,7 +465,7 @@ void lfht_lfsll_serial_test_1(void)
     /* attempt to delete 1 -- should fail */
     assert(!lfht_delete(&lfht, 0x01ULL));
 
-#if 0 /* JRM */
+#if 0  /* JRM */
     lfht_dump_list(&lfht, stdout);
 
     lfht_dump_stats(&lfht, stdout);
@@ -538,43 +531,42 @@ void lfht_lfsll_serial_test_1(void)
 
 } /* lfht_lfsll_serial_test_1() */
 
-
 /***********************************************************************************
  *
  * lfht_lfsll_serial_test_2()
  *
- *     A more extensive smoke check.  
+ *     A more extensive smoke check.
  *
  *     Setup the hash table, but set max_index_bits to zero, which has the effect
  *     of converting the lock free hash table into a lock free singly linked list.
  *
- *     Insert values [0,99] into the lfht's lfsll in increasing order, and verify 
+ *     Insert values [0,99] into the lfht's lfsll in increasing order, and verify
  *     that the insertions succeed.
  *
- *     Delete value [0,99] from the lfht's lfsll in decreasing order, and verify 
+ *     Delete value [0,99] from the lfht's lfsll in decreasing order, and verify
  *     that the deletions succeed.
  *
- *     Insert values [100,199 in decreasing order, and verify that the 
+ *     Insert values [100,199 in decreasing order, and verify that the
  *     insertions succeed.
  *
- *     Search for values [0,199] in the lfht's lfsll in increasing order.  Verify 
+ *     Search for values [0,199] in the lfht's lfsll in increasing order.  Verify
  *     that the searches of [0,99] fail, and that the searches for [100,199]
  *     succeed.
  *
- *     Insert value [0,199] into the lfht's lfsll in increasing order.  Verify 
- *     that the insertions of [0,99] succeed and that the insertions of 
- *     [100,199] fail.  
+ *     Insert value [0,199] into the lfht's lfsll in increasing order.  Verify
+ *     that the insertions of [0,99] succeed and that the insertions of
+ *     [100,199] fail.
  *
  *     Itterate through the hash table.  For each id found, set its value to
  *     its current value + 1000.
  *
- *     Search for the the odd values in the interval [1000,1199] in decreasing 
+ *     Search for the the odd values in the interval [1000,1199] in decreasing
  *     order, and verify that the search return the odd ids in the range [0,199].
  *     Then delete the odd numbered values in the interval [0,199] in decreasing
  *     order, and verify that the deletions succeed.
  *
- *     Search for the values [0,199] in increasing order and verify that 
- *     searches for odd numbers fail and that searches for even numbers 
+ *     Search for the values [0,199] in increasing order and verify that
+ *     searches for odd numbers fail and that searches for even numbers
  *     succeed.
  *
  *     Insert the odd numbered values in the interval [0,199] in decreasing
@@ -600,12 +592,13 @@ void lfht_lfsll_serial_test_1(void)
  *
  ***********************************************************************************/
 
-void lfht_lfsll_serial_test_2(void)
+void
+lfht_lfsll_serial_test_2(void)
 {
-    long long int i;
+    long long int          i;
     unsigned long long int id;
-    void * value;
-    struct lfht_t lfht;
+    void                  *value;
+    struct lfht_t          lfht;
 
     fprintf(stdout, "LFHT LFSLL serial test 2 ...");
 
@@ -613,48 +606,47 @@ void lfht_lfsll_serial_test_2(void)
 
     lfht_init(&lfht);
 
-    /* set lfht.max_index_bits to zero -- which forces the lock free hash table 
-     * to funtion as a lock free singly linked list, as it forces all entries 
+    /* set lfht.max_index_bits to zero -- which forces the lock free hash table
+     * to funtion as a lock free singly linked list, as it forces all entries
      * into a single hash bucket.
      */
     lfht.max_index_bits = 0;
 
-
-    for ( i = 0; i < 100; i++ ) {
+    for (i = 0; i < 100; i++) {
 
         assert(lfht_add(&lfht, i, (void *)i));
     }
 
-    for ( i = 99; i >= 0 ; i-- ) {
+    for (i = 99; i >= 0; i--) {
 
         assert(lfht_delete(&lfht, i));
     }
 
-    for ( i = 199; i > 99; i-- ) {
+    for (i = 199; i > 99; i--) {
 
         assert(lfht_add(&lfht, i, (void *)i));
     }
 
-    for ( i = 0; i < 200; i++ ) {
+    for (i = 0; i < 200; i++) {
 
-        if ( i < 100 ) {
+        if (i < 100) {
 
             assert(!lfht_find(&lfht, i, &value));
-
-        } else {
+        }
+        else {
 
             assert(lfht_find(&lfht, i, &value));
             assert((void *)i == value);
         }
     }
 
-    for ( i = 0; i < 200; i++ ) {
+    for (i = 0; i < 200; i++) {
 
-        if ( i < 100 ) {
+        if (i < 100) {
 
             assert(lfht_add(&lfht, i, (void *)i));
-
-        } else {
+        }
+        else {
 
             assert(!lfht_add(&lfht, i, (void *)i));
         }
@@ -665,10 +657,9 @@ void lfht_lfsll_serial_test_2(void)
 
         assert(lfht_swap_value(&lfht, id, (void *)(((unsigned long long int)value) + 1000ULL), &value));
         assert((void *)id == value);
-    }
-    while (lfht_get_next(&lfht, id, &id, &value));
+    } while (lfht_get_next(&lfht, id, &id, &value));
 
-    for ( i = 199; i >= 0 ; i -= 2 ) {
+    for (i = 199; i >= 0; i -= 2) {
 
         assert(!lfht_find_id_by_value(&lfht, &id, (void *)(i)));
         assert(lfht_find_id_by_value(&lfht, &id, (void *)(i + 1000ULL)));
@@ -676,35 +667,35 @@ void lfht_lfsll_serial_test_2(void)
         assert(lfht_delete(&lfht, i));
     }
 
-    for ( i = 0; i < 200; i++ ) {
+    for (i = 0; i < 200; i++) {
 
-        if ( i % 2 == 1 ) {
+        if (i % 2 == 1) {
 
             assert(!lfht_find(&lfht, i, &value));
-
-        } else {
+        }
+        else {
 
             assert(lfht_find(&lfht, i, &value));
             assert((void *)(i + 1000ULL) == value);
         }
     }
 
-    for ( i = 199; i >= 0 ; i -= 2 ) {
+    for (i = 199; i >= 0; i -= 2) {
 
         assert(lfht_add(&lfht, i, (void *)i));
     }
 
-    for ( i = 199; i >= 0 ; i -= 2 ) {
+    for (i = 199; i >= 0; i -= 2) {
 
         assert(lfht_delete(&lfht, i));
     }
 
-    for ( i = 0; i < 200  ; i += 2 ) {
+    for (i = 0; i < 200; i += 2) {
 
         assert(lfht_delete(&lfht, i));
     }
 
-#if 0 /* JRM */
+#if 0  /* JRM */
     lfht_dump_list(&lfht, stdout);
 
     lfht_dump_stats(&lfht, stdout);
@@ -717,50 +708,50 @@ void lfht_lfsll_serial_test_2(void)
     assert(0 == atomic_load(&(lfht.lfsll_log_len)));
     assert(3 == atomic_load(&(lfht.lfsll_phys_len)));
 
-    assert(  400 == atomic_load(&(lfht.insertions)));
-    assert(  100 == atomic_load(&(lfht.insertion_failures)));
-    assert(    0 == atomic_load(&(lfht.ins_restarts_due_to_ins_col)));
-    assert(    0 == atomic_load(&(lfht.ins_restarts_due_to_del_col)));
-    assert(    2 == atomic_load(&(lfht.ins_deletion_completions)));
+    assert(400 == atomic_load(&(lfht.insertions)));
+    assert(100 == atomic_load(&(lfht.insertion_failures)));
+    assert(0 == atomic_load(&(lfht.ins_restarts_due_to_ins_col)));
+    assert(0 == atomic_load(&(lfht.ins_restarts_due_to_del_col)));
+    assert(2 == atomic_load(&(lfht.ins_deletion_completions)));
     assert(35024 == atomic_load(&(lfht.nodes_visited_during_ins)));
 
-    assert(  400 == atomic_load(&(lfht.deletion_attempts)));
-    assert(    0 == atomic_load(&(lfht.deletion_failures)));
-    assert(  400 == atomic_load(&(lfht.deletion_starts)));
-    assert(    0 == atomic_load(&(lfht.deletion_start_cols)));
-    assert(  397 == atomic_load(&(lfht.del_deletion_completions)));
-    assert(    0 == atomic_load(&(lfht.del_restarts_due_to_del_col)));
+    assert(400 == atomic_load(&(lfht.deletion_attempts)));
+    assert(0 == atomic_load(&(lfht.deletion_failures)));
+    assert(400 == atomic_load(&(lfht.deletion_starts)));
+    assert(0 == atomic_load(&(lfht.deletion_start_cols)));
+    assert(397 == atomic_load(&(lfht.del_deletion_completions)));
+    assert(0 == atomic_load(&(lfht.del_restarts_due_to_del_col)));
     assert(30901 == atomic_load(&(lfht.nodes_visited_during_dels)));
 
-    assert(  400 == atomic_load(&(lfht.searches)));
-    assert(  200 == atomic_load(&(lfht.successful_searches)));
-    assert(  200 == atomic_load(&(lfht.failed_searches)));
-    assert(    0 == atomic_load(&(lfht.marked_nodes_visited_in_succ_searches)));
+    assert(400 == atomic_load(&(lfht.searches)));
+    assert(200 == atomic_load(&(lfht.successful_searches)));
+    assert(200 == atomic_load(&(lfht.failed_searches)));
+    assert(0 == atomic_load(&(lfht.marked_nodes_visited_in_succ_searches)));
     assert(10100 == atomic_load(&(lfht.unmarked_nodes_visited_in_succ_searches)));
-    assert(   99 == atomic_load(&(lfht.marked_nodes_visited_in_failed_searches)));
+    assert(99 == atomic_load(&(lfht.marked_nodes_visited_in_failed_searches)));
     assert(15078 == atomic_load(&(lfht.unmarked_nodes_visited_in_failed_searches)));
 
-    assert(  200 == atomic_load(&(lfht.value_swaps)));
-    assert(  200 == atomic_load(&(lfht.successful_val_swaps)));
-    assert(    0 == atomic_load(&(lfht.failed_val_swaps)));
-    assert(    0 == atomic_load(&(lfht.marked_nodes_visited_in_succ_val_swaps)));
+    assert(200 == atomic_load(&(lfht.value_swaps)));
+    assert(200 == atomic_load(&(lfht.successful_val_swaps)));
+    assert(0 == atomic_load(&(lfht.failed_val_swaps)));
+    assert(0 == atomic_load(&(lfht.marked_nodes_visited_in_succ_val_swaps)));
     assert(20100 == atomic_load(&(lfht.unmarked_nodes_visited_in_succ_val_swaps)));
-    assert(    0 == atomic_load(&(lfht.marked_nodes_visited_in_failed_val_swaps)));
-    assert(    0 == atomic_load(&(lfht.unmarked_nodes_visited_in_failed_val_swaps)));
+    assert(0 == atomic_load(&(lfht.marked_nodes_visited_in_failed_val_swaps)));
+    assert(0 == atomic_load(&(lfht.unmarked_nodes_visited_in_failed_val_swaps)));
 
-    assert(  200 == atomic_load(&(lfht.value_searches)));
-    assert(  100 == atomic_load(&(lfht.successful_val_searches)));
-    assert(  100 == atomic_load(&(lfht.failed_val_searches)));
-    assert(  405 == atomic_load(&(lfht.marked_nodes_visited_in_val_searches)));
+    assert(200 == atomic_load(&(lfht.value_searches)));
+    assert(100 == atomic_load(&(lfht.successful_val_searches)));
+    assert(100 == atomic_load(&(lfht.failed_val_searches)));
+    assert(405 == atomic_load(&(lfht.marked_nodes_visited_in_val_searches)));
     assert(27727 == atomic_load(&(lfht.unmarked_nodes_visited_in_val_searches)));
-    assert(  300 == atomic_load(&(lfht.sentinels_traversed_in_val_searches)));
+    assert(300 == atomic_load(&(lfht.sentinels_traversed_in_val_searches)));
 
-    assert(    1 == atomic_load(&(lfht.itter_inits)));
-    assert(  199 == atomic_load(&(lfht.itter_nexts)));
-    assert(    1 == atomic_load(&(lfht.itter_ends)));
-    assert(    0 == atomic_load(&(lfht.marked_nodes_visited_in_itters)));
+    assert(1 == atomic_load(&(lfht.itter_inits)));
+    assert(199 == atomic_load(&(lfht.itter_nexts)));
+    assert(1 == atomic_load(&(lfht.itter_ends)));
+    assert(0 == atomic_load(&(lfht.marked_nodes_visited_in_itters)));
     assert(20300 == atomic_load(&(lfht.unmarked_nodes_visited_in_itters)));
-    assert(  202 == atomic_load(&(lfht.sentinels_traversed_in_itters)));
+    assert(202 == atomic_load(&(lfht.sentinels_traversed_in_itters)));
 
     lfht_clear(&lfht);
 
@@ -769,7 +760,6 @@ void lfht_lfsll_serial_test_2(void)
     return;
 
 } /* lfht_lfsll_serial_test_2() */
-
 
 /***********************************************************************************
  *
@@ -793,12 +783,12 @@ void lfht_lfsll_serial_test_2(void)
  *        8) Attempt to insert the id into the LFHT's LFSLL -- should fail
  *        9) Attempt to delete the id from the LFHT's LFSLL -- should succeed
  *
- *     in the order given.  However, randomly intersperse the list of 
- *     operations on any given id with the same lists of operations on 
+ *     in the order given.  However, randomly intersperse the list of
+ *     operations on any given id with the same lists of operations on
  *     other id.
  *
  *     Half way through the above, scan through the id's and swap the values.
- *     Then iterate through the entries in the entries in the hash table 
+ *     Then iterate through the entries in the entries in the hash table
  *     and swap the values back.
  *
  *     Check statistics, and verify that they are as expected.
@@ -815,17 +805,18 @@ void lfht_lfsll_serial_test_2(void)
  *
  ***********************************************************************************/
 
-void lfht_lfsll_serial_test_3(void)
+void
+lfht_lfsll_serial_test_3(void)
 {
-    bool first_pass = true;
-    long long int i;
+    bool                   first_pass = true;
+    long long int          i;
     unsigned long long int id;
-    unsigned int seed;
-    int count = 0;
-    int log[10000];
-    void * value;
-    struct timeval t;
-    struct lfht_t lfht;
+    unsigned int           seed;
+    int                    count = 0;
+    int                    log[10000];
+    void                  *value;
+    struct timeval         t;
+    struct lfht_t          lfht;
 
     assert(0 == gettimeofday(&t, NULL));
 
@@ -839,21 +830,20 @@ void lfht_lfsll_serial_test_3(void)
 
     lfht_init(&lfht);
 
-    /* set lfht.max_index_bits to zero -- which forces the lock free hash table 
-     * to funtion as a lock free singly linked list, as it forces all entries 
+    /* set lfht.max_index_bits to zero -- which forces the lock free hash table
+     * to funtion as a lock free singly linked list, as it forces all entries
      * into a single hash bucket.
      */
     lfht.max_index_bits = 0;
 
-
     for (i = 0; i < 10000; i++)
         log[i] = 0;
 
-    while ( count < 100000 ) {
+    while (count < 100000) {
 
         i = rand() % 10000;
 
-        switch ( log[i] ) {
+        switch (log[i]) {
 
             case 0:
                 assert(lfht_add(&lfht, i, (void *)i));
@@ -875,7 +865,7 @@ void lfht_lfsll_serial_test_3(void)
                 count++;
                 break;
 
-            case 3: 
+            case 3:
                 assert(lfht_delete(&lfht, i));
                 log[i]++;
                 count++;
@@ -887,7 +877,7 @@ void lfht_lfsll_serial_test_3(void)
                 count++;
                 break;
 
-            case 5: 
+            case 5:
                 assert(!lfht_delete(&lfht, i));
                 log[i]++;
                 count++;
@@ -912,7 +902,7 @@ void lfht_lfsll_serial_test_3(void)
                 count++;
                 break;
 
-            case 9: 
+            case 9:
                 assert(lfht_delete(&lfht, i));
                 log[i]++;
                 count++;
@@ -923,12 +913,11 @@ void lfht_lfsll_serial_test_3(void)
                 break;
         }
 
-
         /* count can be 50000 for several itterations through the while
          * loop.  Use the first_pass variable to ensure that the enclosed
          * block of code is only executed onec.
          */
-        if ( ( count == 50000 ) && ( first_pass ) ) {
+        if ((count == 50000) && (first_pass)) {
 
             int counter_1 = 0;
             int counter_2 = 0;
@@ -938,11 +927,12 @@ void lfht_lfsll_serial_test_3(void)
 
             for (i = 0; i < 10000; i++) {
 
-                if ( lfht_swap_value(&lfht, (unsigned long long int)i, (void *)(i + 10000LL), &value) ) {
+                if (lfht_swap_value(&lfht, (unsigned long long int)i, (void *)(i + 10000LL), &value)) {
 
                     counter_1++;
                     assert((long long int)value == i);
-                } else {
+                }
+                else {
 
                     counter_3++;
                 }
@@ -955,8 +945,7 @@ void lfht_lfsll_serial_test_3(void)
                 assert(lfht_swap_value(&lfht, id, (void *)(id), &value));
                 assert((void *)(id + 10000ULL) == value);
                 counter_2++;
-            }
-            while (lfht_get_next(&lfht, id, &id, &value));
+            } while (lfht_get_next(&lfht, id, &id, &value));
 
             assert(counter_1 == counter_2);
             assert(counter_1 == atomic_load(&(lfht.lfsll_log_len)));
@@ -966,7 +955,7 @@ void lfht_lfsll_serial_test_3(void)
         }
     }
 
-#if 0 /* JRM */
+#if 0  /* JRM */
     lfht_dump_list(&lfht, stdout);
 
     lfht_dump_stats(&lfht, stdout);
@@ -981,29 +970,29 @@ void lfht_lfsll_serial_test_3(void)
 
     assert(20000 == atomic_load(&(lfht.insertions)));
     assert(10000 == atomic_load(&(lfht.insertion_failures)));
-    assert(    0 == atomic_load(&(lfht.ins_restarts_due_to_ins_col)));
-    assert(    0 == atomic_load(&(lfht.ins_restarts_due_to_del_col)));
+    assert(0 == atomic_load(&(lfht.ins_restarts_due_to_ins_col)));
+    assert(0 == atomic_load(&(lfht.ins_restarts_due_to_del_col)));
 
     /* lfht.ins_deletion_completions and lfht.nodes_visited_during_ins will vary */
 
     assert(30000 == atomic_load(&(lfht.deletion_attempts)));
     assert(10000 == atomic_load(&(lfht.deletion_failures)));
     assert(20000 == atomic_load(&(lfht.deletion_starts)));
-    assert(    0 == atomic_load(&(lfht.deletion_start_cols)));
-    assert(    0 == atomic_load(&(lfht.del_restarts_due_to_del_col)));
+    assert(0 == atomic_load(&(lfht.deletion_start_cols)));
+    assert(0 == atomic_load(&(lfht.del_restarts_due_to_del_col)));
 
     /* lfht.del_deletion_completions and lfht.nodes_visited_during_dels will vary */
 
-    assert(atomic_load(&(lfht.ins_deletion_completions)) + 
-           atomic_load(&(lfht.del_deletion_completions)) +
-           atomic_load(&(lfht.lfsll_phys_len)) - 2 == 20000);
+    assert(atomic_load(&(lfht.ins_deletion_completions)) + atomic_load(&(lfht.del_deletion_completions)) +
+               atomic_load(&(lfht.lfsll_phys_len)) - 2 ==
+           20000);
 
     assert(30000 == atomic_load(&(lfht.searches)));
     assert(20000 == atomic_load(&(lfht.successful_searches)));
     assert(10000 == atomic_load(&(lfht.failed_searches)));
 
     /* lfht.marked_nodes_visited_in_succ_searches, lfht.unmarked_nodes_visited_in_succ_searches
-     * lfht.marked_nodes_visited_in_failed_searches, and 
+     * lfht.marked_nodes_visited_in_failed_searches, and
      * lfht.unmarked_nodes_visited_in_failed_searches will vary
      */
 
@@ -1015,19 +1004,18 @@ void lfht_lfsll_serial_test_3(void)
 
 } /* lfht_lfsll_serial_test_3() */
 
-
 /***********************************************************************************
  *
  * lfht_serial_test_1()
  *
- *     Initial smoke check.  
+ *     Initial smoke check.
  *
  *     Setup the hash table.
  *
  *     Insert a node and verify that the inserion succeeds.  Do it again and
  *     verify that it fails.
  *
- *     Search for the node just inserted, and verify that it succeeds.  Search 
+ *     Search for the node just inserted, and verify that it succeeds.  Search
  *     for a non-existant node and verify that the search fails.
  *
  *     Search for the node just inserted by value and verify that it succeeds.
@@ -1035,14 +1023,14 @@ void lfht_lfsll_serial_test_3(void)
  *
  *     Do a value swap on the node just inserted -- verify that it succeeds.
  *
- *     Start an itteration on the hash table -- verify that the id and value 
+ *     Start an itteration on the hash table -- verify that the id and value
  *     (after the swap) are returned.
  *
  *     Attempt to get the next node in the itteration -- verity that it fails.
  *
  *     Delete a non-existant node and verify that it fails.
  *
- *     Delete a real node and verify that it succeeds.  Do it again and verify 
+ *     Delete a real node and verify that it succeeds.  Do it again and verify
  *     that it fails.
  *
  *     Check statistics, and verify that they are as expected.
@@ -1059,18 +1047,18 @@ void lfht_lfsll_serial_test_3(void)
  *
  ***********************************************************************************/
 
-void lfht_serial_test_1(void)
+void
+lfht_serial_test_1(void)
 {
     unsigned long long int id;
-    void * value = NULL;
-    struct lfht_t lfht;
+    void                  *value = NULL;
+    struct lfht_t          lfht;
 
     fprintf(stdout, "LFHT serial test 1 ...");
 
     fflush(stdout);
 
     lfht_init(&lfht);
-
 
     /* insert 1 -- should succeed */
     assert(lfht_add(&lfht, 0x01ULL, (void *)(0x01ULL)));
@@ -1113,7 +1101,7 @@ void lfht_serial_test_1(void)
     /* attempt to delete 1 -- should fail */
     assert(!lfht_delete(&lfht, 0x01ULL));
 
-#if 0 /* JRM */
+#if 0  /* JRM */
     lfht_dump_list(&lfht, stdout);
 
     lfht_dump_stats(&lfht, stdout);
@@ -1179,42 +1167,41 @@ void lfht_serial_test_1(void)
 
 } /* lfht_serial_test_1() */
 
-
 /***********************************************************************************
  *
  * lfht_serial_test_2()
  *
- *     A more extensive smoke check.  
+ *     A more extensive smoke check.
  *
  *     Setup the hash table.
  *
- *     Insert values [0,99] into the lfht in increasing order, and verify 
+ *     Insert values [0,99] into the lfht in increasing order, and verify
  *     that the insertions succeed.
  *
- *     Delete value [0,99] from the lfht in decreasing order, and verify 
+ *     Delete value [0,99] from the lfht in decreasing order, and verify
  *     that the deletions succeed.
  *
- *     Insert values [100,199 in decreasing order, and verify that the 
+ *     Insert values [100,199 in decreasing order, and verify that the
  *     insertions succeed.
  *
- *     Search for values [0,199] in the lfht in increasing order.  Verify 
+ *     Search for values [0,199] in the lfht in increasing order.  Verify
  *     that the searches of [0,99] fail, and that the searches for [100,199]
  *     succeed.
  *
- *     Insert value [0,199] into the lfht in increasing order.  Verify 
- *     that the insertions of [0,99] succeed and that the insertions of 
- *     [100,199] fail.  
+ *     Insert value [0,199] into the lfht in increasing order.  Verify
+ *     that the insertions of [0,99] succeed and that the insertions of
+ *     [100,199] fail.
  *
  *     Itterate through the hash table.  For each id found, set its value to
  *     its current value + 1000.
  *
- *     Search for the the odd values in the interval [1000,1199] in decreasing 
+ *     Search for the the odd values in the interval [1000,1199] in decreasing
  *     order, and verify that the search return the odd ids in the range [0,199].
  *     Then delete the odd numbered values in the interval [0,199] in decreasing
  *     order, and verify that the deletions succeed.
  *
- *     Search for the values [0,199] in increasing order and verify that 
- *     searches for odd numbers fail and that searches for even numbers 
+ *     Search for the values [0,199] in increasing order and verify that
+ *     searches for odd numbers fail and that searches for even numbers
  *     succeed.
  *
  *     Insert the odd numbered values in the interval [0,199] in decreasing
@@ -1240,12 +1227,13 @@ void lfht_serial_test_1(void)
  *
  ***********************************************************************************/
 
-void lfht_serial_test_2(void)
+void
+lfht_serial_test_2(void)
 {
-    long long int i;
+    long long int          i;
     unsigned long long int id;
-    void * value;
-    struct lfht_t lfht;
+    void                  *value;
+    struct lfht_t          lfht;
 
     fprintf(stdout, "LFHT serial test 2 ...");
 
@@ -1253,42 +1241,41 @@ void lfht_serial_test_2(void)
 
     lfht_init(&lfht);
 
-
-    for ( i = 0; i < 100; i++ ) {
+    for (i = 0; i < 100; i++) {
 
         assert(lfht_add(&lfht, i, (void *)i));
     }
 
-    for ( i = 99; i >= 0 ; i-- ) {
+    for (i = 99; i >= 0; i--) {
 
         assert(lfht_delete(&lfht, i));
     }
 
-    for ( i = 199; i > 99; i-- ) {
+    for (i = 199; i > 99; i--) {
 
         assert(lfht_add(&lfht, i, (void *)i));
     }
 
-    for ( i = 0; i < 200; i++ ) {
+    for (i = 0; i < 200; i++) {
 
-        if ( i < 100 ) {
+        if (i < 100) {
 
             assert(!lfht_find(&lfht, i, &value));
-
-        } else {
+        }
+        else {
 
             assert(lfht_find(&lfht, i, &value));
             assert((void *)i == value);
         }
     }
 
-    for ( i = 0; i < 200; i++ ) {
+    for (i = 0; i < 200; i++) {
 
-        if ( i < 100 ) {
+        if (i < 100) {
 
             assert(lfht_add(&lfht, i, (void *)i));
-
-        } else {
+        }
+        else {
 
             assert(!lfht_add(&lfht, i, NULL));
         }
@@ -1299,10 +1286,9 @@ void lfht_serial_test_2(void)
 
         assert(lfht_swap_value(&lfht, id, (void *)(((unsigned long long int)value) + 1000ULL), &value));
         assert((void *)id == value);
-    }
-    while (lfht_get_next(&lfht, id, &id, &value));
+    } while (lfht_get_next(&lfht, id, &id, &value));
 
-    for ( i = 199; i >= 0 ; i -= 2 ) {
+    for (i = 199; i >= 0; i -= 2) {
 
         assert(!lfht_find_id_by_value(&lfht, &id, (void *)(i)));
         assert(lfht_find_id_by_value(&lfht, &id, (void *)(i + 1000ULL)));
@@ -1310,35 +1296,35 @@ void lfht_serial_test_2(void)
         assert(lfht_delete(&lfht, i));
     }
 
-    for ( i = 0; i < 200; i++ ) {
+    for (i = 0; i < 200; i++) {
 
-        if ( i % 2 == 1 ) {
+        if (i % 2 == 1) {
 
             assert(!lfht_find(&lfht, i, &value));
-
-        } else {
+        }
+        else {
 
             assert(lfht_find(&lfht, i, &value));
             assert((void *)(i + 1000ULL) == value);
         }
     }
 
-    for ( i = 199; i >= 0 ; i -= 2 ) {
+    for (i = 199; i >= 0; i -= 2) {
 
         assert(lfht_add(&lfht, i, NULL));
     }
 
-    for ( i = 199; i >= 0 ; i -= 2 ) {
+    for (i = 199; i >= 0; i -= 2) {
 
         assert(lfht_delete(&lfht, i));
     }
 
-    for ( i = 0; i < 200  ; i += 2 ) {
+    for (i = 0; i < 200; i += 2) {
 
         assert(lfht_delete(&lfht, i));
     }
 
-#if 0 /* JRM */
+#if 0  /* JRM */
     lfht_dump_list(&lfht, stdout);
 
     lfht_dump_stats(&lfht, stdout);
@@ -1348,54 +1334,53 @@ void lfht_serial_test_2(void)
 
     lfht_dump_interesting_stats(&lfht);
 
-    assert( 0 == atomic_load(&(lfht.lfsll_log_len)));
+    assert(0 == atomic_load(&(lfht.lfsll_log_len)));
     assert(65 == atomic_load(&(lfht.lfsll_phys_len)));
 
-    assert(  400 == atomic_load(&(lfht.insertions)));
-    assert(  100 == atomic_load(&(lfht.insertion_failures)));
-    assert(    0 == atomic_load(&(lfht.ins_restarts_due_to_ins_col)));
-    assert(    0 == atomic_load(&(lfht.ins_restarts_due_to_del_col)));
-    assert(   32 == atomic_load(&(lfht.ins_deletion_completions)));
-    assert( 1389 == atomic_load(&(lfht.nodes_visited_during_ins)));
+    assert(400 == atomic_load(&(lfht.insertions)));
+    assert(100 == atomic_load(&(lfht.insertion_failures)));
+    assert(0 == atomic_load(&(lfht.ins_restarts_due_to_ins_col)));
+    assert(0 == atomic_load(&(lfht.ins_restarts_due_to_del_col)));
+    assert(32 == atomic_load(&(lfht.ins_deletion_completions)));
+    assert(1389 == atomic_load(&(lfht.nodes_visited_during_ins)));
 
-    assert(  400 == atomic_load(&(lfht.deletion_attempts)));
-    assert(    0 == atomic_load(&(lfht.deletion_failures)));
-    assert(  400 == atomic_load(&(lfht.deletion_starts)));
-    assert(    0 == atomic_load(&(lfht.deletion_start_cols)));
-    assert(  336 == atomic_load(&(lfht.del_deletion_completions)));
-    assert(    0 == atomic_load(&(lfht.del_restarts_due_to_del_col)));
-    assert( 1344 == atomic_load(&(lfht.nodes_visited_during_dels)));
+    assert(400 == atomic_load(&(lfht.deletion_attempts)));
+    assert(0 == atomic_load(&(lfht.deletion_failures)));
+    assert(400 == atomic_load(&(lfht.deletion_starts)));
+    assert(0 == atomic_load(&(lfht.deletion_start_cols)));
+    assert(336 == atomic_load(&(lfht.del_deletion_completions)));
+    assert(0 == atomic_load(&(lfht.del_restarts_due_to_del_col)));
+    assert(1344 == atomic_load(&(lfht.nodes_visited_during_dels)));
 
-    assert(  400 == atomic_load(&(lfht.searches)));
-    assert(  200 == atomic_load(&(lfht.successful_searches)));
-    assert(  200 == atomic_load(&(lfht.failed_searches)));
-    assert(    0 == atomic_load(&(lfht.marked_nodes_visited_in_succ_searches)));
-    assert(  728 == atomic_load(&(lfht.unmarked_nodes_visited_in_succ_searches)));
-    assert(   84 == atomic_load(&(lfht.marked_nodes_visited_in_failed_searches)));
-    assert(  440 == atomic_load(&(lfht.unmarked_nodes_visited_in_failed_searches)));
+    assert(400 == atomic_load(&(lfht.searches)));
+    assert(200 == atomic_load(&(lfht.successful_searches)));
+    assert(200 == atomic_load(&(lfht.failed_searches)));
+    assert(0 == atomic_load(&(lfht.marked_nodes_visited_in_succ_searches)));
+    assert(728 == atomic_load(&(lfht.unmarked_nodes_visited_in_succ_searches)));
+    assert(84 == atomic_load(&(lfht.marked_nodes_visited_in_failed_searches)));
+    assert(440 == atomic_load(&(lfht.unmarked_nodes_visited_in_failed_searches)));
 
-    assert(  200 == atomic_load(&(lfht.value_swaps)));
-    assert(  200 == atomic_load(&(lfht.successful_val_swaps)));
-    assert(    0 == atomic_load(&(lfht.failed_val_swaps)));
-    assert(    0 == atomic_load(&(lfht.marked_nodes_visited_in_succ_val_swaps)));
-    assert(  728 == atomic_load(&(lfht.unmarked_nodes_visited_in_succ_val_swaps)));
-    assert(    0 == atomic_load(&(lfht.marked_nodes_visited_in_failed_val_swaps)));
-    assert(    0 == atomic_load(&(lfht.unmarked_nodes_visited_in_failed_val_swaps)));
+    assert(200 == atomic_load(&(lfht.value_swaps)));
+    assert(200 == atomic_load(&(lfht.successful_val_swaps)));
+    assert(0 == atomic_load(&(lfht.failed_val_swaps)));
+    assert(0 == atomic_load(&(lfht.marked_nodes_visited_in_succ_val_swaps)));
+    assert(728 == atomic_load(&(lfht.unmarked_nodes_visited_in_succ_val_swaps)));
+    assert(0 == atomic_load(&(lfht.marked_nodes_visited_in_failed_val_swaps)));
+    assert(0 == atomic_load(&(lfht.unmarked_nodes_visited_in_failed_val_swaps)));
 
-    assert(  200 == atomic_load(&(lfht.value_searches)));
-    assert(  100 == atomic_load(&(lfht.successful_val_searches)));
-    assert(  100 == atomic_load(&(lfht.failed_val_searches)));
-    assert( 2948 == atomic_load(&(lfht.marked_nodes_visited_in_val_searches)));
+    assert(200 == atomic_load(&(lfht.value_searches)));
+    assert(100 == atomic_load(&(lfht.successful_val_searches)));
+    assert(100 == atomic_load(&(lfht.failed_val_searches)));
+    assert(2948 == atomic_load(&(lfht.marked_nodes_visited_in_val_searches)));
     assert(27727 == atomic_load(&(lfht.unmarked_nodes_visited_in_val_searches)));
-    assert( 5744 == atomic_load(&(lfht.sentinels_traversed_in_val_searches)));
+    assert(5744 == atomic_load(&(lfht.sentinels_traversed_in_val_searches)));
 
-    assert(    1 == atomic_load(&(lfht.itter_inits)));
-    assert(  199 == atomic_load(&(lfht.itter_nexts)));
-    assert(    1 == atomic_load(&(lfht.itter_ends)));
-    assert(    0 == atomic_load(&(lfht.marked_nodes_visited_in_itters)));
-    assert(  928 == atomic_load(&(lfht.unmarked_nodes_visited_in_itters)));
-    assert(  233 == atomic_load(&(lfht.sentinels_traversed_in_itters)));
-
+    assert(1 == atomic_load(&(lfht.itter_inits)));
+    assert(199 == atomic_load(&(lfht.itter_nexts)));
+    assert(1 == atomic_load(&(lfht.itter_ends)));
+    assert(0 == atomic_load(&(lfht.marked_nodes_visited_in_itters)));
+    assert(928 == atomic_load(&(lfht.unmarked_nodes_visited_in_itters)));
+    assert(233 == atomic_load(&(lfht.sentinels_traversed_in_itters)));
 
     lfht_clear(&lfht);
 
@@ -1404,7 +1389,6 @@ void lfht_serial_test_2(void)
     return;
 
 } /* lfht_serial_test_2() */
-
 
 /***********************************************************************************
  *
@@ -1427,12 +1411,12 @@ void lfht_serial_test_2(void)
  *        8) Attempt to insert the id into the LFHT -- should fail
  *        9) Attempt to delete the id from the LFHT -- should succeed
  *
- *     in the order given.  However, randomly intersperse the list of 
- *     operations on any given id with the same lists of operations on 
+ *     in the order given.  However, randomly intersperse the list of
+ *     operations on any given id with the same lists of operations on
  *     other id.
  *
  *     Half way through the above, scan through the id's and swap the values.
- *     Then iterate through the entries in the entries in the hash table 
+ *     Then iterate through the entries in the entries in the hash table
  *     and swap the values back.
  *
  *     Check statistics, and verify that they are as expected.
@@ -1449,17 +1433,18 @@ void lfht_serial_test_2(void)
  *
  ***********************************************************************************/
 
-void lfht_serial_test_3(void)
+void
+lfht_serial_test_3(void)
 {
-    bool first_pass = true;
-    long long int i;
+    bool                   first_pass = true;
+    long long int          i;
     unsigned long long int id;
-    unsigned int seed;
-    int count = 0;
-    int log[10000];
-    void * value;
-    struct timeval t;
-    struct lfht_t lfht;
+    unsigned int           seed;
+    int                    count = 0;
+    int                    log[10000];
+    void                  *value;
+    struct timeval         t;
+    struct lfht_t          lfht;
 
     assert(0 == gettimeofday(&t, NULL));
 
@@ -1473,15 +1458,14 @@ void lfht_serial_test_3(void)
 
     lfht_init(&lfht);
 
-
     for (i = 0; i < 10000; i++)
         log[i] = 0;
 
-    while ( count < 100000 ) {
+    while (count < 100000) {
 
         i = rand() % 10000;
 
-        switch ( log[i] ) {
+        switch (log[i]) {
 
             case 0:
                 assert(lfht_add(&lfht, i, (void *)i));
@@ -1503,7 +1487,7 @@ void lfht_serial_test_3(void)
                 count++;
                 break;
 
-            case 3: 
+            case 3:
                 assert(lfht_delete(&lfht, i));
                 log[i]++;
                 count++;
@@ -1515,7 +1499,7 @@ void lfht_serial_test_3(void)
                 count++;
                 break;
 
-            case 5: 
+            case 5:
                 assert(!lfht_delete(&lfht, i));
                 log[i]++;
                 count++;
@@ -1540,7 +1524,7 @@ void lfht_serial_test_3(void)
                 count++;
                 break;
 
-            case 9: 
+            case 9:
                 assert(lfht_delete(&lfht, i));
                 log[i]++;
                 count++;
@@ -1555,7 +1539,7 @@ void lfht_serial_test_3(void)
          * loop.  Use the first_pass variable to ensure that the enclosed
          * block of code is only executed onec.
          */
-        if ( ( count == 50000 ) && ( first_pass ) ) {
+        if ((count == 50000) && (first_pass)) {
 
             int counter_1 = 0;
             int counter_2 = 0;
@@ -1565,11 +1549,12 @@ void lfht_serial_test_3(void)
 
             for (i = 0; i < 10000; i++) {
 
-                if ( lfht_swap_value(&lfht, (unsigned long long int)i, (void *)(i + 10000LL), &value) ) {
+                if (lfht_swap_value(&lfht, (unsigned long long int)i, (void *)(i + 10000LL), &value)) {
 
                     counter_1++;
                     assert((long long int)value == i);
-                } else {
+                }
+                else {
 
                     counter_3++;
                 }
@@ -1582,8 +1567,7 @@ void lfht_serial_test_3(void)
                 assert(lfht_swap_value(&lfht, id, (void *)(id), &value));
                 assert((void *)(id + 10000ULL) == value);
                 counter_2++;
-            }
-            while (lfht_get_next(&lfht, id, &id, &value));
+            } while (lfht_get_next(&lfht, id, &id, &value));
 
             assert(counter_1 == counter_2);
             assert(counter_1 == atomic_load(&(lfht.lfsll_log_len)));
@@ -1593,7 +1577,7 @@ void lfht_serial_test_3(void)
         }
     }
 
-#if 0 /* JRM */
+#if 0  /* JRM */
     lfht_dump_list(&lfht, stdout);
 
     lfht_dump_stats(&lfht, stdout);
@@ -1603,35 +1587,34 @@ void lfht_serial_test_3(void)
 
     lfht_dump_interesting_stats(&lfht);
 
-    assert(   0 == atomic_load(&(lfht.lfsll_log_len)));
+    assert(0 == atomic_load(&(lfht.lfsll_log_len)));
     assert(2049 == atomic_load(&(lfht.lfsll_phys_len)));
 
     assert(20000 == atomic_load(&(lfht.insertions)));
     assert(10000 == atomic_load(&(lfht.insertion_failures)));
-    assert(    0 == atomic_load(&(lfht.ins_restarts_due_to_ins_col)));
-    assert(    0 == atomic_load(&(lfht.ins_restarts_due_to_del_col)));
+    assert(0 == atomic_load(&(lfht.ins_restarts_due_to_ins_col)));
+    assert(0 == atomic_load(&(lfht.ins_restarts_due_to_del_col)));
 
     /* lfht.ins_deletion_completions and lfht.nodes_visited_during_ins will vary */
 
     assert(30000 == atomic_load(&(lfht.deletion_attempts)));
     assert(10000 == atomic_load(&(lfht.deletion_failures)));
     assert(20000 == atomic_load(&(lfht.deletion_starts)));
-    assert(    0 == atomic_load(&(lfht.deletion_start_cols)));
-    assert(    0 == atomic_load(&(lfht.del_restarts_due_to_del_col)));
+    assert(0 == atomic_load(&(lfht.deletion_start_cols)));
+    assert(0 == atomic_load(&(lfht.del_restarts_due_to_del_col)));
 
     /* lfht.del_deletion_completions and lfht.nodes_visited_during_dels will vary */
 
-    assert(atomic_load(&(lfht.ins_deletion_completions)) + 
-           atomic_load(&(lfht.del_deletion_completions)) +
-           atomic_load(&(lfht.lfsll_phys_len)) - 
-           atomic_load(&(lfht.buckets_initialized)) - 1 == 20000);
+    assert(atomic_load(&(lfht.ins_deletion_completions)) + atomic_load(&(lfht.del_deletion_completions)) +
+               atomic_load(&(lfht.lfsll_phys_len)) - atomic_load(&(lfht.buckets_initialized)) - 1 ==
+           20000);
 
     assert(30000 == atomic_load(&(lfht.searches)));
     assert(20000 == atomic_load(&(lfht.successful_searches)));
     assert(10000 == atomic_load(&(lfht.failed_searches)));
 
     /* lfht.marked_nodes_visited_in_succ_searches, lfht.unmarked_nodes_visited_in_succ_searches
-     * lfht.marked_nodes_visited_in_failed_searches, and 
+     * lfht.marked_nodes_visited_in_failed_searches, and
      * lfht.unmarked_nodes_visited_in_failed_searches will vary
      */
 
@@ -1643,27 +1626,26 @@ void lfht_serial_test_3(void)
 
 } /* lfht_serial_test_3() */
 
-
 /***********************************************************************************
  *
  * struct lfht_mt_test_params_t
  *
- * Structure used to pass control information into and results out of LFHT 
- * multi-thread test functions.  The individual fields in this structure are 
+ * Structure used to pass control information into and results out of LFHT
+ * multi-thread test functions.  The individual fields in this structure are
  * discussed below.
  *
- * lfht_ptr:    Pointer of the instance of lfht_t that forms the root of the 
+ * lfht_ptr:    Pointer of the instance of lfht_t that forms the root of the
  *              target LFHT
  *
- * start_id:    When scanning through a list of ids and performing a set 
- *              of operations on each element of this list, this is the 
+ * start_id:    When scanning through a list of ids and performing a set
+ *              of operations on each element of this list, this is the
  *              first id, which must be non-negative.
  *
  * step:        When scanning through a list of ids and performing a set
  *              of operations on each element of this list, this is the difference
- *              between each id in the list.  While the absolute value of 
- *              step must be greater than or equal to 1, step may be either 
- *              positive or negative.  
+ *              between each id in the list.  While the absolute value of
+ *              step must be greater than or equal to 1, step may be either
+ *              positive or negative.
  *
  *              Note, however, that the resulting ids must be non-negative.
  *
@@ -1673,18 +1655,18 @@ void lfht_serial_test_3(void)
  *              of operations on each element of this list, this is the number
  *              of ids in the list.
  *
- * itterations: Number of times the test function is to repeat.  
+ * itterations: Number of times the test function is to repeat.
  *
  *              Not always used.
  *
  * ins_fails:   Long long int used to report the number of failed insertions
  *              reported by lfht_add().
  *
- * del_fails:   Long long int used to report the number of failed deletions 
+ * del_fails:   Long long int used to report the number of failed deletions
  *              reported by lfht_delete().
  *
  * search_fails: Long long int used to report the number of failed searches
- *              reported by lfht_find().  
+ *              reported by lfht_find().
  *
  * search_by_val_fails: Long long int used to report the number of failed searches
  *              by value reported by lfht_find_id_by_value().
@@ -1693,26 +1675,26 @@ void lfht_serial_test_3(void)
  *              reported by lfht_swap_value().
  *
  * ins_successes: Long long int used to report the number of successful insertions
- *              reported by lfht_add().  
+ *              reported by lfht_add().
  *
  *              Not always used.
  *
- * del_successes: Long long int used to report the number of successful deletions 
- *              reported by lfht_delete().  
+ * del_successes: Long long int used to report the number of successful deletions
+ *              reported by lfht_delete().
  *
  *              Not always used.
  *
  * search_successes: Long long int used to report the number of successful searches
- *              reported by lfht_find().  
+ *              reported by lfht_find().
  *
  *              Not always used.
  *
- * search_by_val_successes: Long long int used to report the number of successful 
- *              searches by value reported by lfht_find_id_by_value().  
+ * search_by_val_successes: Long long int used to report the number of successful
+ *              searches by value reported by lfht_find_id_by_value().
  *
  *              Not always used.
  *
- * swap_val_successes: Long long int used to report the number of successful 
+ * swap_val_successes: Long long int used to report the number of successful
  *              value swaps reported by lfht_swap_value().
  *
  *              Not always used.
@@ -1732,7 +1714,7 @@ struct lfht_mt_test_params_t {
     struct lfht_t *lfht_ptr;
 
     unsigned long long int start_id;
-    long long int step;
+    long long int          step;
     unsigned long long int num_ids;
     unsigned long long int itterations;
 
@@ -1754,21 +1736,20 @@ struct lfht_mt_test_params_t {
 
 } lfht_mt_test_params_t;
 
-
 /***********************************************************************************
  *
  * lfht_mt_test_fcn_1()
  *
- *     This function is intended to be executed by one or more threads 
+ *     This function is intended to be executed by one or more threads
  *     in a LFHT multi-thread test.
  *
- *     For each id (params_ptr->start_id + n * params_ptr->step) whern 
+ *     For each id (params_ptr->start_id + n * params_ptr->step) whern
  *     0 <= n < params_ptr->num_ids,
  *
- *        0) Attempt to insert the id into the LFHT 
+ *        0) Attempt to insert the id into the LFHT
  *        1) Attempt to find the id in the LFHT
  *        2) Attempt to find the id by value in the LFHT
- *           This is a very expensive operation, so only 
+ *           This is a very expensive operation, so only
  *           do it in one case in 32.
  *        3) Attempt to delete the id from the LFHT
  *        4) Attempt to find the id in the LFHT
@@ -1778,14 +1759,14 @@ struct lfht_mt_test_params_t {
  *        8) Attempt to insert the id into the LFHT
  *        9) Attempt to delete the id from the LFHT
  *
- *     in the order given.  However, randomly intersperse the list of 
- *     operations on any given id with the same lists of operations on 
+ *     in the order given.  However, randomly intersperse the list of
+ *     operations on any given id with the same lists of operations on
  *     other ids.
  *
  *     Note that at present, params_ptr->num_ids may not exceed 10,000.
  *
- *     Failed insertions, deletions, searches, and searches by value are counted, 
- *     and the counts returned in params_ptr->ins_fails, params_ptr->del_fails, 
+ *     Failed insertions, deletions, searches, and searches by value are counted,
+ *     and the counts returned in params_ptr->ins_fails, params_ptr->del_fails,
  *     params_ptr->search_fails, and params_ptr->search_by_val_fails.
  *
  *
@@ -1797,39 +1778,40 @@ struct lfht_mt_test_params_t {
  *
  ***********************************************************************************/
 
-void * lfht_mt_test_fcn_1(void * args )
+void *
+lfht_mt_test_fcn_1(void *args)
 {
-    struct lfht_mt_test_params_t * params_ptr;
-    bool first_pass = true;
-    long long int i;
-    long long int ins_fails = 0;
-    long long int del_fails = 0;
-    long long int search_fails = 0;
-    long long int search_by_val_fails = 0;
-    long long int swap_val_fails = 0;
-    long long int swap_val_successes = 0;
-    long long int itter_inits = 0;
-    long long int itter_nexts = 0;
-    long long int itter_ends = 0;
-    unsigned long long int val_swap_offset = 1000000;
-    unsigned long long int id;
-    unsigned long long int new_id;
-    int count = 0;
-    int log[10000];
-    void * value;
+    struct lfht_mt_test_params_t *params_ptr;
+    bool                          first_pass = true;
+    long long int                 i;
+    long long int                 ins_fails           = 0;
+    long long int                 del_fails           = 0;
+    long long int                 search_fails        = 0;
+    long long int                 search_by_val_fails = 0;
+    long long int                 swap_val_fails      = 0;
+    long long int                 swap_val_successes  = 0;
+    long long int                 itter_inits         = 0;
+    long long int                 itter_nexts         = 0;
+    long long int                 itter_ends          = 0;
+    unsigned long long int        val_swap_offset     = 1000000;
+    unsigned long long int        id;
+    unsigned long long int        new_id;
+    int                           count = 0;
+    int                           log[10000];
+    void                         *value;
 
     params_ptr = (struct lfht_mt_test_params_t *)args;
 
     assert(params_ptr);
     assert(params_ptr->lfht_ptr);
     assert(LFHT_VALID == params_ptr->lfht_ptr->tag);
-    assert((params_ptr->step >= 1) || ( params_ptr->step <= -1));
+    assert((params_ptr->step >= 1) || (params_ptr->step <= -1));
     assert((params_ptr->num_ids > 0) && (params_ptr->num_ids <= 10000));
 
     for (i = 0; i < 10000; i++)
         log[i] = 0;
 
-    while ( count < 10 * params_ptr->num_ids ) {
+    while (count < 10 * params_ptr->num_ids) {
 
         i = rand() % params_ptr->num_ids;
 
@@ -1837,10 +1819,10 @@ void * lfht_mt_test_fcn_1(void * args )
 
         assert(0 <= id);
 
-        switch ( log[i] ) {
+        switch (log[i]) {
 
             case 0:
-                if ( ! lfht_add(params_ptr->lfht_ptr, id, (void *)id) ) {
+                if (!lfht_add(params_ptr->lfht_ptr, id, (void *)id)) {
 
                     ins_fails++;
                 }
@@ -1849,12 +1831,12 @@ void * lfht_mt_test_fcn_1(void * args )
                 break;
 
             case 1:
-                
-                if ( ! lfht_find(params_ptr->lfht_ptr, id, &value) ) {
+
+                if (!lfht_find(params_ptr->lfht_ptr, id, &value)) {
 
                     search_fails++;
-
-                } else {
+                }
+                else {
 
                     assert(((void *)id == value) || ((void *)(id + val_swap_offset) == value));
                 }
@@ -1863,16 +1845,16 @@ void * lfht_mt_test_fcn_1(void * args )
                 break;
 
             case 2:
-                /* lfht_find_id_by_value() is very expensive, so only do it roughly 
+                /* lfht_find_id_by_value() is very expensive, so only do it roughly
                  * one time in 32.
                  */
-                if ( 0 == (rand() & 0x1F) ) {
+                if (0 == (rand() & 0x1F)) {
 
-                    if ( ! lfht_find_id_by_value(params_ptr->lfht_ptr, &new_id, (void *)id) ) {
+                    if (!lfht_find_id_by_value(params_ptr->lfht_ptr, &new_id, (void *)id)) {
 
                         search_by_val_fails++;
-
-                    } else {
+                    }
+                    else {
 
                         assert(new_id == id);
                     }
@@ -1881,8 +1863,8 @@ void * lfht_mt_test_fcn_1(void * args )
                 count++;
                 break;
 
-            case 3: 
-                if ( ! lfht_delete(params_ptr->lfht_ptr, id) ) {
+            case 3:
+                if (!lfht_delete(params_ptr->lfht_ptr, id)) {
 
                     del_fails++;
                 }
@@ -1891,20 +1873,20 @@ void * lfht_mt_test_fcn_1(void * args )
                 break;
 
             case 4:
-                if ( ! lfht_find(params_ptr->lfht_ptr, id, &value) ) {
+                if (!lfht_find(params_ptr->lfht_ptr, id, &value)) {
 
                     search_fails++;
+                }
+                else {
 
-                } else {
- 
                     assert(((void *)id == value) || ((void *)(id + val_swap_offset) == value));
                 }
                 log[i]++;
                 count++;
                 break;
 
-            case 5: 
-                if ( ! lfht_delete(params_ptr->lfht_ptr, id) ) {
+            case 5:
+                if (!lfht_delete(params_ptr->lfht_ptr, id)) {
 
                     del_fails++;
                 }
@@ -1913,7 +1895,7 @@ void * lfht_mt_test_fcn_1(void * args )
                 break;
 
             case 6:
-                if ( ! lfht_add(params_ptr->lfht_ptr, id, (void *)id) ) {
+                if (!lfht_add(params_ptr->lfht_ptr, id, (void *)id)) {
 
                     ins_fails++;
                 }
@@ -1922,11 +1904,11 @@ void * lfht_mt_test_fcn_1(void * args )
                 break;
 
             case 7:
-                if ( ! lfht_find(params_ptr->lfht_ptr, id, &value) ) {
+                if (!lfht_find(params_ptr->lfht_ptr, id, &value)) {
 
                     search_fails++;
-
-                } else {
+                }
+                else {
 
                     assert(((void *)id == value) || ((void *)(id + val_swap_offset) == value));
                 }
@@ -1935,7 +1917,7 @@ void * lfht_mt_test_fcn_1(void * args )
                 break;
 
             case 8:
-                if ( ! lfht_add(params_ptr->lfht_ptr, id, (void *)id) ) {
+                if (!lfht_add(params_ptr->lfht_ptr, id, (void *)id)) {
 
                     ins_fails++;
                 }
@@ -1943,10 +1925,10 @@ void * lfht_mt_test_fcn_1(void * args )
                 count++;
                 break;
 
-            case 9: 
-                if ( ! lfht_delete(params_ptr->lfht_ptr, id) ) {
+            case 9:
+                if (!lfht_delete(params_ptr->lfht_ptr, id)) {
 
-                   del_fails++;
+                    del_fails++;
                 }
                 log[i]++;
                 count++;
@@ -1961,7 +1943,7 @@ void * lfht_mt_test_fcn_1(void * args )
          * loop.  Use the first_pass variable to ensure that the enclosed
          * block of code is only executed onec.
          */
-        if ( ( count == 50000 ) && ( first_pass ) ) {
+        if ((count == 50000) && (first_pass)) {
 
             first_pass = false;
             assert(0 == swap_val_successes);
@@ -1970,13 +1952,12 @@ void * lfht_mt_test_fcn_1(void * args )
 
                 id = params_ptr->start_id + (i * params_ptr->step);
 
-                if ( lfht_swap_value(params_ptr->lfht_ptr, id, 
-                                     (void *)(id + val_swap_offset), &value) ) {
+                if (lfht_swap_value(params_ptr->lfht_ptr, id, (void *)(id + val_swap_offset), &value)) {
 
                     swap_val_successes++;
                     assert(((void *)id == value) || ((void *)(id + val_swap_offset) == value));
-
-                } else {
+                }
+                else {
 
                     swap_val_fails++;
                 }
@@ -1984,26 +1965,26 @@ void * lfht_mt_test_fcn_1(void * args )
             assert(swap_val_successes + swap_val_fails == 10000LL);
 
             itter_inits++;
-            if ( lfht_get_first(params_ptr->lfht_ptr, &id, &value) ) {
+            if (lfht_get_first(params_ptr->lfht_ptr, &id, &value)) {
 
-                if ( lfht_swap_value(params_ptr->lfht_ptr, id, (void *)(id), &value) ) {
+                if (lfht_swap_value(params_ptr->lfht_ptr, id, (void *)(id), &value)) {
 
                     swap_val_successes++;
                     assert(((void *)id == value) || ((void *)(id + val_swap_offset) == value));
-
-                } else {
+                }
+                else {
 
                     swap_val_fails++;
                 }
 
                 while (lfht_get_next(params_ptr->lfht_ptr, id, &id, &value)) {
 
-                    if ( lfht_swap_value(params_ptr->lfht_ptr, id, (void *)(id), &value) ) {
+                    if (lfht_swap_value(params_ptr->lfht_ptr, id, (void *)(id), &value)) {
 
                         swap_val_successes++;
                         assert(((void *)id == value) || ((void *)(id + val_swap_offset) == value));
-
-                    } else {
+                    }
+                    else {
 
                         swap_val_fails++;
                     }
@@ -2020,20 +2001,19 @@ void * lfht_mt_test_fcn_1(void * args )
     params_ptr->search_by_val_fails = search_by_val_fails;
     params_ptr->swap_val_fails      = swap_val_fails;
 
-    params_ptr->itter_inits         = itter_inits;
-    params_ptr->itter_nexts         = itter_nexts;
-    params_ptr->itter_ends          = itter_ends;
+    params_ptr->itter_inits = itter_inits;
+    params_ptr->itter_nexts = itter_nexts;
+    params_ptr->itter_ends  = itter_ends;
 
-    return(NULL);
+    return (NULL);
 
 } /* lfht_mt_test_fcn_1() */
-
 
 /***********************************************************************************
  *
  * lfht_mt_test_fcn_2()
  *
- *     This function is intended to be executed by one or more threads 
+ *     This function is intended to be executed by one or more threads
  *     in a LFHT multi-thread test.
  *
  *     Proceed as follows:
@@ -2054,9 +2034,9 @@ void * lfht_mt_test_fcn_1(void * args )
  *
  *        Record the results in *params_ptr.
  *
- *     3) Pick a random number in the range [0, params_ptr->itterations - 1].  On 
+ *     3) Pick a random number in the range [0, params_ptr->itterations - 1].  On
  *        this itteration, operate as above, but after that operation is complete,
- *        itterate through all entries in the LFHT, and verify that their values 
+ *        itterate through all entries in the LFHT, and verify that their values
  *        are as expected.
  *
  *     Repeat until the specified number of operations have been attempted.
@@ -2069,31 +2049,32 @@ void * lfht_mt_test_fcn_1(void * args )
  *
  ***********************************************************************************/
 
-void * lfht_mt_test_fcn_2(void * args )
+void *
+lfht_mt_test_fcn_2(void *args)
 {
-    struct lfht_mt_test_params_t * params_ptr;
-    int operation;
-    long long int i = 0;
-    long long int itterateration_pass;
-    long long int ins_fails = 0;
-    long long int del_fails = 0;
-    long long int search_fails = 0;
-    long long int search_by_val_fails = 0;
-    long long int swap_val_fails = 0;
-    long long int ins_successes = 0;
-    long long int del_successes = 0;
-    long long int search_successes = 0;
-    long long int search_by_val_successes = 0;
-    long long int swap_val_successes = 0;
-    long long int itter_inits = 0;
-    long long int itter_nexts = 0;
-    long long int itter_ends = 0;
-    long long int id;
-    long long int test_id;
-    unsigned long long int val_swap_offset = 1000000;
-    int count = 0;
-    int log[10000];
-    void * value = NULL;
+    struct lfht_mt_test_params_t *params_ptr;
+    int                           operation;
+    long long int                 i = 0;
+    long long int                 itterateration_pass;
+    long long int                 ins_fails               = 0;
+    long long int                 del_fails               = 0;
+    long long int                 search_fails            = 0;
+    long long int                 search_by_val_fails     = 0;
+    long long int                 swap_val_fails          = 0;
+    long long int                 ins_successes           = 0;
+    long long int                 del_successes           = 0;
+    long long int                 search_successes        = 0;
+    long long int                 search_by_val_successes = 0;
+    long long int                 swap_val_successes      = 0;
+    long long int                 itter_inits             = 0;
+    long long int                 itter_nexts             = 0;
+    long long int                 itter_ends              = 0;
+    long long int                 id;
+    long long int                 test_id;
+    unsigned long long int        val_swap_offset = 1000000;
+    int                           count           = 0;
+    int                           log[10000];
+    void                         *value = NULL;
 
     params_ptr = (struct lfht_mt_test_params_t *)args;
 
@@ -2107,23 +2088,23 @@ void * lfht_mt_test_fcn_2(void * args )
     assert(0 <= itterateration_pass);
     assert(itterateration_pass < params_ptr->itterations);
 
-    while ( i < params_ptr->itterations ) {
+    while (i < params_ptr->itterations) {
 
         id = (long long int)((rand() % params_ptr->num_ids) + params_ptr->start_id);
 
         operation = rand() % 100;
 
-        switch ( operation ) {
+        switch (operation) {
 
             case 0:
             case 1:
-            case 2: 
+            case 2:
             case 3: /* insert value */
-                if ( lfht_add(params_ptr->lfht_ptr, id, (void *)id) ) {
+                if (lfht_add(params_ptr->lfht_ptr, id, (void *)id)) {
 
                     ins_successes++;
-
-                } else {
+                }
+                else {
 
                     ins_fails++;
                 }
@@ -2133,59 +2114,58 @@ void * lfht_mt_test_fcn_2(void * args )
             case 5:
             case 6:
             case 7: /* delete value */
-                if ( lfht_delete(params_ptr->lfht_ptr, id) ) {
+                if (lfht_delete(params_ptr->lfht_ptr, id)) {
 
                     del_successes++;
-
-                } else {
+                }
+                else {
 
                     del_fails++;
                 }
                 break;
 
             case 8: /* search by value */
-                if ( lfht_find_id_by_value(params_ptr->lfht_ptr, &test_id, (void *)id) ) {
+                if (lfht_find_id_by_value(params_ptr->lfht_ptr, &test_id, (void *)id)) {
 
                     search_by_val_successes++;
                     assert(test_id == id);
-
-                } else {
+                }
+                else {
 
                     search_by_val_fails++;
                 }
                 break;
 
             case 9: /* swap value */
-                if ( lfht_swap_value(params_ptr->lfht_ptr, id, 
-                                     (void *)(id + val_swap_offset), &value) ) {
+                if (lfht_swap_value(params_ptr->lfht_ptr, id, (void *)(id + val_swap_offset), &value)) {
 
                     swap_val_successes++;
                     assert(((void *)id == value) || ((void *)(id + val_swap_offset) == value));
-
-                } else {
+                }
+                else {
 
                     swap_val_fails++;
                 }
                 break;
 
             default:
-                if ( lfht_find(params_ptr->lfht_ptr, id, &value) ) {
+                if (lfht_find(params_ptr->lfht_ptr, id, &value)) {
 
                     search_successes++;
 
                     assert(((void *)id == value) || ((void *)(id + val_swap_offset) == value));
-
-                } else {
+                }
+                else {
 
                     search_fails++;
                 }
                 break;
         }
 
-        if ( i == itterateration_pass ) {
+        if (i == itterateration_pass) {
 
             itter_inits++;
-            if ( lfht_get_first(params_ptr->lfht_ptr, &id, &value) ) {
+            if (lfht_get_first(params_ptr->lfht_ptr, &id, &value)) {
 
                 assert(((void *)id == value) || ((void *)(id + val_swap_offset) == value));
 
@@ -2200,37 +2180,36 @@ void * lfht_mt_test_fcn_2(void * args )
         }
 
         i++;
-    } 
+    }
 
-    params_ptr->ins_successes           = ins_successes;
-    params_ptr->ins_fails               = ins_fails;
+    params_ptr->ins_successes = ins_successes;
+    params_ptr->ins_fails     = ins_fails;
 
-    params_ptr->del_successes           = del_successes;
-    params_ptr->del_fails               = del_fails;
+    params_ptr->del_successes = del_successes;
+    params_ptr->del_fails     = del_fails;
 
-    params_ptr->search_successes        = search_successes;
-    params_ptr->search_fails            = search_fails;
+    params_ptr->search_successes = search_successes;
+    params_ptr->search_fails     = search_fails;
 
     params_ptr->search_by_val_successes = search_by_val_successes;
     params_ptr->search_by_val_fails     = search_by_val_fails;
 
-    params_ptr->swap_val_successes      = swap_val_successes;
-    params_ptr->swap_val_fails          = swap_val_fails;
+    params_ptr->swap_val_successes = swap_val_successes;
+    params_ptr->swap_val_fails     = swap_val_fails;
 
-    params_ptr->itter_inits             = itter_inits;
-    params_ptr->itter_nexts             = itter_nexts;
-    params_ptr->itter_ends              = itter_ends;
+    params_ptr->itter_inits = itter_inits;
+    params_ptr->itter_nexts = itter_nexts;
+    params_ptr->itter_ends  = itter_ends;
 
-    return(NULL);
+    return (NULL);
 
 } /* lfht_mt_test_fcn_2() */
-
 
 /***********************************************************************************
  *
  * lfht_lfsll_mt_test_fcn_1__serial_test()
  *
- *     Serial test of lfht_mt_test_fcn_1() with the lock free hash table 
+ *     Serial test of lfht_mt_test_fcn_1() with the lock free hash table
  *     configured to function as a lock free singly linked list.
  *
  *                                                   JRM -- 6/19/23
@@ -2241,34 +2220,32 @@ void * lfht_mt_test_fcn_2(void * args )
  *
  ***********************************************************************************/
 
-void lfht_lfsll_mt_test_fcn_1__serial_test()
+void
+lfht_lfsll_mt_test_fcn_1__serial_test()
 {
-    unsigned int seed;
-    int count = 0;
-    int log[10000];
-    struct timeval t;
-    struct lfht_t lfht;
-    struct lfht_mt_test_params_t params = {
-        /* lfht_ptr                = */ NULL,
-        /* start_id                = */ 50000LL,
-        /* step                    = */ -3LL,
-        /* num_ids                 = */ 10000LL,
-        /* iterations              = */ 0,   /* not used in this case */
-        /* ins_fails               = */ 0LL,
-        /* del_fails               = */ 0LL,
-        /* search_fails            = */ 0LL,
-        /* search_by_val_fails     = */ 0LL,
-        /* swap_val_fails          = */ 0LL,
-        /* ins_successes           = */ 0LL, /* not used in this case */
-        /* del_successes           = */ 0LL, /* not used in this case */
-        /* search_successes        = */ 0LL, /* not used in this case */
-        /* search_by_val_successes = */ 0LL, /* not used in this case */
-        /* swap_val_successes      = */ 0LL, /* not used in this case */
-        /* itter_inits             = */ 0LL,
-        /* itter_nexts             = */ 0LL,
-        /* itter_ends              = */ 0LL
-    };
-
+    unsigned int                 seed;
+    int                          count = 0;
+    int                          log[10000];
+    struct timeval               t;
+    struct lfht_t                lfht;
+    struct lfht_mt_test_params_t params = {/* lfht_ptr                = */ NULL,
+                                           /* start_id                = */ 50000LL,
+                                           /* step                    = */ -3LL,
+                                           /* num_ids                 = */ 10000LL,
+                                           /* iterations              = */ 0, /* not used in this case */
+                                           /* ins_fails               = */ 0LL,
+                                           /* del_fails               = */ 0LL,
+                                           /* search_fails            = */ 0LL,
+                                           /* search_by_val_fails     = */ 0LL,
+                                           /* swap_val_fails          = */ 0LL,
+                                           /* ins_successes           = */ 0LL, /* not used in this case */
+                                           /* del_successes           = */ 0LL, /* not used in this case */
+                                           /* search_successes        = */ 0LL, /* not used in this case */
+                                           /* search_by_val_successes = */ 0LL, /* not used in this case */
+                                           /* swap_val_successes      = */ 0LL, /* not used in this case */
+                                           /* itter_inits             = */ 0LL,
+                                           /* itter_nexts             = */ 0LL,
+                                           /* itter_ends              = */ 0LL};
 
     assert(0 == gettimeofday(&t, NULL));
 
@@ -2292,7 +2269,7 @@ void lfht_lfsll_mt_test_fcn_1__serial_test()
 
     lfht_mt_test_fcn_1((void *)(&params));
 
-#if 0 /* JRM */
+#if 0  /* JRM */
     lfht_dump_list(&lfht, stdout);
 
     lfht_dump_stats(&lfht, stdout);
@@ -2317,33 +2294,32 @@ void lfht_lfsll_mt_test_fcn_1__serial_test()
 
     assert(20000 == atomic_load(&(lfht.insertions)));
     assert(10000 == atomic_load(&(lfht.insertion_failures)));
-    assert(    0 == atomic_load(&(lfht.ins_restarts_due_to_ins_col)));
-    assert(    0 == atomic_load(&(lfht.ins_restarts_due_to_del_col)));
+    assert(0 == atomic_load(&(lfht.ins_restarts_due_to_ins_col)));
+    assert(0 == atomic_load(&(lfht.ins_restarts_due_to_del_col)));
 
     /* lfht.ins_deletion_completions and lfht.nodes_visited_during_ins will vary */
 
     assert(30000 == atomic_load(&(lfht.deletion_attempts)));
     assert(10000 == atomic_load(&(lfht.deletion_failures)));
     assert(20000 == atomic_load(&(lfht.deletion_starts)));
-    assert(    0 == atomic_load(&(lfht.deletion_start_cols)));
-    assert(    0 == atomic_load(&(lfht.del_restarts_due_to_del_col)));
+    assert(0 == atomic_load(&(lfht.deletion_start_cols)));
+    assert(0 == atomic_load(&(lfht.del_restarts_due_to_del_col)));
 
     /* lfht.del_deletion_completions and lfht.nodes_visited_during_dels will vary */
 
-    assert(atomic_load(&(lfht.ins_deletion_completions)) + 
-           atomic_load(&(lfht.del_deletion_completions)) +
-           atomic_load(&(lfht.lfsll_phys_len)) - 2 == 20000);
+    assert(atomic_load(&(lfht.ins_deletion_completions)) + atomic_load(&(lfht.del_deletion_completions)) +
+               atomic_load(&(lfht.lfsll_phys_len)) - 2 ==
+           20000);
 
     assert(30000 == atomic_load(&(lfht.searches)));
     assert(20000 == atomic_load(&(lfht.successful_searches)));
     assert(10000 == atomic_load(&(lfht.failed_searches)));
 
     /* lfht.marked_nodes_visited_in_succ_searches, lfht.unmarked_nodes_visited_in_succ_searches
-     * lfht.marked_nodes_visited_in_failed_searches, and 
+     * lfht.marked_nodes_visited_in_failed_searches, and
      * lfht.unmarked_nodes_visited_in_failed_searches will vary
      */
-    assert(10000 == (atomic_load(&(lfht.successful_val_swaps)) / 2) + 
-                    atomic_load(&(lfht.failed_val_swaps)));
+    assert(10000 == (atomic_load(&(lfht.successful_val_swaps)) / 2) + atomic_load(&(lfht.failed_val_swaps)));
 
     assert(1 == params.itter_inits);
     assert(params.itter_nexts + 1 == (atomic_load(&(lfht.successful_val_swaps)) / 2));
@@ -2359,12 +2335,11 @@ void lfht_lfsll_mt_test_fcn_1__serial_test()
 
 } /* lfht_lfsll_mt_test_fcn_1__serial_test() */
 
-
 /***********************************************************************************
  *
  * lfht_lfsll_mt_test_fcn_2__serial_test()
  *
- *     Serial test of lfht_mt_test_fcn_2() with the lock free hash table 
+ *     Serial test of lfht_mt_test_fcn_2() with the lock free hash table
  *     configured to function as a lock free singly linked list.
  *
  *                                                   JRM -- 6/28/23
@@ -2375,33 +2350,32 @@ void lfht_lfsll_mt_test_fcn_1__serial_test()
  *
  ***********************************************************************************/
 
-void lfht_lfsll_mt_test_fcn_2__serial_test()
+void
+lfht_lfsll_mt_test_fcn_2__serial_test()
 {
-    unsigned int seed;
-    int count = 0;
-    int log[10000];
-    struct timeval t;
-    struct lfht_t lfht;
-    struct lfht_mt_test_params_t params = {
-        /* lfht_ptr                = */ NULL,
-        /* start_id                = */ 0LL,
-        /* step                    = */ 0LL, /* not used in this case */
-        /* num_ids                 = */ 10000LL,
-        /* iterations              = */ 1000000LL,
-        /* ins_fails               = */ 0LL,
-        /* del_fails               = */ 0LL,
-        /* search_fails            = */ 0LL,
-        /* search_by_val_fails     = */ 0LL,
-        /* swap_val_fails          = */ 0LL,
-        /* ins_successes           = */ 0LL, 
-        /* del_successes           = */ 0LL,
-        /* search_successes        = */ 0LL,
-        /* search_by_val_successes = */ 0LL,
-        /* swap_val_successes      = */ 0LL, 
-        /* itter_inits             = */ 0LL,
-        /* itter_nexts             = */ 0LL,
-        /* itter_ends              = */ 0LL
-    };
+    unsigned int                 seed;
+    int                          count = 0;
+    int                          log[10000];
+    struct timeval               t;
+    struct lfht_t                lfht;
+    struct lfht_mt_test_params_t params = {/* lfht_ptr                = */ NULL,
+                                           /* start_id                = */ 0LL,
+                                           /* step                    = */ 0LL, /* not used in this case */
+                                           /* num_ids                 = */ 10000LL,
+                                           /* iterations              = */ 1000000LL,
+                                           /* ins_fails               = */ 0LL,
+                                           /* del_fails               = */ 0LL,
+                                           /* search_fails            = */ 0LL,
+                                           /* search_by_val_fails     = */ 0LL,
+                                           /* swap_val_fails          = */ 0LL,
+                                           /* ins_successes           = */ 0LL,
+                                           /* del_successes           = */ 0LL,
+                                           /* search_successes        = */ 0LL,
+                                           /* search_by_val_successes = */ 0LL,
+                                           /* swap_val_successes      = */ 0LL,
+                                           /* itter_inits             = */ 0LL,
+                                           /* itter_nexts             = */ 0LL,
+                                           /* itter_ends              = */ 0LL};
 
     assert(0 == gettimeofday(&t, NULL));
 
@@ -2425,11 +2399,11 @@ void lfht_lfsll_mt_test_fcn_2__serial_test()
 
     lfht_mt_test_fcn_2((void *)(&params));
 
-#if 0 /* JRM */
+#if 0  /* JRM */
     lfht_dump_list(&lfht, stdout);
 #endif /* JRM */
 
-#if 0 /* JRM */
+#if 0  /* JRM */
     lfht_dump_stats(&lfht, stdout);
 #endif /* JRM */
 
@@ -2437,22 +2411,21 @@ void lfht_lfsll_mt_test_fcn_2__serial_test()
 
     lfht_dump_interesting_stats(&lfht);
 
-    assert(params.ins_fails           == atomic_load(&(lfht.insertion_failures)));
-    assert(params.del_fails           == atomic_load(&(lfht.deletion_failures)));
-    assert(params.search_fails        == atomic_load(&(lfht.failed_searches)));
+    assert(params.ins_fails == atomic_load(&(lfht.insertion_failures)));
+    assert(params.del_fails == atomic_load(&(lfht.deletion_failures)));
+    assert(params.search_fails == atomic_load(&(lfht.failed_searches)));
     assert(params.search_by_val_fails == atomic_load(&(lfht.failed_val_searches)));
-    assert(params.swap_val_fails      == atomic_load(&(lfht.failed_val_swaps)));
+    assert(params.swap_val_fails == atomic_load(&(lfht.failed_val_swaps)));
 
-    assert(params.ins_successes           == atomic_load(&(lfht.insertions)));
-    assert(params.del_successes           == atomic_load(&(lfht.deletion_starts)));
-    assert(params.search_successes        == atomic_load(&(lfht.successful_searches)));
+    assert(params.ins_successes == atomic_load(&(lfht.insertions)));
+    assert(params.del_successes == atomic_load(&(lfht.deletion_starts)));
+    assert(params.search_successes == atomic_load(&(lfht.successful_searches)));
     assert(params.search_by_val_successes == atomic_load(&(lfht.successful_val_searches)));
-    assert(params.swap_val_successes      == atomic_load(&(lfht.successful_val_swaps)));
+    assert(params.swap_val_successes == atomic_load(&(lfht.successful_val_swaps)));
 
     assert(params.itter_inits == atomic_load(&(lfht.itter_inits)));
     assert(params.itter_nexts == atomic_load(&(lfht.itter_nexts)));
-    assert(params.itter_ends  == atomic_load(&(lfht.itter_ends)));
-
+    assert(params.itter_ends == atomic_load(&(lfht.itter_ends)));
 
     /* lfht.log_len & lfht.phys_len will vary */
 
@@ -2461,36 +2434,35 @@ void lfht_lfsll_mt_test_fcn_2__serial_test()
 
     /* lfht.insertions & lfht.insertion_failures will vary */
 
-    assert(    0 == atomic_load(&(lfht.ins_restarts_due_to_ins_col)));
-    assert(    0 == atomic_load(&(lfht.ins_restarts_due_to_del_col)));
+    assert(0 == atomic_load(&(lfht.ins_restarts_due_to_ins_col)));
+    assert(0 == atomic_load(&(lfht.ins_restarts_due_to_del_col)));
 
     /* lfht.ins_deletion_completions and lfht.nodes_visited_during_ins will vary */
 
     /* lfht.deletion_attempts, lfht.deletion_failures, & lfht.deletion_starts will vary */
 
-    assert(    0 == atomic_load(&(lfht.deletion_start_cols)));
-    assert(    0 == atomic_load(&(lfht.del_restarts_due_to_del_col)));
+    assert(0 == atomic_load(&(lfht.deletion_start_cols)));
+    assert(0 == atomic_load(&(lfht.del_restarts_due_to_del_col)));
 
     /* lfht.del_deletion_completions and lfht.nodes_visited_during_dels will vary */
 
-    assert(atomic_load(&(lfht.ins_deletion_completions)) + 
-           atomic_load(&(lfht.del_deletion_completions)) +
-           atomic_load(&(lfht.lfsll_phys_len)) - 2 == atomic_load(&(lfht.insertions)));
+    assert(atomic_load(&(lfht.ins_deletion_completions)) + atomic_load(&(lfht.del_deletion_completions)) +
+               atomic_load(&(lfht.lfsll_phys_len)) - 2 ==
+           atomic_load(&(lfht.insertions)));
 
     /* lfht.searches, lfht.successful_searches, & lfht.failed_searches will vary */
 
-    assert( atomic_load(&(lfht.searches)) == 
-            (atomic_load(&(lfht.successful_searches)) + atomic_load(&(lfht.failed_searches))) );
+    assert(atomic_load(&(lfht.searches)) ==
+           (atomic_load(&(lfht.successful_searches)) + atomic_load(&(lfht.failed_searches))));
 
     /* lfht.marked_nodes_visited_in_succ_searches, lfht.unmarked_nodes_visited_in_succ_searches
-     * lfht.marked_nodes_visited_in_failed_searches, and 
+     * lfht.marked_nodes_visited_in_failed_searches, and
      * lfht.unmarked_nodes_visited_in_failed_searches will vary
      */
     assert((params.search_by_val_fails + params.search_by_val_successes) ==
            atomic_load(&(lfht.value_searches)));
 
-    assert((params.swap_val_fails + params.swap_val_successes) ==
-           atomic_load(&(lfht.value_swaps)));
+    assert((params.swap_val_fails + params.swap_val_successes) == atomic_load(&(lfht.value_swaps)));
 
     assert(1 == params.itter_inits);
     /* number of itter_nexts varies */
@@ -2503,7 +2475,6 @@ void lfht_lfsll_mt_test_fcn_2__serial_test()
     return;
 
 } /* lfht_lfsll_mt_test_fcn_2__serial_test() */
-
 
 /***********************************************************************************
  *
@@ -2519,34 +2490,32 @@ void lfht_lfsll_mt_test_fcn_2__serial_test()
  *
  ***********************************************************************************/
 
-void lfht_mt_test_fcn_1__serial_test()
+void
+lfht_mt_test_fcn_1__serial_test()
 {
-    unsigned int seed;
-    int count = 0;
-    int log[10000];
-    struct timeval t;
-    struct lfht_t lfht;
-    struct lfht_mt_test_params_t params = {
-        /* lfht_ptr                = */ NULL,
-        /* start_id                = */ 50000LL,
-        /* step                    = */ -3LL,
-        /* num_ids                 = */ 10000LL,
-        /* iterations              = */ 0,   /* not used in this case */
-        /* ins_fails               = */ 0LL,
-        /* del_fails               = */ 0LL,
-        /* search_fails            = */ 0LL,
-        /* search_by_val_fails     = */ 0LL,
-        /* swap_val_fails          = */ 0LL,
-        /* ins_successes           = */ 0LL, /* not used in this case */
-        /* del_successes           = */ 0LL, /* not used in this case */
-        /* search_successes        = */ 0LL, /* not used in this case */
-        /* search_by_val_successes = */ 0LL, /* not used in this case */
-        /* swap_val_successes      = */ 0LL, /* not used in this case */
-        /* itter_inits             = */ 0LL,
-        /* itter_nexts             = */ 0LL,
-        /* itter_ends              = */ 0LL
-    };
-
+    unsigned int                 seed;
+    int                          count = 0;
+    int                          log[10000];
+    struct timeval               t;
+    struct lfht_t                lfht;
+    struct lfht_mt_test_params_t params = {/* lfht_ptr                = */ NULL,
+                                           /* start_id                = */ 50000LL,
+                                           /* step                    = */ -3LL,
+                                           /* num_ids                 = */ 10000LL,
+                                           /* iterations              = */ 0, /* not used in this case */
+                                           /* ins_fails               = */ 0LL,
+                                           /* del_fails               = */ 0LL,
+                                           /* search_fails            = */ 0LL,
+                                           /* search_by_val_fails     = */ 0LL,
+                                           /* swap_val_fails          = */ 0LL,
+                                           /* ins_successes           = */ 0LL, /* not used in this case */
+                                           /* del_successes           = */ 0LL, /* not used in this case */
+                                           /* search_successes        = */ 0LL, /* not used in this case */
+                                           /* search_by_val_successes = */ 0LL, /* not used in this case */
+                                           /* swap_val_successes      = */ 0LL, /* not used in this case */
+                                           /* itter_inits             = */ 0LL,
+                                           /* itter_nexts             = */ 0LL,
+                                           /* itter_ends              = */ 0LL};
 
     assert(0 == gettimeofday(&t, NULL));
 
@@ -2564,7 +2533,7 @@ void lfht_mt_test_fcn_1__serial_test()
 
     lfht_mt_test_fcn_1((void *)(&params));
 
-#if 0 /* JRM */
+#if 0  /* JRM */
     lfht_dump_list(&lfht, stdout);
 
     lfht_dump_stats(&lfht, stdout);
@@ -2584,28 +2553,27 @@ void lfht_mt_test_fcn_1__serial_test()
     assert(params.itter_nexts == atomic_load(&(lfht.itter_nexts)));
     assert(params.itter_ends == atomic_load(&(lfht.itter_ends)));
 
-    assert(   0 == atomic_load(&(lfht.lfsll_log_len)));
+    assert(0 == atomic_load(&(lfht.lfsll_log_len)));
     assert(2049 == atomic_load(&(lfht.lfsll_phys_len)));
 
     assert(20000 == atomic_load(&(lfht.insertions)));
     assert(10000 == atomic_load(&(lfht.insertion_failures)));
-    assert(    0 == atomic_load(&(lfht.ins_restarts_due_to_ins_col)));
-    assert(    0 == atomic_load(&(lfht.ins_restarts_due_to_del_col)));
+    assert(0 == atomic_load(&(lfht.ins_restarts_due_to_ins_col)));
+    assert(0 == atomic_load(&(lfht.ins_restarts_due_to_del_col)));
 
     /* lfht.ins_deletion_completions and lfht.nodes_visited_during_ins will vary */
 
     assert(30000 == atomic_load(&(lfht.deletion_attempts)));
     assert(10000 == atomic_load(&(lfht.deletion_failures)));
     assert(20000 == atomic_load(&(lfht.deletion_starts)));
-    assert(    0 == atomic_load(&(lfht.deletion_start_cols)));
-    assert(    0 == atomic_load(&(lfht.del_restarts_due_to_del_col)));
+    assert(0 == atomic_load(&(lfht.deletion_start_cols)));
+    assert(0 == atomic_load(&(lfht.del_restarts_due_to_del_col)));
 
     /* lfht.del_deletion_completions and lfht.nodes_visited_during_dels will vary */
 
-    assert(atomic_load(&(lfht.ins_deletion_completions)) + 
-           atomic_load(&(lfht.del_deletion_completions)) +
-           atomic_load(&(lfht.lfsll_phys_len)) - 
-           atomic_load(&(lfht.buckets_initialized)) - 1 == 20000);
+    assert(atomic_load(&(lfht.ins_deletion_completions)) + atomic_load(&(lfht.del_deletion_completions)) +
+               atomic_load(&(lfht.lfsll_phys_len)) - atomic_load(&(lfht.buckets_initialized)) - 1 ==
+           20000);
 
     assert(30000 == atomic_load(&(lfht.searches)));
     assert(20000 == atomic_load(&(lfht.successful_searches)));
@@ -2615,8 +2583,7 @@ void lfht_mt_test_fcn_1__serial_test()
      * lfht.marked_nodes_visited_in_failed_searches, and i
      * lfht.unmarked_nodes_visited_in_failed_searches will vary
      */
-    assert(10000 == (atomic_load(&(lfht.successful_val_swaps)) / 2) + 
-                    atomic_load(&(lfht.failed_val_swaps)));
+    assert(10000 == (atomic_load(&(lfht.successful_val_swaps)) / 2) + atomic_load(&(lfht.failed_val_swaps)));
 
     assert(1 == params.itter_inits);
     assert(params.itter_nexts + 1 == (atomic_load(&(lfht.successful_val_swaps)) / 2));
@@ -2632,7 +2599,6 @@ void lfht_mt_test_fcn_1__serial_test()
 
 } /* lfht_mt_test_fcn_1__serial_test() */
 
-
 /***********************************************************************************
  *
  * lfht_mt_test_fcn_2__serial_test()
@@ -2647,33 +2613,32 @@ void lfht_mt_test_fcn_1__serial_test()
  *
  ***********************************************************************************/
 
-void lfht_mt_test_fcn_2__serial_test()
+void
+lfht_mt_test_fcn_2__serial_test()
 {
-    unsigned int seed;
-    int count = 0;
-    int log[10000];
-    struct timeval t;
-    struct lfht_t lfht;
-    struct lfht_mt_test_params_t params = {
-        /* lfht_ptr                = */ NULL,
-        /* start_id                = */ 0LL,
-        /* step                    = */ 0LL, /* not used in this case */
-        /* num_ids                 = */ 10000LL,
-        /* iterations              = */ 1000000LL,
-        /* ins_fails               = */ 0LL,
-        /* del_fails               = */ 0LL,
-        /* search_fails            = */ 0LL,
-        /* search_by_val_fails     = */ 0LL,
-        /* swap_val_fails          = */ 0LL,
-        /* ins_successes           = */ 0LL, 
-        /* del_successes           = */ 0LL,
-        /* search_successes        = */ 0LL,
-        /* search_by_val_successes = */ 0LL,
-        /* swap_val_successes      = */ 0LL,
-        /* itter_inits             = */ 0LL,
-        /* itter_nexts             = */ 0LL,
-        /* itter_ends              = */ 0LL
-    };
+    unsigned int                 seed;
+    int                          count = 0;
+    int                          log[10000];
+    struct timeval               t;
+    struct lfht_t                lfht;
+    struct lfht_mt_test_params_t params = {/* lfht_ptr                = */ NULL,
+                                           /* start_id                = */ 0LL,
+                                           /* step                    = */ 0LL, /* not used in this case */
+                                           /* num_ids                 = */ 10000LL,
+                                           /* iterations              = */ 1000000LL,
+                                           /* ins_fails               = */ 0LL,
+                                           /* del_fails               = */ 0LL,
+                                           /* search_fails            = */ 0LL,
+                                           /* search_by_val_fails     = */ 0LL,
+                                           /* swap_val_fails          = */ 0LL,
+                                           /* ins_successes           = */ 0LL,
+                                           /* del_successes           = */ 0LL,
+                                           /* search_successes        = */ 0LL,
+                                           /* search_by_val_successes = */ 0LL,
+                                           /* swap_val_successes      = */ 0LL,
+                                           /* itter_inits             = */ 0LL,
+                                           /* itter_nexts             = */ 0LL,
+                                           /* itter_ends              = */ 0LL};
 
     assert(0 == gettimeofday(&t, NULL));
 
@@ -2691,11 +2656,11 @@ void lfht_mt_test_fcn_2__serial_test()
 
     lfht_mt_test_fcn_2((void *)(&params));
 
-#if 0 /* JRM */
+#if 0  /* JRM */
     lfht_dump_list(&lfht, stdout);
 #endif /* JRM */
 
-#if 0 /* JRM */
+#if 0  /* JRM */
     lfht_dump_stats(&lfht, stdout);
 #endif /* JRM */
 
@@ -2703,22 +2668,21 @@ void lfht_mt_test_fcn_2__serial_test()
 
     lfht_dump_interesting_stats(&lfht);
 
-    assert(params.ins_fails           == atomic_load(&(lfht.insertion_failures)));
-    assert(params.del_fails           == atomic_load(&(lfht.deletion_failures)));
-    assert(params.search_fails        == atomic_load(&(lfht.failed_searches)));
+    assert(params.ins_fails == atomic_load(&(lfht.insertion_failures)));
+    assert(params.del_fails == atomic_load(&(lfht.deletion_failures)));
+    assert(params.search_fails == atomic_load(&(lfht.failed_searches)));
     assert(params.search_by_val_fails == atomic_load(&(lfht.failed_val_searches)));
-    assert(params.swap_val_fails      == atomic_load(&(lfht.failed_val_swaps)));
+    assert(params.swap_val_fails == atomic_load(&(lfht.failed_val_swaps)));
 
-    assert(params.ins_successes           == atomic_load(&(lfht.insertions)));
-    assert(params.del_successes           == atomic_load(&(lfht.deletion_starts)));
-    assert(params.search_successes        == atomic_load(&(lfht.successful_searches)));
+    assert(params.ins_successes == atomic_load(&(lfht.insertions)));
+    assert(params.del_successes == atomic_load(&(lfht.deletion_starts)));
+    assert(params.search_successes == atomic_load(&(lfht.successful_searches)));
     assert(params.search_by_val_successes == atomic_load(&(lfht.successful_val_searches)));
-    assert(params.swap_val_successes      == atomic_load(&(lfht.successful_val_swaps)));
+    assert(params.swap_val_successes == atomic_load(&(lfht.successful_val_swaps)));
 
     assert(params.itter_inits == atomic_load(&(lfht.itter_inits)));
     assert(params.itter_nexts == atomic_load(&(lfht.itter_nexts)));
-    assert(params.itter_ends  == atomic_load(&(lfht.itter_ends)));
-
+    assert(params.itter_ends == atomic_load(&(lfht.itter_ends)));
 
     /* lfht.log_len & lfht.phys_len will vary */
 
@@ -2727,37 +2691,35 @@ void lfht_mt_test_fcn_2__serial_test()
 
     /* lfht.insertions & lfht.insertion_failures will vary */
 
-    assert(    0 == atomic_load(&(lfht.ins_restarts_due_to_ins_col)));
-    assert(    0 == atomic_load(&(lfht.ins_restarts_due_to_del_col)));
+    assert(0 == atomic_load(&(lfht.ins_restarts_due_to_ins_col)));
+    assert(0 == atomic_load(&(lfht.ins_restarts_due_to_del_col)));
 
     /* lfht.ins_deletion_completions and lfht.nodes_visited_during_ins will vary */
 
     /* lfht.deletion_attempts, lfht.deletion_failures, & lfht.deletion_starts will vary */
 
-    assert(    0 == atomic_load(&(lfht.deletion_start_cols)));
-    assert(    0 == atomic_load(&(lfht.del_restarts_due_to_del_col)));
+    assert(0 == atomic_load(&(lfht.deletion_start_cols)));
+    assert(0 == atomic_load(&(lfht.del_restarts_due_to_del_col)));
 
     /* lfht.del_deletion_completions and lfht.nodes_visited_during_dels will vary */
 
-    assert(atomic_load(&(lfht.ins_deletion_completions)) + 
-           atomic_load(&(lfht.del_deletion_completions)) +
-           atomic_load(&(lfht.lfsll_phys_len)) - 
-           atomic_load(&(lfht.buckets_initialized)) - 1 == atomic_load(&(lfht.insertions)));
+    assert(atomic_load(&(lfht.ins_deletion_completions)) + atomic_load(&(lfht.del_deletion_completions)) +
+               atomic_load(&(lfht.lfsll_phys_len)) - atomic_load(&(lfht.buckets_initialized)) - 1 ==
+           atomic_load(&(lfht.insertions)));
 
     /* lfht.searches, lfht.successful_searches, & lfht.failed_searches will vary */
 
-    assert( atomic_load(&(lfht.searches)) == 
-            (atomic_load(&(lfht.successful_searches)) + atomic_load(&(lfht.failed_searches))) );
+    assert(atomic_load(&(lfht.searches)) ==
+           (atomic_load(&(lfht.successful_searches)) + atomic_load(&(lfht.failed_searches))));
 
     /* lfht.marked_nodes_visited_in_succ_searches, lfht.unmarked_nodes_visited_in_succ_searches
-     * lfht.marked_nodes_visited_in_failed_searches, and 
+     * lfht.marked_nodes_visited_in_failed_searches, and
      * lfht.unmarked_nodes_visited_in_failed_searches will vary
      */
     assert((params.search_by_val_fails + params.search_by_val_successes) ==
            atomic_load(&(lfht.value_searches)));
 
-    assert((params.swap_val_fails + params.swap_val_successes) ==
-           atomic_load(&(lfht.value_swaps)));
+    assert((params.swap_val_fails + params.swap_val_successes) == atomic_load(&(lfht.value_swaps)));
 
     assert(1 == params.itter_inits);
     /* number of itter_nexts varies */
@@ -2771,7 +2733,6 @@ void lfht_mt_test_fcn_2__serial_test()
 
 } /* lfht_mt_test_fcn_2__serial_test() */
 
-
 /***********************************************************************************
  *
  * lfht_lfsll_mt_test_1()
@@ -2783,7 +2744,7 @@ void lfht_mt_test_fcn_2__serial_test()
  *     in parallel.  In this case, allow only one thread to touch any one value.
  *     As a result, there should be no insert, deleted, or search collisions
  *     proper.  However collisions allocating and discarding entries will occur,
- *     as will collisions when completing deletions. 
+ *     as will collisions when completing deletions.
  *
  *                                                   JRM -- 6/19/23
  *
@@ -2793,21 +2754,22 @@ void lfht_mt_test_fcn_2__serial_test()
  *
  ***********************************************************************************/
 
-void lfht_lfsll_mt_test_1(int nthreads)
+void
+lfht_lfsll_mt_test_1(int nthreads)
 {
-    int i;
-    long long int ins_fails = 0LL;
-    long long int del_fails = 0LL;
-    long long int search_fails = 0LL;
-    long long int search_by_val_fails = 0LL;
-    long long int swap_val_fails = 0LL;
-    long long int itter_inits = 0LL;
-    long long int itter_nexts = 0LL;
-    long long int itter_ends = 0LL;
-    unsigned int seed;
-    struct timeval t;
-    struct lfht_t lfht;
-    pthread_t threads[MAX_NUM_THREADS];
+    int                          i;
+    long long int                ins_fails           = 0LL;
+    long long int                del_fails           = 0LL;
+    long long int                search_fails        = 0LL;
+    long long int                search_by_val_fails = 0LL;
+    long long int                swap_val_fails      = 0LL;
+    long long int                itter_inits         = 0LL;
+    long long int                itter_nexts         = 0LL;
+    long long int                itter_ends          = 0LL;
+    unsigned int                 seed;
+    struct timeval               t;
+    struct lfht_t                lfht;
+    pthread_t                    threads[MAX_NUM_THREADS];
     struct lfht_mt_test_params_t params[MAX_NUM_THREADS];
 
     assert(nthreads <= MAX_NUM_THREADS);
@@ -2818,8 +2780,7 @@ void lfht_lfsll_mt_test_1(int nthreads)
 
     srand(seed);
 
-    fprintf(stdout, "LFHT LFSLL multi-thread test 1 (nthreads = %d, seed = 0x%x) ...", 
-            nthreads, seed);
+    fprintf(stdout, "LFHT LFSLL multi-thread test 1 (nthreads = %d, seed = 0x%x) ...", nthreads, seed);
 
     fflush(stdout);
 
@@ -2828,8 +2789,8 @@ void lfht_lfsll_mt_test_1(int nthreads)
     /* set lfht.max_index_bits to zero -- which forces the lock free hash table
      * to funtion as a lock free singly linked list, as it forces all entries
      * into a single hash bucket.
-     */   
-    lfht.max_index_bits = 0; 
+     */
+    lfht.max_index_bits = 0;
 
     for (i = 0; i < nthreads; i++) {
 
@@ -2864,15 +2825,15 @@ void lfht_lfsll_mt_test_1(int nthreads)
 
         assert(0 == pthread_join(threads[i], NULL));
 
-        ins_fails           += params[i].ins_fails;
-        del_fails           += params[i].del_fails;
-        search_fails        += params[i].search_fails;
+        ins_fails += params[i].ins_fails;
+        del_fails += params[i].del_fails;
+        search_fails += params[i].search_fails;
         search_by_val_fails += params[i].search_by_val_fails;
-        swap_val_fails      += params[i].swap_val_fails;
+        swap_val_fails += params[i].swap_val_fails;
 
-        itter_inits         += params[i].itter_inits;
-        itter_nexts         += params[i].itter_nexts;
-        itter_ends          += params[i].itter_ends;
+        itter_inits += params[i].itter_inits;
+        itter_nexts += params[i].itter_nexts;
+        itter_ends += params[i].itter_ends;
     }
 
 #if 0 
@@ -2887,11 +2848,11 @@ void lfht_lfsll_mt_test_1(int nthreads)
             (atomic_load(&(lfht.lfsll_phys_len)) + atomic_load(&(lfht.fl_len))));
 #endif
 
-#if 0 /* JRM */
+#if 0  /* JRM */
     lfht_dump_list(&lfht, stdout);
 #endif /* JRM */
 
-#if 0 /* JRM */
+#if 0  /* JRM */
     lfht_dump_stats(&lfht, stdout);
 #endif /* JRM */
 
@@ -2916,29 +2877,28 @@ void lfht_lfsll_mt_test_1(int nthreads)
     assert(3 == atomic_load(&(lfht.lfsll_phys_len)));
 
     assert(2 * nthreads * 10000 == atomic_load(&(lfht.insertions)));
-    assert(    nthreads * 10000 == atomic_load(&(lfht.insertion_failures)));
+    assert(nthreads * 10000 == atomic_load(&(lfht.insertion_failures)));
 
     /* lfht.lfht.ins_restarts_due_to_ins_col and lfht.lfht.ins_restarts_due_to_del_col will vary */
     /* lfht.ins_deletion_completions and lfht.nodes_visited_during_ins will vary */
 
     assert(3 * nthreads * 10000 == atomic_load(&(lfht.deletion_attempts)));
-    assert(    nthreads * 10000 == atomic_load(&(lfht.deletion_failures)));
+    assert(nthreads * 10000 == atomic_load(&(lfht.deletion_failures)));
     assert(2 * nthreads * 10000 == atomic_load(&(lfht.deletion_starts)));
 
     /* lfht.deletion_start_cols and lfht.del_restarts_due_to_del_col) will vary */
     /* lfht.del_deletion_completions and lfht.nodes_visited_during_dels will vary */
 
-    assert( ( atomic_load(&(lfht.ins_deletion_completions)) + 
-              atomic_load(&(lfht.del_deletion_completions)) +
-              atomic_load(&(lfht.lfsll_log_len)) )  == 
-            ( (2 * nthreads * 10000) - (atomic_load(&(lfht.lfsll_phys_len)) - 2) ) );
+    assert((atomic_load(&(lfht.ins_deletion_completions)) + atomic_load(&(lfht.del_deletion_completions)) +
+            atomic_load(&(lfht.lfsll_log_len))) ==
+           ((2 * nthreads * 10000) - (atomic_load(&(lfht.lfsll_phys_len)) - 2)));
 
     assert(3 * nthreads * 10000 == atomic_load(&(lfht.searches)));
     assert(2 * nthreads * 10000 == atomic_load(&(lfht.successful_searches)));
-    assert(    nthreads * 10000 == atomic_load(&(lfht.failed_searches)));
+    assert(nthreads * 10000 == atomic_load(&(lfht.failed_searches)));
 
     /* lfht.marked_nodes_visited_in_succ_searches, lfht.unmarked_nodes_visited_in_succ_searches
-     * lfht.marked_nodes_visited_in_failed_searches, and 
+     * lfht.marked_nodes_visited_in_failed_searches, and
      * lfht.unmarked_nodes_visited_in_failed_searches will vary
      */
 
@@ -2958,21 +2918,20 @@ void lfht_lfsll_mt_test_1(int nthreads)
 
 } /* lfht_lfsll_mt_test_1() */
 
-
 /***********************************************************************************
  *
  * lfht_lfsll_mt_test_2()
  *
- *     Setup a lock free hash table, but configure it to function as a lock free 
+ *     Setup a lock free hash table, but configure it to function as a lock free
  *     singly linked list.
  *
  *     Spawn nthreads threads, each of which performs operations on the LFHT
  *     in parallel.  In this case, all threads perform the same set of operations
- *     on the same set of value -- thus all manner of collisions, insert, search, 
+ *     on the same set of value -- thus all manner of collisions, insert, search,
  *     and delete failures are expected.  Further, since operations are performed
  *     in a largely random order, correctness is hard to check.
  *
- *     Instead, we simply verify that the statistics ballance -- i.e. allocs and 
+ *     Instead, we simply verify that the statistics ballance -- i.e. allocs and
  *     frees ballance, successful inserts and deletes ballance, etc.
  *
  *                                                   JRM -- 6/27/23
@@ -2983,26 +2942,27 @@ void lfht_lfsll_mt_test_1(int nthreads)
  *
  ***********************************************************************************/
 
-void lfht_lfsll_mt_test_2(int nthreads)
+void
+lfht_lfsll_mt_test_2(int nthreads)
 {
-    int i;
-    long long int ins_fails = 0LL;
-    long long int del_fails = 0LL;
-    long long int search_fails = 0LL;
-    long long int search_by_val_fails = 0LL;
-    long long int swap_val_fails = 0LL;
-    long long int ins_successes = 0LL;
-    long long int del_successes = 0LL;
-    long long int search_successes = 0LL;
-    long long int search_by_val_successes = 0LL;
-    long long int swap_val_successes = 0LL;
-    long long int itter_inits = 0LL;
-    long long int itter_nexts = 0LL;
-    long long int itter_ends = 0LL;
-    unsigned int seed;
-    struct timeval t;
-    struct lfht_t lfht;
-    pthread_t threads[MAX_NUM_THREADS];
+    int                          i;
+    long long int                ins_fails               = 0LL;
+    long long int                del_fails               = 0LL;
+    long long int                search_fails            = 0LL;
+    long long int                search_by_val_fails     = 0LL;
+    long long int                swap_val_fails          = 0LL;
+    long long int                ins_successes           = 0LL;
+    long long int                del_successes           = 0LL;
+    long long int                search_successes        = 0LL;
+    long long int                search_by_val_successes = 0LL;
+    long long int                swap_val_successes      = 0LL;
+    long long int                itter_inits             = 0LL;
+    long long int                itter_nexts             = 0LL;
+    long long int                itter_ends              = 0LL;
+    unsigned int                 seed;
+    struct timeval               t;
+    struct lfht_t                lfht;
+    pthread_t                    threads[MAX_NUM_THREADS];
     struct lfht_mt_test_params_t params[MAX_NUM_THREADS];
 
     assert(nthreads <= MAX_NUM_THREADS);
@@ -3013,8 +2973,7 @@ void lfht_lfsll_mt_test_2(int nthreads)
 
     srand(seed);
 
-    fprintf(stdout, "LFHT LFSLL multi-thread test 2 (nthreads = %d, seed = 0x%x) ...", 
-            nthreads, seed);
+    fprintf(stdout, "LFHT LFSLL multi-thread test 2 (nthreads = %d, seed = 0x%x) ...", nthreads, seed);
 
     fflush(stdout);
 
@@ -3028,17 +2987,17 @@ void lfht_lfsll_mt_test_2(int nthreads)
 
     for (i = 0; i < nthreads; i++) {
 
-        params[i].lfht_ptr                = &lfht;
+        params[i].lfht_ptr = &lfht;
 
-        if ( (i % 2) == 0 ) {
+        if ((i % 2) == 0) {
 
-            params[i].start_id            = (long long int)0;
-            params[i].step                = (long long int)1;
+            params[i].start_id = (long long int)0;
+            params[i].step     = (long long int)1;
+        }
+        else {
 
-        } else {
-
-            params[i].start_id            = (long long int)9999;
-            params[i].step                = (long long int)-1;
+            params[i].start_id = (long long int)9999;
+            params[i].step     = (long long int)-1;
         }
         params[i].num_ids                 = 10000LL;
         params[i].itterations             = 0LL; /* not used in this test */
@@ -3068,21 +3027,21 @@ void lfht_lfsll_mt_test_2(int nthreads)
 
         assert(0 == pthread_join(threads[i], NULL));
 
-        ins_fails               += params[i].ins_fails;
-        del_fails               += params[i].del_fails;
-        search_fails            += params[i].search_fails;
-        search_by_val_fails     += params[i].search_by_val_fails;
-        swap_val_fails          += params[i].swap_val_fails;
+        ins_fails += params[i].ins_fails;
+        del_fails += params[i].del_fails;
+        search_fails += params[i].search_fails;
+        search_by_val_fails += params[i].search_by_val_fails;
+        swap_val_fails += params[i].swap_val_fails;
 
-        ins_successes           += params[i].ins_successes;
-        del_successes           += params[i].del_successes;
-        search_successes        += params[i].search_successes;
+        ins_successes += params[i].ins_successes;
+        del_successes += params[i].del_successes;
+        search_successes += params[i].search_successes;
         search_by_val_successes += params[i].search_by_val_successes;
-        swap_val_successes      += params[i].swap_val_successes;
+        swap_val_successes += params[i].swap_val_successes;
 
-        itter_inits             += params[i].itter_inits;
-        itter_nexts             += params[i].itter_nexts;
-        itter_ends              += params[i].itter_ends;
+        itter_inits += params[i].itter_inits;
+        itter_nexts += params[i].itter_nexts;
+        itter_ends += params[i].itter_ends;
     }
 
 #if 0 
@@ -3099,11 +3058,11 @@ void lfht_lfsll_mt_test_2(int nthreads)
             (atomic_load(&(lfht.lfsll_phys_len)) + atomic_load(&(lfht.fl_len))));
 #endif
 
-#if 0 /* JRM */
+#if 0  /* JRM */
     lfht_dump_list(&lfht, stdout);
 #endif /* JRM */
 
-#if 0 /* JRM */
+#if 0  /* JRM */
     lfht_dump_stats(&lfht, stdout);
 #endif /* JRM */
 
@@ -3126,33 +3085,32 @@ void lfht_lfsll_mt_test_2(int nthreads)
 
     /* lfht.lfsll_log_len and lfht.lfsll_phys_len will vary */
 
-    assert(3 * nthreads * 10000 == 
+    assert(3 * nthreads * 10000 ==
            (atomic_load(&(lfht.insertions)) + atomic_load(&(lfht.insertion_failures))));
 
     /* lfht.lfht.ins_restarts_due_to_ins_col and lfht.lfht.ins_restarts_due_to_del_col will vary */
     /* lfht.ins_deletion_completions and lfht.nodes_visited_during_ins will vary */
 
     assert(3 * nthreads * 10000 == atomic_load(&(lfht.deletion_attempts)));
-    assert((nthreads * 10000) + (ins_fails - (nthreads * 10000)) == 
-            atomic_load(&(lfht.deletion_failures)) + atomic_load(&(lfht.deletion_start_cols)) - 
-            atomic_load(&((lfht.lfsll_log_len))));
+    assert((nthreads * 10000) + (ins_fails - (nthreads * 10000)) ==
+           atomic_load(&(lfht.deletion_failures)) + atomic_load(&(lfht.deletion_start_cols)) -
+               atomic_load(&((lfht.lfsll_log_len))));
     assert(((2 * nthreads * 10000) - (ins_fails - (nthreads * 10000))) ==
            (atomic_load(&(lfht.deletion_starts)) + atomic_load(&(lfht.lfsll_log_len))));
 
     /* lfht.deletion_start_cols and lfht.del_restarts_due_to_del_col) will vary */
     /* lfht.del_deletion_completions and lfht.nodes_visited_during_dels will vary */
 
-    assert( ( atomic_load(&(lfht.ins_deletion_completions)) + 
-              atomic_load(&(lfht.del_deletion_completions)) +
-              atomic_load(&(lfht.lfsll_phys_len)) - 2 )  == 
-            ( (2 * nthreads * 10000) - (ins_fails - (nthreads * 10000)) ) );
+    assert((atomic_load(&(lfht.ins_deletion_completions)) + atomic_load(&(lfht.del_deletion_completions)) +
+            atomic_load(&(lfht.lfsll_phys_len)) - 2) ==
+           ((2 * nthreads * 10000) - (ins_fails - (nthreads * 10000))));
 
     assert(3 * nthreads * 10000 == atomic_load(&(lfht.searches)));
-    assert(3 * nthreads * 10000 == 
-          ( atomic_load(&(lfht.successful_searches)) + atomic_load(&(lfht.failed_searches)) ) );
+    assert(3 * nthreads * 10000 ==
+           (atomic_load(&(lfht.successful_searches)) + atomic_load(&(lfht.failed_searches))));
 
     /* lfht.marked_nodes_visited_in_succ_searches, lfht.unmarked_nodes_visited_in_succ_searches
-     * lfht.marked_nodes_visited_in_failed_searches, and 
+     * lfht.marked_nodes_visited_in_failed_searches, and
      * lfht.unmarked_nodes_visited_in_failed_searches will vary
      */
 
@@ -3170,7 +3128,6 @@ void lfht_lfsll_mt_test_2(int nthreads)
 
 } /* lfht_lfsll_mt_test_2() */
 
-
 /***********************************************************************************
  *
  * lfht_lfsll_mt_test_3()
@@ -3179,14 +3136,14 @@ void lfht_lfsll_mt_test_2(int nthreads)
  *     singly linked list.
  *
  *     Spawn nthreads threads, each of which performs random operations on the LFHT
- *     in parallel.  
+ *     in parallel.
  *
- *     In this case, all threads perform random operations on random values in 
- *     the same range -- thus all manner of collisions, insert, search, 
+ *     In this case, all threads perform random operations on random values in
+ *     the same range -- thus all manner of collisions, insert, search,
  *     and delete failures are expected.  Further, since operations are performed
  *     in random order, correctness is hard to check.
  *
- *     Instead, we simply verify that the statistics ballance -- i.e. allocs and 
+ *     Instead, we simply verify that the statistics ballance -- i.e. allocs and
  *     frees ballance, successful inserts and deletes ballance, etc.
  *
  *                                                   JRM -- 6/28/23
@@ -3197,26 +3154,27 @@ void lfht_lfsll_mt_test_2(int nthreads)
  *
  ***********************************************************************************/
 
-void lfht_lfsll_mt_test_3(int nthreads)
+void
+lfht_lfsll_mt_test_3(int nthreads)
 {
-    int i;
-    long long int ins_fails = 0LL;
-    long long int del_fails = 0LL;
-    long long int search_fails = 0LL;
-    long long int search_by_val_fails = 0LL;
-    long long int swap_val_fails = 0LL;
-    long long int ins_successes = 0LL;
-    long long int del_successes = 0LL;
-    long long int search_successes = 0LL;
-    long long int search_by_val_successes = 0LL;
-    long long int swap_val_successes = 0LL;
-    long long int itter_inits = 0LL;
-    long long int itter_nexts = 0LL;
-    long long int itter_ends = 0LL;
-    unsigned int seed;
-    struct timeval t;
-    struct lfht_t lfht;
-    pthread_t threads[MAX_NUM_THREADS];
+    int                          i;
+    long long int                ins_fails               = 0LL;
+    long long int                del_fails               = 0LL;
+    long long int                search_fails            = 0LL;
+    long long int                search_by_val_fails     = 0LL;
+    long long int                swap_val_fails          = 0LL;
+    long long int                ins_successes           = 0LL;
+    long long int                del_successes           = 0LL;
+    long long int                search_successes        = 0LL;
+    long long int                search_by_val_successes = 0LL;
+    long long int                swap_val_successes      = 0LL;
+    long long int                itter_inits             = 0LL;
+    long long int                itter_nexts             = 0LL;
+    long long int                itter_ends              = 0LL;
+    unsigned int                 seed;
+    struct timeval               t;
+    struct lfht_t                lfht;
+    pthread_t                    threads[MAX_NUM_THREADS];
     struct lfht_mt_test_params_t params[MAX_NUM_THREADS];
 
     assert(nthreads <= MAX_NUM_THREADS);
@@ -3227,8 +3185,7 @@ void lfht_lfsll_mt_test_3(int nthreads)
 
     srand(seed);
 
-    fprintf(stdout, "LFHT LFSLL multi-thread test 3 (nthreads = %d, seed = 0x%x) ...", 
-            nthreads, seed);
+    fprintf(stdout, "LFHT LFSLL multi-thread test 3 (nthreads = %d, seed = 0x%x) ...", nthreads, seed);
 
     fflush(stdout);
 
@@ -3237,8 +3194,8 @@ void lfht_lfsll_mt_test_3(int nthreads)
     /* set lfht.max_index_bits to zero -- which forces the lock free hash table
      * to funtion as a lock free singly linked list, as it forces all entries
      * into a single hash bucket.
-     */   
-    lfht.max_index_bits = 0; 
+     */
+    lfht.max_index_bits = 0;
 
     for (i = 0; i < nthreads; i++) {
 
@@ -3252,7 +3209,7 @@ void lfht_lfsll_mt_test_3(int nthreads)
         params[i].search_fails            = 0LL;
         params[i].search_by_val_fails     = 0LL;
         params[i].swap_val_fails          = 0LL;
-        params[i].ins_successes           = 0LL; 
+        params[i].ins_successes           = 0LL;
         params[i].del_successes           = 0LL;
         params[i].search_successes        = 0LL;
         params[i].search_by_val_successes = 0LL;
@@ -3273,21 +3230,21 @@ void lfht_lfsll_mt_test_3(int nthreads)
 
         assert(0 == pthread_join(threads[i], NULL));
 
-        ins_fails               += params[i].ins_fails;
-        del_fails               += params[i].del_fails;
-        search_fails            += params[i].search_fails;
-        search_by_val_fails     += params[i].search_by_val_fails;
-        swap_val_fails          += params[i].swap_val_fails;
+        ins_fails += params[i].ins_fails;
+        del_fails += params[i].del_fails;
+        search_fails += params[i].search_fails;
+        search_by_val_fails += params[i].search_by_val_fails;
+        swap_val_fails += params[i].swap_val_fails;
 
-        ins_successes           += params[i].ins_successes;
-        del_successes           += params[i].del_successes;
-        search_successes        += params[i].search_successes;
+        ins_successes += params[i].ins_successes;
+        del_successes += params[i].del_successes;
+        search_successes += params[i].search_successes;
         search_by_val_successes += params[i].search_by_val_successes;
-        swap_val_successes      += params[i].swap_val_successes;
+        swap_val_successes += params[i].swap_val_successes;
 
-        itter_inits             += params[i].itter_inits;
-        itter_nexts             += params[i].itter_nexts;
-        itter_ends              += params[i].itter_ends;
+        itter_inits += params[i].itter_inits;
+        itter_nexts += params[i].itter_nexts;
+        itter_ends += params[i].itter_ends;
     }
 
 #if 0 
@@ -3305,11 +3262,11 @@ void lfht_lfsll_mt_test_3(int nthreads)
             atomic_load(&(lfht.lfsll_log_len)));
 #endif
 
-#if 0 /* JRM */
+#if 0  /* JRM */
     lfht_dump_list(&lfht, stdout);
 #endif /* JRM */
 
-#if 0 /* JRM */
+#if 0  /* JRM */
     lfht_dump_stats(&lfht, stdout);
 #endif /* JRM */
 
@@ -3320,22 +3277,22 @@ void lfht_lfsll_mt_test_3(int nthreads)
     assert((atomic_load(&(lfht.num_nodes_allocated)) - atomic_load(&(lfht.num_nodes_freed))) ==
            (atomic_load(&(lfht.lfsll_phys_len)) + atomic_load(&(lfht.fl_len))));
 
-    assert(ins_fails            == atomic_load(&(lfht.insertion_failures)));
-    assert(del_fails            == atomic_load(&(lfht.deletion_failures)));
-    assert(search_fails         == atomic_load(&(lfht.failed_searches)));
-    assert(search_by_val_fails  == atomic_load(&(lfht.failed_val_searches)));
-    assert(swap_val_fails       == atomic_load(&(lfht.failed_val_swaps)));
+    assert(ins_fails == atomic_load(&(lfht.insertion_failures)));
+    assert(del_fails == atomic_load(&(lfht.deletion_failures)));
+    assert(search_fails == atomic_load(&(lfht.failed_searches)));
+    assert(search_by_val_fails == atomic_load(&(lfht.failed_val_searches)));
+    assert(swap_val_fails == atomic_load(&(lfht.failed_val_swaps)));
 
-    assert(ins_successes            == atomic_load(&(lfht.insertions)));
-    assert(del_successes            == (atomic_load(&(lfht.deletion_starts)) + 
-                                        atomic_load(&(lfht.deletion_start_cols))));
-    assert(search_successes         == atomic_load(&(lfht.successful_searches)));
-    assert(search_by_val_successes  == atomic_load(&(lfht.successful_val_searches)));
-    assert(swap_val_successes       == atomic_load(&(lfht.successful_val_swaps)));
+    assert(ins_successes == atomic_load(&(lfht.insertions)));
+    assert(del_successes ==
+           (atomic_load(&(lfht.deletion_starts)) + atomic_load(&(lfht.deletion_start_cols))));
+    assert(search_successes == atomic_load(&(lfht.successful_searches)));
+    assert(search_by_val_successes == atomic_load(&(lfht.successful_val_searches)));
+    assert(swap_val_successes == atomic_load(&(lfht.successful_val_swaps)));
 
     assert(itter_inits == atomic_load(&(lfht.itter_inits)));
     assert(itter_nexts == atomic_load(&(lfht.itter_nexts)));
-    assert(itter_ends  == atomic_load(&(lfht.itter_ends)));
+    assert(itter_ends == atomic_load(&(lfht.itter_ends)));
 
     /* lfht.lfsll_log_len and lfht.lfsll_phys_len will vary */
 
@@ -3349,10 +3306,9 @@ void lfht_lfsll_mt_test_3(int nthreads)
 
     /* lfht.deletion_failures will vary */
 
-    assert( (ins_successes - atomic_load(&(lfht.lfsll_log_len))) == 
-            (atomic_load(&(lfht.ins_deletion_completions)) +
-             atomic_load(&(lfht.del_deletion_completions)) +
-             (atomic_load(&(lfht.lfsll_phys_len)) - atomic_load(&(lfht.lfsll_log_len)) - 2)) ); 
+    assert((ins_successes - atomic_load(&(lfht.lfsll_log_len))) ==
+           (atomic_load(&(lfht.ins_deletion_completions)) + atomic_load(&(lfht.del_deletion_completions)) +
+            (atomic_load(&(lfht.lfsll_phys_len)) - atomic_load(&(lfht.lfsll_log_len)) - 2)));
 
     /* lfht.deletion_start_cols and lfht.del_restarts_due_to_del_col) will vary */
     /* lfht.del_deletion_completions and lfht.nodes_visited_during_dels will vary */
@@ -3362,7 +3318,7 @@ void lfht_lfsll_mt_test_3(int nthreads)
     assert(atomic_load(&(lfht.searches)) == (search_successes + search_fails));
 
     /* lfht.marked_nodes_visited_in_succ_searches, lfht.unmarked_nodes_visited_in_succ_searches
-     * lfht.marked_nodes_visited_in_failed_searches, and 
+     * lfht.marked_nodes_visited_in_failed_searches, and
      * lfht.unmarked_nodes_visited_in_failed_searches will vary
      */
 
@@ -3382,7 +3338,6 @@ void lfht_lfsll_mt_test_3(int nthreads)
 
 } /* lfht_lfsll_mt_test_3() */
 
-
 /***********************************************************************************
  *
  * lfht_mt_test_1()
@@ -3393,7 +3348,7 @@ void lfht_lfsll_mt_test_3(int nthreads)
  *     in parallel.  In this case, allow only one thread to touch any one value.
  *     As a result, there should be no insert, deleted, or search collisions
  *     proper.  However collisions allocating and discarding entries will occur,
- *     as will collisions when completing deletions. 
+ *     as will collisions when completing deletions.
  *
  *                                                   JRM -- 6/19/23
  *
@@ -3403,21 +3358,22 @@ void lfht_lfsll_mt_test_3(int nthreads)
  *
  ***********************************************************************************/
 
-void lfht_mt_test_1(int run, int nthreads)
+void
+lfht_mt_test_1(int run, int nthreads)
 {
-    int i;
-    long long int ins_fails = 0LL;
-    long long int del_fails = 0LL;
-    long long int search_fails = 0LL;
-    long long int search_by_val_fails = 0LL;
-    long long int swap_val_fails = 0LL;
-    long long int itter_inits = 0LL;
-    long long int itter_nexts = 0LL;
-    long long int itter_ends = 0LL;
-    unsigned int seed;
-    struct timeval t;
-    struct lfht_t lfht;
-    pthread_t threads[MAX_NUM_THREADS];
+    int                          i;
+    long long int                ins_fails           = 0LL;
+    long long int                del_fails           = 0LL;
+    long long int                search_fails        = 0LL;
+    long long int                search_by_val_fails = 0LL;
+    long long int                swap_val_fails      = 0LL;
+    long long int                itter_inits         = 0LL;
+    long long int                itter_nexts         = 0LL;
+    long long int                itter_ends          = 0LL;
+    unsigned int                 seed;
+    struct timeval               t;
+    struct lfht_t                lfht;
+    pthread_t                    threads[MAX_NUM_THREADS];
     struct lfht_mt_test_params_t params[MAX_NUM_THREADS];
 
     assert(nthreads <= MAX_NUM_THREADS);
@@ -3428,8 +3384,8 @@ void lfht_mt_test_1(int run, int nthreads)
 
     srand(seed);
 
-    fprintf(stdout, "LFHT multi-thread test 1 (nthreads = %d, run = %d, seed = 0x%x) ...", 
-            nthreads, run, seed);
+    fprintf(stdout, "LFHT multi-thread test 1 (nthreads = %d, run = %d, seed = 0x%x) ...", nthreads, run,
+            seed);
 
     fflush(stdout);
 
@@ -3468,15 +3424,15 @@ void lfht_mt_test_1(int run, int nthreads)
 
         assert(0 == pthread_join(threads[i], NULL));
 
-        ins_fails           += params[i].ins_fails;
-        del_fails           += params[i].del_fails;
-        search_fails        += params[i].search_fails;
+        ins_fails += params[i].ins_fails;
+        del_fails += params[i].del_fails;
+        search_fails += params[i].search_fails;
         search_by_val_fails += params[i].search_by_val_fails;
-        swap_val_fails      += params[i].swap_val_fails;
+        swap_val_fails += params[i].swap_val_fails;
 
-        itter_inits         += params[i].itter_inits;
-        itter_nexts         += params[i].itter_nexts;
-        itter_ends          += params[i].itter_ends;
+        itter_inits += params[i].itter_inits;
+        itter_nexts += params[i].itter_nexts;
+        itter_ends += params[i].itter_ends;
     }
 
 #if 0 
@@ -3491,11 +3447,11 @@ void lfht_mt_test_1(int run, int nthreads)
             (atomic_load(&(lfht.lfsll_phys_len)) + atomic_load(&(lfht.fl_len))));
 #endif
 
-#if 0 /* JRM */
+#if 0  /* JRM */
     lfht_dump_list(&lfht, stdout);
 #endif /* JRM */
 
-#if 0 /* JRM */
+#if 0  /* JRM */
     lfht_dump_stats(&lfht, stdout);
 #endif /* JRM */
 
@@ -3506,45 +3462,44 @@ void lfht_mt_test_1(int run, int nthreads)
     assert((atomic_load(&(lfht.num_nodes_allocated)) - atomic_load(&(lfht.num_nodes_freed))) ==
            (atomic_load(&(lfht.lfsll_phys_len)) + atomic_load(&(lfht.fl_len))));
 
-    assert(ins_fails           == atomic_load(&(lfht.insertion_failures)));
-    assert(del_fails           == atomic_load(&(lfht.deletion_failures)));
-    assert(search_fails        == atomic_load(&(lfht.failed_searches)));
+    assert(ins_fails == atomic_load(&(lfht.insertion_failures)));
+    assert(del_fails == atomic_load(&(lfht.deletion_failures)));
+    assert(search_fails == atomic_load(&(lfht.failed_searches)));
     assert(search_by_val_fails == atomic_load(&(lfht.failed_val_searches)));
-    assert(swap_val_fails      == atomic_load(&(lfht.failed_val_swaps)));
+    assert(swap_val_fails == atomic_load(&(lfht.failed_val_swaps)));
 
-    assert(itter_inits         == atomic_load(&(lfht.itter_inits)));
-    assert(itter_nexts         == atomic_load(&(lfht.itter_nexts)));
-    assert(itter_ends          == atomic_load(&(lfht.itter_ends)));
+    assert(itter_inits == atomic_load(&(lfht.itter_inits)));
+    assert(itter_nexts == atomic_load(&(lfht.itter_nexts)));
+    assert(itter_ends == atomic_load(&(lfht.itter_ends)));
 
-    assert(   0 == atomic_load(&(lfht.lfsll_log_len)));
+    assert(0 == atomic_load(&(lfht.lfsll_log_len)));
 
     /* lfsll_phys_len varies, and is checked below */
 
     assert(2 * nthreads * 10000 == atomic_load(&(lfht.insertions)));
-    assert(    nthreads * 10000 == atomic_load(&(lfht.insertion_failures)));
+    assert(nthreads * 10000 == atomic_load(&(lfht.insertion_failures)));
 
     /* lfht.lfht.ins_restarts_due_to_ins_col and lfht.lfht.ins_restarts_due_to_del_col will vary */
     /* lfht.ins_deletion_completions and lfht.nodes_visited_during_ins will vary */
 
     assert(3 * nthreads * 10000 == atomic_load(&(lfht.deletion_attempts)));
-    assert(    nthreads * 10000 == atomic_load(&(lfht.deletion_failures)));
+    assert(nthreads * 10000 == atomic_load(&(lfht.deletion_failures)));
     assert(2 * nthreads * 10000 == atomic_load(&(lfht.deletion_starts)));
 
     /* lfht.deletion_start_cols and lfht.del_restarts_due_to_del_col) will vary */
     /* lfht.del_deletion_completions and lfht.nodes_visited_during_dels will vary */
 
-    assert( ( atomic_load(&(lfht.ins_deletion_completions)) + 
-              atomic_load(&(lfht.del_deletion_completions)) +
-              atomic_load(&(lfht.lfsll_log_len)) )  == 
-            ( (2 * nthreads * 10000) - 
-              (atomic_load(&(lfht.lfsll_phys_len)) - atomic_load(&(lfht.buckets_initialized)) - 1) ) );
+    assert((atomic_load(&(lfht.ins_deletion_completions)) + atomic_load(&(lfht.del_deletion_completions)) +
+            atomic_load(&(lfht.lfsll_log_len))) ==
+           ((2 * nthreads * 10000) -
+            (atomic_load(&(lfht.lfsll_phys_len)) - atomic_load(&(lfht.buckets_initialized)) - 1)));
 
     assert(3 * nthreads * 10000 == atomic_load(&(lfht.searches)));
     assert(2 * nthreads * 10000 == atomic_load(&(lfht.successful_searches)));
-    assert(    nthreads * 10000 == atomic_load(&(lfht.failed_searches)));
+    assert(nthreads * 10000 == atomic_load(&(lfht.failed_searches)));
 
     /* lfht.marked_nodes_visited_in_succ_searches, lfht.unmarked_nodes_visited_in_succ_searches
-     * lfht.marked_nodes_visited_in_failed_searches, and 
+     * lfht.marked_nodes_visited_in_failed_searches, and
      * lfht.unmarked_nodes_visited_in_failed_searches will vary
      */
 
@@ -3562,7 +3517,6 @@ void lfht_mt_test_1(int run, int nthreads)
 
 } /* lfht_mt_test_1() */
 
-
 /***********************************************************************************
  *
  * lfht_mt_test_2()
@@ -3571,11 +3525,11 @@ void lfht_mt_test_1(int run, int nthreads)
  *
  *     Spawn nthreads threads, each of which performs operations on the LFHT
  *     in parallel.  In this case, all threads perform the same set of operations
- *     on the same set of value -- thus all manner of collisions, insert, search, 
+ *     on the same set of value -- thus all manner of collisions, insert, search,
  *     and delete failures are expected.  Further, since operations are performed
  *     in a largely random order, correctness is hard to check.
  *
- *     Instead, we simply verify that the statistics ballance -- i.e. allocs and 
+ *     Instead, we simply verify that the statistics ballance -- i.e. allocs and
  *     frees ballance, successful inserts and deletes ballance, etc.
  *
  *                                                   JRM -- 6/27/23
@@ -3586,26 +3540,27 @@ void lfht_mt_test_1(int run, int nthreads)
  *
  ***********************************************************************************/
 
-void lfht_mt_test_2(int run, int nthreads)
+void
+lfht_mt_test_2(int run, int nthreads)
 {
-    int i;
-    long long int ins_fails = 0LL;
-    long long int del_fails = 0LL;
-    long long int search_fails = 0LL;
-    long long int search_by_val_fails = 0LL;
-    long long int swap_val_fails = 0LL;
-    long long int ins_successes = 0LL;
-    long long int del_successes = 0LL;
-    long long int search_successes = 0LL;
-    long long int search_by_val_successes = 0LL;
-    long long int swap_val_successes = 0LL;
-    long long int itter_inits = 0LL;
-    long long int itter_nexts = 0LL;
-    long long int itter_ends = 0LL;
-    unsigned int seed;
-    struct timeval t;
-    struct lfht_t lfht;
-    pthread_t threads[MAX_NUM_THREADS];
+    int                          i;
+    long long int                ins_fails               = 0LL;
+    long long int                del_fails               = 0LL;
+    long long int                search_fails            = 0LL;
+    long long int                search_by_val_fails     = 0LL;
+    long long int                swap_val_fails          = 0LL;
+    long long int                ins_successes           = 0LL;
+    long long int                del_successes           = 0LL;
+    long long int                search_successes        = 0LL;
+    long long int                search_by_val_successes = 0LL;
+    long long int                swap_val_successes      = 0LL;
+    long long int                itter_inits             = 0LL;
+    long long int                itter_nexts             = 0LL;
+    long long int                itter_ends              = 0LL;
+    unsigned int                 seed;
+    struct timeval               t;
+    struct lfht_t                lfht;
+    pthread_t                    threads[MAX_NUM_THREADS];
     struct lfht_mt_test_params_t params[MAX_NUM_THREADS];
 
     assert(nthreads <= MAX_NUM_THREADS);
@@ -3616,8 +3571,8 @@ void lfht_mt_test_2(int run, int nthreads)
 
     srand(seed);
 
-    fprintf(stdout, "LFHT multi-thread test 2 (nthreads = %d, run = %d, seed = 0x%x) ...", 
-            nthreads, run, seed);
+    fprintf(stdout, "LFHT multi-thread test 2 (nthreads = %d, run = %d, seed = 0x%x) ...", nthreads, run,
+            seed);
 
     fflush(stdout);
 
@@ -3625,17 +3580,17 @@ void lfht_mt_test_2(int run, int nthreads)
 
     for (i = 0; i < nthreads; i++) {
 
-        params[i].lfht_ptr                = &lfht;
+        params[i].lfht_ptr = &lfht;
 
-        if ( (i % 2) == 0 ) {
+        if ((i % 2) == 0) {
 
-            params[i].start_id            = (long long int)0;
-            params[i].step                = (long long int)1;
+            params[i].start_id = (long long int)0;
+            params[i].step     = (long long int)1;
+        }
+        else {
 
-        } else {
-
-            params[i].start_id            = (long long int)9999;
-            params[i].step                = (long long int)-1;
+            params[i].start_id = (long long int)9999;
+            params[i].step     = (long long int)-1;
         }
         params[i].num_ids                 = 10000LL;
         params[i].itterations             = 0LL; /* not used in this test */
@@ -3665,21 +3620,21 @@ void lfht_mt_test_2(int run, int nthreads)
 
         assert(0 == pthread_join(threads[i], NULL));
 
-        ins_fails               += params[i].ins_fails;
-        del_fails               += params[i].del_fails;
-        search_fails            += params[i].search_fails;
-        search_by_val_fails     += params[i].search_by_val_fails;
-        swap_val_fails          += params[i].swap_val_fails;
+        ins_fails += params[i].ins_fails;
+        del_fails += params[i].del_fails;
+        search_fails += params[i].search_fails;
+        search_by_val_fails += params[i].search_by_val_fails;
+        swap_val_fails += params[i].swap_val_fails;
 
-        ins_successes           += params[i].ins_successes;
-        del_successes           += params[i].del_successes;
-        search_successes        += params[i].search_successes;
+        ins_successes += params[i].ins_successes;
+        del_successes += params[i].del_successes;
+        search_successes += params[i].search_successes;
         search_by_val_successes += params[i].search_by_val_successes;
-        swap_val_successes      += params[i].swap_val_successes;
+        swap_val_successes += params[i].swap_val_successes;
 
-        itter_inits             += params[i].itter_inits;
-        itter_nexts             += params[i].itter_nexts;
-        itter_ends              += params[i].itter_ends;
+        itter_inits += params[i].itter_inits;
+        itter_nexts += params[i].itter_nexts;
+        itter_ends += params[i].itter_ends;
     }
 
 #if 0 
@@ -3696,11 +3651,11 @@ void lfht_mt_test_2(int run, int nthreads)
             (atomic_load(&(lfht.lfsll_phys_len)) + atomic_load(&(lfht.fl_len))));
 #endif
 
-#if 0 /* JRM */
+#if 0  /* JRM */
     lfht_dump_list(&lfht, stdout);
 #endif /* JRM */
 
-#if 0 /* JRM */
+#if 0  /* JRM */
     lfht_dump_stats(&lfht, stdout);
 #endif /* JRM */
 
@@ -3711,19 +3666,19 @@ void lfht_mt_test_2(int run, int nthreads)
     assert((atomic_load(&(lfht.num_nodes_allocated)) - atomic_load(&(lfht.num_nodes_freed))) ==
            (atomic_load(&(lfht.lfsll_phys_len)) + atomic_load(&(lfht.fl_len))));
 
-    assert(ins_fails           == atomic_load(&(lfht.insertion_failures)));
-    assert(del_fails           == atomic_load(&(lfht.deletion_failures)));
-    assert(search_fails        == atomic_load(&(lfht.failed_searches)));
+    assert(ins_fails == atomic_load(&(lfht.insertion_failures)));
+    assert(del_fails == atomic_load(&(lfht.deletion_failures)));
+    assert(search_fails == atomic_load(&(lfht.failed_searches)));
     assert(search_by_val_fails == atomic_load(&(lfht.failed_val_searches)));
-    assert(swap_val_fails      == atomic_load(&(lfht.failed_val_swaps)));
+    assert(swap_val_fails == atomic_load(&(lfht.failed_val_swaps)));
 
-    assert(itter_inits         == atomic_load(&(lfht.itter_inits)));
-    assert(itter_nexts         == atomic_load(&(lfht.itter_nexts)));
-    assert(itter_ends          == atomic_load(&(lfht.itter_ends)));
+    assert(itter_inits == atomic_load(&(lfht.itter_inits)));
+    assert(itter_nexts == atomic_load(&(lfht.itter_nexts)));
+    assert(itter_ends == atomic_load(&(lfht.itter_ends)));
 
     /* lfht.lfsll_log_len and lfht.lfsll_phys_len will vary */
 
-    assert(3 * nthreads * 10000 == 
+    assert(3 * nthreads * 10000 ==
            (atomic_load(&(lfht.insertions)) + atomic_load(&(lfht.insertion_failures))));
 
     /* lfht.lfht.ins_restarts_due_to_ins_col and lfht.lfht.ins_restarts_due_to_del_col will vary */
@@ -3731,9 +3686,9 @@ void lfht_mt_test_2(int run, int nthreads)
 
     assert(3 * nthreads * 10000 == atomic_load(&(lfht.deletion_attempts)));
 
-    assert((nthreads * 10000) + (ins_fails - (nthreads * 10000)) == 
-            atomic_load(&(lfht.deletion_failures)) + atomic_load(&(lfht.deletion_start_cols)) - 
-            atomic_load(&((lfht.lfsll_log_len))));
+    assert((nthreads * 10000) + (ins_fails - (nthreads * 10000)) ==
+           atomic_load(&(lfht.deletion_failures)) + atomic_load(&(lfht.deletion_start_cols)) -
+               atomic_load(&((lfht.lfsll_log_len))));
 
     assert(((2 * nthreads * 10000) - (ins_fails - (nthreads * 10000))) ==
            (atomic_load(&(lfht.deletion_starts)) + atomic_load(&(lfht.lfsll_log_len))));
@@ -3741,19 +3696,17 @@ void lfht_mt_test_2(int run, int nthreads)
     /* lfht.deletion_start_cols and lfht.del_restarts_due_to_del_col) will vary */
     /* lfht.del_deletion_completions and lfht.nodes_visited_during_dels will vary */
 
-    assert( ( atomic_load(&(lfht.ins_deletion_completions)) + 
-              atomic_load(&(lfht.del_deletion_completions)) +
-              atomic_load(&(lfht.lfsll_phys_len)) - 
-              atomic_load(&(lfht.buckets_initialized)) - 1) ==
-            ( (2 * nthreads * 10000) - (ins_fails - (nthreads * 10000)) ) );
+    assert((atomic_load(&(lfht.ins_deletion_completions)) + atomic_load(&(lfht.del_deletion_completions)) +
+            atomic_load(&(lfht.lfsll_phys_len)) - atomic_load(&(lfht.buckets_initialized)) - 1) ==
+           ((2 * nthreads * 10000) - (ins_fails - (nthreads * 10000))));
 
     assert(3 * nthreads * 10000 == atomic_load(&(lfht.searches)));
 
-    assert(3 * nthreads * 10000 == 
-          ( atomic_load(&(lfht.successful_searches)) + atomic_load(&(lfht.failed_searches)) ) );
+    assert(3 * nthreads * 10000 ==
+           (atomic_load(&(lfht.successful_searches)) + atomic_load(&(lfht.failed_searches))));
 
     /* lfht.marked_nodes_visited_in_succ_searches, lfht.unmarked_nodes_visited_in_succ_searches
-     * lfht.marked_nodes_visited_in_failed_searches, and 
+     * lfht.marked_nodes_visited_in_failed_searches, and
      * lfht.unmarked_nodes_visited_in_failed_searches will vary
      */
 
@@ -3771,7 +3724,6 @@ void lfht_mt_test_2(int run, int nthreads)
 
 } /* lfht_mt_test_2() */
 
-
 /***********************************************************************************
  *
  * lfht_mt_test_3()
@@ -3779,14 +3731,14 @@ void lfht_mt_test_2(int run, int nthreads)
  *     Setup a lock free hash table.
  *
  *     Spawn nthreads threads, each of which performs random operations on the LFHT
- *     in parallel.  
+ *     in parallel.
  *
- *     In this case, all threads perform random operations on random values in 
- *     the same range -- thus all manner of collisions, insert, search, 
+ *     In this case, all threads perform random operations on random values in
+ *     the same range -- thus all manner of collisions, insert, search,
  *     and delete failures are expected.  Further, since operations are performed
  *     in random order, correctness is hard to check.
  *
- *     Instead, we simply verify that the statistics ballance -- i.e. allocs and 
+ *     Instead, we simply verify that the statistics ballance -- i.e. allocs and
  *     frees ballance, successful inserts and deletes ballance, etc.
  *
  *                                                   JRM -- 6/28/23
@@ -3797,33 +3749,34 @@ void lfht_mt_test_2(int run, int nthreads)
  *
  ***********************************************************************************/
 
-void lfht_mt_test_3(int run, int nthreads)
+void
+lfht_mt_test_3(int run, int nthreads)
 {
-    int i;
-    long long int ins_fails = 0LL;
-    long long int del_fails = 0LL;
-    long long int search_fails = 0LL;
-    long long int search_by_val_fails = 0LL;
-    long long int swap_val_fails = 0LL;
-    long long int ins_successes = 0LL;
-    long long int del_successes = 0LL;
-    long long int search_successes = 0LL;
-    long long int search_by_val_successes = 0LL;
-    long long int swap_val_successes = 0LL;
-    long long int itter_inits = 0LL;
-    long long int itter_nexts = 0LL;
-    long long int itter_ends = 0LL;
-    unsigned int seed;
-    struct timeval t;
-    struct lfht_t lfht;
-    pthread_t threads[MAX_NUM_THREADS];
+    int                          i;
+    long long int                ins_fails               = 0LL;
+    long long int                del_fails               = 0LL;
+    long long int                search_fails            = 0LL;
+    long long int                search_by_val_fails     = 0LL;
+    long long int                swap_val_fails          = 0LL;
+    long long int                ins_successes           = 0LL;
+    long long int                del_successes           = 0LL;
+    long long int                search_successes        = 0LL;
+    long long int                search_by_val_successes = 0LL;
+    long long int                swap_val_successes      = 0LL;
+    long long int                itter_inits             = 0LL;
+    long long int                itter_nexts             = 0LL;
+    long long int                itter_ends              = 0LL;
+    unsigned int                 seed;
+    struct timeval               t;
+    struct lfht_t                lfht;
+    pthread_t                    threads[MAX_NUM_THREADS];
     struct lfht_mt_test_params_t params[MAX_NUM_THREADS];
 
     assert(nthreads <= MAX_NUM_THREADS);
 
     assert(0 == gettimeofday(&t, NULL));
 
-#if 1 
+#if 1
     seed = (unsigned int)(t.tv_usec);
 #else
     seed = 0xa4d3e;
@@ -3831,8 +3784,8 @@ void lfht_mt_test_3(int run, int nthreads)
 
     srand(seed);
 
-    fprintf(stdout, "LFHT multi-thread test 3 (nthreads = %d, run = %d, seed = 0x%x) ...", 
-            nthreads, run, seed);
+    fprintf(stdout, "LFHT multi-thread test 3 (nthreads = %d, run = %d, seed = 0x%x) ...", nthreads, run,
+            seed);
 
     fflush(stdout);
 
@@ -3850,7 +3803,7 @@ void lfht_mt_test_3(int run, int nthreads)
         params[i].search_fails            = 0LL;
         params[i].search_by_val_fails     = 0LL;
         params[i].swap_val_fails          = 0LL;
-        params[i].ins_successes           = 0LL; 
+        params[i].ins_successes           = 0LL;
         params[i].del_successes           = 0LL;
         params[i].search_successes        = 0LL;
         params[i].search_by_val_successes = 0LL;
@@ -3871,21 +3824,21 @@ void lfht_mt_test_3(int run, int nthreads)
 
         assert(0 == pthread_join(threads[i], NULL));
 
-        ins_fails               += params[i].ins_fails;
-        del_fails               += params[i].del_fails;
-        search_fails            += params[i].search_fails;
-        search_by_val_fails     += params[i].search_by_val_fails;
-        swap_val_fails          += params[i].swap_val_fails;
+        ins_fails += params[i].ins_fails;
+        del_fails += params[i].del_fails;
+        search_fails += params[i].search_fails;
+        search_by_val_fails += params[i].search_by_val_fails;
+        swap_val_fails += params[i].swap_val_fails;
 
-        ins_successes           += params[i].ins_successes;
-        del_successes           += params[i].del_successes;
-        search_successes        += params[i].search_successes;
+        ins_successes += params[i].ins_successes;
+        del_successes += params[i].del_successes;
+        search_successes += params[i].search_successes;
         search_by_val_successes += params[i].search_by_val_successes;
-        swap_val_successes      += params[i].swap_val_successes;
+        swap_val_successes += params[i].swap_val_successes;
 
-        itter_inits             += params[i].itter_inits;
-        itter_nexts             += params[i].itter_nexts;
-        itter_ends              += params[i].itter_ends;
+        itter_inits += params[i].itter_inits;
+        itter_nexts += params[i].itter_nexts;
+        itter_ends += params[i].itter_ends;
     }
 
 #if 0 
@@ -3903,11 +3856,11 @@ void lfht_mt_test_3(int run, int nthreads)
             atomic_load(&(lfht.lfsll_log_len)));
 #endif
 
-#if 0 /* JRM */
+#if 0  /* JRM */
     lfht_dump_list(&lfht, stdout);
 #endif /* JRM */
 
-#if 0 /* JRM */
+#if 0  /* JRM */
     lfht_dump_stats(&lfht, stdout);
 #endif /* JRM */
 
@@ -3918,22 +3871,22 @@ void lfht_mt_test_3(int run, int nthreads)
     assert((atomic_load(&(lfht.num_nodes_allocated)) - atomic_load(&(lfht.num_nodes_freed))) ==
            (atomic_load(&(lfht.lfsll_phys_len)) + atomic_load(&(lfht.fl_len))));
 
-    assert(ins_fails            == atomic_load(&(lfht.insertion_failures)));
-    assert(del_fails            == atomic_load(&(lfht.deletion_failures)));
-    assert(search_fails         == atomic_load(&(lfht.failed_searches)));
-    assert(search_by_val_fails  == atomic_load(&(lfht.failed_val_searches)));
-    assert(swap_val_fails       == atomic_load(&(lfht.failed_val_swaps)));
+    assert(ins_fails == atomic_load(&(lfht.insertion_failures)));
+    assert(del_fails == atomic_load(&(lfht.deletion_failures)));
+    assert(search_fails == atomic_load(&(lfht.failed_searches)));
+    assert(search_by_val_fails == atomic_load(&(lfht.failed_val_searches)));
+    assert(swap_val_fails == atomic_load(&(lfht.failed_val_swaps)));
 
-    assert(ins_successes            == atomic_load(&(lfht.insertions)));
-    assert(del_successes            == (atomic_load(&(lfht.deletion_starts)) + 
-                                        atomic_load(&(lfht.deletion_start_cols))));
-    assert(search_successes         == atomic_load(&(lfht.successful_searches)));
-    assert(search_by_val_successes  == atomic_load(&(lfht.successful_val_searches)));
-    assert(swap_val_successes       == atomic_load(&(lfht.successful_val_swaps)));
+    assert(ins_successes == atomic_load(&(lfht.insertions)));
+    assert(del_successes ==
+           (atomic_load(&(lfht.deletion_starts)) + atomic_load(&(lfht.deletion_start_cols))));
+    assert(search_successes == atomic_load(&(lfht.successful_searches)));
+    assert(search_by_val_successes == atomic_load(&(lfht.successful_val_searches)));
+    assert(swap_val_successes == atomic_load(&(lfht.successful_val_swaps)));
 
     assert(itter_inits == atomic_load(&(lfht.itter_inits)));
     assert(itter_nexts == atomic_load(&(lfht.itter_nexts)));
-    assert(itter_ends  == atomic_load(&(lfht.itter_ends)));
+    assert(itter_ends == atomic_load(&(lfht.itter_ends)));
 
     /* lfht.lfsll_log_len and lfht.lfsll_phys_len will vary */
 
@@ -3947,12 +3900,10 @@ void lfht_mt_test_3(int run, int nthreads)
 
     /* lfht.deletion_failures will vary */
 
-    assert( (ins_successes - atomic_load(&(lfht.lfsll_log_len))) == 
-            (atomic_load(&(lfht.ins_deletion_completions)) +
-             atomic_load(&(lfht.del_deletion_completions)) +
-             (atomic_load(&(lfht.lfsll_phys_len)) - 
-              atomic_load(&(lfht.lfsll_log_len)) - 
-              atomic_load(&(lfht.buckets_initialized)) - 1)) ); 
+    assert((ins_successes - atomic_load(&(lfht.lfsll_log_len))) ==
+           (atomic_load(&(lfht.ins_deletion_completions)) + atomic_load(&(lfht.del_deletion_completions)) +
+            (atomic_load(&(lfht.lfsll_phys_len)) - atomic_load(&(lfht.lfsll_log_len)) -
+             atomic_load(&(lfht.buckets_initialized)) - 1)));
 
     /* lfht.deletion_start_cols and lfht.del_restarts_due_to_del_col) will vary */
     /* lfht.del_deletion_completions and lfht.nodes_visited_during_dels will vary */
@@ -3962,7 +3913,7 @@ void lfht_mt_test_3(int run, int nthreads)
     assert(atomic_load(&(lfht.searches)) == (search_successes + search_fails));
 
     /* lfht.marked_nodes_visited_in_succ_searches, lfht.unmarked_nodes_visited_in_succ_searches
-     * lfht.marked_nodes_visited_in_failed_searches, and 
+     * lfht.marked_nodes_visited_in_failed_searches, and
      * lfht.unmarked_nodes_visited_in_failed_searches will vary
      */
 
@@ -3984,12 +3935,13 @@ void lfht_mt_test_3(int run, int nthreads)
 
 #define RUN_LFSLL_TESTS 0
 
-int main()
+int
+main()
 {
     int i;
     int nthreads = 8;
 #if LFHT__USE_SPTR
-    struct lfht_flsptr_t test = {NULL, 0x0ULL};
+    struct lfht_flsptr_t         test = {NULL, 0x0ULL};
     _Atomic struct lfht_flsptr_t atest;
 
     atomic_init(&(atest), test);
@@ -4026,14 +3978,14 @@ int main()
     lfht_mt_test_3(1, nthreads);
 
 #else
-    for ( nthreads = 1; nthreads < 32; nthreads++ ) {
+    for (nthreads = 1; nthreads < 32; nthreads++) {
 
 #if RUN_LFSLL_TESTS
         lfht_lfsll_mt_test_1(nthreads);
         lfht_lfsll_mt_test_2(nthreads);
         lfht_lfsll_mt_test_3(nthreads);
 #endif
-        for ( i = 0; i < 10; i++) {
+        for (i = 0; i < 10; i++) {
 
             lfht_mt_test_1(i, nthreads);
             lfht_mt_test_2(i, nthreads);
@@ -4044,6 +3996,6 @@ int main()
 
     fprintf(stdout, "\nLFHT tests complete.\n");
 
-    return(0);
+    return (0);
 
 } /* main() */

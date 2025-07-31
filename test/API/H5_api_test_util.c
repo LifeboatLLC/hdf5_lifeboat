@@ -648,7 +648,7 @@ error:
  * Add a prefix to the given filename. The caller
  * is responsible for freeing the returned filename
  * pointer with free().
- * 
+ *
  * If the API tests are being run multi-threaded,
  * then the framework-assigned thread index will be inserted as well.
  */
@@ -698,7 +698,8 @@ prefix_filename(const char *prefix, const char *filename, char **filename_out)
         ret_value = FAIL;
         goto done;
 #endif
-    } else {
+    }
+    else {
         if (NULL == (out_buf = malloc(H5_API_TEST_FILENAME_MAX_LENGTH))) {
             printf("    couldn't allocated filename buffer\n");
             ret_value = FAIL;
@@ -763,5 +764,3 @@ done:
 
     return ret_value;
 }
-
-

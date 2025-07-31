@@ -5037,19 +5037,19 @@ test_object_visit(void)
     hid_t    file_id         = H5I_INVALID_HID;
     hid_t    file_id2        = H5I_INVALID_HID;
     hid_t    container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
-    hid_t    group_id2  = H5I_INVALID_HID;
-    hid_t    gcpl_id    = H5I_INVALID_HID;
-    hid_t    type_id    = H5I_INVALID_HID;
-    hid_t    dset_id    = H5I_INVALID_HID;
-    hid_t    dset_dtype = H5I_INVALID_HID;
-    hid_t    fspace_id  = H5I_INVALID_HID;
-    hid_t    attr_id    = H5I_INVALID_HID;
-    hid_t    group_id3  = H5I_INVALID_HID;
-    hid_t    group_id4  = H5I_INVALID_HID;
-    hid_t    group_id5  = H5I_INVALID_HID;
-    hssize_t num_elems  = 0;
-    size_t   elem_size  = 0;
-    char     *visit_filename = NULL;
+    hid_t    group_id2      = H5I_INVALID_HID;
+    hid_t    gcpl_id        = H5I_INVALID_HID;
+    hid_t    type_id        = H5I_INVALID_HID;
+    hid_t    dset_id        = H5I_INVALID_HID;
+    hid_t    dset_dtype     = H5I_INVALID_HID;
+    hid_t    fspace_id      = H5I_INVALID_HID;
+    hid_t    attr_id        = H5I_INVALID_HID;
+    hid_t    group_id3      = H5I_INVALID_HID;
+    hid_t    group_id4      = H5I_INVALID_HID;
+    hid_t    group_id5      = H5I_INVALID_HID;
+    hssize_t num_elems      = 0;
+    size_t   elem_size      = 0;
+    char    *visit_filename = NULL;
 
     TESTING_MULTIPART("object visiting");
 
@@ -7363,23 +7363,25 @@ H5_api_object_test_add(void)
     AddTest("print_object_test_header", print_object_test_header, NULL, "Prints header for object tests",
             NULL, 0);
 
-    AddTest("test_open_object",  test_open_object,  NULL,  "object opening",  NULL, testframe_flags);
+    AddTest("test_open_object", test_open_object, NULL, "object opening", NULL, testframe_flags);
     AddTest("test_open_object_invalid_params", test_open_object_invalid_params, NULL,
             "object opening with invalid parameters", NULL, testframe_flags);
-    AddTest("test_object_exists",  test_object_exists,  NULL,  "object existence",  NULL, testframe_flags);
+    AddTest("test_object_exists", test_object_exists, NULL, "object existence", NULL, testframe_flags);
     AddTest("test_object_exists_invalid_params", test_object_exists_invalid_params, NULL,
             "object existence with invalid parameters", NULL, testframe_flags);
-    AddTest("test_get_object_info",  test_get_object_info,  NULL,  "object info retrieval",  NULL, testframe_flags);
+    AddTest("test_get_object_info", test_get_object_info, NULL, "object info retrieval", NULL,
+            testframe_flags);
     AddTest("test_get_object_info_invalid_params", test_get_object_info_invalid_params, NULL,
             "object info retrieval with invalid parameters", NULL, testframe_flags);
-    AddTest("test_link_object",  test_link_object,  NULL,  "object linking",  NULL, testframe_flags);
+    AddTest("test_link_object", test_link_object, NULL, "object linking", NULL, testframe_flags);
     AddTest("test_link_object_invalid_params", test_link_object_invalid_params, NULL,
             "object linking with invalid parameters", NULL, testframe_flags);
     AddTest("test_incr_decr_object_refcount", test_incr_decr_object_refcount, NULL,
             "increment/decrement the reference count of object", NULL, testframe_flags);
     AddTest("test_incr_decr_object_refcount_invalid_params", test_incr_decr_object_refcount_invalid_params,
             NULL, "object reference count incr./decr. with an invalid parameter", NULL, testframe_flags);
-    AddTest("test_object_copy_basic",  test_object_copy_basic,  NULL,  "basic object copying",  NULL, testframe_flags);
+    AddTest("test_object_copy_basic", test_object_copy_basic, NULL, "basic object copying", NULL,
+            testframe_flags);
     AddTest("test_object_copy_already_existing", test_object_copy_already_existing, NULL,
             "object copying to location where objects already exist", NULL, testframe_flags);
     AddTest("test_object_copy_shallow_group_copy", test_object_copy_shallow_group_copy, NULL,
@@ -7394,22 +7396,23 @@ H5_api_object_test_add(void)
             "object copying between files", NULL, testframe_flags);
     AddTest("test_object_copy_invalid_params", test_object_copy_invalid_params, NULL,
             "object copying with invalid parameters", NULL, testframe_flags);
-    AddTest("test_object_comments",  test_object_comments,  NULL,  "object comments",  NULL, testframe_flags);
+    AddTest("test_object_comments", test_object_comments, NULL, "object comments", NULL, testframe_flags);
     AddTest("test_object_comments_invalid_params", test_object_comments_invalid_params, NULL,
             "object comments with invalid parameters", NULL, testframe_flags);
-    AddTest("test_object_visit",  test_object_visit,  NULL,  "object visiting",  NULL, testframe_flags);
+    AddTest("test_object_visit", test_object_visit, NULL, "object visiting", NULL, testframe_flags);
     AddTest("test_object_visit_soft_link", test_object_visit_soft_link, NULL,
             "object visiting with soft links", NULL, testframe_flags);
     AddTest("test_object_visit_invalid_params", test_object_visit_invalid_params, NULL,
             "object visiting with invalid parameters", NULL, testframe_flags);
-    AddTest("test_close_object",  test_close_object,  NULL,  "H5Oclose",  NULL, testframe_flags);
+    AddTest("test_close_object", test_close_object, NULL, "H5Oclose", NULL, testframe_flags);
     AddTest("test_close_object_invalid_params", test_close_object_invalid_params, NULL,
             "H5Oclose with an invalid object ID", NULL, testframe_flags);
-    AddTest("test_close_invalid_objects",  test_close_invalid_objects,  NULL,  "H5Oclose invalid objects",  NULL, testframe_flags);
-    AddTest("test_flush_object",  test_flush_object,  NULL,  "H5Oflush",  NULL, testframe_flags);
+    AddTest("test_close_invalid_objects", test_close_invalid_objects, NULL, "H5Oclose invalid objects", NULL,
+            testframe_flags);
+    AddTest("test_flush_object", test_flush_object, NULL, "H5Oflush", NULL, testframe_flags);
     AddTest("test_flush_object_invalid_params", test_flush_object_invalid_params, NULL,
             "H5Oflush with invalid parameters", NULL, testframe_flags);
-    AddTest("test_refresh_object",  test_refresh_object,  NULL,  "H5Orefresh",  NULL, testframe_flags);
+    AddTest("test_refresh_object", test_refresh_object, NULL, "H5Orefresh", NULL, testframe_flags);
     AddTest("test_refresh_object_invalid_params", test_refresh_object_invalid_params, NULL,
             "H5Orefresh with invalid parameters", NULL, testframe_flags);
 }

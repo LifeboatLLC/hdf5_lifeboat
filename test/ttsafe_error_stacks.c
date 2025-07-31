@@ -20,15 +20,15 @@
 #define ERR_MAJOR_MSG "Okay, Houston, we've had a problem here"
 #define ERR_MINOR_MSG "Oops!"
 
-void* generate_hdf5_error(void *arg);
-void* generate_user_error(void *arg);
+void *generate_hdf5_error(void *arg);
+void *generate_user_error(void *arg);
 
 /* Helper routine to generate an HDF5 library error */
-void*
+void *
 generate_hdf5_error(void H5_ATTR_UNUSED *arg)
 {
-    void* ret_value = NULL;
-    ssize_t           nobjs     = 0;
+    void   *ret_value = NULL;
+    ssize_t nobjs     = 0;
 
     H5E_BEGIN_TRY
     {
@@ -43,14 +43,14 @@ generate_hdf5_error(void H5_ATTR_UNUSED *arg)
 }
 
 /* Helper routine to generate a user-defined error */
-void*
+void *
 generate_user_error(void H5_ATTR_UNUSED *arg)
 {
-    void* ret_value = NULL;
-    hid_t             cls       = H5I_INVALID_HID;
-    hid_t             major     = H5I_INVALID_HID;
-    hid_t             minor     = H5I_INVALID_HID;
-    herr_t            status    = FAIL;
+    void  *ret_value = NULL;
+    hid_t  cls       = H5I_INVALID_HID;
+    hid_t  major     = H5I_INVALID_HID;
+    hid_t  minor     = H5I_INVALID_HID;
+    herr_t status    = FAIL;
 
     cls = H5Eregister_class(ERR_CLS_NAME, ERR_CLS_LIB_NAME, ERR_CLS_LIB_VERSION);
     CHECK(cls, H5I_INVALID_HID, "H5Eregister_class");
@@ -64,7 +64,7 @@ generate_user_error(void H5_ATTR_UNUSED *arg)
     status = H5Epush2(H5E_DEFAULT, __FILE__, __func__, __LINE__, cls, major, minor, "Hello, error\n");
     CHECK(status, FAIL, "H5Epush2");
 
-    ret_value = (void*)cls;
+    ret_value = (void *)cls;
 
     return ret_value;
 }

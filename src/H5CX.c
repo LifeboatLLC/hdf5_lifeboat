@@ -439,7 +439,7 @@ static H5CX_node_t *H5CX__pop_common(hbool_t update_dxpl_props);
 
 #if !defined(H5_HAVE_THREADSAFE) && !defined(H5_HAVE_MULTITHREAD)
 static H5CX_node_t *H5CX_head_g = NULL; /* Pointer to head of context stack */
-#endif /* H5_HAVE_THREADSAFE or H5_HAVE_MULTITHREAD */
+#endif                                  /* H5_HAVE_THREADSAFE or H5_HAVE_MULTITHREAD */
 
 /* Define a "default" dataset transfer property list cache structure to use for default DXPLs */
 static H5CX_dxpl_cache_t H5CX_def_dxpl_cache;
@@ -717,11 +717,11 @@ static H5CX_node_t **
 H5CX__get_context(void)
 {
     H5TS_tl_value_t *tl_value = NULL;
-    H5CX_node_t **ctx = NULL;
+    H5CX_node_t    **ctx      = NULL;
 
     FUNC_ENTER_PACKAGE_NOERR
 
-    tl_value = (H5TS_tl_value_t*)H5TS_get_thread_local_value(H5TS_apictx_key_g);
+    tl_value = (H5TS_tl_value_t *)H5TS_get_thread_local_value(H5TS_apictx_key_g);
 
     if (!tl_value) {
         /* No associated value with current thread - create one */
@@ -743,14 +743,15 @@ H5CX__get_context(void)
         tl_value = malloc(sizeof(H5TS_tl_value_t));
         assert(tl_value);
 
-        tl_value->type = H5TS_CTX;
+        tl_value->type  = H5TS_CTX;
         tl_value->value = ctx;
         /* (It's not necessary to release this in this API, it is
          *      released by the "key destructor" set up in the H5TS
          *      routines.  See calls to pthread_key_create() in H5TS.c -QAK)
          */
-        H5TS_set_thread_local_value(H5TS_apictx_key_g, (void *) tl_value);
-    } else {
+        H5TS_set_thread_local_value(H5TS_apictx_key_g, (void *)tl_value);
+    }
+    else {
         ctx = (H5CX_node_t **)tl_value->value;
         assert(ctx);
     }

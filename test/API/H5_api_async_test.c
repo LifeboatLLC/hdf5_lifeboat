@@ -69,7 +69,8 @@ test_one_dataset_io(void)
     TESTING_MULTIPART("single dataset I/O");
 
     /* Make sure the connector supports the API functions being tested */
-    if (!(vol_cap_flags_g & H5VL_CAP_FLAG_ASYNC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_FILE_BASIC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_DATASET_BASIC) ||
+    if (!(vol_cap_flags_g & H5VL_CAP_FLAG_ASYNC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_FILE_BASIC) ||
+        !(vol_cap_flags_g & H5VL_CAP_FLAG_DATASET_BASIC) ||
         !(vol_cap_flags_g & H5VL_CAP_FLAG_FLUSH_REFRESH)) {
         SKIPPED();
         printf("    API functions for basic file, dataset, or flush aren't supported with this connector\n");
@@ -336,7 +337,8 @@ test_multi_dataset_io(void)
     TESTING_MULTIPART("multi dataset I/O");
 
     /* Make sure the connector supports the API functions being tested */
-    if (!(vol_cap_flags_g & H5VL_CAP_FLAG_ASYNC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_FILE_BASIC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_DATASET_BASIC) ||
+    if (!(vol_cap_flags_g & H5VL_CAP_FLAG_ASYNC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_FILE_BASIC) ||
+        !(vol_cap_flags_g & H5VL_CAP_FLAG_DATASET_BASIC) ||
         !(vol_cap_flags_g & H5VL_CAP_FLAG_FLUSH_REFRESH)) {
         SKIPPED();
         printf("    API functions for basic file, dataset, or flush aren't supported with this connector\n");
@@ -590,7 +592,8 @@ test_multi_file_dataset_io(void)
     TESTING_MULTIPART("multi file dataset I/O");
 
     /* Make sure the connector supports the API functions being tested */
-    if (!(vol_cap_flags_g & H5VL_CAP_FLAG_ASYNC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_FILE_BASIC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_DATASET_BASIC) ||
+    if (!(vol_cap_flags_g & H5VL_CAP_FLAG_ASYNC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_FILE_BASIC) ||
+        !(vol_cap_flags_g & H5VL_CAP_FLAG_DATASET_BASIC) ||
         !(vol_cap_flags_g & H5VL_CAP_FLAG_FLUSH_REFRESH)) {
         SKIPPED();
         printf("    API functions for basic file, dataset, or flush aren't supported with this connector\n");
@@ -900,8 +903,8 @@ test_multi_file_grp_dset_io(void)
     TESTING_MULTIPART("multi file dataset I/O with groups");
 
     /* Make sure the connector supports the API functions being tested */
-    if (!(vol_cap_flags_g & H5VL_CAP_FLAG_ASYNC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_FILE_BASIC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_GROUP_BASIC) ||
-        !(vol_cap_flags_g & H5VL_CAP_FLAG_DATASET_BASIC)) {
+    if (!(vol_cap_flags_g & H5VL_CAP_FLAG_ASYNC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_FILE_BASIC) ||
+        !(vol_cap_flags_g & H5VL_CAP_FLAG_GROUP_BASIC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_DATASET_BASIC)) {
         SKIPPED();
         printf("    API functions for basic file, group, or dataset aren't supported with this connector\n");
         return;
@@ -1216,7 +1219,8 @@ test_set_extent(void)
     TESTING("H5Dset_extent() and H5Dget_space()");
 
     /* Make sure the connector supports the API functions being tested */
-    if (!(vol_cap_flags_g & H5VL_CAP_FLAG_ASYNC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_FILE_BASIC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_FLUSH_REFRESH) ||
+    if (!(vol_cap_flags_g & H5VL_CAP_FLAG_ASYNC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_FILE_BASIC) ||
+        !(vol_cap_flags_g & H5VL_CAP_FLAG_FLUSH_REFRESH) ||
         !(vol_cap_flags_g & H5VL_CAP_FLAG_DATASET_BASIC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_DATASET_MORE)) {
         SKIPPED();
         printf("    API functions for basic file, dataset, dataset more, or flush aren't supported with "
@@ -1420,7 +1424,8 @@ test_attribute_exists(void)
     TESTING("H5Aexists()");
 
     /* Make sure the connector supports the API functions being tested */
-    if (!(vol_cap_flags_g & H5VL_CAP_FLAG_ASYNC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_FILE_BASIC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_FLUSH_REFRESH) ||
+    if (!(vol_cap_flags_g & H5VL_CAP_FLAG_ASYNC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_FILE_BASIC) ||
+        !(vol_cap_flags_g & H5VL_CAP_FLAG_FLUSH_REFRESH) ||
         !(vol_cap_flags_g & H5VL_CAP_FLAG_DATASET_BASIC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_ATTR_BASIC)) {
         SKIPPED();
         printf("    API functions for basic file, dataset, dataset more, attribute, or flush aren't "
@@ -1541,7 +1546,8 @@ test_attribute_io(void)
     TESTING("attribute I/O");
 
     /* Make sure the connector supports the API functions being tested */
-    if (!(vol_cap_flags_g & H5VL_CAP_FLAG_ASYNC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_FILE_BASIC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_FLUSH_REFRESH) ||
+    if (!(vol_cap_flags_g & H5VL_CAP_FLAG_ASYNC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_FILE_BASIC) ||
+        !(vol_cap_flags_g & H5VL_CAP_FLAG_FLUSH_REFRESH) ||
         !(vol_cap_flags_g & H5VL_CAP_FLAG_DATASET_BASIC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_ATTR_BASIC)) {
         SKIPPED();
         printf("    API functions for basic file, dataset, dataset more, attribute, or flush aren't "
@@ -1683,8 +1689,8 @@ test_attribute_io_tconv(void)
     TESTING("attribute I/O with type conversion");
 
     /* Make sure the connector supports the API functions being tested */
-    if (!(vol_cap_flags_g & H5VL_CAP_FLAG_ASYNC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_FILE_BASIC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_FLUSH_REFRESH) ||
-        !(vol_cap_flags_g & H5VL_CAP_FLAG_ATTR_BASIC)) {
+    if (!(vol_cap_flags_g & H5VL_CAP_FLAG_ASYNC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_FILE_BASIC) ||
+        !(vol_cap_flags_g & H5VL_CAP_FLAG_FLUSH_REFRESH) || !(vol_cap_flags_g & H5VL_CAP_FLAG_ATTR_BASIC)) {
         SKIPPED();
         printf(
             "    API functions for basic file, attribute, or flush aren't supported with this connector\n");
@@ -1829,8 +1835,8 @@ test_attribute_io_compound(void)
     TESTING("attribute I/O with compound type conversion");
 
     /* Make sure the connector supports the API functions being tested */
-    if (!(vol_cap_flags_g & H5VL_CAP_FLAG_ASYNC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_FILE_BASIC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_FLUSH_REFRESH) ||
-        !(vol_cap_flags_g & H5VL_CAP_FLAG_ATTR_BASIC)) {
+    if (!(vol_cap_flags_g & H5VL_CAP_FLAG_ASYNC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_FILE_BASIC) ||
+        !(vol_cap_flags_g & H5VL_CAP_FLAG_FLUSH_REFRESH) || !(vol_cap_flags_g & H5VL_CAP_FLAG_ATTR_BASIC)) {
         SKIPPED();
         printf(
             "    API functions for basic file, attribute, or flush aren't supported with this connector\n");
@@ -2135,8 +2141,9 @@ test_group(void)
     TESTING("group operations");
 
     /* Make sure the connector supports the API functions being tested */
-    if (!(vol_cap_flags_g & H5VL_CAP_FLAG_ASYNC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_FILE_BASIC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_GROUP_BASIC) ||
-        !(vol_cap_flags_g & H5VL_CAP_FLAG_GROUP_MORE) || !(vol_cap_flags_g & H5VL_CAP_FLAG_FLUSH_REFRESH)) {
+    if (!(vol_cap_flags_g & H5VL_CAP_FLAG_ASYNC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_FILE_BASIC) ||
+        !(vol_cap_flags_g & H5VL_CAP_FLAG_GROUP_BASIC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_GROUP_MORE) ||
+        !(vol_cap_flags_g & H5VL_CAP_FLAG_FLUSH_REFRESH)) {
         SKIPPED();
         printf("    API functions for basic file, group, or group more aren't supported "
                "with this connector\n");
@@ -2304,9 +2311,9 @@ test_link(void)
     TESTING("link operations");
 
     /* Make sure the connector supports the API functions being tested */
-    if (!(vol_cap_flags_g & H5VL_CAP_FLAG_ASYNC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_FILE_BASIC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_LINK_BASIC) ||
-        !(vol_cap_flags_g & H5VL_CAP_FLAG_HARD_LINKS) || !(vol_cap_flags_g & H5VL_CAP_FLAG_SOFT_LINKS) ||
-        !(vol_cap_flags_g & H5VL_CAP_FLAG_FLUSH_REFRESH) ||
+    if (!(vol_cap_flags_g & H5VL_CAP_FLAG_ASYNC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_FILE_BASIC) ||
+        !(vol_cap_flags_g & H5VL_CAP_FLAG_LINK_BASIC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_HARD_LINKS) ||
+        !(vol_cap_flags_g & H5VL_CAP_FLAG_SOFT_LINKS) || !(vol_cap_flags_g & H5VL_CAP_FLAG_FLUSH_REFRESH) ||
         !(vol_cap_flags_g & H5VL_CAP_FLAG_CREATION_ORDER)) {
         SKIPPED();
         printf("    API functions for basic file, link, hard link, soft link, flush, or creation order "
@@ -2496,9 +2503,9 @@ test_ocopy_orefresh(void)
     TESTING("H5Ocopy() and H5Orefresh()");
 
     /* Make sure the connector supports the API functions being tested */
-    if (!(vol_cap_flags_g & H5VL_CAP_FLAG_ASYNC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_FILE_BASIC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_GROUP_BASIC) ||
-        !(vol_cap_flags_g & H5VL_CAP_FLAG_DATASET_BASIC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_OBJECT_MORE) ||
-        !(vol_cap_flags_g & H5VL_CAP_FLAG_FLUSH_REFRESH)) {
+    if (!(vol_cap_flags_g & H5VL_CAP_FLAG_ASYNC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_FILE_BASIC) ||
+        !(vol_cap_flags_g & H5VL_CAP_FLAG_GROUP_BASIC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_DATASET_BASIC) ||
+        !(vol_cap_flags_g & H5VL_CAP_FLAG_OBJECT_MORE) || !(vol_cap_flags_g & H5VL_CAP_FLAG_FLUSH_REFRESH)) {
         SKIPPED();
         printf("    API functions for basic file, group, dataset, object more, flush, or refresh aren't "
                "supported with this connector\n");
@@ -2608,7 +2615,8 @@ test_file_reopen(void)
     TESTING("H5Freopen()");
 
     /* Make sure the connector supports the API functions being tested */
-    if (!(vol_cap_flags_g & H5VL_CAP_FLAG_ASYNC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_FILE_BASIC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_FILE_MORE)) {
+    if (!(vol_cap_flags_g & H5VL_CAP_FLAG_ASYNC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_FILE_BASIC) ||
+        !(vol_cap_flags_g & H5VL_CAP_FLAG_FILE_MORE)) {
         SKIPPED();
         printf("    API functions for basic file or file more aren't supported with this connector\n");
         return;
@@ -2676,7 +2684,7 @@ test_file_cleanup(void)
     TESTING("cleanup test files");
 
     /* Don't try to remove test files if this connector doesn't support file creation */
-    if (!(vol_cap_flags_g & H5VL_CAP_FLAG_ASYNC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_FILE_BASIC) ) {
+    if (!(vol_cap_flags_g & H5VL_CAP_FLAG_ASYNC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_FILE_BASIC)) {
         SKIPPED();
         printf("    API functions for basic file, dataset, or flush aren't supported with this connector\n");
         return;
@@ -2698,27 +2706,31 @@ H5_api_async_test_add(void)
     int64_t testframe_flags = ALLOW_MULTITHREAD;
 
     /* Add a fake test to print out a header to distinguish different test interfaces */
-    AddTest("print_async_test_header",  print_async_test_header,  NULL,  "Prints header for async tests",  NULL, 0);
+    AddTest("print_async_test_header", print_async_test_header, NULL, "Prints header for async tests", NULL,
+            0);
 
     AddTest("test_one_dataset_io", test_one_dataset_io, NULL, "single dataset I/O", NULL, testframe_flags);
     AddTest("test_multi_dataset_io", test_multi_dataset_io, NULL, "multi dataset I/O", NULL, testframe_flags);
-    AddTest("test_multi_file_dataset_io", test_multi_file_dataset_io, NULL, "multi file dataset I/O", NULL, testframe_flags);
+    AddTest("test_multi_file_dataset_io", test_multi_file_dataset_io, NULL, "multi file dataset I/O", NULL,
+            testframe_flags);
     AddTest("test_multi_file_grp_dset_io", test_multi_file_grp_dset_io, NULL,
             "multi file dataset I/O with groups", NULL, testframe_flags);
-    AddTest("test_set_extent",  test_set_extent,  NULL,  "H5Dset_extent() and H5Dget_space()",  NULL, testframe_flags);
-    AddTest("test_attribute_exists",  test_attribute_exists,  NULL,  "H5Aexists()",  NULL, testframe_flags);
+    AddTest("test_set_extent", test_set_extent, NULL, "H5Dset_extent() and H5Dget_space()", NULL,
+            testframe_flags);
+    AddTest("test_attribute_exists", test_attribute_exists, NULL, "H5Aexists()", NULL, testframe_flags);
     AddTest("test_attribute_io", test_attribute_io, NULL, "attribute I/O", NULL, testframe_flags);
     AddTest("test_attribute_io_tconv", test_attribute_io_tconv, NULL, "attribute I/O with type conversion",
             NULL, testframe_flags);
     AddTest("test_attribute_io_compound", test_attribute_io_compound, NULL,
             "attribute I/O with compound type conversion", NULL, testframe_flags);
-    AddTest("test_group",  test_group,  NULL,  "group operations",  NULL, testframe_flags);
-    AddTest("test_link",  test_link,  NULL,  "link operations",  NULL, testframe_flags);
-    AddTest("test_ocopy_orefresh",  test_ocopy_orefresh,  NULL,  "H5Ocopy() and H5Orefresh()",  NULL, testframe_flags);
-    AddTest("test_file_reopen",  test_file_reopen,  NULL,  "H5Freopen()",  NULL, testframe_flags);
+    AddTest("test_group", test_group, NULL, "group operations", NULL, testframe_flags);
+    AddTest("test_link", test_link, NULL, "link operations", NULL, testframe_flags);
+    AddTest("test_ocopy_orefresh", test_ocopy_orefresh, NULL, "H5Ocopy() and H5Orefresh()", NULL,
+            testframe_flags);
+    AddTest("test_file_reopen", test_file_reopen, NULL, "H5Freopen()", NULL, testframe_flags);
 
     /* Add a fake test to cleanup test files due to current test interdependencies */
-    AddTest("test_file_cleanup",  test_file_cleanup,  NULL,  "cleanup test files",  NULL, testframe_flags);
+    AddTest("test_file_cleanup", test_file_cleanup, NULL, "cleanup test files", NULL, testframe_flags);
 }
 
 #else /* H5_API_TEST_HAVE_ASYNC */
@@ -2727,7 +2739,8 @@ void
 H5_api_async_test_add(void)
 {
     /* Add a fake test to print out a header to distinguish different test interfaces */
-    AddTest("print_async_test_header",  print_async_test_header,  NULL,  "Prints header for async tests",  NULL, 0);
+    AddTest("print_async_test_header", print_async_test_header, NULL, "Prints header for async tests", NULL,
+            0);
 }
 
 #endif /* H5_API_TEST_HAVE_ASYNC */

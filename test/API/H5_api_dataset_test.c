@@ -1210,11 +1210,11 @@ test_create_dataset_predefined_types(void)
     hid_t  container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
     hid_t  fspace_id                    = H5I_INVALID_HID;
     hid_t  dset_id                      = H5I_INVALID_HID;
-    hid_t  predefined_type_test_table[] = {
-        H5T_STD_U8LE,   H5T_STD_U8BE,   H5T_STD_I8LE,   H5T_STD_I8BE,  H5T_STD_U16LE,  H5T_STD_U16BE,
-        H5T_STD_I16LE,  H5T_STD_I16BE,  H5T_STD_U32LE,  H5T_STD_U32BE, H5T_STD_I32LE,  H5T_STD_I32BE,
-        H5T_STD_U64LE,  H5T_STD_U64BE,  H5T_STD_I64LE,  H5T_STD_I64BE, H5T_IEEE_F32LE, H5T_IEEE_F32BE,
-        H5T_IEEE_F64LE, H5T_IEEE_F64BE};
+    hid_t  predefined_type_test_table[] = {H5T_STD_U8LE,   H5T_STD_U8BE,   H5T_STD_I8LE,   H5T_STD_I8BE,
+                                          H5T_STD_U16LE,  H5T_STD_U16BE,  H5T_STD_I16LE,  H5T_STD_I16BE,
+                                          H5T_STD_U32LE,  H5T_STD_U32BE,  H5T_STD_I32LE,  H5T_STD_I32BE,
+                                          H5T_STD_U64LE,  H5T_STD_U64BE,  H5T_STD_I64LE,  H5T_STD_I64BE,
+                                          H5T_IEEE_F32LE, H5T_IEEE_F32BE, H5T_IEEE_F64LE, H5T_IEEE_F64BE};
 
     TESTING("dataset creation with predefined datatypes");
 
@@ -2091,8 +2091,7 @@ test_create_dataset_creation_properties(void)
                     PART_ERROR(DCPL_alloc_time_test);
                 }
 
-                HDsprintf(name, "%s%zu", DATASET_CREATION_PROPERTIES_TEST_ALLOC_TIMES_BASE_NAME,
-                         i);
+                HDsprintf(name, "%s%zu", DATASET_CREATION_PROPERTIES_TEST_ALLOC_TIMES_BASE_NAME, i);
 
                 if ((dset_id = H5Dcreate2(group_id, name, dset_dtype, fspace_id, H5P_DEFAULT, dcpl_id,
                                           H5P_DEFAULT)) < 0) {
@@ -10716,8 +10715,8 @@ test_dataset_set_extent_chunked_fixed(void)
     }
 
     for (i = 0; i < DATASET_SET_EXTENT_CHUNKED_FIXED_TEST_NUM_PASSES; i++) {
-        hbool_t   skip_iterations = FALSE;
-        size_t j;
+        hbool_t skip_iterations = FALSE;
+        size_t  j;
 
         for (j = 0; j < DATASET_SET_EXTENT_CHUNKED_FIXED_TEST_SPACE_RANK; j++) {
             /* Ensure that the new dimensionality is less than the old dimensionality. */
@@ -10785,8 +10784,8 @@ test_dataset_set_extent_chunked_fixed(void)
      * of the changes to the dataset's dimensionality.
      */
     for (i = 0; i < DATASET_SET_EXTENT_CHUNKED_FIXED_TEST_NUM_PASSES; i++) {
-        hbool_t   skip_iterations = FALSE;
-        size_t j;
+        hbool_t skip_iterations = FALSE;
+        size_t  j;
 
         for (j = 0; j < DATASET_SET_EXTENT_CHUNKED_FIXED_TEST_SPACE_RANK; j++) {
             /* Ensure that the new dimensionality is less than the old dimensionality. */
@@ -14259,7 +14258,8 @@ H5_api_dataset_test_add(void)
     int64_t testframe_flags = ALLOW_MULTITHREAD;
 
     /* Add a fake test to print out a header to distinguish different test interfaces */
-    AddTest("print_dataset_test_header",  print_dataset_test_header,  NULL,  "Prints header for dataset tests",  NULL, 0);
+    AddTest("print_dataset_test_header", print_dataset_test_header, NULL, "Prints header for dataset tests",
+            NULL, 0);
     AddTest("test_create_dataset_under_root", test_create_dataset_under_root, NULL,
             "dataset creation under root group", NULL, testframe_flags);
     AddTest("test_create_dataset_under_existing_group", test_create_dataset_under_existing_group, NULL,
@@ -14274,8 +14274,8 @@ H5_api_dataset_test_add(void)
             "dataset creation with a NULL dataspace", NULL, testframe_flags);
     AddTest("test_create_dataset_scalar_space", test_create_dataset_scalar_space, NULL,
             "dataset creation with a SCALAR dataspace", NULL, testframe_flags);
-    AddTest("test_create_zero_dim_dset", test_create_zero_dim_dset, NULL, "creation of 0-sized dataset",
-            NULL, testframe_flags);
+    AddTest("test_create_zero_dim_dset", test_create_zero_dim_dset, NULL, "creation of 0-sized dataset", NULL,
+            testframe_flags);
     AddTest("test_create_dataset_random_shapes", test_create_dataset_random_shapes, NULL,
             "dataset creation with random dimension sizes", NULL, testframe_flags);
     AddTest("test_create_dataset_predefined_types", test_create_dataset_predefined_types, NULL,
@@ -14290,8 +14290,9 @@ H5_api_dataset_test_add(void)
             "dataset creation with array types", NULL, testframe_flags);
     AddTest("test_create_dataset_creation_properties", test_create_dataset_creation_properties, NULL,
             "dataset creation properties", NULL, testframe_flags);
-    AddTest("test_create_many_dataset",  test_create_many_dataset,  NULL,  "creating many datasets",  NULL, testframe_flags);
-    AddTest("test_open_dataset",  test_open_dataset,  NULL,  "H5Dopen",  NULL, testframe_flags);
+    AddTest("test_create_many_dataset", test_create_many_dataset, NULL, "creating many datasets", NULL,
+            testframe_flags);
+    AddTest("test_open_dataset", test_open_dataset, NULL, "H5Dopen", NULL, testframe_flags);
     AddTest("test_open_dataset_invalid_params", test_open_dataset_invalid_params, NULL,
             "H5Dopen with invalid parameters", NULL, testframe_flags);
     AddTest("test_close_dataset_invalid_params", test_close_dataset_invalid_params, NULL,
@@ -14300,14 +14301,14 @@ H5_api_dataset_test_add(void)
             "retrieval of a dataset's dataspace and datatype", NULL, testframe_flags);
     AddTest("test_get_dataset_space_and_type_invalid_params", test_get_dataset_space_and_type_invalid_params,
             NULL, "H5Dget_type/H5Dget_space with invalid parameters", NULL, testframe_flags);
-    AddTest("test_get_dataset_space_status", test_get_dataset_space_status, NULL, "H5Dget_space_status",
-            NULL, testframe_flags);
+    AddTest("test_get_dataset_space_status", test_get_dataset_space_status, NULL, "H5Dget_space_status", NULL,
+            testframe_flags);
     AddTest("test_get_dataset_space_status_invalid_params", test_get_dataset_space_status_invalid_params,
             NULL, "H5Dget_space_status with invalid parameters", NULL, testframe_flags);
     AddTest("test_dataset_property_lists", test_dataset_property_lists, NULL,
             "dataset property list operations", NULL, testframe_flags);
-    AddTest("test_get_dataset_storage_size", test_get_dataset_storage_size, NULL, "H5Dget_storage_size",
-            NULL, testframe_flags);
+    AddTest("test_get_dataset_storage_size", test_get_dataset_storage_size, NULL, "H5Dget_storage_size", NULL,
+            testframe_flags);
     AddTest("test_get_dataset_storage_size_invalid_params", test_get_dataset_storage_size_invalid_params,
             NULL, "H5Dget_storage_size with invalid parameters", NULL, testframe_flags);
     AddTest("test_get_dataset_chunk_storage_size", test_get_dataset_chunk_storage_size, NULL,
@@ -14315,7 +14316,7 @@ H5_api_dataset_test_add(void)
     AddTest("test_get_dataset_chunk_storage_size_invalid_params",
             test_get_dataset_chunk_storage_size_invalid_params, NULL,
             "H5Dget_chunk_storage_size with invalid parameters", NULL, testframe_flags);
-    AddTest("test_get_dataset_offset",  test_get_dataset_offset,  NULL,  "H5Dget_offset",  NULL, testframe_flags);
+    AddTest("test_get_dataset_offset", test_get_dataset_offset, NULL, "H5Dget_offset", NULL, testframe_flags);
     AddTest("test_get_dataset_offset_invalid_params", test_get_dataset_offset_invalid_params, NULL,
             "H5Dget_offset with invalid parameters", NULL, testframe_flags);
     AddTest("test_read_dataset_small_all", test_read_dataset_small_all, NULL,
@@ -14327,9 +14328,11 @@ H5_api_dataset_test_add(void)
     AddTest("test_read_multi_dataset_small_all", test_read_multi_dataset_small_all, NULL,
             "small read from multiple datasets with H5S_ALL using H5Dread_multi", NULL, testframe_flags);
     AddTest("test_read_multi_dataset_small_hyperslab", test_read_multi_dataset_small_hyperslab, NULL,
-            "small read from multiple datasets with hyperslab selection using H5Dread_multi", NULL, testframe_flags);
-    AddTest("test_read_multi_dataset_small_point_selection", test_read_multi_dataset_small_point_selection, NULL,
-            "small read from multiple datasets with point selection using H5Dread_multi", NULL, testframe_flags);
+            "small read from multiple datasets with hyperslab selection using H5Dread_multi", NULL,
+            testframe_flags);
+    AddTest("test_read_multi_dataset_small_point_selection", test_read_multi_dataset_small_point_selection,
+            NULL, "small read from multiple datasets with point selection using H5Dread_multi", NULL,
+            testframe_flags);
     AddTest("test_dataset_io_point_selections", test_dataset_io_point_selections, NULL,
             "point selection I/O with all selection in memory and points in file", NULL, testframe_flags);
     AddTest("test_read_dataset_invalid_params", test_read_dataset_invalid_params, NULL,
@@ -14347,9 +14350,11 @@ H5_api_dataset_test_add(void)
     AddTest("test_write_multi_dataset_small_all", test_write_multi_dataset_small_all, NULL,
             "small write to multiple datasets with H5S_ALL using H5Dwrite_multi", NULL, testframe_flags);
     AddTest("test_write_multi_dataset_small_hyperslab", test_write_multi_dataset_small_hyperslab, NULL,
-            "small write to multiple datasets with hyperslab selection using H5Dwrite_multi", NULL, testframe_flags);
-    AddTest("test_write_multi_dataset_small_point_selection", test_write_multi_dataset_small_point_selection, NULL,
-            "small write to multiple datasets with point selection using H5Dwrite_multi", NULL, testframe_flags);
+            "small write to multiple datasets with hyperslab selection using H5Dwrite_multi", NULL,
+            testframe_flags);
+    AddTest("test_write_multi_dataset_small_point_selection", test_write_multi_dataset_small_point_selection,
+            NULL, "small write to multiple datasets with point selection using H5Dwrite_multi", NULL,
+            testframe_flags);
     AddTest("test_write_multi_dataset_data_verification", test_write_multi_dataset_data_verification, NULL,
             "verification of dataset data using H5Dwrite_multi then H5Dread_multi", NULL, testframe_flags);
     AddTest("test_write_dataset_invalid_params", test_write_dataset_invalid_params, NULL,
@@ -14376,10 +14381,10 @@ H5_api_dataset_test_add(void)
             "H5Dset_extent on double dataset handles", NULL, testframe_flags);
     AddTest("test_dataset_set_extent_invalid_params", test_dataset_set_extent_invalid_params, NULL,
             "H5Dset_extent with invalid parameters", NULL, testframe_flags);
-    AddTest("test_flush_dataset",  test_flush_dataset,  NULL,  "H5Dflush",  NULL, testframe_flags);
+    AddTest("test_flush_dataset", test_flush_dataset, NULL, "H5Dflush", NULL, testframe_flags);
     AddTest("test_flush_dataset_invalid_params", test_flush_dataset_invalid_params, NULL,
             "H5Dflush with invalid parameters", NULL, testframe_flags);
-    AddTest("test_refresh_dataset",  test_refresh_dataset,  NULL,  "H5Drefresh",  NULL, testframe_flags);
+    AddTest("test_refresh_dataset", test_refresh_dataset, NULL, "H5Drefresh", NULL, testframe_flags);
     AddTest("test_refresh_dataset_invalid_params", test_refresh_dataset_invalid_params, NULL,
             "H5Drefresh with invalid parameters", NULL, testframe_flags);
     AddTest("test_create_single_chunk_dataset", test_create_single_chunk_dataset, NULL,
@@ -14389,20 +14394,25 @@ H5_api_dataset_test_add(void)
     AddTest("test_create_multi_chunk_dataset", test_create_multi_chunk_dataset, NULL,
             "creation of dataset with multiple chunks", NULL, testframe_flags);
     AddTest("test_write_multi_chunk_dataset_same_shape_read", test_write_multi_chunk_dataset_same_shape_read,
-            NULL, "write to dataset with multiple chunks using same shaped dataspaces", NULL, testframe_flags);
+            NULL, "write to dataset with multiple chunks using same shaped dataspaces", NULL,
+            testframe_flags);
     AddTest("test_write_multi_chunk_dataset_diff_shape_read", test_write_multi_chunk_dataset_diff_shape_read,
-            NULL, "write to dataset with multiple chunks using differently shaped dataspaces", NULL, testframe_flags);
+            NULL, "write to dataset with multiple chunks using differently shaped dataspaces", NULL,
+            testframe_flags);
     AddTest("test_overwrite_multi_chunk_dataset_same_shape_read",
             test_overwrite_multi_chunk_dataset_same_shape_read, NULL,
-            "several overwrites to dataset with multiple chunks using same shaped dataspaces", NULL, testframe_flags);
+            "several overwrites to dataset with multiple chunks using same shaped dataspaces", NULL,
+            testframe_flags);
     AddTest("test_overwrite_multi_chunk_dataset_diff_shape_read",
             test_overwrite_multi_chunk_dataset_diff_shape_read, NULL,
-            "several overwrites to dataset with multiple chunks using differently shaped dataspaces", NULL, testframe_flags);
+            "several overwrites to dataset with multiple chunks using differently shaped dataspaces", NULL,
+            testframe_flags);
     AddTest("test_read_partial_chunk_all_selection", test_read_partial_chunk_all_selection, NULL,
             "reading a partial chunk using H5S_ALL for file dataspace", NULL, testframe_flags);
     AddTest("test_read_partial_chunk_hyperslab_selection", test_read_partial_chunk_hyperslab_selection, NULL,
             "reading a partial chunk using a hyperslab selection in file dataspace", NULL, testframe_flags);
     AddTest("test_read_partial_chunk_point_selection", test_read_partial_chunk_point_selection, NULL,
             "reading a partial chunk using a point selection in file dataspace", NULL, testframe_flags);
-    AddTest("test_get_vlen_buf_size",  test_get_vlen_buf_size,  NULL,  "H5Dvlen_get_buf_size",  NULL, testframe_flags);
+    AddTest("test_get_vlen_buf_size", test_get_vlen_buf_size, NULL, "H5Dvlen_get_buf_size", NULL,
+            testframe_flags);
 }

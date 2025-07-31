@@ -2665,7 +2665,8 @@ H5_api_datatype_test_add(void)
 
     AddTest("test_recommit_committed_type", test_recommit_committed_type, NULL,
             "inability to re-commit a committed datatype", NULL, testframe_flags);
-    AddTest("test_open_committed_datatype",  test_open_committed_datatype,  NULL,  "H5Topen2",  NULL, testframe_flags);
+    AddTest("test_open_committed_datatype", test_open_committed_datatype, NULL, "H5Topen2", NULL,
+            testframe_flags);
     AddTest("test_open_committed_datatype_invalid_params", test_open_committed_datatype_invalid_params, NULL,
             "H5Topen2 with invalid parameters", NULL, testframe_flags);
     AddTest("test_reopen_committed_datatype_indirect", test_reopen_committed_datatype_indirect, NULL,
@@ -2682,10 +2683,12 @@ H5_api_datatype_test_add(void)
             NULL, testframe_flags);
     AddTest("test_resurrect_datatype", test_resurrect_datatype, NULL, "resurrecting datatype after deletion",
             NULL, testframe_flags);
-    AddTest("test_flush_committed_datatype",  test_flush_committed_datatype,  NULL,  "H5Tflush",  NULL, testframe_flags);
+    AddTest("test_flush_committed_datatype", test_flush_committed_datatype, NULL, "H5Tflush", NULL,
+            testframe_flags);
     AddTest("test_flush_committed_datatype_invalid_params", test_flush_committed_datatype_invalid_params,
             NULL, "H5Tflush with invalid parameters", NULL, testframe_flags);
-    AddTest("test_refresh_committed_datatype",  test_refresh_committed_datatype,  NULL,  "H5Trefresh",  NULL, testframe_flags);
+    AddTest("test_refresh_committed_datatype", test_refresh_committed_datatype, NULL, "H5Trefresh", NULL,
+            testframe_flags);
     AddTest("test_refresh_committed_datatype_invalid_params", test_refresh_committed_datatype_invalid_params,
             NULL, "H5Trefresh with invalid parameters", NULL, testframe_flags);
 

@@ -7,8 +7,7 @@
 #include "H5Pprivate.h"
 #include "H5Ppkg_mt.h"
 
-
-#define TEST_ROOT "test_root"
+#define TEST_ROOT   "test_root"
 #define CLASS1_NAME "Class 1"
 #define CLASS2_NAME "Class 2"
 #define CLASS3_NAME "Class 3"
@@ -22,15 +21,15 @@
  * An array of instances of prop_info_t is used to create properties and to be compared
  * back to for sanity checking after creating or modifying.
  *
- * Fields: 
- * 
+ * Fields:
+ *
  * name (char *):
  *      Pointer to a dynamically allocated string containing the name of the property.
- * 
+ *
  * value (_Atomic H5P_mt_prop_value_t):
  *      Atomic structure containing the pointer to the buffer containing the value of the
  *      property, and its size.
- * 
+ *
  * edited_value (_Atomic H5P_mt_prop_value_t):
  *      Atomic structure containing the pointer to the buffer containing the value of the
  *      property after it has been modified, and its size.
@@ -53,18 +52,15 @@ typedef struct prop_cb_info_t
 } prop_cb_info_t;
 #endif
 
-typedef struct prop_info_t
-{
-    char                      * name;
+typedef struct prop_info_t {
+    char                       *name;
     _Atomic H5P_mt_prop_value_t value;
     _Atomic H5P_mt_prop_value_t edited_value;
-    //prop_cb_info_t              callbacks;
+    // prop_cb_info_t              callbacks;
 
 } prop_info_t;
 
-
-typedef struct mt_test_params_t
-{
+typedef struct mt_test_params_t {
     int thread_id;
 
 } mt_test_params_t;
@@ -76,47 +72,38 @@ static herr_t reset_globals(TestParams_t *params);
 
 static hid_t create_test_root_class(void);
 
-
-
-
-
 /**
- * 
+ *
  */
 static hid_t
 create_test_root_class(void)
 {
-    H5P_mt_class_t * test_root = NULL;
+    H5P_mt_class_t              *test_root = NULL;
     H5P_mt_active_thread_count_t thrd;
     H5P_mt_active_thread_count_t update_thrd;
     bool                         done = FALSE;
 
-    hid_t            ret_value;
+    hid_t ret_value;
 
-    if ( NULL == ( test_root = H5P__mt_create_class(NULL, "test_root", H5P_TYPE_ROOT,
-                                                    0, NULL, NULL, NULL, 
-                                                    NULL, NULL, NULL)))
-    {
+    if (NULL == (test_root = H5P__mt_create_class(NULL, "test_root", H5P_TYPE_ROOT, 0, NULL, NULL, NULL, NULL,
+                                                  NULL, NULL))) {
         fprintf(stderr, "Failed creating test root class.");
         return -1;
     }
 
-    if (( ret_value = H5I_register(H5I_GENPROP_CLS, test_root, FALSE)) < 0)
-    {
+    if ((ret_value = H5I_register(H5I_GENPROP_CLS, test_root, FALSE)) < 0) {
         fprintf(stderr, "Failed registering test root class in index.");
         return -1;
     }
-    
-    return(ret_value);
+
+    return (ret_value);
 
 } /* create_test_root_class() */
 
-
 #endif
 
-
 /**
- * 
+ *
  */
 int
 main(int argc, char **argv)
@@ -128,7 +115,6 @@ main(int argc, char **argv)
         fprintf(stderr, "couldn't initialize testing framework\n");
         exit(EXIT_FAILURE);
     }
-
 
     /* Display testing information */
     TestInfo(stdout);

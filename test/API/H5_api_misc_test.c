@@ -1058,5 +1058,6 @@ H5_api_misc_test_add(void)
             "creating objects with \".\" as the name", NULL, testframe_flags);
     AddTest("test_symbols_in_compound_field_name", test_symbols_in_compound_field_name, NULL,
             "usage of '{', '}' and '\\\"' symbols in compound field name", NULL, testframe_flags);
-    AddTest("test_double_init_term", test_double_init_term, NULL, "double init/term correctness", NULL, testframe_flags);
+    AddTest("test_double_init_term", test_double_init_term, NULL, "double init/term correctness", NULL,
+            testframe_flags);
 }

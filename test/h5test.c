@@ -110,16 +110,16 @@ const char *LIBVER_NAMES[] = {"earliest", /* H5F_LIBVER_EARLIEST = 0  */
 static H5E_auto2_t err_func = NULL;
 
 /* Global variables for testing */
-H5_ATOMIC(size_t) n_tests_run_g = 0;
-H5_ATOMIC(size_t) n_tests_passed_g = 0;
-H5_ATOMIC(size_t) n_tests_failed_g = 0;
+H5_ATOMIC(size_t) n_tests_run_g     = 0;
+H5_ATOMIC(size_t) n_tests_passed_g  = 0;
+H5_ATOMIC(size_t) n_tests_failed_g  = 0;
 H5_ATOMIC(size_t) n_tests_skipped_g = 0;
 
 #ifdef H5_HAVE_MULTITHREAD
 pthread_key_t test_thread_info_key_g;
 #endif
 
-uint64_t vol_cap_flags_g   = H5VL_CAP_FLAG_NONE;
+uint64_t vol_cap_flags_g = H5VL_CAP_FLAG_NONE;
 
 static herr_t h5_errors(hid_t estack, void *client_data);
 static char  *h5_fixname_real(const char *base_name, hid_t fapl, const char *_suffix, char *fullname,
@@ -2300,9 +2300,11 @@ h5_driver_uses_multiple_files(const char *drv_name, unsigned flags)
 }
 
 /* Generate a heap-allocated filename of the form <prefix><thread_idx><filename> */
-char *generate_threadlocal_filename(const char *prefix, int thread_idx, const char *filename) {
-    int chars_written = 0;
-    char *test_filename =  NULL;
+char *
+generate_threadlocal_filename(const char *prefix, int thread_idx, const char *filename)
+{
+    int   chars_written = 0;
+    char *test_filename = NULL;
 
     if (thread_idx > MAX_THREAD_IDX) {
         fprintf(stderr, "    thread index exceeded expected size\n");
@@ -2320,9 +2322,8 @@ char *generate_threadlocal_filename(const char *prefix, int thread_idx, const ch
     }
 
     /* Write prefix, thread index, and filename into buffer */
-    if ((chars_written = snprintf(test_filename,
-                                  H5_API_TEST_FILENAME_MAX_LENGTH, "%s%d%s",
-                                  prefix, thread_idx, filename)) < 0) {
+    if ((chars_written = snprintf(test_filename, H5_API_TEST_FILENAME_MAX_LENGTH, "%s%d%s", prefix,
+                                  thread_idx, filename)) < 0) {
         fprintf(stderr, "    couldn't create test file name\n");
         goto error;
     }
