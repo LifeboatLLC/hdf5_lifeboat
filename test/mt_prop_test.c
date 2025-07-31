@@ -7,10 +7,10 @@
 #include "H5Pprivate.h"
 #include "H5Ppkg_mt.h"
 
-#define TEST_ROOT_NAME   "test_root"
-#define CLASS1_NAME "Class 1"
-#define CLASS2_NAME "Class 2"
-#define CLASS3_NAME "Class 3"
+#define TEST_ROOT_NAME "test_root"
+#define CLASS1_NAME    "Class 1"
+#define CLASS2_NAME    "Class 2"
+#define CLASS3_NAME    "Class 3"
 
 #define NEG_SENTINEL_NAME "neg_sentinel"
 #define POS_SENTINEL_NAME "pos_sentinel"
@@ -75,12 +75,10 @@ static herr_t reset_globals(TestParams_t *params);
 
 static hid_t create_test_root_class(void);
 
-
-
 /****************************************************************************************
  * Function:    create_test_root_class
  *
- * Purpose:     Creates a new root class for testing. This is done to test the 
+ * Purpose:     Creates a new root class for testing. This is done to test the
  *              multithread create class function in the case of creating the root class
  *              and varify all of the fields prior to deriving classes from.
  *
@@ -93,12 +91,12 @@ static hid_t create_test_root_class(void);
 static hid_t
 create_test_root_class(void)
 {
-    H5P_mt_class_t             * test_root = NULL;
+    H5P_mt_class_t              *test_root = NULL;
     H5P_mt_active_thread_count_t thrd;
     H5P_mt_active_thread_count_t update_thrd;
     H5P_mt_class_ref_counts_t    refs;
-    H5P_mt_prop_t              * neg_sentinel;
-    H5P_mt_prop_t              * pos_sentinel;
+    H5P_mt_prop_t               *neg_sentinel;
+    H5P_mt_prop_t               *pos_sentinel;
     H5P_mt_prop_aptr_t           neg_next;
     H5P_mt_prop_aptr_t           pos_next;
     H5P_mt_prop_value_t          neg_value;
@@ -107,8 +105,8 @@ create_test_root_class(void)
 
     hid_t ret_value;
 
-    if (NULL == (test_root = H5P__mt_create_class(NULL, TEST_ROOT_NAME, H5P_TYPE_ROOT, 0, NULL, NULL, NULL, NULL,
-                                                  NULL, NULL))) {
+    if (NULL == (test_root = H5P__mt_create_class(NULL, TEST_ROOT_NAME, H5P_TYPE_ROOT, 0, NULL, NULL, NULL,
+                                                  NULL, NULL, NULL))) {
         fprintf(stderr, "Failed creating test root class.");
         return -1;
     }
@@ -134,14 +132,14 @@ create_test_root_class(void)
     assert(refs.dummy_bool_1 == FALSE);
     assert(refs.dummy_bool_2 == FALSE);
     assert(refs.dummy_bool_3 == FALSE);
-    
+
     /* Assert checks to ensure the LFSLL of test_root are correct */
     neg_sentinel = atomic_load(&(test_root->pl_head));
-    neg_value = atomic_load(&(neg_sentinel->value));
-    neg_next = atomic_load(&(neg_sentinel->next));
+    neg_value    = atomic_load(&(neg_sentinel->value));
+    neg_next     = atomic_load(&(neg_sentinel->next));
     pos_sentinel = neg_next.ptr;
-    pos_value = atomic_load(&(pos_sentinel->value));
-    pos_next = atomic_load(&(pos_sentinel->next));
+    pos_value    = atomic_load(&(pos_sentinel->value));
+    pos_next     = atomic_load(&(pos_sentinel->next));
 
     /* Assert checks for negative sentinel fields */
     assert(atomic_load(&(neg_sentinel->tag)) == H5P_MT_PROP_TAG);
@@ -198,7 +196,7 @@ create_test_root_class(void)
     assert(pos_sentinel->close = NULL);
 
     /**
-     * NOTE: stat fields are checked in later test functions to ensure they are 
+     * NOTE: stat fields are checked in later test functions to ensure they are
      * initialized correctly and are incremented and decremented correctly.
      */
 
@@ -213,22 +211,19 @@ create_test_root_class(void)
     assert(thrd.opening == TRUE);
     assert(thrd.closing == FALSE);
 
-    update_thrd.count = thrd.count;
+    update_thrd.count   = thrd.count;
     update_thrd.opening = FALSE;
     update_thrd.closing = FALSE;
 
-    do
-    {
+    do {
         /* Atomically update test_root->thrd.opening field to now be FALSE */
-        if (!atomic_compare_exchange_strong(&(test_root->thrd), &thrd, update_thrd))
-        {
+        if (!atomic_compare_exchange_strong(&(test_root->thrd), &thrd, update_thrd)) {
             atomic_fetch_add(&(test_root->num_thrd_update_cols), 1);
         }
         else
             done = TRUE;
-    
-    } while ( done == FALSE );
 
+    } while (done == FALSE);
 
     /* Double check test_root->thrd was updated correctly */
     thrd = atomic_load(&(test_root->thrd));
@@ -236,11 +231,9 @@ create_test_root_class(void)
     assert(thrd.opening == FALSE);
     assert(thrd.closing == FALSE);
 
-
     return (ret_value);
 
 } /* create_test_root_class() */
-
 
 #endif /* ifdef H5_HAVE_MULTITHREAD */
 
