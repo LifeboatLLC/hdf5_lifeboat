@@ -11,118 +11,112 @@
 #include "H5Ppkg_mt.h"
 #include "H5Iprivate.h"
 
+#define TEST_ROOT_NAME "test_root"
+hid_t TEST_ROOT_ID_g = H5I_INVALID_HID;
 
+#define CLASS1_NAME "Class 1"
+hid_t CLASS1_ID_g = H5I_INVALID_HID;
 
+#define CLASS2_NAME "Class 2"
+hid_t CLASS2_ID_g = H5I_INVALID_HID;
 
-#define TEST_ROOT_NAME  "test_root"
-hid_t   TEST_ROOT_ID_g = H5I_INVALID_HID;
-
-#define CLASS1_NAME     "Class 1"
-hid_t   CLASS1_ID_g    = H5I_INVALID_HID;
-
-#define CLASS2_NAME     "Class 2"
-hid_t   CLASS2_ID_g    = H5I_INVALID_HID;
-
-#define CLASS3_NAME     "Class 3"
-hid_t   CLASS3_ID_g    = H5I_INVALID_HID;
+#define CLASS3_NAME "Class 3"
+hid_t CLASS3_ID_g = H5I_INVALID_HID;
 
 #define NEG_SENTINEL_NAME "neg_sentinel"
 #define POS_SENTINEL_NAME "pos_sentinel"
 
-
-
 /****************************************************************************************
- * 
+ *
  * Structure: prop_info_t
- * 
+ *
  * Description:
- * 
- * prop_info_t is a structure used in testing to store the chksum, name, and a pointer to 
- * a H5P_mt_prop_t. The H5P_mt_prop_t is used as the basis for the properties created in 
+ *
+ * prop_info_t is a structure used in testing to store the chksum, name, and a pointer to
+ * a H5P_mt_prop_t. The H5P_mt_prop_t is used as the basis for the properties created in
  * test_h5p_mt_functions, and are used to compare back to ensure that any changes made to
  * properties in classes and lists are made correctly.
- * 
+ *
  * Fields:
- * 
+ *
  * chksum (int64_t):
  *      Checksum of the property stored in this instance of prop_info_t.
- * 
+ *
  * name (const char *):
  *      Name of the property stored in this instance of prop_info_t.
- * 
+ *
  * prop (H5P_mt_prop_t *):
  *      Pointer to an instance of H5P_mt_prop_t used to created properties and compare
  *      them back to ensuring correct fields during testing.
- * 
+ *
  ****************************************************************************************
  */
 #define PROP_INFO_TAG 0x1111
 typedef struct prop_info_t {
-    int64_t         chksum;
-    const char    * name;
-    H5P_mt_prop_t * prop;
+    int64_t        chksum;
+    const char    *name;
+    H5P_mt_prop_t *prop;
 
 } prop_info_t;
 
-
 /****************************************************************************************
- * 
+ *
  * Structure: struct_params_t
- * 
+ *
  * Description:
- * 
+ *
  * This structure is used to count and store the classes and lists used during testing.
- * 
+ *
  * NOTE: The test_root class is not stored in the class LFSLL.
- * 
- * Fields: 
- * 
+ *
+ * Fields:
+ *
  * num_classes (int32_t):
  *      Counts the number of testing classes stored in the LFSLL of test classes.
- * 
+ *
  * test_classes_head (H5P_mt_class_sptr_t):
  *      H5P_mt_class_sptr_t struct where the .ptr field points to the head of the LFSLL
  *      of the classes used for testing.
- * 
+ *
  * test_classes_tail (H5P_mt_class_sptr_t):
  *      H5P_mt_class_sptr_t struct where the .ptr field points to the tail of the LFSLL
  *      of the classes used for testing.
- * 
+ *
  * num_lists (int32_t):
  *      Counts the number of testing lists stored in the LFSLL of test lists.
- * 
+ *
  * test_lists_head (H5P_mt_list_sptr_t):
  *      H5P_mt_class_sptr_t struct where the .ptr field points to the head of the LFSLL
  *      of the lists used for testing.
- * 
+ *
  * test_lists_tail (H5P_mt_list_sptr_t):
  *      H5P_mt_class_sptr_t struct where the .ptr field points to the tail of the LFSLL
  *      of the lists used for testing.
- * 
+ *
  ****************************************************************************************
  */
 typedef struct struct_params_t {
-    int32_t num_classes;
+    int32_t             num_classes;
     H5P_mt_class_sptr_t test_classes_head;
     H5P_mt_class_sptr_t test_classes_tail;
 
-    int32_t num_lists;
-    H5P_mt_list_sptr_t  test_lists_head;
-    H5P_mt_list_sptr_t  test_lists_tail;
+    int32_t            num_lists;
+    H5P_mt_list_sptr_t test_lists_head;
+    H5P_mt_list_sptr_t test_lists_tail;
 
 } struct_params_t;
 
 /**
- * 
+ *
  */
 typedef struct mt_test_params_t {
     int thread_id;
 
 } mt_test_params_t;
 
-/** 
+/**
  * Array of prop_info_t* used to store all versions of properties used in testing
- * to be used to create the test properties from and compare them to ensuring 
+ * to be used to create the test properties from and compare them to ensuring
  * correct operations for class and lists respectively.
  */
 static prop_info_t *class_prop_table;
@@ -131,7 +125,6 @@ static prop_info_t *list_prop_table;
 static prop_info_t *list2_prop_table;
 static prop_info_t *list3_prop_table;
 
-
 static herr_t init_globals(void);
 static herr_t init_class_props(void);
 static herr_t init_class2_props(void);
@@ -139,61 +132,47 @@ static herr_t init_list_props(void);
 static herr_t init_list2_props(void);
 static herr_t init_list3_props(void);
 
-static hid_t create_test_root_class(void);
-static herr_t test_h5p_mt_functions(TestParams_t *params);
-static herr_t test_h5p_mt_class_1(struct_params_t *test_params);
-static herr_t test_h5p_mt_class_2(struct_params_t *test_params);
-static herr_t test_h5p_mt_list_1(struct_params_t *test_params);
-static herr_t test_h5p_mt_list_2(struct_params_t *test_params);
-static herr_t check_stats(struct_params_t *test_params);
-static H5P_mt_prop_t * 
-    get_table_prop_ver(prop_info_t prop_table, uint8_t version);
-static herr_t 
-    class_ver_and_len_check(H5P_mt_class_t *class, uint64_t curr_version, 
-                            uint64_t next_version, size_t nprops_added, 
-                            size_t log_len, size_t phys_len, const char *where);
-static herr_t
-    list_ver_and_len_check(H5P_mt_list_t *list, uint64_t curr_version, 
-                           uint64_t next_version, size_t nprops_inherited,
-                           size_t nprops_added, size_t nprops, 
-                           size_t log_pl_len, size_t phys_pl_len, const char *where);
-static herr_t 
-    check_class_ref_counts(H5P_mt_class_t *class, uint64_t pl, uint32_t plc, 
-                           bool deleted, const char *where);
-static herr_t 
-    check_and_set_thrd_flags(void *param, bool opening_is, bool closing_is,
-                             bool set_opening, bool set_closing, const char *where);
-static herr_t
-    compare_lfsll_to_table_props(H5P_mt_prop_t **test_prop, prop_info_t *prop_table, 
-                                 const char *where);
-static herr_t 
-    list_lkup_tbl_check(H5P_mt_list_t *list, size_t nprops_inherited, 
-                        const char *where);
-H5P_mt_prop_t *
-    get_correct_prop_version_from_table(H5P_mt_prop_t *table_prop, uint64_t create_ver,
-                                        uint64_t delete_ver, const char *where);
-static herr_t prop_check(H5P_mt_prop_t *prop, H5P_mt_prop_t *table_prop, 
-                         bool in_prop_class, bool in_lkup_tbl);
-static herr_t sentinel_check(H5P_mt_prop_t *prop);
-
+static hid_t          create_test_root_class(void);
+static herr_t         test_h5p_mt_functions(TestParams_t *params);
+static herr_t         test_h5p_mt_class_1(struct_params_t *test_params);
+static herr_t         test_h5p_mt_class_2(struct_params_t *test_params);
+static herr_t         test_h5p_mt_list_1(struct_params_t *test_params);
+static herr_t         test_h5p_mt_list_2(struct_params_t *test_params);
+static herr_t         check_stats(struct_params_t *test_params);
+static H5P_mt_prop_t *get_table_prop_ver(prop_info_t prop_table, uint8_t version);
+static herr_t  class_ver_and_len_check(H5P_mt_class_t *class, uint64_t curr_version, uint64_t next_version,
+                                       size_t nprops_added, size_t log_len, size_t phys_len,
+                                       const char *where);
+static herr_t  list_ver_and_len_check(H5P_mt_list_t *list, uint64_t curr_version, uint64_t next_version,
+                                      size_t nprops_inherited, size_t nprops_added, size_t nprops,
+                                      size_t log_pl_len, size_t phys_pl_len, const char *where);
+static herr_t  check_class_ref_counts(H5P_mt_class_t *class, uint64_t pl, uint32_t plc, bool deleted,
+                                      const char *where);
+static herr_t  check_and_set_thrd_flags(void *param, bool opening_is, bool closing_is, bool set_opening,
+                                        bool set_closing, const char *where);
+static herr_t  compare_lfsll_to_table_props(H5P_mt_prop_t **test_prop, prop_info_t *prop_table,
+                                            const char *where);
+static herr_t  list_lkup_tbl_check(H5P_mt_list_t *list, size_t nprops_inherited, const char *where);
+H5P_mt_prop_t *get_correct_prop_version_from_table(H5P_mt_prop_t *table_prop, uint64_t create_ver,
+                                                   uint64_t delete_ver, const char *where);
+static herr_t  prop_check(H5P_mt_prop_t *prop, H5P_mt_prop_t *table_prop, bool in_prop_class,
+                          bool in_lkup_tbl);
+static herr_t  sentinel_check(H5P_mt_prop_t *prop);
 
 static herr_t cleanup_mt_prop_test(TestParams_t *params);
 
-
 /** TODO: Will eventually need test callback functions */
-
-
 
 /****************************************************************************************
  * Function:    init_globals
- * 
- * Purpose:     This function allocates the class_prop_table and list_prop_table and 
+ *
+ * Purpose:     This function allocates the class_prop_table and list_prop_table and
  *              calls init_class_props() and init_list_props() to intialize the tables of
  *              prop_info_t used for testing.
- * 
- * 
- * Return:      SUCCEED/FAIL    
- * 
+ *
+ *
+ * Return:      SUCCEED/FAIL
+ *
  ****************************************************************************************
  */
 static herr_t
@@ -204,7 +183,6 @@ init_globals(void)
     herr_t ret_value = SUCCEED;
 
     ret = H5P__reset_stats_global();
-
 
     /* Allocate the class_prop_table*/
     class_prop_table = (prop_info_t *)malloc(8 * sizeof(prop_info_t));
@@ -246,108 +224,98 @@ init_globals(void)
     ret = init_list3_props();
     CHECK_I(ret, "init_list3_props");
 
-    return(ret_value);
+    return (ret_value);
 
 } /* init_globals() */
 
-
-
 /****************************************************************************************
  * Function:    init_class_props
- * 
- * Purpose:     Initializes the prop_info_t structs in the class_prop_table used by 
- *              class1 in testing. There are 4 different prop_info_t structures with the 
+ *
+ * Purpose:     Initializes the prop_info_t structs in the class_prop_table used by
+ *              class1 in testing. There are 4 different prop_info_t structures with the
  *              properties each containing
- *              a different type of value (integer, float, char, double). 
- * 
+ *              a different type of value (integer, float, char, double).
+ *
  *              There are 8 total properties for class1.
- *              Some properties have multiple versions to handle modifications made to 
+ *              Some properties have multiple versions to handle modifications made to
  *              the property during testing. The first version is pointed to by the prop
- *              pointer field of class_prop_table with the higher versions being 
- *              connected in a LFSLL with the the built in next field of the 
+ *              pointer field of class_prop_table with the higher versions being
+ *              connected in a LFSLL with the the built in next field of the
  *              H5P_mt_prop_t structs for simplicity.
- * 
- *              When a property is created, deleted, or modified in a class its 
+ *
+ *              When a property is created, deleted, or modified in a class its
  *              class_table equivalent has its create_version or delete_version updated
  *              to match. This makes it easier to search for the correct version of the
  *              property in the class_prop_table when comparing the properties.
- * 
- * Return:      SUCCEED/FAIL    
- * 
+ *
+ * Return:      SUCCEED/FAIL
+ *
  ****************************************************************************************
  */
 static herr_t
 init_class_props(void)
 {
-    H5P_mt_prop_t     * test_prop;
-    H5P_mt_prop_t     * test_prop_ver2;
-    H5P_mt_prop_t     * new_prop;
+    H5P_mt_prop_t      *test_prop;
+    H5P_mt_prop_t      *test_prop_ver2;
+    H5P_mt_prop_t      *new_prop;
     H5P_mt_prop_value_t test_value;
     H5P_mt_prop_value_t value;
     H5P_mt_prop_value_t new_value;
     H5P_mt_prop_aptr_t  next;
-    const char        * name;
+    const char         *name;
 
-    herr_t              ret_value = SUCCEED;
+    herr_t ret_value = SUCCEED;
 
     /**
-     * Initalize the fields of class_prop_table, 
+     * Initalize the fields of class_prop_table,
      * including allocating and initializing the property
      */
-    
+
     /**
-     * prop_info_t 1 
+     * prop_info_t 1
      */
 
-    class_prop_table[0].name   = strdup("Property 1");
-    name = class_prop_table[0].name;
+    class_prop_table[0].name = strdup("Property 1");
+    name                     = class_prop_table[0].name;
     CHECK_PTR(name, "strdup");
-    if ( HDstrcmp(name, "Property 1") != 0 )
-    {
+    if (HDstrcmp(name, "Property 1") != 0) {
         TestErrPrintf("class_prop_table names don't match! name = %s, Property 1\n", name);
     }
 
-    class_prop_table[0].chksum = 
-                H5_checksum_metadata(name, strlen(name), 0);
+    class_prop_table[0].chksum = H5_checksum_metadata(name, strlen(name), 0);
     CHECK_I(class_prop_table[0].chksum, "H5_checksum_metadata");
 
     static int prop1_value = 42;
-    value.ptr  = (&prop1_value);
-    value.size = sizeof(prop1_value);
+    value.ptr              = (&prop1_value);
+    value.size             = sizeof(prop1_value);
 
-    class_prop_table[0].prop = H5P__mt_create_prop(name, value.ptr, value.size, TRUE, 
-                                                   1, NULL, NULL, NULL, NULL, 
-                                                   NULL, NULL, NULL, NULL, NULL);
+    class_prop_table[0].prop = H5P__mt_create_prop(name, value.ptr, value.size, TRUE, 1, NULL, NULL, NULL,
+                                                   NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(class_prop_table[0].prop, "H5P__mt_create_prop");
 
     test_prop = class_prop_table[0].prop;
     VERIFY(atomic_load(&(test_prop->tag)), H5P_MT_PROP_TAG, "H5P__mt_create_prop");
     VERIFY(test_prop->chksum, class_prop_table[0].chksum, "H5P__mt_create_prop");
     CHECK_PTR(test_prop->name, "H5P__mt_create_prop");
-    if ( HDstrcmp(test_prop->name, "Property 1") != 0 )
-    {
-        TestErrPrintf("Property names don't match! name = %s, Property 1\n", 
-                      test_prop->name);
-    }
-    
-    test_value = atomic_load(&(test_prop->value));
-    VERIFY(test_value.size, value.size, "H5P__mt_create_prop");
-    if ( memcmp(test_value.ptr, value.ptr, value.size ) != 0 )
-    {
-        TestErrPrintf("Property 1 value doesn't match! line=%d\n", __LINE__);
+    if (HDstrcmp(test_prop->name, "Property 1") != 0) {
+        TestErrPrintf("Property names don't match! name = %s, Property 1\n", test_prop->name);
     }
 
+    test_value = atomic_load(&(test_prop->value));
+    VERIFY(test_value.size, value.size, "H5P__mt_create_prop");
+    if (memcmp(test_value.ptr, value.ptr, value.size) != 0) {
+        TestErrPrintf("Property 1 value doesn't match! line=%d\n", __LINE__);
+    }
 
     /**
      * prop_info_t 1 version 2
      */
 
     static int prop1_ver2_value = 66;
-    value.ptr  = (&prop1_ver2_value);
-    value.size = (sizeof(prop1_ver2_value));
+    value.ptr                   = (&prop1_ver2_value);
+    value.size                  = (sizeof(prop1_ver2_value));
 
-    new_prop = H5P__mt_create_prop(class_prop_table[0].name, value.ptr,
-                                   value.size, TRUE, 2, NULL, NULL, NULL, 
+    new_prop = H5P__mt_create_prop(class_prop_table[0].name, value.ptr, value.size, TRUE, 2, NULL, NULL, NULL,
                                    NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(new_prop, "H5P__mt_create_prop");
 
@@ -355,23 +323,19 @@ init_class_props(void)
     assert(atomic_load(&(new_prop->tag)) == H5P_MT_PROP_TAG);
 
     VERIFY(new_prop->chksum, test_prop->chksum, "H5P__mt_create_prop");
-    if ( HDstrcmp(new_prop->name, test_prop->name) != 0 )
-    {
-        TestErrPrintf("Property names don't match! name = %s, Property 1\n", 
-                      new_prop->name);
+    if (HDstrcmp(new_prop->name, test_prop->name) != 0) {
+        TestErrPrintf("Property names don't match! name = %s, Property 1\n", new_prop->name);
     }
 
     new_value = atomic_load(&(new_prop->value));
     VERIFY(new_value.size, value.size, "H5P__mt_create_prop");
-    if ( memcmp(new_value.ptr, value.ptr, value.size) != 0 )
-    {
+    if (memcmp(new_value.ptr, value.ptr, value.size) != 0) {
         TestErrPrintf("Property 1 version 2 value doesn't match! line=%d\n", __LINE__);
     }
 
-    next = atomic_load(&(test_prop->next));
+    next     = atomic_load(&(test_prop->next));
     next.ptr = new_prop;
     atomic_store(&(test_prop->next), next);
-
 
     /**
      * prop_info_t 1 version 3
@@ -380,11 +344,10 @@ init_class_props(void)
     test_prop_ver2 = new_prop;
 
     static int prop1_ver3_value = 3791;
-    value.ptr  = (&prop1_ver3_value);
-    value.size = (sizeof(prop1_ver3_value));
+    value.ptr                   = (&prop1_ver3_value);
+    value.size                  = (sizeof(prop1_ver3_value));
 
-    new_prop = H5P__mt_create_prop(class_prop_table[0].name, value.ptr,
-                                   value.size, TRUE, 3, NULL, NULL, NULL, 
+    new_prop = H5P__mt_create_prop(class_prop_table[0].name, value.ptr, value.size, TRUE, 3, NULL, NULL, NULL,
                                    NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(new_prop, "H5P__mt_create_prop");
 
@@ -392,78 +355,66 @@ init_class_props(void)
     assert(atomic_load(&(new_prop->tag)) == H5P_MT_PROP_TAG);
 
     VERIFY(new_prop->chksum, test_prop_ver2->chksum, "H5P__mt_create_prop");
-    if ( HDstrcmp(new_prop->name, test_prop_ver2->name) != 0 )
-    {
-        TestErrPrintf("Property names don't match! name = %s, Property 1\n", 
-                      new_prop->name);
+    if (HDstrcmp(new_prop->name, test_prop_ver2->name) != 0) {
+        TestErrPrintf("Property names don't match! name = %s, Property 1\n", new_prop->name);
     }
 
     new_value = atomic_load(&(new_prop->value));
     VERIFY(new_value.size, value.size, "H5P__mt_create_prop");
-    if ( memcmp(new_value.ptr, value.ptr, value.size) != 0 )
-    {
+    if (memcmp(new_value.ptr, value.ptr, value.size) != 0) {
         TestErrPrintf("Property 1 version 3 value doesn't match! line=%d\n", __LINE__);
     }
 
-    next = atomic_load(&(test_prop_ver2->next));
+    next     = atomic_load(&(test_prop_ver2->next));
     next.ptr = new_prop;
     atomic_store(&(test_prop_ver2->next), next);
 
-
-    /** 
-     * prop_info_t 2 
+    /**
+     * prop_info_t 2
      */
 
-    class_prop_table[1].name   = strdup("Property 2");
-    name = class_prop_table[1].name;
+    class_prop_table[1].name = strdup("Property 2");
+    name                     = class_prop_table[1].name;
     CHECK_PTR(name, "strdup");
-    if ( HDstrcmp(name, "Property 2") != 0 )
-    {
+    if (HDstrcmp(name, "Property 2") != 0) {
         TestErrPrintf("class_prop_table names don't match! name = %s, Property 2\n", name);
     }
 
-    class_prop_table[1].chksum = 
-                H5_checksum_metadata(class_prop_table[1].name, 
-                                     strlen(class_prop_table[1].name), 0);
+    class_prop_table[1].chksum =
+        H5_checksum_metadata(class_prop_table[1].name, strlen(class_prop_table[1].name), 0);
     CHECK_I(class_prop_table[0].chksum, "H5_checksum_metadata");
-    
-    static float prop2_value = 3.14F;
-    value.ptr  = (&prop2_value);
-    value.size = sizeof(prop2_value);
 
-    class_prop_table[1].prop = H5P__mt_create_prop(class_prop_table[1].name, value.ptr,
-                                                   value.size, TRUE, 1, NULL, NULL, NULL, 
-                                                   NULL, NULL, NULL, NULL, NULL, NULL);
+    static float prop2_value = 3.14F;
+    value.ptr                = (&prop2_value);
+    value.size               = sizeof(prop2_value);
+
+    class_prop_table[1].prop = H5P__mt_create_prop(class_prop_table[1].name, value.ptr, value.size, TRUE, 1,
+                                                   NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(class_prop_table[1].prop, "H5P__mt_create_prop");
 
     test_prop = class_prop_table[1].prop;
     VERIFY(atomic_load(&(test_prop->tag)), H5P_MT_PROP_TAG, "H5P__mt_create_prop");
     VERIFY(test_prop->chksum, class_prop_table[1].chksum, "H5P__mt_create_prop");
     CHECK_PTR(test_prop->name, "H5P__mt_create_prop");
-    if ( HDstrcmp(test_prop->name, "Property 2") != 0 )
-    {
-        TestErrPrintf("Property names don't match! name = %s, Property 2\n", 
-                      test_prop->name);
-    }
-    
-    test_value = atomic_load(&(test_prop->value));
-    VERIFY(test_value.size, value.size, "H5P__mt_create_prop");
-    if ( memcmp(test_value.ptr, value.ptr, value.size ) != 0 )
-    {
-        TestErrPrintf("Property 2 value doesn't match! line=%d\n", __LINE__);
+    if (HDstrcmp(test_prop->name, "Property 2") != 0) {
+        TestErrPrintf("Property names don't match! name = %s, Property 2\n", test_prop->name);
     }
 
+    test_value = atomic_load(&(test_prop->value));
+    VERIFY(test_value.size, value.size, "H5P__mt_create_prop");
+    if (memcmp(test_value.ptr, value.ptr, value.size) != 0) {
+        TestErrPrintf("Property 2 value doesn't match! line=%d\n", __LINE__);
+    }
 
     /**
      * prop_info_t 2 version 2
      */
 
     static float prop2_ver2_value = 6.28F;
-    value.ptr  = (&prop2_ver2_value);
-    value.size = (sizeof(prop2_ver2_value));
+    value.ptr                     = (&prop2_ver2_value);
+    value.size                    = (sizeof(prop2_ver2_value));
 
-    new_prop = H5P__mt_create_prop(class_prop_table[1].name, value.ptr,
-                                   value.size, TRUE, 2, NULL, NULL, NULL, 
+    new_prop = H5P__mt_create_prop(class_prop_table[1].name, value.ptr, value.size, TRUE, 2, NULL, NULL, NULL,
                                    NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(new_prop, "H5P__mt_create_prop");
 
@@ -471,473 +422,408 @@ init_class_props(void)
     assert(atomic_load(&(new_prop->tag)) == H5P_MT_PROP_TAG);
 
     VERIFY(new_prop->chksum, test_prop->chksum, "H5P__mt_create_prop");
-    if ( HDstrcmp(new_prop->name, test_prop->name) != 0 )
-    {
-        TestErrPrintf("Property names don't match! name = %s, Property 2\n", 
-                      new_prop->name);
+    if (HDstrcmp(new_prop->name, test_prop->name) != 0) {
+        TestErrPrintf("Property names don't match! name = %s, Property 2\n", new_prop->name);
     }
 
     new_value = atomic_load(&(new_prop->value));
     VERIFY(new_value.size, value.size, "H5P__mt_create_prop");
-    if ( memcmp(new_value.ptr, value.ptr, value.size) != 0 )
-    {
+    if (memcmp(new_value.ptr, value.ptr, value.size) != 0) {
         TestErrPrintf("Property 2 version 2 value doesn't match! line=%d\n", __LINE__);
     }
 
-    next = atomic_load(&(test_prop->next));
+    next     = atomic_load(&(test_prop->next));
     next.ptr = new_prop;
     atomic_store(&(test_prop->next), next);
 
-
-    /** 
-     * prop_info_t 3 
+    /**
+     * prop_info_t 3
      */
 
-    class_prop_table[2].name   = strdup("Property 3");
-    name = class_prop_table[2].name;
+    class_prop_table[2].name = strdup("Property 3");
+    name                     = class_prop_table[2].name;
     CHECK_PTR(name, "strdup");
-    if ( HDstrcmp(name, "Property 3") != 0 )
-    {
+    if (HDstrcmp(name, "Property 3") != 0) {
         TestErrPrintf("class_prop_table names don't match! name = %s, Property 3\n", name);
     }
-    class_prop_table[2].chksum = 
-                H5_checksum_metadata(name, strlen(name), 0);
+    class_prop_table[2].chksum = H5_checksum_metadata(name, strlen(name), 0);
     CHECK_I(class_prop_table[2].chksum, "H5_checksum_metadata");
 
     static char prop3_value[9] = "Heracles";
-    value.ptr  = (&prop3_value);
-    value.size = sizeof(prop3_value);
+    value.ptr                  = (&prop3_value);
+    value.size                 = sizeof(prop3_value);
 
-    class_prop_table[2].prop = H5P__mt_create_prop(class_prop_table[2].name, value.ptr,
-                                                   value.size, TRUE, 1, NULL, NULL, NULL, 
-                                                   NULL, NULL, NULL, NULL, NULL, NULL);
+    class_prop_table[2].prop = H5P__mt_create_prop(class_prop_table[2].name, value.ptr, value.size, TRUE, 1,
+                                                   NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(class_prop_table[2].prop, "H5P__mt_create_prop");
 
     test_prop = class_prop_table[2].prop;
     VERIFY(atomic_load(&(test_prop->tag)), H5P_MT_PROP_TAG, "H5P__mt_create_prop");
     VERIFY(test_prop->chksum, class_prop_table[2].chksum, "H5P__mt_create_prop");
     CHECK_PTR(test_prop->name, "H5P__mt_create_prop");
-    if ( HDstrcmp(test_prop->name, "Property 3") != 0 )
-    {
-        TestErrPrintf("Property names don't match! name = %s, Property 3\n", 
-                      test_prop->name);
+    if (HDstrcmp(test_prop->name, "Property 3") != 0) {
+        TestErrPrintf("Property names don't match! name = %s, Property 3\n", test_prop->name);
     }
-    
+
     test_value = atomic_load(&(test_prop->value));
     VERIFY(test_value.size, value.size, "H5P__mt_create_prop");
-    if ( memcmp(test_value.ptr, value.ptr, value.size ) != 0 )
-    {
+    if (memcmp(test_value.ptr, value.ptr, value.size) != 0) {
         TestErrPrintf("Property 3 value doesn't match! line=%d\n", __LINE__);
     }
 
-
-    /** 
+    /**
      * prop_info_t 4
      */
 
-    class_prop_table[3].name   = strdup("Property 4");
-    name = class_prop_table[3].name;
+    class_prop_table[3].name = strdup("Property 4");
+    name                     = class_prop_table[3].name;
     CHECK_PTR(name, "strdup");
-    if ( HDstrcmp(name, "Property 4") != 0 )
-    {
+    if (HDstrcmp(name, "Property 4") != 0) {
         TestErrPrintf("class_prop_table names don't match! name = %s, Property 4\n", name);
     }
-    class_prop_table[3].chksum = 
-                H5_checksum_metadata(name, strlen(name), 0);
+    class_prop_table[3].chksum = H5_checksum_metadata(name, strlen(name), 0);
     CHECK_I(class_prop_table[3].chksum, "H5_checksum_metadata");
-    
-    static double prop4_value = 1.61803;
-    value.ptr  = (&prop4_value);
-    value.size = sizeof(prop4_value);
 
-    class_prop_table[3].prop = H5P__mt_create_prop(class_prop_table[3].name, value.ptr,
-                                                   value.size, TRUE, 1, NULL, NULL, NULL, 
-                                                   NULL, NULL, NULL, NULL, NULL, NULL);
+    static double prop4_value = 1.61803;
+    value.ptr                 = (&prop4_value);
+    value.size                = sizeof(prop4_value);
+
+    class_prop_table[3].prop = H5P__mt_create_prop(class_prop_table[3].name, value.ptr, value.size, TRUE, 1,
+                                                   NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(class_prop_table[3].prop, "H5P__mt_create_prop");
 
     test_prop = class_prop_table[3].prop;
     VERIFY(atomic_load(&(test_prop->tag)), H5P_MT_PROP_TAG, "H5P__mt_create_prop");
     VERIFY(test_prop->chksum, class_prop_table[3].chksum, "H5P__mt_create_prop");
     CHECK_PTR(test_prop->name, "H5P__mt_create_prop");
-    if ( HDstrcmp(test_prop->name, "Property 4") != 0 )
-    {
-        TestErrPrintf("Property names don't match! name = %s, Property 4\n", 
-                      test_prop->name);
+    if (HDstrcmp(test_prop->name, "Property 4") != 0) {
+        TestErrPrintf("Property names don't match! name = %s, Property 4\n", test_prop->name);
     }
-    
+
     test_value = atomic_load(&(test_prop->value));
     VERIFY(test_value.size, value.size, "H5P__mt_create_prop");
-    if ( memcmp(test_value.ptr, value.ptr, value.size ) != 0 )
-    {
+    if (memcmp(test_value.ptr, value.ptr, value.size) != 0) {
         TestErrPrintf("Property 4 value doesn't match! line=%d\n", __LINE__);
     }
 
-
-
-   /** 
+    /**
      * prop_info_t 4 version 2
      */
 
     static double prop4_ver2_value = 3.33333;
-    value.ptr  = (&prop4_ver2_value);
-    value.size = sizeof(prop4_ver2_value);
+    value.ptr                      = (&prop4_ver2_value);
+    value.size                     = sizeof(prop4_ver2_value);
 
-    new_prop = H5P__mt_create_prop(class_prop_table[3].name, value.ptr, value.size, 
-                                   TRUE, 2, NULL, NULL, NULL, NULL, 
-                                   NULL, NULL, NULL, NULL, NULL);
+    new_prop = H5P__mt_create_prop(class_prop_table[3].name, value.ptr, value.size, TRUE, 2, NULL, NULL, NULL,
+                                   NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(new_prop, "H5P__mt_create_prop");
 
     assert(new_prop);
     assert(atomic_load(&(new_prop->tag)) == H5P_MT_PROP_TAG);
 
     VERIFY(new_prop->chksum, test_prop->chksum, "H5P__mt_create_prop");
-    if ( HDstrcmp(new_prop->name, test_prop->name) != 0 )
-    {
-        TestErrPrintf("Property names don't match! name = %s, Property 4\n", 
-                      new_prop->name);
+    if (HDstrcmp(new_prop->name, test_prop->name) != 0) {
+        TestErrPrintf("Property names don't match! name = %s, Property 4\n", new_prop->name);
     }
-    
+
     new_value = atomic_load(&(new_prop->value));
     VERIFY(new_value.size, value.size, "H5P__mt_create_prop");
-    if ( memcmp(new_value.ptr, value.ptr, value.size) != 0 )
-    {
+    if (memcmp(new_value.ptr, value.ptr, value.size) != 0) {
         TestErrPrintf("Property 4 version 2 value doesn't match! line=%d\n", __LINE__);
     }
 
-    next = atomic_load(&(test_prop->next));
+    next     = atomic_load(&(test_prop->next));
     next.ptr = new_prop;
     atomic_store(&(test_prop->next), next);
 
-
-    return(ret_value);
+    return (ret_value);
 
 } /* end init_class_props() */
 
-
-
 /****************************************************************************************
  * Function:    init_class2_props
- * 
- * Purpose:     Initializes the prop_info_t structs in the class2_prop_table used by 
+ *
+ * Purpose:     Initializes the prop_info_t structs in the class2_prop_table used by
  *              class2 in testing. There are only 3 different prop_info_t structs,
  *              due to class2 being used to testing copying another class and deriving
  *              a class from an existing non-root class, and class1 has some properties
  *              deleted when this occurs to ensure non-valid properties are not copied.
- * 
+ *
  *              There are 5 total properties for class2.
- * 
- *              When a property is created, deleted, or modified in a class its 
+ *
+ *              When a property is created, deleted, or modified in a class its
  *              class_table equivalent has its create_version or delete_version updated
  *              to match. This makes it easier to search for the correct version of the
  *              property in the class_prop_table when comparing the properties.
- * 
- * Return:      SUCCEED/FAIL    
- * 
+ *
+ * Return:      SUCCEED/FAIL
+ *
  ****************************************************************************************
  */
 static herr_t
 init_class2_props(void)
 {
-    H5P_mt_prop_t     * test_prop;
-    H5P_mt_prop_t     * test_prop2;
-    H5P_mt_prop_t     * new_prop;
+    H5P_mt_prop_t      *test_prop;
+    H5P_mt_prop_t      *test_prop2;
+    H5P_mt_prop_t      *new_prop;
     H5P_mt_prop_value_t test_value;
     H5P_mt_prop_value_t value;
     H5P_mt_prop_value_t new_value;
     H5P_mt_prop_aptr_t  next;
-    const char        * name;
+    const char         *name;
 
-    herr_t              ret_value = SUCCEED;
+    herr_t ret_value = SUCCEED;
 
     /**
-     * Initalize the fields of class2_prop_table, 
+     * Initalize the fields of class2_prop_table,
      * including allocating and initializing the property
      */
-    
+
     /**
-     * prop_info_t 1 
+     * prop_info_t 1
      */
 
-    class2_prop_table[0].name   = strdup("Property 1");
-    name = class2_prop_table[0].name;
+    class2_prop_table[0].name = strdup("Property 1");
+    name                      = class2_prop_table[0].name;
     CHECK_PTR(name, "strdup");
-    if ( HDstrcmp(name, "Property 1") != 0 )
-    {
+    if (HDstrcmp(name, "Property 1") != 0) {
         TestErrPrintf("class2_prop_table names don't match! name = %s, Property 1\n", name);
     }
 
-    class2_prop_table[0].chksum = 
-                H5_checksum_metadata(name, strlen(name), 0);
+    class2_prop_table[0].chksum = H5_checksum_metadata(name, strlen(name), 0);
     CHECK_I(class2_prop_table[0].chksum, "H5_checksum_metadata");
 
     static int prop1_value = 3791;
-    value.ptr  = (&prop1_value);
-    value.size = sizeof(prop1_value);
+    value.ptr              = (&prop1_value);
+    value.size             = sizeof(prop1_value);
 
-    class2_prop_table[0].prop = H5P__mt_create_prop(name, value.ptr, value.size, TRUE, 
-                                                   1, NULL, NULL, NULL, NULL, 
-                                                   NULL, NULL, NULL, NULL, NULL);
+    class2_prop_table[0].prop = H5P__mt_create_prop(name, value.ptr, value.size, TRUE, 1, NULL, NULL, NULL,
+                                                    NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(class2_prop_table[0].prop, "H5P__mt_create_prop");
 
     test_prop = class2_prop_table[0].prop;
     VERIFY(atomic_load(&(test_prop->tag)), H5P_MT_PROP_TAG, "H5P__mt_create_prop");
     VERIFY(test_prop->chksum, class2_prop_table[0].chksum, "H5P__mt_create_prop");
     CHECK_PTR(test_prop->name, "H5P__mt_create_prop");
-    if ( HDstrcmp(test_prop->name, "Property 1") != 0 )
-    {
-        TestErrPrintf("Property names don't match! name = %s, Property 1\n", 
-                      test_prop->name);
+    if (HDstrcmp(test_prop->name, "Property 1") != 0) {
+        TestErrPrintf("Property names don't match! name = %s, Property 1\n", test_prop->name);
     }
-    
+
     test_value = atomic_load(&(test_prop->value));
     VERIFY(test_value.size, value.size, "H5P__mt_create_prop");
-    if ( memcmp(test_value.ptr, value.ptr, value.size ) != 0 )
-    {
+    if (memcmp(test_value.ptr, value.ptr, value.size) != 0) {
         TestErrPrintf("Property 1 value doesn't match! line=%d\n", __LINE__);
     }
 
-
-
-    /** 
-     * prop_info_t 2 
+    /**
+     * prop_info_t 2
      */
 
-    class2_prop_table[1].name   = strdup("Property 2");
-    name = class2_prop_table[1].name;
+    class2_prop_table[1].name = strdup("Property 2");
+    name                      = class2_prop_table[1].name;
     CHECK_PTR(name, "strdup");
-    if ( HDstrcmp(name, "Property 2") != 0 )
-    {
+    if (HDstrcmp(name, "Property 2") != 0) {
         TestErrPrintf("class2_prop_table names don't match! name = %s, Property 2\n", name);
     }
 
-    class2_prop_table[1].chksum = 
-                H5_checksum_metadata(class2_prop_table[1].name, 
-                                     strlen(class2_prop_table[1].name), 0);
+    class2_prop_table[1].chksum =
+        H5_checksum_metadata(class2_prop_table[1].name, strlen(class2_prop_table[1].name), 0);
     CHECK_I(class2_prop_table[0].chksum, "H5_checksum_metadata");
-    
-    static float prop2_value = 6.28F;
-    value.ptr  = (&prop2_value);
-    value.size = sizeof(prop2_value);
 
-    class2_prop_table[1].prop = H5P__mt_create_prop(class2_prop_table[1].name, value.ptr,
-                                                   value.size, TRUE, 1, NULL, NULL, NULL, 
-                                                   NULL, NULL, NULL, NULL, NULL, NULL);
+    static float prop2_value = 6.28F;
+    value.ptr                = (&prop2_value);
+    value.size               = sizeof(prop2_value);
+
+    class2_prop_table[1].prop = H5P__mt_create_prop(class2_prop_table[1].name, value.ptr, value.size, TRUE, 1,
+                                                    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(class2_prop_table[1].prop, "H5P__mt_create_prop");
 
     test_prop = class2_prop_table[1].prop;
     VERIFY(atomic_load(&(test_prop->tag)), H5P_MT_PROP_TAG, "H5P__mt_create_prop");
     VERIFY(test_prop->chksum, class2_prop_table[1].chksum, "H5P__mt_create_prop");
     CHECK_PTR(test_prop->name, "H5P__mt_create_prop");
-    if ( HDstrcmp(test_prop->name, "Property 2") != 0 )
-    {
-        TestErrPrintf("Property names don't match! name = %s, Property 2\n", 
-                      test_prop->name);
+    if (HDstrcmp(test_prop->name, "Property 2") != 0) {
+        TestErrPrintf("Property names don't match! name = %s, Property 2\n", test_prop->name);
     }
-    
+
     test_value = atomic_load(&(test_prop->value));
     VERIFY(test_value.size, value.size, "H5P__mt_create_prop");
-    if ( memcmp(test_value.ptr, value.ptr, value.size ) != 0 )
-    {
+    if (memcmp(test_value.ptr, value.ptr, value.size) != 0) {
         TestErrPrintf("Property 2 value doesn't match! line=%d\n", __LINE__);
     }
 
-
-
-    /** 
-     * prop_info_t 3 
+    /**
+     * prop_info_t 3
      */
 
-    class2_prop_table[2].name   = strdup("Property 3");
-    name = class2_prop_table[2].name;
+    class2_prop_table[2].name = strdup("Property 3");
+    name                      = class2_prop_table[2].name;
     CHECK_PTR(name, "strdup");
-    if ( HDstrcmp(name, "Property 3") != 0 )
-    {
+    if (HDstrcmp(name, "Property 3") != 0) {
         TestErrPrintf("class2_prop_table names don't match! name = %s, Property 3\n", name);
     }
-    class2_prop_table[2].chksum = 
-                H5_checksum_metadata(name, strlen(name), 0);
+    class2_prop_table[2].chksum = H5_checksum_metadata(name, strlen(name), 0);
     CHECK_I(class2_prop_table[2].chksum, "H5_checksum_metadata");
 
     static char prop3_value[9] = "Heracles";
-    value.ptr  = (&prop3_value);
-    value.size = sizeof(prop3_value);
+    value.ptr                  = (&prop3_value);
+    value.size                 = sizeof(prop3_value);
 
-    class2_prop_table[2].prop = H5P__mt_create_prop(class2_prop_table[2].name, value.ptr,
-                                                   value.size, TRUE, 1, NULL, NULL, NULL, 
-                                                   NULL, NULL, NULL, NULL, NULL, NULL);
+    class2_prop_table[2].prop = H5P__mt_create_prop(class2_prop_table[2].name, value.ptr, value.size, TRUE, 1,
+                                                    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(class2_prop_table[2].prop, "H5P__mt_create_prop");
 
     test_prop = class2_prop_table[2].prop;
     VERIFY(atomic_load(&(test_prop->tag)), H5P_MT_PROP_TAG, "H5P__mt_create_prop");
     VERIFY(test_prop->chksum, class2_prop_table[2].chksum, "H5P__mt_create_prop");
     CHECK_PTR(test_prop->name, "H5P__mt_create_prop");
-    if ( HDstrcmp(test_prop->name, "Property 3") != 0 )
-    {
-        TestErrPrintf("Property names don't match! name = %s, Property 3\n", 
-                      test_prop->name);
+    if (HDstrcmp(test_prop->name, "Property 3") != 0) {
+        TestErrPrintf("Property names don't match! name = %s, Property 3\n", test_prop->name);
     }
-    
+
     test_value = atomic_load(&(test_prop->value));
     VERIFY(test_value.size, value.size, "H5P__mt_create_prop");
-    if ( memcmp(test_value.ptr, value.ptr, value.size ) != 0 )
-    {
+    if (memcmp(test_value.ptr, value.ptr, value.size) != 0) {
         TestErrPrintf("Property 3 value doesn't match! line=%d\n", __LINE__);
     }
 
-
-    /** 
+    /**
      * prop_info_t 3 version 2
      */
 
     static char prop3_ver2_value[9] = "Poseiden";
-    value.ptr  = (&prop3_ver2_value);
-    value.size = sizeof(prop3_ver2_value);
+    value.ptr                       = (&prop3_ver2_value);
+    value.size                      = sizeof(prop3_ver2_value);
 
-    new_prop = H5P__mt_create_prop(class2_prop_table[2].name, value.ptr, value.size,
-                                   TRUE, 1, NULL, NULL, NULL, NULL,
-                                   NULL, NULL, NULL, NULL, NULL);
+    new_prop = H5P__mt_create_prop(class2_prop_table[2].name, value.ptr, value.size, TRUE, 1, NULL, NULL,
+                                   NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(new_prop, "H5P__mt_create_prop");
 
     assert(new_prop);
     assert(atomic_load(&(new_prop->tag)) == H5P_MT_PROP_TAG);
 
     VERIFY(new_prop->chksum, test_prop->chksum, "H5P__mt_create_prop");
-    if ( HDstrcmp(new_prop->name, test_prop->name) != 0 )
-    {
-        TestErrPrintf("Property names don't match! name = %s, Property 3\n", 
-                      new_prop->name);
+    if (HDstrcmp(new_prop->name, test_prop->name) != 0) {
+        TestErrPrintf("Property names don't match! name = %s, Property 3\n", new_prop->name);
     }
-    
+
     new_value = atomic_load(&(new_prop->value));
     VERIFY(new_value.size, value.size, "H5P__mt_create_prop");
-    if ( memcmp(new_value.ptr, value.ptr, value.size) != 0 )
-    {
+    if (memcmp(new_value.ptr, value.ptr, value.size) != 0) {
         TestErrPrintf("Property 1 version 2 value doesn't match! line=%d\n", __LINE__);
     }
 
-    next = atomic_load(&(test_prop->next));
+    next     = atomic_load(&(test_prop->next));
     next.ptr = new_prop;
     atomic_store(&(test_prop->next), next);
 
-
-    /** 
+    /**
      * prop_info_t 3 version 3
      */
 
     test_prop2 = new_prop;
 
     static char prop3_ver3_value[9] = "Heracles";
-    value.ptr  = (&prop3_ver3_value);
-    value.size = sizeof(prop3_ver3_value);
+    value.ptr                       = (&prop3_ver3_value);
+    value.size                      = sizeof(prop3_ver3_value);
 
-    new_prop = H5P__mt_create_prop(class2_prop_table[2].name, value.ptr, value.size,
-                                   TRUE, 1, NULL, NULL, NULL, NULL,
-                                   NULL, NULL, NULL, NULL, NULL);
+    new_prop = H5P__mt_create_prop(class2_prop_table[2].name, value.ptr, value.size, TRUE, 1, NULL, NULL,
+                                   NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(new_prop, "H5P__mt_create_prop");
 
     assert(new_prop);
     assert(atomic_load(&(new_prop->tag)) == H5P_MT_PROP_TAG);
 
     VERIFY(new_prop->chksum, test_prop2->chksum, "H5P__mt_create_prop");
-    if ( HDstrcmp(new_prop->name, test_prop2->name) != 0 )
-    {
-        TestErrPrintf("Property names don't match! name = %s, Property 3\n", 
-                      new_prop->name);
+    if (HDstrcmp(new_prop->name, test_prop2->name) != 0) {
+        TestErrPrintf("Property names don't match! name = %s, Property 3\n", new_prop->name);
     }
-    
+
     new_value = atomic_load(&(new_prop->value));
     VERIFY(new_value.size, value.size, "H5P__mt_create_prop");
-    if ( memcmp(new_value.ptr, value.ptr, value.size) != 0 )
-    {
+    if (memcmp(new_value.ptr, value.ptr, value.size) != 0) {
         TestErrPrintf("Property 1 version 2 value doesn't match! line=%d\n", __LINE__);
     }
 
-    next = atomic_load(&(test_prop2->next));
+    next     = atomic_load(&(test_prop2->next));
     next.ptr = new_prop;
     atomic_store(&(test_prop2->next), next);
 
-
-    return(ret_value);
+    return (ret_value);
 
 } /* end init_class2_props() */
 
-
-
 /****************************************************************************************
  * Function:    init_list_props
- * 
+ *
  * Purpose:     Initializes the prop_info_t structs in the list_prop_table used by list1
  *              in testing.
- * 
- *              There are 4 prop_info_t structs with a a different value type and a 
+ *
+ *              There are 4 prop_info_t structs with a a different value type and a
  *              total of 8 properties due to some having multiple versions.
- * 
+ *
  *              Due to how a list's lkup_tbl's base points to the property in the parent
  *              class's LFSLL, the first versions of prop_info_t 1, 2, and 3 are created
- *              to be copies of class_prop_table's first 3 prop_info_t structs. New 
- *              structs still need to be created so if they are deleted in testing the 
+ *              to be copies of class_prop_table's first 3 prop_info_t structs. New
+ *              structs still need to be created so if they are deleted in testing the
  *              delete version isn't set for class_prop_table's properties.
- * 
- *              When a property is created, deleted, or modified in a list its 
+ *
+ *              When a property is created, deleted, or modified in a list its
  *              list_table equivalent has its create_version or delete_version updated
  *              to match. This makes it easier to search for the correct version when
  *              comparing the properties.
- * 
- * Return:      SUCCEED/FAIL    
- * 
+ *
+ * Return:      SUCCEED/FAIL
+ *
  ****************************************************************************************
  */
 static herr_t
 init_list_props(void)
 {
-    H5P_mt_prop_t     * class_table_prop;
-    H5P_mt_prop_t     * test_prop;
-    H5P_mt_prop_t     * test_prop_ver2;
-    H5P_mt_prop_t     * new_prop;
+    H5P_mt_prop_t      *class_table_prop;
+    H5P_mt_prop_t      *test_prop;
+    H5P_mt_prop_t      *test_prop_ver2;
+    H5P_mt_prop_t      *new_prop;
     H5P_mt_prop_value_t test_value;
     H5P_mt_prop_value_t new_value;
     H5P_mt_prop_value_t value;
     H5P_mt_prop_aptr_t  next;
-    const char        * name;
+    const char         *name;
 
-    herr_t              ret_value = SUCCEED;
+    herr_t ret_value = SUCCEED;
 
     /**
-     * Initalize the fields of list_prop_table, 
+     * Initalize the fields of list_prop_table,
      * including allocating and initializing the property
      */
-    
-    /** 
+
+    /**
      * prop_info_t 1
      */
 
     /* Set the chksum and name of the property in the prop_info_t */
     list_prop_table[0].name = strdup(class_prop_table[0].name);
-    name = list_prop_table[0].name;
+    name                    = list_prop_table[0].name;
     CHECK_PTR(name, "strdup");
-    if ( HDstrcmp(name, "Property 1") != 0 )
-    {
+    if (HDstrcmp(name, "Property 1") != 0) {
         TestErrPrintf("list_prop_table names don't match! name = %s, Property 1\n", name);
     }
 
-    list_prop_table[0].chksum = 
-                H5_checksum_metadata(name, strlen(name), 0);
+    list_prop_table[0].chksum = H5_checksum_metadata(name, strlen(name), 0);
     CHECK_I(list_prop_table[0].chksum, "H5_checksum_metadata");
     VERIFY(list_prop_table[0].chksum, class_prop_table[0].chksum, "H5_checksum_metadata");
 
     /* This prop is inherited, so get the pointer to the prop in the class_prop_table */
     class_table_prop = class_prop_table[0].prop;
-    next = atomic_load(&(class_table_prop->next));
+    next             = atomic_load(&(class_table_prop->next));
     class_table_prop = next.ptr;
-    next = atomic_load(&(class_table_prop->next));
+    next             = atomic_load(&(class_table_prop->next));
     class_table_prop = next.ptr;
-    value = atomic_load(&(class_table_prop->value));
+    value            = atomic_load(&(class_table_prop->value));
 
-    list_prop_table[0].prop = H5P__mt_create_prop(class_table_prop->name, value.ptr,
-                                    value.size, TRUE,
-                                    atomic_load(&(class_table_prop->create_version)),
-                                    NULL, NULL, NULL, NULL, NULL, 
-                                    NULL, NULL, NULL, NULL);
+    list_prop_table[0].prop = H5P__mt_create_prop(class_table_prop->name, value.ptr, value.size, TRUE,
+                                                  atomic_load(&(class_table_prop->create_version)), NULL,
+                                                  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(list_prop_table[0].prop, "init_list_props");
     assert(list_prop_table[0].prop);
 
@@ -947,31 +833,25 @@ init_list_props(void)
     VERIFY(test_prop->chksum, list_prop_table[0].chksum, "init_list_props");
     VERIFY(test_prop->chksum, class_prop_table[0].chksum, "init_list_props");
     CHECK_PTR(test_prop->name, "init_list_props");
-    if ( HDstrcmp(test_prop->name, "Property 1") != 0 )
-    {
-        TestErrPrintf("Property names don't match! name = %s, Property 1\n", 
-                      test_prop->name);
+    if (HDstrcmp(test_prop->name, "Property 1") != 0) {
+        TestErrPrintf("Property names don't match! name = %s, Property 1\n", test_prop->name);
     }
 
     /* Ensure the value is correct */
     test_value = atomic_load(&(test_prop->value));
     VERIFY(test_value.size, value.size, "H5P__mt_create_prop");
-    if ( memcmp(test_value.ptr, value.ptr, value.size ) != 0 )
-    {
+    if (memcmp(test_value.ptr, value.ptr, value.size) != 0) {
         TestErrPrintf("Property 1 value doesn't match! line=%d\n", __LINE__);
     }
-
-
 
     /**
      * prop_info_t 1 version 2
      */
     static int prop1_ver2_value = 9001;
-    value.ptr  = (&prop1_ver2_value);
-    value.size = (sizeof(prop1_ver2_value));
+    value.ptr                   = (&prop1_ver2_value);
+    value.size                  = (sizeof(prop1_ver2_value));
 
-    new_prop = H5P__mt_create_prop(list_prop_table[0].name, value.ptr,
-                                   value.size, FALSE, 2, NULL, NULL, NULL,
+    new_prop = H5P__mt_create_prop(list_prop_table[0].name, value.ptr, value.size, FALSE, 2, NULL, NULL, NULL,
                                    NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(new_prop, "H5P__mt_create_prop");
 
@@ -979,25 +859,21 @@ init_list_props(void)
     assert(atomic_load(&(new_prop->tag)) == H5P_MT_PROP_TAG);
 
     VERIFY(new_prop->chksum, test_prop->chksum, "H5P__mt_create_prop");
-    if ( HDstrcmp(new_prop->name, test_prop->name) != 0 )
-    {
-        TestErrPrintf("Property names don't match! name = %s, Property 1\n", 
-                      new_prop->name);
+    if (HDstrcmp(new_prop->name, test_prop->name) != 0) {
+        TestErrPrintf("Property names don't match! name = %s, Property 1\n", new_prop->name);
     }
 
     new_value = atomic_load(&(new_prop->value));
     VERIFY(new_value.size, value.size, "H5p__mt_create_prop");
-    if ( memcmp(new_value.ptr, value.ptr, value.size) != 0 )
-    {
+    if (memcmp(new_value.ptr, value.ptr, value.size) != 0) {
         TestErrPrintf("Property 1 version 2 value doesn't match! line %d\n", __LINE__);
     }
 
     new_prop->in_lkup_tbl = TRUE;
 
-    next = atomic_load(&(test_prop->next));
+    next     = atomic_load(&(test_prop->next));
     next.ptr = new_prop;
     atomic_store(&(test_prop->next), next);
-
 
     /**
      * prop_info_t 1 version 3
@@ -1006,11 +882,10 @@ init_list_props(void)
     test_prop_ver2 = new_prop;
 
     static int prop1_ver3_value = 1992;
-    value.ptr  = (&prop1_ver3_value);
-    value.size = (sizeof(prop1_ver3_value));
+    value.ptr                   = (&prop1_ver3_value);
+    value.size                  = (sizeof(prop1_ver3_value));
 
-    new_prop = H5P__mt_create_prop(list_prop_table[0].name, value.ptr,
-                                   value.size, FALSE, 3, NULL, NULL, NULL,
+    new_prop = H5P__mt_create_prop(list_prop_table[0].name, value.ptr, value.size, FALSE, 3, NULL, NULL, NULL,
                                    NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(new_prop, "H5P__mt_create_prop");
 
@@ -1018,55 +893,47 @@ init_list_props(void)
     assert(atomic_load(&(new_prop->tag)) == H5P_MT_PROP_TAG);
 
     VERIFY(new_prop->chksum, test_prop_ver2->chksum, "H5P__mt_create_prop");
-    if ( HDstrcmp(new_prop->name, test_prop_ver2->name) != 0 )
-    {
-        TestErrPrintf("Property names don't match! name = %s, Property 1\n", 
-                      new_prop->name);
+    if (HDstrcmp(new_prop->name, test_prop_ver2->name) != 0) {
+        TestErrPrintf("Property names don't match! name = %s, Property 1\n", new_prop->name);
     }
 
     new_value = atomic_load(&(new_prop->value));
     VERIFY(new_value.size, value.size, "H5p__mt_create_prop");
-    if ( memcmp(new_value.ptr, value.ptr, value.size) != 0 )
-    {
+    if (memcmp(new_value.ptr, value.ptr, value.size) != 0) {
         TestErrPrintf("Property 1 version 2 value doesn't match! line %d\n", __LINE__);
     }
 
     new_prop->in_lkup_tbl = TRUE;
 
-    next = atomic_load(&(test_prop_ver2->next));
+    next     = atomic_load(&(test_prop_ver2->next));
     next.ptr = new_prop;
     atomic_store(&(test_prop_ver2->next), next);
 
-
-    /** 
-     * prop_info_t 2 
+    /**
+     * prop_info_t 2
      */
 
     /* Set the chksum and name of the property in the prop_info_t */
     list_prop_table[1].name = strdup(class_prop_table[1].name);
-    name = list_prop_table[1].name;
+    name                    = list_prop_table[1].name;
     CHECK_PTR(name, "strdup");
-    if ( HDstrcmp(name, "Property 2") != 0 )
-    {
+    if (HDstrcmp(name, "Property 2") != 0) {
         TestErrPrintf("list_prop_table names don't match! name = %s, Property 2\n", name);
     }
 
-    list_prop_table[1].chksum = 
-                H5_checksum_metadata(name, strlen(name), 0);
+    list_prop_table[1].chksum = H5_checksum_metadata(name, strlen(name), 0);
     CHECK_I(list_prop_table[1].chksum, "H5_checksum_metadata");
     VERIFY(list_prop_table[1].chksum, class_prop_table[1].chksum, "H5_checksum_metadata");
 
     /* This prop is inherited, so get the pointer to property in the class_prop_table */
     class_table_prop = class_prop_table[1].prop;
-    next = atomic_load(&(class_table_prop->next));
+    next             = atomic_load(&(class_table_prop->next));
     class_table_prop = next.ptr;
-    value = atomic_load(&(class_table_prop->value));
+    value            = atomic_load(&(class_table_prop->value));
 
-    list_prop_table[1].prop = H5P__mt_create_prop(class_table_prop->name, value.ptr,
-                                    value.size, TRUE,
-                                    atomic_load(&(class_table_prop->create_version)),
-                                    NULL, NULL, NULL, NULL, NULL, 
-                                    NULL, NULL, NULL, NULL);
+    list_prop_table[1].prop = H5P__mt_create_prop(class_table_prop->name, value.ptr, value.size, TRUE,
+                                                  atomic_load(&(class_table_prop->create_version)), NULL,
+                                                  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(list_prop_table[1].prop, "init_list_props");
     assert(list_prop_table[1].prop);
 
@@ -1076,48 +943,40 @@ init_list_props(void)
     VERIFY(test_prop->chksum, list_prop_table[1].chksum, "init_list_props");
     VERIFY(test_prop->chksum, class_prop_table[1].chksum, "init_list_props");
     CHECK_PTR(test_prop->name, "init_list_props");
-    if ( HDstrcmp(test_prop->name, "Property 2") != 0 )
-    {
-        TestErrPrintf("Property names don't match! name = %s, Property 2\n", 
-                      test_prop->name);
+    if (HDstrcmp(test_prop->name, "Property 2") != 0) {
+        TestErrPrintf("Property names don't match! name = %s, Property 2\n", test_prop->name);
     }
-    
+
     /* Ensure the value is correct */
     test_value = atomic_load(&(test_prop->value));
     VERIFY(test_value.size, value.size, "init_list_props");
-    if ( memcmp(test_value.ptr, value.ptr, value.size ) != 0 )
-    {
+    if (memcmp(test_value.ptr, value.ptr, value.size) != 0) {
         TestErrPrintf("Property 2 value doesn't match! line=%d\n", __LINE__);
     }
 
-
-    /** 
+    /**
      * prop_info_t 3
      */
 
     /* Set the chksum and name of the property in the prop_info_t */
     list_prop_table[2].name = strdup(class_prop_table[2].name);
-    name = list_prop_table[2].name;
+    name                    = list_prop_table[2].name;
     CHECK_PTR(name, "strdup");
-    if ( HDstrcmp(name, "Property 3") != 0 )
-    {
+    if (HDstrcmp(name, "Property 3") != 0) {
         TestErrPrintf("list_prop_table names don't match! name = %s, Property 3\n", name);
     }
 
-    list_prop_table[2].chksum = 
-                H5_checksum_metadata(name, strlen(name), 0);
+    list_prop_table[2].chksum = H5_checksum_metadata(name, strlen(name), 0);
     CHECK_I(list_prop_table[2].chksum, "H5_checksum_metadata");
     VERIFY(list_prop_table[2].chksum, class_prop_table[2].chksum, "H5_checksum_metadata");
 
-    /* This prop is inherited, so get the pointer to the prop in the class_prop_table */    
+    /* This prop is inherited, so get the pointer to the prop in the class_prop_table */
     class_table_prop = class_prop_table[2].prop;
-    value = atomic_load(&(class_table_prop->value));
+    value            = atomic_load(&(class_table_prop->value));
 
-    list_prop_table[2].prop = H5P__mt_create_prop(class_table_prop->name, value.ptr,
-                                    value.size, TRUE,
-                                    atomic_load(&(class_table_prop->create_version)),
-                                    NULL, NULL, NULL, NULL, NULL, 
-                                    NULL, NULL, NULL, NULL);
+    list_prop_table[2].prop = H5P__mt_create_prop(class_table_prop->name, value.ptr, value.size, TRUE,
+                                                  atomic_load(&(class_table_prop->create_version)), NULL,
+                                                  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(list_prop_table[2].prop, "init_list_props");
     assert(list_prop_table[2].prop);
 
@@ -1127,30 +986,25 @@ init_list_props(void)
     VERIFY(test_prop->chksum, list_prop_table[2].chksum, "init_list_props");
     VERIFY(test_prop->chksum, class_prop_table[2].chksum, "init_list_props");
     CHECK_PTR(test_prop->name, "init_list_props");
-    if ( HDstrcmp(test_prop->name, "Property 3") != 0 )
-    {
-        TestErrPrintf("Property names don't match! name = %s, Property 3\n", 
-                      test_prop->name);
-    }
-    
-    test_value = atomic_load(&(test_prop->value));
-    VERIFY(test_value.size, value.size, "init_list_props");
-    if ( memcmp(test_value.ptr, value.ptr, value.size ) != 0 )
-    {
-        TestErrPrintf("Property 3 value doesn't match! line=%d\n", __LINE__);
+    if (HDstrcmp(test_prop->name, "Property 3") != 0) {
+        TestErrPrintf("Property names don't match! name = %s, Property 3\n", test_prop->name);
     }
 
+    test_value = atomic_load(&(test_prop->value));
+    VERIFY(test_value.size, value.size, "init_list_props");
+    if (memcmp(test_value.ptr, value.ptr, value.size) != 0) {
+        TestErrPrintf("Property 3 value doesn't match! line=%d\n", __LINE__);
+    }
 
     /**
      * prop_info_t 3 version 2
      */
-    static char prop3_ver2_value[80] = 
+    static char prop3_ver2_value[80] =
         "'All we have to decide is what to do with the time that is given us.' - Gandalf";
     value.ptr  = (&prop3_ver2_value);
     value.size = sizeof(prop3_ver2_value);
 
-    new_prop = H5P__mt_create_prop(list_prop_table[2].name, value.ptr,
-                                   value.size, FALSE, 2, NULL, NULL, NULL,
+    new_prop = H5P__mt_create_prop(list_prop_table[2].name, value.ptr, value.size, FALSE, 2, NULL, NULL, NULL,
                                    NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(new_prop, "H5P__mt_create_prop");
 
@@ -1158,79 +1012,67 @@ init_list_props(void)
     assert(atomic_load(&(new_prop->tag)) == H5P_MT_PROP_TAG);
 
     VERIFY(new_prop->chksum, test_prop->chksum, "H5P__mt_create_prop");
-    if ( HDstrcmp(new_prop->name, test_prop->name) != 0 )
-    {
-        TestErrPrintf("Property names don't match! name = %s, Property 1\n", 
-                      new_prop->name);
+    if (HDstrcmp(new_prop->name, test_prop->name) != 0) {
+        TestErrPrintf("Property names don't match! name = %s, Property 1\n", new_prop->name);
     }
 
     new_value = atomic_load(&(new_prop->value));
     VERIFY(new_value.size, value.size, "H5p__mt_create_prop");
-    if ( memcmp(new_value.ptr, value.ptr, value.size) != 0 )
-    {
+    if (memcmp(new_value.ptr, value.ptr, value.size) != 0) {
         TestErrPrintf("Property 3 version 2 value doesn't match! line %d\n", __LINE__);
     }
 
     new_prop->in_lkup_tbl = TRUE;
 
-    next = atomic_load(&(test_prop->next));
+    next     = atomic_load(&(test_prop->next));
     next.ptr = new_prop;
     atomic_store(&(test_prop->next), next);
 
-
-    /** 
+    /**
      * prop_info_t 4
      */
 
-    list_prop_table[3].name   = strdup("Property 4");
-    name = list_prop_table[3].name;
+    list_prop_table[3].name = strdup("Property 4");
+    name                    = list_prop_table[3].name;
     CHECK_PTR(name, "strdup");
-    if ( HDstrcmp(name, "Property 4") != 0 )
-    {
+    if (HDstrcmp(name, "Property 4") != 0) {
         TestErrPrintf("list_prop_table names don't match! name = %s, Property 4\n", name);
     }
 
-    list_prop_table[3].chksum = 
-                H5_checksum_metadata(list_prop_table[3].name, 
-                                     strlen(list_prop_table[3].name), 0);
+    list_prop_table[3].chksum =
+        H5_checksum_metadata(list_prop_table[3].name, strlen(list_prop_table[3].name), 0);
     CHECK_I(list_prop_table[3].chksum, "H5_checksum_metadata");
 
     static double prop4_value = 0.61803;
-    value.ptr  = (&prop4_value);
-    value.size = sizeof(prop4_value);
+    value.ptr                 = (&prop4_value);
+    value.size                = sizeof(prop4_value);
 
-    list_prop_table[3].prop = H5P__mt_create_prop(list_prop_table[3].name, value.ptr,
-                                                   value.size, FALSE, 1, NULL, NULL, NULL, 
-                                                   NULL, NULL, NULL, NULL, NULL, NULL);
+    list_prop_table[3].prop = H5P__mt_create_prop(list_prop_table[3].name, value.ptr, value.size, FALSE, 1,
+                                                  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(list_prop_table[3].prop, "H5P__mt_create_prop");
 
     test_prop = list_prop_table[3].prop;
     VERIFY(atomic_load(&(test_prop->tag)), H5P_MT_PROP_TAG, "H5P__mt_create_prop");
     VERIFY(test_prop->chksum, list_prop_table[3].chksum, "H5P__mt_create_prop");
     CHECK_PTR(test_prop->name, "H5P__mt_create_prop");
-    if ( HDstrcmp(test_prop->name, "Property 4") != 0 )
-    {
-        TestErrPrintf("Property names don't match! name = %s, Property 4\n",
-                      test_prop->name);
-    }
-    
-    test_value = atomic_load(&(test_prop->value));
-    VERIFY(test_value.size, value.size, "H5P__mt_create_prop");
-    if ( memcmp(test_value.ptr, value.ptr, value.size ) != 0 )
-    {
-        TestErrPrintf("Property 4 value doesn't match! line=%d\n", __LINE__);
+    if (HDstrcmp(test_prop->name, "Property 4") != 0) {
+        TestErrPrintf("Property names don't match! name = %s, Property 4\n", test_prop->name);
     }
 
+    test_value = atomic_load(&(test_prop->value));
+    VERIFY(test_value.size, value.size, "H5P__mt_create_prop");
+    if (memcmp(test_value.ptr, value.ptr, value.size) != 0) {
+        TestErrPrintf("Property 4 value doesn't match! line=%d\n", __LINE__);
+    }
 
     /**
      * prop_info_t 4 version 2
      */
     static double prop4_ver2_value = 1.77245;
-    value.ptr  = (&prop4_ver2_value);
-    value.size = (sizeof(prop4_ver2_value));
+    value.ptr                      = (&prop4_ver2_value);
+    value.size                     = (sizeof(prop4_ver2_value));
 
-    new_prop = H5P__mt_create_prop(list_prop_table[3].name, value.ptr,
-                                   value.size, FALSE, 3, NULL, NULL, NULL,
+    new_prop = H5P__mt_create_prop(list_prop_table[3].name, value.ptr, value.size, FALSE, 3, NULL, NULL, NULL,
                                    NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(new_prop, "H5P__mt_create_prop");
 
@@ -1238,82 +1080,75 @@ init_list_props(void)
     assert(atomic_load(&(new_prop->tag)) == H5P_MT_PROP_TAG);
 
     VERIFY(new_prop->chksum, test_prop->chksum, "H5P__mt_create_prop");
-    if ( HDstrcmp(new_prop->name, test_prop->name) != 0 )
-    {
-        TestErrPrintf("Property names don't match! name = %s, Property 4\n", 
-                      new_prop->name);
+    if (HDstrcmp(new_prop->name, test_prop->name) != 0) {
+        TestErrPrintf("Property names don't match! name = %s, Property 4\n", new_prop->name);
     }
 
     new_value = atomic_load(&(new_prop->value));
     VERIFY(new_value.size, value.size, "H5p__mt_create_prop");
-    if ( memcmp(new_value.ptr, value.ptr, value.size) != 0 )
-    {
+    if (memcmp(new_value.ptr, value.ptr, value.size) != 0) {
         TestErrPrintf("Property 4 version 2 value doesn't match! line %d\n", __LINE__);
     }
 
-    next = atomic_load(&(test_prop->next));
+    next     = atomic_load(&(test_prop->next));
     next.ptr = new_prop;
     atomic_store(&(test_prop->next), next);
 
-
-    return(ret_value);
+    return (ret_value);
 
 } /* end init_list_props() */
 
-
-
 /****************************************************************************************
  * Function:    init_list2_props
- * 
+ *
  * Purpose:     Initializes the prop_info_t structs in the list2_prop_table used by list2
  *              in testing.
- * 
- *              There are 4 prop_info_t structs with a a different value type and a 
+ *
+ *              There are 4 prop_info_t structs with a a different value type and a
  *              total of 8 properties due to some having multiple versions.
- * 
+ *
  *              Due to how a list's lkup_tbl's base points to the property in the parent
  *              class's LFSLL, the first versions of prop_info_t 1, 2, and 3 are created
- *              to be copies of class_prop_table's first 3 prop_info_t structs. New 
- *              structs still need to be created so if they are deleted in testing the 
+ *              to be copies of class_prop_table's first 3 prop_info_t structs. New
+ *              structs still need to be created so if they are deleted in testing the
  *              delete version isn't set for class_prop_table's properties.
- * 
- *              When a property is created, deleted, or modified in a list its 
+ *
+ *              When a property is created, deleted, or modified in a list its
  *              list_table equivalent has its create_version or delete_version updated
  *              to match. This makes it easier to search for the correct version when
  *              comparing the properties.
- * 
- * Return:      SUCCEED/FAIL    
- * 
+ *
+ * Return:      SUCCEED/FAIL
+ *
  ****************************************************************************************
  */
 static herr_t
 init_list2_props(void)
 {
-    H5P_mt_prop_t     * list_table_prop;
-    H5P_mt_prop_t     * test_prop;
-    H5P_mt_prop_t     * test_prop_ver2;
-    H5P_mt_prop_t     * new_prop;
+    H5P_mt_prop_t      *list_table_prop;
+    H5P_mt_prop_t      *test_prop;
+    H5P_mt_prop_t      *test_prop_ver2;
+    H5P_mt_prop_t      *new_prop;
     H5P_mt_prop_value_t test_value;
     H5P_mt_prop_value_t new_value;
     H5P_mt_prop_value_t value;
     H5P_mt_prop_aptr_t  next;
-    const char        * name;
+    const char         *name;
 
-    herr_t              ret_value = SUCCEED;
+    herr_t ret_value = SUCCEED;
 
     /**
-     * Initalize the fields of list2_prop_table, 
+     * Initalize the fields of list2_prop_table,
      * including allocating and initializing the property
      */
-    
-    /** 
+
+    /**
      * prop_info_t 1
      */
     list2_prop_table[0].name = strdup(list_prop_table[0].name);
-    name = list2_prop_table[0].name;
+    name                     = list2_prop_table[0].name;
     CHECK_PTR(name, "strdup");
-    if ( HDstrcmp(name, "Property 1") != 0 )
-    {
+    if (HDstrcmp(name, "Property 1") != 0) {
         TestErrPrintf("list2_prop_table names don't match! name = %s, Property 1\n", name);
     }
 
@@ -1324,34 +1159,28 @@ init_list2_props(void)
     /* This prop is inherited, but also deleted */
     list2_prop_table[0].prop = NULL;
 
-
-
     /**
      * prop_info_t 2
      */
 
     /* Set the chksum and name of the property in the prop_info_t */
     list2_prop_table[1].name = strdup(list_prop_table[1].name);
-    name = list2_prop_table[1].name;
+    name                     = list2_prop_table[1].name;
     CHECK_PTR(name, "strdup");
-    if ( HDstrcmp(name, "Property 2") != 0 )
-    {
+    if (HDstrcmp(name, "Property 2") != 0) {
         TestErrPrintf("list_prop_table names don't match! name = %s, Property 2\n", name);
     }
 
-    list2_prop_table[1].chksum = 
-                H5_checksum_metadata(name, strlen(name), 0);
+    list2_prop_table[1].chksum = H5_checksum_metadata(name, strlen(name), 0);
     CHECK_I(list2_prop_table[1].chksum, "H5_checksum_metadata");
     VERIFY(list2_prop_table[1].chksum, list_prop_table[1].chksum, "H5_checksum_metadata");
 
     list_table_prop = list_prop_table[1].prop;
-    value = atomic_load(&(list_table_prop->value));
+    value           = atomic_load(&(list_table_prop->value));
 
-    list2_prop_table[1].prop = H5P__mt_create_prop(list_table_prop->name, value.ptr,
-                                        value.size, TRUE, 
-                                        atomic_load(&(list_table_prop->create_version)),
-                                        NULL, NULL, NULL, NULL, NULL, 
-                                        NULL, NULL, NULL, NULL);
+    list2_prop_table[1].prop = H5P__mt_create_prop(list_table_prop->name, value.ptr, value.size, TRUE,
+                                                   atomic_load(&(list_table_prop->create_version)), NULL,
+                                                   NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(list2_prop_table[1].prop, "init_list2_props");
     assert(list2_prop_table[1].prop);
 
@@ -1361,58 +1190,48 @@ init_list2_props(void)
     VERIFY(test_prop->chksum, list_prop_table[1].chksum, "init_list_props");
     VERIFY(test_prop->chksum, list_prop_table[1].chksum, "init_list_props");
     CHECK_PTR(test_prop->name, "init_list_props");
-    if ( HDstrcmp(test_prop->name, "Property 2") != 0 )
-    {
-        TestErrPrintf("Property names don't match! name = %s, Property 2\n", 
-                      test_prop->name);
+    if (HDstrcmp(test_prop->name, "Property 2") != 0) {
+        TestErrPrintf("Property names don't match! name = %s, Property 2\n", test_prop->name);
     }
-    
+
     /* Ensure the value is correct */
     test_value = atomic_load(&(test_prop->value));
     VERIFY(test_value.size, value.size, "init_list_props");
-    if ( memcmp(test_value.ptr, value.ptr, value.size ) != 0 )
-    {
+    if (memcmp(test_value.ptr, value.ptr, value.size) != 0) {
         TestErrPrintf("Property 2 value doesn't match! line=%d\n", __LINE__);
     }
-
-
 
     /**
      * prop_info_t 2 version 2
      */
 
     static float prop2_ver2_value = 313.00987F;
-    value.ptr  = (&prop2_ver2_value);
-    value.size = (sizeof(prop2_ver2_value));
+    value.ptr                     = (&prop2_ver2_value);
+    value.size                    = (sizeof(prop2_ver2_value));
 
-    new_prop = H5P__mt_create_prop(list2_prop_table[1].name, value.ptr,
-                                   value.size, FALSE, 2, NULL, NULL, NULL,
-                                   NULL, NULL, NULL, NULL, NULL, NULL);
+    new_prop = H5P__mt_create_prop(list2_prop_table[1].name, value.ptr, value.size, FALSE, 2, NULL, NULL,
+                                   NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(new_prop, "H5P__mt_create_prop");
 
     assert(new_prop);
     assert(atomic_load(&(new_prop->tag)) == H5P_MT_PROP_TAG);
 
     VERIFY(new_prop->chksum, test_prop->chksum, "H5P__mt_create_prop");
-    if ( HDstrcmp(new_prop->name, test_prop->name) != 0 )
-    {
-        TestErrPrintf("Property names don't match! name = %s, Property 2\n", 
-                      new_prop->name);
+    if (HDstrcmp(new_prop->name, test_prop->name) != 0) {
+        TestErrPrintf("Property names don't match! name = %s, Property 2\n", new_prop->name);
     }
 
     new_value = atomic_load(&(new_prop->value));
     VERIFY(new_value.size, value.size, "H5p__mt_create_prop");
-    if ( memcmp(new_value.ptr, value.ptr, value.size) != 0 )
-    {
+    if (memcmp(new_value.ptr, value.ptr, value.size) != 0) {
         TestErrPrintf("Property 2 version 2 value doesn't match! line %d\n", __LINE__);
     }
 
     new_prop->in_lkup_tbl = TRUE;
 
-    next = atomic_load(&(test_prop->next));
+    next     = atomic_load(&(test_prop->next));
     next.ptr = new_prop;
     atomic_store(&(test_prop->next), next);
-
 
     /**
      * prop_info_t 2 version 3
@@ -1421,64 +1240,55 @@ init_list2_props(void)
     test_prop_ver2 = new_prop;
 
     list_table_prop = list2_prop_table[1].prop;
-    value = atomic_load(&(list_table_prop->value));
+    value           = atomic_load(&(list_table_prop->value));
 
-    new_prop = H5P__mt_create_prop(list2_prop_table[1].name, value.ptr,
-                                   value.size, FALSE, 3, NULL, NULL, NULL,
-                                   NULL, NULL, NULL, NULL, NULL, NULL);
+    new_prop = H5P__mt_create_prop(list2_prop_table[1].name, value.ptr, value.size, FALSE, 3, NULL, NULL,
+                                   NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(new_prop, "H5P__mt_create_prop");
 
     assert(new_prop);
     assert(atomic_load(&(new_prop->tag)) == H5P_MT_PROP_TAG);
 
     VERIFY(new_prop->chksum, test_prop_ver2->chksum, "H5P__mt_create_prop");
-    if ( HDstrcmp(new_prop->name, test_prop_ver2->name) != 0 )
-    {
-        TestErrPrintf("Property names don't match! name = %s, Property 2\n", 
-                      new_prop->name);
+    if (HDstrcmp(new_prop->name, test_prop_ver2->name) != 0) {
+        TestErrPrintf("Property names don't match! name = %s, Property 2\n", new_prop->name);
     }
 
     new_value = atomic_load(&(new_prop->value));
     VERIFY(new_value.size, value.size, "H5p__mt_create_prop");
-    if ( memcmp(new_value.ptr, value.ptr, value.size) != 0 )
-    {
+    if (memcmp(new_value.ptr, value.ptr, value.size) != 0) {
         TestErrPrintf("Property 2 version 3 value doesn't match! line %d\n", __LINE__);
     }
 
     new_prop->in_lkup_tbl = TRUE;
 
-    next = atomic_load(&(test_prop_ver2->next));
+    next     = atomic_load(&(test_prop_ver2->next));
     next.ptr = new_prop;
     atomic_store(&(test_prop_ver2->next), next);
-
-
 
     /**
      * prop_info_t 3
      */
-    
+
     /* Set the chksum and name of the property in the prop_info_t */
     list2_prop_table[2].name = strdup(list_prop_table[2].name);
-    name = list2_prop_table[2].name;
+    name                     = list2_prop_table[2].name;
     CHECK_PTR(name, "strdup");
-    if ( HDstrcmp(name, "Property 3") != 0 )
-    {
+    if (HDstrcmp(name, "Property 3") != 0) {
         TestErrPrintf("list_prop_table names don't match! name = %s, Property 3\n", name);
     }
 
-    list2_prop_table[2].chksum = 
-                H5_checksum_metadata(name, strlen(name), 0);
+    list2_prop_table[2].chksum = H5_checksum_metadata(name, strlen(name), 0);
     CHECK_I(list2_prop_table[2].chksum, "H5_checksum_metadata");
     VERIFY(list2_prop_table[2].chksum, list_prop_table[2].chksum, "H5_checksum_metadata");
 
     list_table_prop = list_prop_table[2].prop;
-    next = atomic_load(&(list_table_prop->next));
+    next            = atomic_load(&(list_table_prop->next));
     list_table_prop = next.ptr;
-    value = atomic_load(&(list_table_prop->value));
+    value           = atomic_load(&(list_table_prop->value));
 
-    list2_prop_table[2].prop = H5P__mt_create_prop(list_table_prop->name, value.ptr,
-                                        value.size, FALSE, 1, NULL, NULL, NULL, NULL, 
-                                        NULL, NULL, NULL, NULL, NULL);
+    list2_prop_table[2].prop = H5P__mt_create_prop(list_table_prop->name, value.ptr, value.size, FALSE, 1,
+                                                   NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(list2_prop_table[2].prop, "init_list_props");
     assert(list2_prop_table[2].prop);
 
@@ -1488,49 +1298,42 @@ init_list2_props(void)
     VERIFY(test_prop->chksum, list2_prop_table[2].chksum, "init_list_props");
     VERIFY(test_prop->chksum, list2_prop_table[2].chksum, "init_list_props");
     CHECK_PTR(test_prop->name, "init_list_props");
-    if ( HDstrcmp(test_prop->name, "Property 3") != 0 )
-    {
-        TestErrPrintf("Property names don't match! name = %s, Property 3\n", 
-                      test_prop->name);
+    if (HDstrcmp(test_prop->name, "Property 3") != 0) {
+        TestErrPrintf("Property names don't match! name = %s, Property 3\n", test_prop->name);
     }
-    
+
     /* Ensure the value is correct */
     test_value = atomic_load(&(test_prop->value));
     VERIFY(test_value.size, value.size, "init_list_props");
-    if ( memcmp(test_value.ptr, value.ptr, value.size ) != 0 )
-    {
+    if (memcmp(test_value.ptr, value.ptr, value.size) != 0) {
         TestErrPrintf("Property 3 value doesn't match! line=%d\n", __LINE__);
     }
 
     test_prop->in_lkup_tbl = TRUE;
 
-
     /**
      * prop_info_t 4
      */
-    
+
     /* Set the chksum and name of the property in the prop_info_t */
     list2_prop_table[3].name = strdup(list_prop_table[3].name);
-    name = list2_prop_table[3].name;
+    name                     = list2_prop_table[3].name;
     CHECK_PTR(name, "strdup");
-    if ( HDstrcmp(name, "Property 4") != 0 )
-    {
+    if (HDstrcmp(name, "Property 4") != 0) {
         TestErrPrintf("list_prop_table names don't match! name = %s, Property 4\n", name);
     }
 
-    list2_prop_table[3].chksum = 
-                H5_checksum_metadata(name, strlen(name), 0);
+    list2_prop_table[3].chksum = H5_checksum_metadata(name, strlen(name), 0);
     CHECK_I(list2_prop_table[3].chksum, "H5_checksum_metadata");
     VERIFY(list2_prop_table[3].chksum, list_prop_table[3].chksum, "H5_checksum_metadata");
 
     list_table_prop = list_prop_table[3].prop;
-    next = atomic_load(&(list_table_prop->next));
+    next            = atomic_load(&(list_table_prop->next));
     list_table_prop = next.ptr;
-    value = atomic_load(&(list_table_prop->value));
+    value           = atomic_load(&(list_table_prop->value));
 
-    list2_prop_table[3].prop = H5P__mt_create_prop(list_table_prop->name, value.ptr,
-                                            value.size, FALSE, 1, NULL, NULL, NULL,
-                                            NULL, NULL, NULL, NULL, NULL, NULL);
+    list2_prop_table[3].prop = H5P__mt_create_prop(list_table_prop->name, value.ptr, value.size, FALSE, 1,
+                                                   NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(list2_prop_table[3].prop, "init_list_props");
     assert(list2_prop_table[3].prop);
 
@@ -1540,271 +1343,230 @@ init_list2_props(void)
     VERIFY(test_prop->chksum, list2_prop_table[3].chksum, "init_list_props");
     VERIFY(test_prop->chksum, list2_prop_table[3].chksum, "init_list_props");
     CHECK_PTR(test_prop->name, "init_list_props");
-    if ( HDstrcmp(test_prop->name, "Property 4") != 0 )
-    {
-        TestErrPrintf("Property names don't match! name = %s, Property 4\n", 
-                      test_prop->name);
+    if (HDstrcmp(test_prop->name, "Property 4") != 0) {
+        TestErrPrintf("Property names don't match! name = %s, Property 4\n", test_prop->name);
     }
-    
+
     /* Ensure the value is correct */
     test_value = atomic_load(&(test_prop->value));
     VERIFY(test_value.size, value.size, "init_list_props");
-    if ( memcmp(test_value.ptr, value.ptr, value.size ) != 0 )
-    {
+    if (memcmp(test_value.ptr, value.ptr, value.size) != 0) {
         TestErrPrintf("Property 4 value doesn't match! line=%d\n", __LINE__);
     }
-
 
     /**
      * prop_info_t 4 version 2
      */
 
     static double prop4_ver2_value = 101.003033345;
-    value.ptr  = (&prop4_ver2_value);
-    value.size = (sizeof(prop4_ver2_value));
+    value.ptr                      = (&prop4_ver2_value);
+    value.size                     = (sizeof(prop4_ver2_value));
 
-    new_prop = H5P__mt_create_prop(list2_prop_table[3].name, value.ptr,
-                                   value.size, FALSE, 3, NULL, NULL, NULL,
-                                   NULL, NULL, NULL, NULL, NULL, NULL);
+    new_prop = H5P__mt_create_prop(list2_prop_table[3].name, value.ptr, value.size, FALSE, 3, NULL, NULL,
+                                   NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(new_prop, "H5P__mt_create_prop");
 
     assert(new_prop);
     assert(atomic_load(&(new_prop->tag)) == H5P_MT_PROP_TAG);
 
     VERIFY(new_prop->chksum, test_prop->chksum, "H5P__mt_create_prop");
-    if ( HDstrcmp(new_prop->name, test_prop->name) != 0 )
-    {
-        TestErrPrintf("Property names don't match! name = %s, Property 4\n", 
-                      new_prop->name);
+    if (HDstrcmp(new_prop->name, test_prop->name) != 0) {
+        TestErrPrintf("Property names don't match! name = %s, Property 4\n", new_prop->name);
     }
 
     new_value = atomic_load(&(new_prop->value));
     VERIFY(new_value.size, value.size, "H5p__mt_create_prop");
-    if ( memcmp(new_value.ptr, value.ptr, value.size) != 0 )
-    {
+    if (memcmp(new_value.ptr, value.ptr, value.size) != 0) {
         TestErrPrintf("Property 4 version 2 value doesn't match! line %d\n", __LINE__);
     }
 
-    next = atomic_load(&(test_prop->next));
+    next     = atomic_load(&(test_prop->next));
     next.ptr = new_prop;
     atomic_store(&(test_prop->next), next);
-
 
     /**
      * prop_info_t 4 version 3
      */
-    
+
     test_prop_ver2 = new_prop;
 
     list_table_prop = list2_prop_table[3].prop;
-    value = atomic_load(&(list_table_prop->value));
+    value           = atomic_load(&(list_table_prop->value));
 
-    new_prop = H5P__mt_create_prop(list2_prop_table[3].name, value.ptr,
-                                   value.size, FALSE, 3, NULL, NULL, NULL,
-                                   NULL, NULL, NULL, NULL, NULL, NULL);
+    new_prop = H5P__mt_create_prop(list2_prop_table[3].name, value.ptr, value.size, FALSE, 3, NULL, NULL,
+                                   NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(new_prop, "H5P__mt_create_prop");
 
     assert(new_prop);
     assert(atomic_load(&(new_prop->tag)) == H5P_MT_PROP_TAG);
 
     VERIFY(new_prop->chksum, test_prop_ver2->chksum, "H5P__mt_create_prop");
-    if ( HDstrcmp(new_prop->name, test_prop_ver2->name) != 0 )
-    {
-        TestErrPrintf("Property names don't match! name = %s, Property 4\n", 
-                      new_prop->name);
+    if (HDstrcmp(new_prop->name, test_prop_ver2->name) != 0) {
+        TestErrPrintf("Property names don't match! name = %s, Property 4\n", new_prop->name);
     }
 
     new_value = atomic_load(&(new_prop->value));
     VERIFY(new_value.size, value.size, "H5p__mt_create_prop");
-    if ( memcmp(new_value.ptr, value.ptr, value.size) != 0 )
-    {
+    if (memcmp(new_value.ptr, value.ptr, value.size) != 0) {
         TestErrPrintf("Property 4 version 3 value doesn't match! line %d\n", __LINE__);
     }
 
-    next = atomic_load(&(test_prop_ver2->next));
+    next     = atomic_load(&(test_prop_ver2->next));
     next.ptr = new_prop;
     atomic_store(&(test_prop_ver2->next), next);
 
-
-
-
-     return(ret_value);
+    return (ret_value);
 
 } /* end init_list2_props() */
 
-
 /****************************************************************************************
  * Function:    init_list3_props
- * 
+ *
  * Purpose:     Initializes the prop_info_t structs in the list3_prop_table used by list3
  *              in testing.
- * 
+ *
  *              There are 3 prop_info_t structs and only 3 total properties.
- * 
+ *
  *              This table is used by list3 which is a derived list of class2, and no
- *              modifications are done to it, so it just needs to have the versions of 
+ *              modifications are done to it, so it just needs to have the versions of
  *              the properties at creation for checking.
- * 
- * Return:      SUCCEED/FAIL    
- * 
+ *
+ * Return:      SUCCEED/FAIL
+ *
  ****************************************************************************************
  */
 static herr_t
 init_list3_props(void)
 {
-    H5P_mt_prop_t     * class_table_prop;
-    H5P_mt_prop_t     * test_prop;
+    H5P_mt_prop_t      *class_table_prop;
+    H5P_mt_prop_t      *test_prop;
     H5P_mt_prop_value_t test_value;
     H5P_mt_prop_value_t value;
-    const char        * name;
+    const char         *name;
 
-    herr_t              ret_value = SUCCEED;
-
+    herr_t ret_value = SUCCEED;
 
     /**
-     * Initalize the fields of class2_prop_table, 
+     * Initalize the fields of class2_prop_table,
      * including allocating and initializing the property
      */
-    
+
     /**
-     * prop_info_t 1 
+     * prop_info_t 1
      */
 
-    list3_prop_table[0].name   = strdup("Property 1");
-    name = list3_prop_table[0].name;
+    list3_prop_table[0].name = strdup("Property 1");
+    name                     = list3_prop_table[0].name;
     CHECK_PTR(name, "strdup");
-    if ( HDstrcmp(name, "Property 1") != 0 )
-    {
+    if (HDstrcmp(name, "Property 1") != 0) {
         TestErrPrintf("list3_prop_table names don't match! name = %s, Property 1\n", name);
     }
 
-    list3_prop_table[0].chksum = 
-                H5_checksum_metadata(name, strlen(name), 0);
+    list3_prop_table[0].chksum = H5_checksum_metadata(name, strlen(name), 0);
     CHECK_I(list3_prop_table[0].chksum, "H5_checksum_metadata");
 
     class_table_prop = class2_prop_table[0].prop;
-    value = atomic_load(&(class_table_prop->value));
+    value            = atomic_load(&(class_table_prop->value));
 
-    list3_prop_table[0].prop = H5P__mt_create_prop(name, value.ptr, value.size, TRUE, 
-                                        atomic_load(&(class_table_prop->create_version)), 
-                                        NULL, NULL, NULL, NULL, NULL, 
-                                        NULL, NULL, NULL, NULL);
+    list3_prop_table[0].prop = H5P__mt_create_prop(name, value.ptr, value.size, TRUE,
+                                                   atomic_load(&(class_table_prop->create_version)), NULL,
+                                                   NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(list3_prop_table[0].prop, "H5P__mt_create_prop");
 
     test_prop = list3_prop_table[0].prop;
     VERIFY(atomic_load(&(test_prop->tag)), H5P_MT_PROP_TAG, "H5P__mt_create_prop");
     VERIFY(test_prop->chksum, list3_prop_table[0].chksum, "H5P__mt_create_prop");
     CHECK_PTR(test_prop->name, "H5P__mt_create_prop");
-    if ( HDstrcmp(test_prop->name, "Property 1") != 0 )
-    {
-        TestErrPrintf("Property names don't match! name = %s, Property 1\n", 
-                      test_prop->name);
-    }
-    
-    test_value = atomic_load(&(test_prop->value));
-    VERIFY(test_value.size, value.size, "H5P__mt_create_prop");
-    if ( memcmp(test_value.ptr, value.ptr, value.size ) != 0 )
-    {
-        TestErrPrintf("Property 1 value doesn't match! line=%d\n", __LINE__);
+    if (HDstrcmp(test_prop->name, "Property 1") != 0) {
+        TestErrPrintf("Property names don't match! name = %s, Property 1\n", test_prop->name);
     }
 
+    test_value = atomic_load(&(test_prop->value));
+    VERIFY(test_value.size, value.size, "H5P__mt_create_prop");
+    if (memcmp(test_value.ptr, value.ptr, value.size) != 0) {
+        TestErrPrintf("Property 1 value doesn't match! line=%d\n", __LINE__);
+    }
 
     /**
      * prop_info_t 2
      */
 
-    list3_prop_table[1].name   = strdup("Property 2");
-    name = list3_prop_table[1].name;
+    list3_prop_table[1].name = strdup("Property 2");
+    name                     = list3_prop_table[1].name;
     CHECK_PTR(name, "strdup");
-    if ( HDstrcmp(name, "Property 2") != 0 )
-    {
+    if (HDstrcmp(name, "Property 2") != 0) {
         TestErrPrintf("list3_prop_table names don't match! name = %s, Property 2\n", name);
     }
 
-    list3_prop_table[1].chksum = 
-                H5_checksum_metadata(name, strlen(name), 0);
+    list3_prop_table[1].chksum = H5_checksum_metadata(name, strlen(name), 0);
     CHECK_I(list3_prop_table[1].chksum, "H5_checksum_metadata");
 
     class_table_prop = class2_prop_table[1].prop;
-    value = atomic_load(&(class_table_prop->value));
+    value            = atomic_load(&(class_table_prop->value));
 
-    list3_prop_table[1].prop = H5P__mt_create_prop(name, value.ptr, value.size, TRUE, 
-                                        atomic_load(&(class_table_prop->create_version)), 
-                                        NULL, NULL, NULL, NULL, NULL, 
-                                        NULL, NULL, NULL, NULL);
+    list3_prop_table[1].prop = H5P__mt_create_prop(name, value.ptr, value.size, TRUE,
+                                                   atomic_load(&(class_table_prop->create_version)), NULL,
+                                                   NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(list3_prop_table[1].prop, "H5P__mt_create_prop");
 
     test_prop = list3_prop_table[1].prop;
     VERIFY(atomic_load(&(test_prop->tag)), H5P_MT_PROP_TAG, "H5P__mt_create_prop");
     VERIFY(test_prop->chksum, list3_prop_table[1].chksum, "H5P__mt_create_prop");
     CHECK_PTR(test_prop->name, "H5P__mt_create_prop");
-    if ( HDstrcmp(test_prop->name, "Property 2") != 0 )
-    {
-        TestErrPrintf("Property names don't match! name = %s, Property 2\n", 
-                      test_prop->name);
-    }
-    
-    test_value = atomic_load(&(test_prop->value));
-    VERIFY(test_value.size, value.size, "H5P__mt_create_prop");
-    if ( memcmp(test_value.ptr, value.ptr, value.size ) != 0 )
-    {
-        TestErrPrintf("Property 2 value doesn't match! line=%d\n", __LINE__);
+    if (HDstrcmp(test_prop->name, "Property 2") != 0) {
+        TestErrPrintf("Property names don't match! name = %s, Property 2\n", test_prop->name);
     }
 
+    test_value = atomic_load(&(test_prop->value));
+    VERIFY(test_value.size, value.size, "H5P__mt_create_prop");
+    if (memcmp(test_value.ptr, value.ptr, value.size) != 0) {
+        TestErrPrintf("Property 2 value doesn't match! line=%d\n", __LINE__);
+    }
 
     /**
      * prop_info_t 3
      */
 
-    list3_prop_table[2].name   = strdup("Property 3");
-    name = list3_prop_table[2].name;
+    list3_prop_table[2].name = strdup("Property 3");
+    name                     = list3_prop_table[2].name;
     CHECK_PTR(name, "strdup");
-    if ( HDstrcmp(name, "Property 3") != 0 )
-    {
+    if (HDstrcmp(name, "Property 3") != 0) {
         TestErrPrintf("list3_prop_table names don't match! name = %s, Property 3\n", name);
     }
 
-    list3_prop_table[2].chksum = 
-                H5_checksum_metadata(name, strlen(name), 0);
+    list3_prop_table[2].chksum = H5_checksum_metadata(name, strlen(name), 0);
     CHECK_I(list3_prop_table[2].chksum, "H5_checksum_metadata");
 
     class_table_prop = class2_prop_table[2].prop;
-    value = atomic_load(&(class_table_prop->value));
+    value            = atomic_load(&(class_table_prop->value));
 
-    list3_prop_table[2].prop = H5P__mt_create_prop(name, value.ptr, value.size, TRUE, 
-                                        atomic_load(&(class_table_prop->create_version)), 
-                                        NULL, NULL, NULL, NULL, NULL, 
-                                        NULL, NULL, NULL, NULL);
+    list3_prop_table[2].prop = H5P__mt_create_prop(name, value.ptr, value.size, TRUE,
+                                                   atomic_load(&(class_table_prop->create_version)), NULL,
+                                                   NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(list3_prop_table[2].prop, "H5P__mt_create_prop");
 
     test_prop = list3_prop_table[2].prop;
     VERIFY(atomic_load(&(test_prop->tag)), H5P_MT_PROP_TAG, "H5P__mt_create_prop");
     VERIFY(test_prop->chksum, list3_prop_table[2].chksum, "H5P__mt_create_prop");
     CHECK_PTR(test_prop->name, "H5P__mt_create_prop");
-    if ( HDstrcmp(test_prop->name, "Property 3") != 0 )
-    {
-        TestErrPrintf("Property names don't match! name = %s, Property 3\n", 
-                      test_prop->name);
+    if (HDstrcmp(test_prop->name, "Property 3") != 0) {
+        TestErrPrintf("Property names don't match! name = %s, Property 3\n", test_prop->name);
     }
-    
+
     test_value = atomic_load(&(test_prop->value));
     VERIFY(test_value.size, value.size, "H5P__mt_create_prop");
-    if ( memcmp(test_value.ptr, value.ptr, value.size ) != 0 )
-    {
+    if (memcmp(test_value.ptr, value.ptr, value.size) != 0) {
         TestErrPrintf("Property 3 value doesn't match! line=%d\n", __LINE__);
     }
 
-
-    return(ret_value);
+    return (ret_value);
 
 } /* end init_list2_props() */
-
-
 
 /****************************************************************************************
  * Function:    create_test_root_class
  *
- * Purpose:     Creates a new root class for testing. This is done to test the 
+ * Purpose:     Creates a new root class for testing. This is done to test the
  *              multithread create class function in the case of creating the root class
  *              and makes verifying all fields easier.
  *
@@ -1817,12 +1579,12 @@ init_list3_props(void)
 static hid_t
 create_test_root_class(void)
 {
-    H5P_mt_class_t             * test_root = NULL;
+    H5P_mt_class_t              *test_root = NULL;
     H5P_mt_active_thread_count_t thrd;
     H5P_mt_active_thread_count_t update_thrd;
     H5P_mt_class_ref_counts_t    refs;
-    H5P_mt_prop_t              * neg_sentinel;
-    H5P_mt_prop_t              * pos_sentinel;
+    H5P_mt_prop_t               *neg_sentinel;
+    H5P_mt_prop_t               *pos_sentinel;
     H5P_mt_prop_aptr_t           neg_next;
     H5P_mt_prop_aptr_t           pos_next;
     H5P_mt_prop_value_t          neg_value;
@@ -1831,8 +1593,8 @@ create_test_root_class(void)
 
     hid_t ret_value;
 
-    if (NULL == (test_root = H5P__mt_create_class(NULL, TEST_ROOT_NAME, H5P_TYPE_ROOT, 0, NULL, NULL, NULL, NULL,
-                                                  NULL, NULL))) {
+    if (NULL == (test_root = H5P__mt_create_class(NULL, TEST_ROOT_NAME, H5P_TYPE_ROOT, 0, NULL, NULL, NULL,
+                                                  NULL, NULL, NULL))) {
         fprintf(stderr, "create_test_root_class(): Failed creating test root class.");
         return -1;
     }
@@ -1858,14 +1620,14 @@ create_test_root_class(void)
     assert(refs.dummy_bool_1 == FALSE);
     assert(refs.dummy_bool_2 == FALSE);
     assert(refs.dummy_bool_3 == FALSE);
-    
+
     /* Assert checks to ensure the LFSLL of test_root are correct */
     neg_sentinel = test_root->pl_head;
-    neg_value = atomic_load(&(neg_sentinel->value));
-    neg_next = atomic_load(&(neg_sentinel->next));
+    neg_value    = atomic_load(&(neg_sentinel->value));
+    neg_next     = atomic_load(&(neg_sentinel->next));
     pos_sentinel = neg_next.ptr;
-    pos_value = atomic_load(&(pos_sentinel->value));
-    pos_next = atomic_load(&(pos_sentinel->next));
+    pos_value    = atomic_load(&(pos_sentinel->value));
+    pos_next     = atomic_load(&(pos_sentinel->next));
 
     /* Assert checks for negative sentinel fields */
     assert(atomic_load(&(neg_sentinel->tag)) == H5P_MT_PROP_TAG);
@@ -1885,14 +1647,14 @@ create_test_root_class(void)
     assert(atomic_load(&(neg_sentinel->delete_version)) == 0);
     assert(neg_sentinel->callbacks_mt_safe == FALSE);
     assert(neg_sentinel->create == NULL);
-    assert(neg_sentinel->set    == NULL);
-    assert(neg_sentinel->get    == NULL);
+    assert(neg_sentinel->set == NULL);
+    assert(neg_sentinel->get == NULL);
     assert(neg_sentinel->encode == NULL);
     assert(neg_sentinel->decode == NULL);
-    assert(neg_sentinel->del    == NULL);
-    assert(neg_sentinel->copy   == NULL);
-    assert(neg_sentinel->cmp    == NULL);
-    assert(neg_sentinel->close  == NULL);
+    assert(neg_sentinel->del == NULL);
+    assert(neg_sentinel->copy == NULL);
+    assert(neg_sentinel->cmp == NULL);
+    assert(neg_sentinel->close == NULL);
 
     /* Assert checks for positive sentinel fields */
     assert(atomic_load(&(pos_sentinel->tag)) == H5P_MT_PROP_TAG);
@@ -1906,28 +1668,27 @@ create_test_root_class(void)
     assert(pos_sentinel->in_lkup_tbl == FALSE);
     assert(pos_sentinel->chksum == LLONG_MAX);
     assert(0 == strcmp(pos_sentinel->name, POS_SENTINEL_NAME));
-    assert(pos_value.ptr  == NULL);
+    assert(pos_value.ptr == NULL);
     assert(pos_value.size == 0);
     assert(atomic_load(&(pos_sentinel->create_version)) == 1);
     assert(atomic_load(&(pos_sentinel->delete_version)) == 0);
     assert(pos_sentinel->callbacks_mt_safe == FALSE);
     assert(pos_sentinel->create == NULL);
-    assert(pos_sentinel->set    == NULL);
-    assert(pos_sentinel->get    == NULL);
+    assert(pos_sentinel->set == NULL);
+    assert(pos_sentinel->get == NULL);
     assert(pos_sentinel->encode == NULL);
     assert(pos_sentinel->decode == NULL);
-    assert(pos_sentinel->del    == NULL);
-    assert(pos_sentinel->copy   == NULL);
-    assert(pos_sentinel->cmp    == NULL);
-    assert(pos_sentinel->close  == NULL);
+    assert(pos_sentinel->del == NULL);
+    assert(pos_sentinel->copy == NULL);
+    assert(pos_sentinel->cmp == NULL);
+    assert(pos_sentinel->close == NULL);
 
     /**
-     * NOTE: stat fields are checked in later test functions to ensure they are 
+     * NOTE: stat fields are checked in later test functions to ensure they are
      * initialized correctly and are incremented and decremented correctly.
      */
 
-    if ((ret_value = H5I_register(H5I_GENPROP_CLS, test_root, TRUE)) < 0) 
-    {
+    if ((ret_value = H5I_register(H5I_GENPROP_CLS, test_root, TRUE)) < 0) {
         fprintf(stderr, "create_test_root_class(): Failed registering test root class in index.");
         return -1;
     }
@@ -1942,21 +1703,19 @@ create_test_root_class(void)
     assert(thrd.opening == TRUE);
     assert(thrd.closing == FALSE);
 
-    update_thrd.count = thrd.count;
+    update_thrd.count   = thrd.count;
     update_thrd.opening = FALSE;
     update_thrd.closing = FALSE;
 
-    do
-    {
+    do {
         /* Atomically update test_root->thrd.opening field to now be FALSE */
-        if (!atomic_compare_exchange_strong(&(test_root->thrd), &thrd, update_thrd))
-        {
+        if (!atomic_compare_exchange_strong(&(test_root->thrd), &thrd, update_thrd)) {
             atomic_fetch_add(&(test_root->num_thrd_update_cols), 1);
         }
         else
             done = TRUE;
-    
-    } while ( done == FALSE );
+
+    } while (done == FALSE);
 
     /* Double check test_root->thrd was updated correctly */
     thrd = atomic_load(&(test_root->thrd));
@@ -1964,19 +1723,16 @@ create_test_root_class(void)
     assert(thrd.opening == FALSE);
     assert(thrd.closing == FALSE);
 
-
     return (ret_value);
 
 } /* create_test_root_class() */
 
-
-
 /****************************************************************************************
  * Function:    test_h5p_mt_functions
  *
- * Purpose:     Base test function that calls the actual functions that test the 
- *              multithread structures and functions in single thread for a quick smoke 
- *              check. 
+ * Purpose:     Base test function that calls the actual functions that test the
+ *              multithread structures and functions in single thread for a quick smoke
+ *              check.
  *
  * Return:      SUCCESS/FAIL
  *
@@ -1985,9 +1741,9 @@ create_test_root_class(void)
 static herr_t
 test_h5p_mt_functions(TestParams_t *params)
 {
-    struct_params_t * test_params;
-    uint32_t          num_threads;
-    herr_t            ret; /* Generic return value */
+    struct_params_t *test_params;
+    uint32_t         num_threads;
+    herr_t           ret; /* Generic return value */
 
     MESSAGE(5, ("Testing all H5P multithread functions in single thread\n"));
     fflush(stdout);
@@ -2016,19 +1772,18 @@ test_h5p_mt_functions(TestParams_t *params)
 
 } /* end test_h5p_mt_functions()*/
 
-
 /****************************************************************************************
  * Function:    test_h5p_mt_class_1
  *
  * Purpose:     Tests the multithread class structure, H5P_mt_class_t, and the functions
- *              for creating a new class from a root class, inserting, deleting, 
+ *              for creating a new class from a root class, inserting, deleting,
  *              modifying, and searching for a property. After each of the steps the
  *              classes and properties affected are checked to ensure their fields were
  *              modified (or not modifed) correctly.
- * 
+ *
  * Details:
- * 
- *  1) Derive a new class1 from test_root. 
+ *
+ *  1) Derive a new class1 from test_root.
  *  2) Insert default properties into a new class1.
  *  3) Register new class1 into the index and setting the returned ID in the class1->id
  *     field and setting the opening flag to FALSE.
@@ -2040,7 +1795,7 @@ test_h5p_mt_functions(TestParams_t *params)
  *  9) Delete added prop4, and search for the property (should return NULL).
  * 10) Insert a new version of a property where the next most recent version is deleted.
  * 11) Walk class1's LFSLL ensuring every H5P_mt_prop_t struct is in the correct order.
- * 
+ *
  *
  * Return:      SUCCESS/FAIL
  *
@@ -2049,18 +1804,18 @@ test_h5p_mt_functions(TestParams_t *params)
 static herr_t
 test_h5p_mt_class_1(struct_params_t *test_params)
 {
-    H5P_mt_class_t    * test_root = NULL;
-    H5P_mt_class_t    * class1;
-    H5P_mt_prop_t     * prop1;
-    H5P_mt_prop_t     * prop2;
-    H5P_mt_prop_t     * prop3;
-    H5P_mt_prop_t     * table_prop;
+    H5P_mt_class_t     *test_root = NULL;
+    H5P_mt_class_t     *class1;
+    H5P_mt_prop_t      *prop1;
+    H5P_mt_prop_t      *prop2;
+    H5P_mt_prop_t      *prop3;
+    H5P_mt_prop_t      *table_prop;
     H5P_mt_prop_value_t table_value;
-    H5P_mt_prop_t     * test_prop;   /* to test a prop is what is expected */
+    H5P_mt_prop_t      *test_prop; /* to test a prop is what is expected */
     hid_t               class_id;
     herr_t              ret; /* Generic return value */
 
-    herr_t              ret_value = SUCCEED;
+    herr_t ret_value = SUCCEED;
 
     /* Get the test root class from index */
     test_root = (H5P_mt_class_t *)H5I_object(TEST_ROOT_ID_g);
@@ -2068,33 +1823,28 @@ test_h5p_mt_class_1(struct_params_t *test_params)
 
     assert(test_root);
     assert(atomic_load(&(test_root->tag)) == H5P_MT_CLASS_TAG);
-    assert( 0 == strcmp(test_root->name, TEST_ROOT_NAME));
+    assert(0 == strcmp(test_root->name, TEST_ROOT_NAME));
     VERIFY(atomic_load(&(test_root->id)), TEST_ROOT_ID_g, "H5I_object");
 
-
-
     /**
-     * Create a new class derived from the test root 
+     * Create a new class derived from the test root
      */
 
-    class1 = H5P__mt_create_class(test_root, CLASS1_NAME, H5P_TYPE_USER, 0, 
-                                  NULL, NULL, NULL, NULL, NULL, NULL);
+    class1 =
+        H5P__mt_create_class(test_root, CLASS1_NAME, H5P_TYPE_USER, 0, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(class1, "H5P__mt_create_class");
 
     assert(class1);
     assert(atomic_load(&(class1->tag)) == H5P_MT_CLASS_TAG);
 
-    if ( HDstrcmp(class1->name, CLASS1_NAME) != 0 )
-    {
-        TestErrPrintf("Class names don't match! name = %s, CLASS1_NAME=%s\n", 
-                      class1->name, CLASS1_NAME);
+    if (HDstrcmp(class1->name, CLASS1_NAME) != 0) {
+        TestErrPrintf("Class names don't match! name = %s, CLASS1_NAME=%s\n", class1->name, CLASS1_NAME);
     }
 
     /* Verify class1's parent info is correct */
     VERIFY(class1->parent_id, test_root->id, "H5P__mt_create_class");
     VERIFY(class1->parent_ptr, test_root, "H5P__mt_create_class");
-    VERIFY(class1->parent_version, atomic_load(&(test_root->curr_version)), 
-           "H5P__mt_create_class");
+    VERIFY(class1->parent_version, atomic_load(&(test_root->curr_version)), "H5P__mt_create_class");
 
     /* Ensure class fields are correct */
     ret = class_ver_and_len_check(class1, 1, 2, 0, 0, 2, "H5P__mt_create_class");
@@ -2104,50 +1854,40 @@ test_h5p_mt_class_1(struct_params_t *test_params)
     ret = check_class_ref_counts(test_root, 0, 1, FALSE, "H5P__mt_create_class");
     CHECK_I(ret, "H5P__mt_create_class");
 
-
-
     /**
-     * Insert class1's default properties 
+     * Insert class1's default properties
      */
-
 
     /* create default prop1 */
 
     table_prop  = class_prop_table[0].prop;
     table_value = atomic_load(&(table_prop->value));
 
-    ret = H5P__register_real(class1, class_prop_table[0].name, table_value.size, 
-                            table_value.ptr, NULL, NULL, NULL, NULL, NULL,
-                            NULL, NULL, NULL, NULL);
+    ret = H5P__register_real(class1, class_prop_table[0].name, table_value.size, table_value.ptr, NULL, NULL,
+                             NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_I(ret, "H5P__register_real");
-
-
 
     /* create default prop2 */
 
     table_prop  = class_prop_table[1].prop;
     table_value = atomic_load(&(table_prop->value));
 
-    ret = H5P__register_real(class1, class_prop_table[1].name, table_value.size, 
-                            table_value.ptr, NULL, NULL, NULL, NULL, NULL,
-                            NULL, NULL, NULL, NULL);
+    ret = H5P__register_real(class1, class_prop_table[1].name, table_value.size, table_value.ptr, NULL, NULL,
+                             NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_I(ret, "H5P__register_real");
-
 
     /* create default prop3 */
 
     table_prop  = class_prop_table[2].prop;
     table_value = atomic_load(&(table_prop->value));
 
-    ret = H5P__register_real(class1, class_prop_table[2].name, table_value.size,
-                            table_value.ptr, NULL, NULL, NULL, NULL, NULL,
-                            NULL, NULL, NULL, NULL);
+    ret = H5P__register_real(class1, class_prop_table[2].name, table_value.size, table_value.ptr, NULL, NULL,
+                             NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_I(ret, "H5P__register_real");
 
-
     /**
-     * All default properties are inserted, 
-     * register class1 in the index and set opening flag to FALSE 
+     * All default properties are inserted,
+     * register class1 in the index and set opening flag to FALSE
      */
 
     assert(atomic_load(&(class1->id)) == H5I_INVALID_HID);
@@ -2155,25 +1895,20 @@ test_h5p_mt_class_1(struct_params_t *test_params)
     class_id = H5I_register(H5I_GENPROP_CLS, class1, TRUE);
     CHECK_I(class_id, "H5I_register");
 
-
     atomic_store(&(class1->id), class_id);
 
     /* Ensure class thrd flags are correct, then update the flags */
-    if ( 0 > check_and_set_thrd_flags(class1, TRUE, FALSE, FALSE, FALSE, 
-                                      strdup("H5P__register_real")) )
-    {
+    if (0 > check_and_set_thrd_flags(class1, TRUE, FALSE, FALSE, FALSE, strdup("H5P__register_real"))) {
         fprintf(stderr, "test_h5p_mt_class_1(): class thrd flags mismatch.");
         return -1;
     }
-
 
     /**
      * Check class1 fields, and search for each default property and check their fields.
      */
 
     /* Ensure class fields are correct */
-    if ( 0 > class_ver_and_len_check(class1, 1, 2, 0, 3, 5, "H5P__register_real") )
-    {
+    if (0 > class_ver_and_len_check(class1, 1, 2, 0, 3, 5, "H5P__register_real")) {
         assert(class1 == test_root);
 
         fprintf(stderr, "test_h5p_mt_class_1(): class fields are incorrect.");
@@ -2182,8 +1917,7 @@ test_h5p_mt_class_1(struct_params_t *test_params)
     }
 
     /* Search for default prop1 */
-    if ( NULL == ( prop1 = H5P__mt_search__class(class1, class_prop_table[0].name)) )
-    {
+    if (NULL == (prop1 = H5P__mt_search__class(class1, class_prop_table[0].name))) {
         assert(prop1);
 
         fprintf(stderr, "test_h5p_mt_class_1(): Failed to find prop1.");
@@ -2191,8 +1925,7 @@ test_h5p_mt_class_1(struct_params_t *test_params)
     }
 
     /* sanity check for prop1 */
-    if ( 0 != prop_check(prop1, class_prop_table[0].prop, TRUE, FALSE) )
-    {
+    if (0 != prop_check(prop1, class_prop_table[0].prop, TRUE, FALSE)) {
         assert(test_prop == table_prop);
 
         fprintf(stderr, "test_h5p_mt_class_1(): prop1 and table mismatch.");
@@ -2200,8 +1933,7 @@ test_h5p_mt_class_1(struct_params_t *test_params)
     }
 
     /* Search for default prop2 */
-    if ( NULL == ( prop2 = H5P__mt_search__class(class1, class_prop_table[1].name)) )
-    {
+    if (NULL == (prop2 = H5P__mt_search__class(class1, class_prop_table[1].name))) {
         assert(prop2);
 
         fprintf(stderr, "test_h5p_mt_class_1(): Failed to find prop2.");
@@ -2209,8 +1941,7 @@ test_h5p_mt_class_1(struct_params_t *test_params)
     }
 
     /* sanity check for prop2 */
-    if ( 0 != prop_check(prop2, class_prop_table[1].prop, TRUE, FALSE) )
-    {
+    if (0 != prop_check(prop2, class_prop_table[1].prop, TRUE, FALSE)) {
         assert(test_prop == table_prop);
 
         fprintf(stderr, "test_h5p_mt_class_1(): prop2 and table mismatch.");
@@ -2218,8 +1949,7 @@ test_h5p_mt_class_1(struct_params_t *test_params)
     }
 
     /* Search for default prop3 */
-    if ( NULL == ( prop3 = H5P__mt_search__class(class1, class_prop_table[2].name)) )
-    {
+    if (NULL == (prop3 = H5P__mt_search__class(class1, class_prop_table[2].name))) {
         assert(prop3);
 
         fprintf(stderr, "test_h5p_mt_class_1(): Failed to find prop3.");
@@ -2227,17 +1957,13 @@ test_h5p_mt_class_1(struct_params_t *test_params)
     }
 
     /* sanity check for prop3 */
-    if ( 0 != prop_check(prop3, class_prop_table[2].prop, TRUE, FALSE) )
-    {
+    if (0 != prop_check(prop3, class_prop_table[2].prop, TRUE, FALSE)) {
         assert(test_prop == table_prop);
 
         fprintf(stderr, "test_h5p_mt_class_1(): prop3 and table mismatch.");
         return -1;
     }
 
-
-
-    
     /**
      * Insert a new property
      */
@@ -2246,40 +1972,32 @@ test_h5p_mt_class_1(struct_params_t *test_params)
     table_value = atomic_load(&(table_prop->value));
 
     /* Create and insert prop4 */
-    if ( H5P__mt_ins_or_mod_prop__class(class1, class_prop_table[3].name, 
-                                       table_value.ptr, table_value.size, 
-                                       NULL, NULL, NULL, NULL, NULL, NULL, 
-                                       NULL, NULL, NULL) < 0 )
-    {
+    if (H5P__mt_ins_or_mod_prop__class(class1, class_prop_table[3].name, table_value.ptr, table_value.size,
+                                       NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL) < 0) {
         fprintf(stderr, "test_h5p_mt_class_1(): Failed to create and insert prop4.");
         return -1;
     }
 
     /* Ensure class fields are correct */
-    if ( 0 > class_ver_and_len_check(class1, 2, 3, 1, 4, 6, 
-                                     "H5P__mt_ins_or_mod_prop__class") )
-    {
+    if (0 > class_ver_and_len_check(class1, 2, 3, 1, 4, 6, "H5P__mt_ins_or_mod_prop__class")) {
         assert(class1 == test_root);
 
         fprintf(stderr, "test_h5p_mt_class_1(): class fields are incorrect.");
         return -1;
     }
 
-
-    /** 
+    /**
      * Search for the new property
      */
 
     /* Search for prop4 */
-    if ( NULL == ( test_prop = H5P__mt_search__class(class1, class_prop_table[3].name)) )
-    {
+    if (NULL == (test_prop = H5P__mt_search__class(class1, class_prop_table[3].name))) {
         fprintf(stderr, "test_h5p_mt_class_1(): Failed to find prop4.");
         return -1;
     }
 
     /* sanity check for prop4 */
-    if ( 0 != prop_check(test_prop, table_prop, TRUE, FALSE) )
-    {
+    if (0 != prop_check(test_prop, table_prop, TRUE, FALSE)) {
         assert(test_prop == table_prop);
 
         fprintf(stderr, "test_h5p_mt_class_1(): prop4 and table mismatch.");
@@ -2289,8 +2007,6 @@ test_h5p_mt_class_1(struct_params_t *test_params)
     /* Update table_prop's create version to match */
     atomic_store(&(table_prop->create_version), atomic_load(&(class1->curr_version)));
 
-
-
     /**
      * Modify a default property
      */
@@ -2298,41 +2014,32 @@ test_h5p_mt_class_1(struct_params_t *test_params)
     table_prop  = get_table_prop_ver(class_prop_table[0], 2);
     table_value = atomic_load(&(table_prop->value));
 
-    assert( 0 == strcmp(table_prop->name, class_prop_table[0].name));
+    assert(0 == strcmp(table_prop->name, class_prop_table[0].name));
 
     /* Create and insert a second version of property 1 */
-    if ( H5P__mt_ins_or_mod_prop__class(class1, class_prop_table[0].name, 
-                                        table_value.ptr, table_value.size, 
-                                        NULL, NULL, NULL, NULL, NULL, 
-                                        NULL, NULL, NULL, NULL) < 0 )
-    {
+    if (H5P__mt_ins_or_mod_prop__class(class1, class_prop_table[0].name, table_value.ptr, table_value.size,
+                                       NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL) < 0) {
         fprintf(stderr, "test_h5p_mt_class_1(): Failed to 'modify' prop1.");
         return -1;
     }
 
     /* Ensure class fields are correct */
-    if ( 0 > class_ver_and_len_check(class1, 3, 4, 1, 4, 7, 
-                                     "H5P__mt_ins_or_mod_prop__class") )
-    {
+    if (0 > class_ver_and_len_check(class1, 3, 4, 1, 4, 7, "H5P__mt_ins_or_mod_prop__class")) {
         assert(class1 == test_root);
 
         fprintf(stderr, "test_h5p_mt_class_1(): class fields are incorrect.");
         return -1;
     }
 
-
     /* Search for modified prop1, which has two versions (should find newest version) */
 
-    if ( NULL == ( test_prop = H5P__mt_search__class(class1, class_prop_table[0].name)) )
-    {
+    if (NULL == (test_prop = H5P__mt_search__class(class1, class_prop_table[0].name))) {
         fprintf(stderr, "test_h5p_mt_class_1(): Failed to find prop1 ver2.");
         return -1;
     }
 
-
     /* sanity check for modified prop1 */
-    if ( 0 != prop_check(test_prop, table_prop, TRUE, FALSE) )
-    {
+    if (0 != prop_check(test_prop, table_prop, TRUE, FALSE)) {
         assert(test_prop == table_prop);
 
         fprintf(stderr, "test_h5p_mt_class_1(): prop1 ver2 table mismatch.");
@@ -2342,8 +2049,6 @@ test_h5p_mt_class_1(struct_params_t *test_params)
     /* Update table_prop's create version to match */
     atomic_store(&(table_prop->create_version), atomic_load(&(test_prop->create_version)));
 
-
-
     /**
      * Modified an added property
      */
@@ -2351,41 +2056,32 @@ test_h5p_mt_class_1(struct_params_t *test_params)
     table_prop  = get_table_prop_ver(class_prop_table[3], 2);
     table_value = atomic_load(&(table_prop->value));
 
-    assert( 0 == strcmp(table_prop->name, class_prop_table[3].name));
+    assert(0 == strcmp(table_prop->name, class_prop_table[3].name));
 
     /* Create and insert a second version of property 4 */
-    if ( H5P__mt_ins_or_mod_prop__class(class1, class_prop_table[3].name, 
-                                        table_value.ptr, table_value.size, 
-                                        NULL, NULL, NULL, NULL, NULL, 
-                                        NULL, NULL, NULL, NULL) < 0 )
-    {
+    if (H5P__mt_ins_or_mod_prop__class(class1, class_prop_table[3].name, table_value.ptr, table_value.size,
+                                       NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL) < 0) {
         fprintf(stderr, "test_h5p_mt_class_1(): Failed to 'modify' prop4.");
         return -1;
     }
 
     /* Ensure class fields are correct */
-    if ( 0 > class_ver_and_len_check(class1, 4, 5, 1, 4, 8,
-                                     "H5P__mt_ins_or_mod_prop__class") )
-    {
+    if (0 > class_ver_and_len_check(class1, 4, 5, 1, 4, 8, "H5P__mt_ins_or_mod_prop__class")) {
         assert(class1 == test_root);
 
         fprintf(stderr, "test_h5p_mt_class_1(): class fields are incorrect.");
         return -1;
     }
 
-
     /* Search for modified prop4, which has two versions (should find newest version) */
 
-    if ( NULL == ( test_prop = H5P__mt_search__class(class1, class_prop_table[3].name)) )
-    {
+    if (NULL == (test_prop = H5P__mt_search__class(class1, class_prop_table[3].name))) {
         fprintf(stderr, "test_h5p_mt_class_1(): Failed to find prop4 ver2.");
         return -1;
     }
 
-
     /* sanity check for modified prop4 */
-    if ( 0 != prop_check(test_prop, table_prop, TRUE, FALSE) )
-    {
+    if (0 != prop_check(test_prop, table_prop, TRUE, FALSE)) {
         assert(test_prop == table_prop);
 
         fprintf(stderr, "test_h5p_mt_class_1(): prop4 ver2 table mismatch.");
@@ -2395,36 +2091,29 @@ test_h5p_mt_class_1(struct_params_t *test_params)
     /* Update table_prop's create version to match */
     atomic_store(&(table_prop->create_version), atomic_load(&(test_prop->create_version)));
 
-
-
     /**
      * Delete a default property
      */
 
     /* Set delete version on default prop2 */
-    if ( H5P__mt_delete_prop__class(class1, class_prop_table[1].name) < 0 )
-    {
+    if (H5P__mt_delete_prop__class(class1, class_prop_table[1].name) < 0) {
         fprintf(stderr, "test_h5p_mt_class_1(): Failed to delete default prop2.");
         return -1;
     }
 
     /* Ensure class fields are correct */
-    if ( 0 > class_ver_and_len_check(class1, 5, 6, 1, 3, 8,
-                                     "H5P__mt_delete_prop__class") )
-    {
+    if (0 > class_ver_and_len_check(class1, 5, 6, 1, 3, 8, "H5P__mt_delete_prop__class")) {
         assert(class1 == test_root);
 
         fprintf(stderr, "test_h5p_mt_class_1(): class fields are incorrect.");
         return -1;
     }
 
-
     /**
-     * Search for deleted prop2. Should FAIL 
+     * Search for deleted prop2. Should FAIL
      */
 
-    if ( NULL != ( test_prop = H5P__mt_search__class(class1, class_prop_table[1].name)) )
-    {
+    if (NULL != (test_prop = H5P__mt_search__class(class1, class_prop_table[1].name))) {
         fprintf(stderr, "test_h5p_mt_class_1(): Returned a deleted prop2.");
         return -1;
     }
@@ -2434,37 +2123,30 @@ test_h5p_mt_class_1(struct_params_t *test_params)
 
     atomic_store(&(table_prop->delete_version), atomic_load(&(class1->curr_version)));
 
-
-
     /**
      * Delete a modified property (property with multiple vesrions)
      */
 
     /* Delete modified prop1*/
-    if ( H5P__mt_delete_prop__class(class1, class_prop_table[0].name) < 0 )
-    {
+    if (H5P__mt_delete_prop__class(class1, class_prop_table[0].name) < 0) {
         fprintf(stderr, "test_h5p_mt_class_1(): Failed to delete modified prop1.");
         return -1;
     }
 
     /* Ensure class fields are correct */
-    if ( 0 > class_ver_and_len_check(class1, 6, 7, 1, 2, 8,
-                                     "H5P__mt_delete_prop__class") )
-    {
+    if (0 > class_ver_and_len_check(class1, 6, 7, 1, 2, 8, "H5P__mt_delete_prop__class")) {
         assert(class1 == test_root);
 
         fprintf(stderr, "test_h5p_mt_class_1(): class fields are incorrect.");
         return -1;
     }
 
-
-    /** 
-     * Search for deleted prop1. Should FAIL even 
+    /**
+     * Search for deleted prop1. Should FAIL even
      * though a non-deleted older version exists
      */
 
-    if ( NULL != ( test_prop = H5P__mt_search__class(class1, class_prop_table[0].name)) )
-    {
+    if (NULL != (test_prop = H5P__mt_search__class(class1, class_prop_table[0].name))) {
         fprintf(stderr, "test_h5p_mt_class_1(): Returned non-valid prop1.");
         return -1;
     }
@@ -2474,20 +2156,16 @@ test_h5p_mt_class_1(struct_params_t *test_params)
 
     atomic_store(&(table_prop->delete_version), atomic_load(&(class1->curr_version)));
 
-
     /**
      * Delete an added property
      */
-    if ( H5P__mt_delete_prop__class(class1, class_prop_table[3].name) < 0 )
-    {
+    if (H5P__mt_delete_prop__class(class1, class_prop_table[3].name) < 0) {
         fprintf(stderr, "test_h5p_mt_class_1(): Failed to delete modified prop1.");
         return -1;
     }
 
     /* Ensure class fields are correct */
-    if ( 0 > class_ver_and_len_check(class1, 7, 8, 0, 1, 8,
-                                     "H5P__mt_delete_prop__class") )
-    {
+    if (0 > class_ver_and_len_check(class1, 7, 8, 0, 1, 8, "H5P__mt_delete_prop__class")) {
         assert(class1 == test_root);
 
         fprintf(stderr, "test_h5p_mt_class_1(): class fields are incorrect.");
@@ -2499,7 +2177,6 @@ test_h5p_mt_class_1(struct_params_t *test_params)
 
     atomic_store(&(table_prop->delete_version), atomic_load(&(class1->curr_version)));
 
-
     /**
      * Class1 only has 1 valid property. To test inserting a new versions of a
      * previously deleted property insert prop1 and prop2 back in.
@@ -2508,9 +2185,8 @@ test_h5p_mt_class_1(struct_params_t *test_params)
     table_prop  = get_table_prop_ver(class_prop_table[0], 3);
     table_value = atomic_load(&(table_prop->value));
 
-    ret = H5P__mt_ins_or_mod_prop__class(class1, table_prop->name, table_value.ptr,
-                                         table_value.size, NULL, NULL, NULL, NULL,
-                                         NULL, NULL, NULL, NULL, NULL);
+    ret = H5P__mt_ins_or_mod_prop__class(class1, table_prop->name, table_value.ptr, table_value.size, NULL,
+                                         NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_I(ret, "H5P__mt_ins_or_mod_prop__class");
 
     atomic_store(&(table_prop->create_version), atomic_load(&(class1->curr_version)));
@@ -2518,18 +2194,14 @@ test_h5p_mt_class_1(struct_params_t *test_params)
     table_prop  = get_table_prop_ver(class_prop_table[1], 2);
     table_value = atomic_load(&(table_prop->value));
 
-    ret = H5P__mt_ins_or_mod_prop__class(class1, table_prop->name, table_value.ptr,
-                                         table_value.size, NULL, NULL, NULL, NULL,
-                                         NULL, NULL, NULL, NULL, NULL);
+    ret = H5P__mt_ins_or_mod_prop__class(class1, table_prop->name, table_value.ptr, table_value.size, NULL,
+                                         NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_I(ret, "H5P__mt_ins_or_mod_prop__class");
 
     atomic_store(&(table_prop->create_version), atomic_load(&(class1->curr_version)));
 
-    ret = class_ver_and_len_check(class1, 9, 10, 2, 3, 10,
-                                  "H5P__mt_ins_or_mod_prop__class");
+    ret = class_ver_and_len_check(class1, 9, 10, 2, 3, 10, "H5P__mt_ins_or_mod_prop__class");
     CHECK_I(ret, "H5P__mt_ins_or_mod_prop__class");
-
-
 
     /**
      * Walk class1's LFSLL ensuring all prop structs are correct and in order.
@@ -2537,69 +2209,60 @@ test_h5p_mt_class_1(struct_params_t *test_params)
 
     test_prop = class1->pl_head;
 
-    if ( 0 > sentinel_check(test_prop) )
-    {
+    if (0 > sentinel_check(test_prop)) {
         fprintf(stderr, "test_h5p_mt_class_1(): neg_sentinel failed check.");
-        return -1;   
+        return -1;
     }
 
-    ret = compare_lfsll_to_table_props(&test_prop, class_prop_table, 
-                                       "H5P__mt_ins_or_mod_prop__class");
+    ret = compare_lfsll_to_table_props(&test_prop, class_prop_table, "H5P__mt_ins_or_mod_prop__class");
     CHECK_I(ret, "H5P__mt_ins_or_mod_prop__class");
 
-
     assert(test_prop->sentinel);
-    if ( 0 > sentinel_check(test_prop) )
-    {
+    if (0 > sentinel_check(test_prop)) {
         fprintf(stderr, "test_h5p_mt_class_1(): pos_sentinel failed check.");
-        return -1;   
+        return -1;
     }
-
-
 
     /* Insert class1 into test_params class LFSLL */
     test_params->test_classes_head.ptr = class1;
     test_params->test_classes_tail.ptr = class1;
     test_params->num_classes++;
 
-
-    return(ret_value);
+    return (ret_value);
 
 } /* end test_h5p_mt_class_1() */
-
-
 
 /****************************************************************************************
  * Function:    test_h5p_mt_class_2
  *
- * Purpose:     Further tests the multithread class structure, H5P_mt_class_t, and the 
- *              functions for copying a class, deriving a new class from a non-root 
- *              class, comparison of two classes, closing a class, and reallocating a 
+ * Purpose:     Further tests the multithread class structure, H5P_mt_class_t, and the
+ *              functions for copying a class, deriving a new class from a non-root
+ *              class, comparison of two classes, closing a class, and reallocating a
  *              closed instance of a class structure from the class free list to be used
- *              for a new class. After each of the steps the classes and properties 
- *              affected are checked to ensure their fields were modified (or not 
+ *              for a new class. After each of the steps the classes and properties
+ *              affected are checked to ensure their fields were modified (or not
  *              modifed) correctly.
- * 
+ *
  * Details:
- * 
+ *
  *  1) Create class2 as a copy of class1, and register class2 in the index and update
  *     class2->id and class2's opening flag
  *  2) Compare class1 and class2 (should be equal).
- *  3) Modify a property in class2 and compare class1 and class2 again (should not be 
+ *  3) Modify a property in class2 and compare class1 and class2 again (should not be
  *     equal).
  *  4) Modify the property in class2 back and compare class1 and class2 one last time
  *     (should be equal).
  *  5) Close class2 and ensure it was inserted into the class free list correctly.
- *  6) Change the closed class2's tag to be reallocable and derive a new class2 from 
- *     class1. 
+ *  6) Change the closed class2's tag to be reallocable and derive a new class2 from
+ *     class1.
  *  7) Ensure the new class2 used the old class2 structure from the class free
- *     list and that the class free list is now empty (NOTE: the class free list will 
+ *     list and that the class free list is now empty (NOTE: the class free list will
  *     always contain two H5P_mt_class_sptr_t structs for the head and tail of that list,
  *     and if the pointers are NULL then the free list is "empty").
  *  8) Check the property free list and ensure all the H5P_mt_prop_t, property structs,
- *     where correctly inserted, when the class2 struct was reallocated from the class 
+ *     where correctly inserted, when the class2 struct was reallocated from the class
  *     free list.
- * 
+ *
  *
  * Return:      SUCCESS/FAIL
  *
@@ -2608,16 +2271,16 @@ test_h5p_mt_class_1(struct_params_t *test_params)
 static herr_t
 test_h5p_mt_class_2(struct_params_t *test_params)
 {
-    H5P_mt_class_t    * test_root;
-    H5P_mt_class_t    * class1;
-    H5P_mt_class_t    * class2;
-    H5P_mt_class_t    * head_class;
+    H5P_mt_class_t     *test_root;
+    H5P_mt_class_t     *class1;
+    H5P_mt_class_t     *class2;
+    H5P_mt_class_t     *head_class;
     H5P_mt_class_sptr_t fl_head;
     H5P_mt_class_sptr_t fl_tail;
     H5P_mt_class_sptr_t test_next;
-    H5P_mt_prop_t     * table_prop;
+    H5P_mt_prop_t      *table_prop;
     H5P_mt_prop_value_t table_value;
-    H5P_mt_prop_t     * fl_prop;
+    H5P_mt_prop_t      *fl_prop;
     H5P_mt_prop_aptr_t  prop_fl_head;
     H5P_mt_prop_aptr_t  prop_fl_tail;
     hid_t               class_id;
@@ -2630,26 +2293,24 @@ test_h5p_mt_class_2(struct_params_t *test_params)
 
     assert(class1);
     assert(atomic_load(&(class1->tag)) == H5P_MT_CLASS_TAG);
-    assert( 0 == strcmp(class1->name, CLASS1_NAME));
+    assert(0 == strcmp(class1->name, CLASS1_NAME));
 
     /* Get the test root class from class1 */
     test_root = class1->parent_ptr;
 
     assert(test_root);
     assert(atomic_load(&(test_root->tag)) == H5P_MT_CLASS_TAG);
-    assert( 0 == strcmp(test_root->name, TEST_ROOT_NAME));
-
+    assert(0 == strcmp(test_root->name, TEST_ROOT_NAME));
 
     /**
      * Create a copy of class1, check test_root's derived class ref count,
-     * and insert class2 into the index and set ID in class2->id and set 
+     * and insert class2 into the index and set ID in class2->id and set
      * opening flag to FALSE.
-     */ 
+     */
 
-    if ( NULL == (class2 = H5P__mt_copy_class(class1)) )
-    {
+    if (NULL == (class2 = H5P__mt_copy_class(class1))) {
         assert(class2);
-        
+
         fprintf(stderr, "test_h5p_mt_class_2(): Failed to create class2.");
         return -1;
     }
@@ -2657,9 +2318,7 @@ test_h5p_mt_class_2(struct_params_t *test_params)
     assert(0 == strcmp(class2->name, CLASS1_NAME));
 
     /* Ensure class fields are correct */
-    if ( 0 > class_ver_and_len_check(class2, 1, 2, 0, 3, 5,
-                                     "H5P__mt_copy_class") )
-    {
+    if (0 > class_ver_and_len_check(class2, 1, 2, 0, 3, 5, "H5P__mt_copy_class")) {
         assert(test_root == class2);
 
         fprintf(stderr, "test_h5p_mt_class_2(): class fields are incorrect.");
@@ -2670,56 +2329,46 @@ test_h5p_mt_class_2(struct_params_t *test_params)
     ret = check_class_ref_counts(test_root, 0, 2, FALSE, "H5P__mt_copy_class");
     CHECK_I(ret, "H5P__mt_copy_class");
 
-
     assert(atomic_load(&(class2->id)) == H5I_INVALID_HID);
 
-    if (( class_id = H5I_register(H5I_GENPROP_CLS, class2, TRUE)) < 0 )
-    {
+    if ((class_id = H5I_register(H5I_GENPROP_CLS, class2, TRUE)) < 0) {
         fprintf(stderr, "test_h5p_mt_class_1(): failed registering class.");
         return -1;
     }
 
     atomic_store(&(class2->id), class_id);
-        
+
     /* Ensure class thrd flags are correct, then update the flags */
-    if ( 0 > check_and_set_thrd_flags(class2, TRUE, FALSE, FALSE, FALSE, 
-                                      "H5P_register") )
-    {
+    if (0 > check_and_set_thrd_flags(class2, TRUE, FALSE, FALSE, FALSE, "H5P_register")) {
         assert(class1 == class2);
 
         fprintf(stderr, "test_h5p_mt_class_1(): class thrd flags mismatch.");
         return -1;
     }
 
-
-
     /**
      * Compare class1 and the copy, class2. (They should be equal)
-     */ 
+     */
 
-    if ( 0 != H5P__mt_cmp_class(class1, class2) )
-    {
+    if (0 != H5P__mt_cmp_class(class1, class2)) {
         assert(class1 == class2);
 
         fprintf(stderr, "test_h5p_mt_class_2(): class1 and class2 were not equal.");
         return -1;
     }
 
-
     /**
      * Modify a property in class2, and compare class1 and class2 again.
      * (They should not be equal)
-     */ 
+     */
 
     table_prop  = get_table_prop_ver(class2_prop_table[2], 2);
     table_value = atomic_load(&(table_prop->value));
 
     /* Create and insert a second version of property 3 */
-    if (( ret = H5P__mt_ins_or_mod_prop__class(class2, table_prop->name, table_value.ptr,
-                                        table_value.size, NULL, NULL, NULL,
-                                        NULL, NULL, NULL, NULL, NULL, NULL) ) < 0 )
-    {
-        
+    if ((ret = H5P__mt_ins_or_mod_prop__class(class2, table_prop->name, table_value.ptr, table_value.size,
+                                              NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)) < 0) {
+
         fprintf(stderr, "test_h5p_mt_class_2(): Failed to 'modify' prop3.");
         assert(ret > 0);
 
@@ -2730,9 +2379,7 @@ test_h5p_mt_class_2(struct_params_t *test_params)
     atomic_store(&(table_prop->create_version), atomic_load(&(class2->curr_version)));
 
     /* Ensure class fields are correct */
-    if ( 0 > class_ver_and_len_check(class2, 2, 3, 0, 3, 6,
-                                     "H5P__mt_ins_or_mod_prop__class") )
-    {
+    if (0 > class_ver_and_len_check(class2, 2, 3, 0, 3, 6, "H5P__mt_ins_or_mod_prop__class")) {
         assert(class1 == test_root);
 
         fprintf(stderr, "test_h5p_mt_class_2(): class2 fields are incorrect.");
@@ -2740,15 +2387,13 @@ test_h5p_mt_class_2(struct_params_t *test_params)
     }
 
     /* Compare class1 and class2 (should not be equal) */
-    if ( 1 != H5P__mt_cmp_class(class1, class2) )
-    {
+    if (1 != H5P__mt_cmp_class(class1, class2)) {
         assert(class1 == class2);
 
         fprintf(stderr, "test_h5p_mt_class_2(): class1 and class2 were equal.");
         return -1;
     }
 
-    
     /**
      * Change the modified property back to default value and compare
      * class1 and class2 again. (Should be equal)
@@ -2758,10 +2403,8 @@ test_h5p_mt_class_2(struct_params_t *test_params)
     table_value = atomic_load(&(table_prop->value));
 
     /* Create and insert prop3 with default value */
-    if ((ret = H5P__mt_ins_or_mod_prop__class(class2, table_prop->name, table_value.ptr,
-                                        table_value.size, NULL, NULL, NULL,
-                                        NULL, NULL, NULL, NULL, NULL, NULL) ) < 0 )
-    {
+    if ((ret = H5P__mt_ins_or_mod_prop__class(class2, table_prop->name, table_value.ptr, table_value.size,
+                                              NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)) < 0) {
         fprintf(stderr, "test_h5p_mt_class_2(): Failed to 'modify' prop3.");
         assert(ret > 0);
 
@@ -2772,9 +2415,7 @@ test_h5p_mt_class_2(struct_params_t *test_params)
     atomic_store(&(table_prop->create_version), atomic_load(&(class2->curr_version)));
 
     /* Ensure class2's fields are correct */
-    if ( 0 > class_ver_and_len_check(class2, 3, 4, 0, 3, 7,
-                                     "H5P__mt_ins_or_mod_prop__class") )
-    {
+    if (0 > class_ver_and_len_check(class2, 3, 4, 0, 3, 7, "H5P__mt_ins_or_mod_prop__class")) {
         assert(class1 == test_root);
 
         fprintf(stderr, "test_h5p_mt_class_2(): class2 fields are incorrect.");
@@ -2782,23 +2423,19 @@ test_h5p_mt_class_2(struct_params_t *test_params)
     }
 
     /* Compare class1 and class2 (should be equal) */
-    if ( 0 != H5P__mt_cmp_class(class1, class2) )
-    {
+    if (0 != H5P__mt_cmp_class(class1, class2)) {
         assert(class1 == class2);
 
         fprintf(stderr, "test_h5p_mt_class_2(): class1 and class2 were not equal.");
         return -1;
     }
 
-
     /**
      * Close class2 and check test_root's derived class ref count,
      * and ensure class2 was inserted into the class free list.
      */
 
-
-    if ( 0 > H5Pclose_class(class2->id) )
-    {
+    if (0 > H5Pclose_class(class2->id)) {
         assert(class1 == class2);
 
         fprintf(stderr, "test_h5p_mt_class_2(): failed closing class2.");
@@ -2809,19 +2446,17 @@ test_h5p_mt_class_2(struct_params_t *test_params)
     ret = check_class_ref_counts(test_root, 0, 1, FALSE, "H5Pclose_class");
     CHECK_I(ret, "H5Pclose_class");
 
-
     /* Check the class free list to ensure class2 was inserted correctly when closed */
 
-    fl_head = atomic_load(&(H5P_mt_g.class_fl_head));
+    fl_head    = atomic_load(&(H5P_mt_g.class_fl_head));
     head_class = fl_head.ptr;
 
     assert(head_class);
     assert(atomic_load(&(head_class->tag)) == H5P_MT_CLASS_INVALID_TAG);
     VERIFY(atomic_load(&(head_class->tag)), H5P_MT_CLASS_INVALID_TAG, "H5Pclose_class");
-    
+
     /* Ensure head_class's thrd flags are correct */
-    ret = check_and_set_thrd_flags(head_class, FALSE, TRUE, FALSE, TRUE, 
-                                   "H5Pclose_class");
+    ret = check_and_set_thrd_flags(head_class, FALSE, TRUE, FALSE, TRUE, "H5Pclose_class");
     CHECK_I(ret, "H5Pclose_class");
 
     /* Ensure head_class is still marked as deleted */
@@ -2829,26 +2464,22 @@ test_h5p_mt_class_2(struct_params_t *test_params)
     CHECK_I(ret, "H5Pclose_class");
 
     /**
-     * Ensure class2(aka head_class) is the head and tail 
+     * Ensure class2(aka head_class) is the head and tail
      * since it's the only class on the class free list
      */
     fl_tail = atomic_load(&(H5P_mt_g.class_fl_tail));
     VERIFY(fl_tail.ptr, head_class, "H5Pclose_class");
     assert(fl_tail.ptr == head_class);
 
-
-
-
     /**
      * From the class free list, modify the closed class's tag to be reallocable
-     * and derive a new class2 from class1 (should allocate the H5P_mt_class_t 
+     * and derive a new class2 from class1 (should allocate the H5P_mt_class_t
      * structure from the class free list)
      */
 
     atomic_store(&(head_class->tag), H5P_MT_CLASS_FL_REALLOC_TAG);
 
-    class2 = H5P__mt_create_class(class1, CLASS2_NAME, H5P_TYPE_USER, 0,
-                                  NULL, NULL, NULL, NULL, NULL, NULL);
+    class2 = H5P__mt_create_class(class1, CLASS2_NAME, H5P_TYPE_USER, 0, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(class2, "H5P__mt_create_class");
     assert(class2);
     assert(atomic_load(&(class2->tag)) == H5P_MT_CLASS_TAG);
@@ -2874,21 +2505,19 @@ test_h5p_mt_class_2(struct_params_t *test_params)
     atomic_store(&(class2->id), class_id);
 
     /* Ensure class thrd flags are correct, then update the flags */
-    ret = check_and_set_thrd_flags(class2, TRUE, FALSE, FALSE, FALSE,
-                                   "H5P_register");
+    ret = check_and_set_thrd_flags(class2, TRUE, FALSE, FALSE, FALSE, "H5P_register");
 
     /* Ensure the class free list is now empty */
     fl_head = atomic_load(&(H5P_mt_g.class_fl_head));
     fl_tail = atomic_load(&(H5P_mt_g.class_fl_tail));
 
-    assert( ! fl_head.ptr);
-    assert( ! fl_tail.ptr);
+    assert(!fl_head.ptr);
+    assert(!fl_tail.ptr);
     VERIFY(fl_head.ptr, NULL, "H5P__mt_create_class");
     VERIFY(fl_tail.ptr, NULL, "H5P__mt_create_class");
 
-
     /**
-     * Ensure the property structs in class2 were correctly inserted into the prop 
+     * Ensure the property structs in class2 were correctly inserted into the prop
      * free list when class2 was reallocated from the class free list.
      */
 
@@ -2899,14 +2528,13 @@ test_h5p_mt_class_2(struct_params_t *test_params)
 
     assert(fl_prop);
     assert(atomic_load(&(fl_prop->tag)) == H5P_MT_PROP_VALID_ONFL_TAG);
-    
+
     VERIFY(atomic_load(&(H5P_mt_g.prop_fl_len)), 7, "H5P__mt_create_class");
-    
+
     ret = sentinel_check(fl_prop);
     CHECK_I(ret, "H5P__mt_create_class");
 
-    ret = compare_lfsll_to_table_props(&fl_prop, class2_prop_table, 
-                                       "H5P__mt_create_class");
+    ret = compare_lfsll_to_table_props(&fl_prop, class2_prop_table, "H5P__mt_create_class");
     CHECK_I(ret, "H5P__mt_create_class");
     VERIFY(fl_prop->sentinel, TRUE, "H5P__mt_create_class");
 
@@ -2915,45 +2543,41 @@ test_h5p_mt_class_2(struct_params_t *test_params)
     VERIFY(fl_prop, prop_fl_tail.ptr, "H5P__mt_create_class");
     assert(fl_prop == prop_fl_tail.ptr);
 
-
     /* Insert class2 into test_params class LFSLL */
     test_params->test_classes_tail.ptr = class2;
     test_params->num_classes++;
 
     test_next = atomic_load(&(class1->fl_next));
-    assert( ! test_next.ptr);
+    assert(!test_next.ptr);
 
     test_next.ptr = class2;
-    
+
     atomic_store(&(class1->fl_next), test_next);
 
-
-    return(ret_value);
+    return (ret_value);
 
 } /* end test_h5p_mt_class_2() */
-
-
 
 /****************************************************************************************
  * Function:    test_h5p_mt_list_1
  *
  * Purpose:     Tests the multithread list structure, H5P_mt_list_t, and the functions
- *              for deriving a new list from a class, inserting, deleting, modifying, 
+ *              for deriving a new list from a class, inserting, deleting, modifying,
  *              and searching for a property. After each of the steps the classes, lists,
- *              and properties affected are checked to ensure their fields were modified 
+ *              and properties affected are checked to ensure their fields were modified
  *              (or not modifed) correctly.
- * 
+ *
  * Details:
- * 
+ *
  *  1) Derive a new list1 from class1.
- *  2) Search for all unmodified properties in list1's lkup_tbl, which points to the 
+ *  2) Search for all unmodified properties in list1's lkup_tbl, which points to the
  *     property in the class's LFSLL (also check class's property's ref_count).
  *  3) Change a closed property's tag to be reallocable, and create and insert a new
  *     property into list1's LFSLL.
  *  4) Search for the new property in list1's LFSLL.
  *  5) Modify one of list1's inherited properties, and search for that property to ensure
  *     the lkup_tbl's curr fields work correctly.
- *  6) Modify the same property again, and search for that new version to further test 
+ *  6) Modify the same property again, and search for that new version to further test
  *     the curr fields are updated correctly
  *  7) Delete a property in the lkup_tbl where the most recent version is the base.
  *  8) Search for the deleted prop (should FAIL).
@@ -2963,8 +2587,8 @@ test_h5p_mt_class_2(struct_params_t *test_params)
  * 12) Search for the deleted prop (should FAIL).
  * 13) Walk the lkup_tbl and ensure it's correct.
  * 14) Walk the LFSLL and ensure it's correct.
- * 
- * 
+ *
+ *
  *
  * Return:      SUCCESS/FAIL
  *
@@ -2973,19 +2597,19 @@ test_h5p_mt_class_2(struct_params_t *test_params)
 static herr_t
 test_h5p_mt_list_1(struct_params_t *test_params)
 {
-    H5P_mt_class_t * test_root;
-    H5P_mt_class_t * class1;
-    H5P_mt_class_t * class2;
-    H5P_mt_list_t  * list1;
-    H5P_mt_list_table_entry_t * entry;
-    H5P_mt_prop_t  * table_prop;
-    H5P_mt_prop_value_t table_value;
-    H5P_mt_prop_aptr_t  prop_fl_head;
-    H5P_mt_prop_aptr_t  prop_next;
-    H5P_mt_prop_t     * test_prop;
-    herr_t              ret; /* Generic return value */
+    H5P_mt_class_t            *test_root;
+    H5P_mt_class_t            *class1;
+    H5P_mt_class_t            *class2;
+    H5P_mt_list_t             *list1;
+    H5P_mt_list_table_entry_t *entry;
+    H5P_mt_prop_t             *table_prop;
+    H5P_mt_prop_value_t        table_value;
+    H5P_mt_prop_aptr_t         prop_fl_head;
+    H5P_mt_prop_aptr_t         prop_next;
+    H5P_mt_prop_t             *test_prop;
+    herr_t                     ret; /* Generic return value */
 
-    herr_t              ret_value = SUCCEED;
+    herr_t ret_value = SUCCEED;
 
     /* Get class1 from the test LFSLL of classes */
     class1 = test_params->test_classes_head.ptr;
@@ -2993,10 +2617,8 @@ test_h5p_mt_list_1(struct_params_t *test_params)
     assert(class1);
     assert(atomic_load(&(class1->tag)) == H5P_MT_CLASS_TAG);
 
-    if ( HDstrcmp(class1->name, CLASS1_NAME) != 0 )
-    {
-        TestErrPrintf("Class names don't match! name = %s, CLASS1_NAME=%s\n", 
-                      class1->name, CLASS1_NAME);
+    if (HDstrcmp(class1->name, CLASS1_NAME) != 0) {
+        TestErrPrintf("Class names don't match! name = %s, CLASS1_NAME=%s\n", class1->name, CLASS1_NAME);
     }
 
     /* Get the test root class from class1 */
@@ -3005,24 +2627,20 @@ test_h5p_mt_list_1(struct_params_t *test_params)
     assert(test_root);
     assert(atomic_load(&(test_root->tag)) == H5P_MT_CLASS_TAG);
 
-    if ( HDstrcmp(test_root->name, TEST_ROOT_NAME) != 0 )
-    {
-        TestErrPrintf("Class names don't match! name = %s, TEST_ROOT_NAME=%s\n", 
-                      test_root->name, TEST_ROOT_NAME);
+    if (HDstrcmp(test_root->name, TEST_ROOT_NAME) != 0) {
+        TestErrPrintf("Class names don't match! name = %s, TEST_ROOT_NAME=%s\n", test_root->name,
+                      TEST_ROOT_NAME);
     }
 
     /* Get class2 from the test LFSLL of classes */
     class2 = test_params->test_classes_tail.ptr;
-    
+
     assert(class2);
     assert(atomic_load(&(class2->tag)) == H5P_MT_CLASS_TAG);
 
-    if ( HDstrcmp(class2->name, CLASS2_NAME) != 0 )
-    {
-        TestErrPrintf("Class names don't match! name = %s, CLASS2_NAME=%s\n", 
-                      class2->name, CLASS2_NAME);
+    if (HDstrcmp(class2->name, CLASS2_NAME) != 0) {
+        TestErrPrintf("Class names don't match! name = %s, CLASS2_NAME=%s\n", class2->name, CLASS2_NAME);
     }
-
 
     /**
      * Derive a new list1 from class1
@@ -3037,16 +2655,14 @@ test_h5p_mt_list_1(struct_params_t *test_params)
     /* Verify list1's parent info is correct */
     VERIFY(list1->pclass_id, class1->id, "H5P__mt_create_list");
     VERIFY(list1->pclass_ptr, class1, "H5P__mt_create_list");
-    VERIFY(list1->pclass_version, atomic_load(&(class1->curr_version)),
-           "H5P__mt_create_list");
+    VERIFY(list1->pclass_version, atomic_load(&(class1->curr_version)), "H5P__mt_create_list");
     VERIFY(atomic_load(&(list1->class_init)), TRUE, "H5P__mt_create_list");
-    
+
     /* Ensure list fields are correct */
     ret = list_ver_and_len_check(list1, 1, 2, 3, 0, 3, 0, 2, "H5P__mt_create_list");
 
     /* Ensure thrd flags are correct */
-    ret = check_and_set_thrd_flags(list1, FALSE, FALSE, FALSE, FALSE, 
-                                   "H5P__mt_create_list");
+    ret = check_and_set_thrd_flags(list1, FALSE, FALSE, FALSE, FALSE, "H5P__mt_create_list");
 
     /* Ensure the lkup_tbl is correct */
     ret = list_lkup_tbl_check(list1, list1->nprops_inherited, "H5P__mt_create_list");
@@ -3060,12 +2676,11 @@ test_h5p_mt_list_1(struct_params_t *test_params)
     CHECK_I(ret, "H5P__mt_create_list");
     prop_next = atomic_load(&(test_prop->next));
     test_prop = prop_next.ptr;
-    ret =sentinel_check(test_prop);
+    ret       = sentinel_check(test_prop);
     CHECK_I(ret, "H5P__mt_create_list");
 
-
     /**
-     * Search for an inherited property to test searching the 
+     * Search for an inherited property to test searching the
      * lkup_tbl when the most current version is an entry's base,
      * and that the class's property's ref_count was incremented.
      */
@@ -3080,7 +2695,6 @@ test_h5p_mt_list_1(struct_params_t *test_params)
     CHECK_I(ret, "H5P__mt_search__list");
 
     VERIFY(atomic_load(&(test_prop->ref_count)), 1, "H5P__mt_create_list");
-
 
     /* Search for and check prop2 */
     test_prop = H5P__mt_search__list(list1, list_prop_table[1].name);
@@ -3104,63 +2718,56 @@ test_h5p_mt_list_1(struct_params_t *test_params)
 
     VERIFY(atomic_load(&(test_prop->ref_count)), 1, "H5P__mt_create_list");
 
-
     /**
      * From the property free list, modify the head prop's tag to be reallocable,
      * and create and insert a new prop into list1
      */
 
     prop_fl_head = atomic_load(&(H5P_mt_g.prop_fl_head));
-    test_prop = prop_fl_head.ptr;
+    test_prop    = prop_fl_head.ptr;
 
     assert(test_prop);
     assert(atomic_load(&(test_prop->tag)) == H5P_MT_PROP_VALID_ONFL_TAG);
-        
+
     atomic_store(&(test_prop->tag), H5P_MT_PROP_FL_REALLOC_TAG);
 
     table_prop  = list_prop_table[3].prop;
     table_value = atomic_load(&(table_prop->value));
 
     /* Create and insert a new property */
-    ret = H5P__mt_ins_or_mod_prop__list(list1, table_prop->name, table_value.ptr,
-                                        table_value.size, FALSE, FALSE, NULL, NULL,
-                                        NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+    ret = H5P__mt_ins_or_mod_prop__list(list1, table_prop->name, table_value.ptr, table_value.size, FALSE,
+                                        FALSE, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_I(ret, "H5P__mt_ins_or_mod_prop__list");
 
     /* Check list1's fields */
-    ret = list_ver_and_len_check(list1, 2, 3, 3, 1, 4, 1, 3, 
-                                 "H5P__mt_ins_or_mod_prop__list");
+    ret = list_ver_and_len_check(list1, 2, 3, 3, 1, 4, 1, 3, "H5P__mt_ins_or_mod_prop__list");
     CHECK_I(ret, "H5P__mt_ins_or_mod_prop__list");
 
     /* Update the list's table_prop create_version to match */
     atomic_store(&(table_prop->create_version), atomic_load(&(list1->curr_version)));
 
     /**
-     * Search for the new prop4 in list1 which tests the property 
+     * Search for the new prop4 in list1 which tests the property
      * not being in the lkup_tbl and having to search the LFSLL
      */
 
     test_prop = H5P__mt_search__list(list1, table_prop->name);
     CHECK_PTR(test_prop, "H5P__mt_search__list");
-    
-    ret = prop_check(test_prop, table_prop, table_prop->in_prop_class, 
-                     table_prop->in_lkup_tbl);
+
+    ret = prop_check(test_prop, table_prop, table_prop->in_prop_class, table_prop->in_lkup_tbl);
     CHECK_I(ret, "H5P__mt_search__list");
 
-
     /**
-     * Ensure the property free list is correct after reallocating a 
+     * Ensure the property free list is correct after reallocating a
      * property structure from it.
      */
-    
+
     VERIFY(atomic_load(&(H5P_mt_g.prop_fl_len)), 6, "H5P__mt_ins_or_mod_prop__list");
 
     prop_fl_head = atomic_load(&(H5P_mt_g.prop_fl_head));
-    test_prop = prop_fl_head.ptr;
+    test_prop    = prop_fl_head.ptr;
 
-    assert( ! test_prop->sentinel);
-
-
+    assert(!test_prop->sentinel);
 
     /**
      * Modify an inherited property
@@ -3170,31 +2777,26 @@ test_h5p_mt_list_1(struct_params_t *test_params)
 
     assert(table_prop->chksum == list_prop_table[0].chksum);
 
-    ret = H5P__mt_ins_or_mod_prop__list(list1, table_prop->name, table_value.ptr,
-                                        table_value.size, FALSE, FALSE, NULL, NULL, 
-                                        NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+    ret = H5P__mt_ins_or_mod_prop__list(list1, table_prop->name, table_value.ptr, table_value.size, FALSE,
+                                        FALSE, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_I(ret, "H5P__mt_ins_or_mod_prop__list");
 
     /* Ensure list1's fields are correct */
-    ret = list_ver_and_len_check(list1, 3, 4, 3, 1, 4, 2, 4,
-                                 "H5P__mt_ins_or_mod_prop__list");
+    ret = list_ver_and_len_check(list1, 3, 4, 3, 1, 4, 2, 4, "H5P__mt_ins_or_mod_prop__list");
     CHECK_I(ret, "H5P__mt_ins_or_mod_prop__list");
 
     /* Update the table_prop create_verson to match */
     atomic_store(&(table_prop->create_version), atomic_load(&(list1->curr_version)));
 
-
     /**
-     * Search for the modified prop1, which tests searching for a prop in 
+     * Search for the modified prop1, which tests searching for a prop in
      * the lkup_tbl with the most recent version being an entry's curr
      */
     test_prop = H5P__mt_search__list(list1, table_prop->name);
     CHECK_PTR(test_prop, "H5P__mt_search__list");
 
-    ret = prop_check(test_prop, table_prop, table_prop->in_prop_class, 
-                     table_prop->in_lkup_tbl);
+    ret = prop_check(test_prop, table_prop, table_prop->in_prop_class, table_prop->in_lkup_tbl);
     CHECK_I(ret, "H5P__mt_search__list");
-
 
     /**
      * Modify prop1 again to test that the lkup_tbl's entry correctly
@@ -3205,33 +2807,27 @@ test_h5p_mt_list_1(struct_params_t *test_params)
 
     assert(table_prop->chksum == list_prop_table[0].chksum);
 
-    ret = H5P__mt_ins_or_mod_prop__list(list1, table_prop->name, table_value.ptr,
-                                        table_value.size, FALSE, FALSE, NULL, NULL,
-                                        NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+    ret = H5P__mt_ins_or_mod_prop__list(list1, table_prop->name, table_value.ptr, table_value.size, FALSE,
+                                        FALSE, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_I(ret, "H5P__mt_ins_or_mod_porp__list");
 
     /* Ensure list1's fields are correct */
-    ret = list_ver_and_len_check(list1, 4, 5, 3, 1, 4, 2, 5,
-                                 "H5P__mt_ins_or_mod_prop__list");
+    ret = list_ver_and_len_check(list1, 4, 5, 3, 1, 4, 2, 5, "H5P__mt_ins_or_mod_prop__list");
     CHECK_I(ret, "H5P_mt_ins_or_mod_prop__list");
 
     /* Update the table_prop create_version to match */
     atomic_store(&(table_prop->create_version), atomic_load(&(list1->curr_version)));
 
-
     /**
-     * Search for the modified prop1, tests same as 
+     * Search for the modified prop1, tests same as
      * previous but ensures curr was updated correctly.
      */
 
     test_prop = H5P__mt_search__list(list1, table_prop->name);
     CHECK_PTR(test_prop, "H5P__mt_search__list");
 
-    ret = prop_check(test_prop, table_prop, table_prop->in_prop_class, 
-                     table_prop->in_lkup_tbl);
+    ret = prop_check(test_prop, table_prop, table_prop->in_prop_class, table_prop->in_lkup_tbl);
     CHECK_I(ret, "H5P__mt_search__list");
-
-
 
     /**
      * Delete a property in the lkup_tbl where the most recent
@@ -3243,18 +2839,15 @@ test_h5p_mt_list_1(struct_params_t *test_params)
     CHECK_I(ret, "H5P__mt_delete_prop__list");
 
     /* Ensure list1's fields are correct */
-    ret = list_ver_and_len_check(list1, 5, 6, 3, 1, 3, 2, 5,
-                                 "H5P__mt_ins_or_mod_prop__list");
+    ret = list_ver_and_len_check(list1, 5, 6, 3, 1, 3, 2, 5, "H5P__mt_ins_or_mod_prop__list");
     CHECK_I(ret, "H5P__mt_delete_prop__list");
 
     /* Ensure the entry's base_delete_version is set */
     entry = &list1->lkup_tbl[2];
-    VERIFY(atomic_load(&(entry->base_delete_version)), 
-           atomic_load(&(list1->curr_version)), "H5P__mt_delete_prop__list");
-    assert(atomic_load(&(entry->base_delete_version)) == 
-           atomic_load(&(list1->curr_version)));
+    VERIFY(atomic_load(&(entry->base_delete_version)), atomic_load(&(list1->curr_version)),
+           "H5P__mt_delete_prop__list");
+    assert(atomic_load(&(entry->base_delete_version)) == atomic_load(&(list1->curr_version)));
 
-    
     /**
      * Search for deleted prop3. Should FAIL.
      */
@@ -3266,7 +2859,6 @@ test_h5p_mt_list_1(struct_params_t *test_params)
     table_prop = list_prop_table[2].prop;
     atomic_store(&(table_prop->delete_version), atomic_load(&(list1->curr_version)));
 
-
     /**
      * Delete a property in the lkup_tbl where the most recent
      * version is curr.
@@ -3275,10 +2867,8 @@ test_h5p_mt_list_1(struct_params_t *test_params)
     CHECK_I(ret, "H5P__mt_delete_prop__list");
 
     /* Ensure list1's fields are correct */
-    ret = list_ver_and_len_check(list1, 6, 7, 3, 1, 2, 1, 5,
-                                 "H5P__mt_ins_or_mod_prop__list");
+    ret = list_ver_and_len_check(list1, 6, 7, 3, 1, 2, 1, 5, "H5P__mt_ins_or_mod_prop__list");
     CHECK_I(ret, "H5P__mt_delete_prop__list");
-
 
     /**
      * Search for deleted prop1. Should FAIL.
@@ -3287,10 +2877,9 @@ test_h5p_mt_list_1(struct_params_t *test_params)
     CHECK_PTR_NULL(test_prop, "H5P__mt_search__list");
 
     /* Update table_prop's delete_version to match */
-    table_prop  = get_table_prop_ver(list_prop_table[0], 3);
+    table_prop = get_table_prop_ver(list_prop_table[0], 3);
 
     atomic_store(&(table_prop->delete_version), atomic_load(&(list1->curr_version)));
-
 
     /**
      * Delete an added property (non-inherited) from list1.
@@ -3299,10 +2888,8 @@ test_h5p_mt_list_1(struct_params_t *test_params)
     CHECK_I(ret, "H5P__mt_delete_prop__list");
 
     /* Ensure list1's fields are correct */
-    ret = list_ver_and_len_check(list1, 7, 8, 3, 0, 1, 0, 5,
-                                 "H5P__mt_ins_or_mod_prop__list");
+    ret = list_ver_and_len_check(list1, 7, 8, 3, 0, 1, 0, 5, "H5P__mt_ins_or_mod_prop__list");
     CHECK_I(ret, "H5P__mt_delete_prop__list");
-
 
     /**
      * Search for deleted prop4. Should FAIL.
@@ -3314,7 +2901,6 @@ test_h5p_mt_list_1(struct_params_t *test_params)
     table_prop = list_prop_table[3].prop;
     atomic_store(&(table_prop->delete_version), atomic_load(&(list1->curr_version)));
 
-
     /**
      * Right now list1 doesn't have any valid properties in the LFSLL.
      * Add a new one, and add a new version of prop3, an inherited
@@ -3325,43 +2911,38 @@ test_h5p_mt_list_1(struct_params_t *test_params)
     table_value = atomic_load(&(table_prop->value));
 
     /* Create and insert a new version of deleted prop4 */
-    ret = H5P__mt_ins_or_mod_prop__list(list1, table_prop->name, table_value.ptr,
-                                        table_value.size, FALSE, FALSE, NULL, NULL,
-                                        NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+    ret = H5P__mt_ins_or_mod_prop__list(list1, table_prop->name, table_value.ptr, table_value.size, FALSE,
+                                        FALSE, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_I(ret, "H5P__mt_ins_or_mod_prop__list");
 
     /* Check list1's fields */
-    ret = list_ver_and_len_check(list1, 8, 9, 3, 1, 2, 1, 6,
-                                 "H5P__mt_ins_or_mod_prop__list");
+    ret = list_ver_and_len_check(list1, 8, 9, 3, 1, 2, 1, 6, "H5P__mt_ins_or_mod_prop__list");
     CHECK_I(ret, "H5P__mt_ins_or_mod_prop__list");
 
     /* Update the table_prop's create_version to match */
     atomic_store(&(table_prop->create_version), atomic_load(&(list1->curr_version)));
 
     /**
-     * Search for the new prop4 in list1 
+     * Search for the new prop4 in list1
      */
     test_prop = H5P__mt_search__list(list1, table_prop->name);
     CHECK_PTR(test_prop, "H5P__mt_search__list");
 
-    ret = prop_check(test_prop, table_prop, table_prop->in_prop_class,
-                     table_prop->in_lkup_tbl);
+    ret = prop_check(test_prop, table_prop, table_prop->in_prop_class, table_prop->in_lkup_tbl);
     CHECK_I(ret, "H5P__mt_search__list");
 
     /* Create and insert a new version of the deleted inherited prop3 */
     table_prop  = get_table_prop_ver(list_prop_table[2], 2);
     table_value = atomic_load(&(table_prop->value));
 
-    ret = H5P__mt_ins_or_mod_prop__list(list1, table_prop->name, table_value.ptr,
-                                        table_value.size, FALSE, FALSE, NULL, NULL,
-                                        NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+    ret = H5P__mt_ins_or_mod_prop__list(list1, table_prop->name, table_value.ptr, table_value.size, FALSE,
+                                        FALSE, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_I(ret, "H5P__mt_ins_or_mod_prop__list");
-    
+
     /* Check list1's fields */
-    ret = list_ver_and_len_check(list1, 9, 10, 3, 1, 3, 2, 7,
-                                 "H5P__mt_ins_or_mod_prop__list");
+    ret = list_ver_and_len_check(list1, 9, 10, 3, 1, 3, 2, 7, "H5P__mt_ins_or_mod_prop__list");
     CHECK_I(ret, "H5P__mt_ins_or_mod_prop__list");
-    
+
     /* Update the table_prop's create_version to match */
     atomic_store(&(table_prop->create_version), atomic_load(&(list1->curr_version)));
 
@@ -3371,15 +2952,12 @@ test_h5p_mt_list_1(struct_params_t *test_params)
     test_prop = H5P__mt_search__list(list1, table_prop->name);
     CHECK_PTR(test_prop, "H5P__mt_search__list");
 
-
     /**
      * Walk the entire lkup_tbl ensuring everything is correct.
      */
-    
-     ret = list_lkup_tbl_check(list1, list1->nprops_inherited, 
-                              "H5P__mt_ins_or_mod_prop__list");
-    CHECK_I(ret, "H5P__mt_ins_or_mod_prop__list");
 
+    ret = list_lkup_tbl_check(list1, list1->nprops_inherited, "H5P__mt_ins_or_mod_prop__list");
+    CHECK_I(ret, "H5P__mt_ins_or_mod_prop__list");
 
     /**
      * Walk list1's LFSLL ensuring all prop structs are correct and in order.
@@ -3390,61 +2968,55 @@ test_h5p_mt_list_1(struct_params_t *test_params)
     ret = sentinel_check(test_prop);
     CHECK_I(ret, "H5P__mt_ins_or_mod_prop__list");
 
-    ret = compare_lfsll_to_table_props(&test_prop, list_prop_table, 
-                                       "H5P__mt_ins_or_mod_prop__list");
+    ret = compare_lfsll_to_table_props(&test_prop, list_prop_table, "H5P__mt_ins_or_mod_prop__list");
     CHECK_I(ret, "H5P__mt_ins_or_mod_prop__list");
     assert(test_prop->sentinel);
 
     ret = sentinel_check(test_prop);
     CHECK_I(ret, "H5P__mt_ins_or_mod_prop__list");
 
-
-
     /* Insert list1 into test_params list LFSLL */
     test_params->test_lists_head.ptr = list1;
     test_params->test_lists_tail.ptr = list1;
     test_params->num_lists++;
 
-
-    return(ret_value);
+    return (ret_value);
 
 } /* end test_h5p_mt_list_1() */
-
-
 
 /****************************************************************************************
  * Function:    test_h5p_mt_list_2
  *
- * Purpose:     Further tests the multithread list structure, H5P_mt_list_t, and the 
- *              functions for copying a list, comparison of two lists, closing a list, 
- *              and reallocating a closed instance of a list structure from the list 
- *              free list to be used for a new list. After each of the steps the lists 
- *              and properties affected are checked to ensure their fields were modified 
+ * Purpose:     Further tests the multithread list structure, H5P_mt_list_t, and the
+ *              functions for copying a list, comparison of two lists, closing a list,
+ *              and reallocating a closed instance of a list structure from the list
+ *              free list to be used for a new list. After each of the steps the lists
+ *              and properties affected are checked to ensure their fields were modified
  *              (or not modifed) correctly.
- * 
+ *
  * Details:
- * 
+ *
  *  1) Create list2 as a copy of list1, check class1's properties' ref_counts.
  *  2) Compare list1 and list2 (should be equal).
- *  3) Modify a property in list2's LFSLL and compare list1 and list2 again (should not 
+ *  3) Modify a property in list2's LFSLL and compare list1 and list2 again (should not
  *     be equal).
- *  4) Modify the property in list2 back and compare list1 and list2 again (should be 
+ *  4) Modify the property in list2 back and compare list1 and list2 again (should be
  *     equal).
- *  3) Modify a property in list2's lkup_tbl and compare list1 and list2 again (should 
+ *  3) Modify a property in list2's lkup_tbl and compare list1 and list2 again (should
  *     not be equal).
- *  4) Modify the property in list2 back and compare list1 and list2 again (should be 
+ *  4) Modify the property in list2 back and compare list1 and list2 again (should be
  *     equal).
  *  5) Close list2 and ensure it was inserted into the list free list correctly.
- *  6) Change the closed list2's tag to be reallocable and derive a new list3 from 
- *     class2. 
+ *  6) Change the closed list2's tag to be reallocable and derive a new list3 from
+ *     class2.
  *  7) Ensure the new list3 used the old list2 structure from the list free list and that
- *     the list free list is now empty (NOTE: the list free list will always contain two 
+ *     the list free list is now empty (NOTE: the list free list will always contain two
  *     H5P_mt_list_sptr_t structs for the head and tail of that list, and if the pointers
  *     are NULL then the free list is "empty").
  *  8) Check the property free list and ensure all the H5P_mt_prop_t, property structs,
- *     where correctly inserted, when the list2 struct was reallocated from the list 
+ *     where correctly inserted, when the list2 struct was reallocated from the list
  *     free list.
- * 
+ *
  *
  * Return:      SUCCESS/FAIL
  *
@@ -3453,18 +3025,18 @@ test_h5p_mt_list_1(struct_params_t *test_params)
 static herr_t
 test_h5p_mt_list_2(struct_params_t *test_params)
 {
-    H5P_mt_class_t    * test_root;
-    H5P_mt_class_t    * class1;
-    H5P_mt_class_t    * class2;
-    H5P_mt_list_t     * list1;
-    H5P_mt_list_t     * list2;
-    H5P_mt_list_t     * list3;
-    H5P_mt_list_t     * head_list;
+    H5P_mt_class_t     *test_root;
+    H5P_mt_class_t     *class1;
+    H5P_mt_class_t     *class2;
+    H5P_mt_list_t      *list1;
+    H5P_mt_list_t      *list2;
+    H5P_mt_list_t      *list3;
+    H5P_mt_list_t      *head_list;
     H5P_mt_list_sptr_t  fl_head;
     H5P_mt_list_sptr_t  fl_tail;
-    H5P_mt_prop_t     * test_prop;
-    H5P_mt_prop_t     * table_prop;
-    H5P_mt_prop_t     * fl_prop;
+    H5P_mt_prop_t      *test_prop;
+    H5P_mt_prop_t      *table_prop;
+    H5P_mt_prop_t      *fl_prop;
     H5P_mt_prop_value_t table_value;
     H5P_mt_prop_aptr_t  prop_fl_head;
     H5P_mt_prop_aptr_t  prop_fl_tail;
@@ -3478,31 +3050,29 @@ test_h5p_mt_list_2(struct_params_t *test_params)
 
     assert(class1);
     assert(atomic_load(&(class1->tag)) == H5P_MT_CLASS_TAG);
-    assert( 0 == strcmp(class1->name, CLASS1_NAME));
+    assert(0 == strcmp(class1->name, CLASS1_NAME));
 
     /* Get the test root class from class1 */
     test_root = class1->parent_ptr;
 
     assert(test_root);
     assert(atomic_load(&(test_root->tag)) == H5P_MT_CLASS_TAG);
-    assert( 0 == strcmp(test_root->name, TEST_ROOT_NAME));
+    assert(0 == strcmp(test_root->name, TEST_ROOT_NAME));
 
     /* Get class2 from the LFSLL of test classes */
     class2 = test_params->test_classes_tail.ptr;
 
     assert(class2);
     assert(atomic_load(&(class2->tag)) == H5P_MT_CLASS_TAG);
-    assert( 0 == strcmp(class2->name, CLASS2_NAME));
+    assert(0 == strcmp(class2->name, CLASS2_NAME));
 
     /* Get list1 from the LFSLL of test lists */
     list1 = test_params->test_lists_head.ptr;
 
-
-
     /**
      * Create a copy of list1, check class1's ref_counts
      */
-    
+
     list2 = H5P__mt_create_list(class1, list1, TRUE, 0, TRUE);
     CHECK_PTR(list2, "H5P__mt_create_list");
 
@@ -3510,8 +3080,7 @@ test_h5p_mt_list_2(struct_params_t *test_params)
     assert(atomic_load(&(list2->tag)) == H5P_MT_LIST_TAG);
 
     /* Ensure list2's fields are correct */
-    ret = list_ver_and_len_check(list2, 1, 2, 3, 1, 3, 2, 4,
-                                 "H5P__mt_create_list");
+    ret = list_ver_and_len_check(list2, 1, 2, 3, 1, 3, 2, 4, "H5P__mt_create_list");
     CHECK_I(ret, "H5P__mt_create_list");
 
     /* Check class1's ref_counts */
@@ -3519,13 +3088,11 @@ test_h5p_mt_list_2(struct_params_t *test_params)
     CHECK_I(ret, "H5P__mt_create_list");
 
     /* Check list2's thrd flags */
-    ret = check_and_set_thrd_flags(list2, FALSE, FALSE, FALSE, FALSE,
-                                   "H5P__mt_create_list");
+    ret = check_and_set_thrd_flags(list2, FALSE, FALSE, FALSE, FALSE, "H5P__mt_create_list");
     CHECK_I(ret, "H5P__mt_create_list");
 
-    
     /**
-     * Search for and check prop1, which was deleted from list1 
+     * Search for and check prop1, which was deleted from list1
      * before list2 was copied, thus prop1 shouldn't exist in list2.
      */
     test_prop = H5P__mt_search__list(list2, list2_prop_table[0].name);
@@ -3539,8 +3106,7 @@ test_h5p_mt_list_2(struct_params_t *test_params)
     assert(test_prop);
     assert(atomic_load(&(test_prop->tag)) == H5P_MT_PROP_TAG);
 
-    ret = prop_check(test_prop, table_prop, table_prop->in_prop_class, 
-                     table_prop->in_lkup_tbl);
+    ret = prop_check(test_prop, table_prop, table_prop->in_prop_class, table_prop->in_lkup_tbl);
     CHECK_I(ret, "H5P__mt_search__list");
 
     VERIFY(atomic_load(&(test_prop->ref_count)), 2, "H5P__mt_create_list");
@@ -3553,12 +3119,11 @@ test_h5p_mt_list_2(struct_params_t *test_params)
     assert(test_prop);
     assert(atomic_load(&(test_prop->tag)) == H5P_MT_PROP_TAG);
 
-    ret = prop_check(test_prop, table_prop, table_prop->in_prop_class, 
-                     table_prop->in_lkup_tbl);
+    ret = prop_check(test_prop, table_prop, table_prop->in_prop_class, table_prop->in_lkup_tbl);
     CHECK_I(ret, "H5P__mt_search__list");
 
     /**
-     * prop3 was modified in list1, so search prop3 in class1 to 
+     * prop3 was modified in list1, so search prop3 in class1 to
      * ensure the property's ref_count is corret.
      */
     table_prop = class_prop_table[2].prop;
@@ -3570,7 +3135,6 @@ test_h5p_mt_list_2(struct_params_t *test_params)
 
     /* The base was deleted when copied from list1, thus ref_count should be unchaged */
     VERIFY(atomic_load(&(test_prop->ref_count)), 1, "H5P__mt_create_list");
-    
 
     /**
      * Compare list1 and the copy, list2. (They should be equal)
@@ -3579,34 +3143,29 @@ test_h5p_mt_list_2(struct_params_t *test_params)
     CHECK_I(ret, "H5P__mt_cmp_list");
     VERIFY(ret, 0, "H5P__mt_cmp_list");
 
-
-
     /**
      * Modify a property in list2's LFSLL, and compare list1 and list2 again.
      * (They should not be equal)
      */
-    
+
     table_prop  = get_table_prop_ver(list2_prop_table[3], 2);
     table_value = atomic_load(&(table_prop->value));
 
     /* Create and insert a second version of prop 4 */
-    ret = H5P__mt_ins_or_mod_prop__list(list2, table_prop->name, table_value.ptr,
-                                        table_value.size, FALSE, FALSE, NULL, NULL,
-                                        NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+    ret = H5P__mt_ins_or_mod_prop__list(list2, table_prop->name, table_value.ptr, table_value.size, FALSE,
+                                        FALSE, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_I(ret, "H5P__mt_ins_or_mod_prop__list");
 
     /* Update table_prop version to match */
     atomic_store(&(table_prop->create_version), atomic_load(&(list2->curr_version)));
 
     /* Ensure list2's fields are correct */
-    ret = list_ver_and_len_check(list2, 2, 3, 3, 1, 3, 2, 5,
-                                 "H5P__mt_ins_or_mod_prop__list");
+    ret = list_ver_and_len_check(list2, 2, 3, 3, 1, 3, 2, 5, "H5P__mt_ins_or_mod_prop__list");
     CHECK_I(ret, "H5P__mt_ins_or_mod_prop__list");
 
     /* Compare list1 and list2 (should not be equal) */
     ret = H5P__mt_cmp_list(list1, list2);
     VERIFY(ret, 1, "H5P__mt_cmp_list");
-
 
     /**
      * Change the modified property's value back and compare
@@ -3617,51 +3176,45 @@ test_h5p_mt_list_2(struct_params_t *test_params)
     table_value = atomic_load(&(table_prop->value));
 
     /* Create and insert prop3 with original value */
-    ret = H5P__mt_ins_or_mod_prop__list(list2, table_prop->name, table_value.ptr,
-                                        table_value.size, FALSE, FALSE, NULL, NULL,
-                                        NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+    ret = H5P__mt_ins_or_mod_prop__list(list2, table_prop->name, table_value.ptr, table_value.size, FALSE,
+                                        FALSE, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_I(ret, "H5P__mt_ins_or_mod_prop__list");
 
     /* Update table_prop version to match */
     atomic_store(&(table_prop->create_version), atomic_load(&(list2->curr_version)));
 
     /* Ensure list2's fields are correct */
-    ret = list_ver_and_len_check(list2, 3, 4, 3, 1, 3, 2, 6,
-                                 "H5P__mt_ins_or_mod_prop__list");
+    ret = list_ver_and_len_check(list2, 3, 4, 3, 1, 3, 2, 6, "H5P__mt_ins_or_mod_prop__list");
     CHECK_I(ret, "H5P__mt_ins_or_mod_prop__list");
 
     /* Compare list1 and list2 (Should be equal) */
     ret = H5P__mt_cmp_list(list1, list2);
     VERIFY(ret, 0, "H5P__mt_cmp_list");
 
-
     /**
      * Modify a property in list2's lkup_tbl and compare list1 and list2.
      * (Should not be equal).
      */
 
-    table_prop  = get_table_prop_ver(list2_prop_table[1], 2);
+    table_prop = get_table_prop_ver(list2_prop_table[1], 2);
     CHECK_PTR(table_prop, "get_table_prop_ver");
     table_value = atomic_load(&(table_prop->value));
 
     /* Create and insert a second version of prop2 */
-    ret = H5P__mt_ins_or_mod_prop__list(list2, table_prop->name, table_value.ptr,
-                                        table_value.size, FALSE, FALSE, NULL, NULL,
-                                        NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+    ret = H5P__mt_ins_or_mod_prop__list(list2, table_prop->name, table_value.ptr, table_value.size, FALSE,
+                                        FALSE, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_I(ret, "H5P__mt_ins_or_mod_prop__list");
 
     /* Update table_prop version to match */
     atomic_store(&(table_prop->create_version), atomic_load(&(list2->curr_version)));
 
     /* Ensure list2's fields are correct */
-    ret = list_ver_and_len_check(list2, 4, 5, 3, 1, 3, 3, 7,
-                                 "H5P__mt_ins_or_mod_prop__list");
+    ret = list_ver_and_len_check(list2, 4, 5, 3, 1, 3, 3, 7, "H5P__mt_ins_or_mod_prop__list");
     CHECK_I(ret, "H5P__mt_ins_or_mod_prop__list");
 
     /* Compare list1 and list2 (should not be equal) */
     ret = H5P__mt_cmp_list(list1, list2);
     VERIFY(ret, 1, "H5P__mt_cmp_list");
-
 
     /**
      * Change the modified property's value back and compare list1, and list2 again.
@@ -3673,29 +3226,26 @@ test_h5p_mt_list_2(struct_params_t *test_params)
     table_value = atomic_load(&(table_prop->value));
 
     /* Create and insert prop2 with original value */
-    ret = H5P__mt_ins_or_mod_prop__list(list2, table_prop->name, table_value.ptr,
-                                        table_value.size, FALSE, FALSE, NULL, NULL,
-                                        NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+    ret = H5P__mt_ins_or_mod_prop__list(list2, table_prop->name, table_value.ptr, table_value.size, FALSE,
+                                        FALSE, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_I(ret, "H5P__mt_ins_or_mod_prop__list");
 
     /* Update table_prop version to match */
     atomic_store(&(table_prop->create_version), atomic_load(&(list2->curr_version)));
 
     /* Ensure list2's fields are correct */
-    ret = list_ver_and_len_check(list2, 5, 6, 3, 1, 3, 3, 8,
-                                 "H5P__mt_ins_or_mod_prop__list");
+    ret = list_ver_and_len_check(list2, 5, 6, 3, 1, 3, 3, 8, "H5P__mt_ins_or_mod_prop__list");
     CHECK_I(ret, "H5P__mt_ins_or_mod_prop__list");
 
     /* Compare list1 and list2 (Should be equal) */
     ret = H5P__mt_cmp_list(list1, list2);
     VERIFY(ret, 0, "H5P__mt_cmp_list");
 
-    
     /**
      * Close list2, check class1's derived ref counts, and ensure list2 was
      * inserted into the list free list.
      */
-    
+
     ret = H5Pclose(list2->plist_id);
     CHECK_I(ret, "H5Pclose");
 
@@ -3705,7 +3255,7 @@ test_h5p_mt_list_2(struct_params_t *test_params)
 
     /* Check the list free list to ensure list2 was inserted correctly when closed */
 
-    fl_head = atomic_load(&(H5P_mt_g.list_fl_head));
+    fl_head   = atomic_load(&(H5P_mt_g.list_fl_head));
     head_list = fl_head.ptr;
 
     assert(head_list);
@@ -3713,8 +3263,7 @@ test_h5p_mt_list_2(struct_params_t *test_params)
     VERIFY(atomic_load(&(head_list->tag)), H5P_MT_LIST_INVALID_TAG, "H5Pclose");
 
     /* Ensure head_list's thrd flags are correct */
-    ret = check_and_set_thrd_flags(head_list, FALSE, TRUE, FALSE, TRUE,
-                                   "H5Pclose");
+    ret = check_and_set_thrd_flags(head_list, FALSE, TRUE, FALSE, TRUE, "H5Pclose");
     CHECK_I(ret, "H5Pclose");
 
     /**
@@ -3724,9 +3273,6 @@ test_h5p_mt_list_2(struct_params_t *test_params)
     fl_tail = atomic_load(&(H5P_mt_g.list_fl_tail));
     VERIFY(fl_tail.ptr, head_list, "H5Pclose");
     assert(fl_tail.ptr == head_list);
-    
-
-
 
     /**
      * From the list free list, modify the closed list's tag to be reallocable
@@ -3756,11 +3302,10 @@ test_h5p_mt_list_2(struct_params_t *test_params)
     fl_head = atomic_load(&(H5P_mt_g.list_fl_head));
     fl_tail = atomic_load(&(H5P_mt_g.list_fl_tail));
 
-    assert( ! fl_head.ptr);
-    assert( ! fl_tail.ptr);
+    assert(!fl_head.ptr);
+    assert(!fl_tail.ptr);
     VERIFY(fl_head.ptr, NULL, "H5P__mt_create_list");
     VERIFY(fl_tail.ptr, NULL, "H5P__mt_create_list");
-
 
     /**
      * Ensure the property structs in list2 were correctly inserted into the prop
@@ -3776,16 +3321,15 @@ test_h5p_mt_list_2(struct_params_t *test_params)
 
     VERIFY(atomic_load(&(H5P_mt_g.prop_fl_len)), 14, "H5P__mt_create_list");
 
-    assert( ! fl_prop->sentinel);
+    assert(!fl_prop->sentinel);
 
     /**
-     * Walks the property free list and ensures the properties are correct until a 
+     * Walks the property free list and ensures the properties are correct until a
      * sentinel prop is found. When a class or list is closed the properties are
      * inserted into the free in the same order so the sentinel property is the last
      * property from the previously closed class2.
      */
-    ret = compare_lfsll_to_table_props(&fl_prop, class2_prop_table, 
-                                       "H5P__mt_create_list");
+    ret = compare_lfsll_to_table_props(&fl_prop, class2_prop_table, "H5P__mt_create_list");
     CHECK_I(ret, "H5P__mt_create_list");
     VERIFY(fl_prop->sentinel, TRUE, "H5P__mt_create_list");
 
@@ -3795,17 +3339,16 @@ test_h5p_mt_list_2(struct_params_t *test_params)
 
     /* Iterate to the next property in the free list, which is list2's neg_sentinel */
     prop_fl_next = atomic_load(&(fl_prop->next));
-    fl_prop = prop_fl_next.ptr;
+    fl_prop      = prop_fl_next.ptr;
 
     ret = sentinel_check(fl_prop);
     CHECK_I(ret, "H5P__mt_create_list");
 
-    /** 
-     * Continue walking the property free list, now 
+    /**
+     * Continue walking the property free list, now
      * checking the properties from the closed list2.
      */
-    ret = compare_lfsll_to_table_props(&fl_prop, list2_prop_table,
-                                       "H5P__mt_create_list");
+    ret = compare_lfsll_to_table_props(&fl_prop, list2_prop_table, "H5P__mt_create_list");
     CHECK_I(ret, "H5P__mt_create_list");
     VERIFY(fl_prop->sentinel, TRUE, "H5P__mt_create_list");
 
@@ -3815,41 +3358,37 @@ test_h5p_mt_list_2(struct_params_t *test_params)
     VERIFY(fl_prop, prop_fl_tail.ptr, "H5P__mt_create_list");
     assert(fl_prop == prop_fl_tail.ptr);
 
-
-    return(ret_value);
+    return (ret_value);
 
 } /* end test_h5p_mt_list_2() */
-
-
 
 /****************************************************************************************
  * Function:    get_table_prop_ver
  *
  * Purpose:     Searches the prop_table to grab the version of the property specified,
- *              and returns that version. 
- * 
- * 
+ *              and returns that version.
+ *
+ *
  * Return:      Success: Specified version of a property from the prop_table
- * 
- *              Failure: NULL    
+ *
+ *              Failure: NULL
  *
  ****************************************************************************************
  */
 H5P_mt_prop_t *
 get_table_prop_ver(prop_info_t prop_table, uint8_t version)
 {
-    H5P_mt_prop_t    * table_prop;
+    H5P_mt_prop_t     *table_prop;
     H5P_mt_prop_aptr_t next;
 
-    H5P_mt_prop_t    * ret_value = NULL;
+    H5P_mt_prop_t *ret_value = NULL;
 
     table_prop = prop_table.prop;
     assert(table_prop);
     assert(atomic_load(&(table_prop->tag)) == H5P_MT_PROP_TAG);
 
-    for ( int i = 1; i < version; i++ )
-    {
-        next = atomic_load(&(table_prop->next));
+    for (int i = 1; i < version; i++) {
+        next       = atomic_load(&(table_prop->next));
         table_prop = next.ptr;
 
         assert(table_prop);
@@ -3860,31 +3399,28 @@ get_table_prop_ver(prop_info_t prop_table, uint8_t version)
 
     ret_value = table_prop;
 
-    return(ret_value);
+    return (ret_value);
 
 } /* end get_table_prop_ver() */
-
-
 
 /****************************************************************************************
  * Function:    class_ver_and_len_check
  *
  * Purpose:     Verifies that the curr_version, next_version, and the fields counting
- *              properties are all correct for an instance of a class. 
- * 
- * 
- * Return:      SUCCEED/FAIL      
+ *              properties are all correct for an instance of a class.
+ *
+ *
+ * Return:      SUCCEED/FAIL
  *
  ****************************************************************************************
  */
 static herr_t
-class_ver_and_len_check(H5P_mt_class_t *class, uint64_t curr_version, 
-                        uint64_t next_version, size_t nprops_added, 
-                        size_t log_len, size_t phys_len, const char *where)
+class_ver_and_len_check(H5P_mt_class_t *class, uint64_t curr_version, uint64_t next_version,
+                        size_t nprops_added, size_t log_len, size_t phys_len, const char *where)
 {
 
     herr_t ret_value = SUCCEED;
-    
+
     assert(class);
     assert(atomic_load(&(class->tag)) == H5P_MT_CLASS_TAG);
 
@@ -3899,28 +3435,25 @@ class_ver_and_len_check(H5P_mt_class_t *class, uint64_t curr_version,
     VERIFY(phys_len, atomic_load(&(class->phys_pl_len)), where);
     assert(phys_len == atomic_load(&(class->phys_pl_len)));
 
-    return(ret_value);
+    return (ret_value);
 
 } /* end class_ver_and_len_check() */
-
-
 
 /****************************************************************************************
  * Function:    list_ver_and_len_check
  *
  * Purpose:     Verifies that the curr_version, next_version, and the fields counting
- *              properties are all correct for an instance of a list. 
- * 
- * 
- * Return:      SUCCEED/FAIL      
+ *              properties are all correct for an instance of a list.
+ *
+ *
+ * Return:      SUCCEED/FAIL
  *
  ****************************************************************************************
  */
 static herr_t
-list_ver_and_len_check(H5P_mt_list_t *list, uint64_t curr_version, 
-                       uint64_t next_version, size_t nprops_inherited,
-                       size_t nprops_added, size_t nprops, 
-                       size_t log_len, size_t phys_len, const char *where)
+list_ver_and_len_check(H5P_mt_list_t *list, uint64_t curr_version, uint64_t next_version,
+                       size_t nprops_inherited, size_t nprops_added, size_t nprops, size_t log_len,
+                       size_t phys_len, const char *where)
 {
     herr_t ret_value = SUCCEED;
 
@@ -3942,30 +3475,27 @@ list_ver_and_len_check(H5P_mt_list_t *list, uint64_t curr_version,
     VERIFY(atomic_load(&(list->phys_pl_len)), phys_len, where);
     assert(phys_len == atomic_load(&(list->phys_pl_len)));
 
-    return(ret_value);
+    return (ret_value);
 
 } /* end list_ver_and_len_check() */
-
-
 
 /****************************************************************************************
  * Function:    check_class_ref_counts
  *
  * Purpose:     Verifies that a class's list ref counts class ref counts and if the class
- *              is deleted are all correct for an instance of a class. 
- * 
- * 
- * Return:      SUCCEED/FAIL      
+ *              is deleted are all correct for an instance of a class.
+ *
+ *
+ * Return:      SUCCEED/FAIL
  *
  ****************************************************************************************
  */
 static herr_t
-check_class_ref_counts(H5P_mt_class_t *class, uint64_t pl, uint32_t plc, 
-                       bool deleted, const char *where)
+check_class_ref_counts(H5P_mt_class_t *class, uint64_t pl, uint32_t plc, bool deleted, const char *where)
 {
     H5P_mt_class_ref_counts_t ref_counts;
 
-    herr_t                    ret_value = SUCCEED;
+    herr_t ret_value = SUCCEED;
 
     ref_counts = atomic_load(&(class->ref_count));
     VERIFY(ref_counts.pl, pl, where);
@@ -3975,34 +3505,32 @@ check_class_ref_counts(H5P_mt_class_t *class, uint64_t pl, uint32_t plc,
     VERIFY(ref_counts.deleted, deleted, where);
     assert(deleted == ref_counts.deleted);
 
-    return(ret_value);
+    return (ret_value);
 
 } /* end check_class_ref_counts() */
-
-
 
 /****************************************************************************************
  * Function:    check_and_set_thrd_flags
  *
  * Purpose:     Verifies that a class's, or list's, thrd flags are correct, and sets them
- *              if they are correct and need to be changed. 
- * 
- *              NOTE: setting the flags is only used for classes after a class is 
- *              inserted into the index. All other instances where the thrd flags are 
+ *              if they are correct and need to be changed.
+ *
+ *              NOTE: setting the flags is only used for classes after a class is
+ *              inserted into the index. All other instances where the thrd flags are
  *              changed are done in the multithread H5P functions.
- * 
- * 
- * Return:      SUCCEED/FAIL      
+ *
+ *
+ * Return:      SUCCEED/FAIL
  *
  ****************************************************************************************
  */
 static herr_t
-check_and_set_thrd_flags(void *param, bool opening_is, bool closing_is,
-                         bool set_opening, bool set_closing, const char *where)
+check_and_set_thrd_flags(void *param, bool opening_is, bool closing_is, bool set_opening, bool set_closing,
+                         const char *where)
 {
-    uint32_t         tag;
-    H5P_mt_class_t * class = NULL;
-    H5P_mt_list_t  * list  = NULL;
+    uint32_t tag;
+    H5P_mt_class_t *class             = NULL;
+    H5P_mt_list_t               *list = NULL;
     H5P_mt_active_thread_count_t thrd;
 
     herr_t ret_value = SUCCEED;
@@ -4010,36 +3538,28 @@ check_and_set_thrd_flags(void *param, bool opening_is, bool closing_is,
     tag = *(uint32_t *)param;
 
     /* If param is a class */
-    if ( tag == H5P_MT_CLASS_TAG || tag == H5P_MT_CLASS_INVALID_TAG || 
-         tag == H5P_MT_CLASS_FL_REALLOC_TAG )
-    {
+    if (tag == H5P_MT_CLASS_TAG || tag == H5P_MT_CLASS_INVALID_TAG || tag == H5P_MT_CLASS_FL_REALLOC_TAG) {
         class = (H5P_mt_class_t *)param;
     }
     /* If param is a list */
-    else if ( tag == H5P_MT_LIST_TAG || tag == H5P_MT_LIST_INVALID_TAG || 
-              tag == H5P_MT_LIST_FL_REALLOC_TAG )
-    {
+    else if (tag == H5P_MT_LIST_TAG || tag == H5P_MT_LIST_INVALID_TAG || tag == H5P_MT_LIST_FL_REALLOC_TAG) {
         list = (H5P_mt_list_t *)param;
     }
-    else
-    {
+    else {
         TestErrPrintf("%s: param isn't a class or a list\n", where);
 
         assert(class);
 
-        return(-1);
+        return (-1);
     }
 
     /* Get the thrd struct field from the struct we have */
-    if ( class )
-    {
+    if (class) {
         thrd = atomic_load(&(class->thrd));
     }
-    else
-    {
+    else {
         thrd = atomic_load(&(list->thrd));
     }
-
 
     /* Ensure thrd fields are as they should be */
     VERIFY(thrd.opening, opening_is, where);
@@ -4047,64 +3567,56 @@ check_and_set_thrd_flags(void *param, bool opening_is, bool closing_is,
     VERIFY(thrd.closing, closing_is, where);
     assert(thrd.closing == closing_is);
 
-
     /* Update thrd fields */
 
     /* If the set flags are different from current flags, then update the flags */
-    if ( opening_is != set_opening || closing_is != set_closing )
-    {
+    if (opening_is != set_opening || closing_is != set_closing) {
         thrd.opening = set_opening;
         thrd.closing = set_closing;
 
-        if ( class )
-        {
+        if (class) {
             atomic_store(&(class->thrd), thrd);
         }
-        else
-        {
+        else {
             atomic_store(&(list->thrd), thrd);
         }
     }
 
-
-
-    return(ret_value);
+    return (ret_value);
 
 } /* end check_and_set_thrd_flags() */
-
-
 
 /****************************************************************************************
  * Function:    compare_lfsll_to_table_props
  *
- * Purpose:     Iterates a LFSLL and compares the properties in it with the properties 
+ * Purpose:     Iterates a LFSLL and compares the properties in it with the properties
  *              in a prop_table.
- * 
+ *
  *              NOTE: it is assumed the parameter test_prop is a sentinel node and will
  *              iterate to the next prop in the LFSLL before comparing.
- * 
+ *
  *              NOTE: this functions is used for checking the property free list, but
- *              due to stopping when a sentinel node is reached, during 
- *              test_h5p_mt_list_2() it is ran twice so it can continue after the 
+ *              due to stopping when a sentinel node is reached, during
+ *              test_h5p_mt_list_2() it is ran twice so it can continue after the
  *              sentinel nodes.
- * 
- * 
- * Return:      SUCCEED/FAIL      
+ *
+ *
+ * Return:      SUCCEED/FAIL
  *
  ****************************************************************************************
  */
 static herr_t
 compare_lfsll_to_table_props(H5P_mt_prop_t **test_prop, prop_info_t *prop_table, const char *where)
 {
-    H5P_mt_prop_t    * prop;
-    H5P_mt_prop_t    * table_prop = NULL;
+    H5P_mt_prop_t     *prop;
+    H5P_mt_prop_t     *table_prop = NULL;
     H5P_mt_prop_aptr_t next;
     H5P_mt_prop_aptr_t table_next;
     int                table_i;
     uint64_t           create_version;
     uint64_t           delete_version;
     herr_t             ret; /* Generic return value */
-    
+
     herr_t ret_value = SUCCEED;
 
     assert(test_prop);
@@ -4119,10 +3631,8 @@ compare_lfsll_to_table_props(H5P_mt_prop_t **test_prop, prop_info_t *prop_table,
     next = atomic_load(&(prop->next));
     prop = next.ptr;
 
-    while ( ! prop->sentinel )
-    {
-        if ( prop->chksum > prop_table[table_i].chksum )
-        {
+    while (!prop->sentinel) {
+        if (prop->chksum > prop_table[table_i].chksum) {
             table_i++;
 
             continue;
@@ -4135,21 +3645,18 @@ compare_lfsll_to_table_props(H5P_mt_prop_t **test_prop, prop_info_t *prop_table,
 
         assert(prop->chksum == table_prop->chksum);
 
-        table_prop = get_correct_prop_version_from_table(table_prop, create_version,
-                                                         delete_version, where);
+        table_prop = get_correct_prop_version_from_table(table_prop, create_version, delete_version, where);
         CHECK_PTR(table_prop, where);
         assert(table_prop);
         assert(atomic_load(&(table_prop->tag)) == H5P_MT_PROP_TAG ||
                atomic_load(&(table_prop->tag)) == H5P_MT_PROP_VALID_ONFL_TAG);
 
-        if ( prop->in_lkup_tbl != table_prop->in_lkup_tbl )
-        {
+        if (prop->in_lkup_tbl != table_prop->in_lkup_tbl) {
             table_next = atomic_load(&(table_prop->next));
             table_prop = table_next.ptr;
         }
 
-        ret = prop_check(prop, table_prop, table_prop->in_prop_class, 
-                         table_prop->in_lkup_tbl);
+        ret = prop_check(prop, table_prop, table_prop->in_prop_class, table_prop->in_lkup_tbl);
         CHECK_I(ret, where);
 
         next = atomic_load(&(prop->next));
@@ -4162,57 +3669,53 @@ compare_lfsll_to_table_props(H5P_mt_prop_t **test_prop, prop_info_t *prop_table,
 
     *test_prop = prop;
 
-
-    return(ret_value);
+    return (ret_value);
 
 } /* end compare_lfsll_to_table_props() */
-
-
 
 /****************************************************************************************
  * Function:    list_lkup_tbl_check
  *
  * Purpose:     Iterates a list's lkup_tbl and verifies the fields are correct in each
  *              entry.
- * 
+ *
  *              If an entry has a curr.ptr it ensures the curr fields are correct and
  *              the property that curr.ptr points to is the most recent version. If that
- *              property's version differs from first_ver_of_curr the LFSLL is iterated 
+ *              property's version differs from first_ver_of_curr the LFSLL is iterated
  *              to find the first version of that property in the LFSLL and ensures the
  *              version matches with first_ver_of_curr.
- * 
+ *
  *              If an entry has a base.ptr it ensures base fields are correct and that
  *              the property base.ptr points to is correct.
- * 
- * 
- * Return:      SUCCEED/FAIL      
+ *
+ *
+ * Return:      SUCCEED/FAIL
  *
  ****************************************************************************************
  */
 static herr_t
 list_lkup_tbl_check(H5P_mt_list_t *list, size_t nprops_inherited, const char *where)
 {
-    H5P_mt_list_table_entry_t * entry;
-    H5P_mt_list_prop_ref_t      base;
-    H5P_mt_list_prop_ref_t      curr;
-    H5P_mt_prop_t             * table_prop;
-    H5P_mt_prop_t             * list_prop;
-    H5P_mt_prop_t             * test_prop = NULL;
-    H5P_mt_prop_t             * next_prop;
-    H5P_mt_prop_aptr_t          next;
-    size_t                      i;
-    uint64_t                    create_version;
-    uint64_t                    delete_version;
-    herr_t                      ret; /* Generic return value */
+    H5P_mt_list_table_entry_t *entry;
+    H5P_mt_list_prop_ref_t     base;
+    H5P_mt_list_prop_ref_t     curr;
+    H5P_mt_prop_t             *table_prop;
+    H5P_mt_prop_t             *list_prop;
+    H5P_mt_prop_t             *test_prop = NULL;
+    H5P_mt_prop_t             *next_prop;
+    H5P_mt_prop_aptr_t         next;
+    size_t                     i;
+    uint64_t                   create_version;
+    uint64_t                   delete_version;
+    herr_t                     ret; /* Generic return value */
 
-    herr_t                      ret_value = SUCCEED;
+    herr_t ret_value = SUCCEED;
 
     assert(list);
     assert(atomic_load(&(list->tag)) == H5P_MT_LIST_TAG);
 
     /* Iterate the length of the lkup_tbl*/
-    for ( i = 0; i < nprops_inherited; i++ )
-    {
+    for (i = 0; i < nprops_inherited; i++) {
         entry = &list->lkup_tbl[i];
         CHECK_PTR(entry, where);
 
@@ -4224,57 +3727,50 @@ list_lkup_tbl_check(H5P_mt_list_t *list, size_t nprops_inherited, const char *wh
         /* Ensure the entry's chksum and name matches */
         VERIFY(entry->chksum, table_prop->chksum, where);
         assert(entry->chksum == table_prop->chksum);
-        if ( HDstrcmp(entry->name, table_prop->name) != 0 )
-        {
-            TestErrPrintf(
-                "lkup_tbl entry name mismatch! entry name = %s, table_prop name = %s\n",
-                entry->name, table_prop->name);
+        if (HDstrcmp(entry->name, table_prop->name) != 0) {
+            TestErrPrintf("lkup_tbl entry name mismatch! entry name = %s, table_prop name = %s\n",
+                          entry->name, table_prop->name);
         }
-        
+
         base = atomic_load(&(entry->base));
         curr = atomic_load(&(entry->curr));
 
         /* If curr.ptr isn't NULL check all related fields */
-        if ( curr.ptr )
-        {
+        if (curr.ptr) {
             /* Ensure curr.ver is the correct version */
-            list_prop = curr.ptr;
+            list_prop      = curr.ptr;
             create_version = atomic_load(&(list_prop->create_version));
             delete_version = atomic_load(&(list_prop->delete_version));
 
             VERIFY(create_version, curr.ver, where);
             assert(create_version == curr.ver);
 
-            next = atomic_load(&(list_prop->next));
+            next      = atomic_load(&(list_prop->next));
             next_prop = next.ptr;
 
             /* If curr.ver is the first version of a non-base version */
-            if ( curr.ver == atomic_load(&(entry->first_ver_of_curr)) )
-            {
+            if (curr.ver == atomic_load(&(entry->first_ver_of_curr))) {
                 /* Ensure the next property in the LFSLL has a different chksum. */
                 CHECK(list_prop->chksum, next_prop->chksum, where);
                 assert(list_prop->chksum != next_prop->chksum);
             }
             /* If curr.ver is not the first version of a non-base version */
-            else 
-            {
+            else {
                 /* Iterate the LFSLL to find the oldest version of list_prop */
-                while ( next_prop->chksum == list_prop->chksum )
-                {
+                while (next_prop->chksum == list_prop->chksum) {
                     test_prop = next_prop;
-                    next = atomic_load(&(next_prop->next));
+                    next      = atomic_load(&(next_prop->next));
                     next_prop = next.ptr;
                 }
 
                 /* Ensure the first version matches first_ver_of_curr */
-                VERIFY(atomic_load(&(entry->first_ver_of_curr)), 
-                       atomic_load(&(test_prop->create_version)), where);
-                assert(atomic_load(&(entry->first_ver_of_curr)) == 
-                       atomic_load(&(test_prop->create_version)));
+                VERIFY(atomic_load(&(entry->first_ver_of_curr)), atomic_load(&(test_prop->create_version)),
+                       where);
+                assert(atomic_load(&(entry->first_ver_of_curr)) == atomic_load(&(test_prop->create_version)));
             }
 
-            table_prop = get_correct_prop_version_from_table(table_prop, create_version,
-                                                             delete_version, where);
+            table_prop =
+                get_correct_prop_version_from_table(table_prop, create_version, delete_version, where);
             CHECK_PTR(table_prop, where);
             assert(table_prop);
             assert(atomic_load(&(table_prop->tag)) == H5P_MT_PROP_TAG);
@@ -4283,59 +3779,50 @@ list_lkup_tbl_check(H5P_mt_list_t *list, size_t nprops_inherited, const char *wh
             delete_version = atomic_load(&(table_prop->delete_version));
 
             /* Compare the property with the table_prop */
-            ret = prop_check(list_prop, table_prop, table_prop->in_prop_class, 
-                             table_prop->in_lkup_tbl);
+            ret = prop_check(list_prop, table_prop, table_prop->in_prop_class, table_prop->in_lkup_tbl);
             CHECK_I(ret, where);
 
         } /* end if ( curr.ptr ) */
-        if ( base.ptr )
-        {
+        if (base.ptr) {
             /* Ensure base.ver is the correct version */
             list_prop = base.ptr;
-            
+
             VERIFY(base.ver, 1, where);
             assert(base.ver == 1);
 
             table_prop = list_prop_table[i].prop;
 
-            ret = prop_check(list_prop, table_prop, table_prop->in_prop_class, 
-                             table_prop->in_lkup_tbl);
-            CHECK_I(ret, where);            
+            ret = prop_check(list_prop, table_prop, table_prop->in_prop_class, table_prop->in_lkup_tbl);
+            CHECK_I(ret, where);
 
         } /* end else */
 
-
     } /* end for ( i; i < nprops_inherited; i++ ) */
 
-
-
-    return(ret_value);
+    return (ret_value);
 
 } /* end list_lkup_tbl_check() */
-
-
 
 /****************************************************************************************
  * Function:    get_correct_prop_version_from_table
  *
  * Purpose:     Iterates the LFSLL of versions of properties in the prop_table to return
  *              the correct version.
- * 
- * 
+ *
+ *
  * Return:      Success: Pointer to correct property version
- * 
- *              Failure: NULL    
+ *
+ *              Failure: NULL
  *
  ****************************************************************************************
  */
 H5P_mt_prop_t *
-get_correct_prop_version_from_table(H5P_mt_prop_t *table_prop, uint64_t create_ver,
-                                    uint64_t delete_ver, const char *where)
+get_correct_prop_version_from_table(H5P_mt_prop_t *table_prop, uint64_t create_ver, uint64_t delete_ver,
+                                    const char *where)
 {
     H5P_mt_prop_aptr_t next;
 
-    while ( create_ver != atomic_load(&(table_prop->create_version)) )
-    {
+    while (create_ver != atomic_load(&(table_prop->create_version))) {
         next = atomic_load(&(table_prop->next));
         assert(next.ptr);
 
@@ -4348,70 +3835,59 @@ get_correct_prop_version_from_table(H5P_mt_prop_t *table_prop, uint64_t create_v
     VERIFY(delete_ver, atomic_load(&(table_prop->delete_version)), where);
     assert(delete_ver == atomic_load(&(table_prop->delete_version)));
 
-    return(table_prop);
-
+    return (table_prop);
 
 } /* end get_correct_prop_version_from_table() */
-
-
 
 /****************************************************************************************
  * Function:    prop_check
  *
  * Purpose:     Verifies that a property is correct by comparing it to the table_prop and
  *              doing additional checks ensure flags are set correctly.
- * 
- * 
- * Return:      SUCCEED/FAIL      
+ *
+ *
+ * Return:      SUCCEED/FAIL
  *
  ****************************************************************************************
  */
-static herr_t 
-prop_check(H5P_mt_prop_t *prop, H5P_mt_prop_t *table_prop, 
-           bool in_prop_class, bool in_lkup_tbl)
+static herr_t
+prop_check(H5P_mt_prop_t *prop, H5P_mt_prop_t *table_prop, bool in_prop_class, bool in_lkup_tbl)
 {
     herr_t ret_value = SUCCEED;
 
-    if ( 0 != H5P__mt_prop_cmp(prop, table_prop) )
-    {
+    if (0 != H5P__mt_prop_cmp(prop, table_prop)) {
         assert(atomic_load(&(prop->tag)) == 0);
 
         fprintf(stderr, "prop_check(): prop mismatch.");
         return -1;
     }
 
-    if ( in_prop_class != prop->in_prop_class ||
-         in_lkup_tbl   != prop->in_lkup_tbl )
-    {
+    if (in_prop_class != prop->in_prop_class || in_lkup_tbl != prop->in_lkup_tbl) {
         assert(in_prop_class == prop->in_prop_class);
-        assert(in_lkup_tbl   == prop->in_lkup_tbl );
+        assert(in_lkup_tbl == prop->in_lkup_tbl);
 
         fprintf(stderr, "prop_check(): prop class or lkup_tbl flag mismatch.");
         return -1;
     }
 
-    if ( TRUE == prop->sentinel )
-    {
+    if (TRUE == prop->sentinel) {
         assert(prop->sentinel == FALSE);
 
         fprintf(stderr, "prop_check(): prop is marked as sentinel.");
-        return -1;   
+        return -1;
     }
 
-
-    return(ret_value);
+    return (ret_value);
 
 } /* end prop_check() */
-
-
 
 /****************************************************************************************
  * Function:    sentinel_check
  *
  * Purpose:     Verifies that a sentinel property is correct
- * 
- * 
- * Return:      SUCCEED/FAIL      
+ *
+ *
+ * Return:      SUCCEED/FAIL
  *
  ****************************************************************************************
  */
@@ -4420,11 +3896,10 @@ sentinel_check(H5P_mt_prop_t *prop)
 {
     H5P_mt_prop_value_t value;
 
-    herr_t              ret_value = SUCCEED;
+    herr_t ret_value = SUCCEED;
 
     /* Ensures sentinel is marked as sentinel */
-    if ( ! prop->sentinel )
-    {
+    if (!prop->sentinel) {
         assert(prop->sentinel);
 
         fprintf(stderr, "sentinel_check(): sentinel isn't marked as sentinel.");
@@ -4432,87 +3907,77 @@ sentinel_check(H5P_mt_prop_t *prop)
     }
 
     /* Ensures correct chksum */
-    if ( prop->chksum != LLONG_MIN && prop->chksum != LLONG_MAX )
-    {
+    if (prop->chksum != LLONG_MIN && prop->chksum != LLONG_MAX) {
         assert(prop->chksum == LLONG_MIN);
         assert(prop->chksum == LLONG_MAX);
 
         fprintf(stderr, "sentinel_check(): incorrect sentinel chksum.");
-        return -1;   
+        return -1;
     }
 
     /* Ensures correct name */
-    if ( 0 != strcmp(prop->name, "neg_sentinel") && 
-         0 != strcmp(prop->name, "pos_sentinel") )
-    {
+    if (0 != strcmp(prop->name, "neg_sentinel") && 0 != strcmp(prop->name, "pos_sentinel")) {
         fprintf(stderr, "sentinel_check(): incorrect sentinel name.");
-        return -1;   
+        return -1;
     }
 
     value = atomic_load(&(prop->value));
 
     /* Ensures value size is 0 */
-    if ( value.size != 0 )
-    {
+    if (value.size != 0) {
         assert(value.size == 0);
 
         fprintf(stderr, "sentinel_check(): incorrect sentinel size.");
-        return -1;   
+        return -1;
     }
 
     /* Ensures value ptr is NULL */
-    if ( value.ptr )
-    {
-        assert( ! value.ptr );
+    if (value.ptr) {
+        assert(!value.ptr);
 
         fprintf(stderr, "sentinel_check(): sentinel value not NULL.");
-        return -1;   
+        return -1;
     }
 
-    return(ret_value);
+    return (ret_value);
 
 } /* end sentinel_check() */
 
-
 /**
- * 
+ *
  */
 static herr_t
 check_stats(struct_params_t *test_params)
 {
 
-
-    
 } /* end check_stats() */
-
-
 
 /****************************************************************************************
  * Function:    cleanup_mt_prop_test
  *
  * Purpose:     Clean up function that resets the test classes and lists fl_next fields
- *              to {NULL, 0}, due to them normally not being used until they are closed 
- *              and put on their respective free lists. 
- * 
+ *              to {NULL, 0}, due to them normally not being used until they are closed
+ *              and put on their respective free lists.
+ *
  *              NOTE: the fl_next fields are used in testing for simplicity.
- * 
- * 
- * Return:      SUCCEED/FAIL      
+ *
+ *
+ * Return:      SUCCEED/FAIL
  *
  ****************************************************************************************
  */
 static herr_t
 cleanup_mt_prop_test(TestParams_t *params)
 {
-    struct_params_t * test_params;
-    H5P_mt_class_t  * class1;
-    H5P_mt_class_t  * class2;
-    H5P_mt_list_t   * list1;
-    H5P_mt_list_t   * list3;
+    struct_params_t    *test_params;
+    H5P_mt_class_t     *class1;
+    H5P_mt_class_t     *class2;
+    H5P_mt_list_t      *list1;
+    H5P_mt_list_t      *list3;
     H5P_mt_class_sptr_t class_next = {NULL, 0};
-    H5P_mt_list_sptr_t  list_next = {NULL, 0};
+    H5P_mt_list_sptr_t  list_next  = {NULL, 0};
 
-    herr_t            ret_value = SUCCEED;
+    herr_t ret_value = SUCCEED;
 
     test_params = (struct_params_t *)params->UserParams;
 
@@ -4528,19 +3993,18 @@ cleanup_mt_prop_test(TestParams_t *params)
 
     H5P__mt_term_free_lists();
 
-    return(ret_value);
+    return (ret_value);
 
 } /* end cleanup_mt_prop_test() */
 
 #endif /* ifdef H5_HAVE_MULTITHREAD */
 
-
 /****************************************************************************************
  * Function:    main
  *
  * Purpose:     main function to set up and run H5P multithread tests.
- * 
- * Return:      number of errors during tests      
+ *
+ * Return:      number of errors during tests
  *
  ****************************************************************************************
  */
@@ -4548,25 +4012,22 @@ int
 main(int argc, char **argv)
 {
     struct_params_t test_params;
-    int num_errs = 0;
+    int             num_errs = 0;
 
     H5open();
 
-    if ( 0 > init_globals() )
-    {
+    if (0 > init_globals()) {
         fprintf(stderr, "Failed initializing H5P testing globals.");
         exit(EXIT_FAILURE);
     }
 
-    if ( 0 > create_test_root_class() )
-    {
+    if (0 > create_test_root_class()) {
         fprintf(stderr, "Failed allocating and initializing H5P test root class.");
         exit(EXIT_FAILURE);
     }
 
     /* Initialize testing framework */
-    if (TestInit(argv[0], NULL, NULL, NULL, NULL, 0, 0) < 0) 
-    {
+    if (TestInit(argv[0], NULL, NULL, NULL, NULL, 0, 0) < 0) {
         fprintf(stderr, "couldn't initialize testing framework\n");
         exit(EXIT_FAILURE);
     }
@@ -4590,32 +4051,25 @@ main(int argc, char **argv)
                                     /* test_lists_tail   = */ {NULL, 0}};
 
     /* Add tests */
-    AddTest("test_h5p_mt_functions", test_h5p_mt_functions, NULL, cleanup_mt_prop_test,
-            &test_params, sizeof(struct_params_t), 0, 
-            "Serial smoke check of all H5P multithread functions");
-
+    AddTest("test_h5p_mt_functions", test_h5p_mt_functions, NULL, cleanup_mt_prop_test, &test_params,
+            sizeof(struct_params_t), 0, "Serial smoke check of all H5P multithread functions");
 
     /* Parse command line arguments */
-    if ( TestParseCmdLine(argc, argv) < 0 )
-    {
+    if (TestParseCmdLine(argc, argv) < 0) {
         fprintf(stderr, "Error occurred while parsing command-line arguments\n");
         goto exit;
     }
 
     /* Perform tests */
-    if (PerformTests() < 0) 
-    {
+    if (PerformTests() < 0) {
         fprintf(stderr, "Error occurred while running tests\n");
         goto exit;
     }
 
-
     /* Display test summary if requested */
-    if (GetTestSummary())
-    {
+    if (GetTestSummary()) {
         TestSummary(stdout);
     }
-
 
 #else
     fprintf(stderr, "Multithread isn't enabled in library configuration -- no tests to run\n");
@@ -4627,15 +4081,13 @@ exit:
     num_errs = GetTestNumErrs();
 
     /* Release test infrastructure */
-    if ( TestShutdown() < 0 )
-    {
+    if (TestShutdown() < 0) {
         fprintf(stderr, "Error while shutting down test infrastructure\n");
         num_errs++;
     }
 
     H5close();
 
-    exit( num_errs > 0 ? EXIT_FAILURE : EXIT_SUCCESS);
+    exit(num_errs > 0 ? EXIT_FAILURE : EXIT_SUCCESS);
 
 } /* end main() */
-
