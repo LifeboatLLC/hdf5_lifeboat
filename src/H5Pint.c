@@ -34,12 +34,14 @@
 #include "H5MMprivate.h" /* Memory management			*/
 #include "H5Ppkg.h"      /* Property lists		  	*/
 
+
 #ifdef H5_HAVE_MULTITHREAD
 #include "H5Ppkg_mt.h"
 //#include "H5Pint_mt.c"
 typedef H5P_mt_class_t H5P_genclass_t;
-typedef H5P_mt_list_t  H5P_genplist_t;
+typedef H5P_mt_list_t H5P_genplist_t;
 #endif /**/
+
 
 /****************/
 /* Local Macros */
@@ -122,7 +124,7 @@ static herr_t          H5P__do_prop(H5P_genplist_t *plist, const char *name, H5P
 static int             H5P__open_class_path_cb(void *_obj, hid_t H5_ATTR_UNUSED id, void *_key);
 static H5P_genprop_t  *H5P__find_prop_pclass(H5P_genclass_t *pclass, const char *name);
 static herr_t          H5P__free_prop_cb(void *item, void H5_ATTR_UNUSED *key, void *op_data);
-static herr_t   H5P__free_del_name_cb(void *item, void H5_ATTR_UNUSED *key, void H5_ATTR_UNUSED *op_data);
+static herr_t H5P__free_del_name_cb(void *item, void H5_ATTR_UNUSED *key, void H5_ATTR_UNUSED *op_data);
 #endif
 
 /*********************/
@@ -133,29 +135,30 @@ static herr_t   H5P__free_del_name_cb(void *item, void H5_ATTR_UNUSED *key, void
  * Predefined property list classes. These are initialized at runtime by
  * H5P_init() in this source file.
  */
-hid_t H5P_CLS_ROOT_ID_g = H5I_INVALID_HID;
+hid_t           H5P_CLS_ROOT_ID_g = H5I_INVALID_HID;
 
-hid_t H5P_CLS_ATTRIBUTE_ACCESS_ID_g = H5I_INVALID_HID;
-hid_t H5P_CLS_ATTRIBUTE_CREATE_ID_g = H5I_INVALID_HID;
-hid_t H5P_CLS_DATASET_ACCESS_ID_g   = H5I_INVALID_HID;
-hid_t H5P_CLS_DATASET_CREATE_ID_g   = H5I_INVALID_HID;
-hid_t H5P_CLS_DATASET_XFER_ID_g     = H5I_INVALID_HID;
-hid_t H5P_CLS_DATATYPE_ACCESS_ID_g  = H5I_INVALID_HID;
-hid_t H5P_CLS_DATATYPE_CREATE_ID_g  = H5I_INVALID_HID;
-hid_t H5P_CLS_FILE_ACCESS_ID_g      = H5I_INVALID_HID;
-hid_t H5P_CLS_FILE_CREATE_ID_g      = H5I_INVALID_HID;
-hid_t H5P_CLS_FILE_MOUNT_ID_g       = H5I_INVALID_HID;
-hid_t H5P_CLS_GROUP_ACCESS_ID_g     = H5I_INVALID_HID;
-hid_t H5P_CLS_GROUP_CREATE_ID_g     = H5I_INVALID_HID;
-hid_t H5P_CLS_LINK_ACCESS_ID_g      = H5I_INVALID_HID;
-hid_t H5P_CLS_LINK_CREATE_ID_g      = H5I_INVALID_HID;
-hid_t H5P_CLS_MAP_ACCESS_ID_g       = H5I_INVALID_HID;
-hid_t H5P_CLS_MAP_CREATE_ID_g       = H5I_INVALID_HID;
-hid_t H5P_CLS_OBJECT_COPY_ID_g      = H5I_INVALID_HID;
-hid_t H5P_CLS_OBJECT_CREATE_ID_g    = H5I_INVALID_HID;
-hid_t H5P_CLS_REFERENCE_ACCESS_ID_g = H5I_INVALID_HID;
-hid_t H5P_CLS_STRING_CREATE_ID_g    = H5I_INVALID_HID;
-hid_t H5P_CLS_VOL_INITIALIZE_ID_g   = H5I_INVALID_HID;
+hid_t           H5P_CLS_ATTRIBUTE_ACCESS_ID_g = H5I_INVALID_HID;
+hid_t           H5P_CLS_ATTRIBUTE_CREATE_ID_g = H5I_INVALID_HID;
+hid_t           H5P_CLS_DATASET_ACCESS_ID_g   = H5I_INVALID_HID;
+hid_t           H5P_CLS_DATASET_CREATE_ID_g   = H5I_INVALID_HID;
+hid_t           H5P_CLS_DATASET_XFER_ID_g     = H5I_INVALID_HID;
+hid_t           H5P_CLS_DATATYPE_ACCESS_ID_g  = H5I_INVALID_HID;
+hid_t           H5P_CLS_DATATYPE_CREATE_ID_g  = H5I_INVALID_HID;
+hid_t           H5P_CLS_FILE_ACCESS_ID_g      = H5I_INVALID_HID;
+hid_t           H5P_CLS_FILE_CREATE_ID_g      = H5I_INVALID_HID;
+hid_t           H5P_CLS_FILE_MOUNT_ID_g       = H5I_INVALID_HID;
+hid_t           H5P_CLS_GROUP_ACCESS_ID_g     = H5I_INVALID_HID;
+hid_t           H5P_CLS_GROUP_CREATE_ID_g     = H5I_INVALID_HID;
+hid_t           H5P_CLS_LINK_ACCESS_ID_g      = H5I_INVALID_HID;
+hid_t           H5P_CLS_LINK_CREATE_ID_g      = H5I_INVALID_HID;
+hid_t           H5P_CLS_MAP_ACCESS_ID_g       = H5I_INVALID_HID;
+hid_t           H5P_CLS_MAP_CREATE_ID_g       = H5I_INVALID_HID;
+hid_t           H5P_CLS_OBJECT_COPY_ID_g      = H5I_INVALID_HID;
+hid_t           H5P_CLS_OBJECT_CREATE_ID_g    = H5I_INVALID_HID;
+hid_t           H5P_CLS_REFERENCE_ACCESS_ID_g = H5I_INVALID_HID;
+hid_t           H5P_CLS_STRING_CREATE_ID_g    = H5I_INVALID_HID;
+hid_t           H5P_CLS_VOL_INITIALIZE_ID_g   = H5I_INVALID_HID;
+
 
 #ifdef H5_HAVE_MULTITHREAD
 
@@ -166,30 +169,31 @@ hid_t H5P_CLS_VOL_INITIALIZE_ID_g   = H5I_INVALID_HID;
  */
 
 #else
-H5P_genclass_t *H5P_CLS_ROOT_g = NULL;
+H5P_genclass_t *H5P_CLS_ROOT_g    = NULL;
 
-H5P_genclass_t *H5P_CLS_ATTRIBUTE_ACCESS_g = NULL;
-H5P_genclass_t *H5P_CLS_ATTRIBUTE_CREATE_g = NULL;
-H5P_genclass_t *H5P_CLS_DATASET_ACCESS_g   = NULL;
-H5P_genclass_t *H5P_CLS_DATASET_CREATE_g   = NULL;
-H5P_genclass_t *H5P_CLS_DATASET_XFER_g     = NULL;
-H5P_genclass_t *H5P_CLS_DATATYPE_ACCESS_g  = NULL;
-H5P_genclass_t *H5P_CLS_DATATYPE_CREATE_g  = NULL;
-H5P_genclass_t *H5P_CLS_FILE_ACCESS_g      = NULL;
-H5P_genclass_t *H5P_CLS_FILE_CREATE_g      = NULL;
-H5P_genclass_t *H5P_CLS_FILE_MOUNT_g       = NULL;
-H5P_genclass_t *H5P_CLS_GROUP_ACCESS_g     = NULL;
-H5P_genclass_t *H5P_CLS_GROUP_CREATE_g     = NULL;
-H5P_genclass_t *H5P_CLS_LINK_ACCESS_g      = NULL;
-H5P_genclass_t *H5P_CLS_LINK_CREATE_g      = NULL;
-H5P_genclass_t *H5P_CLS_MAP_ACCESS_g       = NULL;
-H5P_genclass_t *H5P_CLS_MAP_CREATE_g       = NULL;
-H5P_genclass_t *H5P_CLS_OBJECT_COPY_g      = NULL;
-H5P_genclass_t *H5P_CLS_OBJECT_CREATE_g    = NULL;
-H5P_genclass_t *H5P_CLS_REFERENCE_ACCESS_g = NULL;
-H5P_genclass_t *H5P_CLS_STRING_CREATE_g    = NULL;
-H5P_genclass_t *H5P_CLS_VOL_INITIALIZE_g   = NULL;
+H5P_genclass_t *H5P_CLS_ATTRIBUTE_ACCESS_g    = NULL;
+H5P_genclass_t *H5P_CLS_ATTRIBUTE_CREATE_g    = NULL;
+H5P_genclass_t *H5P_CLS_DATASET_ACCESS_g      = NULL;
+H5P_genclass_t *H5P_CLS_DATASET_CREATE_g      = NULL;
+H5P_genclass_t *H5P_CLS_DATASET_XFER_g        = NULL;
+H5P_genclass_t *H5P_CLS_DATATYPE_ACCESS_g     = NULL;
+H5P_genclass_t *H5P_CLS_DATATYPE_CREATE_g     = NULL;
+H5P_genclass_t *H5P_CLS_FILE_ACCESS_g         = NULL;
+H5P_genclass_t *H5P_CLS_FILE_CREATE_g         = NULL;
+H5P_genclass_t *H5P_CLS_FILE_MOUNT_g          = NULL;
+H5P_genclass_t *H5P_CLS_GROUP_ACCESS_g        = NULL;
+H5P_genclass_t *H5P_CLS_GROUP_CREATE_g        = NULL;
+H5P_genclass_t *H5P_CLS_LINK_ACCESS_g         = NULL;
+H5P_genclass_t *H5P_CLS_LINK_CREATE_g         = NULL;
+H5P_genclass_t *H5P_CLS_MAP_ACCESS_g          = NULL;
+H5P_genclass_t *H5P_CLS_MAP_CREATE_g          = NULL;
+H5P_genclass_t *H5P_CLS_OBJECT_COPY_g         = NULL;
+H5P_genclass_t *H5P_CLS_OBJECT_CREATE_g       = NULL;
+H5P_genclass_t *H5P_CLS_REFERENCE_ACCESS_g    = NULL;
+H5P_genclass_t *H5P_CLS_STRING_CREATE_g       = NULL;
+H5P_genclass_t *H5P_CLS_VOL_INITIALIZE_g      = NULL;
 #endif
+
 
 /*
  * Predefined property lists for each predefined class. These are initialized
@@ -220,12 +224,12 @@ const H5P_libclass_t H5P_CLS_ROOT[1] = {{
     "root",        /* Class name for debugging     */
     H5P_TYPE_ROOT, /* Class type                   */
 
-    NULL, /* Parent class                 */
+    NULL,               /* Parent class                 */
 
 #ifdef H5_HAVE_MULTITHREAD
     &H5P_MT_CLS_ROOT_g, /* Point to MT class*/
 #else
-    &H5P_CLS_ROOT_g,             /* Pointer to class             */
+    &H5P_CLS_ROOT_g,    /* Pointer to class             */
 #endif
 
     &H5P_CLS_ROOT_ID_g, /* Pointer to class ID          */
@@ -250,8 +254,8 @@ const H5P_libclass_t H5P_CLS_AACC[1] = {{
     &H5P_MT_CLS_LINK_ACCESS_g,      /* Parent MT class */
     &H5P_MT_CLS_ATTRIBUTE_ACCESS_g, /* Pointer to MT class */
 #else
-    &H5P_CLS_LINK_ACCESS_g,      /* Parent class                 */
-    &H5P_CLS_ATTRIBUTE_ACCESS_g, /* Pointer to class             */
+    &H5P_CLS_LINK_ACCESS_g,         /* Parent class                 */
+    &H5P_CLS_ATTRIBUTE_ACCESS_g,    /* Pointer to class             */
 #endif
 
     &H5P_CLS_ATTRIBUTE_ACCESS_ID_g, /* Pointer to class ID          */
@@ -276,8 +280,8 @@ const H5P_libclass_t H5P_CLS_GACC[1] = {{
     &H5P_MT_CLS_LINK_ACCESS_g,  /* Parent MT class */
     &H5P_MT_CLS_GROUP_ACCESS_g, /* Pointer to MT class */
 #else
-    &H5P_CLS_LINK_ACCESS_g,      /* Parent class                 */
-    &H5P_CLS_GROUP_ACCESS_g,     /* Pointer to class             */
+    &H5P_CLS_LINK_ACCESS_g,     /* Parent class                 */
+    &H5P_CLS_GROUP_ACCESS_g,    /* Pointer to class             */
 #endif
 
     &H5P_CLS_GROUP_ACCESS_ID_g, /* Pointer to class ID          */
@@ -302,8 +306,8 @@ const H5P_libclass_t H5P_CLS_TCRT[1] = {{
     &H5P_MT_CLS_OBJECT_CREATE_g,   /* Parent MT class */
     &H5P_MT_CLS_DATATYPE_CREATE_g, /* Pointer to MT class */
 #else
-    &H5P_CLS_OBJECT_CREATE_g,    /* Parent class                 */
-    &H5P_CLS_DATATYPE_CREATE_g,  /* Pointer to class             */
+    &H5P_CLS_OBJECT_CREATE_g,      /* Parent class                 */
+    &H5P_CLS_DATATYPE_CREATE_g,    /* Pointer to class             */
 #endif
 
     &H5P_CLS_DATATYPE_CREATE_ID_g, /* Pointer to class ID          */
@@ -328,8 +332,8 @@ const H5P_libclass_t H5P_CLS_TACC[1] = {{
     &H5P_MT_CLS_LINK_ACCESS_g,     /* Parent MT class */
     &H5P_MT_CLS_DATATYPE_ACCESS_g, /* Pointer to MT class */
 #else
-    &H5P_CLS_LINK_ACCESS_g,      /* Parent class                 */
-    &H5P_CLS_DATATYPE_ACCESS_g,  /* Pointer to class             */
+    &H5P_CLS_LINK_ACCESS_g,        /* Parent class                 */
+    &H5P_CLS_DATATYPE_ACCESS_g,    /* Pointer to class             */
 #endif
 
     &H5P_CLS_DATATYPE_ACCESS_ID_g, /* Pointer to class ID          */
@@ -353,9 +357,9 @@ const H5P_libclass_t H5P_CLS_VINI[1] = {{
 #ifdef H5_HAVE_MULTITHREAD
     &H5P_MT_CLS_ROOT_g,           /* Parent MT class */
     &H5P_MT_CLS_VOL_INITIALIZE_g, /* Pointer to MT class */
-#else
-    &H5P_CLS_ROOT_g,             /* Parent class                 */
-    &H5P_CLS_VOL_INITIALIZE_g,   /* Pointer to class             */
+#else  
+    &H5P_CLS_ROOT_g,              /* Parent class                 */
+    &H5P_CLS_VOL_INITIALIZE_g,    /* Pointer to class             */
 #endif
 
     &H5P_CLS_VOL_INITIALIZE_ID_g, /* Pointer to class ID          */
@@ -379,9 +383,9 @@ const H5P_libclass_t H5P_CLS_RACC[1] = {{
 #ifdef H5_HAVE_MULTITHREAD
     &H5P_MT_CLS_FILE_ACCESS_g,      /* Parent MT class */
     &H5P_MT_CLS_REFERENCE_ACCESS_g, /* Pointer to MT class */
-#else
-    &H5P_CLS_FILE_ACCESS_g,      /* Parent class                         */
-    &H5P_CLS_REFERENCE_ACCESS_g, /* Pointer to class                     */
+#else 
+    &H5P_CLS_FILE_ACCESS_g,         /* Parent class                         */
+    &H5P_CLS_REFERENCE_ACCESS_g,    /* Pointer to class                     */
 #endif
     &H5P_CLS_REFERENCE_ACCESS_ID_g, /* Pointer to class ID                  */
     &H5P_LST_REFERENCE_ACCESS_ID_g, /* Pointer to default property list ID  */
@@ -462,7 +466,7 @@ static H5P_libclass_t const *const init_class[] = {
 #ifdef H5_HAVE_MULTITHREAD
 
 /**
- * The multithread version of H5P uses it's own form of free lists.
+ * The multithread version of H5P uses it's own form of free lists. 
  */
 
 #else
@@ -492,23 +496,24 @@ static const H5I_class_t H5I_GENPROPLST_CLS[1] = {{
     (H5I_free_t)H5P__close_list_cb /* Callback routine for closing objects of this class */
 }};
 
+
 #ifdef H5_HAVE_MULTITHREAD
 
 /****************************************************************************************
  * Function:    H5P_init_phase1
- *
- * Purpose:     Multithread safe version of H5P_init_phase1() which initializes the
- *              interface from some other layer. This should be followed with a call to
- *              H5P_init_phase2() after the H5P interface is completely setup.
- *
- *              NOTE: the only difference for this multithread version is it uses the
+ * 
+ * Purpose:     Multithread safe version of H5P_init_phase1() which initializes the 
+ *              interface from some other layer. This should be followed with a call to 
+ *              H5P_init_phase2() after the H5P interface is completely setup. 
+ *              
+ *              NOTE: the only difference for this multithread version is it uses the 
  *              multithread functions to create the default property list and default
  *              property list classes as well as atomically update the id of the classes
  *              after they are created.
- *
+ * 
  * Return:      Success:    non-negative
  *              Failure:    negative
- *
+ * 
  ****************************************************************************************
  */
 herr_t
@@ -527,20 +532,24 @@ H5P_init_phase1(void)
     /*
      * Initialize the Generic Property class & object groups.
      */
-    if (H5I_register_type(H5I_GENPROPCLS_CLS) < 0) {
+    if (H5I_register_type(H5I_GENPROPCLS_CLS) < 0)
+    {
         HGOTO_ERROR(H5E_ID, H5E_CANTINIT, FAIL, "unable to initialize ID group");
     }
-    if (H5I_register_type(H5I_GENPROPLST_CLS) < 0) {
+    if (H5I_register_type(H5I_GENPROPLST_CLS) < 0)
+    {
         HGOTO_ERROR(H5E_ID, H5E_CANTINIT, FAIL, "unable to initialize ID group");
     }
 
 #if 1
-    /**
+    /** 
      * Initializes the H5P_mt_g global struct which contains the free lists for
-     * classes, lists, and properties, and global stats for H5P.
+     * classes, lists, and properties, and global stats for H5P. 
      */
-    if (0 > H5P_mt_init_free_lists()) {
-        HGOTO_ERROR(H5E_PLIST, H5E_CANTINIT, FAIL, "unable to initialize H5P MT safe free lists");
+    if ( 0 > H5P_mt_init_free_lists() )
+    {
+        HGOTO_ERROR(H5E_PLIST, H5E_CANTINIT, FAIL, 
+                    "unable to initialize H5P MT safe free lists");
     }
 #endif
 
@@ -565,69 +574,78 @@ H5P_init_phase1(void)
                 assert(lib_class->par_pclass || lib_class == H5P_CLS_ROOT);
 
                 /* Allocate the MT safe new class */
-                if (NULL == (*lib_class->pclass = H5P__mt_create_class(
-                                 lib_class->par_pclass ? *lib_class->par_pclass : NULL, lib_class->name,
-                                 lib_class->type, 0, lib_class->create_func, lib_class->create_data,
-                                 lib_class->copy_func, lib_class->copy_data, lib_class->close_func,
-                                 lib_class->close_data))) {
+                if ( NULL == (*lib_class->pclass = H5P__mt_create_class(
+                                lib_class->par_pclass ? *lib_class->par_pclass : NULL, lib_class->name,
+                                lib_class->type, 0, lib_class->create_func, lib_class->create_data,
+                                lib_class->copy_func, lib_class->copy_data, lib_class->close_func, 
+                                lib_class->close_data )))
+                {
                     HGOTO_ERROR(H5E_PLIST, H5E_CANTINIT, FAIL, "class initialization failed");
                 }
 
                 /* Call routine to register properties for class */
-                if (lib_class->reg_prop_func && (*lib_class->reg_prop_func)(*lib_class->pclass) < 0) {
-                    HGOTO_ERROR(H5E_PLIST, H5E_CANTREGISTER, FAIL, "can't register properties");
+                if (lib_class->reg_prop_func && (*lib_class->reg_prop_func)(*lib_class->pclass) < 0)
+                {
+                    HGOTO_ERROR(H5E_PLIST, H5E_CANTREGISTER, FAIL, "can't register properties");                    
                 }
 
                 /* Register the new class */
-                if ((*lib_class->class_id = H5I_register(H5I_GENPROP_CLS, *lib_class->pclass, FALSE)) < 0) {
+                if ((*lib_class->class_id = H5I_register(H5I_GENPROP_CLS, *lib_class->pclass, FALSE)) < 0)
+                {
                     HGOTO_ERROR(H5E_PLIST, H5E_CANTREGISTER, FAIL, "can't register property list class");
                 }
 
                 /* Atomically update the index ID in the class and set opening flag to FALSE */
-                H5P_mt_class_t              *new_class;
+                H5P_mt_class_t             * new_class;
                 H5P_mt_active_thread_count_t thrd;
                 H5P_mt_active_thread_count_t update_thrd;
                 bool                         done = FALSE;
 
-                // new_class = atomic_load(&(*lib_class->pclass));
+                //new_class = atomic_load(&(*lib_class->pclass));
                 new_class = *lib_class->pclass;
 
                 atomic_store(&(new_class->id), *(lib_class->class_id));
 
-                do {
+                do 
+                {
                     thrd = atomic_load(&(new_class->thrd));
 
                     assert(thrd.opening);
-                    assert(!thrd.closing);
+                    assert( ! thrd.closing);
 
-                    update_thrd.count   = thrd.count;
+                    update_thrd.count = thrd.count;
                     update_thrd.opening = FALSE;
                     update_thrd.closing = FALSE;
 
-                    if (!atomic_compare_exchange_strong(&(new_class->thrd), &thrd, update_thrd)) {
+                    if ( ! atomic_compare_exchange_strong(&(new_class->thrd), &thrd, update_thrd))
+                    {
                         /* attempt failed, update stats and try again */
                         atomic_fetch_add(&(new_class->num_thrd_update_cols), 1);
 
                         /* assert is to not get stuck in an infinite loop while testing */
                         assert(H5P_MT_ASSERT_FAIL);
                     }
-                    else {
+                    else
+                    {
                         /* attempt succeded update stats and set done */
                         atomic_fetch_add(&(new_class->num_thrd_count_update), 1);
 
                         done = TRUE;
                     }
+                
+                } while ( ! done );
 
-                } while (!done);
 
                 /* Only register the default property list if it hasn't been created yet */
-                if (lib_class->def_plist_id && *lib_class->def_plist_id == (-1)) {
-                    H5P_mt_list_t *def_plist;
+                if (lib_class->def_plist_id && *lib_class->def_plist_id == (-1)) 
+                {
+                    H5P_mt_list_t * def_plist;
 
                     /* Register the default MT property list for the new MT class */
                     def_plist = H5P__mt_create_list(*lib_class->pclass, NULL, FALSE, 0, FALSE);
 
-                    if (0 > (*lib_class->def_plist_id = atomic_load(&(def_plist->plist_id)))) {
+                    if ( 0 > (*lib_class->def_plist_id = atomic_load(&(def_plist->plist_id))) )
+                    {
                         HGOTO_ERROR(H5E_PLIST, H5E_CANTREGISTER, FAIL,
                                     "can't register default MT property list for MT class");
                     }
@@ -647,6 +665,7 @@ H5P_init_phase1(void)
     /* Verify that all classes were initialized */
     assert(tot_init == NELMTS(init_class));
 
+
 done:
 
     if (ret_value < 0 && tot_init > 0) {
@@ -658,21 +677,27 @@ done:
             H5P_libclass_t const *lib_class = init_class[u]; /* Current class to operate on */
 
             assert(lib_class->class_id);
-            if (*lib_class->class_id >= 0) {
+            if (*lib_class->class_id >= 0) 
+            {
                 /* Close the class ID */
-                if (H5I_dec_ref(*lib_class->class_id) < 0) {
-                    HDONE_ERROR(H5E_PLIST, H5E_CLOSEERROR, FAIL, "unable to close property list class ID");
+                if (H5I_dec_ref(*lib_class->class_id) < 0)
+                {
+                    HDONE_ERROR(H5E_PLIST, H5E_CLOSEERROR, FAIL, 
+                        "unable to close property list class ID");
                 }
             }
-            else if (lib_class->pclass && *lib_class->pclass) {
+            else if (lib_class->pclass && *lib_class->pclass) 
+            {
                 /* Close a half-initialized pclass */
-                if (H5P__mt_close_class(*lib_class->pclass) < 0) {
-                    HDONE_ERROR(H5E_PLIST, H5E_CLOSEERROR, FAIL, "unable to close MT property list class");
+                if ( H5P__mt_close_class(*lib_class->pclass) < 0 )
+                {
+                    HDONE_ERROR(H5E_PLIST, H5E_CLOSEERROR, FAIL, 
+                                "unable to close MT property list class");
                 }
             }
-
+        
         } /* end for () */
-
+    
     } /* end if (ret_value < 0 && tot_init > 0) */
 
     FUNC_LEAVE_NOAPI(ret_value)
@@ -794,6 +819,7 @@ done:
 }
 #endif
 
+
 /*-------------------------------------------------------------------------
  * Function:    H5P_init_phase2
  *
@@ -816,13 +842,15 @@ H5P_init_phase2(void)
     FUNC_ENTER_NOAPI(FAIL)
 
     /* Set up the default VFL driver */
-    if (H5P__facc_set_def_driver() < 0) {
+    if (H5P__facc_set_def_driver() < 0)
+    {
         HGOTO_ERROR(H5E_VFL, H5E_CANTSET, FAIL, "unable to set default VFL driver");
     }
 
 done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5P_init_phase2() */
+
 
 #ifdef H5_HAVE_MULTITHREAD
 
@@ -835,14 +863,14 @@ done:
  * Return:      Success:    Positive if any action was taken that might
  *                          affect some other interface; zero otherwise.
  *
- *              Failure:    Negative
+ *              Failure:    Negative        
  *
  ****************************************************************************************
  */
 int
 H5P_term_package(void)
 {
-    int    n = 0;
+    int n = 0;
     herr_t result;
 
     FUNC_ENTER_NOAPI_NOINIT_NOERR
@@ -949,12 +977,13 @@ H5P_term_package(void)
         n += (H5I_dec_type_ref(H5I_GENPROP_CLS) > 0);
     } /* end else */
 
-    /**
+    /** 
      * If all classes, lists, and properties have been closed, iterate the
      * free lists of the classes, lists, and properties and free any structs
      * still there.
      */
-    if (n == 0) {
+    if ( n == 0 )
+    {
         result = H5P__mt_term_free_lists();
         assert(result >= 0);
     }
@@ -1096,6 +1125,7 @@ H5P_term_package(void)
 
 #endif
 
+
 #ifdef H5_HAVE_MULTITHREAD
 
 /****************************************************************************************
@@ -1103,9 +1133,9 @@ H5P_term_package(void)
  *
  * Purpose:     Multithread safe version of H5P__close_class_cb() which is a routine that
  *              that is called when the ref count reaches zero on a property class's ID.
- *
- *              This is a passthrough function that calls H5P__mt_close_class()
- *              which handles the actual closing of the class.
+ * 
+ *              This is a passthrough function that calls H5P__mt_close_class() 
+ *              which handles the actual closing of the class. 
  *
  * Return:      SUCCEED / FAIL
  *
@@ -1114,9 +1144,9 @@ H5P_term_package(void)
 static herr_t
 H5P__close_class_cb(void *_pclass, void H5_ATTR_UNUSED **request)
 {
-    H5P_mt_class_t *pclass = (H5P_mt_class_t *)_pclass;
+    H5P_mt_class_t * pclass   = (H5P_mt_class_t *)_pclass;
 
-    herr_t ret_value = SUCCEED; /* Return value */
+    herr_t          ret_value = SUCCEED;                   /* Return value */
 
     FUNC_ENTER_PACKAGE
 
@@ -1124,7 +1154,8 @@ H5P__close_class_cb(void *_pclass, void H5_ATTR_UNUSED **request)
     assert(pclass);
 
     /* Close the property list class object */
-    if (H5P__mt_close_class(pclass) < 0) {
+    if (H5P__mt_close_class(pclass) < 0)
+    {
         HGOTO_ERROR(H5E_PLIST, H5E_CLOSEERROR, FAIL, "unable to close property list class");
     }
 
@@ -1147,14 +1178,15 @@ done:
 static herr_t
 H5P__close_class_cb(void *_pclass, void H5_ATTR_UNUSED **request)
 {
-    H5P_genclass_t *pclass = (H5P_genclass_t *)_pclass; /* Property list class to close */
+    H5P_genclass_t *pclass    = (H5P_genclass_t *)_pclass; /* Property list class to close */
 
-    herr_t ret_value = SUCCEED; /* Return value */
+    herr_t          ret_value = SUCCEED;                   /* Return value */
 
     FUNC_ENTER_PACKAGE
 
     /* Sanity check */
     assert(pclass);
+
 
     /* Close the property list class object */
     if (H5P__close_class(pclass) < 0)
@@ -1165,6 +1197,7 @@ done:
 } /* end H5P__close_class_cb() */
 #endif
 
+
 #ifdef H5_HAVE_MULTITHREAD
 
 /****************************************************************************************
@@ -1172,8 +1205,8 @@ done:
  *
  * Purpose:     Multithread safe version of H5P__close_list_cb() which is a routine that
  *              is called when the ref count reaches zero on a property list's ID.
- *
- *              This is a passthrough function that calls H5P__mt_close_list()
+ * 
+ *              This is a passthrough function that calls H5P__mt_close_list() 
  *              which handles the actual closing of the list.
  *
  * Return:      SUCCEED / FAIL
@@ -1183,9 +1216,9 @@ done:
 static herr_t
 H5P__close_list_cb(void *_plist, void H5_ATTR_UNUSED **request)
 {
-    H5P_mt_list_t *plist = (H5P_mt_list_t *)_plist;
+    H5P_mt_list_t * plist     = (H5P_mt_list_t *)_plist;
 
-    herr_t ret_value = SUCCEED; /* Return value */
+    herr_t          ret_value = SUCCEED;                  /* Return value */
 
     FUNC_ENTER_PACKAGE
 
@@ -1193,7 +1226,8 @@ H5P__close_list_cb(void *_plist, void H5_ATTR_UNUSED **request)
     assert(plist);
 
     /* Close the property list class object */
-    if (H5P__mt_close_list(plist) < 0) {
+    if (H5P__mt_close_list(plist) < 0)
+    {
         HGOTO_ERROR(H5E_PLIST, H5E_CLOSEERROR, FAIL, "unable to close property list class");
     }
 
@@ -1216,9 +1250,9 @@ done:
 static herr_t
 H5P__close_list_cb(void *_plist, void H5_ATTR_UNUSED **request)
 {
-    H5P_genplist_t *plist = (H5P_genplist_t *)_plist; /* Property list to close */
+    H5P_genplist_t *plist     = (H5P_genplist_t *)_plist; /* Property list to close */
 
-    herr_t ret_value = SUCCEED; /* Return value */
+    herr_t          ret_value = SUCCEED;                  /* Return value */
 
     FUNC_ENTER_PACKAGE
 
@@ -1233,6 +1267,8 @@ done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5P__close_list_cb() */
 #endif
+
+
 
 #ifdef H5_HAVE_MULTITHREAD
 
@@ -1314,6 +1350,7 @@ done:
 } /* end H5P__do_prop_cb1() */
 #endif
 
+
 #ifdef H5_HAVE_MULTITHREAD
 /****************************************************************************************
  * Function:    H5P__copy_pclass
@@ -1323,7 +1360,7 @@ done:
  *              pclass parameter
  *
  * Return:      Success: Returns a pointer to the new H5P_mt_class_t structure
- *
+ * 
  *              Failure: NULL
  *
  ****************************************************************************************
@@ -1331,14 +1368,16 @@ done:
 H5P_mt_class_t *
 H5P__copy_pclass(H5P_mt_class_t *pclass)
 {
-    H5P_mt_class_t *ret_value = NULL; /* return value */
+    H5P_mt_class_t          * ret_value = NULL;  /* return value */
 
     FUNC_ENTER_PACKAGE
 
     assert(pclass);
 
-    if ((ret_value = H5P__mt_copy_class(pclass)) == NULL) {
-        HGOTO_ERROR(H5E_PLIST, H5E_CANTCOPY, NULL, "can't copy MT property class");
+    if ( (ret_value = H5P__mt_copy_class(pclass)) == NULL )
+    {
+        HGOTO_ERROR(H5E_PLIST, H5E_CANTCOPY, NULL, 
+                    "can't copy MT property class");
     }
 
 done:
@@ -1423,6 +1462,9 @@ done:
 } /* H5P__copy_pclass() */
 #endif
 
+
+
+
 #ifdef H5_HAVE_MULTITHREAD
 /****************************************************************************************
  * Function:    H5P_copy_plist
@@ -1430,10 +1472,10 @@ done:
  * Purpose:     Multithread version of H5P_copy_plist which is just a passthrough
  *              function that calls H5P__mt_create_list() to create a copy of the
  *              plist parameter
- *
+ * 
  *
  * Return:      Success: ID of the new copy of the plist
- *
+ * 
  *              Failure: H5I_INVALID_HID
  *
  ****************************************************************************************
@@ -1441,10 +1483,10 @@ done:
 hid_t
 H5P_copy_plist(H5P_mt_list_t *plist, hbool_t app_ref)
 {
-    H5P_mt_class_t *parent;
-    H5P_mt_list_t  *copy_list;
+    H5P_mt_class_t * parent;
+    H5P_mt_list_t  * copy_list;
 
-    hid_t ret_value = H5I_INVALID_HID; /* return value */
+    hid_t           ret_value = H5I_INVALID_HID; /* return value */
 
     FUNC_ENTER_NOAPI(H5I_INVALID_HID)
 
@@ -1452,8 +1494,10 @@ H5P_copy_plist(H5P_mt_list_t *plist, hbool_t app_ref)
 
     parent = plist->pclass_ptr;
 
-    if ((copy_list = H5P__mt_create_list(parent, plist, TRUE, 0, app_ref)) == NULL) {
-        HGOTO_ERROR(H5E_PLIST, H5E_CANTCOPY, H5I_INVALID_HID, "can't copy MT property list");
+    if (( copy_list = H5P__mt_create_list(parent, plist, TRUE, 0, app_ref)) == NULL )
+    {
+        HGOTO_ERROR(H5E_PLIST, H5E_CANTCOPY, H5I_INVALID_HID, 
+                    "can't copy MT property list");
     }
 
     ret_value = atomic_load(&(copy_list->plist_id));
@@ -1691,6 +1735,9 @@ done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P_copy_plist() */
 #endif
+
+
+
 
 #ifdef H5_HAVE_MULTITHREAD
 
@@ -1961,15 +2008,15 @@ done:
 /****************************************************************************************
  * Function:    H5P__find_prop_plist
  *
- * Purpose:     Multithread safe version of H5P__find_prop_plist() and
- *              H5P__find_prop_pclass() which are internal routines to check for a
- *              property in a property list and proerty list class respectively.
- *
- *              This is a passthrough function that calls H5P__mt_search__list()
+ * Purpose:     Multithread safe version of H5P__find_prop_plist() and 
+ *              H5P__find_prop_pclass() which are internal routines to check for a 
+ *              property in a property list and proerty list class respectively. 
+ * 
+ *              This is a passthrough function that calls H5P__mt_search__list() 
  *              which handles the actual searching for the property in the list.
  *
  * Return:      Success: Pointer to the property
- *
+ * 
  *              Failure: NULL (not in the plist)
  *
  ****************************************************************************************
@@ -1977,15 +2024,17 @@ done:
 H5P_genprop_t *
 H5P__find_prop_plist(H5P_genplist_t *plist, const char *name)
 {
-    H5P_genprop_t *ret_value = NULL; /* Return value */
+    H5P_genprop_t * ret_value = NULL; /* Return value */
 
     FUNC_ENTER_PACKAGE
 
     assert(plist);
     assert(name);
 
-    if (NULL == (ret_value = H5P__mt_search__list(plist, name))) {
-        HGOTO_ERROR(H5E_PLIST, H5E_NOTFOUND, NULL, "can't find property in property list");
+    if ( NULL == (ret_value = H5P__mt_search__list(plist, name)) )
+    {
+        HGOTO_ERROR(H5E_PLIST, H5E_NOTFOUND, NULL, 
+                    "can't find property in property list");
     }
 
 done:
@@ -2100,6 +2149,7 @@ done:
 } /* H5P__find_prop_pclass() */
 #endif
 
+
 #ifdef H5_HAVE_MULTITHREAD
 
 /**
@@ -2147,6 +2197,7 @@ H5P__free_prop(H5P_genprop_t *prop)
     FUNC_LEAVE_NOAPI(SUCCEED)
 } /* H5P__free_prop() */
 #endif
+
 
 #ifdef H5_HAVE_MULTITHREAD
 
@@ -2198,6 +2249,7 @@ H5P__free_prop_cb(void *item, void H5_ATTR_UNUSED *key, void *op_data)
 } /* H5P__free_prop_cb() */
 #endif
 
+
 #ifdef H5_HAVE_MULTITHREAD
 
 /**
@@ -2241,6 +2293,7 @@ H5P__free_del_name_cb(void *item, void H5_ATTR_UNUSED *key, void H5_ATTR_UNUSED 
     FUNC_LEAVE_NOAPI(0)
 } /* H5P__free_del_name_cb() */
 #endif
+
 
 #ifdef H5_HAVE_MULTITHREAD
 
@@ -2349,15 +2402,15 @@ H5P__access_class(H5P_genclass_t *pclass, H5P_class_mod_t mod)
 /****************************************************************************************
  * Function:    H5P__open_class_path_cb
  *
- * Purpose:     Multithread safe version of H5P__open_class_path_cb() which is an
+ * Purpose:     Multithread safe version of H5P__open_class_path_cb() which is an 
  *              internal callback routine to check for duplicated names in parent class.
- *
- *              NOTE: only change between this version and the original is the name
+ * 
+ *              NOTE: only change between this version and the original is the name 
  *              change for the new multithread safe structures, obj->parent changed to
  *              obj->parent_ptr.
- *
+ * 
  * Return:      Success: Pointer to a property class object
- *
+ * 
  *              Failure: NULL
  *
  ****************************************************************************************
@@ -2435,6 +2488,8 @@ H5P__open_class_path_cb(void *_obj, hid_t H5_ATTR_UNUSED id, void *_key)
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5P__open_class_path_cb() */
 #endif
+
+
 
 #ifdef H5_HAVE_MULTITHREAD
 
@@ -2548,6 +2603,7 @@ done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P__create_class() */
 #endif
+
 
 #ifdef H5_HAVE_MULTITHREAD
 
@@ -2702,6 +2758,8 @@ done:
 } /* H5P__create() */
 #endif
 
+
+
 #ifdef H5_HAVE_MULTITHREAD
 /****************************************************************************************
  * Function:    H5P_create_id
@@ -2709,10 +2767,10 @@ done:
  * Purpose:     Multithread version of H5P_create_id which is just a passthrough
  *              function that calls H5P__mt_create_list() to create a new plist derived
  *              from the pclass parameter
- *
+ * 
  *
  * Return:      Success: ID of the new plist
- *
+ * 
  *              Failure: H5I_INVALID_HID
  *
  ****************************************************************************************
@@ -2722,28 +2780,33 @@ H5P_create_id(H5P_mt_class_t *pclass, hbool_t app_ref)
 {
     H5P_mt_list_t *plist;
 
-    hid_t ret_value = H5I_INVALID_HID; /* return value */
+    hid_t           ret_value = H5I_INVALID_HID; /* return value */
 
     FUNC_ENTER_NOAPI(H5I_INVALID_HID)
 
     assert(pclass);
 
     /* Create the new MT property list */
-    if (NULL == (plist = H5P__mt_create_list(pclass, NULL, FALSE, 0, app_ref))) {
-        HGOTO_ERROR(H5E_PLIST, H5E_CANTCREATE, H5I_INVALID_HID, "unable to create MT property list");
+    if ( NULL == (plist = H5P__mt_create_list(pclass, NULL, FALSE, 0, app_ref)) )
+    {
+        HGOTO_ERROR(H5E_PLIST, H5E_CANTCREATE, H5I_INVALID_HID, 
+                    "unable to create MT property list");
     }
 
     ret_value = atomic_load(&(plist->plist_id));
 
+
 done:
 
-    if (H5I_INVALID_HID == ret_value && plist) {
+    if (H5I_INVALID_HID == ret_value && plist)
+    {
         H5P__mt_close_list(plist);
     }
 
     FUNC_LEAVE_NOAPI(ret_value)
 
 } /* H5P_create_id() MT safe version */
+
 
 #else
 /*--------------------------------------------------------------------------
@@ -2823,6 +2886,7 @@ done:
 } /* H5P_create_id() */
 #endif
 
+
 #ifdef H5_HAVE_MULTITHREAD
 
 /****************************************************************************************
@@ -2830,17 +2894,17 @@ done:
  *
  * Purpose:     Multithread version of H5P__register_real(), which is an internal routine
  *              to register a new property in a property list class.
- *
- *              NOTE: for descriptions of the parameters for see the original function
- *              description directly after this function.
- *
- *              NOTE: This function calls the MT safe function
+ * 
+ *              NOTE: for descriptions of the parameters for see the original function 
+ *              description directly after this function. 
+ * 
+ *              NOTE: This function calls the MT safe function 
  *              H5P__mt_ins_or_mod_prop__lfsll_ins() which inserts the new property into
  *              the class without incrementing the version number of the class. This is
  *              specifically used when adding the default properties to a new class, like
  *              during initialization of H5P.
  *
- * Return:      SUCCEED/FAIL
+ * Return:      SUCCEED/FAIL   
  *
  ****************************************************************************************
  */
@@ -2851,20 +2915,22 @@ H5P__register_real(H5P_mt_class_t *pclass, const char *name, size_t size, const 
                    H5P_prp_delete_func_t prp_delete, H5P_prp_copy_func_t prp_copy,
                    H5P_prp_compare_func_t prp_cmp, H5P_prp_close_func_t prp_close)
 {
-    H5P_mt_prop_t *pl_head;
-    H5P_mt_prop_t *new_prop;
-    uint32_t       deletes   = 0;
-    uint32_t       visited   = 0;
-    uint32_t       thrd_cols = 0;
+    H5P_mt_prop_t * pl_head;
+    H5P_mt_prop_t * new_prop;
+    uint32_t        deletes = 0;
+    uint32_t        visited = 0;
+    uint32_t        thrd_cols = 0;
 
-    herr_t ret_value = SUCCEED; /* Return value */
+    herr_t          ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_PACKAGE
 
     /* Create the new MT property structure */
-    if (NULL ==
-        (new_prop = H5P__mt_create_prop(name, def_value, size, TRUE, 1, prp_create, prp_set, prp_get,
-                                        prp_encode, prp_decode, prp_delete, prp_copy, prp_cmp, prp_close))) {
+    if ( NULL == (new_prop = H5P__mt_create_prop(name, def_value, size, TRUE, 1, prp_create, 
+                                                 prp_set, prp_get, prp_encode, 
+                                                 prp_decode, prp_delete, prp_copy,
+                                                 prp_cmp, prp_close)))
+    {
         HGOTO_ERROR(H5E_PLIST, H5E_CANTCREATE, FAIL, "Can't create property");
     }
 
@@ -2876,11 +2942,12 @@ H5P__register_real(H5P_mt_class_t *pclass, const char *name, size_t size, const 
     assert(atomic_load(&(pl_head->tag)) == H5P_MT_PROP_TAG);
 
     /* Insert the new property into the class without incrementing version number */
-    if ((ret_value = H5P__mt_ins_or_mod_prop__lfsll_ins(pl_head, new_prop, &deletes, &visited, &thrd_cols)) <
-        0) {
+    if (( ret_value = H5P__mt_ins_or_mod_prop__lfsll_ins(pl_head, new_prop, &deletes,
+                                                         &visited, &thrd_cols)) < 0 )
+    {
         HGOTO_ERROR(H5E_PLIST, H5E_CANTINSERT, FAIL, "Can't insert property into class");
     }
-
+    
     atomic_fetch_add(&(pclass->phys_pl_len), 1);
     atomic_fetch_add(&(pclass->log_pl_len), 1);
 
@@ -3122,35 +3189,36 @@ done:
 } /* H5P__register_real() */
 #endif
 
+
 #ifdef H5_HAVE_MULTITHREAD
 
 /****************************************************************************************
  * Function:    H5P__register
  *
- * Purpose:     Multithread version of H5P__register(), which is an internal routine to
+ * Purpose:     Multithread version of H5P__register(), which is an internal routine to 
  *              register a a new property in a property list class.
- *
- *              NOTE: for descriptions of the parameters for see the original function
- *              description directly after this function.
- *
+ * 
+ *              NOTE: for descriptions of the parameters for see the original function 
+ *              description directly after this function. 
+ * 
  *              NOTE: unlike H5P__register_real() this function calls the multithread
- *              safe function H5P__mt_ins_or_mod_prop__main() which creates and adds a
- *              new property to a class, and increments the version of the class. This
- *              should be used over H5P__register_real()
- *              (H5P__mt_ins_or_mod_prop__lfsll_ins) unless initializing a completely
+ *              safe function H5P__mt_ins_or_mod_prop__main() which creates and adds a 
+ *              new property to a class, and increments the version of the class. This 
+ *              should be used over H5P__register_real() 
+ *              (H5P__mt_ins_or_mod_prop__lfsll_ins) unless initializing a completely 
  *              new property list class.
- *
- *              NOTE: The original version of this function potentially created a new
- *              class that was a copy of the original in the case where the original
+ * 
+ *              NOTE: The original version of this function potentially created a new 
+ *              class that was a copy of the original in the case where the original 
  *              class had existing derived classes or lists. The way the multithread
- *              version of H5P works is by having each multithread structure use a
- *              versioning system. This means that it is unnecessary to create a new
+ *              version of H5P works is by having each multithread structure use a 
+ *              versioning system. This means that it is unnecessary to create a new 
  *              class if there are existing derived classes or lists, because any changes
- *              made to the class will increment the version number and any derived
- *              classes or lists will only be able to access properties that are valid
- *              at the version they were derived from.
+ *              made to the class will increment the version number and any derived 
+ *              classes or lists will only be able to access properties that are valid 
+ *              at the version they were derived from. 
  *
- * Return:      SUCCEED/FAIL
+ * Return:      SUCCEED/FAIL   
  *
  ****************************************************************************************
  */
@@ -3161,16 +3229,18 @@ H5P__register(H5P_mt_class_t **ppclass, const char *name, size_t size, void *def
               H5P_prp_delete_func_t prp_delete, H5P_prp_copy_func_t prp_copy, H5P_prp_compare_func_t prp_cmp,
               H5P_prp_close_func_t prp_close)
 {
-    H5P_mt_class_t *pclass;
-    H5P_mt_prop_t  *prop;
+    H5P_mt_class_t * pclass;
+    H5P_mt_prop_t  * prop;
 
-    herr_t ret_value = SUCCEED;
+    herr_t          ret_value = SUCCEED;
 
     FUNC_ENTER_PACKAGE
 
     pclass = *ppclass;
 
-    if (NULL != (prop = H5P__mt_search__class(pclass, name))) {
+
+    if ( NULL != (prop = H5P__mt_search__class(pclass, name)) )
+    {
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "property has already been added to class");
     }
 #if 0
@@ -3179,9 +3249,10 @@ H5P__register(H5P_mt_class_t **ppclass, const char *name, size_t size, void *def
                                                    prp_decode, prp_delete, prp_copy, prp_cmp, 
                                                    prp_close)) < 0 )
 #else
-    if ((ret_value = H5P__mt_ins_or_mod_prop__class(pclass, name, def_value, size, prp_create, prp_set,
-                                                    prp_get, prp_encode, prp_decode, prp_delete, prp_copy,
-                                                    prp_cmp, prp_close)) < 0)
+    if ((ret_value = H5P__mt_ins_or_mod_prop__class(pclass, name, def_value, size, prp_create, 
+                                                    prp_set, prp_get, prp_encode, 
+                                                    prp_decode, prp_delete, prp_copy, prp_cmp, 
+                                                    prp_close)) < 0 )
 #endif
     {
         HGOTO_ERROR(H5E_PLIST, H5E_CANTREGISTER, FAIL, "unable to register property in class");
@@ -3451,16 +3522,18 @@ done:
 } /* H5P__register() */
 #endif
 
+
+
 #ifdef H5_HAVE_MULTITHREAD
 /****************************************************************************************
  * Function:    H5P_insert
  *
- * Purpose:     Multithread version of H5P_insert() which is an internal routine to
+ * Purpose:     Multithread version of H5P_insert() which is an internal routine to 
  *              insert a new property into a property list.
- *
- *              NOTE: for descriptions of the parameters for see the original function
- *              description directly after this function.
- *
+ * 
+ *              NOTE: for descriptions of the parameters for see the original function 
+ *              description directly after this function. 
+ * 
  *
  * Return:      SUCCEED/FAIL
  *
@@ -3486,19 +3559,21 @@ H5P_insert(H5P_mt_list_t *plist, const char *name, size_t size, void *value, H5P
                                                     NULL, prp_set, prp_get, prp_encode, prp_decode, 
                                                     prp_delete, prp_copy, prp_cmp, prp_close)) < 0 )
 #else
-    if ((ret_value = H5P__mt_ins_or_mod_prop__list(plist, name, value, size, FALSE, FALSE, NULL, prp_set,
-                                                   prp_get, prp_encode, prp_decode, prp_delete, prp_copy,
-                                                   prp_cmp, prp_close)) < 0)
+    if (( ret_value = H5P__mt_ins_or_mod_prop__list(plist, name, value, size, FALSE, FALSE,
+                                                    NULL, prp_set, prp_get, prp_encode, prp_decode, 
+                                                    prp_delete, prp_copy, prp_cmp, prp_close)) < 0 )
 #endif
     {
         HGOTO_ERROR(H5E_PLIST, H5E_CANTREGISTER, FAIL, "unable to register MT property in MT plist");
     }
+
 
 done:
 
     FUNC_LEAVE_NOAPI(ret_value)
 
 } /* H5P_insert() MT safe version */
+
 
 #else
 /*--------------------------------------------------------------------------
@@ -3741,6 +3816,7 @@ done:
 } /* H5P_insert() */
 #endif
 
+
 #ifdef H5_HAVE_MULTITHREAD
 
 /**
@@ -3834,6 +3910,7 @@ done:
 } /* H5P__do_prop() */
 #endif
 
+
 #ifdef H5_HAVE_MULTITHREAD
 
 /**
@@ -3889,6 +3966,7 @@ done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P__poke_plist_cb() */
 #endif
+
 
 #ifdef H5_HAVE_MULTITHREAD
 
@@ -3960,6 +4038,7 @@ done:
 } /* H5P__poke_pclass_cb() */
 #endif
 
+
 #ifdef H5_HAVE_MULTITHREAD
 
 /****************************************************************************************
@@ -3968,27 +4047,27 @@ done:
  * Purpose:     Multithread safe version of H5P_poke() which is an internal routine that
  *              Overwrites a property in a property list (i.e. a "shallow" copy over
  *              the property value).  The property name must exist or this routine will
- *              fail.
- *
- *              NOTE: If there is a 'set' and/or 'get' callback routine registered for
+ *              fail.  
+ * 
+ *              NOTE: If there is a 'set' and/or 'get' callback routine registered for 
  *              this property, it is _NOT_ called.
- *
- *              NOTE: The multithread safe version of H5P uses a versioning system for
+ * 
+ *              NOTE: The multithread safe version of H5P uses a versioning system for 
  *              the structures, so when 'modifying' an existing property value, instead
  *              of actually modifying that property, a copy of that property is created
  *              at the list's next_version with the new value.
  *
- * Return:      SUCCEED/FAIL
+ * Return:      SUCCEED/FAIL   
  *
  ****************************************************************************************
  */
 herr_t
 H5P_poke(H5P_mt_list_t *plist, const char *name, void *value)
 {
-    H5P_mt_prop_t      *prop;
+    H5P_mt_prop_t     * prop;
     H5P_mt_prop_value_t prop_value;
 
-    herr_t ret_value = SUCCEED; /* Return value */
+    herr_t              ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_NOAPI(FAIL)
 
@@ -3996,7 +4075,8 @@ H5P_poke(H5P_mt_list_t *plist, const char *name, void *value)
     prop = H5P__mt_search__list(plist, name);
 
     /* If the property doesn't exist in the list, fail */
-    if (!prop) {
+    if ( ! prop )
+    {
         HGOTO_ERROR(H5E_PLIST, H5E_NOTFOUND, FAIL, "property doesn't exist");
     }
 
@@ -4013,12 +4093,14 @@ H5P_poke(H5P_mt_list_t *plist, const char *name, void *value)
                                            prop->del, prop->copy, prop->cmp, 
                                            prop->close) )
 #else
-    if (0 > H5P__mt_ins_or_mod_prop__list(plist, name, value, prop_value.size, FALSE, FALSE, prop->create,
-                                          prop->set, prop->get, prop->encode, prop->decode, prop->del,
-                                          prop->copy, prop->cmp, prop->close))
+    if ( 0 > H5P__mt_ins_or_mod_prop__list(plist, name, value, prop_value.size, 
+                                           FALSE, FALSE, prop->create, prop->set, 
+                                           prop->get, prop->encode, prop->decode, 
+                                           prop->del, prop->copy, prop->cmp, 
+                                           prop->close) )
 #endif
     {
-        HGOTO_ERROR(H5E_PLIST, H5E_CANTOPERATE, FAIL,
+        HGOTO_ERROR(H5E_PLIST, H5E_CANTOPERATE, FAIL, 
                     "can't create new property version for the updated value");
     }
 
@@ -4075,6 +4157,7 @@ done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P_poke() */
 #endif
+
 
 #ifdef H5_HAVE_MULTITHREAD
 
@@ -4161,6 +4244,7 @@ done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P__set_plist_cb() */
 #endif
+
 
 #ifdef H5_HAVE_MULTITHREAD
 
@@ -4255,14 +4339,15 @@ done:
 } /* H5P__set_pclass_cb() */
 #endif
 
+
 #ifdef H5_HAVE_MULTITHREAD
 /****************************************************************************************
  * Function:    H5P_set
  *
- * Purpose:     Multithread version of H5P_set() which is an internal routine to set a
+ * Purpose:     Multithread version of H5P_set() which is an internal routine to set a 
  *              property's value in a property list.
- *
- *              NOTE: The multithread safe version of H5P uses a versioning system for
+ * 
+ *              NOTE: The multithread safe version of H5P uses a versioning system for 
  *              the structures, so when 'modifying' an existing property value, instead
  *              of actually modifying that property, a copy of that property is created
  *              at the list's next_version, and if it has a set callback it is called on
@@ -4276,14 +4361,14 @@ done:
 herr_t
 H5P_set(H5P_mt_list_t *plist, const char *name, const void *value)
 {
-    H5P_mt_prop_t      *prop;
+    H5P_mt_prop_t     * prop;
     H5P_mt_prop_value_t prop_value;
     H5P_mt_prop_value_t new_value;
     H5P_mt_prop_value_t tmp_value = {NULL, 0};
-    const void         *prp_value = NULL;
-    bool                done      = TRUE;
+    const void        * prp_value = NULL;
+    bool                done = TRUE;
 
-    herr_t ret_value = SUCCEED; /* Return value */
+    herr_t              ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_NOAPI(FAIL)
 
@@ -4291,7 +4376,8 @@ H5P_set(H5P_mt_list_t *plist, const char *name, const void *value)
     prop = H5P__mt_search__list(plist, name);
 
     /* If the property doesn't exist in the list, fail */
-    if (!prop) {
+    if ( ! prop )
+    {
         HGOTO_ERROR(H5E_PLIST, H5E_NOTFOUND, FAIL, "property doesn't exist");
     }
     assert(prop);
@@ -4306,22 +4392,25 @@ H5P_set(H5P_mt_list_t *plist, const char *name, const void *value)
                                            prop->set, prop->get, prop->encode, prop->decode, 
                                            prop->del, prop->copy, prop->cmp, prop->close) )
 #else
-    if (0 > H5P__mt_ins_or_mod_prop__list(plist, name, (void *)prop_value.ptr, prop_value.size, FALSE, FALSE,
-                                          prop->create, prop->set, prop->get, prop->encode, prop->decode,
-                                          prop->del, prop->copy, prop->cmp, prop->close))
+    if ( 0 > H5P__mt_ins_or_mod_prop__list(plist, name, (void *)prop_value.ptr, 
+                                           prop_value.size, FALSE, FALSE, prop->create, 
+                                           prop->set, prop->get, prop->encode, prop->decode, 
+                                           prop->del, prop->copy, prop->cmp, prop->close) )
 #endif
     {
-        HGOTO_ERROR(H5E_PLIST, H5E_CANTOPERATE, FAIL, "can't operate on MT plist to set value");
+        HGOTO_ERROR(H5E_PLIST, H5E_CANTOPERATE, FAIL, 
+                    "can't operate on MT plist to set value");
     }
 
     /**
-     * NOTE: Currently must search the list for new version of the property structure,
+     * NOTE: Currently must search the list for new version of the property structure, 
      * because H5P__mt_ins_or_mod_prop__main() returns SUCCESS/FAIL but may update that
      * so it returns the property and we don't have to search again.
      */
     prop = H5P__mt_search__list(plist, name);
 
-    if (!prop) {
+    if ( ! prop )
+    {
         HGOTO_ERROR(H5E_PLIST, H5E_NOTFOUND, FAIL, "property doesn't exist");
     }
 
@@ -4331,47 +4420,57 @@ H5P_set(H5P_mt_list_t *plist, const char *name, const void *value)
     prop_value = atomic_load(&(prop->value));
 
     /* If the property has a set callback call it */
-    if (prop->set) {
+    if ( prop->set )
+    {
         /* Create a tmp copy of the value, in case the callback fails */
-        if (NULL == (tmp_value.ptr = H5MM_malloc(prop_value.size))) {
-            HGOTO_ERROR(H5E_PLIST, H5E_CANTALLOC, FAIL, "memory allocation failed temporary property value");
+        if ( NULL == ( tmp_value.ptr = H5MM_malloc(prop_value.size)) )
+        {
+            HGOTO_ERROR(H5E_PLIST, H5E_CANTALLOC, FAIL, 
+                        "memory allocation failed temporary property value");
         }
-
+        
         H5MM_memcpy(tmp_value.ptr, value, prop_value.size);
 
         /* Call the user's callback */
-        if ((*(prop->set))(atomic_load(&(plist->plist_id)), name, prop_value.size, tmp_value.ptr) < 0) {
+        if ((*(prop->set))(atomic_load(&(plist->plist_id)), name, prop_value.size, tmp_value.ptr) < 0)
+        {
             HGOTO_ERROR(H5E_PLIST, H5E_CANTINIT, FAIL, "can't set property value");
         }
 
         prp_value = tmp_value.ptr;
+
     }
     else
-        prp_value = value;
-
+        prp_value = value; 
+    
     /* Free any previous value for the property */
-    if (prop->del) {
+    if ( prop->del )
+    {
         /* Call the user's 'delete' callback */
-        if ((*(prop->del))(plist->plist_id, name, prop_value.size, prop_value.ptr) < 0) {
+        if ((*(prop->del))(plist->plist_id, name, prop_value.size, prop_value.ptr) < 0 )
+        {
             HGOTO_ERROR(H5E_PLIST, H5E_CANTFREE, FAIL, "can't release property value");
         }
     }
 
     /* memcpy into new buffer to atomically set */
-    new_value.ptr  = prop_value.ptr;
+    new_value.ptr = prop_value.ptr;
     new_value.size = prop_value.size;
 
     H5MM_memcpy(new_value.ptr, prp_value, prop_value.size);
-
+    
     /* Atomically set new value */
-    do {
+    do 
+    {
         /* Atomically update the value structure in the property */
-        if (!atomic_compare_exchange_strong(&(prop->value), &prop_value, new_value)) {
+        if ( ! atomic_compare_exchange_strong(&(prop->value), &prop_value, new_value))
+        {
             /* failed, update stats and try again */
 
             /** TODO: don't have a stat to track this yet */
         }
-        else {
+        else
+        {
             /* success, update stats and continue */
 
             /** TODO: don't have a stat to track this yet */
@@ -4379,19 +4478,21 @@ H5P_set(H5P_mt_list_t *plist, const char *name, const void *value)
             done = TRUE;
         }
 
-    } while (!done);
+    } while ( ! done );
 
     assert(atomic_load(&(prop->tag)) == H5P_MT_PROP_TAG);
 
 done:
 
-    if (tmp_value.ptr) {
+    if ( tmp_value.ptr )
+    {
         H5MM_xfree(tmp_value.ptr);
     }
 
     FUNC_LEAVE_NOAPI(ret_value)
 
 } /* H5P_set() MT safe version */
+
 
 #else
 /*--------------------------------------------------------------------------
@@ -4448,15 +4549,16 @@ done:
 } /* H5P_set() */
 #endif
 
+
 #ifdef H5_HAVE_MULTITHREAD
 
 /****************************************************************************************
  * Function:    H5P__class_get
  *
- * Purpose:     Multithread safe version of H5P__class_get() which is an internal
+ * Purpose:     Multithread safe version of H5P__class_get() which is an internal 
  *              routine to get a property's value in a property class.
- *
- *              NOTE: currently this will always grab the most current version of the
+ * 
+ *              NOTE: currently this will always grab the most current version of the 
  *              property in the class.
  *
  * Return:      SUCCEED/FAIL
@@ -4466,10 +4568,10 @@ done:
 herr_t
 H5P__class_get(H5P_genclass_t *pclass, const char *name, void *value)
 {
-    H5P_mt_prop_t      *prop; /* Temporary property pointer */
+    H5P_mt_prop_t     * prop;                /* Temporary property pointer */
     H5P_mt_prop_value_t prop_value;
-
-    herr_t ret_value = SUCCEED; /* Return value */
+    
+    herr_t         ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_PACKAGE
 
@@ -4478,15 +4580,18 @@ H5P__class_get(H5P_genclass_t *pclass, const char *name, void *value)
     assert(name);
     assert(value);
 
+
     /* Search the pclass to find the most current version of the of the property */
-    if (NULL == (prop = H5P__mt_search__class(pclass, name))) {
+    if ( NULL == (prop = H5P__mt_search__class(pclass, name)) )
+    {
         HGOTO_ERROR(H5E_PLIST, H5E_NOTFOUND, FAIL, "property doesn't exist in pclass");
     }
 
     prop_value = atomic_load(&(prop->value));
 
     /* Ensure the size isn't 0 */
-    if (0 == prop_value.size) {
+    if ( 0 == prop_value.size )
+    {
         HGOTO_ERROR(H5E_PLIST, H5E_BADVALUE, FAIL, "property has zero size");
     }
 
@@ -4552,20 +4657,21 @@ done:
 } /* H5P__class_get() */
 #endif
 
+
 #ifdef H5_HAVE_MULTITHREAD
 
 /****************************************************************************************
  * Function:    H5P__class_set
  *
- * Purpose:     Multithread safe version of H5P__class_set() which is an internal
+ * Purpose:     Multithread safe version of H5P__class_set() which is an internal 
  *              routine to set a property's value in a property class.
- *
+ * 
  *              The multithread safe version of H5P uses a versioning system, thus to be
  *              multithread safe a new property struct is created that is a copy of the
  *              most recent version until now, but the version is updated and the updated
  *              value will be stored in the new version.
- *
- *              NOTE: The multithread safe version of H5P uses a versioning system for
+ * 
+ *              NOTE: The multithread safe version of H5P uses a versioning system for 
  *              the structures, so when 'modifying' an existing property value, instead
  *              of actually modifying that property, a copy of that property is created
  *              at the class's next_version with the new value instead of the old value.
@@ -4577,10 +4683,10 @@ done:
 herr_t
 H5P__class_set(H5P_genclass_t *pclass, const char *name, void *value)
 {
-    H5P_mt_prop_t      *prop; /* Temporary property pointer */
+    H5P_mt_prop_t     * prop;                /* Temporary property pointer */
     H5P_mt_prop_value_t prop_value;
 
-    herr_t ret_value = SUCCEED; /* Return value */
+    herr_t          ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_PACKAGE
 
@@ -4589,8 +4695,10 @@ H5P__class_set(H5P_genclass_t *pclass, const char *name, void *value)
     assert(name);
     assert(value);
 
+
     /* Search the pclass to find the most current version of the of the property */
-    if (NULL == (prop = H5P__mt_search__class(pclass, name))) {
+    if ( NULL == (prop = H5P__mt_search__class(pclass, name)) )
+    {
         HGOTO_ERROR(H5E_PLIST, H5E_NOTFOUND, FAIL, "property doesn't exist in pclass");
     }
 
@@ -4600,10 +4708,10 @@ H5P__class_set(H5P_genclass_t *pclass, const char *name, void *value)
     prop_value = atomic_load(&(prop->value));
 
     /* Ensure the size isn't 0 */
-    if (0 == prop_value.size)
+    if ( 0 == prop_value.size )
         HGOTO_ERROR(H5E_PLIST, H5E_BADVALUE, FAIL, "property has zero size");
 
-        /* Create and insert the new property struct for the updated value */
+    /* Create and insert the new property struct for the updated value */
 #if 0
     if ( (H5P__mt_ins_or_mod_prop__main(pclass, name, value, prop_value.size,
                                         FALSE, FALSE, prop->create, prop->set, 
@@ -4611,12 +4719,14 @@ H5P__class_set(H5P_genclass_t *pclass, const char *name, void *value)
                                         prop->del, prop->copy, prop->cmp, 
                                         prop->close)) < 0 )
 #else
-    if ((H5P__mt_ins_or_mod_prop__class(pclass, name, value, prop_value.size, prop->create, prop->set,
-                                        prop->get, prop->encode, prop->decode, prop->del, prop->copy,
-                                        prop->cmp, prop->close)) < 0)
+    if ( (H5P__mt_ins_or_mod_prop__class(pclass, name, value, prop_value.size,
+                                        prop->create, prop->set, prop->get, 
+                                        prop->encode, prop->decode, 
+                                        prop->del, prop->copy, prop->cmp, 
+                                        prop->close)) < 0 )
 #endif
     {
-        HGOTO_ERROR(H5E_PLIST, H5E_CANTOPERATE, FAIL,
+        HGOTO_ERROR(H5E_PLIST, H5E_CANTOPERATE, FAIL, 
                     "can't create new property version for the updated value");
     }
 
@@ -4683,26 +4793,27 @@ done:
 } /* H5P__class_set() */
 #endif
 
+
 #ifdef H5_HAVE_MULTITHREAD
 
 /****************************************************************************************
  * Function:    H5P_exist_plist
  *
- * Purpose:     Multithread safe version of H5P_exist_plist(), which is an internal
+ * Purpose:     Multithread safe version of H5P_exist_plist(), which is an internal 
  *              routine to query the existence of a property in a property list.
  *
  * Return:      Success: 1 if property exists in the plist, 0 if it doesn't
- *
- *              Failure: N/A
+ * 
+ *              Failure: N/A   
  *
  ****************************************************************************************
  */
 htri_t
 H5P_exist_plist(H5P_mt_list_t *plist, const char *name)
 {
-    H5P_mt_prop_t *prop;
+    H5P_mt_prop_t * prop;
 
-    htri_t ret_value = FAIL; /* return value */
+    htri_t          ret_value = FAIL; /* return value */
 
     FUNC_ENTER_NOAPI_NOINIT_NOERR
 
@@ -4710,10 +4821,12 @@ H5P_exist_plist(H5P_mt_list_t *plist, const char *name)
     assert(name);
 
     /* Search the list for the property */
-    if (NULL == (prop = H5P__mt_search__list(plist, name))) {
+    if ( NULL == (prop = H5P__mt_search__list(plist, name)) )
+    {
         ret_value = FALSE;
     }
-    else {
+    else
+    {
         ret_value = TRUE;
     }
 
@@ -4782,6 +4895,7 @@ done:
 } /* H5P_exist_plist() */
 #endif
 
+
 #ifdef H5_HAVE_MULTITHREAD
 
 /**
@@ -4846,6 +4960,7 @@ done:
 } /* H5P__exist_pclass() */
 #endif
 
+
 #ifdef H5_HAVE_MULTITHREAD
 
 /**
@@ -4900,6 +5015,7 @@ done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P__get_size_plist() */
 #endif
+
 
 #ifdef H5_HAVE_MULTITHREAD
 
@@ -4956,6 +5072,7 @@ done:
 } /* H5P__get_size_pclass() */
 #endif
 
+
 #ifdef H5_HAVE_MULTITHREAD
 
 /**
@@ -4999,6 +5116,7 @@ H5P__get_nprops_plist(const H5P_genplist_t *plist, size_t *nprops)
     FUNC_LEAVE_NOAPI(SUCCEED)
 } /* H5P__get_nprops_plist() */
 #endif
+
 
 #ifdef H5_HAVE_MULTITHREAD
 
@@ -5053,6 +5171,7 @@ H5P_get_nprops_pclass(const H5P_genclass_t *pclass, size_t *nprops, hbool_t recu
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P_get_nprops_pclass() */
 #endif
+
 
 #ifdef H5_HAVE_MULTITHREAD
 
@@ -5194,19 +5313,20 @@ done:
 } /* H5P__cmp_prop() */
 #endif
 
+
 #ifdef H5_HAVE_MULTITHREAD
 
 /****************************************************************************************
  * Function:    H5P__cmp_class
  *
- * Purpose:     Multithread safe version of H5P__cmp_class() which is an internal
+ * Purpose:     Multithread safe version of H5P__cmp_class() which is an internal 
  *              routine to compare two property list classes.
- *
+ * 
  *              This is just a pass through function to the multithread function that
  *              handles the actual comparison of the classes.
  *
  * Return:      Success: 0 if equal, 1 if not equal
- *
+ * 
  *              Failure: -1
  *
  ****************************************************************************************
@@ -5218,8 +5338,10 @@ H5P__cmp_class(H5P_genclass_t *pclass1, H5P_genclass_t *pclass2)
 
     FUNC_ENTER_PACKAGE
 
-    if (0 > (ret_value = H5P__mt_cmp_list_or_class(pclass1, pclass2))) {
-        HGOTO_ERROR(H5E_PLIST, H5E_CANTCOMPARE, FAIL, "can't compare MT property classes");
+    if ( 0 > ( ret_value = H5P__mt_cmp_class(pclass1, pclass2) ) )
+    {
+        HGOTO_ERROR(H5E_PLIST, H5E_CANTCOMPARE, FAIL, 
+                    "can't compare MT property classes");
     }
 
 done:
@@ -5359,6 +5481,7 @@ done:
 } /* H5P__cmp_class() */
 #endif
 
+
 #ifdef H5_HAVE_MULTITHREAD
 
 /**
@@ -5429,14 +5552,15 @@ done:
 } /* end H5P__cmp_plist_cb() */
 #endif
 
+
 #ifdef H5_HAVE_MULTITHREAD
 
 /****************************************************************************************
  * Function:    H5P__cmp_plist
  *
- * Purpose:     Multithread safe version of H5P__cmp_plist() which is an internal
+ * Purpose:     Multithread safe version of H5P__cmp_plist() which is an internal 
  *              routine to compare two property lists.
- *
+ * 
  *              This is just a pass through function to the multithread function that
  *              handles the actual comparison of the lists.
  *
@@ -5452,8 +5576,10 @@ H5P__cmp_plist(H5P_genplist_t *plist1, H5P_genplist_t *plist2, int *cmp_ret)
     FUNC_ENTER_PACKAGE
 
     /* Multithread safe function to compare the lists */
-    if (0 > (*cmp_ret = H5P__mt_cmp_list_or_class(plist1, plist2))) {
-        HGOTO_ERROR(H5E_PLIST, H5E_CANTCOMPARE, FAIL, "can't compare MT property lists");
+    if ( 0 > ( *cmp_ret = H5P__mt_cmp_list(plist1, plist2) ) )
+    {
+        HGOTO_ERROR(H5E_PLIST, H5E_CANTCOMPARE, FAIL, 
+                    "can't compare MT property lists");
     }
 
 done:
@@ -5544,6 +5670,8 @@ done:
 } /* H5P__cmp_plist() */
 #endif
 
+
+
 #ifdef H5_HAVE_MULTITHREAD
 
 /****************************************************************************************
@@ -5551,12 +5679,12 @@ done:
  *
  * Purpose:     Multithread safe version of H5P_class_isa() which is a routine that
  *              queries whether two property list classes are the same.
- *
- *              This is a passthrough function that calls H5P__mt_cmp_list_or_class()
+ * 
+ *              This is a passthrough function that calls H5P__mt_cmp_class() 
  *              which does the comparison for the multithread safe structures.
  *
  * Return:      Success: 1 if TRUE, 0 if FALSE
- *
+ * 
  *              Failure: negative
  *
  ****************************************************************************************
@@ -5565,7 +5693,7 @@ htri_t
 H5P_class_isa(H5P_mt_class_t *pclass1, H5P_mt_class_t *pclass2)
 {
     int32_t equal;
-    htri_t  ret_value = FAIL; /* Return value */
+    htri_t ret_value = FAIL; /* Return value */
 
     FUNC_ENTER_NOAPI(FAIL)
 
@@ -5573,21 +5701,28 @@ H5P_class_isa(H5P_mt_class_t *pclass1, H5P_mt_class_t *pclass2)
     assert(pclass2);
 
     /* Compare property classes */
-    if ((equal = H5P__mt_cmp_list_or_class(pclass1, pclass2)) == 0) {
+    if ( ( equal = H5P__mt_cmp_class(pclass1, pclass2)) == 0 )
+    {
         HGOTO_DONE(TRUE);
     }
-    else {
+    else 
+    {
         /* If classes are not equal, try comparing with pclass1's parent class */
-        if (equal == 1) {
-            if (pclass1->parent_ptr) {
+        if ( equal == 1 )
+        {
+            if ( pclass1->parent_ptr )
+            {
                 ret_value = H5P_class_isa(pclass1->parent_ptr, pclass2);
             }
-            else {
+            else
+            {
                 HGOTO_DONE(FALSE);
             }
         }
-        else if (equal == -1) {
-            HGOTO_ERROR(H5E_PLIST, H5E_CANTREGISTER, FAIL, "unable to compare MT property list classes");
+        else if ( equal == -1 )
+        {
+            HGOTO_ERROR(H5E_PLIST, H5E_CANTREGISTER, FAIL, 
+                        "unable to compare MT property list classes");
         }
     }
 
@@ -5648,6 +5783,7 @@ done:
 } /* H5P_class_isa() */
 #endif
 
+
 #ifdef H5_HAVE_MULTITHREAD
 
 /****************************************************************************************
@@ -5655,14 +5791,14 @@ done:
  *
  * Purpose:     Multithread safe version of H5P_isa_class() which is a routine that
  *              queries whether a property list is derived from the property list class.
- *
+ * 
  *              This is basically a passthrough function that calls H5P_class_isa() to
- *              compare the property list's parent class to the property list class.
- *              If the classes are equal, then the property list is derived from the
+ *              compare the property list's parent class to the property list class. 
+ *              If the classes are equal, then the property list is derived from the 
  *              class.
  *
  * Return:      Success: 1 if TRUE, 0 if FALSE
- *
+ * 
  *              Failure: negative
  *
  ****************************************************************************************
@@ -5670,23 +5806,26 @@ done:
 htri_t
 H5P_isa_class(hid_t plist_id, hid_t pclass_id)
 {
-    H5P_genplist_t *plist;  /* Property list to query */
-    H5P_genclass_t *pclass; /* Property list class */
+    H5P_genplist_t *plist;            /* Property list to query */
+    H5P_genclass_t *pclass;           /* Property list class */
 
-    htri_t ret_value = FAIL; /* Return value */
+    htri_t          ret_value = FAIL; /* Return value */
 
     FUNC_ENTER_NOAPI(FAIL)
 
     /* Check arguments. */
-    if (NULL == (plist = (H5P_genplist_t *)H5I_object_verify(plist_id, H5I_GENPROP_LST))) {
+    if (NULL == (plist = (H5P_genplist_t *)H5I_object_verify(plist_id, H5I_GENPROP_LST)))
+    {
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a property list");
     }
-    if (NULL == (pclass = (H5P_genclass_t *)H5I_object_verify(pclass_id, H5I_GENPROP_CLS))) {
+    if (NULL == (pclass = (H5P_genclass_t *)H5I_object_verify(pclass_id, H5I_GENPROP_CLS)))
+    {
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a property class");
     }
 
     /* Compare the property list's parent class against the other class */
-    if ((ret_value = H5P_class_isa(plist->pclass_ptr, pclass)) < 0) {
+    if ((ret_value = H5P_class_isa(plist->pclass_ptr, pclass)) < 0)
+    {
         HGOTO_ERROR(H5E_PLIST, H5E_CANTREGISTER, FAIL, "unable to compare property list classes");
     }
 
@@ -5724,10 +5863,10 @@ done:
 htri_t
 H5P_isa_class(hid_t plist_id, hid_t pclass_id)
 {
-    H5P_genplist_t *plist;  /* Property list to query */
-    H5P_genclass_t *pclass; /* Property list class */
+    H5P_genplist_t *plist;            /* Property list to query */
+    H5P_genclass_t *pclass;           /* Property list class */
 
-    htri_t ret_value = FAIL; /* Return value */
+    htri_t          ret_value = FAIL; /* Return value */
 
     FUNC_ENTER_NOAPI(FAIL)
 
@@ -5744,7 +5883,7 @@ H5P_isa_class(hid_t plist_id, hid_t pclass_id)
 done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P_isa_class() */
-#endif
+# endif
 
 #ifndef H5_HAVE_MULTITHREAD
 /*-------------------------------------------------------------------------
@@ -5819,15 +5958,17 @@ H5P_object_verify(hid_t plist_id, hid_t pclass_id, bool allow_default)
     FUNC_ENTER_NOAPI(NULL)
 
     /* Compare the property list's class against the other class */
-    if (H5P_isa_class(plist_id, pclass_id) != TRUE) {
+    if (H5P_isa_class(plist_id, pclass_id) != TRUE)
+    {
         HGOTO_ERROR(H5E_PLIST, H5E_CANTREGISTER, NULL, "property list is not a member of the class");
+
     }
 
 #ifdef H5_HAVE_MULTITHREAD
 
     /**
      * The multithread safe version of H5P uses a versioning system for the structures,
-     * thus directly modifying a default plist is fine, because if you want only the
+     * thus directly modifying a default plist is fine, because if you want only the 
      * default plist, simply use the plist at version 1.
      */
 
@@ -5840,13 +5981,16 @@ H5P_object_verify(hid_t plist_id, hid_t pclass_id, bool allow_default)
 #endif
 
     /* Get the plist structure */
-    if (NULL == (ret_value = (H5P_genplist_t *)H5I_object(plist_id))) {
+    if (NULL == (ret_value = (H5P_genplist_t *)H5I_object(plist_id)))
+    {
         HGOTO_ERROR(H5E_ID, H5E_BADID, NULL, "can't find object for ID");
     }
 
 done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P_object_verify() */
+
+
 
 #ifdef H5_HAVE_MULTITHREAD
 
@@ -5911,6 +6055,7 @@ done:
 } /* end H5P__iterate_plist_cb() */
 #endif
 
+
 #ifdef H5_HAVE_MULTITHREAD
 
 /**
@@ -5964,44 +6109,45 @@ H5P__iterate_plist_pclass_cb(void *_item, void *_key, void *_udata)
 } /* end H5P__iterate_plist_pclass_cb() */
 #endif
 
+
 #ifdef H5_HAVE_MULTITHREAD
 
 /****************************************************************************************
  * Function:    H5P__iterate_plist
  *
- * Purpose:     Multithread safe version of H5P__iterate_plist(), which iterates the
- *              properties in a given property list, and with a provided callback
- *              function performs a given action.
- *
+ * Purpose:     Multithread safe version of H5P__iterate_plist(), which iterates the 
+ *              properties in a given property list, and with a provided callback 
+ *              function performs a given action. 
+ * 
  *              NOTE: The multithread safe version of H5P doesn't use skip lists and thus
  *              doesn't iterate the same way. Do to the versioning system the function
- *              H5P__get_next_valid_prop() is called to get the next valid property,
- *              skipping over any non-valid properties, for the most current version of
- *              the plist from the LFSLL (lock free singly linked list), which contains
- *              all of the new and modified properties in the plist. Which is what would
+ *              H5P__get_next_valid_prop() is called to get the next valid property, 
+ *              skipping over any non-valid properties, for the most current version of 
+ *              the plist from the LFSLL (lock free singly linked list), which contains 
+ *              all of the new and modified properties in the plist. Which is what would 
  *              be stored in the original H5P_genlist_t structure. Then if iter_all_prop
- *              is TRUE the lkup_tbl of the plist is then iterated and any properties
- *              that were not already iterated over from the LFSLL will be iterated.
- *              The properties in the lkup_tbl are the properties inherited from the
+ *              is TRUE the lkup_tbl of the plist is then iterated and any properties 
+ *              that were not already iterated over from the LFSLL will be iterated. 
+ *              The properties in the lkup_tbl are the properties inherited from the 
  *              parent, which the original non multithread safe H5P would have iterated
- *              over the parent class's properties.
- *
- *              NOTE: the index field curr_idx tracks the index of the LFSLL when
- *              iterating it (sentinal properties are skipped), and when moving on the
- *              lkup_tbl curr_idx continues to increment. Meaning that index 0 is the
+ *              over the parent class's properties. 
+ * 
+ *              NOTE: the index field curr_idx tracks the index of the LFSLL when 
+ *              iterating it (sentinal properties are skipped), and when moving on the 
+ *              lkup_tbl curr_idx continues to increment. Meaning that index 0 is the 
  *              first valid property in the LFSLL (or if there are no valid properties
  *              in the LFSLL, then index 0 is the first valid property in the lkup_tbl).
- *              If there are 10 valid properties and 5 of them in the LFSLL, then
+ *              If there are 10 valid properties and 5 of them in the LFSLL, then 
  *              curr_idx = 0 is the first valid prop in the LFSLL and curr_idx = 5 is
  *              the first valid prop in the lkup_tbl.
- *
+ * 
  *              NOTE: for more details on the multithread safe H5P structures and how
  *              they are handled, see the detailed descriptions of them in the file
  *              H5Ppkg_mt.h
- *
+ * 
  * Return:      Success: 0
- *
- *              Failure: -1 (which should only happen if the callback fails)
+ * 
+ *              Failure: -1 (which should only happen if the callback fails)   
  *
  ****************************************************************************************
  */
@@ -6009,16 +6155,16 @@ int
 H5P__iterate_plist(const H5P_genplist_t *plist, hbool_t iter_all_prop, int *idx, H5P_iterate_int_t cb_func,
                    void *udata)
 {
-    H5P_mt_prop_t             *valid_prop;        /* Next valid property to iterate over */
-    H5P_mt_prop_t             *prev_prop;         /* Prev prop that was iterated over */
-    uint64_t                   version;           /* Current version of the plist */
-    H5P_mt_list_table_entry_t *entry = NULL;      /* Entry in the lkup_tbl to iterate over */
-    uint32_t                   tbl_idx;           /* Index of the lkup_tbl */
-    bool                       base_flag = FALSE; /* Flag for lkup_tbl entries */
-    int                        dest_idx;          /* Index to start callback ops on */
-    int                        curr_idx = 0;      /* Current index in LFSLL and lkup_tbl */
+    H5P_mt_prop_t             * valid_prop;     /* Next valid property to iterate over */
+    H5P_mt_prop_t             * prev_prop;      /* Prev prop that was iterated over */
+    uint64_t                    version;        /* Current version of the plist */
+    H5P_mt_list_table_entry_t * entry = NULL;   /* Entry in the lkup_tbl to iterate over */
+    uint32_t                    tbl_idx;        /* Index of the lkup_tbl */
+    bool                        base_flag = FALSE;  /* Flag for lkup_tbl entries */
+    int                         dest_idx;       /* Index to start callback ops on */
+    int                         curr_idx  = 0;  /* Current index in LFSLL and lkup_tbl */
 
-    int ret_value = 0; /* Return value */
+    int                         ret_value = 0;    /* Return value */
 
     FUNC_ENTER_PACKAGE_NOERR
 
@@ -6027,7 +6173,7 @@ H5P__iterate_plist(const H5P_genplist_t *plist, hbool_t iter_all_prop, int *idx,
 
     prev_prop = plist->pl_head;
     assert(prev_prop);
-    assert(atomic_load(&(prev_prop->tag)) == H5P_MT_PROP_TAG);
+    assert(atomic_load(&(prev_prop->tag)) == H5P_MT_PROP_TAG );
     assert(prev_prop->sentinel);
 
     dest_idx = *idx;
@@ -6037,16 +6183,20 @@ H5P__iterate_plist(const H5P_genplist_t *plist, hbool_t iter_all_prop, int *idx,
      * but the callback will not get called until curr_idx is equal to or
      * greater than the provided idx (dest_idx).
      */
-    do {
+    do
+    {
         /* Gets the next valid property in the LFSLL */
         valid_prop = H5P__get_next_valid_prop(prev_prop, version);
 
-        if (valid_prop) {
-            if (curr_idx >= dest_idx) {
+        if ( valid_prop )
+        {
+            if ( curr_idx >= dest_idx )
+            {
                 /* Call the provided callback */
                 ret_value = (cb_func)(valid_prop, udata);
 
-                if (ret_value != 0) {
+                if ( ret_value != 0 )
+                {
                     HGOTO_DONE(ret_value);
                 }
             }
@@ -6058,38 +6208,45 @@ H5P__iterate_plist(const H5P_genplist_t *plist, hbool_t iter_all_prop, int *idx,
 
         } /* end if ( valid_prop ) */
 
-    } while (valid_prop);
+    } while ( valid_prop );
+
 
     /* If iter_all_prop is TRUE then iterate the lkup_tbl as well */
-    if (iter_all_prop) {
-        for (tbl_idx = 0; tbl_idx < plist->nprops_inherited; tbl_idx++) {
+    if ( iter_all_prop )
+    {
+        for ( tbl_idx = 0; tbl_idx < plist->nprops_inherited; tbl_idx++ )
+        {
             entry = &plist->lkup_tbl[tbl_idx];
 
             /* Ensure the lkup_tbl entry contains a valid version */
             valid_prop = H5P__mt_entry_find_version(entry, version, &base_flag);
 
-            if (valid_prop) {
+            if ( valid_prop )
+            {
                 /**
                  * If base_flag is TRUE, then entry->base is the valid version for the
                  * version of the plist we are iterating over, and we must increment
                  * the idx counters.
-                 *
-                 * If base_flag is FALSE, then entry->curr valid version which was
-                 * already iterated over in the LFSLL.
+                 * 
+                 * If base_flag is FALSE, then entry->curr valid version which was 
+                 * already iterated over in the LFSLL. 
                  */
-                if (base_flag) {
-                    if (curr_idx >= dest_idx) {
+                if ( base_flag )
+                {
+                    if ( curr_idx >= dest_idx )
+                    {
                         /* Call the provided callback */
                         ret_value = (cb_func)(valid_prop, udata);
 
-                        if (ret_value != 0) {
+                        if ( ret_value != 0 )
+                        {
                             HGOTO_DONE(ret_value);
                         }
                     }
 
                     /* Increment curr_idx and iterate */
                     curr_idx++;
-
+                
                 } /* end if ( base_flag ) */
             }
         } /* end for() */
@@ -6221,6 +6378,8 @@ done:
 } /* H5P__iterate_plist() */
 #endif
 
+
+
 #ifdef H5_HAVE_MULTITHREAD
 
 /**
@@ -6280,33 +6439,35 @@ done:
 } /* end H5P__iterate_pclass_cb() */
 #endif
 
+
 #ifdef H5_HAVE_MULTITHREAD
 
 /****************************************************************************************
  * Function:    H5P__iterate_pclass
  *
- * Purpose:     Multithread safe version of H5P__iterate_pclass(), which iterates the
- *              properties in a given property class, and with a provided callback
+ * Purpose:     Multithread safe version of H5P__iterate_pclass(), which iterates the 
+ *              properties in a given property class, and with a provided callback 
  *              function performs a given action. The multithread version of this code
  *              doesn't iterate this way, so this function is simply used to allow the
- *              test directory to compile correctly.
+ *              test directory to compile correctly. 
+ * 
+ *              NOTE: this function may need more work to allow all regression tests to 
+ *              pass. 
  *
- *              NOTE: this function may need more work to allow all regression tests to
- *              pass.
- *
- * Return:      0
+ * Return:      0  
  *
  ****************************************************************************************
  */
 int
-H5P__iterate_pclass(const H5P_genclass_t *pclass, int *idx, H5P_iterate_int_t cb_func, void *udata)
+H5P__iterate_pclass(const H5P_genclass_t *pclass, int *idx, H5P_iterate_int_t cb_func, 
+                    void *udata)
 {
-    H5P_mt_prop_t *valid_prop;
-    H5P_mt_prop_t *prev_prop;
-    uint64_t       version;
-    int            dest_idx;
-    int            curr_idx  = 0; /* Current iteration index */
-    int            ret_value = 0; /* Return value */
+    H5P_mt_prop_t             * valid_prop; 
+    H5P_mt_prop_t             * prev_prop;
+    uint64_t                    version;
+    int                         dest_idx;
+    int                         curr_idx  = 0;    /* Current iteration index */
+    int                         ret_value = 0;    /* Return value */
 
     FUNC_ENTER_PACKAGE_NOERR
 
@@ -6315,7 +6476,7 @@ H5P__iterate_pclass(const H5P_genclass_t *pclass, int *idx, H5P_iterate_int_t cb
 
     prev_prop = pclass->pl_head;
     assert(prev_prop);
-    assert(atomic_load(&(prev_prop->tag)) == H5P_MT_PROP_TAG);
+    assert(atomic_load(&(prev_prop->tag)) == H5P_MT_PROP_TAG );
     assert(prev_prop->sentinel);
 
     dest_idx = *idx;
@@ -6325,17 +6486,21 @@ H5P__iterate_pclass(const H5P_genclass_t *pclass, int *idx, H5P_iterate_int_t cb
      * but the callback will not get called until curr_idx is equal to or
      * greater than the provided idx (dest_idx).
      */
-    do {
+    do
+    {
         /* Gets the next valid property in the LFSLL */
         valid_prop = H5P__get_next_valid_prop(prev_prop, version);
 
-        if (valid_prop) {
-            if (curr_idx >= dest_idx) {
+        if ( valid_prop )
+        {
+            if ( curr_idx >= dest_idx )
+            {
                 /* Call the provided callback */
                 ret_value = (cb_func)(valid_prop, udata);
 
                 /* If not 0, then we are done */
-                if (ret_value != 0) {
+                if ( ret_value != 0 )
+                {
                     HGOTO_DONE(ret_value);
                 }
             }
@@ -6347,7 +6512,7 @@ H5P__iterate_pclass(const H5P_genclass_t *pclass, int *idx, H5P_iterate_int_t cb
 
         } /* end if ( valid_prop ) */
 
-    } while (valid_prop);
+    } while ( valid_prop );
 
     *idx = curr_idx;
 
@@ -6442,6 +6607,8 @@ done:
 } /* H5P__iterate_pclass() */
 #endif
 
+
+
 #ifdef H5_HAVE_MULTITHREAD
 
 /**
@@ -6499,6 +6666,7 @@ done:
 } /* H5P__peek_cb() */
 #endif
 
+
 #ifdef H5_HAVE_MULTITHREAD
 
 /****************************************************************************************
@@ -6506,7 +6674,7 @@ done:
  *
  * Purpose:     Multithread version of H5P_peek() which retrieves a "shallow" copy of the
  *              value for a property in a property list. If there is a 'get' callback
- *              routine registered for this property, it is NOT called.
+ *              routine registered for this property, it is NOT called. 
  *
  * Return:      SUCCEED/FAIL
  *
@@ -6515,22 +6683,24 @@ done:
 herr_t
 H5P_peek(H5P_genplist_t *plist, const char *name, void *value)
 {
-    H5P_mt_prop_t      *prop;
+    H5P_mt_prop_t     * prop;
     H5P_mt_prop_value_t prop_value;
 
-    herr_t ret_value = SUCCEED;
+    herr_t              ret_value = SUCCEED;
 
     FUNC_ENTER_NOAPI(FAIL)
 
     /* Search for the property */
-    if (NULL == (prop = H5P__mt_search__list(plist, name))) {
+    if ( NULL == (prop = H5P__mt_search__list(plist, name)) )
+    {
         HGOTO_ERROR(H5E_PLIST, H5E_CANTGET, FAIL, "MT property isn't in MT list");
     }
 
     prop_value = atomic_load(&(prop->value));
 
     /* Check for property size > 0 */
-    if (0 == prop_value.size) {
+    if ( 0 == prop_value.size )
+    {
         HGOTO_ERROR(H5E_PLIST, H5E_BADVALUE, FAIL, "property has zero size");
     }
 
@@ -6590,6 +6760,9 @@ done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P_peek() */
 #endif
+
+
+
 
 #ifdef H5_HAVE_MULTITHREAD
 
@@ -6667,6 +6840,8 @@ done:
 } /* H5P__get_cb() */
 #endif
 
+
+
 #ifdef H5_HAVE_MULTITHREAD
 
 /****************************************************************************************
@@ -6682,11 +6857,11 @@ done:
 herr_t
 H5P_get(H5P_genplist_t *plist, const char *name, void *value)
 {
-    H5P_mt_prop_t      *prop;
+    H5P_mt_prop_t     * prop;
     H5P_mt_prop_value_t prop_value;
-    void               *tmp_value = NULL;
+    void              * tmp_value = NULL;
 
-    herr_t ret_value = SUCCEED;
+    herr_t              ret_value = SUCCEED;
 
     FUNC_ENTER_NOAPI(FAIL)
 
@@ -6696,25 +6871,30 @@ H5P_get(H5P_genplist_t *plist, const char *name, void *value)
     assert(value);
 
     /* Find the property and get the value */
-    if (NULL == (prop = H5P__mt_search__list(plist, name))) {
+    if ( NULL == (prop = H5P__mt_search__list(plist, name)) )
+    {
         HGOTO_ERROR(H5E_PLIST, H5E_CANTGET, FAIL, "MT property isn't in MT list");
     }
     assert(prop);
     assert(atomic_load(&(prop->tag)) == H5P_MT_PROP_TAG);
-
+    
     prop_value = atomic_load(&(prop->value));
 
     /* Call the 'get' callback, if it exists */
-    if (prop->get) {
+    if ( prop->get )
+    {
         /* Make a copy of the current value, in case the callback fails */
-        if (NULL == (tmp_value = H5MM_malloc(prop_value.size))) {
-            HGOTO_ERROR(H5E_PLIST, H5E_CANTALLOC, FAIL, "memory allocation failed temporary property value");
+        if ( NULL == (tmp_value = H5MM_malloc(prop_value.size)) )
+        {
+            HGOTO_ERROR(H5E_PLIST, H5E_CANTALLOC, FAIL, 
+                        "memory allocation failed temporary property value");
         }
-
+        
         H5MM_memcpy(tmp_value, prop_value.ptr, prop_value.size);
 
         /* Call the callback */
-        if ((*(prop->get))(plist->plist_id, name, prop_value.size, tmp_value) < 0) {
+        if ((*(prop->get))(plist->plist_id, name, prop_value.size, tmp_value) < 0)
+        {
             HGOTO_ERROR(H5E_PLIST, H5E_CANTINIT, FAIL, "can't set property value");
         }
 
@@ -6725,7 +6905,7 @@ H5P_get(H5P_genplist_t *plist, const char *name, void *value)
 
 done:
 
-    if (tmp_value)
+    if ( tmp_value )
         H5MM_xfree(tmp_value);
 
     FUNC_LEAVE_NOAPI(ret_value)
@@ -6783,6 +6963,8 @@ done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P_get() */
 #endif
+
+
 
 #ifdef H5_HAVE_MULTITHREAD
 
@@ -6861,6 +7043,8 @@ done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P__del_plist_cb() */
 #endif
+
+
 
 #ifdef H5_HAVE_MULTITHREAD
 
@@ -6944,21 +7128,23 @@ done:
 } /* H5P__del_pclass_cb() */
 #endif
 
+
+
 #ifdef H5_HAVE_MULTITHREAD
 /****************************************************************************************
  * Function:    H5P_remove
  *
  * Purpose:     Multithread version of H5P_remove which is an internal routine to remove
  *              a property from a property list.
- *
- *              NOTE: In the multithread safe version of H5P the structures use a
- *              versioning system, meaning the property structure (H5P_mt_prop_t) is not
+ * 
+ *              NOTE: In the multithread safe version of H5P the structures use a 
+ *              versioning system, meaning the property structure (H5P_mt_prop_t) is not 
  *              actually removed from the plist structure (H5P_mt_list_t). The property
  *              has it's delete_version field set to the next version of the plist, and
- *              the plist's curr_version is increment to that same next version. Thus,
+ *              the plist's curr_version is increment to that same next version. Thus, 
  *              anytime the plist is accessed at the new version or later, the property
  *              will no longer be a valid property and will not be able to be accessed.
- *
+ * 
  *              NOTE: for more information on this process, see the detailed descriptions
  *              of the structures in the file H5Ppkg_mt.h
  *
@@ -6978,8 +7164,10 @@ H5P_remove(H5P_mt_list_t *plist, const char *name)
     assert(name);
 
     /* Sets the delete version on the property in the plist */
-    if ((ret_value = H5P__mt_delete_prop__list(plist, name)) < 0) {
-        HGOTO_ERROR(H5E_PLIST, H5E_CANTOPERATE, FAIL, "Failed to set delete version on property");
+    if (( ret_value = H5P__mt_delete_prop__list(plist, name)) < 0 )
+    {
+        HGOTO_ERROR(H5E_PLIST, H5E_CANTOPERATE, FAIL, 
+                    "Failed to set delete version on property");
     }
 
 done:
@@ -7033,13 +7221,15 @@ done:
 } /* H5P_remove() */
 #endif
 
+
+
 #ifdef H5_HAVE_MULTITHREAD
 /****************************************************************************************
  * Function:    H5P__copy_prop_plist
  *
- * Purpose:     Multithread version of H5P__copy_prop_plist() which is an internal
+ * Purpose:     Multithread version of H5P__copy_prop_plist() which is an internal 
  *              routine to copy a property from one list to another.
- *
+ * 
  *              NOTE: if a version of the property already exists in the dst_plist the
  *              property's copy callback in called, else the create callback is called.
  *
@@ -7050,14 +7240,14 @@ done:
 herr_t
 H5P__copy_prop_plist(hid_t dst_id, hid_t src_id, const char *name)
 {
-    H5P_mt_list_t      *dst_plist;
-    H5P_mt_list_t      *src_plist;
-    H5P_mt_prop_t      *dst_prop;
-    H5P_mt_prop_t      *src_prop;
-    H5P_mt_prop_t      *new_prop = NULL;
+    H5P_mt_list_t  * dst_plist;
+    H5P_mt_list_t  * src_plist;
+    H5P_mt_prop_t  * dst_prop;
+    H5P_mt_prop_t  * src_prop;
+    H5P_mt_prop_t  * new_prop = NULL;
     H5P_mt_prop_value_t value;
 
-    herr_t ret_value = SUCCEED; /* return value */
+    herr_t          ret_value = SUCCEED; /* return value */
 
     FUNC_ENTER_PACKAGE
 
@@ -7065,12 +7255,14 @@ H5P__copy_prop_plist(hid_t dst_id, hid_t src_id, const char *name)
 
     /* Get the objects to operate on */
     if (NULL == (src_plist = (H5P_mt_list_t *)H5I_object(src_id)) ||
-        NULL == (dst_plist = (H5P_mt_list_t *)H5I_object(dst_id))) {
+        NULL == (dst_plist = (H5P_mt_list_t *)H5I_object(dst_id)))
+    {
         HGOTO_ERROR(H5E_PLIST, H5E_NOTFOUND, FAIL, "property object doesn't exist");
     }
 
     /* Get the pointer to the source property */
-    if (NULL == (src_prop = H5P__mt_search__list(src_plist, name))) {
+    if ( NULL == ( src_prop = H5P__mt_search__list(src_plist, name) ))
+    {
         HGOTO_ERROR(H5E_PLIST, H5E_NOTFOUND, FAIL, "MT property doesn't exist");
     }
 
@@ -7079,15 +7271,17 @@ H5P__copy_prop_plist(hid_t dst_id, hid_t src_id, const char *name)
 
     value = atomic_load(&(src_prop->value));
 
+
     /* If the property exists in the destination already */
-    if ((dst_prop = H5P__mt_search__list(dst_plist, name)) != NULL) {
+    if ( (dst_prop = H5P__mt_search__list(dst_plist, name)) != NULL )
+    {
         assert(dst_prop);
         assert(atomic_load(&(dst_prop->tag)) == H5P_MT_PROP_TAG);
 
         /**
-         * Create a copy of the source prop,
-         * call the copy callback,
-         * and insert it into the dst_plist
+         * Create a copy of the source prop, 
+         * call the copy callback, 
+         * and insert it into the dst_plist 
          */
 #if 0
         if ( 0 < H5P__mt_ins_or_mod_prop__main(dst_plist, prop->name, value.ptr, value.size,
@@ -7095,23 +7289,25 @@ H5P__copy_prop_plist(hid_t dst_id, hid_t src_id, const char *name)
                                                prop->get, prop->encode, prop->decode, 
                                                prop->del, prop->copy, prop->cmp, prop->close) )
 #else
-        if (0 < H5P__mt_ins_or_mod_prop__list(dst_plist, src_prop->name, value.ptr, value.size, FALSE, TRUE,
-                                              src_prop->create, src_prop->set, src_prop->get,
-                                              src_prop->encode, src_prop->decode, src_prop->del,
-                                              src_prop->copy, src_prop->cmp, src_prop->close))
+        if ( 0 < H5P__mt_ins_or_mod_prop__list(dst_plist, src_prop->name, value.ptr, value.size,
+                                               FALSE, TRUE, src_prop->create, src_prop->set, 
+                                               src_prop->get, src_prop->encode, src_prop->decode, 
+                                               src_prop->del, src_prop->copy, src_prop->cmp, 
+                                               src_prop->close) )
 #endif
         {
             HGOTO_ERROR(H5E_PLIST, H5E_CANTCOPY, FAIL, "Failed copying and inserting MT property");
         }
-
+    
     } /* end if() */
 
     /* If the property doesn't exist in the destination */
-    else {
+    else
+    {
         /**
-         * Create a copy of the source prop,
-         * call the create callback,
-         * and insert it into the dst_plist
+         * Create a copy of the source prop, 
+         * call the create callback, 
+         * and insert it into the dst_plist 
          */
 #if 0
         if ( 0 < H5P__mt_ins_or_mod_prop__main(dst_plist, prop->name, value.ptr, value.size,
@@ -7119,24 +7315,30 @@ H5P__copy_prop_plist(hid_t dst_id, hid_t src_id, const char *name)
                                                prop->get, prop->encode, prop->decode, 
                                                prop->del, prop->copy, prop->cmp, prop->close) )
 #else
-        if (0 < H5P__mt_ins_or_mod_prop__list(dst_plist, src_prop->name, value.ptr, value.size, TRUE, FALSE,
-                                              src_prop->create, src_prop->set, src_prop->get,
-                                              src_prop->encode, src_prop->decode, src_prop->del,
-                                              src_prop->copy, src_prop->cmp, src_prop->close))
+        if ( 0 < H5P__mt_ins_or_mod_prop__list(dst_plist, src_prop->name, value.ptr, value.size,
+                                               TRUE, FALSE, src_prop->create, src_prop->set, 
+                                               src_prop->get, src_prop->encode, src_prop->decode, 
+                                               src_prop->del, src_prop->copy, src_prop->cmp, 
+                                               src_prop->close) )
 #endif
         {
             HGOTO_ERROR(H5E_PLIST, H5E_CANTCOPY, FAIL, "Failed copying and inserting MT property");
         }
     }
 
-done:
 
+done:
+    
     /* If there was a failure and the new_prop was created add it to the prop free list */
-    if (ret_value < 0) {
-        if (new_prop) {
+    if ( ret_value < 0 )
+    {
+        if ( new_prop )
+        {
             H5P__mt_close_prop(new_prop);
         }
     }
+
+
 
     FUNC_LEAVE_NOAPI(ret_value)
 
@@ -7198,7 +7400,7 @@ H5P__copy_prop_plist(hid_t dst_id, hid_t src_id, const char *name)
         /* Delete the property from the destination list, calling the 'close' callback if necessary */
         if (H5P_remove(dst_plist, name) < 0)
             HGOTO_ERROR(H5E_PLIST, H5E_CANTDELETE, FAIL, "unable to remove property");
-
+        
         /* Get the pointer to the source property */
         prop = H5P__find_prop_plist(src_plist, name);
 
@@ -7249,6 +7451,7 @@ H5P__copy_prop_plist(hid_t dst_id, hid_t src_id, const char *name)
         dst_plist->nprops++;
     } /* end else */
 
+
 done:
     /* Cleanup, if necessary */
     if (ret_value < 0) {
@@ -7261,11 +7464,14 @@ done:
 } /* H5P__copy_prop_plist() */
 #endif
 
+
+
+
 #ifdef H5_HAVE_MULTITHREAD
 /****************************************************************************************
  * Function:    H5P__copy_prop_pclass
  *
- * Purpose:     Multithread version of H5P__copy_prop_pclass() which is an internal
+ * Purpose:     Multithread version of H5P__copy_prop_pclass() which is an internal 
  *              routine to copy a property from one class to another.
  *
  * Return:      SUCCEED/FAIL
@@ -7275,12 +7481,12 @@ done:
 herr_t
 H5P__copy_prop_pclass(hid_t dst_id, hid_t src_id, const char *name)
 {
-    H5P_mt_class_t     *dst_pclass;
-    H5P_mt_class_t     *src_pclass;
-    H5P_mt_prop_t      *prop;
+    H5P_mt_class_t * dst_pclass;
+    H5P_mt_class_t * src_pclass;
+    H5P_mt_prop_t  * prop;
     H5P_mt_prop_value_t value;
 
-    herr_t ret_value = SUCCEED; /* return value */
+    herr_t          ret_value = SUCCEED; /* return value */
 
     FUNC_ENTER_PACKAGE
 
@@ -7289,12 +7495,14 @@ H5P__copy_prop_pclass(hid_t dst_id, hid_t src_id, const char *name)
 
     /* Get the objects to operate on */
     if (NULL == (src_pclass = (H5P_mt_class_t *)H5I_object(src_id)) ||
-        NULL == (dst_pclass = (H5P_mt_class_t *)H5I_object(dst_id))) {
+        NULL == (dst_pclass = (H5P_mt_class_t *)H5I_object(dst_id)))
+    {
         HGOTO_ERROR(H5E_PLIST, H5E_NOTFOUND, FAIL, "property object doesn't exist");
     }
 
     /* Get the property from the source */
-    if (NULL == (prop = H5P__mt_search__class(src_pclass, name))) {
+    if ( NULL == (prop = H5P__mt_search__class(src_pclass, name)))
+    {
         HGOTO_ERROR(H5E_PLIST, H5E_NOTFOUND, FAIL, "unable to locate MT property");
     }
 
@@ -7310,19 +7518,22 @@ H5P__copy_prop_pclass(hid_t dst_id, hid_t src_id, const char *name)
                                            prop->get, prop->encode, prop->decode, 
                                            prop->del, prop->copy, prop->cmp, prop->close) )
 #else
-    if (0 < H5P__mt_ins_or_mod_prop__class(dst_pclass, prop->name, value.ptr, value.size, prop->create,
-                                           prop->set, prop->get, prop->encode, prop->decode, prop->del,
-                                           prop->copy, prop->cmp, prop->close))
+    if ( 0 < H5P__mt_ins_or_mod_prop__class(dst_pclass, prop->name, value.ptr, value.size,
+                                            prop->create, prop->set, 
+                                            prop->get, prop->encode, prop->decode, 
+                                            prop->del, prop->copy, prop->cmp, prop->close) )
 #endif
     {
         HGOTO_ERROR(H5E_PLIST, H5E_CANTCOPY, FAIL, "Failed copying and inserting MT property");
     }
 
 done:
-
+    
     FUNC_LEAVE_NOAPI(ret_value)
 
 } /* H5P__copy_prop_pclass() MT safe version */
+
+
 
 #else
 /*--------------------------------------------------------------------------
@@ -7357,12 +7568,12 @@ done:
 herr_t
 H5P__copy_prop_pclass(hid_t dst_id, hid_t src_id, const char *name)
 {
-    H5P_genclass_t *src_pclass;      /* Source property class, containing property to copy */
-    H5P_genclass_t *dst_pclass;      /* Destination property class */
-    H5P_genclass_t *orig_dst_pclass; /* Original destination property class */
-    H5P_genprop_t  *prop;            /* Temporary property pointer */
+    H5P_genclass_t *src_pclass;          /* Source property class, containing property to copy */
+    H5P_genclass_t *dst_pclass;          /* Destination property class */
+    H5P_genclass_t *orig_dst_pclass;     /* Original destination property class */
+    H5P_genprop_t  *prop;                /* Temporary property pointer */
 
-    herr_t ret_value = SUCCEED; /* return value */
+    herr_t          ret_value = SUCCEED; /* return value */
 
     FUNC_ENTER_PACKAGE
 
@@ -7413,6 +7624,7 @@ done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P__copy_prop_pclass() */
 #endif
+
 
 #ifdef H5_HAVE_MULTITHREAD
 
@@ -7477,17 +7689,19 @@ done:
 } /* H5P__unregister() */
 #endif
 
+
+
 #ifdef H5_HAVE_MULTITHREAD
 
 /****************************************************************************************
  * Function:    H5P_close
  *
  * Purpose:     Multithread version of H5P_close() which is an internal routine to close
- *              a list.
- *
- *              NOTE: for multithread safety this is just a passthrough to the
+ *              a list. 
+ * 
+ *              NOTE: for multithread safety this is just a passthrough to the 
  *              multithread function to close a class.
- *
+ *  
  * Return:      SUCCEED / FAIL
  *
  ****************************************************************************************
@@ -7495,13 +7709,15 @@ done:
 herr_t
 H5P_close(H5P_genplist_t *plist)
 {
-    herr_t ret_value = SUCCEED; /* return value */
+    herr_t          ret_value = SUCCEED; /* return value */
 
     FUNC_ENTER_NOAPI_NOINIT
 
     /* Call the MT safe function to close a list */
-    if (H5P__mt_close_list(plist) < 0) {
-        HGOTO_ERROR(H5E_PLIST, H5E_CLOSEERROR, FAIL, "unable to close property list class");
+    if (H5P__mt_close_list(plist) < 0 )
+    {
+        HGOTO_ERROR(H5E_PLIST, H5E_CLOSEERROR, FAIL,
+                    "unable to close property list class");
     }
 
 done:
@@ -7684,6 +7900,8 @@ done:
 } /* H5P_close() */
 #endif
 
+
+
 /*--------------------------------------------------------------------------
  NAME
     H5P_get_class_name
@@ -7719,20 +7937,23 @@ H5P_get_class_name(H5P_genclass_t *pclass)
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P_get_class_name() */
 
+
+
+
 #ifdef H5_HAVE_MULTITHREAD
 
 /****************************************************************************************
  * Function:    H5P__get_class_path
  *
- * Purpose:     Multithread safe version of H5P__get_class_path() which is an internal
- *              routine to retrieve the full path name of a generic property list class,
+ * Purpose:     Multithread safe version of H5P__get_class_path() which is an internal 
+ *              routine to retrieve the full path name of a generic property list class, 
  *              starting with the root of the class hierarchy.
- *
+ * 
  *              The pointer to the name must be free'd by the user for successful calls.
  *
- *
+ * 
  * Return:      Success: Pointer to a malloc'ed string containing the full path of class
- *
+ * 
  *              Failure: NULL
  *
  ****************************************************************************************
@@ -7747,24 +7968,28 @@ H5P__get_class_path(H5P_genclass_t *pclass)
     assert(pclass);
 
     /* Recursively build the full path */
-    if (pclass->parent_ptr != NULL) {
+    if (pclass->parent_ptr != NULL) 
+    {
         char *par_path; /* Parent class's full path */
 
         /* Get the parent class's path */
         par_path = H5P__get_class_path(pclass->parent_ptr);
 
-        if (par_path != NULL) {
+        if (par_path != NULL) 
+        {
             size_t ret_str_len;
 
-            /**
+            /** 
              * Allocate enough space for the parent class's path, plus the '/'
              * separator, this class's name and the string terminator
-             *
+             * 
              * Extra "+3" to quiet GCC warning - 2019/07/05, QAK
              */
             ret_str_len = HDstrlen(par_path) + HDstrlen(pclass->name) + 1 + 3;
-            if (NULL == (ret_value = (char *)H5MM_malloc(ret_str_len))) {
-                HGOTO_ERROR(H5E_RESOURCE, H5E_NOSPACE, NULL, "memory allocation failed for class name");
+            if (NULL == (ret_value = (char *)H5MM_malloc(ret_str_len)))
+            {
+                HGOTO_ERROR(H5E_RESOURCE, H5E_NOSPACE, NULL, 
+                            "memory allocation failed for class name");
             }
 
             /* Build the full path for this class */
@@ -7850,6 +8075,7 @@ done:
 } /* H5P__get_class_path() */
 #endif
 
+
 /*--------------------------------------------------------------------------
  NAME
     H5P__open_class_path
@@ -7900,10 +8126,12 @@ H5P__open_class_path(const char *path)
         check_info.new_class = NULL;
 
         /* Find the class with this name & parent by iterating over the open classes */
-        if (H5I_iterate(H5I_GENPROP_CLS, H5P__open_class_path_cb, &check_info, FALSE) < 0) {
+        if (H5I_iterate(H5I_GENPROP_CLS, H5P__open_class_path_cb, &check_info, FALSE) < 0)
+        {
             HGOTO_ERROR(H5E_PLIST, H5E_BADITER, NULL, "can't iterate over classes");
         }
-        else if (NULL == check_info.new_class) {
+        else if (NULL == check_info.new_class)
+        {
             HGOTO_ERROR(H5E_PLIST, H5E_NOTFOUND, NULL, "can't locate class");
         }
 
@@ -7920,15 +8148,18 @@ H5P__open_class_path(const char *path)
     check_info.new_class = NULL;
 
     /* Find the class with this name & parent by iterating over the open classes */
-    if (H5I_iterate(H5I_GENPROP_CLS, H5P__open_class_path_cb, &check_info, FALSE) < 0) {
+    if (H5I_iterate(H5I_GENPROP_CLS, H5P__open_class_path_cb, &check_info, FALSE) < 0)
+    {
         HGOTO_ERROR(H5E_PLIST, H5E_BADITER, NULL, "can't iterate over classes");
     }
-    else if (NULL == check_info.new_class) {
+    else if (NULL == check_info.new_class)
+    {
         HGOTO_ERROR(H5E_PLIST, H5E_NOTFOUND, NULL, "can't locate class");
     }
 
     /* Copy it */
-    if (NULL == (ret_value = H5P__copy_pclass(check_info.new_class))) {
+    if (NULL == (ret_value = H5P__copy_pclass(check_info.new_class)))
+    {
         HGOTO_ERROR(H5E_PLIST, H5E_CANTCOPY, NULL, "can't copy property class");
     }
 
@@ -7939,17 +8170,19 @@ done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P__open_class_path() */
 
+
 #ifdef H5_HAVE_MULTITHREAD
+
 
 /****************************************************************************************
  * Function:    H5P__get_class_parent
  *
- * Purpose:     Multithread safe version of H5P__get_class_parent() which is an internal
+ * Purpose:     Multithread safe version of H5P__get_class_parent() which is an internal 
  *              routine query the parent class of a multithread safe property class
- *
- *
+ * 
+ * 
  * Return:      Success: Pointer to the parent class of a property class
- *
+ * 
  *              Failure: NULL
  *
  ****************************************************************************************
@@ -7964,7 +8197,8 @@ H5P__get_class_parent(const H5P_mt_class_t *pclass)
     assert(pclass);
 
     /* Get property size */
-    if (NULL == (ret_value = pclass->parent_ptr)) {
+    if ( NULL == (ret_value = pclass->parent_ptr) )
+    {
         HGOTO_ERROR(H5E_PLIST, H5E_NOTFOUND, NULL, "can't locate class");
     }
 
@@ -8009,6 +8243,8 @@ H5P__get_class_parent(const H5P_genclass_t *pclass)
 } /* H5P__get_class_parent() */
 #endif
 
+
+
 #ifdef H5_HAVE_MULTITHREAD
 
 /****************************************************************************************
@@ -8016,11 +8252,11 @@ H5P__get_class_parent(const H5P_genclass_t *pclass)
  *
  * Purpose:     Multithread version of H5P__close_class(), which is an internal routine
  *              to close a property list class.
- *
- *              NOTE: for multithread safety this is just a passthrough to the
+ * 
+ *              NOTE: for multithread safety this is just a passthrough to the 
  *              multithread function to close a class.
  *
- * Return:      SUCCEED/FAIL
+ * Return:      SUCCEED/FAIL   
  *
  ****************************************************************************************
  */
@@ -8033,8 +8269,10 @@ H5P__close_class(H5P_mt_class_t *pclass)
 
     assert(pclass);
 
-    if (H5P__mt_close_class(pclass) < 0) {
-        HGOTO_ERROR(H5E_PLIST, H5E_CLOSEERROR, FAIL, "unable to close property list class");
+    if ( H5P__mt_close_class(pclass) < 0 )
+    {
+        HGOTO_ERROR(H5E_PLIST, H5E_CLOSEERROR, FAIL, 
+                    "unable to close property list class");
     }
 
 done:
@@ -8078,6 +8316,7 @@ done:
 } /* H5P__close_class() */
 #endif
 
+
 #ifdef H5_HAVE_MULTITHREAD
 /****************************************************************************************
  * Function:    H5P__new_plist_of_type
@@ -8086,7 +8325,7 @@ done:
  *              original version, but uses the multithread safe structures.
  *
  * Return:      Success: Returns a pointer to the new H5P_mt_class_t structure
- *
+ * 
  *              Failure: NULL
  *
  ****************************************************************************************
@@ -8094,10 +8333,10 @@ done:
 hid_t
 H5P__new_plist_of_type(H5P_plist_type_t type)
 {
-    H5P_mt_class_t *pclass;
-    hid_t           class_id; /* ID of class to create */
+    H5P_mt_class_t * pclass;
+    hid_t           class_id;                    /* ID of class to create */
 
-    hid_t ret_value = H5I_INVALID_HID; /* Return value */
+    hid_t           ret_value = H5I_INVALID_HID; /* Return value */
 
     FUNC_ENTER_PACKAGE
 
@@ -8106,10 +8345,13 @@ H5P__new_plist_of_type(H5P_plist_type_t type)
     assert(type >= H5P_TYPE_USER && type <= H5P_TYPE_REFERENCE_ACCESS);
 
     /* Check arguments */
-    if (type == H5P_TYPE_USER) {
-        HGOTO_ERROR(H5E_PLIST, H5E_BADVALUE, H5I_INVALID_HID, "can't create user property list");
+    if (type == H5P_TYPE_USER)
+    {
+        HGOTO_ERROR(H5E_PLIST, H5E_BADVALUE, H5I_INVALID_HID, 
+                    "can't create user property list");
     }
-    if (type == H5P_TYPE_ROOT) {
+    if (type == H5P_TYPE_ROOT)
+    {
         HGOTO_ERROR(H5E_PLIST, H5E_BADVALUE, H5I_INVALID_HID,
                     "shouldn't be creating root class property list");
     }
@@ -8204,23 +8446,26 @@ H5P__new_plist_of_type(H5P_plist_type_t type)
         case H5P_TYPE_ROOT:
         case H5P_TYPE_MAX_TYPE:
         default:
-            HGOTO_ERROR(H5E_PLIST, H5E_BADRANGE, H5I_INVALID_HID, "invalid property list type: %u\n",
-                        (unsigned)type);
+            HGOTO_ERROR(H5E_PLIST, H5E_BADRANGE, H5I_INVALID_HID, "invalid property list type: %u\n", (unsigned)type);
     } /* end switch */
 
     /* Get the class object */
-    if (NULL == (pclass = (H5P_mt_class_t *)H5I_object(class_id))) {
+    if (NULL == (pclass = (H5P_mt_class_t *)H5I_object(class_id)))
+    {
         HGOTO_ERROR(H5E_PLIST, H5E_BADTYPE, H5I_INVALID_HID, "not a property class");
     }
 
     /* Create the new property list */
-    if ((ret_value = H5P_create_id(pclass, TRUE)) < 0) {
-        HGOTO_ERROR(H5E_PLIST, H5E_CANTCREATE, H5I_INVALID_HID, "unable to create property list");
+    if ((ret_value = H5P_create_id(pclass, TRUE)) < 0)
+    {
+        HGOTO_ERROR(H5E_PLIST, H5E_CANTCREATE, H5I_INVALID_HID, 
+                    "unable to create property list");
     }
 
 done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5P__new_plist_of_type() MT safe version */
+
 
 #else
 /*-------------------------------------------------------------------------
@@ -8359,6 +8604,8 @@ done:
 } /* end H5P__new_plist_of_type() */
 #endif
 
+
+
 #ifdef H5_HAVE_MULTITHREAD
 
 /**
@@ -8393,15 +8640,16 @@ H5P_get_plist_id(const H5P_genplist_t *plist)
 } /* end H5P_get_plist_id() */
 #endif
 
+
 #ifdef H5_HAVE_MULTITHREAD
 
 /****************************************************************************************
  * Function:    H5P_get_class
  *
- * Purpose:     Multithread version of H5P_get_class() which queries the class of a
- *              property list.
- *
- *              Additionally checks if the deleted flag has been set, and if so
+ * Purpose:     Multithread version of H5P_get_class() which queries the class of a 
+ *              property list. 
+ * 
+ *              Additionally checks if the deleted flag has been set, and if so 
  *              atomically resets it to FALSE.
  *
  * Return:      Success:    Non-NULL class of property list.
@@ -8412,12 +8660,12 @@ H5P_get_plist_id(const H5P_genplist_t *plist)
 H5P_genclass_t *
 H5P_get_class(H5P_genplist_t *plist)
 {
-    H5P_mt_class_t           *pclass;
+    H5P_mt_class_t          * pclass;
     H5P_mt_class_ref_counts_t ref_count;
     H5P_mt_class_ref_counts_t local_rc;
     bool                      done = FALSE;
 
-    H5P_mt_class_t *ret_value;
+    H5P_mt_class_t          * ret_value;
 
     FUNC_ENTER_NOAPI_NOERR
 
@@ -8430,29 +8678,36 @@ H5P_get_class(H5P_genplist_t *plist)
     assert(atomic_load(&(pclass->tag)) == H5P_MT_CLASS_TAG);
 
     /* Ensure the class isn't marked deleted */
-    do {
+    do
+    {
         ref_count = atomic_load(&(pclass->ref_count));
 
-        if (ref_count.deleted) {
-            local_rc         = ref_count;
+        if ( ref_count.deleted )
+        {
+            local_rc = ref_count;
             local_rc.deleted = FALSE;
 
-            if (!atomic_compare_exchange_strong(&(pclass->ref_count), &ref_count, local_rc)) {
+            if ( ! atomic_compare_exchange_strong(&(pclass->ref_count),
+                                                    &ref_count, local_rc) )
+            {
                 atomic_fetch_add(&(pclass->num_ref_count_cols), 1);
             }
-            else {
+            else
+            {
                 atomic_fetch_add(&(pclass->num_ref_count_deleted_false), 1);
 
                 done = TRUE;
             }
         }
-        else {
+        else
+        {
             done = TRUE;
         }
 
-    } while (!done);
+    } while ( ! done );
 
     ret_value = pclass;
+
 
     FUNC_LEAVE_NOAPI(ret_value);
 
@@ -8483,6 +8738,8 @@ H5P_get_class(const H5P_genplist_t *plist)
     FUNC_LEAVE_NOAPI(plist->pclass)
 } /* end H5P_get_class() */
 #endif
+
+
 
 #ifdef H5_HAVE_MULTITHREAD
 
