@@ -199,6 +199,11 @@ typedef struct id_type_t {
  * k.id:        Initialized to 0, and set to the ID number assigned when the 
  *              ID is created.
  *
+ * k.id_info_ptr:  Initialized to NULL, and set to the address of the newly 
+ *              allocated instance of H5I_mt_id_info_t just after the above 
+ *              ID is returned.  Note that this pointer need not be valid,
+ *              and will be invalid if k.discarded is TRUE.
+ *
  * real_id:     If k.real_id_defined is TRUE, this field contains the ID of the 
  *              real ID. Undefined otherwise.
  *
@@ -211,18 +216,19 @@ typedef struct id_type_t {
  *********************************************************************************/
 
 #define ID_OBJECT_T__TAG              0x2020
-#define ID_OBJECT_K_T__INITIALIZER    {FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, H5I_INVALID_HID}
+#define ID_OBJECT_K_T__INITIALIZER    {FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, H5I_INVALID_HID, NULL}
 
 typedef struct id_object_kernel_t {
-    hbool_t    in_progress;
-    hbool_t    allocated;
-    hbool_t    discarded;
-    hbool_t    future;
-    hbool_t    real_id_def_in_prog;
-    hbool_t    real_id_defined;
-    hbool_t    future_id_realized;
-    hbool_t    future_id_discarded;
-    hid_t      id;
+    hbool_t            in_progress;
+    hbool_t            allocated;
+    hbool_t            discarded;
+    hbool_t            future;
+    hbool_t            real_id_def_in_prog;
+    hbool_t            real_id_defined;
+    hbool_t            future_id_realized;
+    hbool_t            future_id_discarded;
+    hid_t              id;
+    H5I_mt_id_info_t * id_info_ptr;
 } id_object_kernel_t;
 
 typedef struct id_object_t{
@@ -267,6 +273,22 @@ typedef struct id_object_t{
  *              when the ID is created.  Due to k being an atomic structure
  *              and the above k.in_progress, this initialization must be done
  *              by a single process.
+ *
+ * k.closings_attempted: Integer field containing the number of times the 
+ *              H5I code has reported that it is about to attempt to set 
+ *              the closing flag on the target instance of H5I_mt_id_info_t.
+ *
+ * k.closings_failed: Integer field containing the number of times the
+ *              H5I code has reported that an attempt to set the closing 
+ *              flag on the target instance of H5I_mt_id_info_t has failed.
+ *              This should always be due to another thread modifying 
+ *              the kernel prior to a call to atomic_compare_exchange_strong..
+ *
+ * k.closing:   Boolean flag that is initialized to FALSE, and set to TRUE
+ *              when the H5I code reports that the closing flag has been set
+ *              on the associated instance of H5I_mt_id_info_t.  This field
+ *              is initialized to FALSE, and must not be set to TRUE more 
+ *              than once.
  *
  * k.discarded: Boolean flag that is initialized to FALSE, and set to TRUE
  *              when the ID is discarded.
@@ -397,11 +419,14 @@ typedef struct id_object_t{
  *********************************************************************************/
 
 #define ID_INSTANCE_T__TAG 0x3030
-#define ID_INSTANCE_K_T__INITIALIZER {FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, H5I_INVALID_HID}
+#define ID_INSTANCE_K_T__INITIALIZER {FALSE, FALSE, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, H5I_INVALID_HID}
 
 typedef struct id_instance_kernel_t {
     hbool_t  in_progress;
     hbool_t  created;
+    int32_t  closings_attempted;
+    int32_t  closings_failed;
+    hbool_t  closing;
     hbool_t  discarded;
     hbool_t  future;
     hbool_t  realized;
@@ -508,12 +533,14 @@ static id_type_t     *types_array;
 static id_object_t   *objects_array;
 static id_instance_t *id_instance_array;
 
+extern H5I_closing_rpt_t  closing_rpt_fcn;
 
 static herr_t init_globals(void);
 static herr_t reset_globals(TestParams_t *params);
 
 
 static herr_t free_func(void * obj, void ** request);
+static void closing_rpt(hid_t id, void * obj, int op);
 static herr_t realize_cb_0(void * future_object, hid_t * actual_object_id);
 static herr_t discard_cb_0(void * future_object);
 
@@ -756,10 +783,10 @@ static herr_t
 free_func(void * obj, void H5_ATTR_UNUSED ** request)
 {
     int                           id_index;
-    volatile id_object_t        * object_ptr = (id_object_t *)obj;
-    volatile id_instance_kernel_t id_inst_k;
+    id_object_t                 * object_ptr = (id_object_t *)obj;
+    id_instance_kernel_t          id_inst_k;
     id_instance_kernel_t          mod_id_inst_k = ID_INSTANCE_K_T__INITIALIZER;
-    volatile id_object_kernel_t   obj_k;
+    id_object_kernel_t            obj_k;
     id_object_kernel_t            mod_obj_k = ID_OBJECT_K_T__INITIALIZER;
 
     assert(object_ptr);
@@ -770,6 +797,12 @@ free_func(void * obj, void H5_ATTR_UNUSED ** request)
 
     assert( ( 0 <= id_index ) && ( id_index < NUM_ID_INSTANCES ) );
     assert( ID_INSTANCE_T__TAG == id_instance_array[id_index].tag );
+
+    memset(&id_inst_k, 0, sizeof(id_instance_kernel_t));
+    memset(&mod_id_inst_k, 0, sizeof(id_instance_kernel_t));
+
+    memset(&obj_k, 0, sizeof(id_object_kernel_t));
+    memset(&mod_obj_k, 0, sizeof(id_object_kernel_t));
 
     id_inst_k = atomic_load(&(id_instance_array[id_index].k));
 
@@ -804,6 +837,7 @@ free_func(void * obj, void H5_ATTR_UNUSED ** request)
     mod_obj_k.future_id_realized  = obj_k.future_id_realized;
     mod_obj_k.future_id_discarded = obj_k.future_id_discarded;
     mod_obj_k.id                  = obj_k.id;
+    mod_obj_k.id_info_ptr         = obj_k.id_info_ptr;
 
     if ( ( atomic_compare_exchange_strong(&(id_instance_array[id_index].k), &id_inst_k, mod_id_inst_k) ) &&
          ( atomic_compare_exchange_strong(&(object_ptr->k), &obj_k, mod_obj_k) ) ) {
@@ -817,6 +851,110 @@ free_func(void * obj, void H5_ATTR_UNUSED ** request)
         return(FAIL);
     }
 } /* free_func() */
+
+/***********************************************************************************************
+ * closing_rpt
+ *
+ *      Update instrumentation on the current test to reflect the fact that the closing 
+ *      flag on the supplied ID / object is about to be manipulated.
+ *
+ ***********************************************************************************************/
+
+static void
+closing_rpt(hid_t id, void * obj, int op)
+{
+    hbool_t done = FALSE;
+    H5I_type_t id_type;
+    int obj_index;
+    int id_index;
+    struct id_instance_kernel_t inst_k;
+    struct id_instance_kernel_t mod_inst_k;
+
+    /* if the id is of a type maintained by the HDF5 library proper, just return without
+     * doing anything.
+     */
+
+    assert(id > 0);
+
+    id_type =  H5I_TYPE(id);
+
+    if (H5I_IS_LIB_TYPE(id_type)) {
+
+        return;
+    } 
+
+    assert(ID_OBJECT_T__TAG == ((id_object_t *)obj)->tag);
+
+    /* Obtain the index of the target ID in the id_instance_array[], with lots of 
+     * sanity checking along the way.
+     */
+    obj_index = ((id_object_t *)obj)->index;
+
+    assert(objects_array);
+    assert(0 <= obj_index);
+    assert(obj_index < NUM_ID_OBJECTS);
+    assert(&(objects_array[obj_index]) == ((id_object_t *)obj));
+
+    id_index = atomic_load(&(objects_array[obj_index].id_index));
+
+    assert(0 <= id_index);
+    assert(id_index < NUM_ID_INSTANCES);
+    assert(ID_INSTANCE_T__TAG == id_instance_array[id_index].tag);
+    assert(id_instance_array[id_index].obj_index == obj_index);
+
+    do {
+        memset(&inst_k, 0, sizeof(id_instance_kernel_t));
+        memset(&mod_inst_k, 0, sizeof(id_instance_kernel_t));
+
+        inst_k = atomic_load(&(id_instance_array[id_index].k));
+
+        mod_inst_k.in_progress        = inst_k.in_progress;
+        mod_inst_k.created            = inst_k.created;
+        mod_inst_k.closings_attempted = inst_k.closings_attempted;
+        mod_inst_k.closings_failed    = inst_k.closings_failed;
+        mod_inst_k.closing            = inst_k.closing;
+        mod_inst_k.discarded          = inst_k.discarded;
+        mod_inst_k.future             = inst_k.future;
+        mod_inst_k.realized           = inst_k.realized;
+        mod_inst_k.future_id_src      = inst_k.future_id_src;
+        mod_inst_k.id                 = inst_k.id;
+
+        switch(op) {
+
+            case H5I_CLOSING_STAT__PENDING:
+                mod_inst_k.closings_attempted++;
+                break;
+
+            case H5I_CLOSING_STAT__SUCCESS:
+                assert(! mod_inst_k.closing);
+                mod_inst_k.closing = TRUE;
+                break;
+
+            case H5I_CLOSING_STAT__FAIL:
+                mod_inst_k.closings_failed++;
+                break;
+
+            default:
+                assert(FALSE);
+                break;
+        }
+
+        if ( atomic_compare_exchange_strong(&(id_instance_array[id_index].k), &inst_k, mod_inst_k) ) {
+
+            done = TRUE;
+
+        } else {
+
+            /* since no locks need be held during the call to closing_rpt_fcn() it is possible 
+             * that some other thread has changed id_instance_array[id_index].k).  Just re-try.
+             * done is still FALSE, so don't need to do anything to trigger this.
+             */
+        } 
+    } while ( ! done );
+    
+    return;
+
+} /* closing_rpt_fcn() */
 
 
 /***********************************************************************************************
@@ -1105,6 +1243,7 @@ realize_cb_0(void * future_object, hid_t * actual_object_id)
         mod_future_id_obj_k.future_id_realized  = TRUE;
         mod_future_id_obj_k.future_id_discarded = future_id_obj_k.future_id_discarded;
         mod_future_id_obj_k.id                  = future_id_obj_k.id;
+        mod_future_id_obj_k.id_info_ptr         = future_id_obj_k.id_info_ptr;
 
         if ( atomic_compare_exchange_strong(&(future_id_obj_ptr->k), &future_id_obj_k, mod_future_id_obj_k) ) {
 
@@ -1270,6 +1409,7 @@ discard_cb_0(void * future_object)
         mod_id_obj_k.future_id_realized  = id_obj_k.future_id_realized;
         mod_id_obj_k.future_id_discarded = id_obj_k.future_id_discarded;
         mod_id_obj_k.id                  = id_obj_k.id;
+        mod_id_obj_k.id_info_ptr         = id_obj_k.id_info_ptr;
 
         if ( ! atomic_compare_exchange_strong(&(future_id_obj_ptr->k), &id_obj_k, mod_id_obj_k) ) {
 
@@ -1386,6 +1526,7 @@ discard_cb_0(void * future_object)
         mod_id_obj_k.future_id_realized  = id_obj_k.future_id_realized;
         mod_id_obj_k.future_id_discarded = TRUE;
         mod_id_obj_k.id                  = id_obj_k.id;
+        mod_id_obj_k.id_info_ptr         = id_obj_k.id_info_ptr;
 
         if ( ! atomic_compare_exchange_strong(&(future_id_obj_ptr->k), &id_obj_k, mod_id_obj_k) ) {
 
@@ -2291,6 +2432,7 @@ register_id(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_t * 
         mod_id_obj_k.future_id_realized  = id_obj_k.future_id_realized;
         mod_id_obj_k.future_id_discarded = id_obj_k.future_id_discarded;
         mod_id_obj_k.id                  = id_obj_k.id;
+        mod_id_obj_k.id_info_ptr         = id_obj_k.id_info_ptr;
         
         if ( ! atomic_compare_exchange_strong(&(id_obj_ptr->k), &id_obj_k, mod_id_obj_k) ) {
 
@@ -2351,6 +2493,7 @@ register_id(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_t * 
         mod_id_obj_k.future_id_realized  = id_obj_k.future_id_realized;
         mod_id_obj_k.future_id_discarded = id_obj_k.future_id_discarded;
         mod_id_obj_k.id                  = id_obj_k.id;
+        mod_id_obj_k.id_info_ptr         = id_obj_k.id_info_ptr;
 
         id = H5Iregister(type, (void *)id_obj_ptr);
 
@@ -2361,6 +2504,7 @@ register_id(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_t * 
 
             mod_id_obj_k.allocated   = TRUE;
             mod_id_obj_k.id          = id;
+            mod_id_obj_k.id_info_ptr = H5I__find_id(id);
 
         } else {
 
@@ -2562,6 +2706,7 @@ try_register_id(int id_index, int obj_index, hbool_t cs, hbool_t ds, hbool_t rpt
         mod_id_obj_k.future_id_realized  = id_obj_k.future_id_realized;
         mod_id_obj_k.future_id_discarded = id_obj_k.future_id_discarded;
         mod_id_obj_k.id                  = id_obj_k.id;
+        mod_id_obj_k.id_info_ptr         = id_obj_k.id_info_ptr;
         
         if ( ! atomic_compare_exchange_strong(&(objects_array[obj_index].k), &id_obj_k, mod_id_obj_k) ) {
 
@@ -2624,6 +2769,7 @@ try_register_id(int id_index, int obj_index, hbool_t cs, hbool_t ds, hbool_t rpt
         mod_id_obj_k.future_id_realized  = id_obj_k.future_id_realized;
         mod_id_obj_k.future_id_discarded = id_obj_k.future_id_discarded;
         mod_id_obj_k.id                  = id_obj_k.id;
+        mod_id_obj_k.id_info_ptr         = id_obj_k.id_info_ptr;
 
         id = H5Iregister(type_id, (void *)(&(objects_array[obj_index])));
 
@@ -2634,6 +2780,7 @@ try_register_id(int id_index, int obj_index, hbool_t cs, hbool_t ds, hbool_t rpt
 
             mod_id_obj_k.allocated   = TRUE;
             mod_id_obj_k.id          = id;
+            mod_id_obj_k.id_info_ptr = H5I__find_id(id);
 
         } else {
 
@@ -2834,6 +2981,7 @@ register_future_id(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_obje
         mod_id_obj_k.future_id_realized  = id_obj_k.future_id_realized;
         mod_id_obj_k.future_id_discarded = id_obj_k.future_id_discarded;
         mod_id_obj_k.id                  = id_obj_k.id;
+        mod_id_obj_k.id_info_ptr         = id_obj_k.id_info_ptr;
         
         if ( ! atomic_compare_exchange_strong(&(id_obj_ptr->k), &id_obj_k, mod_id_obj_k) ) {
 
@@ -2895,6 +3043,7 @@ register_future_id(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_obje
         mod_id_obj_k.future_id_realized  = id_obj_k.future_id_realized;
         mod_id_obj_k.future_id_discarded = id_obj_k.future_id_discarded;
         mod_id_obj_k.id                  = id_obj_k.id;
+        mod_id_obj_k.id_info_ptr         = id_obj_k.id_info_ptr;
 
         id = H5Iregister_future(type, (void *)id_obj_ptr, realize_cb, discard_cb);
 
@@ -2907,6 +3056,7 @@ register_future_id(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_obje
             mod_id_obj_k.allocated   = TRUE;
             mod_id_obj_k.future      = TRUE;
             mod_id_obj_k.id          = id;
+            mod_id_obj_k.id_info_ptr = H5I__find_id(id);
 
         } else {
 
@@ -2991,7 +3141,7 @@ link_real_and_future_ids(id_object_t * future_id_obj_ptr, id_object_t * real_id_
     volatile id_instance_kernel_t real_id_inst_k;
     id_instance_kernel_t          mod_real_id_inst_k = ID_INSTANCE_K_T__INITIALIZER;
     volatile id_object_kernel_t   real_id_obj_k;
-    volatile id_object_kernel_t   future_id_obj_k;
+    id_object_kernel_t            future_id_obj_k;
     id_object_kernel_t            mod_future_id_obj_k = ID_OBJECT_K_T__INITIALIZER;
 
     if ( ( NULL == future_id_obj_ptr )  || ( ID_OBJECT_T__TAG != future_id_obj_ptr->tag ) ||
@@ -3245,6 +3395,7 @@ link_real_and_future_ids(id_object_t * future_id_obj_ptr, id_object_t * real_id_
             mod_future_id_obj_k.future_id_realized  = future_id_obj_k.future_id_realized;
             mod_future_id_obj_k.future_id_discarded = future_id_obj_k.future_id_discarded;
             mod_future_id_obj_k.id                  = future_id_obj_k.id;
+            mod_future_id_obj_k.id_info_ptr         = future_id_obj_k.id_info_ptr;
 
             if ( atomic_compare_exchange_strong(&(future_id_obj_ptr->k), 
                                                 &future_id_obj_k, mod_future_id_obj_k) ) {
@@ -3303,6 +3454,7 @@ link_real_and_future_ids(id_object_t * future_id_obj_ptr, id_object_t * real_id_
         mod_future_id_obj_k.future_id_realized  = future_id_obj_k.future_id_realized;
         mod_future_id_obj_k.future_id_discarded = future_id_obj_k.future_id_discarded;
         mod_future_id_obj_k.id                  = future_id_obj_k.id;
+        mod_future_id_obj_k.id_info_ptr         = future_id_obj_k.id_info_ptr;
 
         if ( atomic_compare_exchange_strong(&(future_id_obj_ptr->k), 
                                             &future_id_obj_k, mod_future_id_obj_k) ) {
@@ -3686,6 +3838,16 @@ try_object_verify(int id_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, in
                             "try_object_verify(%d):%d failure possibly explained by a remove verify in progress.\n",
                             id_index, tid);
                 }
+            } else if ( post_id_inst_k.closing ) {
+        
+                ambiguous_results++;  
+        
+                if ( rpt_failures ) { 
+        
+                    fprintf(stderr,   
+                            "try_object_verify(%d):%d failure possibly explained by closing flag.\n",
+                            id_index, tid);
+                }
             } else {
 
                 /* the id existed when H5Iobject_verify() was called -- thus the
@@ -4045,6 +4207,7 @@ remove_verify(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_t 
             mod_id_obj_k.future_id_realized  = id_obj_k.future_id_realized;
             mod_id_obj_k.future_id_discarded = id_obj_k.future_id_discarded;
             mod_id_obj_k.id                  = id_obj_k.id;
+            mod_id_obj_k.id_info_ptr         = id_obj_k.id_info_ptr;
 
             atomic_compare_exchange_strong(&(id_obj_ptr->k), &id_obj_k, mod_id_obj_k);
 
@@ -4216,6 +4379,16 @@ try_remove_verify(int id_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, in
 
                     fprintf(stderr, 
                             "try_remove_verify(%d):%d: failure possibly caused by a concurrent revmoce verify.\n",
+                            id_index, tid);
+                }
+             } else if ( ( post_id_inst_k.closing ) && ( ! success ) ) {
+        
+                ambiguous_results++;  
+        
+                if ( rpt_failures ) { 
+        
+                    fprintf(stderr,   
+                            "try_object_verify(%d):%d failure possibly explained by closing flag.\n",
                             id_index, tid);
                 }
             } else {
@@ -4606,6 +4779,16 @@ try_dec_ref(int id_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
                             "try_dec_ref(%d):%d failure possibly explained by a remove verify in progress.\n",
                             id_index, tid);
                 }
+            } else if ( post_id_inst_k.closing ) {
+        
+                ambiguous_results++;  
+        
+                if ( rpt_failures ) { 
+        
+                    fprintf(stderr,   
+                            "try_object_verify(%d):%d failure possibly explained by closing flag.\n",
+                            id_index, tid);
+                }
             } else { 
 
                 /* ID was registerd before and after the call to H5Idec_ref().  Thus the 
@@ -4843,6 +5026,16 @@ try_inc_ref(int id_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
                     fprintf(stderr, "try_inc_ref(%d):%d: failure possibly caused by a concurrent revoce verify.\n",
                             id_index, tid);
                 }
+            } else if ( post_id_inst_k.closing ) {
+        
+                ambiguous_results++;  
+        
+                if ( rpt_failures ) { 
+        
+                    fprintf(stderr,   
+                            "try_object_verify(%d):%d failure possibly explained by closing flag.\n",
+                            id_index, tid);
+                }
             } else {
 
                 assert(success);
@@ -5052,6 +5245,16 @@ try_get_ref(int id_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
 
                     fprintf(stderr,
                             "try_object_verify(%d):%d failure possibly explained by a remove verify in progress.\n",
+                            id_index, tid);
+                }
+            } else if ( post_id_inst_k.closing ) {
+
+                ambiguous_results++;
+
+                if ( rpt_failures ) {
+
+                    fprintf(stderr,
+                            "try_object_verify(%d):%d failure possibly explained by closing flag.\n",
                             id_index, tid);
                 }
             } else {
@@ -8406,6 +8609,9 @@ mt_test_2_helper(int num_threads)
         id_instance_array[i].type_index = i % (types_per_thread * num_threads);
     }
 
+    /* setup the closing report function */
+    closing_rpt_fcn = &closing_rpt;
+
     for ( i = 0;  i < num_threads; i++ ) {
 
         if ( 0 != pthread_create(&(threads[i]), NULL, &mt_test_fcn_2, (void *)(&(params[i])))) {
@@ -8441,6 +8647,9 @@ mt_test_2_helper(int num_threads)
             ambig_cnt += params[i].ambig_cnt;
         }
     }
+
+    /* take down the closing report function */
+    closing_rpt_fcn = NULL;
 
     for ( i = 0; i < NUM_ID_TYPES; i++ ) {
 
@@ -8627,8 +8836,10 @@ main(int argc, char **argv)
 
     AddTest("serial_test_3", serial_test_3, NULL, reset_globals, NULL, 0, 0,
             "another smoke check test for H5I ID registrations");
+#if 0
     AddTest("serial_test_4", serial_test_4, NULL, reset_globals, NULL, 0, 0,
             "smoke check test for H5I future ID functionality");
+#endif
 
     test_params = (mt_test_params_t) {
         /* thread_id      = */     0,

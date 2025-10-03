@@ -127,10 +127,10 @@ H5FL_SEQ_DEFINE_STATIC(H5A_t_ptr);
 
 /* Attribute ID class */
 static const H5I_class_t H5I_ATTR_CLS[1] = {{
-    H5I_ATTR,                 /* ID class value */
-    0,                        /* Class flags */
-    0,                        /* # of reserved IDs for class */
-    (H5I_free_t)H5A__close_cb /* Callback routine for closing objects of this class */
+    H5I_ATTR,                       /* ID class value */
+    H5I_CLASS_FREE_FUNC_TOUCHES_VL, /* Class flags */
+    0,                              /* # of reserved IDs for class */
+    (H5I_free_t)H5A__close_cb       /* Callback routine for closing objects of this class */
 }};
 
 /*-------------------------------------------------------------------------

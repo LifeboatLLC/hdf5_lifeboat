@@ -35,10 +35,17 @@
 #define H5I_IS_LIB_TYPE(type) (type > 0 && type < H5I_NTYPES)
 
 /* Flags for ID class */
-#define H5I_CLASS_IS_APPLICATION 0x01
-#define H5I_CLASS_IS_MT_SAFE     0x02 /* set only if all callbacks associated with the class can
-                                       * be executed safely by multiple threads simultaneeously.
-                                       */
+#define H5I_CLASS_IS_APPLICATION       0x01
+#define H5I_CLASS_IS_MT_SAFE           0x02 /* set only if all callbacks associated with the class can
+                                             * be executed safely by multiple threads simultaneeously.
+                                             */
+#define H5I_CLASS_FREE_FUNC_TOUCHES_VL 0x04 /* set only if the free function provided to the class
+                                             * passes through the VOL layer.  If this flag is set, 
+                                             * we do not wrap the free function in the global mutex,
+                                             * since the VOL code will do this when the free function
+                                             * hits a VOL connector that is not multi-thread safe.
+                                             */
+                                             
 
 /****************************/
 /* Library Private Typedefs */
@@ -56,6 +63,18 @@ typedef struct H5I_class_t {
                            */
     H5I_free_t free_func; /* Free function for object's of this type */
 } H5I_class_t;
+
+/**
+ * A test function used to notify the test framework when a thread is about to 
+ * attempt to set the closing flag on an ID, and to notify the test framework
+ * of the result of this attempt.  This function is only called on non-system
+ * IDs, 
+ */          
+#define H5I_CLOSING_STAT__PENDING         0
+#define H5I_CLOSING_STAT__SUCCESS         1
+#define H5I_CLOSING_STAT__FAIL            2
+typedef void (*H5I_closing_rpt_t)(hid_t id, void *obj, int op);
+
 
 /*****************************/
 /* Library-private Variables */

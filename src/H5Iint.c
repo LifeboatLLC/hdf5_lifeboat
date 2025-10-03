@@ -42,8 +42,12 @@
 #ifdef H5_HAVE_MULTITHREAD
 
 #define H5I_MT_DEBUG                    0
+
+#if ! H5I_LOCK_FREE
+
 #define H5I_MT_DEBUG_DO_NOT_DISTURB     0
 
+/* ******** rework or delete **********/
 /* The multi-thread version of H5I uses the do_not_distub field in instances of 
  * H5I_mt_id_info_t to maintain mutual exclusion on kernels of the host instance
  * of H5I_mt_id_info_t while performing operations that can't be rolled back -- 
@@ -79,6 +83,8 @@
  * #define is set to TRUE.
  */
 #define H5I__HAVE_GLOBAL_MUTEX          1
+
+#endif /* H5I_LOCK_FREE */
 
 #endif /* H5_HAVE_MULTITHREAD */
 
@@ -181,6 +187,12 @@ static H5I_mt_type_info_t * H5I__new_mt_type_info(const H5I_class_t *cls, unsign
 #ifdef H5_HAVE_MULTITHREAD
 
 H5I_mt_t              H5I_mt_g;
+
+/* The closing_rpt_function is used by test code to monitor the points at which 
+ * the closing flag is set on an ID.  This is used to determine whether sequences 
+ * of operations in the test are correct or incorrect.
+ */
+H5I_closing_rpt_t     closing_rpt_fcn = NULL;
 
 #else /* H5_HAVE_MULTITHREAD */
 
@@ -393,19 +405,28 @@ H5I_init(void)
     atomic_init(&(H5I_mt_g.H5I__mark_node__marked), 0ULL);
     atomic_init(&(H5I_mt_g.H5I__mark_node__marked_by_another_thread), 0ULL);
     atomic_init(&(H5I_mt_g.H5I__mark_node__no_ops), 0ULL);
+#if ! H5I_LOCK_FREE
     atomic_init(&(H5I_mt_g.H5I__mark_node__global_mutex_locks_for_discard_cb), 0ULL);
     atomic_init(&(H5I_mt_g.H5I__mark_node__global_mutex_unlocks_for_discard_cb), 0ULL);
     atomic_init(&(H5I_mt_g.H5I__mark_node__discard_cb_failures_marked), 0ULL);
     atomic_init(&(H5I_mt_g.H5I__mark_node__discard_cb_failures_unmarked), 0ULL);
     atomic_init(&(H5I_mt_g.H5I__mark_node__discard_cb_successes), 0ULL);
+#endif /* ! H5I_LOCK_FREE */
     atomic_init(&(H5I_mt_g.H5I__mark_node__global_mutex_locks_for_free_func), 0ULL);
     atomic_init(&(H5I_mt_g.H5I__mark_node__global_mutex_unlocks_for_free_func), 0ULL);
     atomic_init(&(H5I_mt_g.H5I__mark_node__free_func_failures_marked), 0ULL);
     atomic_init(&(H5I_mt_g.H5I__mark_node__free_func_failures_unmarked), 0ULL);
     atomic_init(&(H5I_mt_g.H5I__mark_node__free_func_successes), 0ULL);
     atomic_init(&(H5I_mt_g.H5I__mark_node__retries), 0ULL);
+    atomic_init(&(H5I_mt_g.H5I__mark_node__id_ignored__closing_set_and_wrong_thread), 0ULL);
+    atomic_init(&(H5I_mt_g.H5I__mark_node__closing_set_and_right_thread), 0ULL);
+
 
     atomic_init(&(H5I_mt_g.H5I__remove_common__num_calls), 0ULL);
+#if H5I_LOCK_FREE
+    atomic_init(&(H5I_mt_g.H5I__remove_common__failed_due_to_closing_set_and_wrong_thread), 0ULL);
+    atomic_init(&(H5I_mt_g.H5I__remove_common__closing_set_and_right_thread), 0ULL);
+#endif /* H5I_LOCK_FREE */
     atomic_init(&(H5I_mt_g.H5I__remove_common__already_marked), 0ULL);
     atomic_init(&(H5I_mt_g.H5I__remove_common__marked_by_another_thread), 0ULL);
     atomic_init(&(H5I_mt_g.H5I__remove_common__marked), 0ULL);
@@ -416,16 +437,24 @@ H5I_init(void)
     atomic_init(&(H5I_mt_g.H5I__find_id__num_calls_with_global_mutex), 0ULL);
     atomic_init(&(H5I_mt_g.H5I__find_id__num_calls_with_global_mutex), 0ULL);
     atomic_init(&(H5I_mt_g.H5I__find_id__ids_found), 0ULL);
+#if ! H5I_LOCK_FREE
     atomic_init(&(H5I_mt_g.H5I__find_id__num_calls_to_realize_cb), 0ULL);
     atomic_init(&(H5I_mt_g.H5I__find_id__global_mutex_locks_for_realize_cb), 0ULL);
     atomic_init(&(H5I_mt_g.H5I__find_id__global_mutex_unlocks_for_realize_cb), 0ULL);
+#endif /* ! H5I_LOCK_FREE */
     atomic_init(&(H5I_mt_g.H5I__find_id__num_calls_to_H5I__remove_common), 0ULL);
+#if ! H5I_LOCK_FREE
     atomic_init(&(H5I_mt_g.H5I__find_id__num_calls_to_discard_cb), 0ULL);
     atomic_init(&(H5I_mt_g.H5I__find_id__global_mutex_locks_for_discard_cb), 0ULL);
     atomic_init(&(H5I_mt_g.H5I__find_id__global_mutex_unlocks_for_discard_cb), 0ULL);
     atomic_init(&(H5I_mt_g.H5I__find_id__future_id_conversions_attempted), 0ULL);
     atomic_init(&(H5I_mt_g.H5I__find_id__future_id_conversions_completed), 0ULL);
+#endif /* ! H5I_LOCK_FREE */
     atomic_init(&(H5I_mt_g.H5I__find_id__retries), 0ULL);
+#if H5I_LOCK_FREE
+    atomic_init(&(H5I_mt_g.H5I__find_id__failed_due_to_closing_set_and_wrong_thread), 0ULL);
+    atomic_init(&(H5I_mt_g.H5I__find_id__closing_set_and_right_thread), 0ULL);
+#endif /* H5I_LOCK_FREE */
 
     atomic_init(&(H5I_mt_g.H5I_register_using_existing_id__num_calls), 0ULL);
     atomic_init(&(H5I_mt_g.H5I_register_using_existing_id__num_marked_only), 0ULL);
@@ -435,10 +464,15 @@ H5I_init(void)
     atomic_init(&(H5I_mt_g.H5I_subst__num_calls), 0ULL);
     atomic_init(&(H5I_mt_g.H5I_subst__num_calls__with_global_mutex), 0ULL);
     atomic_init(&(H5I_mt_g.H5I_subst__num_calls__without_global_mutex), 0ULL);
+#if H5I_LOCK_FREE
+    atomic_init(&(H5I_mt_g.H5I_subst__failed_due_to_closing_set_and_wrong_thread), 0ULL);
+    atomic_init(&(H5I_mt_g.H5I_subst__closing_set_and_right_thread), 0ULL);
+#endif /* H5I_LOCK_FREE */
     atomic_init(&(H5I_mt_g.H5I_subst__marked_on_entry), 0ULL);
     atomic_init(&(H5I_mt_g.H5I_subst__marked_during_call), 0ULL);
     atomic_init(&(H5I_mt_g.H5I_subst__retries), 0ULL);
     atomic_init(&(H5I_mt_g.H5I_subst__failures), 0ULL);
+
 
     atomic_init(&(H5I_mt_g.H5I__dec_ref__num_calls), 0ULL);
     atomic_init(&(H5I_mt_g.H5I__dec_ref__num_app_calls), 0ULL);
@@ -454,6 +488,11 @@ H5I_init(void)
     atomic_init(&(H5I_mt_g.H5I__dec_ref__global_mutex_unlocks_for_free_func), 0ULL);
     atomic_init(&(H5I_mt_g.H5I__dec_ref__free_func_failed), 0ULL);
     atomic_init(&(H5I_mt_g.H5I__dec_ref__retries), 0ULL);
+#if H5I_LOCK_FREE
+    atomic_init(&(H5I_mt_g.H5I__dec_ref__id_ignored__closing_set_and_wrong_thread), 0ULL);
+    atomic_init(&(H5I_mt_g.H5I__dec_ref__closing_set_and_right_thread), 0ULL);
+#endif /* H5I_LOCK_FREE */
+
 
     atomic_init(&(H5I_mt_g.H5I__inc_ref__num_calls), 0ULL);
     atomic_init(&(H5I_mt_g.H5I__inc_ref__num_app_calls), 0ULL);
@@ -462,6 +501,11 @@ H5I_init(void)
     atomic_init(&(H5I_mt_g.H5I__inc_ref__incremented), 0ULL);
     atomic_init(&(H5I_mt_g.H5I__inc_ref__app_incremented), 0ULL);
     atomic_init(&(H5I_mt_g.H5I__inc_ref__retries), 0ULL);
+#if H5I_LOCK_FREE
+    atomic_init(&(H5I_mt_g.H5I__inc_ref__id_ignored__closing_set_and_wrong_thread), 0ULL);
+    atomic_init(&(H5I_mt_g.H5I__inc_ref__closing_set_and_right_thread), 0ULL);
+#endif /* H5I_LOCK_FREE */
+
 
     atomic_init(&(H5I_mt_g.H5I__iterate_cb__num_calls), 0ULL);
     atomic_init(&(H5I_mt_g.H5I__iterate_cb__num_calls__with_global_mutex), 0ULL);
@@ -475,6 +519,10 @@ H5I_init(void)
     atomic_init(&(H5I_mt_g.H5I__iterate_cb__num_user_func_fails), 0ULL);
     atomic_init(&(H5I_mt_g.H5I__iterate_cb__num_user_func_skips), 0ULL);
     atomic_init(&(H5I_mt_g.H5I__iterate_cb__num_retries), 0ULL);
+#if H5I_LOCK_FREE
+    atomic_init(&(H5I_mt_g.H5I__iterate_cb__id_ignored__closing_set_and_wrong_thread), 0ULL);
+    atomic_init(&(H5I_mt_g.H5I__iterate_cb__closing_set_and_right_thread), 0ULL);
+#endif /* H5I_LOCK_FREE */
 
     atomic_init(&(H5I_mt_g.H5I__unwrap__num_calls), 0ULL);
     atomic_init(&(H5I_mt_g.H5I__unwrap__num_calls_with_global_mutex), 0ULL);
@@ -489,11 +537,20 @@ H5I_init(void)
     atomic_init(&(H5I_mt_g.H5I_is_file_object__global_mutex_locks_for_H5T_is_named), 0ULL);
     atomic_init(&(H5I_mt_g.H5I_is_file_object__global_mutex_unlocks_for_H5T_is_named), 0ULL);
 
+#if H5I_LOCK_FREE
+
+    atomic_init(&(H5I_mt_g.num_successful_closing_sets), 0ULL);
+    atomic_init(&(H5I_mt_g.num_failed_closing_sets), 0ULL);
+
+#else /* H5I_LOCK_FREE */
+
     atomic_init(&(H5I_mt_g.num_do_not_disturb_yields), 0ULL);
     atomic_init(&(H5I_mt_g.num_successful_do_not_disturb_sets), 0ULL);
     atomic_init(&(H5I_mt_g.num_failed_do_not_disturb_sets), 0ULL);
     atomic_init(&(H5I_mt_g.num_do_not_disturb_resets), 0ULL);
     atomic_init(&(H5I_mt_g.num_do_not_disturb_recursions), 0ULL);
+
+#endif /* H5I_LOCK_FREE */
 
     atomic_init(&(H5I_mt_g.global_mutex_acquire_attempts), 0ULL);
     atomic_init(&(H5I_mt_g.global_mutex_acquire_successes), 0ULL);
@@ -735,19 +792,27 @@ H5I_clear_stats(void)
     atomic_store(&(H5I_mt_g.H5I__mark_node__marked), 0ULL);
     atomic_store(&(H5I_mt_g.H5I__mark_node__marked_by_another_thread), 0ULL);
     atomic_store(&(H5I_mt_g.H5I__mark_node__no_ops), 0ULL);
+#if ! H5I_LOCK_FREE
     atomic_store(&(H5I_mt_g.H5I__mark_node__global_mutex_locks_for_discard_cb), 0ULL);
     atomic_store(&(H5I_mt_g.H5I__mark_node__global_mutex_unlocks_for_discard_cb), 0ULL);
     atomic_store(&(H5I_mt_g.H5I__mark_node__discard_cb_failures_marked), 0ULL);
     atomic_store(&(H5I_mt_g.H5I__mark_node__discard_cb_failures_unmarked), 0ULL);
     atomic_store(&(H5I_mt_g.H5I__mark_node__discard_cb_successes), 0ULL);
+#endif /* ! H5I_LOCK_FREE */
     atomic_store(&(H5I_mt_g.H5I__mark_node__global_mutex_locks_for_free_func), 0ULL);
     atomic_store(&(H5I_mt_g.H5I__mark_node__global_mutex_unlocks_for_free_func), 0ULL);
     atomic_store(&(H5I_mt_g.H5I__mark_node__free_func_failures_marked), 0ULL);
     atomic_store(&(H5I_mt_g.H5I__mark_node__free_func_failures_unmarked), 0ULL);
     atomic_store(&(H5I_mt_g.H5I__mark_node__free_func_successes), 0ULL);
     atomic_store(&(H5I_mt_g.H5I__mark_node__retries), 0ULL);
+    atomic_store(&(H5I_mt_g.H5I__mark_node__id_ignored__closing_set_and_wrong_thread), 0ULL);
+    atomic_store(&(H5I_mt_g.H5I__mark_node__closing_set_and_right_thread), 0ULL);
 
     atomic_store(&(H5I_mt_g.H5I__remove_common__num_calls), 0ULL);
+#if H5I_LOCK_FREE
+    atomic_store(&(H5I_mt_g.H5I__remove_common__failed_due_to_closing_set_and_wrong_thread), 0ULL);
+    atomic_store(&(H5I_mt_g.H5I__remove_common__closing_set_and_right_thread), 0ULL);
+#endif /* H5I_LOCK_FREE */
     atomic_store(&(H5I_mt_g.H5I__remove_common__already_marked), 0ULL);
     atomic_store(&(H5I_mt_g.H5I__remove_common__marked_by_another_thread), 0ULL);
     atomic_store(&(H5I_mt_g.H5I__remove_common__marked), 0ULL);
@@ -758,16 +823,24 @@ H5I_clear_stats(void)
     atomic_store(&(H5I_mt_g.H5I__find_id__num_calls_with_global_mutex), 0ULL);
     atomic_store(&(H5I_mt_g.H5I__find_id__num_calls_without_global_mutex), 0ULL);
     atomic_store(&(H5I_mt_g.H5I__find_id__ids_found), 0ULL);
+#if ! H5I_LOCK_FREE
     atomic_store(&(H5I_mt_g.H5I__find_id__num_calls_to_realize_cb), 0ULL);
     atomic_store(&(H5I_mt_g.H5I__find_id__global_mutex_locks_for_realize_cb), 0ULL);
     atomic_store(&(H5I_mt_g.H5I__find_id__global_mutex_unlocks_for_realize_cb), 0ULL);
+#endif /* ! H5I_LOCK_FREE */
     atomic_store(&(H5I_mt_g.H5I__find_id__num_calls_to_H5I__remove_common), 0ULL);
+#if ! H5I_LOCK_FREE
     atomic_store(&(H5I_mt_g.H5I__find_id__num_calls_to_discard_cb), 0ULL);
     atomic_store(&(H5I_mt_g.H5I__find_id__global_mutex_locks_for_discard_cb), 0ULL);
     atomic_store(&(H5I_mt_g.H5I__find_id__global_mutex_unlocks_for_discard_cb), 0ULL);
     atomic_store(&(H5I_mt_g.H5I__find_id__future_id_conversions_attempted), 0ULL);
     atomic_store(&(H5I_mt_g.H5I__find_id__future_id_conversions_completed), 0ULL);
+#endif /* ! H5I_LOCK_FREE */
     atomic_store(&(H5I_mt_g.H5I__find_id__retries), 0ULL);
+#if H5I_LOCK_FREE
+    atomic_store(&(H5I_mt_g.H5I__find_id__failed_due_to_closing_set_and_wrong_thread), 0ULL);
+    atomic_store(&(H5I_mt_g.H5I__find_id__closing_set_and_right_thread), 0ULL);
+#endif /* H5I_LOCK_FREE */
 
     atomic_store(&(H5I_mt_g.H5I_register_using_existing_id__num_calls), 0ULL);
     atomic_store(&(H5I_mt_g.H5I_register_using_existing_id__num_marked_only), 0ULL);
@@ -777,6 +850,11 @@ H5I_clear_stats(void)
     atomic_store(&(H5I_mt_g.H5I_subst__num_calls), 0ULL);
     atomic_store(&(H5I_mt_g.H5I_subst__num_calls__with_global_mutex), 0ULL);
     atomic_store(&(H5I_mt_g.H5I_subst__num_calls__without_global_mutex), 0ULL);
+#if H5I_LOCK_FREE
+    atomic_store(&(H5I_mt_g.H5I_subst__failed_due_to_closing_set_and_wrong_thread), 0ULL);
+    atomic_store(&(H5I_mt_g.H5I_subst__failed_due_to_closing_set_and_wrong_thread), 0ULL);
+#endif /* H5I_LOCK_FREE */
+
     atomic_store(&(H5I_mt_g.H5I_subst__marked_on_entry), 0ULL);
     atomic_store(&(H5I_mt_g.H5I_subst__marked_during_call), 0ULL);
     atomic_store(&(H5I_mt_g.H5I_subst__retries), 0ULL);
@@ -796,6 +874,10 @@ H5I_clear_stats(void)
     atomic_store(&(H5I_mt_g.H5I__dec_ref__global_mutex_unlocks_for_free_func), 0ULL);
     atomic_store(&(H5I_mt_g.H5I__dec_ref__free_func_failed), 0ULL);
     atomic_store(&(H5I_mt_g.H5I__dec_ref__retries), 0ULL);
+#if H5I_LOCK_FREE
+    atomic_store(&(H5I_mt_g.H5I__dec_ref__id_ignored__closing_set_and_wrong_thread), 0ULL);
+    atomic_store(&(H5I_mt_g.H5I__dec_ref__closing_set_and_right_thread), 0ULL);
+#endif /* H5I_LOCK_FREE */
 
     atomic_store(&(H5I_mt_g.H5I__inc_ref__num_calls), 0ULL);
     atomic_store(&(H5I_mt_g.H5I__inc_ref__num_app_calls), 0ULL);
@@ -804,6 +886,10 @@ H5I_clear_stats(void)
     atomic_store(&(H5I_mt_g.H5I__inc_ref__incremented), 0ULL);
     atomic_store(&(H5I_mt_g.H5I__inc_ref__app_incremented), 0ULL);
     atomic_store(&(H5I_mt_g.H5I__inc_ref__retries), 0ULL);
+#if H5I_LOCK_FREE
+    atomic_store(&(H5I_mt_g.H5I__inc_ref__id_ignored__closing_set_and_wrong_thread), 0ULL);
+    atomic_store(&(H5I_mt_g.H5I__inc_ref__closing_set_and_right_thread), 0ULL);
+#endif /* H5I_LOCK_FREE */
 
     atomic_store(&(H5I_mt_g.H5I__iterate_cb__num_calls), 0ULL);
     atomic_store(&(H5I_mt_g.H5I__iterate_cb__num_calls__with_global_mutex), 0ULL);
@@ -817,6 +903,10 @@ H5I_clear_stats(void)
     atomic_store(&(H5I_mt_g.H5I__iterate_cb__num_user_func_fails), 0ULL);
     atomic_store(&(H5I_mt_g.H5I__iterate_cb__num_user_func_skips), 0ULL);
     atomic_store(&(H5I_mt_g.H5I__iterate_cb__num_retries), 0ULL);
+#if H5I_LOCK_FREE
+    atomic_store(&(H5I_mt_g.H5I__iterate_cb__id_ignored__closing_set_and_wrong_thread), 0ULL);
+    atomic_store(&(H5I_mt_g.H5I__iterate_cb__closing_set_and_right_thread), 0ULL);
+#endif /* H5I_LOCK_FREE */
 
     atomic_store(&(H5I_mt_g.H5I__unwrap__num_calls), 0ULL);
     atomic_store(&(H5I_mt_g.H5I__unwrap__num_calls_with_global_mutex), 0ULL);
@@ -831,11 +921,20 @@ H5I_clear_stats(void)
     atomic_store(&(H5I_mt_g.H5I_is_file_object__global_mutex_locks_for_H5T_is_named), 0ULL);
     atomic_store(&(H5I_mt_g.H5I_is_file_object__global_mutex_unlocks_for_H5T_is_named), 0ULL);
 
+#if H5I_LOCK_FREE
+
+    atomic_store(&(H5I_mt_g.num_successful_closing_sets), 0ULL);
+    atomic_store(&(H5I_mt_g.num_failed_closing_sets), 0ULL);
+
+#else /* H5I_LOCK_FREE */
+
     atomic_store(&(H5I_mt_g.num_do_not_disturb_yields), 0ULL);
     atomic_store(&(H5I_mt_g.num_successful_do_not_disturb_sets), 0ULL);
     atomic_store(&(H5I_mt_g.num_failed_do_not_disturb_sets), 0ULL);
     atomic_store(&(H5I_mt_g.num_do_not_disturb_resets), 0ULL);
     atomic_store(&(H5I_mt_g.num_do_not_disturb_recursions), 0ULL);
+
+#endif /* H5I_LOCK_FREE */
 
     atomic_store(&(H5I_mt_g.global_mutex_acquire_attempts), 0ULL);
     atomic_store(&(H5I_mt_g.global_mutex_acquire_successes), 0ULL);
@@ -1013,6 +1112,7 @@ H5I_dump_stats(FILE * file_ptr)
             (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__mark_node__marked_by_another_thread))));
     fprintf(file_ptr, "H5I_mt_g.H5I__mark_node__no_ops                                        = %lld\n", 
             (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__mark_node__no_ops))));
+#if ! H5I_LOCK_FREE
     fprintf(file_ptr, "H5I_mt_g.H5I__mark_node__global_mutex_locks_for_discard_cb             = %lld\n", 
             (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__mark_node__global_mutex_locks_for_discard_cb))));
     fprintf(file_ptr, "H5I_mt_g.H5I__mark_node__global_mutex_unlocks_for_discard_cb           = %lld\n", 
@@ -1024,6 +1124,7 @@ H5I_dump_stats(FILE * file_ptr)
             (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__mark_node__discard_cb_failures_unmarked))));
     fprintf(file_ptr, "H5I_mt_g.H5I__mark_node__discard_cb_successes                          = %lld\n", 
             (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__mark_node__discard_cb_successes))));
+#endif /* ! H5I_LOCK_FREE */
     fprintf(file_ptr, "H5I_mt_g.H5I__mark_node__global_mutex_locks_for_free_func              = %lld\n", 
             (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__mark_node__global_mutex_locks_for_free_func))));
     fprintf(file_ptr, "H5I_mt_g.H5I__mark_node__global_mutex_unlocks_for_free_func            = %lld\n", 
@@ -1035,11 +1136,23 @@ H5I_dump_stats(FILE * file_ptr)
             (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__mark_node__free_func_failures_unmarked))));
     fprintf(file_ptr, "H5I_mt_g.H5I__mark_node__free_func_successes                           = %lld\n", 
             (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__mark_node__free_func_successes))));
-    fprintf(file_ptr, "H5I_mt_g.H5I__mark_node__retries                                       = %lld\n\n", 
+    fprintf(file_ptr, "H5I_mt_g.H5I__mark_node__retries                                       = %lld\n", 
             (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__mark_node__retries))));
+    fprintf(file_ptr, "H5I_mt_g.H5I__mark_node__id_ignored__closing_set_and_wrong_thread      = %lld\n", 
+            (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__mark_node__id_ignored__closing_set_and_wrong_thread))));
+    fprintf(file_ptr, "H5I_mt_g.H5I__mark_node__closing_set_and_right_thread                  = %lld\n\n", 
+            (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__mark_node__closing_set_and_right_thread))));
+
 
     fprintf(file_ptr, "H5I_mt_g.H5I__remove_common__num_calls                                 = %lld\n", 
             (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__remove_common__num_calls))));
+#if H5I_LOCK_FREE
+    fprintf(file_ptr, "H5I_mt_g.H5I__remove_common__failed_due_to_closing_set_and_wrong_thread = %lld\n", 
+            (unsigned long long)
+            (atomic_load(&(H5I_mt_g.H5I__remove_common__failed_due_to_closing_set_and_wrong_thread))));
+    fprintf(file_ptr, "H5I_mt_g.H5I__remove_common__closing_set_and_right_thread              = %lld\n", 
+            (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__remove_common__closing_set_and_right_thread))));
+#endif /* H5I_LOCK_FREE */
     fprintf(file_ptr, "H5I_mt_g.H5I__remove_common__already_marked                            = %lld\n", 
             (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__remove_common__already_marked))));
     fprintf(file_ptr, "H5I_mt_g.H5I__remove_common__marked_by_another_thread                  = %lld\n", 
@@ -1059,14 +1172,17 @@ H5I_dump_stats(FILE * file_ptr)
             (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__find_id__num_calls_without_global_mutex))));
     fprintf(file_ptr, "H5I_mt_g.H5I__find_id__ids_found                                       = %lld\n", 
             (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__find_id__ids_found))));
+#if ! H5I_LOCK_FREE
     fprintf(file_ptr, "H5I_mt_g.H5I__find_id__num_calls_to_realize_cb                         = %lld\n", 
             (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__find_id__num_calls_to_realize_cb))));
     fprintf(file_ptr, "H5I_mt_g.H5I__find_id__global_mutex_locks_for_realize_cb               = %lld\n", 
             (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__find_id__global_mutex_locks_for_realize_cb))));
     fprintf(file_ptr, "H5I_mt_g.H5I__find_id__global_mutex_unlocks_for_realize_cb             = %lld\n", 
             (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__find_id__global_mutex_unlocks_for_realize_cb))));
+#endif /* ! H5I_LOCK_FREE */
     fprintf(file_ptr, "H5I_mt_g.H5I__find_id__num_calls_to_H5I__remove_common                 = %lld\n", 
             (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__find_id__num_calls_to_H5I__remove_common))));
+#if ! H5I_LOCK_FREE
     fprintf(file_ptr, "H5I_mt_g.H5I__find_id__num_calls_to_discard_cb                         = %lld\n", 
             (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__find_id__num_calls_to_discard_cb))));
     fprintf(file_ptr, "H5I_mt_g.H5I__find_id__global_mutex_locks_for_discard_cb               = %lld\n", 
@@ -1077,8 +1193,15 @@ H5I_dump_stats(FILE * file_ptr)
             (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__find_id__future_id_conversions_attempted))));
     fprintf(file_ptr, "H5I_mt_g.H5I__find_id__future_id_conversions_completed                 = %lld\n", 
             (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__find_id__future_id_conversions_completed))));
-    fprintf(file_ptr, "H5I_mt_g.H5I__find_id__retries                                         = %lld\n\n", 
+#endif /* ! H5I_LOCK_FREE */
+    fprintf(file_ptr, "H5I_mt_g.H5I__find_id__retries                                         = %lld\n", 
             (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__find_id__retries))));
+#if H5I_LOCK_FREE
+    fprintf(file_ptr, "H5I_mt_g.H5I__find_id__failed_due_to_closing_set_and_wrong_thread      = %lld\n", 
+            (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__find_id__failed_due_to_closing_set_and_wrong_thread))));
+    fprintf(file_ptr, "H5I_mt_g.H5I__find_id__closing_set_and_right_thread                    = %lld\n\n", 
+            (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__find_id__closing_set_and_right_thread))));
+#endif /* H5I_LOCK_FREE */
 
     fprintf(file_ptr, "H5I_mt_g.H5I_register_using_existing_id__num_calls                     = %lld\n", 
             (unsigned long long)(atomic_load(&(H5I_mt_g.H5I_register_using_existing_id__num_calls))));
@@ -1108,6 +1231,12 @@ H5I_dump_stats(FILE * file_ptr)
             (unsigned long long)(atomic_load(&(H5I_mt_g.H5I_subst__num_calls__with_global_mutex))));
     fprintf(file_ptr, "H5I_mt_g.H5I_subst__num_calls__without_global_mutex                    = %lld\n", 
             (unsigned long long)(atomic_load(&(H5I_mt_g.H5I_subst__num_calls__without_global_mutex))));
+#if H5I_LOCK_FREE
+    fprintf(file_ptr, "H5I_mt_g.H5I_subst__failed_due_to_closing_set_and_wrong_thread         = %lld\n", 
+            (unsigned long long)(atomic_load(&(H5I_mt_g.H5I_subst__failed_due_to_closing_set_and_wrong_thread))));
+    fprintf(file_ptr, "H5I_mt_g.H5I_subst__closing_set_and_right_thread                       = %lld\n", 
+            (unsigned long long)(atomic_load(&(H5I_mt_g.H5I_subst__closing_set_and_right_thread))));
+#endif /* H5I_LOCK_FREE */
     fprintf(file_ptr, "H5I_mt_g.H5I_subst__marked_on_entry                                    = %lld\n", 
             (unsigned long long)(atomic_load(&(H5I_mt_g.H5I_subst__marked_on_entry))));
     fprintf(file_ptr, "H5I_mt_g.H5I_subst__marked_during_call                                 = %lld\n", 
@@ -1143,8 +1272,14 @@ H5I_dump_stats(FILE * file_ptr)
             (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__dec_ref__global_mutex_unlocks_for_free_func))));
     fprintf(file_ptr, "H5I_mt_g.H5I__dec_ref__free_func_failed                                = %lld\n", 
             (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__dec_ref__free_func_failed))));
-    fprintf(file_ptr, "H5I_mt_g.H5I__dec_ref__retries                                         = %lld\n\n", 
+    fprintf(file_ptr, "H5I_mt_g.H5I__dec_ref__retries                                         = %lld\n", 
             (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__dec_ref__retries))));
+#if H5I_LOCK_FREE
+    fprintf(file_ptr, "H5I_mt_g.H5I__dec_ref__id_ignored__closing_set_and_wrong_thread        = %lld\n", 
+            (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__dec_ref__id_ignored__closing_set_and_wrong_thread))));
+    fprintf(file_ptr, "H5I_mt_g.H5I__dec_ref__closing_set_and_right_thread                    = %lld\n\n", 
+            (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__dec_ref__closing_set_and_right_thread))));
+#endif /* H5I_LOCK_FREE */
 
     fprintf(file_ptr, "H5I_mt_g.H5I__inc_ref__num_calls                                       = %lld\n", 
             (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__inc_ref__num_calls))));
@@ -1158,8 +1293,14 @@ H5I_dump_stats(FILE * file_ptr)
             (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__inc_ref__incremented))));
     fprintf(file_ptr, "H5I_mt_g.H5I__inc_ref__app_incremented                                 = %lld\n", 
             (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__inc_ref__app_incremented))));
-    fprintf(file_ptr, "H5I_mt_g.H5I__inc_ref__retries                                         = %lld\n\n", 
+    fprintf(file_ptr, "H5I_mt_g.H5I__inc_ref__retries                                         = %lld\n", 
             (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__inc_ref__retries))));
+#if H5I_LOCK_FREE
+    fprintf(file_ptr, "H5I_mt_g.H5I__inc_ref__id_ignored__closing_set_and_wrong_thread        = %lld\n", 
+            (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__inc_ref__id_ignored__closing_set_and_wrong_thread))));
+    fprintf(file_ptr, "H5I_mt_g.H5I__inc_ref__closing_set_and_right_thread                    = %lld\n\n", 
+            (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__inc_ref__closing_set_and_right_thread))));
+#endif /* H5I_LOCK_FREE */
 
     fprintf(file_ptr, "H5I_mt_g.H5I__iterate_cb__num_calls                                    = %lld\n", 
             (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__iterate_cb__num_calls))));
@@ -1184,8 +1325,14 @@ H5I_dump_stats(FILE * file_ptr)
             (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__iterate_cb__num_user_func_fails))));
     fprintf(file_ptr, "H5I_mt_g.H5I__iterate_cb__num_user_func_skips                          = %lld\n", 
             (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__iterate_cb__num_user_func_skips))));
-    fprintf(file_ptr, "H5I_mt_g.H5I__iterate_cb__num_retries                                  = %lld\n\n", 
+    fprintf(file_ptr, "H5I_mt_g.H5I__iterate_cb__num_retries                                  = %lld\n", 
             (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__iterate_cb__num_retries))));
+#if H5I_LOCK_FREE
+    fprintf(file_ptr, "H5I_mt_g.H5I__iterate_cb__id_ignored__closing_set_and_wrong_thread     = %lld\n", 
+            (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__iterate_cb__id_ignored__closing_set_and_wrong_thread))));
+    fprintf(file_ptr, "H5I_mt_g.H5I__iterate_cb__closing_set_and_right_thread                 = %lld\n\n", 
+            (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__iterate_cb__closing_set_and_right_thread))));
+#endif /* H5I_LOCK_FREE */
 
     fprintf(file_ptr, "H5I_mt_g.H5I__unwrap__num_calls                                        = %lld\n", 
             (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__unwrap__num_calls))));
@@ -1213,6 +1360,15 @@ H5I_dump_stats(FILE * file_ptr)
             (unsigned long long)
             (atomic_load(&(H5I_mt_g.H5I_is_file_object__global_mutex_unlocks_for_H5T_is_named))));
 
+#if H5I_LOCK_FREE
+
+    fprintf(file_ptr, "H5I_mt_g.num_successful_closing_sets                                    = %lld\n", 
+            (unsigned long long)(atomic_load(&(H5I_mt_g.num_successful_closing_sets))));
+    fprintf(file_ptr, "H5I_mt_g.num_failed_closing_sets                                        = %lld\n\n", 
+            (unsigned long long)(atomic_load(&(H5I_mt_g.num_failed_closing_sets))));
+
+#else /* H5I_LOCK_FREE */
+
     fprintf(file_ptr, "H5I_mt_g.num_do_not_disturb_yields                                     = %lld\n", 
             (unsigned long long)(atomic_load(&(H5I_mt_g.num_do_not_disturb_yields))));
     fprintf(file_ptr, "H5I_mt_g.num_successful_do_not_disturb_sets                            = %lld\n", 
@@ -1223,6 +1379,8 @@ H5I_dump_stats(FILE * file_ptr)
             (unsigned long long)(atomic_load(&(H5I_mt_g.num_do_not_disturb_resets))));
     fprintf(file_ptr, "H5I_mt_g.num_do_not_disturb_recursions                                 = %lld\n\n",
             (unsigned long long)(atomic_load(&(H5I_mt_g.num_do_not_disturb_recursions))));
+
+#endif /* H5I_LOCK_FREE */
 
     fprintf(file_ptr, "H5I_mt_g.global_mutex_acquire_attempts                                 = %lld\n",
             (unsigned long long)(atomic_load(&(H5I_mt_g.global_mutex_acquire_attempts))));
@@ -1558,7 +1716,7 @@ H5I_dump_nz_stats(FILE * file_ptr, const char * tag)
     if ( (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__mark_node__no_ops))) > 0ULL )
         fprintf(file_ptr, "H5I_mt_g.H5I__mark_node__no_ops                                        = %lld\n", 
                 (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__mark_node__no_ops))));
-
+#if ! H5I_LOCK_FREE
     if ( (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__mark_node__global_mutex_locks_for_discard_cb))) > 0ULL )
         fprintf(file_ptr, "H5I_mt_g.H5I__mark_node__global_mutex_locks_for_discard_cb             = %lld\n", 
                 (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__mark_node__global_mutex_locks_for_discard_cb))));
@@ -1579,7 +1737,7 @@ H5I_dump_nz_stats(FILE * file_ptr, const char * tag)
     if ( (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__mark_node__discard_cb_successes))) > 0ULL )
         fprintf(file_ptr, "H5I_mt_g.H5I__mark_node__discard_cb_successes                          = %lld\n", 
                 (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__mark_node__discard_cb_successes))));
-
+#endif /* H5I_LOCK_FREE */
     if ( (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__mark_node__global_mutex_locks_for_free_func))) > 0ULL )
         fprintf(file_ptr, "H5I_mt_g.H5I__mark_node__global_mutex_locks_for_free_func              = %lld\n", 
                 (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__mark_node__global_mutex_locks_for_free_func))));
@@ -1605,13 +1763,31 @@ H5I_dump_nz_stats(FILE * file_ptr, const char * tag)
         fprintf(file_ptr, "H5I_mt_g.H5I__mark_node__retries                                       = %lld\n", 
                 (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__mark_node__retries))));
 
+    if ( (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__mark_node__id_ignored__closing_set_and_wrong_thread))) > 0ULL )
+        fprintf(file_ptr, "H5I_mt_g.H5I__mark_node__id_ignored__closing_set_and_wrong_thread      = %lld\n", 
+                (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__mark_node__id_ignored__closing_set_and_wrong_thread))));
+
+    if ( (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__mark_node__closing_set_and_right_thread))) > 0ULL )
+        fprintf(file_ptr, "H5I_mt_g.H5I__mark_node__closing_set_and_right_thread                  = %lld\n", 
+                (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__mark_node__closing_set_and_right_thread))));
+
 
     /* H5I__remove_common() stats */
 
     if ( (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__remove_common__num_calls))) > 0ULL )
         fprintf(file_ptr, "H5I_mt_g.H5I__remove_common__num_calls                                 = %lld\n", 
                 (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__remove_common__num_calls))));
+#if H5I_LOCK_FREE
+    if ( (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__remove_common__failed_due_to_closing_set_and_wrong_thread))) > 
+         0ULL )
+        fprintf(file_ptr, "H5I_mt_g.H5I__remove_common__failed_due_to_closing_set_and_wrong_thread = %lld\n", 
+                (unsigned long long)
+                (atomic_load(&(H5I_mt_g.H5I__remove_common__failed_due_to_closing_set_and_wrong_thread))));
 
+    if ( (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__remove_common__closing_set_and_right_thread))) > 0ULL )
+        fprintf(file_ptr, "H5I_mt_g.H5I__remove_common__closing_set_and_right_thread              = %lld\n", 
+                (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__remove_common__closing_set_and_right_thread))));
+#endif /* H5I_LOCK_FREE */
     if ( (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__remove_common__already_marked))) > 0ULL )
         fprintf(file_ptr, "H5I_mt_g.H5I__remove_common__already_marked                            = %lld\n", 
                 (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__remove_common__already_marked))));
@@ -1651,6 +1827,8 @@ H5I_dump_nz_stats(FILE * file_ptr, const char * tag)
         fprintf(file_ptr, "H5I_mt_g.H5I__find_id__ids_found                                       = %lld\n", 
                 (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__find_id__ids_found))));
 
+#if ! H5I_LOCK_FREE
+
     if ( (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__find_id__num_calls_to_realize_cb))) > 0ULL )
         fprintf(file_ptr, "H5I_mt_g.H5I__find_id__num_calls_to_realize_cb                         = %lld\n", 
                 (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__find_id__num_calls_to_realize_cb))));
@@ -1663,9 +1841,13 @@ H5I_dump_nz_stats(FILE * file_ptr, const char * tag)
         fprintf(file_ptr, "H5I_mt_g.H5I__find_id__global_mutex_unlocks_for_realize_cb             = %lld\n", 
                 (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__find_id__global_mutex_unlocks_for_realize_cb))));
 
+#endif /* ! H5I_LOCK_FREE */
+
     if ( (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__find_id__num_calls_to_H5I__remove_common))) > 0ULL )
         fprintf(file_ptr, "H5I_mt_g.H5I__find_id__num_calls_to_H5I__remove_common                 = %lld\n", 
                 (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__find_id__num_calls_to_H5I__remove_common))));
+
+#if ! H5I_LOCK_FREE
 
     if ( (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__find_id__num_calls_to_discard_cb))) > 0ULL )
         fprintf(file_ptr, "H5I_mt_g.H5I__find_id__num_calls_to_discard_cb                         = %lld\n", 
@@ -1687,9 +1869,23 @@ H5I_dump_nz_stats(FILE * file_ptr, const char * tag)
         fprintf(file_ptr, "H5I_mt_g.H5I__find_id__future_id_conversions_completed                 = %lld\n", 
                 (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__find_id__future_id_conversions_completed))));
 
+#endif /* ! H5I_LOCK_FREE */
+
     if ( (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__find_id__retries))) > 0ULL )
         fprintf(file_ptr, "H5I_mt_g.H5I__find_id__retries                                         = %lld\n", 
                 (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__find_id__retries))));
+
+#if H5I_LOCK_FREE
+
+    if ( (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__find_id__failed_due_to_closing_set_and_wrong_thread))) > 0ULL )
+        fprintf(file_ptr, "H5I_mt_g.H5I__find_id__failed_due_to_closing_set_and_wrong_thread      = %lld\n", 
+                (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__find_id__failed_due_to_closing_set_and_wrong_thread))));
+
+    if ( (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__find_id__closing_set_and_right_thread))) > 0ULL )
+        fprintf(file_ptr, "H5I_mt_g.H5I__find_id__closing_set_and_right_thread                    = %lld\n", 
+                (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__find_id__closing_set_and_right_thread))));
+
+#endif /* H5I_LOCK_FREE */
 
 
     /* H5I_register() stats */
@@ -1749,6 +1945,18 @@ H5I_dump_nz_stats(FILE * file_ptr, const char * tag)
     if ( (unsigned long long)(atomic_load(&(H5I_mt_g.H5I_subst__num_calls__without_global_mutex))) > 0ULL )
         fprintf(file_ptr, "H5I_mt_g.H5I_subst__num_calls__without_global_mutex                    = %lld\n", 
                 (unsigned long long)(atomic_load(&(H5I_mt_g.H5I_subst__num_calls__without_global_mutex))));
+
+#if H5I_LOCK_FREE
+
+    if ( (unsigned long long)(atomic_load(&(H5I_mt_g.H5I_subst__failed_due_to_closing_set_and_wrong_thread))) > 0ULL )
+        fprintf(file_ptr, "H5I_mt_g.H5I_subst__failed_due_to_closing_set_and_wrong_thread         = %lld\n", 
+                (unsigned long long)(atomic_load(&(H5I_mt_g.H5I_subst__failed_due_to_closing_set_and_wrong_thread))));
+
+    if ( (unsigned long long)(atomic_load(&(H5I_mt_g.H5I_subst__closing_set_and_right_thread))) > 0ULL )
+        fprintf(file_ptr, "H5I_mt_g.H5I_subst__closing_set_and_right_thread                       = %lld\n", 
+                (unsigned long long)(atomic_load(&(H5I_mt_g.H5I_subst__closing_set_and_right_thread))));
+
+#endif /* H5I_LOCK_FREE */
 
     if ( (unsigned long long)(atomic_load(&(H5I_mt_g.H5I_subst__marked_on_entry))) > 0ULL )
         fprintf(file_ptr, "H5I_mt_g.H5I_subst__marked_on_entry                                    = %lld\n", 
@@ -1824,6 +2032,18 @@ H5I_dump_nz_stats(FILE * file_ptr, const char * tag)
         fprintf(file_ptr, "H5I_mt_g.H5I__dec_ref__retries                                         = %lld\n", 
                 (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__dec_ref__retries))));
 
+#if H5I_LOCK_FREE
+
+    if ( (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__dec_ref__id_ignored__closing_set_and_wrong_thread))) > 0ULL )
+        fprintf(file_ptr, "H5I_mt_g.H5I__dec_ref__id_ignored__closing_set_and_wrong_thread        = %lld\n", 
+                (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__dec_ref__id_ignored__closing_set_and_wrong_thread))));
+
+    if ( (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__dec_ref__closing_set_and_right_thread))) > 0ULL )
+        fprintf(file_ptr, "H5I_mt_g.H5I__dec_ref__closing_set_and_right_thread                    = %lld\n", 
+                (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__dec_ref__closing_set_and_right_thread))));
+
+#endif /* H5I_LOCK_FREE */
+
 
     /* H5I__inc_ref() stats */
 
@@ -1854,6 +2074,18 @@ H5I_dump_nz_stats(FILE * file_ptr, const char * tag)
     if ( (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__inc_ref__retries))) > 0ULL )
         fprintf(file_ptr, "H5I_mt_g.H5I__inc_ref__retries                                         = %lld\n", 
                 (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__inc_ref__retries))));
+
+#if H5I_LOCK_FREE
+
+    if ( (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__inc_ref__id_ignored__closing_set_and_wrong_thread))) > 0ULL )
+        fprintf(file_ptr, "H5I_mt_g.H5I__inc_ref__id_ignored__closing_set_and_wrong_thread        = %lld\n", 
+                (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__inc_ref__id_ignored__closing_set_and_wrong_thread))));
+
+    if ( (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__inc_ref__closing_set_and_right_thread))) > 0ULL )
+        fprintf(file_ptr, "H5I_mt_g.H5I__inc_ref__closing_set_and_right_thread                    = %lld\n", 
+                (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__inc_ref__closing_set_and_right_thread))));
+
+#endif /* H5I_LOCK_FREE */
 
 
     /* H5I__iterate_cb_stats() stats */
@@ -1906,6 +2138,20 @@ H5I_dump_nz_stats(FILE * file_ptr, const char * tag)
     if ( (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__iterate_cb__num_retries))) > 0ULL )
         fprintf(file_ptr, "H5I_mt_g.H5I__iterate_cb__num_retries                                  = %lld\n", 
                 (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__iterate_cb__num_retries))));
+
+#if H5I_LOCK_FREE
+
+    if ( (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__iterate_cb__id_ignored__closing_set_and_wrong_thread))) > 
+         0ULL )
+        fprintf(file_ptr, "H5I_mt_g.H5I__iterate_cb__id_ignored__closing_set_and_wrong_thread     = %lld\n", 
+                (unsigned long long)
+                (atomic_load(&(H5I_mt_g.H5I__iterate_cb__id_ignored__closing_set_and_wrong_thread))));
+
+    if ( (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__iterate_cb__closing_set_and_right_thread))) > 0ULL )
+        fprintf(file_ptr, "H5I_mt_g.H5I__iterate_cb__closing_set_and_right_thread                 = %lld\n", 
+                (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__iterate_cb__closing_set_and_right_thread))));
+
+#endif /* H5I_LOCK_FREE */
 
 
     /* H5I__unwrap() stats */
@@ -1961,6 +2207,19 @@ H5I_dump_nz_stats(FILE * file_ptr, const char * tag)
                 (unsigned long long)
                 (atomic_load(&(H5I_mt_g.H5I_is_file_object__global_mutex_unlocks_for_H5T_is_named))));
 
+#if H5I_LOCK_FREE
+
+    /* closing flag stats */
+
+    if ( (unsigned long long)(atomic_load(&(H5I_mt_g.num_successful_closing_sets))) > 0ULL )
+        fprintf(file_ptr, "H5I_mt_g.num_successful_closing_sets                                   = %lld\n", 
+                (unsigned long long)(atomic_load(&(H5I_mt_g.num_successful_closing_sets))));
+
+    if ( (unsigned long long)(atomic_load(&(H5I_mt_g.num_failed_closing_sets))) > 0ULL )
+        fprintf(file_ptr, "H5I_mt_g.num_failed_closing_sets                                       = %lld\n", 
+                (unsigned long long)(atomic_load(&(H5I_mt_g.num_failed_closing_sets))));
+
+#else /* H5I_LOCK_FREE */
 
     /* do_not_disturb stats */
 
@@ -1983,6 +2242,8 @@ H5I_dump_nz_stats(FILE * file_ptr, const char * tag)
     if ((unsigned long long)(atomic_load(&(H5I_mt_g.num_do_not_disturb_recursions))) > 0ULL)
         fprintf(file_ptr, "H5I_mt_g.num_do_not_disturb_recursions                                 = %lld\n",
                 (unsigned long long)(atomic_load(&(H5I_mt_g.num_do_not_disturb_recursions))));
+
+#endif /* H5I_LOCK_FREE */
 
     /* global mutex acquire / dealock avoidance stats */
 
@@ -2759,6 +3020,418 @@ done:
 
 #ifdef H5_HAVE_MULTITHREAD
 
+#if H5I_LOCK_FREE
+
+/*-------------------------------------------------------------------------
+ * Function:    H5I__mark_node
+ *
+ * Purpose:     Attempts to mark the node for freeing and calls the free
+ *              function for the object, if any
+ *
+ *              Addendum 9/6/23:
+ *
+ *              A more detailed description of the action of this function
+ *              is necessary for the multi-thread conversion.  From reading 
+ *              the code of the single thread version, I get the following.
+ *
+ *              if udata->force is set, or 
+ *
+ *                 udata->app_ref is TRUE and info_ptr->count <= 1, or
+ *
+ *                 udata->app_ref is FALSE and 
+ *                  info_ptr->count - info_ptr->app_count <= 1
+ *
+ *              *info_ptr (the node in the original comment) is considered
+ *              for marking.
+ *
+ *              If an instance of *info_ptr is considered for marking, it 
+ *              will actually be marked if either:
+ *
+ *              1) info_ptr->is_future is TRUE, and either 
+ *                 (info_ptr->discard_cb)((void *)info->object) succeeds or
+ *                 udata->force is TRUE.
+ *
+ *              2) udata->type_info->cls->free_func is NULL, or either
+ *                 (udata->type_info->cls->free_func)((void *)info_ptr->object, 
+ *                 H5_REQUEST_NULL) succeeds or udata->force is TRUE.
+ *
+ *              Note that in both cases, the failed call to the discard_cb 
+ *              or free_func is ignored.  Further, if udata->force is false, 
+ *              *info_ptr with its possibly corrupted *object is left in 
+ *              the index.
+ *
+ *              This seems questionable to me, but since this is what the
+ *              single thread version of the code does, we will stay with
+ *              it for now.  Obviously, this decision should be revisited
+ *              once the prototype is up and running.
+ *
+ *                                                   -- JRM
+ *
+ *              Addendum 9/9/25:
+ *
+ *              Reworked function heavily to avoid ID locking.  Did this by 
+ *              discarding the existing future ID API for a multi-thread 
+ *              friendly version, and by making any ID whose free func has 
+ *              failed visible only to the thread that decremented the ref 
+ *              count to zero.  See RFC and H5I_mt_id_info_t header comment
+ *              for further details.
+ *
+ *                                                   -- JRM
+ *
+ * Return:      SUCCEED/FAIL
+ *
+ * Programmer:  Neil Fortner
+ *              Friday, July 10, 2015
+ *
+ *-------------------------------------------------------------------------
+ */
+static herr_t
+H5I__mark_node(void *_info, void H5_ATTR_UNUSED *key, void *_udata)
+{
+    hbool_t                 is_candidate;
+    hbool_t                 mark;
+    hbool_t                 done = FALSE;
+    hbool_t                 have_global_mutex = TRUE; /*trivially so for single thread builds */
+    hbool_t                 global_mutex_acquired;
+    hbool_t                 cls_is_mt_safe;
+    hbool_t                 free_func_touches_vl;
+    hbool_t                 bool_result;
+    int                     pass = 0;
+    H5I_mt_id_info_kernel_t init_info_k;
+    H5I_mt_id_info_kernel_t info_k;
+    H5I_mt_id_info_kernel_t mod_info_k;
+    H5I_mt_id_info_t       *id_info_ptr  = (H5I_mt_id_info_t *)_info;        /* Current ID info being worked with */
+    H5I_mt_clear_type_ud_t *udata        = (H5I_mt_clear_type_ud_t *)_udata; /* udata struct */
+    herr_t                  result;
+    herr_t                  ret_value = SUCCEED; /* Return value */
+
+    FUNC_ENTER_NOAPI(FAIL)
+
+#if H5I_MT_DEBUG
+    fprintf(stdout, "\n\n   H5I__mark_node() called. \n\n\n");
+#endif /* H5I_MT_DEBUG */
+
+    /* Sanity checks */
+    assert(id_info_ptr);
+    assert(udata);
+    assert(udata->type_info);
+
+    atomic_fetch_add(&(H5I_mt_g.H5I__mark_node__num_calls), 1ULL);
+
+    cls_is_mt_safe = ((udata->type_info->cls->flags & H5I_CLASS_IS_MT_SAFE) != 0);
+    free_func_touches_vl = ((udata->type_info->cls->flags & H5I_CLASS_FREE_FUNC_TOUCHES_VL) != 0);
+
+#if defined(H5_HAVE_THREADSAFE) || defined(H5_HAVE_MULTITHREAD)
+
+    if ( H5TS_have_mutex(&H5_g.init_lock, &have_global_mutex) < 0 )
+
+        HGOTO_ERROR(H5E_LIB, H5E_CANTGET, FAIL, "Can't determine whether we have the global mutex");
+
+#endif /* defined(H5_HAVE_THREADSAFE) || defined(H5_HAVE_MULTITHREAD) */
+
+    do {
+
+        /* If another thread modified id_info_ptr-k while we are preparing our modified copy,
+         * we have to re-run this do-while loop.  Since we start each pass fresh, start by 
+         * reseting all the flags to their initial values.
+         */
+        global_mutex_acquired = FALSE;
+        is_candidate          = FALSE;
+        mark                  = FALSE;
+
+        /* dito the structures for local copies of the kernel */
+        memset(&init_info_k, 0, sizeof(H5I_mt_id_info_kernel_t));
+        memset(&info_k, 0, sizeof(H5I_mt_id_info_kernel_t));
+        memset(&mod_info_k, 0, sizeof(H5I_mt_id_info_kernel_t));
+
+        /* increment the pass and log retries */
+        if ( pass++ >= 1 ) {
+
+            atomic_fetch_add(&(H5I_mt_g.H5I__mark_node__retries), 1ULL);
+        }
+
+        /* load the atomic kernel from *id_info_ptr into info_k.  Note that this is a snapshot of the 
+         * state of *id_info_ptr, and can be changed before we get to writing it back.
+         */
+        init_info_k = atomic_load(&(id_info_ptr->k));
+
+        if (init_info_k.marked) {
+
+            /* this is is already marked for deletion -- nothing to do here */
+
+            /* update stats */
+            if ( pass <= 1 ) {
+
+                atomic_fetch_add(&(H5I_mt_g.H5I__mark_node__already_marked), 1ULL);
+
+            } else {
+
+                atomic_fetch_add(&(H5I_mt_g.H5I__mark_node__marked_by_another_thread), 1ULL);
+            }
+            break;
+        }
+
+        if ( init_info_k.closing ) {
+
+#if H5I_BYPASS_HDF5_TID
+            if ( ( ! init_info_k.tid_valid ) || ( ! pthread_equal(init_info_k.tid, pthread_self()) ) )
+#else /* H5I_BYPASS_HDF5_TID */
+            if ( init_info_k.tid != H5TS_thread_id() ) 
+#endif /* H5I_BYPASS_HDF5_TID */
+            {
+                /* update stats for entries skipped due to closing set and tid mismatch */
+                atomic_fetch_add(&(H5I_mt_g.H5I__mark_node__id_ignored__closing_set_and_wrong_thread), 1ULL);
+                break;
+
+            } else {
+
+                /* update stats for repeat attempt mark an entry that is already closing */
+                atomic_fetch_add(&(H5I_mt_g.H5I__mark_node__closing_set_and_right_thread), 1ULL);
+            }
+        }
+
+
+        if ((udata->force) || ((init_info_k.count - ((!udata->app_ref) * init_info_k.app_count)) <= 1)) {
+
+            is_candidate = TRUE;
+
+        }
+
+        if ( ! is_candidate ) {
+
+            /* we have nothing to do -- just break out of the while loop */
+
+            /* update stats */
+            atomic_fetch_add(&(H5I_mt_g.H5I__mark_node__no_ops), 1ULL);
+
+            break;
+        }
+
+        /* If we get this far, attempt to set the closing flag.
+         * If this faile, start over.  Note that we set tid here as well, as 
+         * if the attempt to call the free func fails, this ID will be visible 
+         * only to the current thread, and that thread is responsible for 
+         * further attempts to discard the ID.
+         */
+        mod_info_k.count             = init_info_k.count;
+        mod_info_k.app_count         = init_info_k.app_count;
+        mod_info_k.object            = init_info_k.object;
+#if H5I_BYPASS_HDF5_TID
+        mod_info_k.tid               = pthread_self();
+        mod_info_k.tid_valid         = TRUE;
+        assert( ( ! init_info_k.tid_valid ) || ( pthread_equal(init_info_k.tid, pthread_self()) ) );
+#else
+        mod_info_k.tid               = H5TS_thread_id()
+        assert( ( 0 == init_info_k.tic ) || ( init_info_k.tid == H5TS_thread_id() ) );
+#endif
+        mod_info_k.marked            = init_info_k.marked;
+        mod_info_k.closing           = TRUE;
+
+        if ( closing_rpt_fcn ) {
+
+            H5_GCC_CLANG_DIAG_OFF("cast-qual")
+            (closing_rpt_fcn)(id_info_ptr->id, (void *)(init_info_k.object), H5I_CLOSING_STAT__PENDING);
+            H5_GCC_CLANG_DIAG_ON("cast-qual")
+        }
+
+        if ( ! atomic_compare_exchange_strong(&(id_info_ptr->k), &init_info_k, mod_info_k) ) {
+
+            /* Some other thread changed the value of id_info_ptr->k since we last read
+             * it.  Thus we must return to the beginning of the do loop and start
+             * again.  Note that it is possible that by that time, there will be
+             * nothing left to do.
+             */
+
+            if ( closing_rpt_fcn ) {
+
+                H5_GCC_CLANG_DIAG_OFF("cast-qual")
+                (closing_rpt_fcn)(id_info_ptr->id, (void *)(init_info_k.object), H5I_CLOSING_STAT__FAIL);
+                H5_GCC_CLANG_DIAG_ON("cast-qual")
+            }
+
+            /* update stats */ 
+            atomic_fetch_add(&(H5I_mt_g.num_failed_closing_sets), 1ULL);
+
+            continue;
+
+        } else {
+
+            if ( closing_rpt_fcn ) {
+
+                H5_GCC_CLANG_DIAG_OFF("cast-qual")
+                (closing_rpt_fcn)(id_info_ptr->id, (void *)(init_info_k.object), H5I_CLOSING_STAT__SUCCESS);
+                H5_GCC_CLANG_DIAG_ON("cast-qual")
+            }
+
+            /* On the face of it, it would seem that we could just update info_k
+             * to match mod_info_k, and use it in the next atomic_compare_exchange_strong()
+             * call.  However, for reason or reasons unknown, this doesn't work.
+             *
+             * Instead, we reload info_k after the atomic_compare_exchange_strong(),
+             * and verify that it contains the expected values.
+             */
+            info_k = atomic_load(&(id_info_ptr->k));
+
+            assert(info_k.count             == mod_info_k.count);
+            assert(info_k.app_count         == mod_info_k.app_count);
+            assert(info_k.object            == mod_info_k.object);
+#if H5I_BYPASS_HDF5_TID
+            assert(info_k.tid_valid == mod_info_k.tid_valid);
+
+            if ( info_k.tid_valid ) {
+
+                assert( pthread_equal(info_k.tid, pthread_self()) );
+            }
+#else
+            assert(info_k.tid == mod_info_k.tid);
+#endif
+
+            assert(info_k.marked            == mod_info_k.marked);
+            assert(info_k.closing           == mod_info_k.closing);
+
+            /* update stats */ 
+            atomic_fetch_add(&(H5I_mt_g.num_successful_closing_sets), 1ULL);
+        }
+
+
+        {
+            /* Check for a 'free' function and call it, if it exists */
+            if ( udata->type_info->cls->free_func ) {
+
+                if ( ( ! have_global_mutex ) && ( ! cls_is_mt_safe ) && ( ! free_func_touches_vl ) ) {
+
+                    H5_API_LOCK
+
+                    global_mutex_acquired = TRUE;
+
+                    atomic_fetch_add(&(H5I_mt_g.H5I__mark_node__global_mutex_locks_for_free_func), 1ULL);
+                }
+
+                H5_GCC_CLANG_DIAG_OFF("cast-qual")
+                result = (udata->type_info->cls->free_func)((void *)info_k.object, H5_REQUEST_NULL);
+                H5_GCC_CLANG_DIAG_ON("cast-qual")
+
+                /* drop the global mutex if it was acquired */
+                if ( global_mutex_acquired ) {
+
+                    H5_API_UNLOCK
+
+                    atomic_fetch_add(&(H5I_mt_g.H5I__mark_node__global_mutex_unlocks_for_free_func), 1ULL);
+                }
+
+                if ( result < 0 ) {
+
+                    /* the free function failed */
+
+                    if (udata->force) {
+#ifdef H5I_DEBUG
+                        if (H5DEBUG(I)) {
+                            fprintf(H5DEBUG(I),
+                                      "H5I: free type=%d obj=0x%08lx "
+                                      "failure ignored\n",
+                                      (int)udata->type_info->cls->type, (unsigned long)(info_k.object));
+                        }
+#endif /* H5I_DEBUG */
+
+                        /* update stats */
+                        atomic_fetch_add(&(H5I_mt_g.H5I__mark_node__free_func_failures_marked), 1ULL);
+
+                        /* Indicate node should be removed from list */
+                        mark = TRUE;
+
+                    } else {
+
+                        /* If the force flag is not set, we leave *info_ptr alone and don't mark it 
+                         * for deletion.  
+                         *
+                         * This seems questionable to me, since now info_ptr->object is potentially 
+                         * corrupted.  However, that is what the single thread code does, so keep 
+                         * it that way for now.  Obviously, this decision should be reviewed once 
+                         * we have the prototype up and running.
+                         *                                                JRM -- 9/8/23
+                         */
+                        atomic_fetch_add(&(H5I_mt_g.H5I__mark_node__free_func_failures_unmarked), 1ULL);
+                    }
+                }
+                else { /* free function succeeded */
+
+                    /* update stats */
+                    atomic_fetch_add(&(H5I_mt_g.H5I__mark_node__free_func_successes), 1ULL);
+
+                    /* Indicate node should be removed from list */
+                    mark = TRUE;
+#if 0 /* JRM */
+                    fprintf(stdout, "H5I__mark_node(): The free function succeeded -- mark = %d.\n", (int)mark);
+#endif /* JRM */
+                }
+            }
+        }
+
+        if ( mark ) {
+
+            /* If we have set marked to TRUE, must attempt to replace the current value of 
+             * info_ptr->k with our modified version.
+             *
+             * First setup mod_info_k.  The only fields we will touch are the marked boolean,
+             * the ref counts, and the object field.  Also reset the cleared flag and invalidate
+             * the thread id. All other value are drawn from info_k that we read at the 
+             * top of the do/while loop.
+             */
+            mod_info_k.count             = 0;
+            mod_info_k.app_count         = 0;
+            mod_info_k.object            = NULL;
+#if H5I_BYPASS_HDF5_TID
+            mod_info_k.tid_valid         = FALSE;
+            mod_info_k.tid               = info_k.tid;
+#else
+            mod_info_k.tid               = 0;
+#endif
+            mod_info_k.marked            = TRUE;
+            mod_info_k.closing           = FALSE;
+
+            /* now attempt to overwrite the value of info_ptr->k.  Since we set the closing flag
+             * this must succeed.  Hence the assert.
+             */
+            bool_result = atomic_compare_exchange_strong(&(id_info_ptr->k), &info_k, mod_info_k);
+            assert(bool_result);
+
+            /* no need to update update stats here -- will increment H5I_mt_g.H5I__mark_node__marked
+             * after we exit the do/while loop
+             */
+
+            done = TRUE;
+
+        } else {
+
+            /* Since we got this far, and mark is not set, the free func must have failed.
+             * Thus the current thread is responsible for further attempts to free the object
+             * as required.
+             */
+
+            /* update stats */
+            atomic_fetch_add(&(H5I_mt_g.H5I__mark_node__free_func_failures_unmarked), 1ULL);
+
+            done = TRUE;
+        }
+    } while ( ! done );
+
+    if ( mark ) {
+
+        /* update stats */
+        atomic_fetch_add(&(H5I_mt_g.H5I__mark_node__marked), 1ULL);
+
+        /* Decrement the number of IDs in the type */
+        atomic_fetch_sub(&(udata->type_info->id_count), 1);
+    }
+
+done:
+
+    FUNC_LEAVE_NOAPI(ret_value)
+
+} /* end H5I__mark_node() */
+
+#else /* H5I_LOCK_FREE */
+
 /*-------------------------------------------------------------------------
  * Function:    H5I__mark_node
  *
@@ -3436,6 +4109,8 @@ done:
 
 } /* end H5I__mark_node() */
 
+#endif /* H5I_LOCK_FREE */
+
 #else /* H5_HAVE_MULTITHREAD */
 
 /*-------------------------------------------------------------------------
@@ -4018,6 +4693,11 @@ H5I_register_using_existing_id(H5I_type_t type, void *object, hbool_t app_ref, h
 
         } else {
 
+            /* with recent modifications, it is also possible that the ID is marked as closing, and 
+             * normally invisible to any thread other than the one that marked it as closing.  
+             * That said, it still exists, and thus cannot be just overwritten.  Until it is actually
+             * deleted or marked for deletion, we have to treat the ID as in use.
+             */
             atomic_fetch_add(&(H5I_mt_g.H5I_register_using_existing_id__num_id_already_in_use), 1ULL);
             HGOTO_ERROR(H5E_ID, H5E_BADRANGE, FAIL, "ID already in use");
         }
@@ -4190,6 +4870,196 @@ done:
 #endif /* H5_HAVE_MULTITHREAD */
 
 #ifdef H5_HAVE_MULTITHREAD
+
+#if H5I_LOCK_FREE
+
+/*-------------------------------------------------------------------------
+ * Function:    H5I_subst
+ *
+ * Purpose:     Substitute a new object pointer for the specified ID.
+ *
+ *              Re-written for multi-thread.
+ *
+ * Return:      Success:    Non-NULL previous object pointer associated
+ *                          with the specified ID.
+ *              Failure:    NULL
+ *
+ * Programmer:  Quincey Koziol
+ *              Saturday, February 27, 2010
+ *
+ * Changes:     Added calls to H5I__enter() and H5I__exit() to track 
+ *              the number of threads in H5I.  If 
+ *              H5I_subst() is ever called from within 
+ *              H5I, we will need to add a boolean prameter to control 
+ *              the H5I__enter/exit calls.
+ *
+ *                                          JRM -- 7/5/24
+ *
+ *              Modified to remove ID locking.  See discussion in 
+ *              header comment for H5I_mt_id_info_t for details.
+ *
+ *                                          JRM -- 9/10/25
+ *
+ *-------------------------------------------------------------------------
+ */
+void *
+H5I_subst(hid_t id, const void *new_object)
+{
+    hbool_t                 done = FALSE;
+    hbool_t                 have_global_mutex = TRUE; /* trivially true in the single thread case */
+    int                     pass = 0;
+    H5I_mt_id_info_kernel_t info_k;
+    H5I_mt_id_info_kernel_t mod_info_k;
+    H5I_mt_id_info_t       *id_info_ptr  = NULL; /* Pointer to the ID's info */
+    const void             *old_object;
+    void                   *ret_value = NULL; /* Return value */
+
+    FUNC_ENTER_NOAPI(NULL)
+
+    H5I__enter(FALSE);
+
+#if H5I_MT_DEBUG
+    fprintf(stdout, "\n\n   H5I_subst() called. \n\n\n");
+#endif /* H5I_MT_DEBUG */
+
+    atomic_fetch_add(&(H5I_mt_g.H5I_subst__num_calls), 1ULL);
+
+#if defined(H5_HAVE_THREADSAFE) || defined(H5_HAVE_MULTITHREAD)
+
+    if ( H5TS_have_mutex(&H5_g.init_lock, &have_global_mutex) < 0 )
+
+        HGOTO_ERROR(H5E_LIB, H5E_CANTGET, NULL, "Can't determine whether we have the global mutex");
+        
+#endif /* defined(H5_HAVE_THREADSAFE) || defined(H5_HAVE_MULTITHREAD) */
+
+    if ( have_global_mutex ) {
+
+        atomic_fetch_add(&(H5I_mt_g.H5I_subst__num_calls__with_global_mutex), 1ULL);
+
+    } else {
+        
+        atomic_fetch_add(&(H5I_mt_g.H5I_subst__num_calls__without_global_mutex), 1ULL);
+    }
+
+    do {
+
+        id_info_ptr = NULL;
+        old_object = NULL;
+
+        memset(&info_k, 0, sizeof(H5I_mt_id_info_kernel_t));
+        memset(&mod_info_k, 0, sizeof(H5I_mt_id_info_kernel_t));
+
+
+        /* increment the pass and log retries */
+        if ( pass++ >= 1 ) {
+
+            atomic_fetch_add(&(H5I_mt_g.H5I_subst__retries), 1ULL);
+        }
+
+        if ( NULL == (id_info_ptr = H5I__find_id(id)) )
+
+            HGOTO_ERROR(H5E_ID, H5E_NOTFOUND, NULL, "can't find ID");
+
+        info_k = atomic_load(&(id_info_ptr->k));
+
+
+        if ( info_k.closing ) {
+
+            /* arguable, we should dis-allow this operation for all threads 
+             * if the closing flag is set.  Consider this, but allow it for now.
+             */
+
+#if H5I_BYPASS_HDF5_TID
+            if ( ( ! info_k.tid_valid ) || ( ! pthread_equal(info_k.tid, pthread_self()) ) )
+#else /* H5I_BYPASS_HDF5_TID */
+            if ( info_k.tid != H5TS_thread_id() )
+#endif /* H5I_BYPASS_HDF5_TID */
+            {
+                /* update stats for entries skipped due to closing set and tid mismatch.
+                 */
+                atomic_fetch_add(&(H5I_mt_g.H5I_subst__failed_due_to_closing_set_and_wrong_thread), 1ULL);
+
+                /* report can't find ID error, as once the closing flag is set, only the 
+                 * thread that triggered this can see the ID. 
+                 */
+                HGOTO_ERROR(H5E_ID, H5E_NOTFOUND, NULL, "can't find ID");
+
+            } else {
+
+                atomic_fetch_add(&(H5I_mt_g.H5I_subst__closing_set_and_right_thread), 1ULL);
+            }
+        }
+
+
+        if ( info_k.marked ) {
+
+            /* this is is already marked for deletion -- nothing to do here */
+
+            /* update stats */
+            if ( pass <= 1 ) {
+
+                atomic_fetch_add(&(H5I_mt_g.H5I_subst__marked_on_entry), 1ULL);
+
+            } else {
+
+                atomic_fetch_add(&(H5I_mt_g.H5I_subst__marked_during_call), 1ULL);
+            }
+            break;
+        }
+
+#if H5I_BYPASS_HDF5_TID
+        assert( ( ! info_k.tid_valid ) || ( pthread_equal(info_k.tid, info_k.tid) ) );
+#else
+        assert( ( 0ULL == info_k.tid ) || ( info_k.tid != H5TS_thread_id() ) );
+#endif
+
+        old_object = info_k.object;
+
+        /* setup the modified version of the id info kernel */
+        mod_info_k.count             = info_k.count;
+        mod_info_k.app_count         = info_k.app_count;
+        mod_info_k.object            = new_object;
+#if H5I_BYPASS_HDF5_TID
+        mod_info_k.tid               = info_k.tid;
+        mod_info_k.tid_valid         = info_k.tid_valid;
+#else
+        mod_info_k.tid               = info_k.tid;
+#endif
+        mod_info_k.marked            = info_k.marked;
+        mod_info_k.closing           = info_k.closing;
+
+
+        if ( atomic_compare_exchange_strong(&(id_info_ptr->k), &info_k, mod_info_k) ) {
+
+            done = TRUE;
+
+        } else {
+
+            /* the atomic compare exchange strong failed -- try again */
+
+        }
+    } while ( ! done );
+
+    if ( done ) {
+
+        H5_GCC_CLANG_DIAG_OFF("cast-qual")
+        ret_value = (void *)old_object;
+        H5_GCC_CLANG_DIAG_ON("cast-qual")
+
+    } else {
+
+        atomic_fetch_add(&(H5I_mt_g.H5I_subst__failures), 1ULL);
+    } 
+
+done:
+
+    H5I__exit();
+
+    FUNC_LEAVE_NOAPI(ret_value)
+
+} /* end H5I_subst() */
+
+#else /* H5I_LOCK_FREE */
 
 /*-------------------------------------------------------------------------
  * Function:    H5I_subst
@@ -4369,6 +5239,8 @@ done:
 
 } /* end H5I_subst() */
 
+#endif /* H5I_LOCK_FREE */
+
 #else /* H5_HAVE_MULTITHREAD */
 
 /*-------------------------------------------------------------------------
@@ -4412,6 +5284,123 @@ done:
 #endif /* H5_HAVE_MULTITHREAD */
 
 #ifdef H5_HAVE_MULTITHREAD
+
+#if H5I_LOCK_FREE
+
+/*-------------------------------------------------------------------------
+ * Function:    H5I_object
+ *
+ * Purpose:     Find an object pointer for the specified ID.
+ *
+ *              Modified for multi-thread.
+ *
+ * Return:      Success:    Non-NULL object pointer associated with the
+ *                          specified ID
+ *
+ *              Failure:    NULL
+ *
+ * Changes:     To track threads entering and exiting H5I (needed for free 
+ *              list management), changed the name of the existing 
+ *              H5I_object() function to H5I_object_internal()
+ *              and created a new version of H5I_object() that 
+ *              simply calls H5I__enter(), H5I_object_internal(),
+ *              and then H5I__exit().
+ *
+ *              It would make more sense to just add another parameter to 
+ *              H5I_object(), but until we have a single version 
+ *              of the H5I code, this will be complicated.  Make this 
+ *              change when we get to the production version.
+ * 
+ *                                              JRM -- 07/04/24
+ *
+ *-------------------------------------------------------------------------
+ */
+void *
+H5I_object(hid_t id)
+{
+    void                   *ret_value = NULL; /* Return value */
+
+    FUNC_ENTER_NOAPI_NOERR
+
+    H5I__enter(FALSE);
+
+    ret_value = H5I_object_internal(id);
+
+    H5I__exit();
+
+    FUNC_LEAVE_NOAPI(ret_value)
+
+} /* end H5I_object() */
+
+void *
+H5I_object_internal(hid_t id)
+{
+    H5I_mt_id_info_kernel_t info_k;
+    H5I_mt_id_info_t       *info_ptr      = NULL; /* Pointer to the ID info */
+    void                   *ret_value = NULL; /* Return value */
+
+    FUNC_ENTER_NOAPI_NOERR
+
+#if H5I_MT_DEBUG
+    fprintf(stderr, "   H5I_object(0x%llx) called. \n", (unsigned long long)id);
+#endif /* H5I_MT_DEBUG */
+
+    /* General lookup of the ID */
+    if (NULL != (info_ptr = H5I__find_id(id))) {
+
+        /* load the kernel */
+        info_k = atomic_load(&(info_ptr->k));
+
+        if ( info_k.closing ) {
+
+            /* This ID must only be visible to the thread which set the closing 
+             * flag.
+             */
+#if H5I_BYPASS_HDF5_TID
+            if ( ( ! info_k.tid_valid ) || ( ! pthread_equal(info_k.tid, pthread_self()) ) )
+#else /* H5I_BYPASS_HDF5_TID */
+            if ( info_k.tid != H5TS_thread_id() )
+#endif /* H5I_BYPASS_HDF5_TID */
+            {
+                /* If we ever instrument H5I_object, update stats for entries skipped 
+                 * due to closing set and tid mismatch here.
+                 */
+
+                /* This ID is invisible to this thread.  Just set ret_value to NULL. */
+                ret_value = NULL;
+            }
+        } else if ( info_k.marked ) {
+
+            /* If we ever instrument H5I_object, update stats for entries skipped 
+             * due to marked for deletion.
+             */
+
+            /* this is is already marked for deletion -- set ret_value to NULL. */
+            ret_value = NULL;
+
+        } else {
+
+            /* set ret_value to the object ptr. Note that this pointer can be 
+             * deleted out from under the caller unless the H5I_object() call 
+             * and the use of the pointer is bracketed with inc ref / dec ref 
+             * calls.
+             */
+            H5_GCC_CLANG_DIAG_OFF("cast-qual")
+            ret_value = (void *)info_k.object;
+            H5_GCC_CLANG_DIAG_ON("cast-qual")
+        }
+    }
+
+#if H5I_MT_DEBUG
+    fprintf(stderr, "   H5I_object(0x%llx) returns 0x%llx. \n", 
+              (unsigned long long)id, (unsigned long long)ret_value);
+#endif /* H5I_MT_DEBUG */
+
+    FUNC_LEAVE_NOAPI(ret_value)
+
+} /* end H5I_object() */
+
+#else /* H5I_LOCK_FREE */
 
 /*-------------------------------------------------------------------------
  * Function:    H5I_object
@@ -4492,6 +5481,8 @@ H5I_object_internal(hid_t id)
 
 } /* end H5I_object() */
 
+#endif /* H5I_LOCK_FREE */
+
 #else /* H5_HAVE_MULTITHREAD */
 
 /*-------------------------------------------------------------------------
@@ -4528,6 +5519,8 @@ H5I_object(hid_t id)
 #endif /* H5_HAVE_MULTITHREAD */
 
 #ifdef H5_HAVE_MULTITHREAD 
+
+#if H5I_LOCK_FREE
 
 /*-------------------------------------------------------------------------
  * Function:    H5I_object_verify
@@ -4596,13 +5589,47 @@ H5I_object_verify_internal(hid_t id, H5I_type_t type)
     /* Verify that the type of the ID is correct & lookup the ID */
     if ( ( type == H5I_TYPE(id) ) && ( NULL != (info_ptr = H5I__find_id(id)) ) ) {
 
-        /* Get the object pointer to return */
-
+        /* load the kernel */
         info_k = atomic_load(&(info_ptr->k));
+                
+        if ( ( info_k.closing ) &&
+#if H5I_BYPASS_HDF5_TID
+             ( ( ( ! info_k.tid_valid ) || ( ! pthread_equal(info_k.tid, pthread_self()) ) ) ) )
+#else /* H5I_BYPASS_HDF5_TID */
+             ( info_k.tid != H5TS_thread_id() ) )
+#endif /* H5I_BYPASS_HDF5_TID */
+        {
+            /* This ID must only be visible to the thread which set the closing
+             * flag.
+             */
 
-        H5_GCC_CLANG_DIAG_OFF("cast-qual")
-        ret_value = (void *)info_k.object;
-        H5_GCC_CLANG_DIAG_ON("cast-qual")
+            /* If we ever instrument H5I_object_verify() update stats for failure due 
+             * to ID marked closing and thread ID mis-match here.
+             */
+
+            /* This ID is invisible to this thread.  Just set ret_value to NULL. */
+            ret_value = NULL;
+   
+        } else if ( info_k.marked ) {
+
+            /* If we ever instrument H5I_object_verify() update stats for failure due 
+             * to ID marked for deletion here.
+             */
+
+            /* this is is already marked for deletion -- set ret_value to NULL. */
+            ret_value = NULL;
+
+        } else {
+
+            /* set ret_value to the object ptr. Note that this pointer can be
+             * deleted out from under the caller unless the H5I_object() call
+             * and the use of the pointer is bracketed with inc ref / dec ref
+             * calls.
+             */
+            H5_GCC_CLANG_DIAG_OFF("cast-qual")
+            ret_value = (void *)info_k.object;
+            H5_GCC_CLANG_DIAG_ON("cast-qual")
+        }
     }
 
 #if H5I_MT_DEBUG
@@ -4613,6 +5640,95 @@ H5I_object_verify_internal(hid_t id, H5I_type_t type)
     FUNC_LEAVE_NOAPI(ret_value)
 
 } /* H5I_object_verify_internal() */
+
+#else /* H5I_LOCK_FREE */
+
+/*-------------------------------------------------------------------------
+ * Function:    H5I_object_verify
+ *
+ * Purpose:     Find an object pointer for the specified ID, verifying that
+ *              its in a particular type.
+ *
+ *              Updated for multi-thread.
+ *
+ * Return:      Success:    Non-NULL object pointer associated with the
+ *                          specified ID.
+ *              Failure:    NULL
+ *
+ * Programmer:  Quincey Koziol
+ *              Wednesday, July 31, 2002
+ *
+ * Changes:     To track threads entering and exiting H5I (needed for free
+ *              list management), changed the name of the existing
+ *              H5I_object_verify() function to H5I_object_verify_internal()
+ *              and created a new version of H5I_object_verify() that
+ *              simply calls H5I__enter(), H5I_object_verify_internal(),
+ *              and then H5I__exit().
+ *
+ *              It would make more sense to just add another parameter to
+ *              H5I_object_verify(), but until we have a single version
+ *              of the H5I code, this will be complicated.  Make this
+ *              change when we get to the production version.
+ *
+ *                                              JRM -- 07/04/24
+ *
+ *-------------------------------------------------------------------------
+ */
+void *
+H5I_object_verify(hid_t id, H5I_type_t type)
+{
+    void                   *ret_value = NULL; /* Return value */
+
+    FUNC_ENTER_NOAPI_NOERR
+
+    H5I__enter(FALSE);
+
+    ret_value = H5I_object_verify_internal(id, type);
+
+    H5I__exit();
+
+    FUNC_LEAVE_NOAPI(ret_value)
+
+} /* end H5I_object_verify() */
+
+void *
+H5I_object_verify_internal(hid_t id, H5I_type_t type)
+{
+    H5I_mt_id_info_kernel_t  info_k;
+    H5I_mt_id_info_t        *info_ptr      = NULL; /* Pointer to the ID info */
+    void                    *ret_value     = NULL; /* Return value */
+
+    FUNC_ENTER_NOAPI_NOERR
+
+#if H5I_MT_DEBUG
+    fprintf(stdout, "   H5I_object_verify(id = 0x%llx, type = %d) called. \n",
+              (unsigned long long)id, (int)type);
+#endif /* H5I_MT_DEBUG */
+
+    assert( ( type >= 1 ) && ( (int)type < atomic_load(&(H5I_mt_g.next_type)) ) );
+
+    /* Verify that the type of the ID is correct & lookup the ID */
+    if ( ( type == H5I_TYPE(id) ) && ( NULL != (info_ptr = H5I__find_id(id)) ) ) {
+
+        /* Get the object pointer to return */
+
+        info_k = atomic_load(&(info_ptr->k));
+
+        H5_GCC_CLANG_DIAG_OFF("cast-qual")
+        ret_value = (void *)info_k.object;
+        H5_GCC_CLANG_DIAG_ON("cast-qual")
+    }
+
+#if H5I_MT_DEBUG
+    fprintf(stdout, "   H5I_object_verify(id = 0x%llx, type = %d) returns 0x%llx. \n",
+              (unsigned long long)id, (int)type, (unsigned long long)ret_value);
+#endif /* H5I_MT_DEBUG */
+
+    FUNC_LEAVE_NOAPI(ret_value)
+
+} /* H5I_object_verify_internal() */
+
+#endif /* H5I_LOCK_FREE */
 
 #else /* H5_HAVE_MULTITHREAD */
 
@@ -4992,6 +6108,219 @@ H5I__remove_verify(hid_t id, H5I_type_t type)
 
 #ifdef H5_HAVE_MULTITHREAD 
 
+#if H5I_LOCK_FREE
+
+/*-------------------------------------------------------------------------
+ * Function:    H5I__remove_common
+ *
+ * Purpose:     Common code to remove a specified ID from its type.
+ *
+ *              Modified for MT.
+ *
+ * Return:      Success:    A pointer to the object that was removed, the
+ *                          same pointer which would have been found by
+ *                          calling H5I_object().
+ *              Failure:    NULL
+ *
+ * Programmer:  Quincey Koziol
+ *              October 3, 2013
+ *
+ *-------------------------------------------------------------------------
+ */
+static void *
+H5I__remove_common(H5I_type_info_t *type_info_ptr, hid_t id)
+{
+    hbool_t                 done = FALSE;
+    int                     pass = 0;
+    H5I_type_t              type;
+    H5I_mt_id_info_t       *id_info_ptr  = NULL; /* Pointer to the current ID */
+    H5I_mt_id_info_t       *dup_id_info_ptr;     /* Pointer to the current ID */
+    H5I_mt_id_info_kernel_t info_k;
+    H5I_mt_id_info_kernel_t mod_info_k;
+    void                   *ret_value = NULL;    /* Return value */
+
+    FUNC_ENTER_PACKAGE
+
+#if H5I_MT_DEBUG
+    fprintf(stdout, "\n\n   H5I__remove_common() called. \n\n\n");
+#endif /* H5I_MT_DEBUG */
+
+    /* Sanity check */
+    assert(type_info_ptr);
+    assert(type_info_ptr->cls);
+    type = type_info_ptr->cls->type;
+    assert(type == H5I_TYPE(id));
+    assert(atomic_load(&(type_info_ptr->init_count)) > 0);
+
+    atomic_fetch_add(&(H5I_mt_g.H5I__remove_common__num_calls), 1ULL);
+
+    /* Delete or mark the node */
+    do {
+
+        memset(&info_k, 0, sizeof(H5I_mt_id_info_kernel_t));
+        memset(&mod_info_k, 0, sizeof(H5I_mt_id_info_kernel_t));
+
+        /* increment the pass and log retries */
+        if ( pass++ >= 1 ) {
+
+            atomic_fetch_add(&(H5I_mt_g.H5I__remove_common__retries), 1ULL);
+        }
+
+        lfht_find(&(type_info_ptr->lfht), (unsigned long long int)id, (void **)&id_info_ptr);
+
+        if ( id_info_ptr ) {
+
+            info_k = atomic_load(&(id_info_ptr->k)); 
+
+            if ( ( info_k.closing ) && 
+#if H5I_BYPASS_HDF5_TID
+                 ( ( ( ! info_k.tid_valid ) || ( ! pthread_equal(info_k.tid, pthread_self()) ) ) ) ) 
+#else /* H5I_BYPASS_HDF5_TID */
+                 ( info_k.tid != H5TS_thread_id() ) )
+#endif /* H5I_BYPASS_HDF5_TID */
+            {
+                /* update stats for entries skipped due to closing set and tid mismatch.
+                 */
+                atomic_fetch_add(&(H5I_mt_g.H5I__remove_common__failed_due_to_closing_set_and_wrong_thread), 1ULL);
+
+                /* Since the closing flag is set, the target ID is invisible to all threads 
+                 * other than the one that set the closing flag.
+                 *
+                 * Thus set id_info_ptr = NULL, and flag an entry not found error.
+                 *
+                 * Note that for now at least, we don't distinguish between the case in which the 
+                 * closing flag is set on entry vs. the case in which flag is set by another 
+                 * thread at a later point.
+                 */
+
+                id_info_ptr = NULL;
+
+                HGOTO_ERROR(H5E_ID, H5E_NOTFOUND, NULL, "can't find ID");
+
+            } else if ( info_k.marked ) {
+
+                /* update stats */
+                if ( pass <= 1 ) {
+
+                    atomic_fetch_add(&(H5I_mt_g.H5I__remove_common__already_marked), 1ULL);
+
+                } else {
+
+                    atomic_fetch_add(&(H5I_mt_g.H5I__remove_common__marked_by_another_thread), 1ULL);
+                }
+
+                /* the target ID has been logically deleted from the index.
+                 * Thus set id_info_ptr = NULL, and flag an error.
+                 *
+                 * Note that for now at least, we don't distinguish between the case in which the 
+                 * ID is logically deleted on entry vs. the case in which the ID is logically 
+                 * deleted by another thread at a later point.
+                 */
+                id_info_ptr = NULL;
+                done = TRUE;
+
+            } else {
+
+                /* It is possible that the ID is marked as closing due to a previous free function 
+                 * failure.  Test for this possibility, and update stats accordingly
+                 */
+                if ( info_k.closing ) {
+
+#if H5I_BYPASS_HDF5_TID
+                    assert( info_k.tid_valid );
+                    assert( pthread_equal(info_k.tid, pthread_self()) );
+#else /* H5I_BYPASS_HDF5_TID */
+                    assert( info_k.tid == H5TS_thread_id() );
+#endif /* H5I_BYPASS_HDF5_TID */
+
+                    atomic_fetch_add(&(H5I_mt_g.H5I__remove_common__closing_set_and_right_thread), 1ULL);
+                }
+
+                /* The id and the associated instance of H5I_mt_id_info_t is logically deleted 
+                 * as soon as we set id_info_ptr->k.marked to TRUE -- thus update the remaining 
+                 * fields of id_info_ptr->k accordingly.
+                 */
+
+                mod_info_k.count             = 0;
+                mod_info_k.app_count         = 0;
+                mod_info_k.object            = NULL;
+#if H5I_BYPASS_HDF5_TID
+                mod_info_k.tid_valid         = FALSE;
+#else
+                mod_info_k.tid               = 0ULL;
+#endif
+
+                mod_info_k.marked            = TRUE;
+                mod_info_k.closing           = FALSE;
+
+               if ( atomic_compare_exchange_strong(&(id_info_ptr->k), &info_k, mod_info_k) ) {
+
+                    /* update stats */
+                    atomic_fetch_add(&(H5I_mt_g.H5I__remove_common__marked), 1ULL);
+
+                    done = TRUE;
+
+                } else {
+
+                    /* the atomic compare exchange strong failed -- try again */
+
+                    /* done is false, so nothing to do to trigger the retry */
+                }
+            }
+        } else { /* id_info_ptr is NULL */
+
+            /* target entry doesn't exist in the lock free hash table, so can't proceed.
+             * will flag an error later.
+             */
+            /* update stats */
+            atomic_fetch_add(&(H5I_mt_g.H5I__remove_common__target_not_in_lfht), 1ULL);
+
+            done = TRUE;
+        }
+    } while ( ! done );
+
+    if ( ! id_info_ptr ) {
+
+        HGOTO_ERROR(H5E_ID, H5E_CANTDELETE, NULL, "can't mark ID for removal from hash table");
+
+    } else {
+
+        /* if this was the last ID accessed, set type_info_ptr->last_id_info to NULL.
+         * Do this with a call to atomic_compare_exchange_strong().  This call will NULL
+         * type_info_ptr->last_id_info if it is currently set to id_info_ptr, and leave it 
+         * unchanged otherwise.  If type_info_ptr->last_id_info is not id_info_ptr, 
+         * atomic_compare_exchange_strong() will return its current value in the second 
+         * parameter -- hence the need for dup_id_info_ptr.
+         */
+        dup_id_info_ptr = id_info_ptr;
+        atomic_compare_exchange_strong(&(type_info_ptr->last_id_info), &dup_id_info_ptr, NULL);
+
+        H5_GCC_CLANG_DIAG_OFF("cast-qual")
+        ret_value = (void *)info_k.object;
+        H5_GCC_CLANG_DIAG_ON("cast-qual")
+
+        atomic_fetch_sub(&(type_info_ptr->id_count), 1ULL);
+
+        if ( 0 == atomic_load(&(H5I_mt_g.marking_array[type])) ) {
+            
+            if ( ( ! lfht_delete(&(type_info_ptr->lfht), (unsigned long long int)id)) )
+
+                HGOTO_ERROR(H5E_ID, H5E_CANTDELETE, NULL, "can't remove ID node from hash table");
+
+            if ( H5I__discard_mt_id_info(id_info_ptr) < 0 )
+
+                HGOTO_ERROR(H5E_ID, H5E_CANTDELETE, NULL, "can't release ID info to free list");
+        }
+    }
+
+done:
+
+    FUNC_LEAVE_NOAPI(ret_value)
+
+} /* end H5I__remove_common() */
+
+#else /* H5I_LOCK_FREE */
+
 /*-------------------------------------------------------------------------
  * Function:    H5I__remove_common
  *
@@ -5183,6 +6512,8 @@ done:
 
 } /* end H5I__remove_common() */
 
+#endif /* H5I_LOCK_FREE */
+
 #else /* H5_HAVE_MULTITHREAD */
 
 /*-------------------------------------------------------------------------
@@ -5366,6 +6697,472 @@ done:
 #endif /* H5_HAVE_MULTITHREAD */
 
 #ifdef H5_HAVE_MULTITHREAD 
+
+#if H5I_LOCK_FREE
+
+/*-------------------------------------------------------------------------
+ * Function:    H5I__dec_ref
+ *
+ * Purpose:     This will fail if the type is not a reference counted type.
+ *              The ID type's 'free' function will be called for the ID
+ *              if the reference count for the ID reaches 0 and a free
+ *              function has been defined at type creation time.
+ *
+ *              Reworked for multi-thread.  Changes were major, as to 
+ *              preserve atomicity, I had two options -- either greatly 
+ *              extend H5I__remove_common(), or incorporate it 
+ *              functionality into this function.
+ *
+ *              For now at least, the latter seems the most appropriate,
+ *              althought refactoring will be in order once the prototype
+ *              is up and running.
+ *
+ *              Further, to make app_count and count decrements atomic, 
+ *              added the app boolean parameter.  When set, both 
+ *              id_info_ptr->k.count and id_info_ptr->k.app_count fields
+ *              are decrementd, and, if id_info_ptr->k.count is still 
+ *              positive, the new value of id_info_ptr->k.app_count is 
+ *              returned.  Note that the ID is still marked for 
+ *              deletion if id_info_ptr->k.count drops to zero, and 
+ *              in that case, 0 is returned unless an error is detected.
+ *
+ *                                              JRM -- 9/18/23
+ *
+ * Note:        Allows for asynchronous 'close' operation on object, with
+ *              request != H5_REQUEST_NULL.
+ *
+ * Return:      Success:    New reference count
+ *              Failure:    -1
+ *
+ *-------------------------------------------------------------------------
+ */
+static int
+H5I__dec_ref(hid_t id, void **request, hbool_t app)
+{
+    hbool_t                  done                = FALSE;
+    hbool_t                  mark_for_deletion;
+    hbool_t                  have_global_mutex = TRUE; /* trivially so in single thread builds */
+    hbool_t                  global_mutex_acquired;
+    hbool_t                  cls_is_mt_safe;
+    hbool_t                  free_func_touches_vl;
+    hbool_t                  bool_result;
+    int                      pass                = 0;
+    H5I_mt_id_info_kernel_t  base_info_k;
+    H5I_mt_id_info_kernel_t  info_k;
+    H5I_mt_id_info_kernel_t  mod_info_k;
+    H5I_mt_id_info_t        *id_info_ptr         = NULL; /* Pointer to the ID */
+    H5I_mt_type_info_t      *type_info_ptr;              /* ptr to the type   */
+    herr_t                   result;
+    int                      ret_value           = 0;    /* Return value */
+
+    FUNC_ENTER_PACKAGE
+
+#if H5I_MT_DEBUG
+    fprintf(stdout, "   H5I__dec_ref(0x%llx, reguest, app) called. \n", (unsigned long long)id);
+#endif /* H5I_MT_DEBUG */
+
+    atomic_fetch_add(&(H5I_mt_g.H5I__dec_ref__num_calls), 1ULL);
+
+    if ( app ) {
+
+        atomic_fetch_add(&(H5I_mt_g.H5I__dec_ref__num_app_calls), 1ULL);
+    }
+
+#if defined(H5_HAVE_THREADSAFE) || defined(H5_HAVE_MULTITHREAD)
+
+    if ( H5TS_have_mutex(&H5_g.init_lock, &have_global_mutex) < 0 )
+
+        HGOTO_ERROR(H5E_LIB, H5E_CANTGET, FAIL, "Can't determine whether we have the global mutex");
+        
+#endif /* defined(H5_HAVE_THREADSAFE) || defined(H5_HAVE_MULTITHREAD) */
+
+    if ( have_global_mutex ) {
+
+        atomic_fetch_add(&(H5I_mt_g.H5I__dec_ref__num_calls_with_global_mutex), 1ULL);
+
+    } else {
+
+        atomic_fetch_add(&(H5I_mt_g.H5I__dec_ref__num_calls_without_global_mutex), 1ULL);
+    }
+
+    /* Get the ID's type */
+    if ( NULL == (type_info_ptr = atomic_load(&(H5I_mt_g.type_info_array[H5I_TYPE(id)]))) )
+
+        HGOTO_ERROR(H5E_ID, H5E_BADID, (-1), "can't locate ID type");
+
+    /* test the class flags to see if the class is multi-thread safe, or if its free func
+     * touches the VL code.  make note of the results.
+     */
+    cls_is_mt_safe = ((type_info_ptr->cls->flags & H5I_CLASS_IS_MT_SAFE) != 0);
+    free_func_touches_vl = ((type_info_ptr->cls->flags & H5I_CLASS_FREE_FUNC_TOUCHES_VL) != 0);
+
+    /* General lookup of the ID -- note that this call will fail even if the ID exists
+     * if the ID is marked as closing, and the current thread isn't the thread that 
+     * set the closing flag.
+     *
+     * Note that there is no need to repeat this search at the beginning of each 
+     * pass through the do/while loop, as any changes will be reflected in *id_info_ptr.
+     */
+
+    /* Sanity check */
+    assert(id >= 0);
+
+    if (NULL == (id_info_ptr = H5I__find_id(id)))
+
+        HGOTO_ERROR(H5E_ID, H5E_BADID, (-1), "can't locate ID");
+
+    do {
+
+        mark_for_deletion     = FALSE;
+        global_mutex_acquired = FALSE;
+
+        memset(&base_info_k, 0, sizeof(H5I_mt_id_info_kernel_t));
+        memset(&info_k, 0, sizeof(H5I_mt_id_info_kernel_t));
+        memset(&mod_info_k, 0, sizeof(H5I_mt_id_info_kernel_t));
+
+        /* increment the pass and log retries */
+        if ( pass++ >= 1 ) {
+
+            atomic_fetch_add(&(H5I_mt_g.H5I__dec_ref__retries), 1ULL);
+        }
+
+        base_info_k = atomic_load(&(id_info_ptr->k));
+
+        /* Must check for the closing flag, as it could have been set between the 
+         * call to H5I__find_id() and the atomic read of the kernel.
+         */
+        if ( base_info_k.closing ) {
+
+#if H5I_BYPASS_HDF5_TID
+            if ( ( ! base_info_k.tid_valid ) || ( ! pthread_equal(base_info_k.tid, pthread_self()) ) )
+#else /* H5I_BYPASS_HDF5_TID */
+            if ( base_info_k.tid != H5TS_thread_id() )
+#endif /* H5I_BYPASS_HDF5_TID */
+            {
+                /* update stats for entries skipped due to closing set and tid mismatch */
+                atomic_fetch_add(&(H5I_mt_g.H5I__dec_ref__id_ignored__closing_set_and_wrong_thread), 1ULL);
+
+                HGOTO_ERROR(H5E_ID, H5E_BADID, (-1), "can't locate ID");
+
+            } else {
+
+                /* update stats for repeat attempt to decrement the ref count on an ID that is already closing */
+                atomic_fetch_add(&(H5I_mt_g.H5I__dec_ref__closing_set_and_right_thread), 1ULL);
+            }
+        }
+
+        if (base_info_k.marked) {
+
+            /* this is is already marked for deletion -- nothing to do here */
+
+            /* update stats */
+            if ( pass <= 1 ) {
+
+                atomic_fetch_add(&(H5I_mt_g.H5I__dec_ref__marked_on_entry), 1ULL);
+
+            } else {
+
+                atomic_fetch_add(&(H5I_mt_g.H5I__dec_ref__marked_during_call), 1ULL);
+            }
+
+            HGOTO_ERROR(H5E_ID, H5E_BADID, (-1), "can't locate ID");
+        }
+
+        /* Copy the current version of the kernel into the modified version.  Will
+         * modify later as appropriate
+         */
+        mod_info_k.count             = base_info_k.count;
+        mod_info_k.app_count         = base_info_k.app_count;
+        mod_info_k.object            = base_info_k.object;
+#if H5I_BYPASS_HDF5_TID
+        mod_info_k.tid               = base_info_k.tid;
+        mod_info_k.tid_valid         = base_info_k.tid_valid;
+        assert( ( ! mod_info_k.tid_valid ) || ( pthread_equal(mod_info_k.tid, pthread_self()) ) );
+#else
+        mod_info_k.tid               = base_info_k.tid;
+        assert( ( 0 == mod_info_k.tic ) || ( mod_info_k.tid == H5TS_thread_id() ) );
+#endif
+        mod_info_k.marked            = base_info_k.marked;
+        mod_info_k.closing           = base_info_k.closing;
+
+        if (base_info_k.count > 1) { /* just decrement ref count */
+
+            mod_info_k.count--;
+
+            if ( app ) {
+
+                mod_info_k.app_count--;
+
+                assert(mod_info_k.count >= mod_info_k.app_count);
+            }
+        } else { 
+            /* we are about to attempt to decrement the ref count to zero. 
+             *
+             * Set the closing flag, and set the tid to the current thread.
+             * This makes the ID unaccessible to any thread but the current 
+             * thread.
+             *
+             * At best, either the free func doesn't exist, or it succeeds.
+             * In this case we will set the marked flag, set the ref counts
+             * to zero, set object to NULL, amd delete the instance of 
+             * H5I_mt_id_info_t from the lock free hash table unless 
+             * H5I_mt_g.marking_array[H5I_TYPE(id)] is not zero.
+             *
+             * If the free func fails, leave the ref count and object fields
+             * alone, set the maked flag, and leave the instance of 
+             * H5I_mt_id_info_t in the lock free hash table.
+             * Futher attempts to decrement the ref count and discard the 
+             * associated object are the responsibility of the current thread.
+             */
+            assert(1 == base_info_k.count);
+
+#if H5I_BYPASS_HDF5_TID
+            mod_info_k.tid               = pthread_self();
+            mod_info_k.tid_valid         = TRUE;
+#else
+            mod_info_k.tid               = H5TS_thread_id();
+#endif
+            mod_info_k.closing           = TRUE;
+
+            if ( closing_rpt_fcn ) {
+
+                H5_GCC_CLANG_DIAG_OFF("cast-qual")
+                (closing_rpt_fcn)(id, (void *)(base_info_k.object), H5I_CLOSING_STAT__PENDING);
+                H5_GCC_CLANG_DIAG_ON("cast-qual")
+            }
+        }
+
+        /* Now attempt to overwrite the global version of the kernel with mod_info_k. */
+
+        if (atomic_compare_exchange_strong(&(id_info_ptr->k), &base_info_k, mod_info_k)) {
+
+            /* atomic_compare_exchange_strong() succeeded */
+
+            if ( base_info_k.count > 1 ) { 
+
+                assert(base_info_k.count == mod_info_k.count + 1);
+
+                /* ref count is still posifive, so we are done.  Just setup return value.
+                 * Note that the closing flag may be true if a previous call to the 
+                 * free func failed.
+                 */
+
+                atomic_fetch_add(&(H5I_mt_g.H5I__dec_ref__decremented), 1ULL);
+
+                if ( app ) {
+
+                    atomic_fetch_add(&(H5I_mt_g.H5I__dec_ref__app_decremented), 1ULL);
+
+                    H5_GCC_CLANG_DIAG_OFF("cast-qual")
+                    ret_value = (int)(mod_info_k.app_count);
+                    H5_GCC_CLANG_DIAG_ON("cast-qual")
+
+                } else {
+
+                    H5_GCC_CLANG_DIAG_OFF("cast-qual")
+                    ret_value = (int)(mod_info_k.count);
+                    H5_GCC_CLANG_DIAG_ON("cast-qual")
+                }
+
+                done = TRUE;
+
+            } else { /* closing flag is set */
+
+                assert(mod_info_k.closing);
+
+                if ( closing_rpt_fcn ) {
+
+                    H5_GCC_CLANG_DIAG_OFF("cast-qual")
+                    (closing_rpt_fcn)(id, (void *)(base_info_k.object), H5I_CLOSING_STAT__SUCCESS);
+                    H5_GCC_CLANG_DIAG_ON("cast-qual")
+                }
+
+                /* we are about to call the free func on the void pointer associated 
+                 * with the ID.  If this call succeeds, we will need to modify the 
+                 * ID kernel again.  Load the current value of the kernel, and verify 
+                 * that it is as expected.
+                 */
+                info_k = atomic_load(&(id_info_ptr->k));
+
+                assert(info_k.count             == mod_info_k.count);
+                assert(info_k.app_count         == mod_info_k.app_count);
+                assert(info_k.object            == mod_info_k.object);
+#if H5I_BYPASS_HDF5_TID
+                assert(info_k.tid_valid         == mod_info_k.tid_valid);
+
+                if ( info_k.tid_valid ) {
+
+                    assert( pthread_equal(info_k.tid, pthread_self()) );
+                }
+#else
+                assert(info_k.tid == mod_info_k.tid);
+#endif
+                assert(info_k.marked            == mod_info_k.marked);
+                assert(info_k.closing           == mod_info_k.closing);
+            }
+        } else {
+
+            /* the atomic compare exchange strong failed -- try again */
+
+            if ( info_k.closing ) {
+
+                atomic_fetch_add(&(H5I_mt_g.num_failed_closing_sets), 1ULL);
+            }
+
+            if ( closing_rpt_fcn ) {
+
+                H5_GCC_CLANG_DIAG_OFF("cast-qual")
+                (closing_rpt_fcn)(id, (void *)(base_info_k.object), H5I_CLOSING_STAT__FAIL);
+                H5_GCC_CLANG_DIAG_ON("cast-qual")
+            }
+
+            /* done is false, so nothing to do to trigger the retry */
+            assert( ! done );
+
+            /* jump to the start of the loop */
+            continue;
+        }
+
+        if ( ( ! done ) && ( info_k.count <= 1 ) ) {
+
+            assert(info_k.closing);
+
+            atomic_fetch_add(&(H5I_mt_g.num_successful_closing_sets), 1ULL);
+
+            /* call the free function if it exists.  If successful, update the 
+             * the kernel to set the marked flag, and set the object field to 
+             * NULL. Also, set the ref counts to zero.
+             */
+            if ( type_info_ptr->cls->free_func ) {
+    
+                if ( ( ! have_global_mutex ) && ( ! cls_is_mt_safe ) && ( ! free_func_touches_vl ) ) {
+    
+                    H5_API_LOCK
+    
+                    global_mutex_acquired = TRUE;
+    
+                    atomic_fetch_add(&(H5I_mt_g.H5I__dec_ref__global_mutex_locks_for_free_func), 1ULL);
+                }
+    
+                atomic_fetch_add(&(H5I_mt_g.H5I__dec_ref__calls_to_free_func), 1ULL);
+
+                H5_GCC_CLANG_DIAG_OFF("cast-qual")
+                result = type_info_ptr->cls->free_func((void *)info_k.object, request);
+                H5_GCC_CLANG_DIAG_ON("cast-qual")
+    
+                /* drop the global mutex if it was acquired */
+                if ( global_mutex_acquired ) {
+    
+                    H5_API_UNLOCK
+        
+                    atomic_fetch_add(&(H5I_mt_g.H5I__dec_ref__global_mutex_unlocks_for_free_func), 1ULL);
+                }
+
+                if ( result < 0 ) {
+                
+                    /* the free function failed
+                     *
+                     * Not much to do here.  Set mark_for_deletion to FALSE so we don't 
+                     * try to set the marked flag in the kernel or delete from the 
+                     * the lock free hash table.
+                     * 
+                     * Otherwise, just update stats and set done to TRUE.
+                     */
+
+                    atomic_fetch_add(&(H5I_mt_g.H5I__dec_ref__free_func_failed), 1ULL);
+                    
+                    mark_for_deletion = FALSE;
+                    done = TRUE;
+
+                    ret_value = -1;
+
+                } else { /* free function succeeded */
+
+                    /* update stats */
+                    atomic_fetch_add(&(H5I_mt_g.H5I__mark_node__free_func_successes), 1ULL);
+
+                    /* Indicate node should be marked and possibly deleted from the lock free hash table */
+                    mark_for_deletion = TRUE;
+
+                    ret_value = 0;
+                }
+            } else {
+
+                /* No free function, so just set mark_for_deletion to TRUE. */
+                mark_for_deletion = TRUE;
+            }
+        }
+
+        if ( ( ! done ) && ( mark_for_deletion ) ) {
+
+            /* setup mod_info_k */
+            mod_info_k.count     = 0;
+            mod_info_k.app_count = 0;
+            mod_info_k.object    = NULL;
+#if H5I_BYPASS_HDF5_TID
+            mod_info_k.tid_valid = FALSE;
+#else
+            mod_info_k.tid       = 0;
+#endif
+            mod_info_k.marked    = TRUE;
+            mod_info_k.closing   = FALSE;
+
+            /* set the kernel of the target ID to mod_info_k.  The atomic_compare_exchange_strong()
+             * must succeed since we have set the closing flag.  Hence assert that this call 
+             * succeeds.
+             */
+            bool_result = atomic_compare_exchange_strong(&(id_info_ptr->k), &info_k, mod_info_k);
+
+            assert(bool_result);
+
+            atomic_fetch_add(&(H5I_mt_g.H5I__dec_ref__marked), 1ULL);
+
+            done = TRUE;
+        }
+    } while ( ! done );
+
+    if ( mark_for_deletion ) {
+
+        assert( 0 == ret_value );
+        assert( id_info_ptr );
+
+        atomic_fetch_sub(&(type_info_ptr->id_count), 1ULL);
+
+        if ( 0 == atomic_load(&(H5I_mt_g.marking_array[H5I_TYPE(id)])) ) {
+
+            /* attempt to remove the ID from the lock free hash table and release the
+             * instance of H5I_mt_id_info_t to the free list.
+             */
+
+            if ( ( ! lfht_delete(&(type_info_ptr->lfht), (unsigned long long int)id)) )
+
+                HGOTO_ERROR(H5E_ID, H5E_CANTDELETE, (-1), "can't remove ID node from hash table");
+
+            if ( H5I__discard_mt_id_info(id_info_ptr) < 0 )
+
+                HGOTO_ERROR(H5E_ID, H5E_CANTDELETE, (-1), "can't release ID info to free list");
+        }
+    }
+
+    assert ( ( ret_value >= 1 ) || ( mark_for_deletion && ( 0 == ret_value ) ) || ( -1 == ret_value ) ||
+             ( ( app ) && ( 0 == ret_value ) && ( mod_info_k.count >= 1 ) ) );
+
+done:
+
+#if H5I_MT_DEBUG
+    fprintf(stdout, "   H5I__dec_ref(0x%llx, reguest, app) returns %d. \n", (unsigned long long)id, ret_value);
+#endif /* H5I_MT_DEBUG */
+
+#if 0 /* JRM */
+    if ( ret_value < 0 ) 
+        fprintf(stderr, "   H5I__dec_ref(0x%llx, reguest, app) returns %d. \n", (unsigned long long)id, ret_value);
+#endif /* JRM */
+
+    FUNC_LEAVE_NOAPI(ret_value)
+
+} /* end H5I__dec_ref */
+
+#else /* H5I_LOCK_FREE */
 
 /*-------------------------------------------------------------------------
  * Function:    H5I__dec_ref
@@ -6024,6 +7821,8 @@ done:
     FUNC_LEAVE_NOAPI(ret_value)
 
 } /* end H5I__dec_ref */
+
+#endif /* H5I_LOCK_FREE */
 
 #else /* H5_HAVE_MULTITHREAD */
 
@@ -6724,6 +8523,210 @@ done:
 
 #ifdef H5_HAVE_MULTITHREAD
 
+#if H5I_LOCK_FREE
+
+/*-------------------------------------------------------------------------
+ * Function:    H5I_inc_ref
+ *
+ * Purpose:     Increment the reference count for an object.
+ *
+ *              Modified for multi-thread
+ *
+ * Return:      Success:    The new reference count
+ *              Failure:    -1
+ *
+ * Changes:     To track threads entering and exiting H5I (needed for free 
+ *              list management), changed the name of the existing 
+ *              H5I_inc_ref() function to H5I_inc_ref_internal()
+ *              and created a new version of H5I_inc_ref() that 
+ *              simply calls H5I__enter(), H5I_ind_ref_internal(),
+ *              and then H5I__exit().
+ *
+ *              It would make more sense to just add another parameter to 
+ *              H5I_inc_ref(), but until we have a single version 
+ *              of the H5I code, this will be complicated.  Make this 
+ *              change when we get to the production version.
+ * 
+ *                                              JRM -- 07/04/24
+ *
+ *-------------------------------------------------------------------------
+ */
+int
+H5I_inc_ref(hid_t id, hbool_t app_ref)
+{
+    int                      ret_value = 0;      /* Return value */
+
+    FUNC_ENTER_NOAPI_NOERR
+
+    H5I__enter(FALSE);
+
+    ret_value = H5I_inc_ref_internal(id, app_ref);
+
+    H5I__exit();
+
+    FUNC_LEAVE_NOAPI(ret_value)
+
+} /* end H5I_inc_ref() */
+
+int
+H5I_inc_ref_internal(hid_t id, hbool_t app_ref)
+{
+    hbool_t                  done                = FALSE;
+    int                      pass                = 0;
+    H5I_mt_id_info_kernel_t  info_k;
+    H5I_mt_id_info_kernel_t  mod_info_k;
+    H5I_mt_id_info_t        *id_info_ptr = NULL; /* Pointer to the ID info */
+    int                      ret_value = 0;      /* Return value */
+
+    FUNC_ENTER_NOAPI((-1))
+
+#if H5I_MT_DEBUG
+    fprintf(stdout, "   H5I_inc_ref((id = 0x%llx, app_ref = %d) called. \n", 
+              (unsigned long long)id, (int)app_ref);
+#endif /* H5I_MT_DEBUG */
+
+    atomic_fetch_add(&(H5I_mt_g.H5I__inc_ref__num_calls), 1ULL);
+
+    if ( app_ref ) {
+
+        atomic_fetch_add(&(H5I_mt_g.H5I__inc_ref__num_app_calls), 1ULL);
+    }
+
+    /* Sanity check */
+    assert(id >= 0);
+
+    /* General lookup of the ID -- note that this call will fail even if the ID exists
+     * if the ID is marked as closing, and the current thread isn't the thread that
+     * set the closing flag.
+     *
+     * Note that there is no need to repeat this search at the beginning of each
+     * pass through the do/while loop, as any changes will be reflected in *id_info_ptr.
+     */         
+    if (NULL == (id_info_ptr = H5I__find_id(id)))
+
+        HGOTO_ERROR(H5E_ID, H5E_BADID, (-1), "can't locate ID");
+
+    do {
+
+        memset(&info_k, 0, sizeof(H5I_mt_id_info_kernel_t));
+        memset(&mod_info_k, 0, sizeof(H5I_mt_id_info_kernel_t));
+
+        /* increment the pass and log retries */
+        if ( pass++ >= 1 ) {
+
+            atomic_fetch_add(&(H5I_mt_g.H5I__inc_ref__retries), 1ULL);
+        }
+
+        info_k = atomic_load(&(id_info_ptr->k));
+
+        /* Must check for the closing flag, as it could have been set between the
+         * call to H5I__find_id() and the atomic read of the kernel.
+         */
+        if ( info_k.closing ) {
+
+#if H5I_BYPASS_HDF5_TID
+            if ( ( ! info_k.tid_valid ) || ( ! pthread_equal(info_k.tid, pthread_self()) ) )
+#else /* H5I_BYPASS_HDF5_TID */
+            if ( info_k.tid != H5TS_thread_id() )
+#endif /* H5I_BYPASS_HDF5_TID */
+            {
+                /* update stats for entries skipped due to closing set and tid mismatch */
+                atomic_fetch_add(&(H5I_mt_g.H5I__dec_ref__id_ignored__closing_set_and_wrong_thread), 1ULL);
+
+                HGOTO_ERROR(H5E_ID, H5E_BADID, (-1), "can't locate ID");
+
+            } else {
+
+                /* update stats for repeat attempt to decrement the ref count on an ID that is already closing */
+                atomic_fetch_add(&(H5I_mt_g.H5I__dec_ref__closing_set_and_right_thread), 1ULL);
+            }
+        }
+
+        if ( info_k.marked ) {
+
+            /* this is is already marked for deletion -- nothing to do here */
+
+            /* update stats */
+            if ( pass <= 1 ) {
+
+                atomic_fetch_add(&(H5I_mt_g.H5I__inc_ref__marked_on_entry), 1ULL);
+
+            } else {
+
+                atomic_fetch_add(&(H5I_mt_g.H5I__inc_ref__marked_during_call), 1ULL);
+            }
+
+            HGOTO_ERROR(H5E_ID, H5E_BADID, (-1), "can't locate ID");
+        }
+
+        /* Set mod_info_k to reflect the ref_count increment */
+        mod_info_k.count             = info_k.count + 1;
+        mod_info_k.app_count         = info_k.app_count;
+        mod_info_k.object            = info_k.object;
+#if H5I_BYPASS_HDF5_TID
+        mod_info_k.tid       = info_k.tid;
+        mod_info_k.tid_valid = info_k.tid_valid;
+
+        assert( ( ! mod_info_k.tid_valid ) || ( pthread_equal(mod_info_k.tid, info_k.tid) ) );
+#else
+        mod_info_k.tid       = info_k.tid;
+
+        assert( ( 0 == mod_info_k.tid ) || ( info_k.tid ==  H5TS_thread_id() ) )
+#endif
+
+        mod_info_k.marked            = info_k.marked;
+        mod_info_k.closing           = info_k.closing;
+
+        if ( app_ref ) {
+
+            mod_info_k.app_count++;
+        }
+
+        if ( atomic_compare_exchange_strong(&(id_info_ptr->k), &info_k, mod_info_k) ) {
+
+            /* Update stats and set return value*/
+
+            atomic_fetch_add(&(H5I_mt_g.H5I__inc_ref__incremented), 1ULL);
+
+            if ( app_ref ) {
+
+                atomic_fetch_add(&(H5I_mt_g.H5I__inc_ref__app_incremented), 1ULL);
+
+                H5_GCC_CLANG_DIAG_OFF("cast-qual")
+                ret_value = (int)(mod_info_k.app_count);
+                H5_GCC_CLANG_DIAG_ON("cast-qual")
+
+            } else {
+
+                H5_GCC_CLANG_DIAG_OFF("cast-qual")
+                ret_value = (int)(mod_info_k.count);
+                H5_GCC_CLANG_DIAG_ON("cast-qual")
+            }
+
+            done = TRUE;
+
+        } else {
+
+            /* the atomic compare exchange strong failed -- try again */
+
+            /* done is false, so nothing to do to trigger the retry */
+        }
+    } while ( ! done );
+
+done:
+
+#if H5I_MT_DEBUG
+    fprintf(stdout, "   H5I_inc_ref((id = 0x%llx, app_ref = %d) returns %d. \n", 
+              (unsigned long long)id, (int)app_ref, (int)ret_value);
+#endif /* H5I_MT_DEBUG */
+
+    FUNC_LEAVE_NOAPI(ret_value)
+
+} /* end H5I_inc_ref_internal() */
+
+
+#else /* H5I_LOCK_FREE */
+
 /*-------------------------------------------------------------------------
  * Function:    H5I_inc_ref
  *
@@ -6944,6 +8947,8 @@ done:
 
 } /* end H5I_inc_ref_internal() */
 
+#endif /* H5I_LOCK_FREE */
+
 #else /* H5_HAVE_MULTITHREAD */
 
 /*-------------------------------------------------------------------------
@@ -6986,6 +8991,113 @@ done:
 #endif /* H5_HAVE_MULTITHREAD */
 
 #ifdef H5_HAVE_MULTITHREAD 
+
+#if H5I_LOCK_FREE
+
+/*-------------------------------------------------------------------------
+ * Function:    H5I_get_ref
+ *
+ * Purpose:     Retrieve the reference count for an object.
+ * 
+ *              Updated for multi-thread.
+ *
+ * Return:      Success:    The reference count
+ *              Failure:    -1
+ *
+ * Changes:     To track threads entering and exiting H5I (needed for free 
+ *              list management), changed the name of the existing 
+ *              H5I_get_ref() function to H5I_get_ref_internal()
+ *              and created a new version of H5I_get_ref() that 
+ *              simply calls H5I__enter(), H5I_get_ref_internal(),
+ *              and then H5I__exit().
+ *
+ *              It would make more sense to just add another parameter to 
+ *              H5I_get_ref(), but until we have a single version 
+ *              of the H5I code, this will be complicated.  Make this 
+ *              change when we get to the production version.
+ * 
+ *                                              JRM -- 07/04/24
+ *
+ *-------------------------------------------------------------------------
+ */
+int
+H5I_get_ref(hid_t id, hbool_t app_ref)
+{
+    herr_t                   ret_value     = SUCCEED; /* Return value */
+
+    FUNC_ENTER_NOAPI_NOERR
+
+    H5I__enter(FALSE);
+
+    ret_value = H5I_get_ref_internal(id, app_ref);
+
+    H5I__exit();
+
+    FUNC_LEAVE_NOAPI(ret_value)
+
+} /* end H5I_get_ref() */
+
+int
+H5I_get_ref_internal(hid_t id, hbool_t app_ref)
+{
+    H5I_mt_id_info_t           *id_info_ptr      = NULL; /* Pointer to the ID */
+    H5I_mt_id_info_kernel_t  info_k;
+    int                      ret_value = 0;    /* Return value */
+
+    FUNC_ENTER_NOAPI((-1))
+
+#if H5I_MT_DEBUG
+    fprintf(stdout, "\n\n   H5I_get_ref() called. \n\n\n");
+#endif /* H5I_MT_DEBUG */
+
+    /* Sanity check */
+    assert(id >= 0);
+
+    /* General lookup of the ID */
+    if (NULL == (id_info_ptr = H5I__find_id(id)))
+        HGOTO_ERROR(H5E_ID, H5E_BADID, (-1), "can't locate ID");
+
+    info_k = atomic_load(&(id_info_ptr->k));
+
+    if ( info_k.closing ) {
+        
+        /* This ID must only be visible to the thread which set the closing
+         * flag.
+         */
+#if H5I_BYPASS_HDF5_TID 
+        if ( ( ! info_k.tid_valid ) || ( ! pthread_equal(info_k.tid, pthread_self()) ) )
+#else /* H5I_BYPASS_HDF5_TID */
+        if ( info_k.tid != H5TS_thread_id() )
+#endif /* H5I_BYPASS_HDF5_TID */
+        {
+            /* if we instrument H5I_get_ref(), update stats for an entry skipped
+             * due to the closing flag set and a thread ID mis-match.
+             */
+
+            HGOTO_ERROR(H5E_ID, H5E_BADID, (-1), "can't locate ID");
+        }   
+    }
+
+    if ( info_k.marked ) {
+ 
+        /* if we instrument H5I_get_ref(), update stats for an entry skipped
+         * since it marked for deletion.
+         */
+ 
+        /* this is is already marked for deletion */
+        HGOTO_ERROR(H5E_ID, H5E_BADID, (-1), "can't locate ID");
+    } 
+
+    /* Set return value */
+    ret_value = (int)(app_ref ? info_k.app_count : info_k.count);
+
+done:
+
+    FUNC_LEAVE_NOAPI(ret_value)
+
+} /* end H5I_get_ref_internal() */
+
+#else /* H5I_LOCK_FREE */
 
 /*-------------------------------------------------------------------------
  * Function:    H5I_get_ref
@@ -7060,6 +9172,8 @@ done:
     FUNC_LEAVE_NOAPI(ret_value)
 
 } /* end H5I_get_ref_internal() */
+
+#endif /* H5I_LOCK_FREE */
 
 #else /* H5_HAVE_MULTITHREAD */
 
@@ -7422,6 +9536,307 @@ done:
 
 #ifdef H5_HAVE_MULTITHREAD 
 
+#if H5I_LOCK_FREE
+
+/*-------------------------------------------------------------------------
+ * Function:    H5I__iterate_cb
+ *
+ * Purpose:     Callback routine for H5I_iterate, invokes "user" callback
+ *              function, and then sets return value, based on the result of
+ *              that callback.
+ *
+ *              Updated for multi-thread.
+ *
+ *              The use of internal iteration is problematic, as we have
+ *              no control over the activities of the callback.  In 
+ *              principle this wouldn't be a problem if the entire HDF5
+ *              library was multi-thread safe and lock free.  Unfortunately,
+ *              this will not be the case for years if ever.
+ *
+ *              For this reason this function should be depreceated and 
+ *              replaced with support for external iteration -- thus 
+ *              avoiding the possibility of any interaction between the
+ *              callback and the iteration code.
+ *
+ * Return:      Success:    H5_ITER_CONT (0) or H5_ITER_STOP (1)
+ *              Failure:    H5_ITER_ERROR (-1)
+ *
+ * Changes:     The initial multi-thread impleementation of this 
+ *              function set the do not disturb flag to prevent the 
+ *              ID from being deleted out from under the callback and 
+ *              to give the callback exclusive access to ID and its
+ *              associated buffer.
+ *
+ *              While this worked well at first, when we extended the 
+ *              multi-thread effort to the VOL layer this approach 
+ *              resulted lock ordering issues.  Specifically, some
+ *              calls to H5I_iterate() occur under the global mutex,
+ *              and others outside it -- which breaks the ID, global 
+ *              mutex lock ordering.
+ *
+ *              The correct solution is to stop locking IDs.  Unfortunately
+ *              this can't be done until we either make the free functions
+ *              always succeed, or we create a mechanism that allows us
+ *              determine whether the free func will succeed.
+ *
+ *              Fortunately, we can avoid locking IDs here.  Do this by
+ *              wrapping calls to H5I__iterate_cb() in ref count increments
+ *              and decrements -- which prevents deletion of the ID during
+ *              the call to H5I__iterate_cb() (assuming no coding errors
+ *              in ref count management, or overlapping discards of the 
+ *              target ID type). 
+ *
+ *              In principle, all callbacks manipulating the buffer 
+ *              associated with the ID should be thread safe -- but that
+ *              will not be the case until the library is completely 
+ *              multi-thread safe.  Until then, we wrap callbacks in the
+ *              global mutex if it isn't already held.
+ *
+ *                                              JRM -- 3/12/25
+ *
+ *-------------------------------------------------------------------------
+ */
+static int
+H5I__iterate_cb(void *_item, void H5_ATTR_UNUSED *_key, void *_udata)
+{
+    hbool_t                 done = FALSE;
+    hbool_t                  have_global_mutex;
+    hbool_t                 drop_global_mutex = FALSE;
+    H5I_mt_id_info_t        *id_info_ptr       = (H5I_mt_id_info_t *)_item;  /* Pointer to the ID info */
+    H5I_iterate_ud_t        *udata             = (H5I_iterate_ud_t *)_udata; /* User data for callback */
+    H5I_mt_id_info_kernel_t  info_k;
+    herr_t                   result;
+    int                      ret_value         = H5_ITER_CONT;               /* Callback return value */
+
+    FUNC_ENTER_PACKAGE_NOERR
+
+#if H5I_MT_DEBUG
+    fprintf(stdout, "\n\n   H5I__iterate_cb() called. \n\n\n");
+#endif /* H5I_MT_DEBUG */
+
+    atomic_fetch_add(&(H5I_mt_g.H5I__iterate_cb__num_calls), 1ULL);
+
+    have_global_mutex = udata->have_global_mutex;
+
+    if ( have_global_mutex ) {
+
+        atomic_fetch_add(&(H5I_mt_g.H5I__iterate_cb__num_calls__with_global_mutex), 1ULL);
+
+    } else {
+
+        atomic_fetch_add(&(H5I_mt_g.H5I__iterate_cb__num_calls__without_global_mutex), 1ULL);
+    }
+
+
+    /* rework this if successful */
+
+    /* The call to H5I__iterate_cb() was wrapped in a pair of calls to increment and then
+     * then decrement the reference count.  Under normal circumstances, this should ensure 
+     * that the entry will not be deleted out from under us.
+     *
+     * However, there are two scenarios where this need not be the case.
+     *
+     * The obvious one is a coding error elsewhere, that inserts spurious ref count decrements.
+     * Unfortunately, there isn't much we can do about this other than try to detect it.
+     * 
+     * The less obvious occurs when an ID type is destroyed.  Here IDs are deleted regardless of 
+     * their reference counts.
+     *
+     * For the HDF5 library proper, the presumption at present is that shut down will 
+     * be single thread -- making this case moot.
+     *
+     * However, discards of user ID types can happen whenever.  Ideally, the data structures
+     * and callbacks used in such user ID typs will be designed to handle this case gracefully.
+     * Failing that, the issue must be avoided through careful coding.
+     *
+     * Here again there isn't much we can do other than to try to detect the issue.
+     *
+     * In both cases, we attempt to detect the issue by asserting that the ref count is positive.
+     *
+     * 
+     * Note that even if it is successful in blocking deletion of the IDs under consideration, 
+     * wrapping the target ID in a ref count increment / decrement doesn't prevent concurrent 
+     * access to the void pointer associated with the ID -- indeed, it is possible for value 
+     * of the void pointer to be changed at any time.
+     *
+     * Again, this would not be a problem if all clients of H5I, and all callback functions
+     * supplied to the iterate function, were multithread safe.  However, this is not the 
+     * case, and likely will not be for some time if ever.  Thus, in addition to ensuring that the 
+     * target ID will not be deleted out from under the callback, we need some method to maintain
+     * mutual exclusion on the target of the void pointer associated with the target ID.
+     *
+     * Initially this was done using the do not disturb flag.  While this worked when all calls
+     * to H5I_iterate() were under the global mutex, moving the global mutex below the VOL layer
+     * made it possible for some calls to H5I_interate() to be under the global mutex, and others
+     * above -- exposing potential lock ordering issues where sometimes the global lock is obtained
+     * before the lock on the target ID, and sometimes afterwards.
+     *
+     * To resolve this, stop using the do not disturb flag, and wrap both the unwrap call 
+     * and the callback in the global mutex.
+     *
+     * Note that this is not a complete solution.  It is still possible for the void pointer 
+     * associated with the ID to be modified by another thread even if the global mutex is 
+     * held.  At present, I don't believe this is a problem, as to my knowlege, the only 
+     * place that void pointers are modified is in H5P when property list classes are modified.
+     * Thus, I don't think this is a problem for now.  That said, the ultimate solution is 
+     * make all the callback multi-thread safe.
+     */
+
+    do {
+
+        memset(&info_k, 0, sizeof(H5I_mt_id_info_kernel_t));
+
+        if ( ! have_global_mutex ) {
+
+            atomic_fetch_add(&(H5I_mt_g.H5I__iterate_cb__global_mutex_locks_for_user_func), 1ULL);
+            H5_API_LOCK
+            drop_global_mutex = TRUE;
+        }
+
+        /* read the current value of the id info kernel */
+        info_k = atomic_load(&(id_info_ptr->k));
+
+        if ( info_k.closing ) {
+
+#if H5I_BYPASS_HDF5_TID
+            if ( ( ! info_k.tid_valid ) || ( ! pthread_equal(info_k.tid, pthread_self()) ) )
+#else /* H5I_BYPASS_HDF5_TID */
+            if ( info_k.tid != H5TS_thread_id() )
+#endif /* H5I_BYPASS_HDF5_TID */
+            {
+
+                /* ID is in the process of being deleted and is invisible to this thread.
+                 * Update stats and go on to the next ID if it exists.
+                 */
+                assert( H5_ITER_CONT == ret_value );
+
+                atomic_fetch_add(&(H5I_mt_g.H5I__iterate_cb__id_ignored__closing_set_and_wrong_thread), 1ULL);
+
+                done = TRUE;
+
+                if ( drop_global_mutex ) {
+
+                    H5_API_UNLOCK
+                    drop_global_mutex = FALSE;
+                }
+
+                break;
+
+            } else {
+
+                atomic_fetch_add(&(H5I_mt_g.H5I__iterate_cb__closing_set_and_right_thread), 1ULL);
+            }
+        }
+
+        if ( info_k.marked ) {
+
+            /* ID was deleted out from under us -- update stats and go on
+             * to the next ID if it exists.
+             */
+            assert( H5_ITER_CONT == ret_value );
+
+            atomic_fetch_add(&(H5I_mt_g.H5I__iterate_cb__marked_during_call), 1ULL);
+
+            done = TRUE;
+
+            if ( drop_global_mutex ) {
+
+                H5_API_UNLOCK
+                drop_global_mutex = FALSE;
+            }
+
+            break;
+        }
+
+
+        /* If we get this far, verify that the reference count on the target id is positive. */
+        assert( info_k.count > 0 );
+
+
+        /* Only invoke the callback function if this ID has not been marked for deletion, is visible
+         * externally and its reference count is positive. 
+         *
+         * While the user_func (and all the callbacks defined in the type) should be thread safe,
+         * for now, we use the global mutext to attempt to ensure that the user_func has exclusive access
+         * to the object.  Note, however, that the object can still be looked up by the user and accessed 
+         * outside the H5I code.  Similarly, the user may have a copy of the pointer, and be able to access 
+         * its data structure at will directly.
+         *
+         * The following boolean expression is partially redundant, since we have already verified 
+         * that info_k.marked is FALSE.  Leave it for now.
+         */
+        if ( ( ! info_k.marked ) && ( ( ( ! udata->app_ref ) || ( info_k.app_count > 0 ) ) ) ) {
+
+            H5I_type_t              type               = udata->obj_type;
+            void                   *object;
+            herr_t                  cb_ret_val;
+
+            /* H5I__unwrap() can fail -- for now at least.  Handle this by treating any 
+             * failure as a callback failure.  
+             *
+             * Note also that H5I__unwrap() grabs the global mutex.  This is redundant in 
+             * this case at least, and should be repaired in the production version.
+             */
+            H5_GCC_CLANG_DIAG_OFF("cast-qual")
+            result = H5I__unwrap((void *)info_k.object, type, &object);
+            H5_GCC_CLANG_DIAG_ON("cast-qual")
+
+            if ( result < 0 ) {
+
+                cb_ret_val = -1;
+
+            } else {
+
+                atomic_fetch_add(&(H5I_mt_g.H5I__iterate_cb__num_user_func_calls), 1ULL);
+
+                cb_ret_val = (*udata->user_func)((void *)object, id_info_ptr->id, udata->user_udata);
+
+
+                /* Set the return value based on the callback's return value */
+                if (cb_ret_val > 0) {
+
+                    atomic_fetch_add(&(H5I_mt_g.H5I__iterate_cb__num_user_func_iter_stops), 1ULL);
+  
+                    ret_value = H5_ITER_STOP; /* terminate iteration early */
+
+                } else if (cb_ret_val < 0) {
+
+                    atomic_fetch_add(&(H5I_mt_g.H5I__iterate_cb__num_user_func_fails), 1ULL);
+
+                    ret_value = H5_ITER_ERROR; /* indicate failure (which terminates iteration) */
+
+                } else {
+
+                    atomic_fetch_add(&(H5I_mt_g.H5I__iterate_cb__num_user_func_successes), 1ULL);
+                }
+            }
+        } else {
+
+            atomic_fetch_add(&(H5I_mt_g.H5I__iterate_cb__num_user_func_skips), 1ULL);
+        }
+
+        if ( drop_global_mutex ) {
+
+            H5_API_UNLOCK
+
+            drop_global_mutex = FALSE;
+
+            atomic_fetch_add(&(H5I_mt_g.H5I__iterate_cb__global_mutex_unlocks_for_user_func), 1ULL);
+        }
+
+        done = TRUE;
+
+    } while ( ! done );
+
+    /* verify that we droped the global mutex if we grabbed it */
+    assert( ! drop_global_mutex);
+
+    FUNC_LEAVE_NOAPI(ret_value)
+
+} /* end H5I__iterate_cb() */
+
+#else /* H5I_LOCK_FREE */
+
 /*-------------------------------------------------------------------------
  * Function:    H5I__iterate_cb
  *
@@ -7730,6 +10145,8 @@ H5I__iterate_cb(void *_item, void H5_ATTR_UNUSED *_key, void *_udata)
     FUNC_LEAVE_NOAPI(ret_value)
 
 } /* end H5I__iterate_cb() */
+
+#endif /* H5I_LOCK_FREE */
 
 #else /* H5_HAVE_MULTITHREAD */
 
@@ -8071,6 +10488,145 @@ done:
 
 #ifdef H5_HAVE_MULTITHREAD
 
+#if H5I_LOCK_FREE
+
+/*-------------------------------------------------------------------------
+ * Function:    H5I_get_first
+ *
+ * Purpose:     Given a type ID, find the first ID in the given type, and 
+ *              return that ID and its associated un-wrapped object pointer
+ *              in *id_ptr and *object_ptr respectively.
+ *
+ *              If the type is empty, *id_ptr is set to zero, and 
+ *              *object_ptr is set to NULL.  Recall that since type 0 is 
+ *              not used, and since the type is encoded in the id, an 
+ *              id of zero cannot occur.
+ *
+ *              Note that the itteration supported by the H5I_get_first()
+ *              and H5I_get_next() is neither id nor insertion order.
+ *
+ *              On failure, *id_ptr and *object_ptr are undefined.
+ *
+ * Return:      Success:    SUCCEED
+ *
+ *              Failure:    FAIL
+ *
+ * Changes:     Added the called_from_H5I paramter, which must be set 
+ *              to TRUE if the function is called withing the H5I package,
+ *              and FALSE otherwise.  This is needed to allow  tracking
+ *              the number of threads inside H5I, which is in turn used
+ *              in free list management.
+ *                                              JRM -- 7/6/24
+ *
+ *-------------------------------------------------------------------------
+ */
+herr_t
+H5I_get_first(H5I_type_t type, hid_t *id_ptr, void ** object_ptr, hbool_t called_from_H5I)
+{
+    H5I_mt_type_info_t      *type_info_ptr    = NULL;    /* Pointer to the type */
+    unsigned long long int   id               = 0;
+    void                    *value            = NULL;
+    void                    *object           = NULL;
+    H5I_mt_id_info_t        *id_info_ptr      = NULL;
+    H5I_mt_id_info_kernel_t  info_k;
+    herr_t                   result;
+    herr_t                   ret_value        = SUCCEED; /* Return value */
+
+    FUNC_ENTER_NOAPI(FAIL)
+
+    if ( ! called_from_H5I ) {
+
+        /* if H5I_get_first() is not called from withing H5I, it must have been called
+         * from somewhere within the HDF5 library proper -- hence we set the public_api
+         * parameter of H5I__enter() to FALSE.
+         */
+        H5I__enter(FALSE);
+    }
+
+    /* Check arguments */
+    if (type <= H5I_BADID || (int)type >= atomic_load(&(H5I_mt_g.next_type)))
+
+        HGOTO_ERROR(H5E_ARGS, H5E_BADRANGE, FAIL, "invalid type number");
+
+    if ( ( ! id_ptr ) || ( ! object_ptr ) ) 
+
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "bad id or object ptr");
+
+    type_info_ptr = atomic_load(&(H5I_mt_g.type_info_array[type]));
+
+    /* Only iterate through ID list if it is initialized and there are IDs in type */
+    if ( ( type_info_ptr )  && ( atomic_load(&(type_info_ptr->init_count)) > 0 ) && 
+         ( atomic_load(&(type_info_ptr->id_count)) > 0 ) ) {
+
+        /* Even though we have just tested to see if the type is non-empty, it is 
+         * possible that it will be emptied during the following do-while loop.
+         * Thus set *id_ptr and *object_ptr to values indicating that the type is
+         * empty before starting our search for the first entry in the type.
+         * Typically, the following assignments will be overwritten.
+         */
+        *id_ptr     = (hid_t)0;
+        *object_ptr = NULL;
+
+        /* Iterate over IDs */
+        if ( lfht_get_first(&(type_info_ptr->lfht), &id, &value) ) {
+
+            do {
+
+                id_info_ptr = (H5I_mt_id_info_t *)value;
+
+                info_k = atomic_load(&(id_info_ptr->k));
+
+#if H5I_BYPASS_HDF5_TID
+                if ( ( ( info_k.closing ) && ( ( ! info_k.tid_valid ) || ( ! pthread_equal(info_k.tid, pthread_self()) ) ) ) ||
+                     ( info_k.marked ) )
+#else /* H5I_BYPASS_HDF5_TID */
+                if ( ( ( info_k.closing ) && ( info_k.tid != H5TS_thread_id() ) ) || ( info_k.marked ) )
+#endif /* H5I_BYPASS_HDF5_TID */
+                {
+                    continue;
+                }
+                
+                /* The stored object pointer might be an H5VL_object_t, in which
+                 * case we'll need to get the wrapped object struct (H5F_t *, etc.).
+                 */
+#if 0 
+                H5_GCC_CLANG_DIAG_OFF("cast-qual")
+                object = H5I__unwrap((void *)info_k.object, type);
+                H5_GCC_CLANG_DIAG_ON("cast-qual")
+#endif 
+                H5_GCC_CLANG_DIAG_OFF("cast-qual")
+                result = H5I__unwrap((void *)info_k.object, type, &object);
+                H5_GCC_CLANG_DIAG_ON("cast-qual")
+
+                if ( result < 0 )
+
+                    HGOTO_ERROR(H5E_LIB, H5E_CANTGET, FAIL, "Can't get unwrapped object");
+
+                *id_ptr     = (hid_t)id;
+                *object_ptr = object;
+                break;
+
+            } while (lfht_get_next(&(type_info_ptr->lfht), id, &id, &value));
+        }
+    } else {
+
+        *id_ptr     = (hid_t)0;
+        *object_ptr = NULL;
+    }
+
+done:
+
+    if ( ! called_from_H5I ) {
+
+        H5I__exit();
+    }
+
+    FUNC_LEAVE_NOAPI(ret_value)
+
+} /* end H5I_get_first() */
+
+#else /* H5I_LOCK_FREE */
+
 /*-------------------------------------------------------------------------
  * Function:    H5I_get_first
  *
@@ -8196,6 +10752,160 @@ done:
     FUNC_LEAVE_NOAPI(ret_value)
 
 } /* end H5I_get_first() */
+
+#endif /* H5I_LOCK_FREE */
+
+#if H5I_LOCK_FREE
+
+/*-------------------------------------------------------------------------
+ * Function:    H5I_get_next
+ *
+ * Purpose:     Given a type ID, and the last id visited in an itteration 
+ *              through the specified index, return the next ID in the 
+ *              itteration and its associated un-wrapped object pointer 
+ *              in *next_id_ptr and *object_ptr respectively.
+ *
+ *              If there are no further IDs remaining in the type, 
+ *              *id_ptr is set to zero, and *object_ptr is set to NULL.  
+ *              Recall that since type 0 is not used, and since the type 
+ *              is encoded in the id, an id of zero cannot occur.
+ *
+ *              Note that the itteration supported by the H5I_get_first()
+ *              and H5I_get_next() is neither id nor insertion order.
+ *
+ *              Further, note that the index may be modified during the
+ *              itteration.  Deletions, additions, and modifications to
+ *              the object associated with an ID may or may not be 
+ *              reflected in the itterations.
+ *
+ *              On failure, *id_ptr and *object_ptr are undefined.
+ *
+ * Return:      Success:    SUCCEED
+ *
+ *              Failure:    FAIL
+ *
+ * Changes:     Added the called_from_H5I paramter, which must be set 
+ *              to TRUE if the function is called withing the H5I package,
+ *              and FALSE otherwise.  This is needed to allow  tracking
+ *              the number of threads inside H5I, which is in turn used
+ *              in free list management.
+ *                                              JRM -- 7/6/24
+ *
+ *-------------------------------------------------------------------------
+ */
+herr_t
+H5I_get_next(H5I_type_t type, hid_t last_id, hid_t *next_id_ptr, void ** next_object_ptr, hbool_t called_from_H5I)
+{
+    H5I_mt_type_info_t      *type_info_ptr = NULL;    /* Pointer to the type */
+    unsigned long long int   id            = 0;
+    void                    *value         = NULL;
+    void                    *object        = NULL;
+    H5I_mt_id_info_t        *id_info_ptr   = NULL;
+    H5I_mt_id_info_kernel_t  info_k;
+    herr_t                   result;
+    herr_t                   ret_value     = SUCCEED; /* Return value */
+
+    FUNC_ENTER_NOAPI(FAIL)
+
+    if ( ! called_from_H5I ) {
+
+        /* if H5I_get_first() is not called from withing H5I, it must have been called
+         * from somewhere within the HDF5 library proper -- hence we set the public_api
+         * parameter of H5I__enter() to FALSE.
+         */
+        H5I__enter(FALSE);
+    }
+
+    /* Check arguments */
+    if (type <= H5I_BADID || (int)type >= atomic_load(&(H5I_mt_g.next_type)))
+
+        HGOTO_ERROR(H5E_ARGS, H5E_BADRANGE, FAIL, "invalid type number");
+
+    if ( ( last_id == 0 ) || ( type != H5I_TYPE(last_id) ) ) 
+
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "invalid last_id");
+
+    if ( ( ! next_id_ptr ) || ( ! next_object_ptr ) ) 
+
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "bad next id or next object ptr");
+
+    type_info_ptr = atomic_load(&(H5I_mt_g.type_info_array[type]));
+
+    /* Only iterate through ID list if it is initialized and there are IDs in type */
+    if ( ( type_info_ptr )  && ( atomic_load(&(type_info_ptr->init_count)) > 0 ) && 
+         ( atomic_load(&(type_info_ptr->id_count)) > 0 ) ) {
+
+        id = (unsigned long long int)last_id;
+
+        /* While we know that the target index is not empty, it is possible that 
+         * last_id is the last id in the itteration through theindex, or that the 
+         * next id will be deleted before we get to it.  
+         * 
+         * Thus set *next_id_ptr and *next_object_ptr to values indicating that we 
+         * have completed the itteration before we start searcing for the next 
+         * id in the indexxthe type is
+         * 
+         * Usually, the following assignments will be overwritten.
+         */
+        *next_id_ptr     = (hid_t)0;
+        *next_object_ptr = NULL;
+
+        /* Iterate over IDs starting just after last_id */
+        while ( lfht_get_next(&(type_info_ptr->lfht), id, &id, &value) ) {
+
+            id_info_ptr = (H5I_mt_id_info_t *)value;
+
+            info_k = atomic_load(&(id_info_ptr->k));
+
+#if H5I_BYPASS_HDF5_TID
+            if ( ( ( info_k.closing ) && ( ( ! info_k.tid_valid ) || ( ! pthread_equal(info_k.tid, pthread_self()) ) ) ) ||
+                 ( info_k.marked ) )
+#else /* H5I_BYPASS_HDF5_TID */
+            if ( ( ( info_k.closing ) && ( info_k.tid != H5TS_thread_id() ) ) || ( info_k.marked ) )
+#endif /* H5I_BYPASS_HDF5_TID */
+            {
+                continue;
+            }
+
+
+            /* The stored object pointer might be an H5VL_object_t, in which
+             * case we'll need to get the wrapped object struct (H5F_t *, etc.).
+             */
+#if 0 
+            H5_GCC_CLANG_DIAG_OFF("cast-qual")
+            object = H5I__unwrap((void *)info_k.object, type);
+            H5_GCC_CLANG_DIAG_ON("cast-qual")
+#endif 
+            H5_GCC_CLANG_DIAG_OFF("cast-qual")
+            result = H5I__unwrap((void *)info_k.object, type, &object);
+            H5_GCC_CLANG_DIAG_ON("cast-qual")
+
+            if ( result < 0 )
+
+                HGOTO_ERROR(H5E_LIB, H5E_CANTGET, FAIL, "Can't get unwrapped object");
+
+            *next_id_ptr     = (hid_t)id;
+            *next_object_ptr = object;
+            break;
+        }
+    } else {
+
+        *next_id_ptr     = (hid_t)0;
+        *next_object_ptr = NULL;
+    }
+
+done:
+
+    if ( ! called_from_H5I ) {
+
+        H5I__exit();
+    }
+
+    FUNC_LEAVE_NOAPI(ret_value)
+
+} /* end H5I_get_next() */
+
+#else /* H5I_LOCK_FREE */
 
 /*-------------------------------------------------------------------------
  * Function:    H5I_get_next
@@ -8337,9 +11047,165 @@ done:
 
 } /* end H5I_get_next() */
 
+#endif /* H5I_LOCK_FREE */
+
 #endif /* H5_HAVE_MULTITHREAD */
 
+
 #ifdef H5_HAVE_MULTITHREAD
+
+#if H5I_LOCK_FREE
+
+/*-------------------------------------------------------------------------
+ * Function:    H5I__find_id
+ *
+ * Purpose:     Given an object ID find the info struct that describes the
+ *              object.
+ *
+ * Return:      Success:    A pointer to the object's info struct.
+ *
+ *              Failure:    NULL
+ *
+ *-------------------------------------------------------------------------
+ */
+H5I_mt_id_info_t *
+H5I__find_id(hid_t id)
+{
+    hbool_t                 have_global_mutex = TRUE; /* trivially true in the serial case */
+    H5I_type_t              type;                      /* ID's type */
+    H5I_mt_type_info_t     *type_info_ptr      = NULL; /* Pointer to the type */
+    H5I_mt_id_info_t       *last_id_info_ptr   = NULL; /* ptr to ID info of lat ID accessed */
+    H5I_mt_id_info_t       *id_info_ptr        = NULL; /* ID's info */
+    H5I_mt_id_info_kernel_t info_k;
+    H5I_mt_id_info_t       *ret_value          = NULL; /* Return value */
+
+    FUNC_ENTER_PACKAGE_NOERR
+
+    atomic_fetch_add(&(H5I_mt_g.H5I__find_id__num_calls), 1ULL);
+
+#if H5I_MT_DEBUG
+    fprintf(stdout, "   H5I__find_id(0x%llx) called. \n", (unsigned long long)id);
+#endif /* H5I_MT_DEBUG */
+
+#if defined(H5_HAVE_THREADSAFE) || defined(H5_HAVE_MULTITHREAD)
+
+    /* We don't throw an error if H5TS_have_mutex() fails, since H5I__find_id() 
+     * doesn't have an error reporting mechanism -- it either finds the target
+     * or not.  
+     *
+     * Think on improving this in the production version.
+     */
+    if ( H5TS_have_mutex(&H5_g.init_lock, &have_global_mutex) < 0 )
+
+        HGOTO_DONE(NULL);
+
+#endif /* defined(H5_HAVE_THREADSAFE) || defined(H5_HAVE_MULTITHREAD) */
+
+    if ( have_global_mutex ) {
+
+        atomic_fetch_add(&(H5I_mt_g.H5I__find_id__num_calls_with_global_mutex), 1ULL);
+
+    } else {
+
+        atomic_fetch_add(&(H5I_mt_g.H5I__find_id__num_calls_without_global_mutex), 1ULL);
+    }
+
+    /* Check arguments */
+    type = H5I_TYPE(id);
+    if ( type <= H5I_BADID || (int)type >= atomic_load(&(H5I_mt_g.next_type)) ) {
+
+        HGOTO_DONE(NULL);
+    }
+
+    type_info_ptr = atomic_load(&(H5I_mt_g.type_info_array[type]));
+
+    if  ( ( ! type_info_ptr ) || ( atomic_load(&(type_info_ptr->init_count)) <= 0) ) {
+
+        /* type doesn't exist, or has been logically deleted.  No point in
+         * in retrying, so just return NULL.
+         */
+        HGOTO_DONE(NULL);
+    }
+
+    memset(&info_k, 0, sizeof(H5I_mt_id_info_kernel_t));
+
+    /* Check for same ID as we have looked up last time */
+    last_id_info_ptr = atomic_load(&(type_info_ptr->last_id_info));
+
+    if ( ( last_id_info_ptr ) && ( last_id_info_ptr->id == id ) ) {
+
+        id_info_ptr = last_id_info_ptr;
+
+    } else {
+
+        if ( ! lfht_find(&(type_info_ptr->lfht), (unsigned long long int)id, (void **)&id_info_ptr) ) {
+
+            assert(NULL == id_info_ptr);
+            HGOTO_DONE(NULL);
+        }
+
+        /* Remember this ID */
+        atomic_store(&(type_info_ptr->last_id_info), id_info_ptr);
+
+    }
+
+    /* load the atomic kernel from *id_info_ptr into info_k.  Note that this is a snapshot of the
+     * state of *id_info_ptr, and can be changed before we get to writing it back.
+     */
+    info_k = atomic_load(&(id_info_ptr->k));
+
+
+    if ( info_k.closing ) {
+
+#if H5I_BYPASS_HDF5_TID
+        if ( ( ! info_k.tid_valid ) || ( ! pthread_equal(info_k.tid, pthread_self()) ) )
+#else /* H5I_BYPASS_HDF5_TID */
+        if ( info_k.tid != H5TS_thread_id() )
+#endif /* H5I_BYPASS_HDF5_TID */
+        {
+            /* update stats for entries skipped due to closing set and tid mismatch */
+            atomic_fetch_add(&(H5I_mt_g.H5I__find_id__failed_due_to_closing_set_and_wrong_thread), 1ULL);
+            
+            /* return NULL */
+            HGOTO_DONE(NULL);
+
+        } else {
+
+            /* update stats for repeat attempt mark an entry that is already closing */
+            atomic_fetch_add(&(H5I_mt_g.H5I__find_id__closing_set_and_right_thread), 1ULL);
+        }
+    }
+
+    if (info_k.marked) {
+
+        /* the ID is marked for deletion -- nothing to do here.  Set
+         * id_info_ptr to NULL, update stats, and return NULL
+         */
+        HGOTO_DONE(NULL);
+    }
+
+    /* insert code for manage new version future IDs here if successful */
+
+    if ( id_info_ptr ) {
+
+        atomic_fetch_add(&(H5I_mt_g.H5I__find_id__ids_found), 1ULL);
+    }
+
+    /* Set return value */
+    ret_value = id_info_ptr;
+
+done:
+
+#if H5I_MT_DEBUG
+    fprintf(stdout, "   H5I__find_id(0x%llx) returns 0x%llx. \n", 
+              (unsigned long long)id, (unsigned long long) ret_value);
+#endif /* H5I_MT_DEBUG */
+
+    FUNC_LEAVE_NOAPI(ret_value)
+
+} /* end H5I__find_id() */
+
+#else /* H5I_LOCK_FREE */
 
 /*-------------------------------------------------------------------------
  * Function:    H5I__find_id
@@ -8997,6 +11863,8 @@ done:
 
 } /* end H5I__find_id() */
 
+#endif /* H5I_LOCK_FREE */
+
 #else /* H5_HAVE_MULTITHREAD */
 
 /*-------------------------------------------------------------------------
@@ -9086,6 +11954,87 @@ done:
 
 #ifdef H5_HAVE_MULTITHREAD 
 
+#if H5I_LOCK_FREE
+
+/*-------------------------------------------------------------------------
+ * Function:    H5I__find_id_cb
+ *
+ * Purpose:     Callback for searching for an ID with a specific pointer
+ *
+ *              Updated for multi-thread.
+ *
+ * Return:      Success:    H5_ITER_CONT (0) or H5_ITER_STOP (1)
+ *              Failure:    H5_ITER_ERROR (-1)
+ *
+ *-------------------------------------------------------------------------
+ */
+static int
+H5I__find_id_cb(void *_item, void H5_ATTR_UNUSED *_key, void *_udata)
+{
+    H5I_mt_id_info_t        *id_info_ptr      = (H5I_mt_id_info_t *)_item; /* Pointer to the ID info */
+    H5I_mt_id_info_kernel_t  info_k;
+    H5I_get_id_ud_t         *udata            = (H5I_get_id_ud_t *)_udata; /* Pointer to user data */
+    H5I_type_t               type             = udata->obj_type;
+    void                    *object           = NULL;
+    herr_t                   result;
+    int                      ret_value        = H5_ITER_CONT; /* Return value */
+
+    FUNC_ENTER_PACKAGE_NOERR
+
+#if H5I_MT_DEBUG
+    fprintf(stdout, "\n\n   H5I__find_id_cb() called. \n\n\n");
+#endif /* H5I_MT_DEBUG */
+
+    /* Sanity check */
+    assert(id_info_ptr);
+    assert(udata);
+
+    info_k = atomic_load(&(id_info_ptr->k));
+
+    /* if the entry is either closing and this is not closing thread, or 
+     * the entry is marked for deletion, we shouldn't have been called 
+     * on it.  Assert that this is true
+     */
+#if H5I_BYPASS_HDF5_TID
+    assert( ( ! info_k.closing ) || ( ( info_k.tid_valid ) && ( pthread_equal(info_k.tid, pthread_self()) ) ) );
+#else /* H5I_BYPASS_HDF5_TID */
+    assert( info_k.tid == H5TS_thread_id() );
+#endif /* H5I_BYPASS_HDF5_TID */
+    assert( ! info_k.marked );
+    /* ignore entries that are marked for deletion */
+    if ( ! info_k.marked ) {
+
+        /* Get a pointer to the VOL connector's data */
+#if 0  /* delete this eventually */
+        H5_GCC_CLANG_DIAG_OFF("cast-qual")
+        object = H5I__unwrap((void *)info_k.object, type); /* will hit global mutex */
+        H5_GCC_CLANG_DIAG_ON("cast-qual")
+#endif
+        H5_GCC_CLANG_DIAG_OFF("cast-qual")
+        result = H5I__unwrap((void *)info_k.object, type, &object);
+        H5_GCC_CLANG_DIAG_ON("cast-qual")
+
+        if ( result < 0 ) {
+
+            ret_value = H5_ITER_ERROR;
+
+        } else {
+
+            /* Check for a match */
+            if (object == udata->object) {
+
+                udata->ret_id = id_info_ptr->id;
+                ret_value     = H5_ITER_STOP;
+            }
+        }
+    }
+
+    FUNC_LEAVE_NOAPI(ret_value)
+
+} /* end H5I__find_id_cb() */
+
+#else /* H5I_LOCK_FREE */
+
 /*-------------------------------------------------------------------------
  * Function:    H5I__find_id_cb
  *
@@ -9153,6 +12102,8 @@ H5I__find_id_cb(void *_item, void H5_ATTR_UNUSED *_key, void *_udata)
 
 } /* end H5I__find_id_cb() */
 
+#endif /* H5I_LOCK_FREE */
+
 #else /* H5_HAVE_MULTITHREAD */
 
 /*-------------------------------------------------------------------------
@@ -9197,6 +12148,156 @@ H5I__find_id_cb(void *_item, void H5_ATTR_UNUSED *_key, void *_udata)
 #endif /* H5_HAVE_MULTITHREAD */
 
 #ifdef H5_HAVE_MULTITHREAD
+
+#if H5I_LOCK_FREE
+
+/*-------------------------------------------------------------------------
+ * Function:    H5I_find_id
+ *
+ * Purpose:     Return the ID of an object by searching through the ID list
+ *              for the type.
+ *
+ *              Updated for multi-thread.
+ *
+ * Return:      SUCCEED/FAIL
+ *              (id will be set to H5I_INVALID_HID on errors or not found)
+ *
+ * Changes:     Modified the function to increment the ref count on the
+ *              target entry before calling H5I__find_id_cb().  This 
+ *              should prevent IDs from being deleted out from under 
+ *              H5I__find_id_cb() absent other coding errors.
+ *
+ *              Note that this adds significant overhead.  However absent
+ *              an appropriate free list for VOL connectors, it is 
+ *              necessary.
+ *
+ *                                              JRM 6/2/25
+ *
+ *-------------------------------------------------------------------------
+ */
+herr_t
+H5I_find_id(const void *object, H5I_type_t type, hid_t *id)
+{
+    H5I_mt_type_info_t      *type_info_ptr = NULL;    /* Pointer to the type */
+    H5I_mt_id_info_kernel_t  info_k;
+    herr_t                   ret_value = SUCCEED;     /* Return value */
+
+    FUNC_ENTER_NOAPI(FAIL)
+
+#if H5I_MT_DEBUG
+    fprintf(stdout, "\n\n   H5I_find_id() called. \n\n\n");
+#endif /* H5I_MT_DEBUG */
+
+    assert(id);
+
+    *id = H5I_INVALID_HID;
+
+    type_info_ptr = atomic_load(&(H5I_mt_g.type_info_array[type]));
+
+    if ( ( ! type_info_ptr ) || ( atomic_load(&(type_info_ptr->init_count)) <= 0 ) )
+
+        HGOTO_ERROR(H5E_ID, H5E_BADGROUP, FAIL, "invalid type");
+
+    /* Only iterate through ID list if it is initialized and there are IDs in type */
+    if ( ( atomic_load(&(type_info_ptr->init_count)) > 0 ) && ( atomic_load(&(type_info_ptr->id_count)) > 0 ) ) {
+
+        H5I_get_id_ud_t         udata; /* User data */
+        H5I_mt_id_info_t       *id_info_ptr = NULL;
+        unsigned long long int  scan_id;
+        void                   *value;
+
+        /* Set up iterator user data */
+        udata.object   = object;
+        udata.obj_type = type;
+        udata.ret_id   = H5I_INVALID_HID;
+
+        /* Iterate over IDs for the ID type */
+        if ( lfht_get_first(&(type_info_ptr->lfht), &scan_id, &value) ) {
+
+            do {
+
+                id_info_ptr = (H5I_mt_id_info_t *)value;
+
+                assert(H5I__ID_INFO == id_info_ptr->tag);
+
+                info_k = atomic_load(&(id_info_ptr->k));
+
+#if H5I_BYPASS_HDF5_TID
+                if ( ( ( info_k.closing ) && ( ( ! info_k.tid_valid ) || ( ! pthread_equal(info_k.tid, pthread_self()) ) ) ) ||
+                     ( info_k.marked ) )
+#else /* H5I_BYPASS_HDF5_TID */
+                if ( ( ( info_k.closing ) && ( info_k.tid != H5TS_thread_id() ) ) || ( info_k.marked ) )
+#endif /* H5I_BYPASS_HDF5_TID */
+                {
+                    continue;
+                }
+
+
+                /* Since this iteration may be called in parallel with other
+                 * operations on the target id type, it is possible that the
+                 * target ID will be deleted during the iterate callback.
+                 *
+                 * To prevent this, increment the ref count on the target ID
+                 * before we call the itterate callback, and decrement it again
+                 * when that call returns.
+                 *
+                 * While this isn't fool proof, it should work absent
+                 * coding errors elsewhere.
+                 *
+                 * At present, we do this with calls to H5I_inc_ref_internal()
+                 * and H5I__dec_ref().  This is very inefficient as it requires
+                 * two unnecessary calls to H5I__find_id(), in addition to
+                 * other issues.  This is acceptable for the prototype, but
+                 * we need to do better for the production version.
+                 *
+                 * Note also that the call to H5I_inc_ref_internal() may fail.
+                 * If it does, presume that this is due to the target ID being
+                 * deleted out from under the itteration, and just go on to the
+                 * next ID.
+                 */
+
+                if ( -1 != H5I_inc_ref_internal(id_info_ptr->id, FALSE) ) {
+
+                    int ret;  /* return value for find id cb */
+
+                    /* inc ref was successful -- call the find callback */
+
+                    ret = H5I__find_id_cb((void *)id_info_ptr, NULL, (void *)&udata);
+
+                    /* decrement the ref count again before we check the find
+                     * callback return value.
+                     */
+                    if ( H5I__dec_ref(id_info_ptr->id, NULL, FALSE) < 0 )
+
+                        HGOTO_ERROR(H5E_ID, H5E_CANTDEC, (-1), "can't decrement ID ref count");
+
+                    /* Now check results of the iteration */
+
+                    if (H5_ITER_ERROR == ret)
+                        HGOTO_ERROR(H5E_ID, H5E_BADITER, FAIL, "iteration failed");
+
+                    if (H5_ITER_STOP == ret)
+                        break;
+
+                } else {
+
+                    /* ID was deleted out from under us -- update stats and go on
+                     * to the next ID if it exists.
+                     */
+                }
+            } while (lfht_get_next(&(type_info_ptr->lfht), scan_id, &scan_id, &value));
+        }
+
+        *id = udata.ret_id;
+    }
+
+done:
+
+    FUNC_LEAVE_NOAPI(ret_value)
+
+} /* end H5I_find_id() */
+
+#else /* H5I_LOCK_FREE */
 
 /*-------------------------------------------------------------------------
  * Function:    H5I_find_id
@@ -9359,6 +12460,8 @@ done:
     FUNC_LEAVE_NOAPI(ret_value)
 
 } /* end H5I_find_id() */
+
+#endif /* H5I_LOCK_FREE */
 
 #else /* H5_HAVE_MULTITHREAD */
 
@@ -9546,10 +12649,14 @@ H5I__discard_mt_id_info(H5I_mt_id_info_t * id_info_ptr)
 #else
     assert(0ULL == info_k.tid);
 #endif
+
     assert(TRUE == info_k.marked);
+
+#if ! H5I_LOCK_FREE
     assert(FALSE == info_k.do_not_disturb);
     assert(FALSE == info_k.is_future);
     assert(FALSE == info_k.have_global_mutex);
+#endif
 
     assert(!atomic_load(&(id_info_ptr->on_fl)));
     assert(0 == atomic_load(&(id_info_ptr->serial_num)));
@@ -9845,10 +12952,12 @@ H5I__new_mt_id_info(hid_t id, unsigned count, unsigned app_count, const void * o
     new_k.tid               = 0ULL;
 #endif
     new_k.marked = FALSE;
+
+#if ! H5I_LOCK_FREE
     new_k.do_not_disturb = FALSE;
     new_k.is_future = is_future;
     new_k.have_global_mutex = FALSE;
-
+#endif
 
     atomic_fetch_add(&(H5I_mt_g.H5I__new_mt_id_info__num_calls), 1ULL);
 
