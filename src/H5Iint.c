@@ -296,7 +296,7 @@ H5I_init(void)
     atomic_init(&(H5I_mt_g.type_next_sn), 1ULL);
     atomic_init(&(H5I_mt_g.type_max_realloc_sn), 0ULL);
 
-    /* allocate the initial entry in the id info free list and initialize the id info free list */
+    /* allocate the initial entry in the type info free list and initialize the type info free list */
     type_info_ptr = H5I__new_mt_type_info(NULL, 0);
     if (NULL == type_info_ptr)
         HGOTO_ERROR(H5E_ID, H5E_CANTINIT, FAIL, "Can't initialize type info free list");
