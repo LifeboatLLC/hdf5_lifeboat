@@ -94,7 +94,6 @@
  *********************************************************************************/
 
 #define ID_TYPE_T__TAG           0x1010
-#define ID_TYPE_T_K__INITIALIZER {FALSE, FALSE, FALSE, FALSE, 0, H5I_BADID}
 
 typedef struct id_type_kernel_t {
     hbool_t    in_progress;
@@ -216,7 +215,6 @@ typedef struct id_type_t {
  *********************************************************************************/
 
 #define ID_OBJECT_T__TAG              0x2020
-#define ID_OBJECT_K_T__INITIALIZER    {FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, H5I_INVALID_HID, NULL}
 
 typedef struct id_object_kernel_t {
     hbool_t            in_progress;
@@ -419,7 +417,6 @@ typedef struct id_object_t{
  *********************************************************************************/
 
 #define ID_INSTANCE_T__TAG 0x3030
-#define ID_INSTANCE_K_T__INITIALIZER {FALSE, FALSE, 0, 0, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, H5I_INVALID_HID}
 
 typedef struct id_instance_kernel_t {
     hbool_t  in_progress;
@@ -431,8 +428,6 @@ typedef struct id_instance_kernel_t {
     hbool_t  future;
     hbool_t  realized;
     hbool_t  future_id_src;
-    hbool_t  bool_buf_1;
-    hbool_t  bool_buf_2;
     hid_t id;
 } id_instance_kernel_t;
 
@@ -622,13 +617,48 @@ static herr_t
 init_globals(void)
 {
     int                         i;
-    id_type_kernel_t            type_k  = ID_TYPE_T_K__INITIALIZER;
-    struct id_object_kernel_t   obj_k   = ID_OBJECT_K_T__INITIALIZER;
-    struct id_instance_kernel_t inst_k  = ID_INSTANCE_K_T__INITIALIZER;
+    id_type_kernel_t            type_k;
+    struct id_object_kernel_t   obj_k;
+    struct id_instance_kernel_t inst_k;
 
-    types_array = malloc(NUM_ID_TYPES * sizeof(id_type_t));
-    objects_array = malloc(NUM_ID_OBJECTS * sizeof(id_object_t));
-    id_instance_array = malloc(NUM_ID_INSTANCES * sizeof(id_instance_t));
+    /* initialize type_k */
+    memset(&type_k, 0, sizeof(id_type_kernel_t));
+    type_k.in_progress = FALSE;
+    type_k.created     = FALSE;
+    type_k.discarded   = FALSE;
+    type_k.buffer_bool = FALSE;
+    type_k.buffer_int  = 0;
+    type_k.type_id     = H5I_BADID;
+
+    /* initialize obj_k */
+    memset(&obj_k, 0, sizeof(id_object_kernel_t));
+    obj_k.in_progress         = FALSE;
+    obj_k.allocated           = FALSE;
+    obj_k.discarded           = FALSE;
+    obj_k.future              = FALSE;
+    obj_k.real_id_def_in_prog = FALSE;
+    obj_k.real_id_defined     = FALSE;
+    obj_k.future_id_realized  = FALSE;
+    obj_k.future_id_discarded = FALSE;
+    obj_k.id                  = H5I_INVALID_HID;
+    obj_k.id_info_ptr         = NULL;
+
+    /* initialize inst_k */
+    memset(&inst_k, 0, sizeof(id_instance_kernel_t));
+    inst_k.in_progress        = FALSE;
+    inst_k.created            = FALSE;
+    inst_k.closings_attempted = 0;
+    inst_k.closings_failed    = 0;
+    inst_k.closing            = FALSE;
+    inst_k.discarded          = FALSE;
+    inst_k.future             = FALSE;
+    inst_k.realized           = FALSE;
+    inst_k.future_id_src      = FALSE;
+    inst_k.id                 = H5I_INVALID_HID;
+
+    types_array = calloc(NUM_ID_TYPES, sizeof(id_type_t));
+    objects_array = calloc(NUM_ID_OBJECTS, sizeof(id_object_t));
+    id_instance_array = calloc(NUM_ID_INSTANCES, sizeof(id_instance_t));
 
     if ( ( NULL == types_array ) || ( NULL == objects_array ) || ( NULL == id_instance_array ) ) {
 
@@ -699,9 +729,44 @@ static herr_t
 reset_globals(TestParams_t H5_ATTR_UNUSED *params)
 {
     int i;
-    struct id_type_kernel_t     type_k  = ID_TYPE_T_K__INITIALIZER;
-    struct id_object_kernel_t   obj_k   = ID_OBJECT_K_T__INITIALIZER;
-    struct id_instance_kernel_t inst_k  = ID_INSTANCE_K_T__INITIALIZER;
+    struct id_type_kernel_t     type_k;
+    struct id_object_kernel_t   obj_k;
+    struct id_instance_kernel_t inst_k;
+
+    /* initialize type_k */
+    memset(&type_k, 0, sizeof(id_type_kernel_t));
+    type_k.in_progress = FALSE;
+    type_k.created     = FALSE;
+    type_k.discarded   = FALSE;
+    type_k.buffer_bool = FALSE;
+    type_k.buffer_int  = 0;
+    type_k.type_id     = H5I_BADID;
+
+    /* initialize obj_k */
+    memset(&obj_k, 0, sizeof(id_object_kernel_t));
+    obj_k.in_progress         = FALSE;
+    obj_k.allocated           = FALSE;
+    obj_k.discarded           = FALSE;
+    obj_k.future              = FALSE;
+    obj_k.real_id_def_in_prog = FALSE;
+    obj_k.real_id_defined     = FALSE;
+    obj_k.future_id_realized  = FALSE;
+    obj_k.future_id_discarded = FALSE;
+    obj_k.id                  = H5I_INVALID_HID;
+    obj_k.id_info_ptr         = NULL;
+
+    /* initialize inst_k */
+    memset(&inst_k, 0, sizeof(id_instance_kernel_t));
+    inst_k.in_progress        = FALSE;
+    inst_k.created            = FALSE;
+    inst_k.closings_attempted = 0;
+    inst_k.closings_failed    = 0;
+    inst_k.closing            = FALSE;
+    inst_k.discarded          = FALSE;
+    inst_k.future             = FALSE;
+    inst_k.realized           = FALSE;
+    inst_k.future_id_src      = FALSE;
+    inst_k.id                 = H5I_INVALID_HID;
 
     for ( i = 0; i < NUM_ID_TYPES; i++ )
     {
@@ -785,9 +850,9 @@ free_func(void * obj, void H5_ATTR_UNUSED ** request)
     int                           id_index;
     id_object_t                 * object_ptr = (id_object_t *)obj;
     id_instance_kernel_t          id_inst_k;
-    id_instance_kernel_t          mod_id_inst_k = ID_INSTANCE_K_T__INITIALIZER;
+    id_instance_kernel_t          mod_id_inst_k;
     id_object_kernel_t            obj_k;
-    id_object_kernel_t            mod_obj_k = ID_OBJECT_K_T__INITIALIZER;
+    id_object_kernel_t            mod_obj_k;
 
     assert(object_ptr);
 
@@ -1043,7 +1108,10 @@ realize_cb_0(void * future_object, hid_t * actual_object_id)
     volatile id_object_t      * real_id_obj_ptr      = NULL;
     volatile id_object_t      * future_id_obj_ptr = (id_object_t *)future_object;
     id_object_kernel_t          future_id_obj_k;
-    id_object_kernel_t          mod_future_id_obj_k = ID_OBJECT_K_T__INITIALIZER;
+    id_object_kernel_t          mod_future_id_obj_k;
+
+    memset(&future_id_obj_k, 0, sizeof(id_object_kernel_t));
+    memset(&mod_future_id_obj_k, 0, sizeof(id_object_kernel_t));
 
     if ( ( NULL == future_id_obj_ptr )  || ( ID_OBJECT_T__TAG != future_id_obj_ptr->tag ) || 
          ( NULL == actual_object_id ) ) {
@@ -1344,10 +1412,15 @@ discard_cb_0(void * future_object)
     int                           future_id_inst_index = -1;
     id_object_t                 * future_id_obj_ptr = (id_object_t *)future_object;
     id_object_kernel_t            id_obj_k;
-    id_object_kernel_t            mod_id_obj_k = ID_OBJECT_K_T__INITIALIZER;
+    id_object_kernel_t            mod_id_obj_k;
     volatile id_instance_t      * future_id_inst_ptr = NULL;
-    volatile id_instance_kernel_t id_inst_k;
-    id_instance_kernel_t          mod_id_inst_k = ID_INSTANCE_K_T__INITIALIZER;
+    id_instance_kernel_t          id_inst_k;
+    id_instance_kernel_t          mod_id_inst_k;
+
+    memset(&id_inst_k, 0, sizeof(id_instance_kernel_t));
+    memset(&mod_id_inst_k, 0, sizeof(id_instance_kernel_t));
+    memset(&id_obj_k, 0, sizeof(id_object_kernel_t));
+    memset(&mod_id_obj_k, 0, sizeof(id_object_kernel_t));
     
 
     if ( ( NULL == future_id_obj_ptr )  || ( ID_OBJECT_T__TAG != future_id_obj_ptr->tag ) ) {
@@ -1593,8 +1666,11 @@ static int
 register_type(id_type_t * id_type_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
 {
     hbool_t                   success = TRUE; /* will set to FALSE on failure */
-    volatile id_type_kernel_t id_k;
-    volatile id_type_kernel_t mod_id_k = ID_TYPE_T_K__INITIALIZER;
+    id_type_kernel_t          id_k;
+    id_type_kernel_t          mod_id_k;
+
+    memset(&id_k, 0, sizeof(id_type_kernel_t));
+    memset(&mod_id_k, 0, sizeof(id_type_kernel_t));
 
     if ( cs ) {
 
@@ -1730,8 +1806,11 @@ try_register_type(int type_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, 
 {
     hbool_t                   success = TRUE; /* will set to FALSE on failure */
     hbool_t                   index_ok = TRUE; /* will set to FALSE if not */
-    volatile id_type_kernel_t id_k;
-    volatile id_type_kernel_t mod_id_k = ID_TYPE_T_K__INITIALIZER;
+    id_type_kernel_t          id_k;
+    id_type_kernel_t          mod_id_k;
+
+    memset(&id_k, 0, sizeof(id_type_kernel_t));
+    memset(&mod_id_k, 0, sizeof(id_type_kernel_t));
 
     if ( cs ) {
 
@@ -2056,7 +2135,10 @@ destroy_type(id_type_t * id_type_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failur
     hbool_t          destroy_succeeded;
     int              retries = -1;
     id_type_kernel_t id_type_k;
-    id_type_kernel_t mod_id_type_k = ID_TYPE_T_K__INITIALIZER;
+    id_type_kernel_t mod_id_type_k;
+
+    memset(&id_type_k, 0, sizeof(id_type_kernel_t));
+    memset(&mod_id_type_k, 0, sizeof(id_type_kernel_t));
 
     if ( ( NULL == id_type_ptr ) || ( ID_TYPE_T__TAG != id_type_ptr->tag ) ) {
 
@@ -2187,10 +2269,15 @@ try_destroy_type(int type_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, i
     int                       retries = -1;
     int                       ambiguous_result = 0;
     herr_t                    result;
-    volatile id_type_kernel_t pre_id_type_k;
-    volatile id_type_kernel_t post_id_type_k;
-    volatile id_type_kernel_t id_type_k;
-    id_type_kernel_t          mod_id_type_k = ID_TYPE_T_K__INITIALIZER;
+    id_type_kernel_t          pre_id_type_k;
+    id_type_kernel_t          post_id_type_k;
+    id_type_kernel_t          id_type_k;
+    id_type_kernel_t          mod_id_type_k;
+
+    memset(&pre_id_type_k, 0, sizeof(id_type_kernel_t));
+    memset(&post_id_type_k, 0, sizeof(id_type_kernel_t));
+    memset(&id_type_k, 0, sizeof(id_type_kernel_t));
+    memset(&mod_id_type_k, 0, sizeof(id_type_kernel_t));
 
     assert( ( 0 <= type_index ) && ( type_index < NUM_ID_TYPES ));
     assert( ID_TYPE_T__TAG == types_array[type_index].tag );
@@ -2317,9 +2404,15 @@ register_id(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_t * 
     hid_t                id;
     id_type_kernel_t     id_type_k;
     id_instance_kernel_t id_inst_k;
-    id_instance_kernel_t mod_id_inst_k = ID_INSTANCE_K_T__INITIALIZER;
+    id_instance_kernel_t mod_id_inst_k;
     id_object_kernel_t   id_obj_k;
-    id_object_kernel_t   mod_id_obj_k = ID_OBJECT_K_T__INITIALIZER;
+    id_object_kernel_t   mod_id_obj_k;
+
+    memset(&id_type_k, 0, sizeof(id_type_kernel_t));
+    memset(&id_inst_k, 0, sizeof(id_instance_kernel_t));
+    memset(&mod_id_inst_k, 0, sizeof(id_instance_kernel_t));
+    memset(&id_obj_k, 0, sizeof(id_object_kernel_t));
+    memset(&mod_id_obj_k, 0, sizeof(id_object_kernel_t));
 
     if ( ( NULL == id_type_ptr ) || ( ID_TYPE_T__TAG != id_type_ptr->tag ) ||
          ( NULL == id_inst_ptr ) || ( ID_INSTANCE_T__TAG != id_inst_ptr->tag ) ||
@@ -2397,13 +2490,16 @@ register_id(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_t * 
 
     if ( success ) {
 
-        mod_id_inst_k.in_progress   = TRUE;
-        mod_id_inst_k.created       = id_inst_k.created;
-        mod_id_inst_k.discarded     = id_inst_k.discarded;
-        mod_id_inst_k.future        = id_inst_k.future;
-        mod_id_inst_k.realized      = id_inst_k.realized;
-        mod_id_inst_k.future_id_src = id_inst_k.future_id_src;
-        mod_id_inst_k.id            = id_inst_k.id;
+        mod_id_inst_k.in_progress        = TRUE;
+        mod_id_inst_k.created            = id_inst_k.created;
+        mod_id_inst_k.closings_attempted = id_inst_k.closings_attempted;
+        mod_id_inst_k.closings_failed    = id_inst_k.closings_failed;
+        mod_id_inst_k.closing            = id_inst_k.closing;
+        mod_id_inst_k.discarded          = id_inst_k.discarded;
+        mod_id_inst_k.future             = id_inst_k.future;
+        mod_id_inst_k.realized           = id_inst_k.realized;
+        mod_id_inst_k.future_id_src      = id_inst_k.future_id_src;
+        mod_id_inst_k.id                 = id_inst_k.id;
 
         if ( ! atomic_compare_exchange_strong(&(id_inst_ptr->k), &id_inst_k, mod_id_inst_k) ) {
 
@@ -2446,13 +2542,16 @@ register_id(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_t * 
             }
 
             /* in progress flag is set in id_inst_ptr->k.  Must reset it */
-            mod_id_inst_k.in_progress   = FALSE;
-            mod_id_inst_k.created       = id_inst_k.created;
-            mod_id_inst_k.discarded     = id_inst_k.discarded;
-            mod_id_inst_k.future        = id_inst_k.future;
-            mod_id_inst_k.realized      = id_inst_k.realized;
-            mod_id_inst_k.future_id_src = id_inst_k.future_id_src;
-            mod_id_inst_k.id            = id_inst_k.id;
+            mod_id_inst_k.in_progress        = FALSE;
+            mod_id_inst_k.created            = id_inst_k.created;
+            mod_id_inst_k.closings_attempted = id_inst_k.closings_attempted;
+            mod_id_inst_k.closings_failed    = id_inst_k.closings_failed;
+            mod_id_inst_k.closing            = id_inst_k.closing;
+            mod_id_inst_k.discarded          = id_inst_k.discarded;
+            mod_id_inst_k.future             = id_inst_k.future;
+            mod_id_inst_k.realized           = id_inst_k.realized;
+            mod_id_inst_k.future_id_src      = id_inst_k.future_id_src;
+            mod_id_inst_k.id                 = id_inst_k.id;
 
             if ( ! atomic_compare_exchange_strong(&(id_inst_ptr->k), &id_inst_k, mod_id_inst_k) ) {
 
@@ -2476,12 +2575,15 @@ register_id(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_t * 
         atomic_store(&(id_obj_ptr->id_index), id_inst_ptr->index);
         atomic_store(&(id_inst_ptr->obj_index), id_obj_ptr->index);
 
-        mod_id_inst_k.in_progress   = FALSE;
-        mod_id_inst_k.created       = id_inst_k.created;
-        mod_id_inst_k.discarded     = id_inst_k.discarded;
-        mod_id_inst_k.future        = id_inst_k.future;
-        mod_id_inst_k.realized      = id_inst_k.realized;
-        mod_id_inst_k.future_id_src = id_inst_k.future_id_src;
+        mod_id_inst_k.in_progress        = FALSE;
+        mod_id_inst_k.created            = id_inst_k.created;
+        mod_id_inst_k.closings_attempted = id_inst_k.closings_attempted;
+        mod_id_inst_k.closings_failed    = id_inst_k.closings_failed;
+        mod_id_inst_k.closing            = id_inst_k.closing;
+        mod_id_inst_k.discarded          = id_inst_k.discarded;
+        mod_id_inst_k.future             = id_inst_k.future;
+        mod_id_inst_k.realized           = id_inst_k.realized;
+        mod_id_inst_k.future_id_src      = id_inst_k.future_id_src;
         mod_id_inst_k.id            = id_inst_k.id;
 
         mod_id_obj_k.in_progress         = FALSE;
@@ -2586,9 +2688,15 @@ try_register_id(int id_index, int obj_index, hbool_t cs, hbool_t ds, hbool_t rpt
     hid_t                id;
     id_type_kernel_t     id_type_k;
     id_instance_kernel_t id_inst_k;
-    id_instance_kernel_t mod_id_inst_k = ID_INSTANCE_K_T__INITIALIZER;
+    id_instance_kernel_t mod_id_inst_k;
     id_object_kernel_t   id_obj_k;
-    id_object_kernel_t   mod_id_obj_k = ID_OBJECT_K_T__INITIALIZER;
+    id_object_kernel_t   mod_id_obj_k;
+
+    memset(&id_type_k, 0, sizeof(id_type_kernel_t));
+    memset(&id_inst_k, 0, sizeof(id_instance_kernel_t));
+    memset(&mod_id_inst_k, 0, sizeof(id_instance_kernel_t));
+    memset(&id_obj_k, 0, sizeof(id_object_kernel_t));
+    memset(&mod_id_obj_k, 0, sizeof(id_object_kernel_t));
 
     if ( cs ) {
 
@@ -2604,7 +2712,7 @@ try_register_id(int id_index, int obj_index, hbool_t cs, hbool_t ds, hbool_t rpt
         assert( ID_OBJECT_T__TAG   == objects_array[obj_index].tag );
 
         type_index = id_instance_array[id_index].type_index;
-        type_id    = atomic_load(&(id_instance_array[id_index].type_id));
+        type_id    = (H5I_type_t)atomic_load(&(id_instance_array[id_index].type_id));
 
         if ( ( type_index < 0 ) || ( type_index >= NUM_ID_TYPES ) ) {
 
@@ -2626,7 +2734,7 @@ try_register_id(int id_index, int obj_index, hbool_t cs, hbool_t ds, hbool_t rpt
         if ( H5I_BADID == type_id ) {
 
             id_type_k = atomic_load(&(types_array[type_index].k));
-            type_id = id_type_k.type_id;
+            type_id = (H5I_type_t)id_type_k.type_id;
 
             if ( H5I_BADID != type_id ) {
 
@@ -2670,13 +2778,16 @@ try_register_id(int id_index, int obj_index, hbool_t cs, hbool_t ds, hbool_t rpt
 
     if ( success ) {
 
-        mod_id_inst_k.in_progress   = TRUE;
-        mod_id_inst_k.created       = id_inst_k.created;
-        mod_id_inst_k.discarded     = id_inst_k.discarded;
-        mod_id_inst_k.future        = id_inst_k.future;
-        mod_id_inst_k.realized      = id_inst_k.realized;
-        mod_id_inst_k.future_id_src = id_inst_k.future_id_src;
-        mod_id_inst_k.id            = id_inst_k.id;
+        mod_id_inst_k.in_progress        = TRUE;
+        mod_id_inst_k.created            = id_inst_k.created;
+        mod_id_inst_k.closings_attempted = id_inst_k.closings_attempted;
+        mod_id_inst_k.closings_failed    = id_inst_k.closings_failed;
+        mod_id_inst_k.closing            = id_inst_k.closing;
+        mod_id_inst_k.discarded          = id_inst_k.discarded;
+        mod_id_inst_k.future             = id_inst_k.future;
+        mod_id_inst_k.realized           = id_inst_k.realized;
+        mod_id_inst_k.future_id_src      = id_inst_k.future_id_src;
+        mod_id_inst_k.id                 = id_inst_k.id;
 
         if ( ! atomic_compare_exchange_strong(&(id_instance_array[id_index].k), &id_inst_k, mod_id_inst_k) ) {
 
@@ -2716,13 +2827,16 @@ try_register_id(int id_index, int obj_index, hbool_t cs, hbool_t ds, hbool_t rpt
             }
 
             /* in progress flag is set in id_instance_array[id_index].k.  Must reset it */
-            mod_id_inst_k.in_progress   = FALSE;
-            mod_id_inst_k.created       = id_inst_k.created;
-            mod_id_inst_k.discarded     = id_inst_k.discarded;
-            mod_id_inst_k.future        = id_inst_k.future;
-            mod_id_inst_k.realized      = id_inst_k.realized;
-            mod_id_inst_k.future_id_src = id_inst_k.future_id_src;
-            mod_id_inst_k.id            = id_inst_k.id;
+            mod_id_inst_k.in_progress        = FALSE;
+            mod_id_inst_k.created            = id_inst_k.created;
+            mod_id_inst_k.closings_attempted = id_inst_k.closings_attempted;
+            mod_id_inst_k.closings_failed    = id_inst_k.closings_failed;
+            mod_id_inst_k.closing            = id_inst_k.closing;
+            mod_id_inst_k.discarded          = id_inst_k.discarded;
+            mod_id_inst_k.future             = id_inst_k.future;
+            mod_id_inst_k.realized           = id_inst_k.realized;
+            mod_id_inst_k.future_id_src      = id_inst_k.future_id_src;
+            mod_id_inst_k.id                 = id_inst_k.id;
 
             if ( ! atomic_compare_exchange_strong(&(id_instance_array[id_index].k), &id_inst_k, mod_id_inst_k) ) {
 
@@ -2752,13 +2866,16 @@ try_register_id(int id_index, int obj_index, hbool_t cs, hbool_t ds, hbool_t rpt
         atomic_store(&(objects_array[obj_index].id_index), id_instance_array[id_index].index);
         atomic_store(&(id_instance_array[id_index].obj_index), objects_array[obj_index].index);
 
-        mod_id_inst_k.in_progress   = FALSE;
-        mod_id_inst_k.created       = id_inst_k.created;
-        mod_id_inst_k.discarded     = id_inst_k.discarded;
-        mod_id_inst_k.future        = id_inst_k.future;
-        mod_id_inst_k.realized      = id_inst_k.realized;
-        mod_id_inst_k.future_id_src = id_inst_k.future_id_src;
-        mod_id_inst_k.id            = id_inst_k.id;
+        mod_id_inst_k.in_progress        = FALSE;
+        mod_id_inst_k.created            = id_inst_k.created;
+        mod_id_inst_k.closings_attempted = id_inst_k.closings_attempted;
+        mod_id_inst_k.closings_failed    = id_inst_k.closings_failed;
+        mod_id_inst_k.closing            = id_inst_k.closing;
+        mod_id_inst_k.discarded          = id_inst_k.discarded;
+        mod_id_inst_k.future             = id_inst_k.future;
+        mod_id_inst_k.realized           = id_inst_k.realized;
+        mod_id_inst_k.future_id_src      = id_inst_k.future_id_src;
+        mod_id_inst_k.id                 = id_inst_k.id;
 
         mod_id_obj_k.in_progress         = FALSE;
         mod_id_obj_k.allocated           = id_obj_k.allocated;
@@ -2866,9 +2983,15 @@ register_future_id(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_obje
     hid_t                id;
     id_type_kernel_t     id_type_k;
     id_instance_kernel_t id_inst_k;
-    id_instance_kernel_t mod_id_inst_k = ID_INSTANCE_K_T__INITIALIZER;
+    id_instance_kernel_t mod_id_inst_k;
     id_object_kernel_t   id_obj_k;
-    id_object_kernel_t   mod_id_obj_k = ID_OBJECT_K_T__INITIALIZER;
+    id_object_kernel_t   mod_id_obj_k;
+
+    memset(&id_type_k, 0, sizeof(id_type_kernel_t));
+    memset(&id_inst_k, 0, sizeof(id_instance_kernel_t));
+    memset(&mod_id_inst_k, 0, sizeof(id_instance_kernel_t));
+    memset(&id_obj_k, 0, sizeof(id_object_kernel_t));
+    memset(&mod_id_obj_k, 0, sizeof(id_object_kernel_t));
 
     if ( ( NULL == id_type_ptr ) || ( ID_TYPE_T__TAG != id_type_ptr->tag ) ||
          ( NULL == id_inst_ptr ) || ( ID_INSTANCE_T__TAG != id_inst_ptr->tag ) ||
@@ -2946,13 +3069,16 @@ register_future_id(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_obje
 
     if ( success ) {
 
-        mod_id_inst_k.in_progress   = TRUE;
-        mod_id_inst_k.created       = id_inst_k.created;
-        mod_id_inst_k.discarded     = id_inst_k.discarded;
-        mod_id_inst_k.future        = id_inst_k.future;
-        mod_id_inst_k.realized      = id_inst_k.realized;
-        mod_id_inst_k.future_id_src = id_inst_k.future_id_src;
-        mod_id_inst_k.id            = id_inst_k.id;
+        mod_id_inst_k.in_progress        = TRUE;
+        mod_id_inst_k.created            = id_inst_k.created;
+        mod_id_inst_k.closings_attempted = id_inst_k.closings_attempted;
+        mod_id_inst_k.closings_failed    = id_inst_k.closings_failed;
+        mod_id_inst_k.closing            = id_inst_k.closing;
+        mod_id_inst_k.discarded          = id_inst_k.discarded;
+        mod_id_inst_k.future             = id_inst_k.future;
+        mod_id_inst_k.realized           = id_inst_k.realized;
+        mod_id_inst_k.future_id_src      = id_inst_k.future_id_src;
+        mod_id_inst_k.id                 = id_inst_k.id;
 
         if ( ! atomic_compare_exchange_strong(&(id_inst_ptr->k), &id_inst_k, mod_id_inst_k) ) {
 
@@ -2995,13 +3121,16 @@ register_future_id(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_obje
             }
 
             /* in progress flag is set in id_inst_ptr->k.  Must reset it */
-            mod_id_inst_k.in_progress   = FALSE;
-            mod_id_inst_k.created       = id_inst_k.created;
-            mod_id_inst_k.discarded     = id_inst_k.discarded;
-            mod_id_inst_k.future        = id_inst_k.future;
-            mod_id_inst_k.realized      = id_inst_k.realized;
-            mod_id_inst_k.future_id_src = id_inst_k.future_id_src;
-            mod_id_inst_k.id            = id_inst_k.id;
+            mod_id_inst_k.in_progress        = FALSE;
+            mod_id_inst_k.created            = id_inst_k.created;
+            mod_id_inst_k.closings_attempted = id_inst_k.closings_attempted;
+            mod_id_inst_k.closings_failed    = id_inst_k.closings_failed;
+            mod_id_inst_k.closing            = id_inst_k.closing;
+            mod_id_inst_k.discarded          = id_inst_k.discarded;
+            mod_id_inst_k.future             = id_inst_k.future;
+            mod_id_inst_k.realized           = id_inst_k.realized;
+            mod_id_inst_k.future_id_src      = id_inst_k.future_id_src;
+            mod_id_inst_k.id                 = id_inst_k.id;
 
             if ( ! atomic_compare_exchange_strong(&(id_inst_ptr->k), &id_inst_k, mod_id_inst_k) ) {
 
@@ -3026,13 +3155,16 @@ register_future_id(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_obje
         atomic_store(&(id_obj_ptr->id_index), id_inst_ptr->index);
         atomic_store(&(id_inst_ptr->obj_index), id_obj_ptr->index);
 
-        mod_id_inst_k.in_progress   = FALSE;
-        mod_id_inst_k.created       = id_inst_k.created;
-        mod_id_inst_k.discarded     = id_inst_k.discarded;
-        mod_id_inst_k.future        = id_inst_k.future;
-        mod_id_inst_k.realized      = id_inst_k.realized;
-        mod_id_inst_k.future_id_src = id_inst_k.future_id_src;
-        mod_id_inst_k.id            = id_inst_k.id;
+        mod_id_inst_k.in_progress        = FALSE;
+        mod_id_inst_k.created            = id_inst_k.created;
+        mod_id_inst_k.closings_attempted = id_inst_k.closings_attempted;
+        mod_id_inst_k.closings_failed    = id_inst_k.closings_failed;
+        mod_id_inst_k.closing            = id_inst_k.closing;
+        mod_id_inst_k.discarded          = id_inst_k.discarded;
+        mod_id_inst_k.future             = id_inst_k.future;
+        mod_id_inst_k.realized           = id_inst_k.realized;
+        mod_id_inst_k.future_id_src      = id_inst_k.future_id_src;
+        mod_id_inst_k.id                 = id_inst_k.id;
 
         mod_id_obj_k.in_progress         = FALSE;
         mod_id_obj_k.allocated           = id_obj_k.allocated;
@@ -3138,11 +3270,17 @@ link_real_and_future_ids(id_object_t * future_id_obj_ptr, id_object_t * real_id_
     hbool_t                       success = TRUE;
     int                           real_id_inst_index;
     volatile id_instance_t      * real_id_inst_ptr;
-    volatile id_instance_kernel_t real_id_inst_k;
-    id_instance_kernel_t          mod_real_id_inst_k = ID_INSTANCE_K_T__INITIALIZER;
-    volatile id_object_kernel_t   real_id_obj_k;
+    id_instance_kernel_t          real_id_inst_k;
+    id_instance_kernel_t          mod_real_id_inst_k;
+    id_object_kernel_t            real_id_obj_k;
     id_object_kernel_t            future_id_obj_k;
-    id_object_kernel_t            mod_future_id_obj_k = ID_OBJECT_K_T__INITIALIZER;
+    id_object_kernel_t            mod_future_id_obj_k;
+
+    memset(&real_id_inst_k, 0, sizeof(id_instance_kernel_t));
+    memset(&mod_real_id_inst_k, 0, sizeof(id_instance_kernel_t));
+    memset(&real_id_obj_k, 0, sizeof(id_object_kernel_t));
+    memset(&future_id_obj_k, 0, sizeof(id_object_kernel_t));
+    memset(&mod_future_id_obj_k, 0, sizeof(id_object_kernel_t));
 
     if ( ( NULL == future_id_obj_ptr )  || ( ID_OBJECT_T__TAG != future_id_obj_ptr->tag ) ||
          ( NULL == real_id_obj_ptr )    || ( ID_OBJECT_T__TAG != real_id_obj_ptr->tag ) ) {
@@ -3239,13 +3377,16 @@ link_real_and_future_ids(id_object_t * future_id_obj_ptr, id_object_t * real_id_
 
         if ( success ) {
 
-            mod_real_id_inst_k.in_progress   = real_id_inst_k.in_progress;
-            mod_real_id_inst_k.created       = real_id_inst_k.created;
-            mod_real_id_inst_k.discarded     = real_id_inst_k.discarded;
-            mod_real_id_inst_k.future        = real_id_inst_k.future;
-            mod_real_id_inst_k.realized      = real_id_inst_k.realized;
-            mod_real_id_inst_k.future_id_src = TRUE;
-            mod_real_id_inst_k.id            = real_id_inst_k.id;
+            mod_real_id_inst_k.in_progress        = real_id_inst_k.in_progress;
+            mod_real_id_inst_k.created            = real_id_inst_k.created;
+            mod_real_id_inst_k.closings_attempted = real_id_inst_k.closings_attempted;
+            mod_real_id_inst_k.closings_failed    = real_id_inst_k.closings_failed;
+            mod_real_id_inst_k.closing            = real_id_inst_k.closing;
+            mod_real_id_inst_k.discarded          = real_id_inst_k.discarded;
+            mod_real_id_inst_k.future             = real_id_inst_k.future;
+            mod_real_id_inst_k.realized           = real_id_inst_k.realized;
+            mod_real_id_inst_k.future_id_src      = TRUE;
+            mod_real_id_inst_k.id                 = real_id_inst_k.id;
 
             if ( atomic_compare_exchange_strong(&(real_id_inst_ptr->k), 
                                                 &real_id_inst_k, mod_real_id_inst_k) ) {
@@ -3512,6 +3653,10 @@ object_verify(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_t 
     id_instance_kernel_t id_inst_k;
     id_object_kernel_t   id_obj_k;
 
+    memset(&id_type_k, 0, sizeof(id_type_kernel_t));
+    memset(&id_inst_k, 0, sizeof(id_instance_kernel_t));
+    memset(&id_obj_k, 0, sizeof(id_object_kernel_t));
+
     if ( ( NULL == id_type_ptr ) || ( ID_TYPE_T__TAG != id_type_ptr->tag ) ||
          ( NULL == id_inst_ptr ) || ( ID_INSTANCE_T__TAG != id_inst_ptr->tag ) ||
          ( ( NULL != id_obj_ptr ) && ( ID_OBJECT_T__TAG != id_obj_ptr->tag ) ) ) {
@@ -3732,9 +3877,13 @@ try_object_verify(int id_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, in
     unsigned long long            post_remove_verify_starts;
     id_object_t                 * expected_id_obj_ptr = NULL;
     id_object_t                 * reported_id_obj_ptr = NULL;
-    volatile id_type_kernel_t     id_type_k;
-    volatile id_instance_kernel_t pre_id_inst_k;
-    volatile id_instance_kernel_t post_id_inst_k;
+    id_type_kernel_t              id_type_k;
+    id_instance_kernel_t          pre_id_inst_k;
+    id_instance_kernel_t          post_id_inst_k;
+
+    memset(&id_type_k, 0, sizeof(id_type_kernel_t));
+    memset(&pre_id_inst_k, 0, sizeof(id_instance_kernel_t));
+    memset(&post_id_inst_k, 0, sizeof(id_instance_kernel_t));
 
     if ( cs ) {
 
@@ -3915,6 +4064,9 @@ get_type(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr,
     id_type_kernel_t     id_type_k;
     id_instance_kernel_t id_inst_k;
 
+    memset(&id_type_k, 0, sizeof(id_type_kernel_t));
+    memset(&id_inst_k, 0, sizeof(id_instance_kernel_t));
+
     if ( ( NULL == id_type_ptr ) || ( ID_TYPE_T__TAG != id_type_ptr->tag ) ||
          ( NULL == id_inst_ptr ) || ( ID_INSTANCE_T__TAG != id_inst_ptr->tag ) ) {
 
@@ -4038,9 +4190,15 @@ remove_verify(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_t 
     hid_t                id;
     id_type_kernel_t     id_type_k;
     id_instance_kernel_t id_inst_k;
-    id_instance_kernel_t mod_id_inst_k = ID_INSTANCE_K_T__INITIALIZER;
+    id_instance_kernel_t mod_id_inst_k;
     id_object_kernel_t   id_obj_k;
-    id_object_kernel_t   mod_id_obj_k = ID_OBJECT_K_T__INITIALIZER;
+    id_object_kernel_t   mod_id_obj_k;
+
+    memset(&id_type_k, 0, sizeof(id_type_kernel_t));
+    memset(&id_inst_k, 0, sizeof(id_instance_kernel_t));
+    memset(&mod_id_inst_k, 0, sizeof(id_instance_kernel_t));
+    memset(&id_obj_k, 0, sizeof(id_object_kernel_t));
+    memset(&mod_id_obj_k, 0, sizeof(id_object_kernel_t));
 
     if ( ( NULL == id_type_ptr ) || ( ID_TYPE_T__TAG != id_type_ptr->tag ) ||
          ( NULL == id_inst_ptr ) || ( ID_INSTANCE_T__TAG != id_inst_ptr->tag ) ||
@@ -4177,13 +4335,18 @@ remove_verify(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_t 
         /* mark *id_inst_k as discarded */
         while ( ! id_inst_k.discarded ) {
 
-            mod_id_inst_k.in_progress   = id_inst_k.in_progress;
-            mod_id_inst_k.created       = id_inst_k.created;
-            mod_id_inst_k.discarded     = TRUE;
-            mod_id_inst_k.future        = id_inst_k.future;
-            mod_id_inst_k.realized      = id_inst_k.realized;
-            mod_id_inst_k.future_id_src = id_inst_k.future_id_src;
-            mod_id_inst_k.id            = id_inst_k.id;
+            memset(&mod_id_inst_k, 0, sizeof(id_instance_kernel_t));
+
+            mod_id_inst_k.in_progress        = id_inst_k.in_progress;
+            mod_id_inst_k.created            = id_inst_k.created;
+            mod_id_inst_k.closings_attempted = id_inst_k.closings_attempted;
+            mod_id_inst_k.closings_failed    = id_inst_k.closings_failed;
+            mod_id_inst_k.closing            = id_inst_k.closing;
+            mod_id_inst_k.discarded          = TRUE;
+            mod_id_inst_k.future             = id_inst_k.future;
+            mod_id_inst_k.realized           = id_inst_k.realized;
+            mod_id_inst_k.future_id_src      = id_inst_k.future_id_src;
+            mod_id_inst_k.id                 = id_inst_k.id;
 
             atomic_compare_exchange_strong(&(id_inst_ptr->k), &id_inst_k, mod_id_inst_k);
 
@@ -4197,6 +4360,8 @@ remove_verify(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_t 
          * the object so we can detect other calls to the free function.
          */
         while ( ! id_obj_k.discarded ) {
+
+            memset(&mod_id_obj_k, 0, sizeof(id_object_kernel_t));
 
             mod_id_obj_k.in_progress         = id_obj_k.in_progress;
             mod_id_obj_k.allocated           = id_obj_k.allocated;
@@ -4289,6 +4454,9 @@ try_remove_verify(int id_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, in
     id_instance_kernel_t post_id_inst_k;
     id_object_t        * reported_id_obj_ptr = NULL;
 
+    memset(&id_type_k, 0, sizeof(id_type_kernel_t));
+    memset(&pre_id_inst_k, 0, sizeof(id_instance_kernel_t));
+    memset(&post_id_inst_k, 0, sizeof(id_instance_kernel_t));
 
     if ( cs ) {
 
@@ -4482,8 +4650,13 @@ dec_ref(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_t * id_o
     int                  ref_count;
     id_type_kernel_t     id_type_k;
     id_instance_kernel_t id_inst_k;
-    id_instance_kernel_t mod_id_inst_k = ID_INSTANCE_K_T__INITIALIZER;
+    id_instance_kernel_t mod_id_inst_k;
     id_object_kernel_t   id_obj_k;
+
+    memset(&id_type_k, 0, sizeof(id_type_kernel_t));
+    memset(&id_inst_k, 0, sizeof(id_instance_kernel_t));
+    memset(&mod_id_inst_k, 0, sizeof(id_instance_kernel_t));
+    memset(&id_obj_k, 0, sizeof(id_object_kernel_t));
 
     if ( ( NULL == id_type_ptr ) || ( ID_TYPE_T__TAG != id_type_ptr->tag ) ||
          ( NULL == id_inst_ptr ) || ( ID_INSTANCE_T__TAG != id_inst_ptr->tag ) ||
@@ -4607,13 +4780,16 @@ dec_ref(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_t * id_o
             /* mark *id_inst_k as discarded */
             while ( ! id_inst_k.discarded ) {
 
-                mod_id_inst_k.in_progress   = id_inst_k.in_progress;
-                mod_id_inst_k.created       = id_inst_k.created;
-                mod_id_inst_k.discarded     = TRUE;
-                mod_id_inst_k.future        = id_inst_k.future;
-                mod_id_inst_k.realized      = id_inst_k.realized;
-                mod_id_inst_k.future_id_src = id_inst_k.future_id_src;
-                mod_id_inst_k.id            = id_inst_k.id;
+                mod_id_inst_k.in_progress        = id_inst_k.in_progress;
+                mod_id_inst_k.created            = id_inst_k.created;
+                mod_id_inst_k.closings_attempted = id_inst_k.closings_attempted;
+                mod_id_inst_k.closings_failed    = id_inst_k.closings_failed;
+                mod_id_inst_k.closing            = id_inst_k.closing;
+                mod_id_inst_k.discarded          = TRUE;
+                mod_id_inst_k.future             = id_inst_k.future;
+                mod_id_inst_k.realized           = id_inst_k.realized;
+                mod_id_inst_k.future_id_src      = id_inst_k.future_id_src;
+                mod_id_inst_k.id                = id_inst_k.id;
 
                 atomic_compare_exchange_strong(&(id_inst_ptr->k), &id_inst_k, mod_id_inst_k);
 
@@ -4687,6 +4863,9 @@ try_dec_ref(int id_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
     unsigned long long   post_remove_verify_starts;
     id_instance_kernel_t pre_id_inst_k;
     id_instance_kernel_t post_id_inst_k;
+
+    memset(&pre_id_inst_k, 0, sizeof(id_instance_kernel_t));
+    memset(&post_id_inst_k, 0, sizeof(id_instance_kernel_t));
 
     if ( cs ) {
 
@@ -4864,6 +5043,8 @@ inc_ref(id_instance_t * id_inst_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failure
     int                  ref_count;
     id_instance_kernel_t id_inst_k;
 
+    memset(&id_inst_k, 0, sizeof(id_instance_kernel_t));
+
     if ( ( NULL == id_inst_ptr ) || ( ID_INSTANCE_T__TAG != id_inst_ptr->tag ) ) {
 
         assert(FALSE);
@@ -4979,6 +5160,9 @@ try_inc_ref(int id_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
     unsigned long long   post_remove_verify_starts;
     id_instance_kernel_t pre_id_inst_k;
     id_instance_kernel_t post_id_inst_k;
+
+    memset(&pre_id_inst_k, 0, sizeof(id_instance_kernel_t));
+    memset(&post_id_inst_k, 0, sizeof(id_instance_kernel_t));
 
     assert( ( id_index >= 0 ) && ( id_index < NUM_ID_INSTANCES ) );
 
@@ -5101,6 +5285,8 @@ get_ref(id_instance_t * id_inst_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failure
     int                  ref_count;
     id_instance_kernel_t id_inst_k;
 
+    memset(&id_inst_k, 0, sizeof(id_instance_kernel_t));
+
     if ( ( NULL == id_inst_ptr ) || ( ID_INSTANCE_T__TAG != id_inst_ptr->tag ) ) {
 
         assert(FALSE);
@@ -5203,6 +5389,9 @@ try_get_ref(int id_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
     unsigned long long   post_remove_verify_starts;
     id_instance_kernel_t pre_id_inst_k;
     id_instance_kernel_t post_id_inst_k;
+
+    memset(&pre_id_inst_k, 0, sizeof(id_instance_kernel_t));
+    memset(&post_id_inst_k, 0, sizeof(id_instance_kernel_t));
 
     assert( ( id_index >= 0 ) && ( id_index < NUM_ID_INSTANCES ) );
 
@@ -5319,6 +5508,8 @@ nmembers(id_type_t * id_type_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failures, 
     H5I_type_t           type;
     id_type_kernel_t     id_type_k;
 
+    memset(&id_type_k, 0, sizeof(id_type_kernel_t));
+
     if ( ( NULL == id_type_ptr ) || ( ID_TYPE_T__TAG != id_type_ptr->tag ) ) {
 
         assert(FALSE);
@@ -5415,6 +5606,8 @@ type_exists(id_type_t * id_type_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failure
     H5I_type_t           type;
     id_type_kernel_t     id_type_k;
 
+    memset(&id_type_k, 0, sizeof(id_type_kernel_t));
+
     if ( ( NULL == id_type_ptr ) || ( ID_TYPE_T__TAG != id_type_ptr->tag ) ) {
 
         assert(FALSE);
@@ -5481,6 +5674,8 @@ inc_type_ref(id_type_t * id_type_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failur
     int                  ref_count;
     H5I_type_t           type;
     id_type_kernel_t     id_type_k;
+
+    memset(&id_type_k, 0, sizeof(id_type_kernel_t));
 
     if ( ( NULL == id_type_ptr ) || ( ID_TYPE_T__TAG != id_type_ptr->tag ) ) {
 
@@ -5572,6 +5767,8 @@ dec_type_ref(id_type_t * id_type_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failur
     H5I_type_t           type;
     id_type_kernel_t     id_type_k;
 
+    memset(&id_type_k, 0, sizeof(id_type_kernel_t));
+
     if ( ( NULL == id_type_ptr ) || ( ID_TYPE_T__TAG != id_type_ptr->tag ) ) {
 
         assert(FALSE);
@@ -5661,6 +5858,8 @@ try_dec_type_ref(id_type_t * id_type_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_fa
     herr_t               ref_count;
     H5I_type_t           type;
     id_type_kernel_t     id_type_k;
+
+    memset(&id_type_k, 0, sizeof(id_type_kernel_t));
 
     if ( ( NULL == id_type_ptr ) || ( ID_TYPE_T__TAG != id_type_ptr->tag ) ) {
 
