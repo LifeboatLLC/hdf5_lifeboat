@@ -827,6 +827,7 @@ reset_globals(TestParams_t H5_ATTR_UNUSED *params)
 
 } /* reset_globals() */
 
+#if 0 /* original version */
 
 /***********************************************************************************************
  * free_func()
@@ -841,7 +842,7 @@ reset_globals(TestParams_t H5_ATTR_UNUSED *params)
  *      must therefore not be used with ID types that are marked as multi-thread safe.
  *
  *                                                        JRM -- 4/16/24
- *      
+ *
  ***********************************************************************************************/
 
 static herr_t
@@ -865,9 +866,11 @@ free_func(void * obj, void H5_ATTR_UNUSED ** request)
 
     memset(&id_inst_k, 0, sizeof(id_instance_kernel_t));
     memset(&mod_id_inst_k, 0, sizeof(id_instance_kernel_t));
+    mod_id_inst_k.id = H5I_INVALID_HID;
 
     memset(&obj_k, 0, sizeof(id_object_kernel_t));
     memset(&mod_obj_k, 0, sizeof(id_object_kernel_t));
+    mod_obj_k.id = H5I_INVALID_HID;
 
     id_inst_k = atomic_load(&(id_instance_array[id_index].k));
 
@@ -885,14 +888,17 @@ free_func(void * obj, void H5_ATTR_UNUSED ** request)
     assert( ! obj_k.discarded );
     assert( ! obj_k.future );
 
-    mod_id_inst_k.in_progress     = id_inst_k.in_progress;
-    mod_id_inst_k.created         = id_inst_k.created;
-    mod_id_inst_k.discarded       = TRUE;
-    mod_id_inst_k.future          = id_inst_k.future;
-    mod_id_inst_k.realized        = id_inst_k.realized;
-    mod_id_inst_k.future_id_src   = id_inst_k.future_id_src;
-    mod_id_inst_k.in_progress     = id_inst_k.in_progress;
-    mod_id_inst_k.id              = id_inst_k.id;
+    mod_id_inst_k.in_progress        = id_inst_k.in_progress;
+    mod_id_inst_k.created            = id_inst_k.created;
+    mod_id_inst_k.closings_attempted = id_inst_k.closings_attempted;
+    mod_id_inst_k.closings_failed    = id_inst_k.closings_failed;
+    mod_id_inst_k.closing            = id_inst_k.closing;
+    mod_id_inst_k.discarded          = TRUE;
+    mod_id_inst_k.future             = id_inst_k.future;
+    mod_id_inst_k.realized           = id_inst_k.realized;
+    mod_id_inst_k.future_id_src      = id_inst_k.future_id_src;
+    mod_id_inst_k.in_progress        = id_inst_k.in_progress;
+    mod_id_inst_k.id                 = id_inst_k.id;
 
     mod_obj_k.allocated           = obj_k.allocated;
     mod_obj_k.discarded           = TRUE;
@@ -916,6 +922,131 @@ free_func(void * obj, void H5_ATTR_UNUSED ** request)
         return(FAIL);
     }
 } /* free_func() */
+
+#else /* modified version */
+
+/***********************************************************************************************
+ * free_func()
+ *
+ *      Discard the object associated with an ID in the index.
+ *
+ *      In the context of the H5I test code, this means that both the instance of id_object_t
+ *      pointed to by the obj parameter, and the instance of id_instance_t associated with 
+ *      it must be marked as deleted.
+ *
+ *      Note that this implementation of the free function is not multi-thread safe -- and
+ *      must therefore not be used with ID types that are marked as multi-thread safe.
+ *
+ *                                                        JRM -- 4/16/24
+ *
+ * Changes: 
+ *
+ *      Modified function to allow for the possibility that the kernel of an instance 
+ *      of id_object_t may be modified during the execution of the free function.
+ *
+ *                                                      JRM -- 10/27/25
+ *      
+ ***********************************************************************************************/
+
+static herr_t
+free_func(void * obj, void H5_ATTR_UNUSED ** request)
+{
+    hbool_t                       inst_done = FALSE;
+    hbool_t                       obj_done = FALSE;
+    int                           id_index;
+    id_object_t                 * object_ptr = (id_object_t *)obj;
+    id_instance_kernel_t          id_inst_k;
+    id_instance_kernel_t          mod_id_inst_k;
+    id_object_kernel_t            obj_k;
+    id_object_kernel_t            mod_obj_k;
+
+    assert(object_ptr);
+
+    assert(ID_OBJECT_T__TAG == object_ptr->tag);
+
+    id_index = atomic_load(&(object_ptr->id_index));
+
+    assert( ( 0 <= id_index ) && ( id_index < NUM_ID_INSTANCES ) );
+    assert( ID_INSTANCE_T__TAG == id_instance_array[id_index].tag );
+
+    memset(&obj_k, 0, sizeof(id_object_kernel_t));
+    memset(&mod_obj_k, 0, sizeof(id_object_kernel_t));
+    mod_obj_k.id = H5I_INVALID_HID;
+
+    obj_k = atomic_load(&(object_ptr->k));
+
+    assert( obj_k.allocated );
+    assert( ! obj_k.discarded );
+    assert( ! obj_k.future );
+
+    mod_obj_k.allocated           = obj_k.allocated;
+    mod_obj_k.discarded           = TRUE;
+    mod_obj_k.future              = obj_k.future;
+    mod_obj_k.real_id_def_in_prog = obj_k.real_id_def_in_prog;
+    mod_obj_k.real_id_defined     = obj_k.real_id_defined;
+    mod_obj_k.future_id_realized  = obj_k.future_id_realized;
+    mod_obj_k.future_id_discarded = obj_k.future_id_discarded;
+    mod_obj_k.id                  = obj_k.id;
+    mod_obj_k.id_info_ptr         = obj_k.id_info_ptr;
+
+    do {
+
+        memset(&id_inst_k, 0, sizeof(id_instance_kernel_t));
+        memset(&mod_id_inst_k, 0, sizeof(id_instance_kernel_t));
+        mod_id_inst_k.id = H5I_INVALID_HID;
+
+        id_inst_k = atomic_load(&(id_instance_array[id_index].k));
+
+        assert( id_inst_k.created );
+        assert( ! id_inst_k.discarded );
+#if 0 
+        assert( ! id_inst_k.future );
+#else 
+        assert( ( ! id_inst_k.future ) || ( id_inst_k.realized ) );
+#endif
+
+        mod_id_inst_k.in_progress        = id_inst_k.in_progress;
+        mod_id_inst_k.created            = id_inst_k.created;
+        mod_id_inst_k.closings_attempted = id_inst_k.closings_attempted;
+        mod_id_inst_k.closings_failed    = id_inst_k.closings_failed;
+        mod_id_inst_k.closing            = id_inst_k.closing;
+        mod_id_inst_k.discarded          = TRUE;
+        mod_id_inst_k.future             = id_inst_k.future;
+        mod_id_inst_k.realized           = id_inst_k.realized;
+        mod_id_inst_k.future_id_src      = id_inst_k.future_id_src;
+        mod_id_inst_k.in_progress        = id_inst_k.in_progress;
+        mod_id_inst_k.id                 = id_inst_k.id;
+
+        inst_done = atomic_compare_exchange_strong(&(id_instance_array[id_index].k), &id_inst_k, mod_id_inst_k);
+
+        if ( ! obj_done ) {
+
+            obj_done = atomic_compare_exchange_strong(&(object_ptr->k), &obj_k, mod_obj_k);
+        } 
+
+        /* at present, the atomic_compare_exchange_strong on object_ptr->k must always succeed.  
+         * display a diagnostic and fail if this is not the case.
+         */
+
+        if ( ! obj_done ) {
+
+            fprintf(stderr, "\nfree_func() failed for id_index = %d\n\n", id_index);
+
+            return(FAIL);
+        }
+
+        /* It is possible that another thread will modify id_instance_array[id_index].k between the 
+         * atomic load and the call to atomic_compare_exchange_strong().  If so, just retry.  Note
+         * that the modification of object_ptr->k must succeed the first time, and thus is not 
+         * repeated.
+         */
+    } while ( ! inst_done );
+
+    return(SUCCEED);
+
+} /* free_func() */
+
+#endif /* modified version */
 
 /***********************************************************************************************
  * closing_rpt
@@ -970,6 +1101,7 @@ closing_rpt(hid_t id, void * obj, int op)
     do {
         memset(&inst_k, 0, sizeof(id_instance_kernel_t));
         memset(&mod_inst_k, 0, sizeof(id_instance_kernel_t));
+        mod_inst_k.id = H5I_INVALID_HID;
 
         inst_k = atomic_load(&(id_instance_array[id_index].k));
 
@@ -1112,6 +1244,7 @@ realize_cb_0(void * future_object, hid_t * actual_object_id)
 
     memset(&future_id_obj_k, 0, sizeof(id_object_kernel_t));
     memset(&mod_future_id_obj_k, 0, sizeof(id_object_kernel_t));
+    mod_future_id_obj_k.id = H5I_INVALID_HID;
 
     if ( ( NULL == future_id_obj_ptr )  || ( ID_OBJECT_T__TAG != future_id_obj_ptr->tag ) || 
          ( NULL == actual_object_id ) ) {
@@ -1419,8 +1552,10 @@ discard_cb_0(void * future_object)
 
     memset(&id_inst_k, 0, sizeof(id_instance_kernel_t));
     memset(&mod_id_inst_k, 0, sizeof(id_instance_kernel_t));
+    mod_id_inst_k.id = H5I_INVALID_HID;
     memset(&id_obj_k, 0, sizeof(id_object_kernel_t));
     memset(&mod_id_obj_k, 0, sizeof(id_object_kernel_t));
+    mod_id_obj_k.id = H5I_INVALID_HID;
     
 
     if ( ( NULL == future_id_obj_ptr )  || ( ID_OBJECT_T__TAG != future_id_obj_ptr->tag ) ) {
@@ -1616,14 +1751,17 @@ discard_cb_0(void * future_object)
 
     if ( ( success ) && ( id_obj_k.future_id_realized ) ) {
 
-        mod_id_inst_k.in_progress   = id_inst_k.in_progress;
-        mod_id_inst_k.created       = id_inst_k.created;
-        mod_id_inst_k.discarded     = id_inst_k.discarded;
-        mod_id_inst_k.future        = id_inst_k.future;
-        mod_id_inst_k.realized      = TRUE;
-        mod_id_inst_k.future_id_src = id_inst_k.future_id_src;
-        mod_id_inst_k.in_progress   = id_inst_k.in_progress;
-        mod_id_inst_k.id            = id_inst_k.id;
+        mod_id_inst_k.in_progress        = id_inst_k.in_progress;
+        mod_id_inst_k.created            = id_inst_k.created;
+        mod_id_inst_k.closings_attempted = id_inst_k.closings_attempted;
+        mod_id_inst_k.closings_failed    = id_inst_k.closings_failed;
+        mod_id_inst_k.closing            = id_inst_k.closing;
+        mod_id_inst_k.discarded          = id_inst_k.discarded;
+        mod_id_inst_k.future             = id_inst_k.future;
+        mod_id_inst_k.realized           = TRUE;
+        mod_id_inst_k.future_id_src      = id_inst_k.future_id_src;
+        mod_id_inst_k.in_progress        = id_inst_k.in_progress;
+        mod_id_inst_k.id                 = id_inst_k.id;
 
         if ( ! atomic_compare_exchange_strong(&(future_id_inst_ptr->k), &id_inst_k, mod_id_inst_k) ) {
 
@@ -1671,6 +1809,7 @@ register_type(id_type_t * id_type_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failu
 
     memset(&id_k, 0, sizeof(id_type_kernel_t));
     memset(&mod_id_k, 0, sizeof(id_type_kernel_t));
+    mod_id_k.type_id = H5I_BADID;
 
     if ( cs ) {
 
@@ -1811,6 +1950,7 @@ try_register_type(int type_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, 
 
     memset(&id_k, 0, sizeof(id_type_kernel_t));
     memset(&mod_id_k, 0, sizeof(id_type_kernel_t));
+    mod_id_k.type_id = H5I_BADID;
 
     if ( cs ) {
 
@@ -2139,6 +2279,7 @@ destroy_type(id_type_t * id_type_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failur
 
     memset(&id_type_k, 0, sizeof(id_type_kernel_t));
     memset(&mod_id_type_k, 0, sizeof(id_type_kernel_t));
+    mod_id_type_k.type_id = H5I_BADID;
 
     if ( ( NULL == id_type_ptr ) || ( ID_TYPE_T__TAG != id_type_ptr->tag ) ) {
 
@@ -2278,6 +2419,7 @@ try_destroy_type(int type_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, i
     memset(&post_id_type_k, 0, sizeof(id_type_kernel_t));
     memset(&id_type_k, 0, sizeof(id_type_kernel_t));
     memset(&mod_id_type_k, 0, sizeof(id_type_kernel_t));
+    mod_id_type_k.type_id = H5I_BADID;
 
     assert( ( 0 <= type_index ) && ( type_index < NUM_ID_TYPES ));
     assert( ID_TYPE_T__TAG == types_array[type_index].tag );
@@ -2411,8 +2553,10 @@ register_id(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_t * 
     memset(&id_type_k, 0, sizeof(id_type_kernel_t));
     memset(&id_inst_k, 0, sizeof(id_instance_kernel_t));
     memset(&mod_id_inst_k, 0, sizeof(id_instance_kernel_t));
+    mod_id_inst_k.id = H5I_INVALID_HID;
     memset(&id_obj_k, 0, sizeof(id_object_kernel_t));
     memset(&mod_id_obj_k, 0, sizeof(id_object_kernel_t));
+    mod_id_obj_k.id = H5I_INVALID_HID;
 
     if ( ( NULL == id_type_ptr ) || ( ID_TYPE_T__TAG != id_type_ptr->tag ) ||
          ( NULL == id_inst_ptr ) || ( ID_INSTANCE_T__TAG != id_inst_ptr->tag ) ||
@@ -2584,7 +2728,7 @@ register_id(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_t * 
         mod_id_inst_k.future             = id_inst_k.future;
         mod_id_inst_k.realized           = id_inst_k.realized;
         mod_id_inst_k.future_id_src      = id_inst_k.future_id_src;
-        mod_id_inst_k.id            = id_inst_k.id;
+        mod_id_inst_k.id                 = id_inst_k.id;
 
         mod_id_obj_k.in_progress         = FALSE;
         mod_id_obj_k.allocated           = id_obj_k.allocated;
@@ -2695,8 +2839,10 @@ try_register_id(int id_index, int obj_index, hbool_t cs, hbool_t ds, hbool_t rpt
     memset(&id_type_k, 0, sizeof(id_type_kernel_t));
     memset(&id_inst_k, 0, sizeof(id_instance_kernel_t));
     memset(&mod_id_inst_k, 0, sizeof(id_instance_kernel_t));
+    mod_id_inst_k.id = H5I_INVALID_HID;
     memset(&id_obj_k, 0, sizeof(id_object_kernel_t));
     memset(&mod_id_obj_k, 0, sizeof(id_object_kernel_t));
+    mod_id_obj_k.id = H5I_INVALID_HID;
 
     if ( cs ) {
 
@@ -2990,8 +3136,10 @@ register_future_id(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_obje
     memset(&id_type_k, 0, sizeof(id_type_kernel_t));
     memset(&id_inst_k, 0, sizeof(id_instance_kernel_t));
     memset(&mod_id_inst_k, 0, sizeof(id_instance_kernel_t));
+    mod_id_inst_k.id = H5I_INVALID_HID;
     memset(&id_obj_k, 0, sizeof(id_object_kernel_t));
     memset(&mod_id_obj_k, 0, sizeof(id_object_kernel_t));
+    mod_id_obj_k.id = H5I_INVALID_HID;
 
     if ( ( NULL == id_type_ptr ) || ( ID_TYPE_T__TAG != id_type_ptr->tag ) ||
          ( NULL == id_inst_ptr ) || ( ID_INSTANCE_T__TAG != id_inst_ptr->tag ) ||
@@ -3278,9 +3426,11 @@ link_real_and_future_ids(id_object_t * future_id_obj_ptr, id_object_t * real_id_
 
     memset(&real_id_inst_k, 0, sizeof(id_instance_kernel_t));
     memset(&mod_real_id_inst_k, 0, sizeof(id_instance_kernel_t));
+    mod_real_id_inst_k.id = H5I_INVALID_HID;
     memset(&real_id_obj_k, 0, sizeof(id_object_kernel_t));
     memset(&future_id_obj_k, 0, sizeof(id_object_kernel_t));
     memset(&mod_future_id_obj_k, 0, sizeof(id_object_kernel_t));
+    mod_future_id_obj_k.id = H5I_INVALID_HID;
 
     if ( ( NULL == future_id_obj_ptr )  || ( ID_OBJECT_T__TAG != future_id_obj_ptr->tag ) ||
          ( NULL == real_id_obj_ptr )    || ( ID_OBJECT_T__TAG != real_id_obj_ptr->tag ) ) {
@@ -4197,8 +4347,10 @@ remove_verify(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_t 
     memset(&id_type_k, 0, sizeof(id_type_kernel_t));
     memset(&id_inst_k, 0, sizeof(id_instance_kernel_t));
     memset(&mod_id_inst_k, 0, sizeof(id_instance_kernel_t));
+    mod_id_inst_k.id = H5I_INVALID_HID;
     memset(&id_obj_k, 0, sizeof(id_object_kernel_t));
     memset(&mod_id_obj_k, 0, sizeof(id_object_kernel_t));
+    mod_id_obj_k.id = H5I_INVALID_HID;
 
     if ( ( NULL == id_type_ptr ) || ( ID_TYPE_T__TAG != id_type_ptr->tag ) ||
          ( NULL == id_inst_ptr ) || ( ID_INSTANCE_T__TAG != id_inst_ptr->tag ) ||
@@ -4336,6 +4488,7 @@ remove_verify(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_t 
         while ( ! id_inst_k.discarded ) {
 
             memset(&mod_id_inst_k, 0, sizeof(id_instance_kernel_t));
+            mod_id_inst_k.id = H5I_INVALID_HID;
 
             mod_id_inst_k.in_progress        = id_inst_k.in_progress;
             mod_id_inst_k.created            = id_inst_k.created;
@@ -4656,6 +4809,7 @@ dec_ref(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_t * id_o
     memset(&id_type_k, 0, sizeof(id_type_kernel_t));
     memset(&id_inst_k, 0, sizeof(id_instance_kernel_t));
     memset(&mod_id_inst_k, 0, sizeof(id_instance_kernel_t));
+    mod_id_inst_k.id = H5I_INVALID_HID;
     memset(&id_obj_k, 0, sizeof(id_object_kernel_t));
 
     if ( ( NULL == id_type_ptr ) || ( ID_TYPE_T__TAG != id_type_ptr->tag ) ||
@@ -9030,11 +9184,13 @@ main(int argc, char **argv)
         /* err_cnt        = */     0,
         /* ambig_cnt      = */     0
     };
+
     AddTest("serial_test_2", serial_test_2, NULL, reset_globals, &test_params,
             sizeof(mt_test_params_t), 0, "smoke check test for H5I ID registrations");
 
     AddTest("serial_test_3", serial_test_3, NULL, reset_globals, NULL, 0, 0,
             "another smoke check test for H5I ID registrations");
+
 #if 0
     AddTest("serial_test_4", serial_test_4, NULL, reset_globals, NULL, 0, 0,
             "smoke check test for H5I future ID functionality");
@@ -9057,12 +9213,14 @@ main(int argc, char **argv)
         /* err_cnt        = */     0,
         /* ambig_cnt      = */     0
     };
+
     AddTest("mt_test_fcn_1_serial_test", mt_test_fcn_1_serial_test, NULL, reset_globals,
             &test_params, sizeof(mt_test_params_t), 0,
             "serial smoke check test for multi-thread helper function");
 
     AddTest("mt_test_1", mt_test_1, NULL, NULL, NULL, 0, 0,
             "multi-thread H5I smoke check test #1");
+
     AddTest("mt_test_2", mt_test_2, NULL, NULL, NULL, 0, 0,
             "multi-thread H5I smoke check test #2");
 

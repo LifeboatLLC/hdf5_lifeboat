@@ -629,6 +629,8 @@ H5I_term_package(void)
 
             if (type_info_ptr) {
 
+                assert(0 == atomic_load(&(type_info_ptr->id_count)));
+
                 H5I__discard_mt_type_info(type_info_ptr);
                 type_info_ptr = NULL;
 
@@ -2416,6 +2418,8 @@ H5I_register_type_internal(const H5I_class_t *cls)
             lfht_clear(&(type_info_ptr->lfht));
             atomic_store(&(type_info_ptr->lfht_cleared), TRUE);
 
+            assert(0 == atomic_load(&(type_info_ptr->id_count)));
+
             result = H5I__discard_mt_type_info(type_info_ptr);
             assert(result >= 0);
 
@@ -3186,7 +3190,13 @@ H5I__mark_node(void *_info, void H5_ATTR_UNUSED *key, void *_udata)
             } else {
 
                 /* update stats for repeat attempt mark an entry that is already closing */
+
                 atomic_fetch_add(&(H5I_mt_g.H5I__mark_node__closing_set_and_right_thread), 1ULL);
+
+                /* Since this is the same thread that markd the target ID as closing, it follows
+                 * that a previous attempt to free the data associated with the ID failed.  Thus 
+                 * we must proceed and try again.
+                 */
             }
         }
 
@@ -4274,6 +4284,18 @@ H5I__destroy_type(H5I_type_t type)
 
     result = atomic_compare_exchange_strong(&(H5I_mt_g.type_info_allocation_table[type]), &expected, FALSE);
     assert(result);
+
+#if 1 /* JRM */
+
+    if ( 0 != atomic_load(&(type_info_ptr->id_count)) ) {
+
+        fprintf(stderr, "\nH5I__destroy_type(): type_info_ptr->id_count = %lld\n",
+                (long long)(atomic_load(&(type_info_ptr->id_count))));
+    }
+
+#endif /* JRM */
+
+    assert(0 == atomic_load(&(type_info_ptr->id_count)));
 
     H5I__discard_mt_type_info(type_info_ptr);
     type_info_ptr = NULL;
@@ -7012,7 +7034,10 @@ H5I__dec_ref(hid_t id, void **request, hbool_t app)
             if ( closing_rpt_fcn ) {
 
                 H5_GCC_CLANG_DIAG_OFF("cast-qual")
-                (closing_rpt_fcn)(id, (void *)(base_info_k.object), H5I_CLOSING_STAT__FAIL);
+                /* since atomic_compare_exchange_strong() failed, base_info_k has 
+                 * been modified.  Thus use mod_info_k instead.
+                 */
+                (closing_rpt_fcn)(id, (void *)(mod_info_k.object), H5I_CLOSING_STAT__FAIL);
                 H5_GCC_CLANG_DIAG_ON("cast-qual")
             }
 
