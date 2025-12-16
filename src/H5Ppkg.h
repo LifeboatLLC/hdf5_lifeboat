@@ -182,7 +182,11 @@ H5_DLL herr_t H5P__class_get(const H5P_genclass_t *pclass, const char *name, voi
 H5_DLL herr_t H5P__class_set(const H5P_genclass_t *pclass, const char *name, const void *value);
 #endif
 H5_DLL htri_t H5P__exist_pclass(H5P_genclass_t *pclass, const char *name);
+#ifdef H5_HAVE_MULTITHREAD
+H5_DLL herr_t H5P__get_size_plist(H5P_genplist_t *plist, const char *name, size_t *size);
+#else
 H5_DLL herr_t H5P__get_size_plist(const H5P_genplist_t *plist, const char *name, size_t *size);
+#endif
 H5_DLL herr_t H5P__get_size_pclass(H5P_genclass_t *pclass, const char *name, size_t *size);
 H5_DLL herr_t H5P__get_nprops_plist(const H5P_genplist_t *plist, size_t *nprops);
 #ifdef H5_HAVE_MULTITHREAD
