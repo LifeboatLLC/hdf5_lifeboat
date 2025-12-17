@@ -33,6 +33,7 @@
 #include "H5MFprivate.h" /* File memory management                   */
 #include "H5MMprivate.h" /* Memory management                        */
 #include "H5Pprivate.h"  /* Property lists                           */
+#include "H5Ppkg_mt.h"
 #include "H5SMprivate.h" /* Shared Object Header Messages            */
 #include "H5Tprivate.h"  /* Datatypes                                */
 #include "H5VLprivate.h" /* Virtual Object Layer                     */
@@ -63,6 +64,13 @@ typedef struct H5F_olist_t {
     size_t max_nobjs;  /* Maximum # of IDs to put into array */
 } H5F_olist_t;
 
+#ifdef H5_HAVE_MULTITHREAD
+
+typedef H5P_mt_list_t H5P_genplist_t;
+typedef H5P_mt_class_t H5P_genclass_t;
+
+#endif
+
 /********************/
 /* Package Typedefs */
 /********************/
@@ -81,14 +89,8 @@ static char  *H5F__getenv_prefix_name(char **env_prefix /*in,out*/);
 static H5F_t *H5F__new(H5F_shared_t *shared, unsigned flags, hid_t fcpl_id, hid_t fapl_id, H5FD_t *lf);
 static herr_t H5F__check_if_using_file_locks(H5P_genplist_t *fapl, hbool_t *use_file_locking);
 static herr_t H5F__dest(H5F_t *f, hbool_t flush);
-
-#ifdef H5_HAVE_MULTITHREAD /* multithread version fapl can't be const, must count thread numbers */
-static herr_t H5F__build_actual_name(const H5F_t *f, H5P_genplist_t *fapl, const char *name,
-                                     char ** /*out*/ actual_name);
-#else
 static herr_t H5F__build_actual_name(const H5F_t *f, const H5P_genplist_t *fapl, const char *name,
                                      char ** /*out*/ actual_name);
-#endif
 static herr_t H5F__flush_phase1(H5F_t *f);
 static herr_t H5F__flush_phase2(H5F_t *f, hbool_t closing);
 
@@ -277,7 +279,6 @@ H5F__set_vol_conn(H5F_t *file)
     H5VL_connector_prop_t connector_prop;               /* Property for VOL connector ID & info */
     void                 *new_connector_info = NULL;    /* Copy of connector info */
     herr_t                ret_value          = SUCCEED; /* Return value */
-    bool                  conn_id_incr       = FALSE;   /* Whether the connector ID was incremented */
 
     FUNC_ENTER_PACKAGE
 
@@ -293,12 +294,6 @@ H5F__set_vol_conn(H5F_t *file)
     /* Sanity check */
     assert(0 != connector_prop.connector_id);
 
-    /* This shared file is now an owner of the connector class */
-    if (H5I_inc_ref(connector_prop.connector_id, FALSE) < 0)
-        HGOTO_ERROR(H5E_FILE, H5E_CANTINC, FAIL, "incrementing VOL connector ID failed");
-
-    conn_id_incr = TRUE;
-
     /* Retrieve the connector for the ID */
     if (NULL == (file->shared->vol_cls = (H5VL_class_t *)H5I_object(connector_prop.connector_id)))
         HGOTO_ERROR(H5E_FILE, H5E_BADTYPE, FAIL, "not a VOL connector ID");
@@ -312,12 +307,10 @@ H5F__set_vol_conn(H5F_t *file)
     /* Cache the connector ID & info for the container */
     file->shared->vol_id   = connector_prop.connector_id;
     file->shared->vol_info = new_connector_info;
+    if (H5I_inc_ref(file->shared->vol_id, FALSE) < 0)
+        HGOTO_ERROR(H5E_FILE, H5E_CANTINC, FAIL, "incrementing VOL connector ID failed");
 
 done:
-    if (ret_value < 0 && conn_id_incr)
-        if (H5I_dec_ref(connector_prop.connector_id) < 0)
-            HDONE_ERROR(H5E_FILE, H5E_CANTDEC, FAIL, "can't decrement VOL connector ID");
-
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5F__set_vol_conn() */
 
@@ -2702,20 +2695,16 @@ H5F_decr_nopen_objs(H5F_t *f)
  * Return:      SUCCEED/FAIL
  *-------------------------------------------------------------------------
  */
-#ifdef H5_HAVE_MULTITHREAD
-/**
- * multithread version can't have fapl be const,
- * due to tracking number of threads
- */
 static herr_t
-H5F__build_actual_name(const H5F_t *f, H5P_genplist_t *fapl, const char *name, char **actual_name /*out*/)
-#else
-static herr_t
-H5F__build_actual_name(const H5F_t *f, const H5P_genplist_t *fapl, const char *name,
-                       char **actual_name /*out*/)
-#endif
+H5F__build_actual_name(const H5F_t *f, const H5P_genplist_t *fapl, const char *name, char **actual_name /*out*/)
 {
     hid_t new_fapl_id = H5I_INVALID_HID; /* ID for duplicated FAPL */
+#ifdef H5_HAVE_MULTITHREAD
+    H5P_genplist_t *_fapl = malloc(sizeof(H5P_genplist_t));
+    
+    memcpy(_fapl, fapl, sizeof(*fapl));
+    assert(_fapl);
+#endif
 #ifdef H5_HAVE_SYMLINK
     /* This has to be declared here to avoid unfreed resources on errors */
     char *realname = NULL;      /* Fully resolved path name of file */
@@ -2738,7 +2727,8 @@ H5F__build_actual_name(const H5F_t *f, const H5P_genplist_t *fapl, const char *n
  */
 #ifdef H5_HAVE_SYMLINK
     /* Check for POSIX I/O compatible file handle */
-    if (H5F_HAS_FEATURE(f, H5FD_FEAT_POSIX_COMPAT_HANDLE)) {
+    if (H5F_HAS_FEATURE(f, H5FD_FEAT_POSIX_COMPAT_HANDLE))
+{
         h5_stat_t lst; /* Stat info from lstat() call */
 
         /* Call lstat() on the file's name */
@@ -2765,8 +2755,13 @@ H5F__build_actual_name(const H5F_t *f, const H5P_genplist_t *fapl, const char *n
              */
 
             /* Copy the FAPL object to modify */
+#if H5_HAVE_MULTITHREAD
+            if ((new_fapl_id = H5P_copy_plist(_fapl, FALSE)) < 0)
+                HGOTO_ERROR(H5E_FILE, H5E_CANTCOPY, FAIL, "unable to copy file access property list");
+#else
             if ((new_fapl_id = H5P_copy_plist(fapl, FALSE)) < 0)
                 HGOTO_ERROR(H5E_FILE, H5E_CANTCOPY, FAIL, "unable to copy file access property list");
+#endif
             if (NULL == (new_fapl = (H5P_genplist_t *)H5I_object(new_fapl_id)))
                 HGOTO_ERROR(H5E_FILE, H5E_CANTCREATE, FAIL, "can't get property list");
 
