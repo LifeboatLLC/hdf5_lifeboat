@@ -66,7 +66,7 @@ typedef struct H5F_olist_t {
 
 #ifdef H5_HAVE_MULTITHREAD
 
-typedef H5P_mt_list_t H5P_genplist_t;
+typedef H5P_mt_list_t  H5P_genplist_t;
 typedef H5P_mt_class_t H5P_genclass_t;
 
 #endif
@@ -2696,12 +2696,13 @@ H5F_decr_nopen_objs(H5F_t *f)
  *-------------------------------------------------------------------------
  */
 static herr_t
-H5F__build_actual_name(const H5F_t *f, const H5P_genplist_t *fapl, const char *name, char **actual_name /*out*/)
+H5F__build_actual_name(const H5F_t *f, const H5P_genplist_t *fapl, const char *name,
+                       char **actual_name /*out*/)
 {
     hid_t new_fapl_id = H5I_INVALID_HID; /* ID for duplicated FAPL */
 #ifdef H5_HAVE_MULTITHREAD
     H5P_genplist_t *_fapl = malloc(sizeof(H5P_genplist_t));
-    
+
     memcpy(_fapl, fapl, sizeof(*fapl));
     assert(_fapl);
 #endif
@@ -2727,8 +2728,7 @@ H5F__build_actual_name(const H5F_t *f, const H5P_genplist_t *fapl, const char *n
  */
 #ifdef H5_HAVE_SYMLINK
     /* Check for POSIX I/O compatible file handle */
-    if (H5F_HAS_FEATURE(f, H5FD_FEAT_POSIX_COMPAT_HANDLE))
-{
+    if (H5F_HAS_FEATURE(f, H5FD_FEAT_POSIX_COMPAT_HANDLE)) {
         h5_stat_t lst; /* Stat info from lstat() call */
 
         /* Call lstat() on the file's name */
@@ -2747,14 +2747,14 @@ H5F__build_actual_name(const H5F_t *f, const H5P_genplist_t *fapl, const char *n
             if (NULL == (realname = (char *)H5MM_calloc((size_t)PATH_MAX * sizeof(char))))
                 HGOTO_ERROR(H5E_RESOURCE, H5E_NOSPACE, FAIL, "memory allocation failed");
 
-            /* Perform a sanity check that the file or link wasn't switched
-             * between when we opened it and when we called lstat().  This is
-             * according to the security best practices for lstat() documented
-             * here:
-             * https://www.securecoding.cert.org/confluence/display/seccode/POS35-C.+Avoid+race+conditions+while+checking+for+the+existence+of+a+symbolic+link
-             */
+                /* Perform a sanity check that the file or link wasn't switched
+                 * between when we opened it and when we called lstat().  This is
+                 * according to the security best practices for lstat() documented
+                 * here:
+                 * https://www.securecoding.cert.org/confluence/display/seccode/POS35-C.+Avoid+race+conditions+while+checking+for+the+existence+of+a+symbolic+link
+                 */
 
-            /* Copy the FAPL object to modify */
+                /* Copy the FAPL object to modify */
 #if H5_HAVE_MULTITHREAD
             if ((new_fapl_id = H5P_copy_plist(_fapl, FALSE)) < 0)
                 HGOTO_ERROR(H5E_FILE, H5E_CANTCOPY, FAIL, "unable to copy file access property list");
