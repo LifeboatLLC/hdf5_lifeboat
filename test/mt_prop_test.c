@@ -5802,22 +5802,22 @@ reset_globals(TestParams_t H5_ATTR_UNUSED *params)
  *              Array entry names that end in a z, ex. list_3z is a list that is a copy
  *              of the list with the same number.
  *              (list_3z is a copy of list_3).
- * 
- *              NOTE: To make tracking operations easier, only a select number of 
+ *
+ *              NOTE: To make tracking operations easier, only a select number of
  *              specified classes and lists are set up to be copies of another class or
  *              list. This makes it easier to differentiate between creating a new object
  *              or copying an existing one. Thus during create_class() and create_list()
- *              if the randomly chosen entry is marked as a copy a new one is selected. 
+ *              if the randomly chosen entry is marked as a copy a new one is selected.
  *              During copy_class() and copy_list() only ones set as copy are selected.
- * 
+ *
  *              NOTE: To help with debugging, the names of the property list classes are
  *              names of video game consoles, and the names of the properties are names
  *              from a list of top rated games from that video game console. If a game
- *              was released on multiple console I only included it on either the first 
+ *              was released on multiple console I only included it on either the first
  *              console it was released on, or if it was released at the same time I just
- *              picked one console for it. This is to prevent multiple classes or lists 
+ *              picked one console for it. This is to prevent multiple classes or lists
  *              from having the same property names, unless a list or class inherits it
- *              from its parent class, or the list or class is a copy. 
+ *              from its parent class, or the list or class is a copy.
  *
  * Return:      SUCCEED/FAIL
  *
@@ -5846,56 +5846,88 @@ init_globals_2(void)
 
     /* Class prop names */
 
-    char class_1[10][25] = { /* NES */
-        "Super Mario Bros. 3", "Mega Man 2",        "The Legend of Zelda",
-        "Mega Man 3",          "Punch-Out!!",       "Contra",
-        "Super Mario Bros.",   "Kirby's Adventure", "Castlevania III",
-        "Dragon Quest IV"}; 
+    char class_1[10][25] = {/* NES */
+                            "Super Mario Bros. 3", "Mega Man 2",        "The Legend of Zelda",
+                            "Mega Man 3",          "Punch-Out!!",       "Contra",
+                            "Super Mario Bros.",   "Kirby's Adventure", "Castlevania III",
+                            "Dragon Quest IV"};
 
-    char class_2[10][25] = { /* Genesis */
+    char class_2[10][25] = {
+        /* Genesis */
         "Sonic 3",     "Streets of Rage II",     "Gunstar Heroes", "Strider",
         "Shinobi III", "Castlevania Bloodlines", "Ristar",         "Rocket Knight Adventures",
-        "Aladdin",     "Mortal Kombat"}; 
+        "Aladdin",     "Mortal Kombat"};
 
-    char class_3[10][25] = { /* Gameboy */
+    char class_3[10][25] = {
+        /* Gameboy */
         "Zelda: Link's Awakening", "Tetris",         "Donkey Kong",        "Wario Land",
         "Pokemon Red & Blue",      "Pokemon Yellow", "Super Mario Land 2", "Wario Land II",
-        "Kirby's Dream Land 2",    "Castlevania II"}; 
+        "Kirby's Dream Land 2",    "Castlevania II"};
 
-    char class_4[10][25] = { /* SNES */
+    char class_4[10][25] = {
+        /* SNES */
         "Super Mario World", "A link to the Past",  "Super Metroid",         "Chrono Trigger",
         "Final Fantasy III", "Super Mario World 2", "Super Mario All-Stars", "Super Mario RPG",
-        "DK Country 2",      "EarthBound"}; 
+        "DK Country 2",      "EarthBound"};
 
-    char class_4a[15][25] = { /* SNES copy */
-        "Super Mario World",     "A link to the Past", "Super Metroid",
-        "Chrono Trigger",        "Final Fantasy III",  "Super Mario World 2",
-        "Super Mario All-Stars", "Super Mario RPG",    "DK Country 2",
-        "EarthBound",            "Terranigma",         "DK Country 3",
-        "Tetris Attack",         "Illusion of Gaia",   "F-Zero"}; 
+    char class_4a[15][25] = {/* SNES copy */
+                             "Super Mario World",
+                             "A link to the Past",
+                             "Super Metroid",
+                             "Chrono Trigger",
+                             "Final Fantasy III",
+                             "Super Mario World 2",
+                             "Super Mario All-Stars",
+                             "Super Mario RPG",
+                             "DK Country 2",
+                             "EarthBound",
+                             "Terranigma",
+                             "DK Country 3",
+                             "Tetris Attack",
+                             "Illusion of Gaia",
+                             "F-Zero"};
 
     char class_5[1][25] = {"Sega Rally Championship"}; /* Saturn */
 
-    char class_6[10][25] = { /* Playstation */
-        "Metal Gear Solid",  "Castlevania: SotN", "Resident Evil 2",
-        "Xenogears",         "Suikoden II",       "Tekken 3",
-        "Final Fantasy VII", "Resident Evil",     "Final Fantasy Tactics",
-        "Final Fantas IX"};
+    char class_6[10][25] = {/* Playstation */
+                            "Metal Gear Solid",  "Castlevania: SotN", "Resident Evil 2",
+                            "Xenogears",         "Suikoden II",       "Tekken 3",
+                            "Final Fantasy VII", "Resident Evil",     "Final Fantasy Tactics",
+                            "Final Fantas IX"};
 
-    char class_6a[20][25] = { /* Playstation copy */
-        "Metal Gear Solid", "Castlevania: SotN", "Resident Evil 2",
-        "Xenogears", "Suikoden II", "Tekken 3",
-        "Final Fantasy VII", "Resident Evil", "Final Fantasy Tactics",
-        "Final Fantas IX", "Valkyrie Profile", "Mega Man X5",
-        "Wipeout 3", "Einhander", "Tenchu",
-        "Lunar 2", "Dino Crisis 2", "Oddworld",
-        "Arc the Lad", "Lunar"}; 
+    char class_6a[20][25] = {/* Playstation copy */
+                             "Metal Gear Solid",
+                             "Castlevania: SotN",
+                             "Resident Evil 2",
+                             "Xenogears",
+                             "Suikoden II",
+                             "Tekken 3",
+                             "Final Fantasy VII",
+                             "Resident Evil",
+                             "Final Fantasy Tactics",
+                             "Final Fantas IX",
+                             "Valkyrie Profile",
+                             "Mega Man X5",
+                             "Wipeout 3",
+                             "Einhander",
+                             "Tenchu",
+                             "Lunar 2",
+                             "Dino Crisis 2",
+                             "Oddworld",
+                             "Arc the Lad",
+                             "Lunar"};
 
-    char class_7[10][25] = { /* N64 */
-        "Zelda: Ocarina of Time", "Zelda: Majora's Mask", "Super Mario 64",
-        "GoldenEye 007", "Banjo-Kazooie", "Star Fox 64",
-        "Paper Mario", "Perfect Dark", "Super Smash Bros.",
-        "F-Zero X"}; 
+    char class_7[10][25] = {/* N64 */
+                            "Zelda: Ocarina of Time",
+                            "Zelda: Majora's Mask",
+                            "Super Mario 64",
+                            "GoldenEye 007",
+                            "Banjo-Kazooie",
+                            "Star Fox 64",
+                            "Paper Mario",
+                            "Perfect Dark",
+                            "Super Smash Bros.",
+                            "F-Zero X"};
 
     char class_8[20][25] = {"Zelda: Link's Awakening",
                             "Tetris",
@@ -6130,7 +6162,6 @@ init_globals_2(void)
                              "Smash Bros. Ultimate",   "Tears of the Kingdom", "Mario Kart 8 Deluxe",
                              "Xenoblade Chronicles 3", "Dragon Quest XI",      "Super Mario Bros. Wonder",
                              "Fire Emblem: 3 Houses"}; /* Switch */
-
 
     /* List prop names */
 
@@ -6766,46 +6797,35 @@ init_globals_2(void)
                             "Luigi's Mansion 3",
                             "Ori"}; /* Switch */
 
-
-
-
-
-    char(*class_prop_names[24])[25] = {
-        class_1,  class_2,   class_3,   class_4,  class_4a,  
-        class_5,  class_6,   class_6a,  class_7,  class_8,   
-        class_9,  class_10,  class_10a, class_11, class_12, 
-        class_13, class_14,  class_15,  class_16, class_17, 
-        class_18, class_18a, class_18b, class_19};
+    char(*class_prop_names[24])[25] = {class_1,   class_2,  class_3,  class_4,   class_4a,  class_5,
+                                       class_6,   class_6a, class_7,  class_8,   class_9,   class_10,
+                                       class_10a, class_11, class_12, class_13,  class_14,  class_15,
+                                       class_16,  class_17, class_18, class_18a, class_18b, class_19};
 
     /**
-     *    NES      Genesis    Gameboy     SNES    SNES(a) 
+     *    NES      Genesis    Gameboy     SNES    SNES(a)
      *  Saturn      PS1       PS1(a)       N64      GBC
-     *  Dreamcast   PS2       PS2(a)     GameCube   GBA 
-     *    Xbox      360        PS3         Wii      WiiU 
+     *  Dreamcast   PS2       PS2(a)     GameCube   GBA
+     *    Xbox      360        PS3         Wii      WiiU
      *  PS4/One  PS4/One(a)  PS4/One(b)   Switch
      */
 
     uint32_t num_names[24] = {10, 10, 10, 10, 15, 1,  10, 20, 10, 20, 5,  20,
                               30, 10, 30, 10, 10, 10, 10, 20, 10, 20, 20, 10};
 
-
-    char(*list_prop_names[28])[25] = {
-        list_1,   list_2,   list_3,  list_3z, list_4,   
-        list_4a,  list_5,   list_5z, list_6,  list_6a,  
-        list_7,   list_8,   list_9,  list_9z, list_10, 
-        list_10z, list_10a, list_11, list_12, list_13,  
-        list_14,  list_15,  list_16, list_17, list_18, 
-        list_18a, list_18b, list_19};
+    char(*list_prop_names[28])[25] = {list_1,  list_2,   list_3,   list_3z, list_4,   list_4a,  list_5,
+                                      list_5z, list_6,   list_6a,  list_7,  list_8,   list_9,   list_9z,
+                                      list_10, list_10z, list_10a, list_11, list_12,  list_13,  list_14,
+                                      list_15, list_16,  list_17,  list_18, list_18a, list_18b, list_19};
 
     /**
-     *    NES      Genesis  Gameboy  Gameboy(z)  SNES    
+     *    NES      Genesis  Gameboy  Gameboy(z)  SNES
      *  SNES(a)    Saturn   Saturn(z)   PS1      PS1(a)
-     *    N64       GBC    Dreamcast Dreamcast(z) PS2       
-     *  PS2(z)     PS2(a)   GameCube    GBA      Xbox      
-     *   360        PS3       Wii       WiiU    PS4/One  
+     *    N64       GBC    Dreamcast Dreamcast(z) PS2
+     *  PS2(z)     PS2(a)   GameCube    GBA      Xbox
+     *   360        PS3       Wii       WiiU    PS4/One
      * PS4/One(a) PS4/One(b) Switch
      */
-
 
     uint32_t num_names2[28] = {20, 20, 20, 20, 20, 25, 2,  2,  20, 30, 20, 30, 10, 10,
                                30, 40, 40, 20, 40, 20, 30, 20, 20, 30, 18, 28, 21, 20};
@@ -7183,18 +7203,18 @@ reset_globals_2(void)
 /****************************************************************************************
  * Function:    create_starting_classes_and_lists
  *
- * Purpose:     Creates the first four classes, all derived from the test_root class, 
+ * Purpose:     Creates the first four classes, all derived from the test_root class,
  *              with each class having an increasing number of properties (0-3) created
  *              and inserted as their default properties. Additionally, a list is derived
  *              from each of those classes.
  *
  *              This is done so there are a few classes and lists already created at the
  *              beginning of the test for operations to be performed on.
- * 
+ *
  *              NOTE: As mentioned in the description for init_globals_2 a number of
  *              specified entries in class_table and list_table are for being created as
- *              copies. The fourth list_entry is one such entry, thus it is skipped and 
- *              instead the fifth entry is created due to it being a list derived from 
+ *              copies. The fourth list_entry is one such entry, thus it is skipped and
+ *              instead the fifth entry is created due to it being a list derived from
  *              the class_table's fourth entry.
  *
  * Return:      SUCCEED/FAIL
@@ -7542,15 +7562,15 @@ search_prop_table(prop_table_entry_t *prop_table, uint32_t num_prop_entries, int
  *
  * Purpose:     Primary function for the multithread tests, which gets the global
  *              structures ready and a small number of classes and lists created with a
- *              couple default properties so some H5P objects exist at the start of the 
- *              tests. Also, gets the max number of threads for the tests, and loops 
+ *              couple default properties so some H5P objects exist at the start of the
+ *              tests. Also, gets the max number of threads for the tests, and loops
  *              calling test_2_helper() with the number of threads increasing from one to
- *              max_num_threads. At the end of the loop cleanup functions are called so 
+ *              max_num_threads. At the end of the loop cleanup functions are called so
  *              globals are reset at default for the next iteration of the tests and all
- *              H5P objects created during the test (which were closed at the end of 
+ *              H5P objects created during the test (which were closed at the end of
  *              test_2_helper(), thus are on the H5P free lists) are properly freed.
- * 
- *              NOTE: At the moment max_num_threads is hard coded at 
+ *
+ *              NOTE: At the moment max_num_threads is hard coded at
  *              DEFAULT_MAX_NUM_THREADS (32 threads).
  *
  * Return:      SUCCEED/FAIL
@@ -7625,15 +7645,15 @@ mt_test_2(TestParams_t H5_ATTR_UNUSED *params)
  * Function:    test_2_helper
  *
  * Purpose:     Allocates and intializes a thread_params_t struct for each thread in this
- *              iteration of tests. 
- * 
- *              NOTE: The struct thread_params_t is a structure assigned to each thread 
- *              to track the number of operations that thread has performed and an array 
- *              of test_op_info_t (*op_table) for information related to every operation 
- *              performed to be stored, so after all operations are performed the table 
- *              of all threads can be searched and sorted to check that all operations 
- *              were done correctly and if there were thread collisions, that the threads 
- *              wound up completeting their operations in some sort of order, based on 
+ *              iteration of tests.
+ *
+ *              NOTE: The struct thread_params_t is a structure assigned to each thread
+ *              to track the number of operations that thread has performed and an array
+ *              of test_op_info_t (*op_table) for information related to every operation
+ *              performed to be stored, so after all operations are performed the table
+ *              of all threads can be searched and sorted to check that all operations
+ *              were done correctly and if there were thread collisions, that the threads
+ *              wound up completeting their operations in some sort of order, based on
  *              the version number of the property list or property list class they were
  *              assigned when entering that object.
  *
@@ -7642,9 +7662,9 @@ mt_test_2(TestParams_t H5_ATTR_UNUSED *params)
  *
  *              After all threads have joined up, check_operations is called to check
  *              all of the stats and that all operations were performed correctly.
- * 
- *              Lastly, all property lists and property list classes that were created 
- *              during the test are closed, putting them on their respective H5P free 
+ *
+ *              Lastly, all property lists and property list classes that were created
+ *              during the test are closed, putting them on their respective H5P free
  *              list.
  *
  * Return:      static void
@@ -7813,7 +7833,7 @@ test_2_helper(int num_threads)
  * Purpose:     This function loops having the threads call rand_op(), which
  *              will have the threads perform a random operation on a H5P multithread
  *              structure. Upon completing the random operation the threads will
- *              increment the number of operations performed, both by that thread and 
+ *              increment the number of operations performed, both by that thread and
  *              total operations by all threads, and continue the loop till the total
  *              number of operations is less than TOTAL_OPS_PER_THREAD.
  *
@@ -7849,10 +7869,10 @@ h5p_full_cols_mt_test(void *_thread_params)
  * Function:    rand_op
  *
  * Purpose:     Using a simple implementation to get a random number 0-99 that is roughly
- *              1% per number. The random number is used to decide which operation will 
+ *              1% per number. The random number is used to decide which operation will
  *              be performed next.
  *              NOTE: The probability for each operation is very loosely based on the
- *              frequency that those operations are used during normal HDF5 library 
+ *              frequency that those operations are used during normal HDF5 library
  *              operations, while still allowing for the possibly that thread collisions
  *              can occur in each operation.
  *                   0-9  (~10%): create_list  - creates a new property list.
@@ -7870,17 +7890,17 @@ h5p_full_cols_mt_test(void *_thread_params)
  *
  *              NOTE: modifying a list or class means to create a new property, modify
  *              an existing property, or to delete a property from that list or class.
- * 
- *              NOTE: close and delete in relation of lists and classes mean different 
+ *
+ *              NOTE: close and delete in relation of lists and classes mean different
  *              things. Close is referring to the act of calling the close function for
- *              that object which attempts to decrement the ref count of its ID in the 
+ *              that object which attempts to decrement the ref count of its ID in the
  *              index. For lists, as long as the close is successful, will always result
  *              in the list being deleted. However, for classes it may not, due to when
  *              a H5P object is derived from a class that derived object increments their
- *              parent's index ID's ref count. Thus if a class is closed but it has 
+ *              parent's index ID's ref count. Thus if a class is closed but it has
  *              existing derived objects its ID ref count won't be decremented to 0 and
  *              won't be deleted. But if that class is closed again an assert in H5I will
- *              fail. To prevent this the status EXISTS_BUT_CLOSED is set to prevent 
+ *              fail. To prevent this the status EXISTS_BUT_CLOSED is set to prevent
  *              multiple close attempts on a class. But when that classes derived objects
  *              are closed the class will automatically finish being closed and then be
  *              deleted.
@@ -7901,61 +7921,139 @@ rand_op(thread_params_t *thread_params)
     operation = rand() % 100;
 
     switch (operation) {
-        case 0: case 1: case 2: case 3: case 4: 
-        case 5: case 6: case 7: case 8: case 9:
+        case 0:
+        case 1:
+        case 2:
+        case 3:
+        case 4:
+        case 5:
+        case 6:
+        case 7:
+        case 8:
+        case 9:
             ret = create_list(thread_params);
             assert(ret == SUCCEED);
             break;
-        case 10: case 11: case 12: case 13: case 14: 
-        case 15: case 16: case 17:
+        case 10:
+        case 11:
+        case 12:
+        case 13:
+        case 14:
+        case 15:
+        case 16:
+        case 17:
             ret = create_class(thread_params);
             assert(ret == SUCCEED);
             break;
-        case 18: case 19: case 20: case 21:
+        case 18:
+        case 19:
+        case 20:
+        case 21:
             ret = copy_list(thread_params);
             assert(ret == SUCCEED);
             break;
-        case 22: case 23: case 24:
+        case 22:
+        case 23:
+        case 24:
             ret = copy_class(thread_params);
             assert(ret == SUCCEED);
             break;
-        case 25: case 26: case 27: case 28: case 29:
-        case 30: case 31: case 32: case 33: case 34:
-        case 35: case 36: case 37: case 38: case 39:
-        case 40: case 41: case 42: case 43: case 44:
+        case 25:
+        case 26:
+        case 27:
+        case 28:
+        case 29:
+        case 30:
+        case 31:
+        case 32:
+        case 33:
+        case 34:
+        case 35:
+        case 36:
+        case 37:
+        case 38:
+        case 39:
+        case 40:
+        case 41:
+        case 42:
+        case 43:
+        case 44:
             ret = read_list(thread_params);
             assert(ret == SUCCEED);
             break;
-        case 45: case 46: case 47: case 48: case 49:
-        case 50: case 51: case 52: case 53: case 54:
-        case 55: case 56: case 57: case 58: case 59:
+        case 45:
+        case 46:
+        case 47:
+        case 48:
+        case 49:
+        case 50:
+        case 51:
+        case 52:
+        case 53:
+        case 54:
+        case 55:
+        case 56:
+        case 57:
+        case 58:
+        case 59:
             ret = read_class(thread_params);
             assert(ret == SUCCEED);
             break;
-        case 60: case 61: case 62: case 63: case 64:
-        case 65: case 66: case 67: case 68: case 69:
-        case 70: case 71: case 72: case 73: case 74:
+        case 60:
+        case 61:
+        case 62:
+        case 63:
+        case 64:
+        case 65:
+        case 66:
+        case 67:
+        case 68:
+        case 69:
+        case 70:
+        case 71:
+        case 72:
+        case 73:
+        case 74:
             ret = write_list(thread_params);
             assert(ret == SUCCEED);
             break;
-        case 75: case 76: case 77: case 78: case 79:
-        case 80: case 81: case 82: case 83: case 84:
+        case 75:
+        case 76:
+        case 77:
+        case 78:
+        case 79:
+        case 80:
+        case 81:
+        case 82:
+        case 83:
+        case 84:
             ret = write_class(thread_params);
             assert(ret == SUCCEED);
             break;
-        case 85: case 86: case 87: case 88: case 89:
+        case 85:
+        case 86:
+        case 87:
+        case 88:
+        case 89:
             ret = cmp_list(thread_params);
             assert(ret == SUCCEED);
             break;
-        case 90: case 91: case 92: case 93: case 94:
+        case 90:
+        case 91:
+        case 92:
+        case 93:
+        case 94:
             ret = cmp_class(thread_params);
             assert(ret == SUCCEED);
             break;
-        case 95: case 96: case 97:
+        case 95:
+        case 96:
+        case 97:
             ret = close_list(thread_params);
             assert(ret == SUCCEED);
             break;
-        case 98: case 99:
+        case 98:
+        case 99:
             ret = close_class(thread_params);
             assert(ret == SUCCEED);
             break;
@@ -7972,18 +8070,18 @@ rand_op(thread_params_t *thread_params)
  * Function:    create_list
  *
  * Purpose:     Attempts to create a new property list.
- * 
+ *
  * Details:     Gets the next entry (op_info) in the op_table of the thread_params_t and
- *              sets the op to CREATE and sets the op_num to the number of this 
+ *              sets the op to CREATE and sets the op_num to the number of this
  *              operation.
- * 
- *              In a do-while loop a random list_entry is selected from the list_table, 
- *              if that list_entry is marked as copy the list table is iterated to the 
+ *
+ *              In a do-while loop a random list_entry is selected from the list_table,
+ *              if that list_entry is marked as copy the list table is iterated to the
  *              next non-copy.
- * 
+ *
  *              Still in the do-while loop, a second do-while loop is entered and the
  *              list_entry is checked if the list has ever been created during this test
- *              iteration yet. If it has, the index is searched for that list and if 
+ *              iteration yet. If it has, the index is searched for that list and if
  *              found the op_info is updated and marked as LIST_ALREADY_EXISTS and will
  *              exit both do-while loops.
  *              If the list isn't in the index the list_entry's status is checked. If
@@ -7991,49 +8089,49 @@ rand_op(thread_params_t *thread_params)
  *              changes, and if it doesn't change the inner do-while is exited and the
  *              outer do-while is looped to randomly select a new list_entry.
  *              NOTE: This is because if the status is IN_PROGRESS another thread is
- *              currently attempting to create that list, and we don't want multiple 
- *              copies of the same list created (unless there is a list_entry 
+ *              currently attempting to create that list, and we don't want multiple
+ *              copies of the same list created (unless there is a list_entry
  *              specifically setup as a copy of another list).
  *              NOTE: The reason we loop once instead of immediately grabbing a different
- *              list_entry is due to a check on how often this was occuring while 
+ *              list_entry is due to a check on how often this was occuring while
  *              debugging. This loop is mostly useless at this point and will probably be
  *              removed.
- *              If the list isn't in the index and the status isn't IN_PROGRESS, that 
+ *              If the list isn't in the index and the status isn't IN_PROGRESS, that
  *              list must have been deleted. The tag for the list structure and the
- *              list_entry's status are checked to ensure it has been deleted. The 
+ *              list_entry's status are checked to ensure it has been deleted. The
  *              op_info is updated and marked as LIST_DELETED and both do-while loops are
  *              exited.
- * 
- *              Still in both do-while loops, if the list hasn't been created then the 
- *              status is checked and if it's DOESNT_EXIST the status is updated 
+ *
+ *              Still in both do-while loops, if the list hasn't been created then the
+ *              status is checked and if it's DOESNT_EXIST the status is updated
  *              atomically to IN_PROGRESS and the create bool is set to TRUE to attempt
  *              to create the list.
  *              If the status is CLOSING_IN_PROGRESS the inner do-while is looped until
- *              thread attempting to close the list, that doesn't exist yet, fails and 
+ *              thread attempting to close the list, that doesn't exist yet, fails and
  *              sets the status back to DOESNT_EXIST.
- *              If the status is IN_PROGRESS the inner loop is exited and we loop the 
- *              outer loop to get a random new list_entry, because we don't want to 
+ *              If the status is IN_PROGRESS the inner loop is exited and we loop the
+ *              outer loop to get a random new list_entry, because we don't want to
  *              create a list that another thread is already creating.
- *               
+ *
  *              If the create bool is TRUE, the process to create the list begins. The
- *              parent's info is retrieved and H5Pcreate() is called. 
- *              If the returned list_id == H5I_INVALID_HID, creating the list failed and 
- *              it's investigated why. The only reason creating this list should fail is 
- *              because the parent has been deleted or hasn't been created yet, and the 
+ *              parent's info is retrieved and H5Pcreate() is called.
+ *              If the returned list_id == H5I_INVALID_HID, creating the list failed and
+ *              it's investigated why. The only reason creating this list should fail is
+ *              because the parent has been deleted or hasn't been created yet, and the
  *              op_info is updated with the result.
  *              If creating the list was successful we search the index for the list to
  *              ensure it was correctly created, and all of the properties that exist in
- *              the list have their statuses atomically updated in the 
+ *              the list have their statuses atomically updated in the
  *              list_entry->prop_table. Then op_info is updated and marked as OP_SUCCESS.
- * 
+ *
  *              Lastly, the status of the list_entry is atomically updated to EXISTS.
- *              Before the atomic update occurs though the list's structure tag and 
+ *              Before the atomic update occurs though the list's structure tag and
  *              list_entry->status are double checked to see if the list was closed
  *              while updating the statuses of the properties. If it was closed or is in
  *              the process of closing, nothing is done, because the thread closing the
  *              list will (or already has) updated the status to reflect it's now closed.
- *              
- *              
+ *
+ *
  * Return:      SUCCEED/FAIL
  *
  ****************************************************************************************
@@ -8239,8 +8337,7 @@ create_list(thread_params_t *thread_params)
 
     /* If create == TRUE attempt to create the list */
     if (create) {
-        do
-        {
+        do {
             try_again = FALSE;
             /* Grab the parent info */
             parent_entry = atomic_load(&(list_entry->parent_entry));
@@ -8291,17 +8388,14 @@ create_list(thread_params_t *thread_params)
                     parent_sptr = atomic_load(&(parent_entry->class_sptr));
                     parent      = parent_sptr.ptr;
 
-                    if ( parent_status == CLOSING_IN_PROGRESS )
-                    {
-                        if ( ! parent )
-                        {
+                    if (parent_status == CLOSING_IN_PROGRESS) {
+                        if (!parent) {
                             op_info->result = PARENT_DOESNT_EXIST;
-                            done = TRUE;
+                            done            = TRUE;
                         }
                     }
 
-                    if ( ! done )
-                    {
+                    if (!done) {
                         CHECK_PTR(parent, "create_list");
                         assert(parent);
 
@@ -8321,8 +8415,7 @@ create_list(thread_params_t *thread_params)
 
                     try_again = TRUE;
 
-                    //fprintf(stderr, "\nTrying again to see if parent is in index now\n\n");
-
+                    // fprintf(stderr, "\nTrying again to see if parent is in index now\n\n");
 
                     /**
                      * NOTE: If status is EXISTS the parent should be in the index
@@ -8332,9 +8425,9 @@ create_list(thread_params_t *thread_params)
                      * actually being created.
                      * Thus something is wrong, trigger an assert to investigate.
                      */
-                    //fprintf(stderr, "parent_status shouldn't be: %d\n", parent_status);
+                    // fprintf(stderr, "parent_status shouldn't be: %d\n", parent_status);
 
-                    //assert(FALSE);
+                    // assert(FALSE);
                 }
                 else {
                     fprintf(stderr, "parent_status is: %d\n", parent_status);
@@ -8342,8 +8435,7 @@ create_list(thread_params_t *thread_params)
                     assert(FALSE);
                 }
 
-                if ( ! try_again )
-                {
+                if (!try_again) {
                     /* Set list status back to DOESNT_EXIST */
                     update_status = DOESNT_EXIST;
 
@@ -8352,7 +8444,8 @@ create_list(thread_params_t *thread_params)
                         list_status = atomic_load(&(list_entry->status));
 
                         if (list_status == IN_PROGRESS) {
-                            if (!atomic_compare_exchange_strong(&(list_entry->status), &list_status, update_status)) {
+                            if (!atomic_compare_exchange_strong(&(list_entry->status), &list_status,
+                                                                update_status)) {
                                 /**
                                  * TODO: For now just fail to see if this even happens,
                                  * but it will have to get updated.
@@ -8465,7 +8558,7 @@ create_list(thread_params_t *thread_params)
                         }
 
                         prop_entry = search_prop_table(list_entry->prop_table, list_entry->num_prop_entries,
-                                                    valid_prop->chksum, valid_prop->name);
+                                                       valid_prop->chksum, valid_prop->name);
                         CHECK_PTR(prop_entry, "search_prop_table");
                         assert(prop_entry);
 
@@ -8566,7 +8659,8 @@ create_list(thread_params_t *thread_params)
                     /* If still not done, attempt to update the list status */
                     if (!done) {
                         /* Attempt to atomically update the status */
-                        if (!atomic_compare_exchange_strong(&(list_entry->status), &list_status, update_status)) {
+                        if (!atomic_compare_exchange_strong(&(list_entry->status), &list_status,
+                                                            update_status)) {
                             /**
                              * NOTE: Only loop and try again once, not much should
                              * update the  status so this should be highly unlikely
@@ -8589,7 +8683,7 @@ create_list(thread_params_t *thread_params)
 
             } /* end else ( list was created, update list_entry and op_info ) */
 
-        } while ( try_again );
+        } while (try_again);
 
     } /* end if ( create ) */
 
@@ -8611,7 +8705,7 @@ create_class(thread_params_t *thread_params)
     status_t             update_status;
     status_t             check_status;
     status_t             parent_status;
-    H5P_mt_class_t     *class           = NULL;
+    H5P_mt_class_t *class           = NULL;
     H5P_mt_class_t     *check_class = NULL;
     H5P_mt_class_t     *parent      = NULL;
     int                 r;
@@ -8741,7 +8835,7 @@ create_class(thread_params_t *thread_params)
                  * before attempting the closure its status is always set to
                  * CLOSING_IN_PROGRESS to prevent another thread from trying to close it.
                  * However, to be more thorough in testing as long as a class's status
-                 * isn't EXISTS_BUT_CLOSED, or CLOSING_IN_PROGRESS, the thread will 
+                 * isn't EXISTS_BUT_CLOSED, or CLOSING_IN_PROGRESS, the thread will
                  * attempt to close it, even if that class hasn't been created yet.
                  * (NOTE: If the status is DELETED the thread will still attempt to close
                  * it, because it's already been removed from the index so no assertion
@@ -8754,7 +8848,7 @@ create_class(thread_params_t *thread_params)
                     loop_count++;
 
                     /* If looped 100 times fail and investigate */
-                    //assert(loop_count < 100);
+                    // assert(loop_count < 100);
                 }
                 else if (class_status == DOESNT_EXIST) {
                     update_status = IN_PROGRESS;
@@ -8808,8 +8902,7 @@ create_class(thread_params_t *thread_params)
 
     /* If TRUE create the class */
     if (create) {
-        do
-        {
+        do {
             try_again = FALSE;
 
             /* Grab the parent info */
@@ -8838,8 +8931,8 @@ create_class(thread_params_t *thread_params)
             /* Attempt to create the class */
             H5E_BEGIN_TRY
             {
-                class_id = H5Pcreate_class(atomic_load(&(class_entry->parent_id)), class_entry->name, 
-                                        NULL, NULL, NULL, NULL, NULL, NULL);
+                class_id = H5Pcreate_class(atomic_load(&(class_entry->parent_id)), class_entry->name, NULL,
+                                           NULL, NULL, NULL, NULL, NULL);
             }
             H5E_END_TRY
 
@@ -8858,8 +8951,6 @@ create_class(thread_params_t *thread_params)
                 parent_status = atomic_load(&(parent_entry->status));
                 parent_sptr   = atomic_load(&(parent_entry->class_sptr));
                 parent        = parent_sptr.ptr;
-
-
 
 #if 1
                 /**
@@ -8894,22 +8985,21 @@ create_class(thread_params_t *thread_params)
                      * actually being created.
                      * Thus something is wrong, trigger an assert to investigate.
                      */
-                    
+
                     /** TODO: testing
                      * parent_id was grabbed right before being added to the index,
                      * but after it was created. So, trying again should succeed.
                      */
                     try_again = TRUE;
 
-                    //assert(FALSE);
+                    // assert(FALSE);
                 }
                 else {
                     assert(FALSE);
                 }
 #endif
 
-                if ( ! try_again )
-                {
+                if (!try_again) {
                     /* Set class status back to DOESNT_EXIST */
                     update_status = DOESNT_EXIST;
                     done          = FALSE;
@@ -8998,8 +9088,9 @@ create_class(thread_params_t *thread_params)
                             assert(atomic_load(&(valid_prop->create_version)) == 1);
 
                             /* Get the entry for that property in the prop_table */
-                            prop_entry = search_prop_table(class_entry->prop_table, class_entry->num_prop_entries,
-                                                        valid_prop->chksum, valid_prop->name);
+                            prop_entry =
+                                search_prop_table(class_entry->prop_table, class_entry->num_prop_entries,
+                                                  valid_prop->chksum, valid_prop->name);
 
                             CHECK_PTR(prop_entry, "search_prop_table");
                             assert(prop_entry);
@@ -9077,9 +9168,8 @@ create_class(thread_params_t *thread_params)
 
                     /* Double check the class wasn't closed while updating prop statuses */
                     if (class_status == DELETED || class_status == EXISTS_BUT_CLOSED) {
-                        
-                        if ( class_status == DELETED )
-                        {
+
+                        if (class_status == DELETED) {
                             assert(atomic_load(&(class->tag)) == H5P_MT_CLASS_INVALID_TAG);
                         }
                         /**
@@ -9088,8 +9178,7 @@ create_class(thread_params_t *thread_params)
                          */
                         done = TRUE;
                     }
-                    else if ( class_status == CLOSING_IN_PROGRESS )
-                    {
+                    else if (class_status == CLOSING_IN_PROGRESS) {
                         /**
                          * TODO: debug code, testing if actually hits this
                          */
@@ -9104,7 +9193,6 @@ create_class(thread_params_t *thread_params)
 
                             /** TODO: debug, testing if this is hit */
                             assert(FALSE);
-
 
                             /**
                              * NOTE: Only loop and try again once, not much should
@@ -9133,22 +9221,21 @@ create_class(thread_params_t *thread_params)
                 class_sptr = atomic_load(&(class_entry->class_sptr));
                 class      = class_sptr.ptr;
 
-                if ( atomic_load(&(class->tag)) == H5P_MT_CLASS_INVALID_TAG )
-                {
+                if (atomic_load(&(class->tag)) == H5P_MT_CLASS_INVALID_TAG) {
                     assert(FALSE);
                 }
 
                 class = (H5P_mt_class_t *)H5I_object(class_id);
 
                 assert(class);
-                
-                /** 
-                 * TODO: end debugging code, remove after fixed 
+
+                /**
+                 * TODO: end debugging code, remove after fixed
                  */
 
             } /* end else ( class was created, update class_entry and op_info ) */
 
-        } while ( try_again );
+        } while (try_again);
 
     } /* end if ( create ) */
 
@@ -9346,7 +9433,7 @@ copy_list(thread_params_t *thread_params)
                     loop_count++;
 
                     /* If looped 10 times fail and investigate */
-                    //assert(loop_count < 10);
+                    // assert(loop_count < 10);
                 }
                 else {
                     if (list_status == IN_PROGRESS) {
@@ -9375,8 +9462,7 @@ copy_list(thread_params_t *thread_params)
 
     /* If create == TRUE attempt to create a copy of a list */
     if (create) {
-        do
-        {
+        do {
             try_again = FALSE;
 
             /* Grab the original list to copy */
@@ -9388,8 +9474,8 @@ copy_list(thread_params_t *thread_params)
             }
             og_list_id = atomic_load(&(og_list_entry->id));
 
-            assert(0 ==
-                strcmp(atomic_load(&(og_list_entry->parent_name)), atomic_load(&(list_entry->parent_name))));
+            assert(0 == strcmp(atomic_load(&(og_list_entry->parent_name)),
+                               atomic_load(&(list_entry->parent_name))));
 
             parent_entry = atomic_load(&(list_entry->parent_entry));
             parent_id    = atomic_load(&(parent_entry->id));
@@ -9435,40 +9521,34 @@ copy_list(thread_params_t *thread_params)
                 og_list_sptr   = atomic_load(&(og_list_entry->list_sptr));
                 og_list        = og_list_sptr.ptr;
 
-                if ( og_list )
-                {
-                    if ( atomic_load(&(og_list->tag)) == H5P_MT_LIST_INVALID_TAG) {
+                if (og_list) {
+                    if (atomic_load(&(og_list->tag)) == H5P_MT_LIST_INVALID_TAG) {
                         assert(list_status == DELETED || list_status == CLOSING_IN_PROGRESS);
-                        
+
                         op_info->obj_ver = atomic_load(&(og_list->curr_version));
                         op_info->result  = OG_DELETED;
                     }
-                    else if ( list_status == CLOSING_IN_PROGRESS )
-                    {
+                    else if (list_status == CLOSING_IN_PROGRESS) {
                         uint64_t curr_ver = atomic_load(&(og_list->curr_version));
                         uint64_t next_ver = atomic_load(&(og_list->next_version));
 
-                        if ( curr_ver + 1 != next_ver )
-                        {
+                        if (curr_ver + 1 != next_ver) {
                             op_info->obj_ver = next_ver - 1;
                         }
-                        
-                        op_info->result  = OG_DELETED;
+
+                        op_info->result = OG_DELETED;
                     }
-                    else if ( list_status == EXISTS )
-                    {
+                    else if (list_status == EXISTS) {
                         try_again = TRUE;
                     }
                 }
-                else 
-                {
+                else {
                     assert(og_list_status == DOESNT_EXIST || og_list_status == IN_PROGRESS ||
                            og_list_status == CLOSING_IN_PROGRESS);
                     op_info->result = OG_DOESNT_EXIST;
                 }
 
-                if ( ! try_again )
-                {
+                if (!try_again) {
                     /* Set list status back to DOESNT_EXIST */
                     update_status = DOESNT_EXIST;
 
@@ -9477,7 +9557,8 @@ copy_list(thread_params_t *thread_params)
                         list_status = atomic_load(&(list_entry->status));
 
                         if (list_status == IN_PROGRESS) {
-                            if (!atomic_compare_exchange_strong(&(list_entry->status), &list_status, update_status)) {
+                            if (!atomic_compare_exchange_strong(&(list_entry->status), &list_status,
+                                                                update_status)) {
                                 /**
                                  * TODO: For now just fail to see if this even happens,
                                  * but it will have to get updated.
@@ -9597,7 +9678,7 @@ copy_list(thread_params_t *thread_params)
                         }
 
                         prop_entry = search_prop_table(list_entry->prop_table, list_entry->num_prop_entries,
-                                                    valid_prop->chksum, valid_prop->name);
+                                                       valid_prop->chksum, valid_prop->name);
                         CHECK_PTR(prop_entry, "search_prop_table");
                         assert(prop_entry);
 
@@ -9676,12 +9757,12 @@ copy_list(thread_params_t *thread_params)
                          * update it to EXISTS because it will updated to DELETED.
                          */
 
-    #if 0 /* Testing if IN_PROGRESS is occurring often */
+#if 0 /* Testing if IN_PROGRESS is occurring often */
 
                         if ( list_status == DELETED || list_status == IN_PROGRESS )
-    #else
+#else
                         if (list_status == DELETED)
-    #endif
+#endif
                         {
                             done = TRUE;
                         }
@@ -9695,18 +9776,19 @@ copy_list(thread_params_t *thread_params)
                         {
                             assert(FALSE);
                         }
-    #if 1 /* Testing if IN_PROGRESS is occurring often */
+#if 1 /* Testing if IN_PROGRESS is occurring often */
                         else if (list_status == IN_PROGRESS)
                         {
                             assert(FALSE);
                         }
-    #endif
+#endif
                     } /* if ( atomic_load(&(list->tag)) == H5P_MT_LIST_INVALID_TAG ) */
 
                     /* If still not done, attempt to update the list status */
                     if (!done) {
                         /* Attempt to atomically update the status */
-                        if (!atomic_compare_exchange_strong(&(list_entry->status), &list_status, update_status)) {
+                        if (!atomic_compare_exchange_strong(&(list_entry->status), &list_status,
+                                                            update_status)) {
                             /**
                              * NOTE: Only loop and try again once, not much should
                              * update the  status so this should be highly unlikely
@@ -9729,7 +9811,7 @@ copy_list(thread_params_t *thread_params)
 
             } /* end else ( list was created, update list_entry and op_info ) */
 
-        } while ( try_again );
+        } while (try_again);
 
     } /* end if ( create ) */
 
@@ -9753,7 +9835,7 @@ copy_class(thread_params_t *thread_params)
     status_t             update_status;
     status_t             check_status;
     status_t             og_class_status;
-    H5P_mt_class_t     *class       = NULL;
+    H5P_mt_class_t *class           = NULL;
     H5P_mt_class_t     *og_class    = NULL;
     H5P_mt_class_t     *check_class = NULL;
     int                 r;
@@ -9897,7 +9979,7 @@ copy_class(thread_params_t *thread_params)
                     loop_count++;
 
                     /* If looped 100 times fail and investigate */
-                    //assert(loop_count < 100);
+                    // assert(loop_count < 100);
                 }
                 else if (class_status == DOESNT_EXIST) {
                     update_status = IN_PROGRESS;
@@ -9951,8 +10033,7 @@ copy_class(thread_params_t *thread_params)
 
     /* If create == TRUE attempt to create a copy of a list */
     if (create) {
-        do
-        {
+        do {
             try_again = FALSE;
 
             /* Grab the original class to copy */
@@ -9997,8 +10078,8 @@ copy_class(thread_params_t *thread_params)
             /* Attempt to create a copy of the class */
             H5E_BEGIN_TRY
             {
-                class_id = H5Pcreate_class(atomic_load(&(class_entry->parent_id)), class_entry->name, NULL, NULL,
-                                        NULL, NULL, NULL, NULL);
+                class_id = H5Pcreate_class(atomic_load(&(class_entry->parent_id)), class_entry->name, NULL,
+                                           NULL, NULL, NULL, NULL, NULL);
             }
             H5E_END_TRY
 
@@ -10042,7 +10123,7 @@ copy_class(thread_params_t *thread_params)
                 }
                 else if (og_class_status == EXISTS) {
                     /* If true then og_class would have been in the index */
-                    //assert(FALSE);
+                    // assert(FALSE);
 
                     try_again = TRUE;
                 }
@@ -10050,8 +10131,7 @@ copy_class(thread_params_t *thread_params)
                     assert(FALSE);
                 }
 
-                if ( ! try_again )
-                {
+                if (!try_again) {
                     /* Set class status back to DOESNT_EXIST */
                     update_status = DOESNT_EXIST;
 
@@ -10147,8 +10227,9 @@ copy_class(thread_params_t *thread_params)
                             assert(atomic_load(&(valid_prop->create_version)) == 1);
 
                             /* Get the entry for that property in the prop_table */
-                            prop_entry = search_prop_table(class_entry->prop_table, class_entry->num_prop_entries,
-                                                        valid_prop->chksum, valid_prop->name);
+                            prop_entry =
+                                search_prop_table(class_entry->prop_table, class_entry->num_prop_entries,
+                                                  valid_prop->chksum, valid_prop->name);
 
                             CHECK_PTR(prop_entry, "search_prop_table");
                             assert(prop_entry);
@@ -10262,7 +10343,7 @@ copy_class(thread_params_t *thread_params)
 
             } /* end else ( Class was created, update class_entry and op_info ) */
 
-        } while ( try_again );
+        } while (try_again);
 
     } /* end if ( create ) */
 
@@ -10557,7 +10638,7 @@ close_list(thread_params_t *thread_params)
                 /* Atomic update successful */
                 check_status = atomic_load(&(list_entry->status));
                 assert(check_status == CLOSING_IN_PROGRESS);
-                
+
                 done = TRUE;
             }
         }
@@ -10711,8 +10792,7 @@ close_list(thread_params_t *thread_params)
              * IN_PROGRESS of being created. Set result as LIST_DOESNT_EXIST
              * and set status back to start_status.
              */
-            if ( list_status != CLOSING_IN_PROGRESS )
-            {
+            if (list_status != CLOSING_IN_PROGRESS) {
                 fprintf(stderr, "list_status should be CLOSING_IN_PROGRESS\n");
                 fprintf(stderr, "list_status: %d", list_status);
             }
@@ -10877,7 +10957,7 @@ close_class(thread_params_t *thread_params)
         H5E_END_TRY
 
         if (ret == SUCCEED) {
-            
+
             assert(start_status == EXISTS || start_status == IN_PROGRESS);
 
             /* Check if class has been closed or deleted */
@@ -10899,8 +10979,7 @@ close_class(thread_params_t *thread_params)
             /**
              * TODO: debugging, remove after fixed
              */
-            if ( atomic_load(&(class->tag)) == H5P_MT_CLASS_TAG )
-            {
+            if (atomic_load(&(class->tag)) == H5P_MT_CLASS_TAG) {
                 assert(update_status = EXISTS_BUT_CLOSED);
             }
             /**
@@ -10951,7 +11030,7 @@ close_class(thread_params_t *thread_params)
             } while (!done);
 
             /* Check if closing this class closed it's parent */
-            if ( check_status == DELETED ) {
+            if (check_status == DELETED) {
                 atomic_store(&(class_entry->ver_deleted), op_info->obj_ver);
 
                 parent_entry = atomic_load(&(class_entry->parent_entry));
@@ -10961,7 +11040,7 @@ close_class(thread_params_t *thread_params)
                  * closed during these tests.
                  */
                 if (parent_entry) {
-                    
+
                     parent_sptr = atomic_load(&(parent_entry->class_sptr));
                     parent      = parent_sptr.ptr;
 
@@ -10970,10 +11049,8 @@ close_class(thread_params_t *thread_params)
                     do {
                         parent_status = atomic_load(&(parent_entry->status));
 
-                        if ( atomic_load(&(parent->tag)) == H5P_MT_CLASS_INVALID_TAG )
-                        {
-                            assert(parent_status == EXISTS_BUT_CLOSED || 
-                                   parent_status == DELETED || 
+                        if (atomic_load(&(parent->tag)) == H5P_MT_CLASS_INVALID_TAG) {
+                            assert(parent_status == EXISTS_BUT_CLOSED || parent_status == DELETED ||
                                    parent_status == CLOSING_IN_PROGRESS);
                         }
 
@@ -11060,14 +11137,13 @@ close_class(thread_params_t *thread_params)
                      * continues. Thus the status shouldn't have been able to be changed.
                      */
                     assert(class_status == CLOSING_IN_PROGRESS);
-                    
-                    if ( start_status != DOESNT_EXIST )
-                    {
+
+                    if (start_status != DOESNT_EXIST) {
                         fprintf(stderr, "While attempting close_class() start_status isn't DOESNT_EXIST\n");
                         fprintf(stderr, "class isn't in index yet\n");
                         fprintf(stderr, "start_status: %d\n", start_status);
                         fprintf(stderr, "test_class_id: %d\n\n", class_entry->test_class_id);
-                        //assert(start_status == DOESNT_EXIST);
+                        // assert(start_status == DOESNT_EXIST);
                     }
 
                     if (!atomic_compare_exchange_strong(&(class_entry->status), &class_status,
@@ -11078,11 +11154,9 @@ close_class(thread_params_t *thread_params)
                     else {
                         check_status = atomic_load(&(class_entry->status));
 
-                        if ( check_status != DOESNT_EXIST )
-                        {
-                            fprintf(stderr, 
-                                "class status after updating back to start: %d\n", check_status);
-                        } 
+                        if (check_status != DOESNT_EXIST) {
+                            fprintf(stderr, "class status after updating back to start: %d\n", check_status);
+                        }
 
                         done = TRUE;
                     }
@@ -11093,13 +11167,11 @@ close_class(thread_params_t *thread_params)
         } /* end else ( ret != SUCCEED ) */
 
     } /* end if ( try_close ) */
-    else
-    {
+    else {
         check_status = atomic_load(&(class_entry->status));
 
         assert(check_status == EXISTS_BUT_CLOSED);
     }
-
 
     return SUCCEED;
 
@@ -11299,25 +11371,22 @@ search_list(thread_params_t *thread_params)
         } /* end if ( list_status == EXISTS || list_status == IN_PROGRESS ) */
         else {
 
-            if ( atomic_load(&(list->tag)) == H5P_MT_LIST_INVALID_TAG )
-            {
+            if (atomic_load(&(list->tag)) == H5P_MT_LIST_INVALID_TAG) {
                 assert(list_status == DELETED || list_status == CLOSING_IN_PROGRESS);
                 op_info->obj_ver = atomic_load(&(list->curr_version));
             }
-            else
-            {
+            else {
                 assert(list_status == CLOSING_IN_PROGRESS);
 
                 uint64_t curr_ver = atomic_load(&(list->curr_version));
                 uint64_t next_ver = atomic_load(&(list->next_version));
 
-                if ( curr_ver + 1 != next_ver )
-                {
+                if (curr_ver + 1 != next_ver) {
                     op_info->obj_ver = next_ver - 1;
                 }
             }
 
-            op_info->result  = LIST_DELETED;
+            op_info->result = LIST_DELETED;
         }
 
     } /* end if ( list ) */
@@ -11482,25 +11551,22 @@ search_list_ver(thread_params_t *thread_params)
              list_status == DOESNT_EXIST ) */
         else {
 
-            if ( atomic_load(&(list->tag)) == H5P_MT_LIST_INVALID_TAG )
-            {
+            if (atomic_load(&(list->tag)) == H5P_MT_LIST_INVALID_TAG) {
                 assert(list_status == DELETED || list_status == CLOSING_IN_PROGRESS);
                 op_info->obj_ver = atomic_load(&(list->curr_version));
             }
-            else
-            {
+            else {
                 assert(list_status == CLOSING_IN_PROGRESS);
 
                 curr_ver = atomic_load(&(list->curr_version));
                 next_ver = atomic_load(&(list->next_version));
 
-                if ( curr_ver + 1 != next_ver )
-                {
+                if (curr_ver + 1 != next_ver) {
                     op_info->obj_ver = next_ver - 1;
                 }
             }
 
-            op_info->result  = LIST_DELETED;
+            op_info->result = LIST_DELETED;
         }
 
     } /* end if ( list ) */
@@ -11577,9 +11643,7 @@ search_class(thread_params_t *thread_params)
     if (class) {
         class_status = atomic_load(&(class_entry->status));
 
-        if (class_status == EXISTS || class_status == IN_PROGRESS || 
-            class_status == EXISTS_BUT_CLOSED) 
-        {
+        if (class_status == EXISTS || class_status == IN_PROGRESS || class_status == EXISTS_BUT_CLOSED) {
             op_info->obj_ver = atomic_load(&(class->curr_version));
             op_info->op_ver  = op_info->obj_ver;
 
@@ -11657,25 +11721,22 @@ search_class(thread_params_t *thread_params)
         } /* end if ( class_status == EXISTS || class_status == IN_PROGRESS ||
                        class_status == EXISTS_BUT_CLOSED ) */
         else {
-            if ( atomic_load(&(class->tag)) == H5P_MT_CLASS_INVALID_TAG )
-            {
+            if (atomic_load(&(class->tag)) == H5P_MT_CLASS_INVALID_TAG) {
                 assert(class_status == DELETED || class_status == CLOSING_IN_PROGRESS);
                 op_info->obj_ver = atomic_load(&(class->curr_version));
             }
-            else
-            {
+            else {
                 assert(class_status == CLOSING_IN_PROGRESS);
 
                 curr_ver = atomic_load(&(class->curr_version));
                 next_ver = atomic_load(&(class->next_version));
 
-                if ( curr_ver + 1 != next_ver )
-                {
+                if (curr_ver + 1 != next_ver) {
                     op_info->obj_ver = next_ver - 1;
                 }
             }
 
-            op_info->result  = CLASS_DELETED;
+            op_info->result = CLASS_DELETED;
         }
 
     } /* end if ( class ) */
@@ -11839,30 +11900,25 @@ search_class_ver(thread_params_t *thread_params)
 
         } /* end if ( class_status == EXISTS || class_status == IN_PROGRESS ||
              class_status == DOESNT_EXIST || class_status == EXISTS_BUT_CLOSED ) */
-        else
-        {
-            if ( atomic_load(&(class->tag)) == H5P_MT_CLASS_INVALID_TAG )
-            {
+        else {
+            if (atomic_load(&(class->tag)) == H5P_MT_CLASS_INVALID_TAG) {
                 assert(class_status == DELETED || class_status == CLOSING_IN_PROGRESS);
                 op_info->obj_ver = atomic_load(&(class->curr_version));
             }
-            else
-            {
+            else {
                 assert(class_status == CLOSING_IN_PROGRESS);
-                //op_info->obj_ver = atomic_load(&(class->next_version));
+                // op_info->obj_ver = atomic_load(&(class->next_version));
 
                 curr_ver = atomic_load(&(class->curr_version));
                 next_ver = atomic_load(&(class->next_version));
 
-                if ( curr_ver + 1 != next_ver )
-                {
+                if (curr_ver + 1 != next_ver) {
                     op_info->obj_ver = next_ver - 1;
                 }
-
             }
-            //op_info->obj_ver = atomic_load(&(class->curr_version));
-            op_info->result  = CLASS_DELETED;
-        }          
+            // op_info->obj_ver = atomic_load(&(class->curr_version));
+            op_info->result = CLASS_DELETED;
+        }
 
     } /* end if ( class ) */
     else {
@@ -11892,7 +11948,7 @@ mod_list_create_prop(thread_params_t *thread_params)
     uint32_t            op_num;
     int                 r = 0;
     uint32_t            nprops;
-    uint32_t            i          = 0;
+    uint32_t            i = 0;
     uint64_t            curr_ver;
     uint64_t            next_ver;
     bool                done       = FALSE;
@@ -12052,19 +12108,16 @@ mod_list_create_prop(thread_params_t *thread_params)
             else {
                 list = op_info->list;
 
-                if (atomic_load(&(list->tag)) == H5P_MT_LIST_INVALID_TAG)
-                {
+                if (atomic_load(&(list->tag)) == H5P_MT_LIST_INVALID_TAG) {
                     assert(list_status == DELETED || list_status == CLOSING_IN_PROGRESS);
                     op_info->obj_ver = atomic_load(&(list->curr_version));
                     op_info->result  = LIST_DELETED;
                 }
-                else if (list_status == CLOSING_IN_PROGRESS)
-                {
+                else if (list_status == CLOSING_IN_PROGRESS) {
                     curr_ver = atomic_load(&(list->curr_version));
                     next_ver = atomic_load(&(list->next_version));
 
-                    if ( curr_ver + 1 != next_ver )
-                    {
+                    if (curr_ver + 1 != next_ver) {
                         op_info->obj_ver = next_ver - 1;
                     }
                     op_info->result = LIST_DELETED;
@@ -12194,19 +12247,16 @@ mod_list_mod_prop(thread_params_t *thread_params)
             else {
                 list = op_info->list;
 
-                if (atomic_load(&(list->tag)) == H5P_MT_LIST_INVALID_TAG)
-                {
+                if (atomic_load(&(list->tag)) == H5P_MT_LIST_INVALID_TAG) {
                     assert(list_status == DELETED || list_status == CLOSING_IN_PROGRESS);
                     op_info->obj_ver = atomic_load(&(list->curr_version));
                     op_info->result  = LIST_DELETED;
                 }
-                else if (list_status == CLOSING_IN_PROGRESS)
-                {
+                else if (list_status == CLOSING_IN_PROGRESS) {
                     curr_ver = atomic_load(&(list->curr_version));
                     next_ver = atomic_load(&(list->next_version));
 
-                    if ( curr_ver + 1 != next_ver )
-                    {
+                    if (curr_ver + 1 != next_ver) {
                         op_info->obj_ver = next_ver - 1;
                     }
                     op_info->result = LIST_DELETED;
@@ -12355,19 +12405,16 @@ mod_list_delete_prop(thread_params_t *thread_params)
             else {
                 list = op_info->list;
 
-                if (atomic_load(&(list->tag)) == H5P_MT_LIST_INVALID_TAG)
-                {
+                if (atomic_load(&(list->tag)) == H5P_MT_LIST_INVALID_TAG) {
                     assert(list_status == DELETED || list_status == CLOSING_IN_PROGRESS);
                     op_info->obj_ver = atomic_load(&(list->curr_version));
                     op_info->result  = LIST_DELETED;
                 }
-                else if (list_status == CLOSING_IN_PROGRESS)
-                {
+                else if (list_status == CLOSING_IN_PROGRESS) {
                     curr_ver = atomic_load(&(list->curr_version));
                     next_ver = atomic_load(&(list->next_version));
 
-                    if ( curr_ver + 1 != next_ver )
-                    {
+                    if (curr_ver + 1 != next_ver) {
                         op_info->obj_ver = next_ver - 1;
                     }
                     op_info->result = LIST_DELETED;
@@ -12409,7 +12456,7 @@ mod_class_create_prop(thread_params_t *thread_params)
     uint32_t            op_num;
     int                 r = 0;
     uint32_t            nprops;
-    uint32_t            i          = 0;
+    uint32_t            i = 0;
     uint64_t            curr_ver;
     uint64_t            next_ver;
     bool                done       = FALSE;
@@ -12570,30 +12617,24 @@ mod_class_create_prop(thread_params_t *thread_params)
             else {
                 class = op_info->class;
 
-                if ( atomic_load(&(class->tag)) == H5P_MT_CLASS_INVALID_TAG )
-                {
+                if (atomic_load(&(class->tag)) == H5P_MT_CLASS_INVALID_TAG) {
                     assert(class_status == DELETED || class_status == CLOSING_IN_PROGRESS);
                     op_info->obj_ver = atomic_load(&(class->curr_version));
                     op_info->result  = CLASS_DELETED;
                 }
-                else if ( class_status == CLOSING_IN_PROGRESS )
-                {
+                else if (class_status == CLOSING_IN_PROGRESS) {
                     curr_ver = atomic_load(&(class->curr_version));
                     next_ver = atomic_load(&(class->next_version));
 
-                    if ( curr_ver + 1 != next_ver )
-                    {
+                    if (curr_ver + 1 != next_ver) {
                         op_info->obj_ver = next_ver - 1;
                     }
                     op_info->result = CLASS_DELETED;
-
                 }
-                else if ( class_status == IN_PROGRESS )
-                {
+                else if (class_status == IN_PROGRESS) {
                     op_info->result = CLASS_DOESNT_EXIST;
                 }
-                else
-                {
+                else {
                     assert(FALSE);
                 }
             }
@@ -12664,14 +12705,12 @@ mod_class_mod_prop(thread_params_t *thread_params)
     if (class) {
         class_status = atomic_load(&(class_entry->status));
 
-        if ( class_status == EXISTS || class_status == IN_PROGRESS ||
-             class_status == EXISTS_BUT_CLOSED )
-        {
+        if (class_status == EXISTS || class_status == IN_PROGRESS || class_status == EXISTS_BUT_CLOSED) {
             /* Randomly select a possible property to attempt to create a new version of */
             nprops = atomic_load(&(class_entry->num_prop_entries));
-            r = rand() % (int)nprops;
+            r      = rand() % (int)nprops;
 
-            prop_entry = &class_entry->prop_table[r];
+            prop_entry  = &class_entry->prop_table[r];
             prop_status = atomic_load(&(prop_entry->status));
 
             op_info->prop_name = prop_entry->name;
@@ -12687,8 +12726,7 @@ mod_class_mod_prop(thread_params_t *thread_params)
             }
             H5E_END_TRY
 
-            if ( ret == SUCCEED )
-            {
+            if (ret == SUCCEED) {
                 prop = H5P__mt_search__class(class, prop_entry->name, op_info->op_ver);
                 CHECK_PTR(prop, "H5P__mt_search__class");
                 assert(prop);
@@ -12697,8 +12735,7 @@ mod_class_mod_prop(thread_params_t *thread_params)
                 op_info->result = OP_SUCCESS;
             }
             /* Failed creating a new version of the property, find why */
-            else
-            {
+            else {
                 H5E_BEGIN_TRY
                 {
                     class = (H5P_mt_class_t *)H5I_object(class_id);
@@ -12733,36 +12770,29 @@ mod_class_mod_prop(thread_params_t *thread_params)
                         assert(FALSE);
                     }
                 }
-
             }
-        
+
         } /* end if ( class_status == EXISTS || class_status == IN_PROGRESS ||
                       class_status == EXISTS_BUT_CLOSED ) */
-        else
-        {
-            if ( atomic_load(&(class->tag)) == H5P_MT_CLASS_INVALID_TAG )
-            {
+        else {
+            if (atomic_load(&(class->tag)) == H5P_MT_CLASS_INVALID_TAG) {
                 assert(class_status == DELETED || class_status == CLOSING_IN_PROGRESS);
                 op_info->obj_ver = atomic_load(&(class->curr_version));
             }
-            else
-            {
+            else {
                 assert(class_status == CLOSING_IN_PROGRESS);
-                //op_info->obj_ver = atomic_load(&(class->next_version));
+                // op_info->obj_ver = atomic_load(&(class->next_version));
 
                 curr_ver = atomic_load(&(class->curr_version));
                 next_ver = atomic_load(&(class->next_version));
 
-                if ( curr_ver + 1 != next_ver )
-                {
+                if (curr_ver + 1 != next_ver) {
                     op_info->obj_ver = next_ver - 1;
                 }
-
             }
-            //op_info->obj_ver = atomic_load(&(class->curr_version));
-            op_info->result  = CLASS_DELETED;
+            // op_info->obj_ver = atomic_load(&(class->curr_version));
+            op_info->result = CLASS_DELETED;
         }
-        
 
     } /* end if ( class ) */
     else {
@@ -12870,7 +12900,7 @@ mod_class_delete_prop(thread_params_t *thread_params)
 
             prop = H5P__mt_search__class(class, prop_entry->name, op_info->obj_ver);
             CHECK_PTR(prop, "H5P__mt_search__class");
-            //fprintf(stderr, "test_class_id: %d\n", class_entry->test_class_id);
+            // fprintf(stderr, "test_class_id: %d\n", class_entry->test_class_id);
             assert(prop);
 
             op_info->prop   = prop;
@@ -12897,33 +12927,27 @@ mod_class_delete_prop(thread_params_t *thread_params)
                     assert(FALSE);
                 }
             }
-           else {
+            else {
                 class = op_info->class;
 
-                if ( atomic_load(&(class->tag)) == H5P_MT_CLASS_INVALID_TAG )
-                {
+                if (atomic_load(&(class->tag)) == H5P_MT_CLASS_INVALID_TAG) {
                     assert(class_status == DELETED || class_status == CLOSING_IN_PROGRESS);
                     op_info->obj_ver = atomic_load(&(class->curr_version));
-                    op_info->result = CLASS_DELETED;
+                    op_info->result  = CLASS_DELETED;
                 }
-                else if ( class_status == CLOSING_IN_PROGRESS )
-                {
+                else if (class_status == CLOSING_IN_PROGRESS) {
                     curr_ver = atomic_load(&(class->curr_version));
                     next_ver = atomic_load(&(class->next_version));
 
-                    if ( curr_ver + 1 != next_ver )
-                    {
+                    if (curr_ver + 1 != next_ver) {
                         op_info->obj_ver = next_ver - 1;
                     }
                     op_info->result = CLASS_DELETED;
-
                 }
-                else if ( class_status == IN_PROGRESS )
-                {
+                else if (class_status == IN_PROGRESS) {
                     op_info->result = CLASS_DOESNT_EXIST;
                 }
-                else
-                {
+                else {
                     assert(FALSE);
                 }
             }
@@ -13006,33 +13030,28 @@ cmp_list_equal(thread_params_t *thread_params)
     else if (list_status == DOESNT_EXIST || list_status == IN_PROGRESS) {
         op_info->result = LIST_DOESNT_EXIST;
     }
-    else
-    {
-        list_sptr = atomic_load(&(list_entry->list_sptr));
-        list      = list_sptr.ptr;
-        op_info->list    = list;
-        op_info->id      = atomic_load(&(list->plist_id));
+    else {
+        list_sptr     = atomic_load(&(list_entry->list_sptr));
+        list          = list_sptr.ptr;
+        op_info->list = list;
+        op_info->id   = atomic_load(&(list->plist_id));
 
-        if ( atomic_load(&(list->tag)) == H5P_MT_LIST_INVALID_TAG )
-        {
+        if (atomic_load(&(list->tag)) == H5P_MT_LIST_INVALID_TAG) {
             assert(list_status == DELETED || list_status == CLOSING_IN_PROGRESS);
             op_info->obj_ver = atomic_load(&(list->curr_version));
         }
-        else
-        {
+        else {
             assert(list_status == CLOSING_IN_PROGRESS);
 
             curr_ver = atomic_load(&(list->curr_version));
             next_ver = atomic_load(&(list->next_version));
 
-            if ( curr_ver + 1 != next_ver )
-            {
+            if (curr_ver + 1 != next_ver) {
                 op_info->obj_ver = next_ver - 1;
             }
         }
-        op_info->result  = LIST_DELETED;
+        op_info->result = LIST_DELETED;
     }
-
 
     return SUCCEED;
 
@@ -13129,31 +13148,27 @@ cmp_list_not_equal(thread_params_t *thread_params)
     else if (list_status1 == DOESNT_EXIST || list_status1 == IN_PROGRESS) {
         op_info->result = LIST_DOESNT_EXIST;
     }
-    else
-    {
-        list_sptr = atomic_load(&(list_entry1->list_sptr));
-        list      = list_sptr.ptr;
-        op_info->list    = list;
-        op_info->id      = atomic_load(&(list->plist_id));
+    else {
+        list_sptr     = atomic_load(&(list_entry1->list_sptr));
+        list          = list_sptr.ptr;
+        op_info->list = list;
+        op_info->id   = atomic_load(&(list->plist_id));
 
-        if ( atomic_load(&(list->tag)) == H5P_MT_LIST_INVALID_TAG )
-        {
+        if (atomic_load(&(list->tag)) == H5P_MT_LIST_INVALID_TAG) {
             assert(list_status1 == DELETED || list_status1 == CLOSING_IN_PROGRESS);
             op_info->obj_ver = atomic_load(&(list->curr_version));
         }
-        else
-        {
+        else {
             assert(list_status1 == CLOSING_IN_PROGRESS);
 
             curr_ver = atomic_load(&(list->curr_version));
             next_ver = atomic_load(&(list->next_version));
 
-            if ( curr_ver + 1 != next_ver )
-            {
+            if (curr_ver + 1 != next_ver) {
                 op_info->obj_ver = next_ver - 1;
             }
         }
-        op_info->result  = LIST_DELETED;
+        op_info->result = LIST_DELETED;
     }
 
     return SUCCEED;
@@ -13229,31 +13244,27 @@ cmp_class_equal(thread_params_t *thread_params)
     else if (class_status == DOESNT_EXIST || class_status == IN_PROGRESS) {
         op_info->result = CLASS_DOESNT_EXIST;
     }
-    else
-    {
-        class_sptr = atomic_load(&(class_entry->class_sptr));
-        class      = class_sptr.ptr;
-        op_info->class    = class;
-        op_info->id      = atomic_load(&(class->id));
+    else {
+        class_sptr     = atomic_load(&(class_entry->class_sptr));
+        class          = class_sptr.ptr;
+        op_info->class = class;
+        op_info->id    = atomic_load(&(class->id));
 
-        if ( atomic_load(&(class->tag)) == H5P_MT_CLASS_INVALID_TAG )
-        {
+        if (atomic_load(&(class->tag)) == H5P_MT_CLASS_INVALID_TAG) {
             assert(class_status == DELETED || class_status == CLOSING_IN_PROGRESS);
             op_info->obj_ver = atomic_load(&(class->curr_version));
         }
-        else
-        {
+        else {
             assert(class_status == CLOSING_IN_PROGRESS);
 
             curr_ver = atomic_load(&(class->curr_version));
             next_ver = atomic_load(&(class->next_version));
 
-            if ( curr_ver + 1 != next_ver )
-            {
+            if (curr_ver + 1 != next_ver) {
                 op_info->obj_ver = next_ver - 1;
             }
         }
-        op_info->result  = LIST_DELETED;
+        op_info->result = LIST_DELETED;
     }
 
     return SUCCEED;
@@ -13352,31 +13363,27 @@ cmp_class_not_equal(thread_params_t *thread_params)
     else if (class_status1 == DOESNT_EXIST || class_status1 == IN_PROGRESS) {
         op_info->result = CLASS_DOESNT_EXIST;
     }
-    else
-    {
-        class_sptr = atomic_load(&(class_entry1->class_sptr));
-        class      = class_sptr.ptr;
-        op_info->class    = class;
-        op_info->id      = atomic_load(&(class->id));
+    else {
+        class_sptr     = atomic_load(&(class_entry1->class_sptr));
+        class          = class_sptr.ptr;
+        op_info->class = class;
+        op_info->id    = atomic_load(&(class->id));
 
-        if ( atomic_load(&(class->tag)) == H5P_MT_CLASS_INVALID_TAG )
-        {
+        if (atomic_load(&(class->tag)) == H5P_MT_CLASS_INVALID_TAG) {
             assert(class_status1 == DELETED || class_status1 == CLOSING_IN_PROGRESS);
             op_info->obj_ver = atomic_load(&(class->curr_version));
         }
-        else
-        {
+        else {
             assert(class_status1 == CLOSING_IN_PROGRESS);
 
             curr_ver = atomic_load(&(class->curr_version));
             next_ver = atomic_load(&(class->next_version));
 
-            if ( curr_ver + 1 != next_ver )
-            {
+            if (curr_ver + 1 != next_ver) {
                 op_info->obj_ver = next_ver - 1;
             }
         }
-        op_info->result  = LIST_DELETED;
+        op_info->result = LIST_DELETED;
     }
 
     return SUCCEED;
@@ -13899,8 +13906,8 @@ check_operations(thread_params_t *thread_params, uint64_t num_threads)
     test_op_info_t  *curr_op;
     operation_type_t op;
     status_t         class_status;
-    //status_t         list_status;
-    //status_t         parent_status;
+    // status_t         list_status;
+    // status_t         parent_status;
 
     bool created = FALSE;
     int  ret;
@@ -14112,27 +14119,25 @@ check_operations(thread_params_t *thread_params, uint64_t num_threads)
                 else if (op == SEARCH || op == SEARCH_VER || op == MOD_CREATE_PROP || op == MOD_MOD_PROP ||
                          op == MOD_DELETE_PROP) {
                     if (result == CLASS_DELETED) {
-                        
-                        if (atomic_load(&(class->tag)) != H5P_MT_CLASS_INVALID_TAG )
-                        {
+
+                        if (atomic_load(&(class->tag)) != H5P_MT_CLASS_INVALID_TAG) {
                             fprintf(stderr, "\nop is searching or modding a class\n");
                             fprintf(stderr, "result is marked CLASS_DELETED, but tag isn't INVALID\n");
                             class_status = atomic_load(&(class_entry->status));
                             fprintf(stderr, "class_status: %d", class_status);
                         }
 
-                        if ( curr_op->obj_ver + 1 != atomic_load(&(class->next_version)) )
-                        {
-                            fprintf(stderr, 
-                                "\nProp op on deleted class doesn't have obj_ver of one less than next_version\n");
+                        if (curr_op->obj_ver + 1 != atomic_load(&(class->next_version))) {
+                            fprintf(stderr, "\nProp op on deleted class doesn't have obj_ver of one less "
+                                            "than next_version\n");
                             fprintf(stderr, "class test_id: %d\n", class_entry->test_class_id);
                             fprintf(stderr, "curr_op->op: %d\n", curr_op->op);
                             fprintf(stderr, "curr_op->obj_ver: %ld\n", curr_op->obj_ver);
                             fprintf(stderr, "class->next_version: %ld\n", class->next_version);
-                            fprintf(stderr, "class_entry->ver_closed: %ld\n", 
-                                        atomic_load(&(class_entry->ver_closed)));
+                            fprintf(stderr, "class_entry->ver_closed: %ld\n",
+                                    atomic_load(&(class_entry->ver_closed)));
                             fprintf(stderr, "class_entry->ver_deleted: %ld\n",
-                                        atomic_load(&(class_entry->ver_deleted)));
+                                    atomic_load(&(class_entry->ver_deleted)));
                             assert(FALSE);
                         }
                     }
