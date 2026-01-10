@@ -744,6 +744,83 @@ done:
 
 } /* end H5Iregister_future() */
 
+#ifdef H5I_LOCK_FREE
+
+#define H5I_MAKE(g, i) ((((hid_t)(g)&TYPE_MASK) << ID_BITS) | ((hid_t)(i)&ID_MASK))
+
+/*-------------------------------------------------------------------------
+ * Function:    H5Ireserve_future_id
+ *
+ * Purpose:     Register a "future" id.
+ *
+ * Return:      Success:    New future ID
+ *              Failure:    H5I_INVALID_HID
+ *
+ *-------------------------------------------------------------------------
+ */
+hid_t 
+H5Ireserve_future_id(H5I_type_t type, H5I_progress_func_t progress_cb){
+    void *ret_value = NULL; /* Return value */
+
+    FUNC_ENTER_API_NO_MUTEX(H5I_INVALID_HID)
+    H5TRACE2("i", "It*xIRID", type, progress_cb);
+
+    H5I__enter(TRUE);
+
+    if (H5I_IS_LIB_TYPE(type))
+        HGOTO_ERROR(H5E_ID, H5E_BADGROUP, NULL, "cannot call public function on library type");
+
+    /* Remove the id */
+    ret_value = H5I__reserve_future_id(type, progress_cb);
+
+done:
+
+    H5I__exit();
+
+    FUNC_LEAVE_API_NO_MUTEX(ret_value)
+} /* H5Ireserve_future_id() */
+
+/*-------------------------------------------------------------------------
+ * Function:    H5Idefine_future_id
+ *
+ * Purpose:     DEFINE a "future" id.
+ *
+ * Return:      Success:    SUCCEED
+ *              Failure:    FAIL
+ *
+ *-------------------------------------------------------------------------
+ */
+herr_t 
+H5Idefine_future_id(H5I_type_t type, hid_t id, void *actual_object){
+    void *ret_value = NULL; /* Return value */
+
+    FUNC_ENTER_API_NO_MUTEX(FAIL)
+    H5TRACE3("i", "It*xIRID", type, id, actual_object);
+
+    H5I__enter(TRUE);
+
+    /* Check arguments */
+    if (H5I_IS_LIB_TYPE(type))
+        HGOTO_ERROR(H5E_ID, H5E_BADGROUP, NULL, "cannot call public function on library type");
+
+    if (NULL == actual_object)
+        HGOTO_ERROR(H5E_ID, H5E_BADVALUE, H5I_INVALID_HID, "NULL pointer for object");
+
+    if (NULL == id)
+        HGOTO_ERROR(H5E_ID, H5E_BADVALUE, H5I_INVALID_HID, "NULL id is not allowed");
+
+    /* Define the id */
+    ret_value = H5I__define_future_id(type, id, actual_object);
+
+done:
+
+    H5I__exit();
+
+    FUNC_LEAVE_API_NO_MUTEX(ret_value)
+} /* H5Idefine_future_id() */
+
+#endif
+
 #else /* H5_HAVE_MULTITHREAD */
 
 /*-------------------------------------------------------------------------
@@ -895,10 +972,23 @@ H5Iget_type(hid_t id)
 
     ret_value = H5I_get_type_internal(id);
 
+#ifdef H5I_LOCK_FREE
+
+    if ( ret_value <= H5I_BADID || (int)ret_value >= atomic_load(&(H5I_mt_g.next_type)) )
+        HGOTO_DONE(H5I_BADID);
+    
+    /* Validate the existance of the ID in the index, but don't require object*/
+    if ( H5I__find_id(id, FALSE) == NULL ) {
+
+        HGOTO_DONE(H5I_BADID);
+    }
+
+#else
     if (ret_value <= H5I_BADID || (int)ret_value >= atomic_load(&(H5I_mt_g.next_type)) || 
         NULL == H5I_object_internal(id))
 
         HGOTO_DONE(H5I_BADID);
+#endif
 
 done:
 
@@ -1535,9 +1625,12 @@ H5Iis_valid(hid_t id)
 
     H5I__enter(TRUE);
 
+#ifdef H5I_LOCK_FREE
     /* Find the ID */
+    if ( NULL == (id_info_ptr = H5I__find_id(id, TRUE)) ) {
+#else 
     if ( NULL == (id_info_ptr = H5I__find_id(id)) ) {
-
+#endif 
         ret_value = FALSE;
 
     } else {
