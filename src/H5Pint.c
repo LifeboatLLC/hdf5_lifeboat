@@ -3167,7 +3167,6 @@ H5P__register(H5P_mt_class_t **ppclass, const char *name, size_t size, void *def
               H5P_prp_close_func_t prp_close)
 {
     H5P_mt_class_t *pclass;
-    // H5P_mt_prop_t  *prop;
 
     herr_t ret_value = SUCCEED;
 
@@ -3175,18 +3174,11 @@ H5P__register(H5P_mt_class_t **ppclass, const char *name, size_t size, void *def
 
     pclass = *ppclass;
 
-#if 0 /* This has been moved to inside H5P__mt_ins_or_mod_prop__class() */
-
-    /* Ensure the property doesn't already exist in the class */
-    if (NULL != (prop = H5P__mt_search__class(pclass, name))) {
-        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "property has already been added to class");
-    }
-#endif
-
     /* Create and insert the property into the class */
-    if ((ret_value = H5P__mt_ins_or_mod_prop__class(pclass, name, def_value, size, TRUE, prp_create, prp_set,
-                                                    prp_get, prp_encode, prp_decode, prp_delete, prp_copy,
-                                                    prp_cmp, prp_close)) < 0) {
+    if ((ret_value = H5P__mt_ins_or_mod_prop__class(pclass, name, def_value, size, TRUE, prp_create, 
+                                                    prp_set, prp_get, prp_encode, prp_decode, prp_delete, 
+                                                    prp_copy, prp_cmp, prp_close)) < 0)
+    {
         HGOTO_ERROR(H5E_PLIST, H5E_CANTREGISTER, FAIL, "unable to register property in class");
     }
 
@@ -3475,7 +3467,7 @@ H5P_insert(H5P_mt_list_t *plist, const char *name, size_t size, void *value, H5P
            H5P_prp_delete_func_t prp_delete, H5P_prp_copy_func_t prp_copy, H5P_prp_compare_func_t prp_cmp,
            H5P_prp_close_func_t prp_close)
 {
-    // H5P_mt_prop_t  *prop;
+    //H5P_mt_prop_t  *prop;
 
     herr_t ret_value = SUCCEED; /* Return value */
 
@@ -3484,7 +3476,7 @@ H5P_insert(H5P_mt_list_t *plist, const char *name, size_t size, void *value, H5P
     assert(plist);
     assert(name);
     assert((size > 0 && value != NULL) || (size == 0));
-
+    
 #if 0 /* This has been moved to inside H5P__mt_ins_or_mod_prop__list() */
 
     /* Ensure the property doesn't already exist in the list */
@@ -3494,9 +3486,10 @@ H5P_insert(H5P_mt_list_t *plist, const char *name, size_t size, void *value, H5P
 #endif
 
     /* Create the new property and insert it into the property list */
-    if ((ret_value = H5P__mt_ins_or_mod_prop__list(plist, name, value, size, FALSE, FALSE, TRUE, NULL,
-                                                   prp_set, prp_get, prp_encode, prp_decode, prp_delete,
-                                                   prp_copy, prp_cmp, prp_close)) < 0) {
+    if ((ret_value = H5P__mt_ins_or_mod_prop__list(plist, name, value, size, FALSE, FALSE, TRUE, NULL, 
+                                                   prp_set, prp_get, prp_encode, prp_decode, prp_delete, 
+                                                   prp_copy, prp_cmp, prp_close)) < 0)
+    {
         HGOTO_ERROR(H5E_PLIST, H5E_CANTREGISTER, FAIL, "unable to register MT property in MT plist");
     }
 
@@ -4016,9 +4009,10 @@ H5P_poke(H5P_mt_list_t *plist, const char *name, void *value)
     prop_value = atomic_load(&(prop->value));
 
     /* Create a new version of the property that is a copy of it with the new value */
-    if (0 > H5P__mt_ins_or_mod_prop__list(plist, name, value, prop_value.size, FALSE, FALSE, FALSE,
-                                          prop->create, prop->set, prop->get, prop->encode, prop->decode,
-                                          prop->del, prop->copy, prop->cmp, prop->close)) {
+    if (0 > H5P__mt_ins_or_mod_prop__list(plist, name, value, prop_value.size, FALSE, FALSE, FALSE, 
+                                          prop->create, prop->set, prop->get, prop->encode, prop->decode, 
+                                          prop->del, prop->copy, prop->cmp, prop->close))
+    {
         HGOTO_ERROR(H5E_PLIST, H5E_CANTOPERATE, FAIL,
                     "can't create new property version for the updated value");
     }
@@ -4306,8 +4300,9 @@ H5P_set(H5P_mt_list_t *plist, const char *name, const void *value)
 
     /* Create a new version of the property that is a copy of it */
     if (0 > H5P__mt_ins_or_mod_prop__list(plist, name, (void *)prop_value.ptr, prop_value.size, FALSE, FALSE,
-                                          FALSE, prop->create, prop->set, prop->get, prop->encode,
-                                          prop->decode, prop->del, prop->copy, prop->cmp, prop->close)) {
+                                          FALSE, prop->create, prop->set, prop->get, prop->encode, 
+                                          prop->decode, prop->del, prop->copy, prop->cmp, prop->close))
+    {
         HGOTO_ERROR(H5E_PLIST, H5E_CANTOPERATE, FAIL, "can't operate on MT plist to set value");
     }
 
@@ -4610,10 +4605,11 @@ H5P__class_set(H5P_genclass_t *pclass, const char *name, void *value)
     if (0 == prop_value.size)
         HGOTO_ERROR(H5E_PLIST, H5E_BADVALUE, FAIL, "property has zero size");
 
-    /* Create and insert the new property struct for the updated value */
-    if ((H5P__mt_ins_or_mod_prop__class(pclass, name, value, prop_value.size, FALSE, prop->create, prop->set,
-                                        prop->get, prop->encode, prop->decode, prop->del, prop->copy,
-                                        prop->cmp, prop->close)) < 0) {
+        /* Create and insert the new property struct for the updated value */
+    if ((H5P__mt_ins_or_mod_prop__class(pclass, name, value, prop_value.size, FALSE, prop->create, 
+                                        prop->set, prop->get, prop->encode, prop->decode, prop->del, 
+                                        prop->copy, prop->cmp, prop->close)) < 0)
+    {
         HGOTO_ERROR(H5E_PLIST, H5E_CANTOPERATE, FAIL,
                     "can't create new property version for the updated value");
     }
@@ -4887,8 +4883,8 @@ done:
  NAME
     H5P__get_size_plist
  PURPOSE
-    Multithread version of H5P__get_size_plist(). Which is an internal
-    routine to query the size of a property in a property list.
+    Multithread version of H5P__get_size_plist(). Which is an internal 
+    routine to query the size of a property in a property list. 
  USAGE
     herr_t H5P__get_size_plist(plist, name)
         H5P_genplist_t *plist;  IN: Property list to check
@@ -4909,7 +4905,7 @@ done:
 herr_t
 H5P__get_size_plist(H5P_genplist_t *plist, const char *name, size_t *size)
 {
-    H5P_genprop_t      *prop; /* Temporary property pointer */
+    H5P_genprop_t      *prop;                /* Temporary property pointer */
     H5P_mt_prop_value_t value;
     uint64_t            version;
     herr_t              ret_value = SUCCEED; /* return value */
@@ -4991,7 +4987,7 @@ done:
  NAME
     H5P__get_size_pclass
  PURPOSE
-    Multithread safe version of H5P__get_size_pclass(). Which is an internal
+    Multithread safe version of H5P__get_size_pclass(). Which is an internal 
     routine to query the size of a property in a property class.
  USAGE
     herr_t H5P__get_size_pclass(pclass, name)
@@ -5013,7 +5009,7 @@ done:
 herr_t
 H5P__get_size_pclass(H5P_genclass_t *pclass, const char *name, size_t *size)
 {
-    H5P_genprop_t      *prop; /* Temporary property pointer */
+    H5P_genprop_t      *prop;                /* Temporary property pointer */
     H5P_mt_prop_value_t value;
     uint64_t            version;
     herr_t              ret_value = SUCCEED; /* return value */
@@ -5353,7 +5349,7 @@ H5P__cmp_class(H5P_genclass_t *pclass1, H5P_genclass_t *pclass2)
     FUNC_ENTER_PACKAGE
 
     /**
-     * TODO: need to add a check that if the classes are
+     * TODO: need to add a check that if the classes are 
      * in the context, the versions are grabbed from there.
      */
     pclass1_ver = atomic_load(&(pclass1->curr_version));
@@ -5591,12 +5587,12 @@ H5P__cmp_plist(H5P_genplist_t *plist1, H5P_genplist_t *plist2, int *cmp_ret)
     uint64_t plist1_ver;
     uint64_t plist2_ver;
 
-    herr_t ret_value = SUCCEED;
+    herr_t   ret_value = SUCCEED;
 
     FUNC_ENTER_PACKAGE
 
     /**
-     * TODO: need to add a check that if the classes are
+     * TODO: need to add a check that if the classes are 
      * in the context, the versions are grabbed from there.
      */
     plist1_ver = atomic_load(&(plist1->curr_version));
@@ -5717,8 +5713,8 @@ H5P_class_isa(H5P_mt_class_t *pclass1, H5P_mt_class_t *pclass2)
 {
     uint64_t pclass1_ver;
     uint64_t pclass2_ver;
-    int32_t  equal;
-    htri_t   ret_value = FAIL; /* Return value */
+    int32_t equal;
+    htri_t  ret_value = FAIL; /* Return value */
 
     FUNC_ENTER_NOAPI(FAIL)
 
@@ -5726,7 +5722,7 @@ H5P_class_isa(H5P_mt_class_t *pclass1, H5P_mt_class_t *pclass2)
     assert(pclass2);
 
     /**
-     * TODO: need to add a check that if the classes are
+     * TODO: need to add a check that if the classes are 
      * in the context, the versions are grabbed from there.
      */
     pclass1_ver = atomic_load(&(pclass1->curr_version));
@@ -7268,7 +7264,8 @@ H5P__copy_prop_plist(hid_t dst_id, hid_t src_id, const char *name)
         if (0 < H5P__mt_ins_or_mod_prop__list(dst_plist, src_prop->name, value.ptr, value.size, FALSE, TRUE,
                                               FALSE, src_prop->create, src_prop->set, src_prop->get,
                                               src_prop->encode, src_prop->decode, src_prop->del,
-                                              src_prop->copy, src_prop->cmp, src_prop->close)) {
+                                              src_prop->copy, src_prop->cmp, src_prop->close))
+        {
             HGOTO_ERROR(H5E_PLIST, H5E_CANTCOPY, FAIL, "Failed copying and inserting MT property");
         }
 
@@ -7284,7 +7281,8 @@ H5P__copy_prop_plist(hid_t dst_id, hid_t src_id, const char *name)
         if (0 < H5P__mt_ins_or_mod_prop__list(dst_plist, src_prop->name, value.ptr, value.size, TRUE, FALSE,
                                               FALSE, src_prop->create, src_prop->set, src_prop->get,
                                               src_prop->encode, src_prop->decode, src_prop->del,
-                                              src_prop->copy, src_prop->cmp, src_prop->close)) {
+                                              src_prop->copy, src_prop->cmp, src_prop->close))
+        {
             HGOTO_ERROR(H5E_PLIST, H5E_CANTCOPY, FAIL, "Failed copying and inserting MT property");
         }
     }
@@ -7468,9 +7466,10 @@ H5P__copy_prop_pclass(hid_t dst_id, hid_t src_id, const char *name)
     value = atomic_load(&prop->value);
 
     /* Create a copy of the source prop, and insert it into the dst_pclass */
-    if (0 < H5P__mt_ins_or_mod_prop__class(dst_pclass, prop->name, value.ptr, value.size, TRUE, prop->create,
-                                           prop->set, prop->get, prop->encode, prop->decode, prop->del,
-                                           prop->copy, prop->cmp, prop->close)) {
+    if (0 < H5P__mt_ins_or_mod_prop__class(dst_pclass, prop->name, value.ptr, value.size, TRUE, 
+                                           prop->create, prop->set, prop->get, prop->encode, prop->decode, 
+                                           prop->del, prop->copy, prop->cmp, prop->close))
+    {
         HGOTO_ERROR(H5E_PLIST, H5E_CANTCOPY, FAIL, "Failed copying and inserting MT property");
     }
 
