@@ -88,7 +88,7 @@
 
 #if H5I_LOCK_FREE
 /* Max tries a progress function can make towards realizing a future ID */
-#define H5I_FIND_FUTURE_MAX_PROGRESS_TRIES 10
+#define H5I_FIND_FUTURE_MAX_PROGRESS_TRIES 4
 
 #endif
 
@@ -3143,6 +3143,20 @@ done:
  *              for further details.
  *
  *                                                   -- JRM
+ * 
+ * Changes: 
+ * 
+ *              Modified for the possibility for future IDs. Future IDs 
+ *              do not have objects, so in that event skip the free func
+ *              and mark the ID for deletion and signal the condition
+ *              variables for that ID's type. 
+ * 
+ *              Added a test-specific function call, future_free_rpt_fcn, 
+ *              similar to the closing_rpt, this call is intended to signal
+ *              the test harness that the ID is closing so that the harness
+ *              variables can be updated as needed at an appropriate time.
+ * 
+ *                                                   AZO -- 1/15/26
  *
  * Return:      SUCCEED/FAIL
  *
@@ -6870,6 +6884,26 @@ done:
  *              in that case, 0 is returned unless an error is detected.
  *
  *                                              JRM -- 9/18/23
+ * 
+ * Changes:     Altered for the possibility of a future ID passed in.
+ *              If the ID is a future, do not call the free function 
+ *              and just mark for deletion and signal the condition
+ *              variables for the ID's type.
+ * 
+ *              Added testing-specific function call - similar to 
+ *              closing_rpt_fcn, future_free_rpt_fcn, which is used to 
+ *              signal that an ID has been marked for deletion so that
+ *              test harness values can be updated accordingly and in 
+ *              a timely fashion.
+ * 
+ *              Changed the call to the closing report function in the
+ *              event the CAS fails (typically caused by a concurrent 
+ *              define here) to call the updated kernel (base_info_k) 
+ *              rather than the old one (mod_info_k). This in theory
+ *              should not cause any issues or side-effects as its 
+ *              just a slight change of contract. 
+ * 
+ *                                               AZO -- 1/15/26
  *
  * Note:        Allows for asynchronous 'close' operation on object, with
  *              request != H5_REQUEST_NULL.
@@ -7154,6 +7188,7 @@ H5I__dec_ref(hid_t id, void **request, hbool_t app)
                 atomic_fetch_add(&(H5I_mt_g.num_failed_closing_sets), 1ULL);
             }
 
+#if 0
             if ( closing_rpt_fcn ) {
 
                 H5_GCC_CLANG_DIAG_OFF("cast-qual")
@@ -7163,6 +7198,26 @@ H5I__dec_ref(hid_t id, void **request, hbool_t app)
                 (closing_rpt_fcn)(id, (void *)(mod_info_k.object), H5I_CLOSING_STAT__FAIL);
                 H5_GCC_CLANG_DIAG_ON("cast-qual")
             }
+#else
+            if ( closing_rpt_fcn ) {
+
+                H5_GCC_CLANG_DIAG_OFF("cast-qual")
+                /* CAS failed: atomic_compare_exchange_strong() has updated base_info_k
+                 * to the current kernel value that won the race.
+                 * 
+                 * With the introduction of future IDs, the object pointer may change
+                 * concurrently (e.g., future->realized, object NULL -> non-NULL). In 
+                 * this case, reporting the attempted snapshaot (mod_info_k) can pass
+                 * a stale or misleading object pointer. 
+                 * 
+                 * For FAIL reports, we therefore report the current state (base_info_k),
+                 * not the attempted state, so the callback observes a consistent view of
+                 * the ID at the time of the failure.  
+                 */
+                (closing_rpt_fcn)(id, (void *)(base_info_k.object), H5I_CLOSING_STAT__FAIL);
+                H5_GCC_CLANG_DIAG_ON("cast-qual")
+            }
+#endif
 
             /* done is false, so nothing to do to trigger the retry */
             assert( ! done );
@@ -7282,7 +7337,7 @@ H5I__dec_ref(hid_t id, void **request, hbool_t app)
 
             assert(bool_result);
 
-            /* Broadcast only if we transitioned FUTURE → MARKED */
+            /* Broadcast only if we transitioned to MARKED */
             if ( info_k.is_future ) {
                 pthread_mutex_lock(&(type_info_ptr->future_mu));
                 atomic_fetch_add(&(type_info_ptr->future_gen), 1ULL);
@@ -11464,8 +11519,11 @@ herr_t H5I__define_future_id(H5I_type_t type, hid_t id, void *object)
     }
 
 done:
+
     FUNC_LEAVE_NOAPI(ret_value)
-}
+
+} /* H5I__define_future_id() */
+
 /*-------------------------------------------------------------------------
  * Function:    H5I__find_id
  *
@@ -11475,6 +11533,35 @@ done:
  * Return:      Success:    A pointer to the object's info struct.
  *
  *              Failure:    NULL
+ * 
+ * Changes:
+ * 
+ *              Added future ID support, future IDs passed in are now 
+ *              realized given the correct conditions. 
+ * 
+ *              Added second boolean parameter, stall_on_future, for use 
+ *              with future IDs when there is no provided progress cb.
+ *              This is optional and only affects the condvar waiting
+ *              path for future IDs where, when true, will put the current
+ *              thread to sleep waiting for an ID of the passed in ID's type
+ *              to be defined, or marked for closure. Upon waking up, the
+ *              sleeping thread retries the find and returns to sleep if
+ *              the future ID is still a future, or returns the object info
+ *              pointer. 
+ * 
+ *              In the case a progress callback is provided, if a future ID
+ *              is passed in, the progress callback associated with that ID
+ *              is invoked and progress towards defining the ID is made.
+ *              After invocation of the progress cb, the current thread
+ *              retries the lookup and, if the id is no longer future, 
+ *              returns the object info pointer. Otherwise, the progress
+ *              callback is invoked again.
+ * 
+ *              Note: The progress callback is invoked a bounded number of
+ *                    times and depends on H5I_FIND_FUTURE_MAX_PROGRESS_TRIES
+ *                    which by default is set to 4. 
+ * 
+ *                                              AZO -- 11/24/25
  *
  *-------------------------------------------------------------------------
  */
@@ -11482,7 +11569,7 @@ H5I_mt_id_info_t *
 H5I__find_id(hid_t id, hbool_t stall_on_future)
 {
     unsigned long long      gen;
-    int                     tries;
+    int                     tries             = 0;     /* attempts to drive progress for future id*/
     hbool_t                 have_global_mutex = TRUE; /* trivially true in the serial case */
     H5I_type_t              type;                      /* ID's type */
     H5I_mt_type_info_t     *type_info_ptr      = NULL; /* Pointer to the type */
@@ -11600,46 +11687,34 @@ retry:
         HGOTO_DONE(NULL);
     }
 
-    /* insert code for manage new version future IDs here if successful */
+    /* Upon lookup of a future ID, either attempt to make progress towards realization, given
+     * a progress_cb is provided, or put the current thread to sleep and wait for a signal
+     * if stall_on_future == TRUE
+     */
+    if ( info_k.is_future ) {
 
+        if ( id_info_ptr->progress_cb ) {
 
-    if (info_k.is_future) {
+            tries++;
 
-        if (id_info_ptr->progress_cb) {
-
-            
-
-            for (tries = 0; tries < H5I_FIND_FUTURE_MAX_PROGRESS_TRIES; tries++) {
-
-                atomic_fetch_add(&H5I_mt_g.H5I__find_id__num_calls_to_progress_cb, 1ULL);
-
-                if ((id_info_ptr->progress_cb)(id) < 0) {
-                    atomic_fetch_add(&H5I_mt_g.H5I__find_id__num_progress_cb_failures, 1ULL);
-                    HGOTO_DONE(NULL);
-                }
-
-                /* Re-check state (do NOT assume unchanged) */
-                info_k = atomic_load(&id_info_ptr->k);
-
-                if (info_k.marked)
-                    HGOTO_DONE(NULL);
-
-                if (!info_k.is_future) {
-                    atomic_fetch_add(&H5I_mt_g.H5I__find_id__num_futures_resolved_by_progress, 1ULL);
-                    break;
-                }
-
-            }
-
-            if ( info_k.is_future ) {
-                /* Bail: still future after bounded progress attempts */
+            if ( tries >= H5I_FIND_FUTURE_MAX_PROGRESS_TRIES ) {
                 atomic_fetch_add(&H5I_mt_g.H5I__find_id__num_future_progress_bails, 1ULL);
-
-                HGOTO_DONE(id_info_ptr); /* Return pointer on failure */
-
+                HGOTO_DONE(id_info_ptr);
             }
-            /* Not future anymore */
-            HGOTO_DONE(id_info_ptr);
+
+
+            atomic_fetch_add(&H5I_mt_g.H5I__find_id__num_calls_to_progress_cb, 1ULL);
+
+            if ( (id_info_ptr->progress_cb)(id) < 0 ) {
+                atomic_fetch_add(&H5I_mt_g.H5I__find_id__num_progress_cb_failures, 1ULL);
+                HGOTO_DONE(NULL);
+            }
+
+            if ( !info_k.is_future ) 
+                atomic_fetch_add(&H5I_mt_g.H5I__find_id__num_futures_resolved_by_progress, 1ULL);
+            
+            /* If realized here, will simply return the object info pointer, otherwise retry */
+            goto retry;
         }
 
         /* No progress_cb: only CV waiting can stall */
@@ -11661,6 +11736,7 @@ retry:
 
         }
         pthread_mutex_unlock(&type_info_ptr->future_mu);
+        
         goto retry; /* re-find and re-check */
     }
 

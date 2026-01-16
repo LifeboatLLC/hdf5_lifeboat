@@ -235,7 +235,7 @@ typedef struct id_object_kernel_t {
     H5I_mt_id_info_t * id_info_ptr;
 } id_object_kernel_t;
 
-typedef struct id_object_t{
+typedef struct id_object_t {
     unsigned                   tag;
     int                        index;
     _Atomic int                id_index;
@@ -606,7 +606,7 @@ typedef struct test_progress_event_t{
  *
  ***********************************************************************************/
 #define H5I_TEST_Q_CAPACITY   4096
-#define H5I_TEST_PUMP_STEPS   16     /* how much progress_cb does per call */
+#define H5I_TEST_PUMP_STEPS   4     /* how much progress_cb does per call */
 
 /* Values for the definer thread */
 #define H5I_TEST_SCAN_BUDGET     256     /* how many random id_index samples when queue empty */
@@ -1121,6 +1121,12 @@ free_func(void * obj, void H5_ATTR_UNUSED ** request)
  *      of id_object_t may be modified during the execution of the free function.
  *
  *                                                      JRM -- 10/27/25
+ * 
+ *      Modified to allow for the very rare possiblity that the ID has been defined internally,
+ *      though the test harness has not yet been updated in which case an object will be passed
+ *      in and the free func will be called but the id instance kernel is still marked as future.
+ *      
+ *                                                      AZO -- 1/15/25
  *      
  ***********************************************************************************************/
 
@@ -1175,8 +1181,9 @@ free_func(void * obj, void H5_ATTR_UNUSED ** request)
 
         assert( id_inst_k.created );
         assert( ! id_inst_k.discarded );
-#if 0 
-        assert( ! id_inst_k.future );
+#if 1
+        if ( ( !id_inst_k.in_progress ) )
+            assert( ( ! id_inst_k.future ) || ( id_inst_k.realized ) );
 #else 
         assert( ( ! id_inst_k.future ) || ( id_inst_k.realized ) );
 #endif
@@ -1461,7 +1468,7 @@ closing_rpt(hid_t id, void * obj, int op)
     struct id_instance_kernel_t mod_inst_k;
     H5I_mt_id_info_t *info;
     H5I_mt_type_info_t  *type_info_ptr;
-    void *ctx;
+    void *index_ctx; /* Future case, ID index stored here at reserve */
 
     /* if the id is of a type maintained by the HDF5 library proper, just return without
      * doing anything.
@@ -1498,23 +1505,35 @@ closing_rpt(hid_t id, void * obj, int op)
         assert(id_index < NUM_ID_INSTANCES);
         assert(ID_INSTANCE_T__TAG == id_instance_array[id_index].tag);
         assert(id_instance_array[id_index].obj_index == obj_index);
+
     } else {
-        
-        type_info_ptr = atomic_load(&H5I_mt_g.type_info_array[id_type]);
+        /* In the case of a future ID there is no associated object, though closing flags are
+         * still useful. We instead derive the id_index from the client_data, set to hold the
+         * value of the id index when the future ID was reserved. Sanity check along the way
+         * and ensure this ID is a future.
+         */
+        memset(&inst_k, 0, sizeof(id_instance_kernel_t));
+
+        type_info_ptr = atomic_load(&(H5I_mt_g.type_info_array[id_type]));
         info = NULL;
+
         lfht_find(&(type_info_ptr->lfht), (unsigned long long)id, (void **)&info );
         
         assert(info);
 
-        ctx = atomic_load(&info->client_data);
-        if ( !ctx ) {
-            assert(FALSE);
-        }
-        assert(ctx);
+        index_ctx = atomic_load(&info->client_data);
 
-        id_index = (int)(uintptr_t)ctx;
+        assert(index_ctx);
 
-        assert (id_index >= 0);
+        id_index = (int)(uintptr_t)index_ctx; /* stored in try_reserve_future_id() */
+
+        assert(id_index >= 0);
+        assert(id_index < NUM_ID_INSTANCES);
+        assert(ID_INSTANCE_T__TAG == id_instance_array[id_index].tag);
+
+        inst_k = atomic_load(&(id_instance_array[id_index].k));
+
+        assert(inst_k.future);
     }
 
     do {
@@ -4577,7 +4596,7 @@ try_define_future_id(int id_index, int obj_index,
 
         type_index = id_instance_array[id_index].type_index;
 
-        if ( (type_index < 0 ) || ( type_index >= NUM_ID_TYPES ) ) {
+        if ( ( type_index < 0 ) || ( type_index >= NUM_ID_TYPES ) ) {
 
             if ( rpt_failures ) {
 
@@ -4701,8 +4720,8 @@ try_define_future_id(int id_index, int obj_index,
         atomic_store(&(objects_array[obj_index].id_index), id_instance_array[id_index].index);
         atomic_store(&(id_instance_array[id_index].obj_index), objects_array[obj_index].index);
 
-        if ( ( !id_inst_k.future ) || ( id_inst_k.realized ) || ( id_inst_k.discarded ) ) {
-            ambiguous++;
+        if ( ( !id_inst_k.future ) || ( id_inst_k.realized ) || ( id_inst_k.discarded ) || ( id_inst_k.closing ) ) {
+
             success = FALSE;
             if ( rpt_failures ) {
 
@@ -6206,7 +6225,7 @@ try_remove_verify(int id_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, in
              * set before the id is marked as created, it is possible that it will be 
              * set even though the id instance is not listed as being created.  
              *
-             * Deal wiht this case by allowing the obj_index to be either -1 or equal to
+             * Deal with this case by allowing the obj_index to be either -1 or equal to
              * to the id_index.  While this is good for now, note that it may change.
              */
             assert( ! success );
@@ -6220,6 +6239,9 @@ try_remove_verify(int id_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, in
              * be defined (i.e. not -1).  Further the indicated object must be 
              * marked as discarded, and must be linked to the id via its id_index
              * field.
+             * 
+             * The above is only the case in the event that the id was not a future,
+             * if it was it has no associated object. 
              */
             assert( ! success );
 
@@ -6318,7 +6340,7 @@ try_remove_verify(int id_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, in
                 assert( ( 0 <= obj_index ) && ( obj_index < NUM_ID_OBJECTS ) );
                 assert( id_index == atomic_load(&(objects_array[obj_index].id_index)) );
             } else {
-                assert(0 > obj_index);
+                assert( 0 > obj_index );
             }
 
         }
