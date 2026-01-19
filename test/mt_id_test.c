@@ -1157,7 +1157,12 @@ free_func(void * obj, void H5_ATTR_UNUSED ** request)
 
     obj_k = atomic_load(&(object_ptr->k));
 
-    assert( obj_k.allocated );
+    /* If the object is in progress and the free func was hit, H5Idefine_future() was called
+     * and succeeded, though the test side variables are not updated to reflect that change
+     */
+    if ( ! obj_k.in_progress )
+        assert( obj_k.allocated );
+
     assert( ! obj_k.discarded );
     assert( ! obj_k.future );
 

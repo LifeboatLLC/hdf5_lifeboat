@@ -11317,7 +11317,6 @@ hid_t H5I__reserve_future_id(H5I_type_t type, H5I_progress_func_t progress_cb)
 {
     H5I_mt_type_info_t      *type_info_ptr  = NULL;  /* Type info pointer */
     H5I_mt_id_info_t        *id_info_ptr    = NULL;  /* ID info node for this future ID */
-    H5I_mt_id_info_kernel_t  k;                 /* Atomic kernel for the ID */
     hid_t                    id        = H5I_INVALID_HID;
     hbool_t                  added     = FALSE;
     hid_t                    ret_value = H5I_INVALID_HID;
@@ -11352,40 +11351,16 @@ hid_t H5I__reserve_future_id(H5I_type_t type, H5I_progress_func_t progress_cb)
         HGOTO_DONE(H5I_INVALID_HID);
 
     /* Allocate the new ID info node */
-    id_info_ptr = (H5I_mt_id_info_t *)malloc(sizeof(H5I_mt_id_info_t));
+    id_info_ptr = H5I__new_mt_id_info(id, 1, 1, NULL, TRUE, NULL, NULL);
 
     if ( NULL == id_info_ptr )
         HGOTO_ERROR(H5E_ID, H5E_CANTALLOC, H5I_INVALID_HID, "ID info allocation failed");
 
     atomic_fetch_add(&(H5I_mt_g.num_id_info_structs_alloced_from_heap), 1ULL);
 
-    id_info_ptr->tag = H5I__ID_INFO;
-    id_info_ptr->id  = id;
-    
-    /* Initialize the atomic kernel */
-    memset(&k, 0, sizeof(H5I_mt_id_info_kernel_t));
-
-    k.is_future = TRUE;  /* Mark as future - note yet realize/defined */
-    k.object    = NULL;  /* No object until define() flips it */
-    k.count     = 1;     /* Library reference (H5I internal hold) */
-    k.app_count = 1;     /* Application-visible reference count */
-
-#if H5I_BYPASS_HDF5_TID
-    k.tid_valid = FALSE; /* No owning thread (not closing)*/
-#else 
-    k.tid       = 0ULL;  /* Application-visible reference count */
-#endif
-    k.marked = FALSE;
-    atomic_store(&id_info_ptr->k, k);
-
     /* Bind the per-ID progress callback */
     id_info_ptr->progress_cb = progress_cb;
-
-    /* Initialize free-list linkage fields */
-    atomic_store(&(id_info_ptr->on_fl), FALSE);
-    H5I_mt_id_info_sptr_t tmp = { NULL, 0ULL };
-    atomic_store(&(id_info_ptr->fl_snext), tmp);
-    atomic_store(&(id_info_ptr->serial_num), 0ULL);
+    atomic_store(&(id_info_ptr->client_data), NULL);
 
     /* increment the id count */
     atomic_fetch_add(&type_info_ptr->id_count, 1ULL);
@@ -11398,7 +11373,7 @@ hid_t H5I__reserve_future_id(H5I_type_t type, H5I_progress_func_t progress_cb)
     if ( !added ) {
         /* Another thread raced with the same ID or insert failed - clean up */
         atomic_fetch_sub(&(type_info_ptr->id_count), 1ULL);
-        free(id_info_ptr);
+        
         HGOTO_DONE(H5I_INVALID_HID);
     }
     
@@ -11570,6 +11545,7 @@ H5I__find_id(hid_t id, hbool_t stall_on_future)
 {
     unsigned long long      gen;
     int                     tries             = 0;     /* attempts to drive progress for future id*/
+    hbool_t                 done              = FALSE;
     hbool_t                 have_global_mutex = TRUE; /* trivially true in the serial case */
     H5I_type_t              type;                      /* ID's type */
     H5I_mt_type_info_t     *type_info_ptr      = NULL; /* Pointer to the type */
@@ -11582,171 +11558,174 @@ H5I__find_id(hid_t id, hbool_t stall_on_future)
 
     atomic_fetch_add(&(H5I_mt_g.H5I__find_id__num_calls), 1ULL);
 
-retry:
+    while ( ! done ) {
 
 #if H5I_MT_DEBUG
-    fprintf(stdout, "   H5I__find_id(0x%llx) called. \n", (unsigned long long)id);
+        fprintf(stdout, "   H5I__find_id(0x%llx) called. \n", (unsigned long long)id);
 #endif /* H5I_MT_DEBUG */
 
 #if defined(H5_HAVE_THREADSAFE) || defined(H5_HAVE_MULTITHREAD)
 
-    /* We don't throw an error if H5TS_have_mutex() fails, since H5I__find_id() 
-     * doesn't have an error reporting mechanism -- it either finds the target
-     * or not.  
-     *
-     * Think on improving this in the production version.
-     */
-    if ( H5TS_have_mutex(&H5_g.init_lock, &have_global_mutex) < 0 )
+        /* We don't throw an error if H5TS_have_mutex() fails, since H5I__find_id() 
+        * doesn't have an error reporting mechanism -- it either finds the target
+        * or not.  
+        *
+        * Think on improving this in the production version.
+        */
+        if ( H5TS_have_mutex(&H5_g.init_lock, &have_global_mutex) < 0 )
 
-        HGOTO_DONE(NULL);
+            HGOTO_DONE(NULL);
 
 #endif /* defined(H5_HAVE_THREADSAFE) || defined(H5_HAVE_MULTITHREAD) */
 
-    if ( have_global_mutex ) {
+        if ( have_global_mutex ) {
 
-        atomic_fetch_add(&(H5I_mt_g.H5I__find_id__num_calls_with_global_mutex), 1ULL);
-
-    } else {
-
-        atomic_fetch_add(&(H5I_mt_g.H5I__find_id__num_calls_without_global_mutex), 1ULL);
-    }
-
-    /* Check arguments */
-    type = H5I_TYPE(id);
-    if ( type <= H5I_BADID || (int)type >= atomic_load(&(H5I_mt_g.next_type)) ) {
-
-        HGOTO_DONE(NULL);
-    }
-
-    type_info_ptr = atomic_load(&(H5I_mt_g.type_info_array[type]));
-
-    if  ( ( ! type_info_ptr ) || ( atomic_load(&(type_info_ptr->init_count)) <= 0) ) {
-
-        /* type doesn't exist, or has been logically deleted.  No point in
-         * in retrying, so just return NULL.
-         */
-        HGOTO_DONE(NULL);
-    }
-
-    memset(&info_k, 0, sizeof(H5I_mt_id_info_kernel_t));
-
-    /* Check for same ID as we have looked up last time */
-    last_id_info_ptr = atomic_load(&(type_info_ptr->last_id_info));
-
-    if ( ( last_id_info_ptr ) && ( last_id_info_ptr->id == id ) ) {
-
-        id_info_ptr = last_id_info_ptr;
-
-    } else {
-        /* avoid stale pointer in the case of retry */
-        id_info_ptr = NULL;
-
-        if ( ! lfht_find(&(type_info_ptr->lfht), (unsigned long long int)id, (void **)&id_info_ptr) ) {
-
-            assert(NULL == id_info_ptr);
-            HGOTO_DONE(NULL);
-        }
-
-        /* Remember this ID */
-        atomic_store(&(type_info_ptr->last_id_info), id_info_ptr);
-
-    }
-
-    /* load the atomic kernel from *id_info_ptr into info_k.  Note that this is a snapshot of the
-     * state of *id_info_ptr, and can be changed before we get to writing it back.
-     */
-    info_k = atomic_load(&(id_info_ptr->k));
-
-
-    if ( info_k.closing ) {
-
-#if H5I_BYPASS_HDF5_TID
-        if ( ( ! info_k.tid_valid ) || ( ! pthread_equal(info_k.tid, pthread_self()) ) )
-#else /* H5I_BYPASS_HDF5_TID */
-        if ( info_k.tid != H5TS_thread_id() )
-#endif /* H5I_BYPASS_HDF5_TID */
-        {
-            /* update stats for entries skipped due to closing set and tid mismatch */
-            atomic_fetch_add(&(H5I_mt_g.H5I__find_id__failed_due_to_closing_set_and_wrong_thread), 1ULL);
-            
-            /* return NULL */
-            HGOTO_DONE(NULL);
+            atomic_fetch_add(&(H5I_mt_g.H5I__find_id__num_calls_with_global_mutex), 1ULL);
 
         } else {
 
-            /* update stats for repeat attempt mark an entry that is already closing */
-            atomic_fetch_add(&(H5I_mt_g.H5I__find_id__closing_set_and_right_thread), 1ULL);
+            atomic_fetch_add(&(H5I_mt_g.H5I__find_id__num_calls_without_global_mutex), 1ULL);
         }
-    }
 
-    if (info_k.marked) {
+        /* Check arguments */
+        type = H5I_TYPE(id);
+        if ( type <= H5I_BADID || (int)type >= atomic_load(&(H5I_mt_g.next_type)) ) {
 
-        /* the ID is marked for deletion -- nothing to do here.  Set
-         * id_info_ptr to NULL, update stats, and return NULL
-         */
-        HGOTO_DONE(NULL);
-    }
+            HGOTO_DONE(NULL);
+        }
 
-    /* Upon lookup of a future ID, either attempt to make progress towards realization, given
-     * a progress_cb is provided, or put the current thread to sleep and wait for a signal
-     * if stall_on_future == TRUE
-     */
-    if ( info_k.is_future ) {
+        type_info_ptr = atomic_load(&(H5I_mt_g.type_info_array[type]));
 
-        if ( id_info_ptr->progress_cb ) {
+        if  ( ( ! type_info_ptr ) || ( atomic_load(&(type_info_ptr->init_count)) <= 0) ) {
 
-            tries++;
+            /* type doesn't exist, or has been logically deleted.  No point in
+            * in retrying, so just return NULL.
+            */
+            HGOTO_DONE(NULL);
+        }
 
-            if ( tries >= H5I_FIND_FUTURE_MAX_PROGRESS_TRIES ) {
-                atomic_fetch_add(&H5I_mt_g.H5I__find_id__num_future_progress_bails, 1ULL);
-                HGOTO_DONE(id_info_ptr);
-            }
+        memset(&info_k, 0, sizeof(H5I_mt_id_info_kernel_t));
 
+        /* Check for same ID as we have looked up last time */
+        last_id_info_ptr = atomic_load(&(type_info_ptr->last_id_info));
 
-            atomic_fetch_add(&H5I_mt_g.H5I__find_id__num_calls_to_progress_cb, 1ULL);
+        if ( ( last_id_info_ptr ) && ( last_id_info_ptr->id == id ) ) {
 
-            if ( (id_info_ptr->progress_cb)(id) < 0 ) {
-                atomic_fetch_add(&H5I_mt_g.H5I__find_id__num_progress_cb_failures, 1ULL);
+            id_info_ptr = last_id_info_ptr;
+
+        } else {
+            /* avoid stale pointer in the case of retry */
+            id_info_ptr = NULL;
+
+            if ( ! lfht_find(&(type_info_ptr->lfht), (unsigned long long int)id, (void **)&id_info_ptr) ) {
+
+                assert(NULL == id_info_ptr);
                 HGOTO_DONE(NULL);
             }
 
-            if ( !info_k.is_future ) 
-                atomic_fetch_add(&H5I_mt_g.H5I__find_id__num_futures_resolved_by_progress, 1ULL);
+            /* Remember this ID */
+            atomic_store(&(type_info_ptr->last_id_info), id_info_ptr);
+
+        }
+
+        /* load the atomic kernel from *id_info_ptr into info_k.  Note that this is a snapshot of the
+        * state of *id_info_ptr, and can be changed before we get to writing it back.
+        */
+        info_k = atomic_load(&(id_info_ptr->k));
+
+
+        if ( info_k.closing ) {
+
+#if H5I_BYPASS_HDF5_TID
+            if ( ( ! info_k.tid_valid ) || ( ! pthread_equal(info_k.tid, pthread_self()) ) )
+#else /* H5I_BYPASS_HDF5_TID */
+            if ( info_k.tid != H5TS_thread_id() )
+#endif /* H5I_BYPASS_HDF5_TID */
+            {
+                /* update stats for entries skipped due to closing set and tid mismatch */
+                atomic_fetch_add(&(H5I_mt_g.H5I__find_id__failed_due_to_closing_set_and_wrong_thread), 1ULL);
+                
+                /* return NULL */
+                HGOTO_DONE(NULL);
+
+            } else {
+
+                /* update stats for repeat attempt mark an entry that is already closing */
+                atomic_fetch_add(&(H5I_mt_g.H5I__find_id__closing_set_and_right_thread), 1ULL);
+            }
+        }
+
+        if (info_k.marked) {
+
+            /* the ID is marked for deletion -- nothing to do here.  Set
+            * id_info_ptr to NULL, update stats, and return NULL
+            */
+            HGOTO_DONE(NULL);
+        }
+
+        /* Upon lookup of a future ID, either attempt to make progress towards realization, given
+        * a progress_cb is provided, or put the current thread to sleep and wait for a signal
+        * if stall_on_future == TRUE
+        */
+        if ( info_k.is_future ) {
+
+            if ( id_info_ptr->progress_cb ) {
+
+                tries++;
+
+                if ( tries >= H5I_FIND_FUTURE_MAX_PROGRESS_TRIES ) {
+                    atomic_fetch_add(&H5I_mt_g.H5I__find_id__num_future_progress_bails, 1ULL);
+                    HGOTO_DONE(id_info_ptr);
+                }
+
+
+                atomic_fetch_add(&H5I_mt_g.H5I__find_id__num_calls_to_progress_cb, 1ULL);
+
+                if ( (id_info_ptr->progress_cb)(id) < 0 ) {
+                    atomic_fetch_add(&H5I_mt_g.H5I__find_id__num_progress_cb_failures, 1ULL);
+                    HGOTO_DONE(NULL);
+                }
+
+                if ( !info_k.is_future ) 
+                    atomic_fetch_add(&H5I_mt_g.H5I__find_id__num_futures_resolved_by_progress, 1ULL);
+                
+                /* If realized here, will simply return the object info pointer, otherwise retry */
+                continue;
+            }
+
+            /* No progress_cb: only CV waiting can stall */
+            if ( !stall_on_future )
+                HGOTO_DONE(id_info_ptr);
+
+            /* Type-level generation counter to signal any changes in the cv. 
+            * This addresses issues with signal-before-wait deadlock issues.
+            * Rather than using per-id condition variables, this should be sufficient to
+            * signal here as it is incremented on any event that should wake waiters. 
+            */
+            gen = atomic_load(&(type_info_ptr->future_gen));
+
+            pthread_mutex_lock(&type_info_ptr->future_mu);
+
+            while ( atomic_load(&(type_info_ptr->future_gen)) == gen ) {
+
+                pthread_cond_wait(&type_info_ptr->future_cv, &type_info_ptr->future_mu);
+
+            }
+            pthread_mutex_unlock(&type_info_ptr->future_mu);
             
-            /* If realized here, will simply return the object info pointer, otherwise retry */
-            goto retry;
+            continue; /* re-find and re-check */
         }
 
-        /* No progress_cb: only CV waiting can stall */
-        if ( !stall_on_future )
-            HGOTO_DONE(id_info_ptr);
+        if ( id_info_ptr ) {
 
-        /* Type-level generation counter to signal any changes in the cv. 
-         * This addresses issues with signal-before-wait deadlock issues.
-         * Rather than using per-id condition variables, this should be sufficient to
-         * signal here as it is incremented on any event that should wake waiters. 
-         */
-        gen = atomic_load(&(type_info_ptr->future_gen));
-
-        pthread_mutex_lock(&type_info_ptr->future_mu);
-
-        while ( atomic_load(&(type_info_ptr->future_gen)) == gen ) {
-
-            pthread_cond_wait(&type_info_ptr->future_cv, &type_info_ptr->future_mu);
-
+            atomic_fetch_add(&(H5I_mt_g.H5I__find_id__ids_found), 1ULL);
         }
-        pthread_mutex_unlock(&type_info_ptr->future_mu);
-        
-        goto retry; /* re-find and re-check */
+
+        /* Set return value */
+        ret_value = id_info_ptr;
+
+        done = TRUE;
     }
-
-    if ( id_info_ptr ) {
-
-        atomic_fetch_add(&(H5I_mt_g.H5I__find_id__ids_found), 1ULL);
-    }
-
-    /* Set return value */
-    ret_value = id_info_ptr;
 
 done:
 
@@ -13504,6 +13483,7 @@ H5I__new_mt_id_info(hid_t id, unsigned count, unsigned app_count, const void * o
     new_k.count = count;
     new_k.app_count = app_count;
     new_k.object = object;
+    new_k.is_future = is_future;
 #if H5I_BYPASS_HDF5_TID
     new_k.tid_valid         = FALSE;
 #else
@@ -13637,6 +13617,12 @@ H5I__new_mt_id_info(hid_t id, unsigned count, unsigned app_count, const void * o
                     id_info_ptr->realize_cb = realize_cb;
                     id_info_ptr->discard_cb = discard_cb;
 
+#if H5I_LOCK_FREE
+                    /* Reset the fields here, they will be set in H5I__reserve_future_id() */
+                    id_info_ptr->progress_cb = NULL;
+                    atomic_store(&(id_info_ptr->client_data), NULL);
+#endif
+
                     atomic_fetch_sub(&(H5I_mt_g.id_info_fl_len), 1ULL);
                     atomic_fetch_add(&(H5I_mt_g.num_id_info_structs_alloced_from_fl), 1ULL);
                     atomic_fetch_add(&(H5I_mt_g.num_id_serial_num_resets), 1ULL);
@@ -13668,7 +13654,7 @@ H5I__new_mt_id_info(hid_t id, unsigned count, unsigned app_count, const void * o
         atomic_init(&(id_info_ptr->serial_num), 0ULL);
 
 #if H5I_LOCK_FREE
-        atomic_init(&(id_info_ptr->progress_cb), NULL);
+        id_info_ptr->progress_cb = NULL;
         atomic_init(&(id_info_ptr->client_data), NULL);
 #endif /* H5I_LOCK_FREE */
     }
