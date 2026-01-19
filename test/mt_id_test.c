@@ -1157,12 +1157,17 @@ free_func(void * obj, void H5_ATTR_UNUSED ** request)
 
     obj_k = atomic_load(&(object_ptr->k));
 
-    /* If the object is in progress and the free func was hit, H5Idefine_future() was called
-     * and succeeded, though the test side variables are not updated to reflect that change
+    /* In the case of a future ID, H5Idefine_future_id() may have succeeded and the test define
+     * function may not have updated the test-side variables yet. In this case, ignore if the
+     * object is in the process of being defined.
      */
-    if ( ! obj_k.in_progress )
+#if 1
+    if ( !obj_k.in_progress )
         assert( obj_k.allocated );
-
+#else
+    assert( obj_k.allocated );
+#endif
+    
     assert( ! obj_k.discarded );
     assert( ! obj_k.future );
 
