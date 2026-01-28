@@ -86,9 +86,9 @@ typedef struct {
 hid_t
 H5Pcopy(hid_t id)
 {
-    H5P_mt_class_t              *copy_class; /* Copy of the class */
-    void                        *obj;        /* Property object to copy */
-    hid_t                        ret_value = H5I_INVALID_HID; /* return value */
+    H5P_mt_class_t *copy_class;                  /* Copy of the class */
+    void           *obj;                         /* Property object to copy */
+    hid_t           ret_value = H5I_INVALID_HID; /* return value */
 
     FUNC_ENTER_API(H5I_INVALID_HID)
     H5TRACE1("i", "i", id);
@@ -227,8 +227,8 @@ H5Pcreate_class(hid_t parent, const char *name, H5P_cls_create_func_t cls_create
                 H5P_cls_copy_func_t cls_copy, void *copy_data, H5P_cls_close_func_t cls_close,
                 void *close_data)
 {
-    H5P_mt_class_t              *par_class = NULL;
-    H5P_mt_class_t              *pclass    = NULL;
+    H5P_mt_class_t *par_class = NULL;
+    H5P_mt_class_t *pclass    = NULL;
 
     hid_t ret_value = H5I_INVALID_HID; /* Return value */
 
@@ -490,7 +490,6 @@ H5Pregister2(hid_t cls_id, const char *name, size_t size, void *def_value, H5P_p
         HGOTO_ERROR(H5E_PLIST, H5E_CANTREGISTER, FAIL, "unable to register property in class");
     }
 
-    
 done:
 
     FUNC_LEAVE_API(ret_value)
@@ -1073,8 +1072,8 @@ done:
 herr_t
 H5Pget_size(hid_t id, const char *name, size_t *size /*out*/)
 {
-    H5P_mt_class_t     *pclass;
-    H5P_mt_list_t      *plist;
+    H5P_mt_class_t *pclass;
+    H5P_mt_list_t  *plist;
 
     herr_t ret_value = SUCCEED; /* return value */
 
@@ -1100,7 +1099,6 @@ H5Pget_size(hid_t id, const char *name, size_t *size /*out*/)
         /* Check the property size */
         if ((ret_value = H5P__get_size_plist(plist, name, size)) < 0)
             HGOTO_ERROR(H5E_PLIST, H5E_CANTREGISTER, FAIL, "unable to query size in plist");
-
     }
     else if (H5I_GENPROP_CLS == H5I_get_type(id)) {
         if (NULL == (pclass = (H5P_mt_class_t *)H5I_object(id))) {
@@ -1340,28 +1338,27 @@ H5Pget_class(hid_t plist_id)
     if (0 >= H5I_inc_ref(pclass_id, TRUE)) {
 
         /**
-         * NOTE: The original H5P code didn't use H5I_inc_ref(), instead using H5I_register() to 
+         * NOTE: The original H5P code didn't use H5I_inc_ref(), instead using H5I_register() to
          * assign a new ID to the class regardless of whether the class had an existing ID or not.
-         * Meaning that multiple IDs in the index could point to the same class instance. To 
+         * Meaning that multiple IDs in the index could point to the same class instance. To
          * prevent this, the use of H5I_inc_ref() is implemented to simply increment the index's
-         * reference count on the ID for that class. 
-         * 
-         * However, if an ID's ref_count for a class were to drop to 0 the ID would be removed 
-         * from the index, but if the class has existing derived classes or lists the structure 
-         * would not be deleted. Then if H5Pget_class() is called on a derived list or class 
-         * H5I_inc_ref() would fail (which is most likely why the original H5P code used 
+         * reference count on the ID for that class.
+         *
+         * However, if an ID's ref_count for a class were to drop to 0 the ID would be removed
+         * from the index, but if the class has existing derived classes or lists the structure
+         * would not be deleted. Then if H5Pget_class() is called on a derived list or class
+         * H5I_inc_ref() would fail (which is most likely why the original H5P code used
          * H5I_register() ), so H5I_register_using_existing_id() is called to attempt to re-insert
-         * a class's ID back into the index (H5P_mt_class_t structs have a field for their ID). 
-         * There is a chance H5I_register_using _existing_id() could fail if the ID has been 
-         * assigned to another instance of H5P_mt_class_t (which is unlikely to occur). But if it 
-         * does fail H5I_register() is called to register a new ID in the index for the class. 
-         * 
+         * a class's ID back into the index (H5P_mt_class_t structs have a field for their ID).
+         * There is a chance H5I_register_using _existing_id() could fail if the ID has been
+         * assigned to another instance of H5P_mt_class_t (which is unlikely to occur). But if it
+         * does fail H5I_register() is called to register a new ID in the index for the class.
+         *
          * This is something that should not occur during regular use of the library, however, does
-         * occur during existing H5P tests. This design is mostly done to handle that test, and to 
-         * handle the off chance that a class is closed enough times it is removed from the index before 
+         * occur during existing H5P tests. This design is mostly done to handle that test, and to
+         * handle the off chance that a class is closed enough times it is removed from the index before
          * it's derived classes and lists are closed.
          */
-
 
         /* If the class's ID isn't in the index, register it back in */
         if (0 > H5I_register_using_existing_id(H5I_GENPROP_CLS, pclass, TRUE, pclass_id)) {
@@ -1369,10 +1366,9 @@ H5Pget_class(hid_t plist_id)
              * If registering the class's id back into the index fails,
              * register it with a new id.
              */
-            if ((pclass_id = H5I_register(H5I_GENPROP_CLS, pclass, TRUE)) < 0)
-            {
-                HGOTO_ERROR(H5E_PLIST, H5E_CANTREGISTER, H5I_INVALID_HID, 
-                            "unable to register property list class");  
+            if ((pclass_id = H5I_register(H5I_GENPROP_CLS, pclass, TRUE)) < 0) {
+                HGOTO_ERROR(H5E_PLIST, H5E_CANTREGISTER, H5I_INVALID_HID,
+                            "unable to register property list class");
             }
 
             /* Update the class's ID to the new assigned ID */
@@ -1395,7 +1391,6 @@ H5Pget_class(hid_t plist_id)
                 atomic_fetch_add(&(H5P_mt_g.class_un_marked_as_deleted), 1);
             }
         }
-
     }
 
     /* Return the parent's ID*/
@@ -1607,9 +1602,9 @@ done:
  *              structures track the number of threads that currently are accessing them,
  *              thus a field will always be modified.
  *
- * 
+ *
  * Return:      Success: TRUE if equal, FALSE if unequal
- *              
+ *
  *              Failure: negative
  *
  ****************************************************************************************
@@ -1950,8 +1945,7 @@ H5Pget(hid_t plist_id, const char *name, void *value /*out*/)
 
 #if 1 /* debug */
 
-    if ( atomic_load(&(plist->tag)) != H5P_MT_LIST_TAG )
-    {
+    if (atomic_load(&(plist->tag)) != H5P_MT_LIST_TAG) {
         assert(FALSE);
     }
 
@@ -2510,7 +2504,7 @@ H5Pclose_class(hid_t cls_id)
 
     if (H5I_dec_app_ref(cls_id) < 0) {
         HGOTO_ERROR(H5E_PLIST, H5E_CANTFREE, FAIL, "can't close");
-    }    
+    }
 
 done:
 
