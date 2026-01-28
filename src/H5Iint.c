@@ -2393,7 +2393,7 @@ H5I_register_type_internal(const H5I_class_t *cls)
     H5I_mt_type_info_t *expected_ptr   = NULL;    /* Pointer to the ID type*/
     herr_t              result;                   /* for sanity checking */
     herr_t              ret_value      = SUCCEED; /* Return value */
-    int                 p_ret;                    /* Future-ID pthread return value */ 
+    int                 p_ret;                    /* Future-ID pthread return value*/ 
 
     FUNC_ENTER_NOAPI(FAIL)
 
