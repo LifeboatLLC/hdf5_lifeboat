@@ -110,41 +110,6 @@ H5P__open_class_path_test(const char *path)
     if ((ret_value = H5I_register(H5I_GENPROP_CLS, pclass, TRUE)) < 0)
         HGOTO_ERROR(H5E_PLIST, H5E_CANTREGISTER, H5I_INVALID_HID, "unable to register property list class");
 
-#ifdef H5_HAVE_MULTITHREAD
-    H5P_mt_active_thread_count_t thrd;
-    H5P_mt_active_thread_count_t update_thrd;
-    bool                         done = FALSE;
-
-    atomic_store(&(pclass->id), ret_value);
-
-    do {
-        thrd = atomic_load(&(pclass->thrd));
-
-        assert(thrd.opening);
-        assert(!thrd.closing);
-
-        update_thrd.count   = thrd.count;
-        update_thrd.opening = FALSE;
-        update_thrd.closing = FALSE;
-
-        if (!atomic_compare_exchange_strong(&(pclass->thrd), &thrd, update_thrd)) {
-            /* attempt failed, update stats and try again */
-            atomic_fetch_add(&(pclass->num_thrd_update_cols), 1);
-
-            /* assert is to not get stuck in an infinite loop while testing */
-            assert(H5P_MT_ASSERT_FAIL);
-        }
-        else {
-            /* attempt succeded update stats and set done */
-            atomic_fetch_add(&(pclass->num_thrd_count_update), 1);
-
-            done = TRUE;
-        }
-
-    } while (!done);
-
-#endif
-
 done:
     if (H5I_INVALID_HID == ret_value && pclass)
         H5P__close_class(pclass);
