@@ -12359,7 +12359,7 @@ copy_class(thread_params_t *thread_params)
 
             og_class_id = atomic_load(&(og_class_entry->id));
 
-            assert(0 == strcmp(atomic_load(&(og_class_entry->name)), atomic_load(&(class_entry->name))));
+            assert(0 == strcmp(og_class_entry->name, class_entry->name));
 
             /* Double check class pointer and class status */
             class_sptr = atomic_load(&(class_entry->class_sptr));
@@ -14007,7 +14007,7 @@ search_list(thread_params_t *thread_params)
     op_info->id = list_id;
 
     /* Randomly select a possible property in the list to search for */
-    nprops = atomic_load(&(list_entry->num_prop_entries));
+    nprops = list_entry->num_prop_entries;
     r      = rand() % (int)nprops;
 
     prop_entry = &list_entry->prop_table[r];
@@ -14391,7 +14391,7 @@ search_list_ver(thread_params_t *thread_params)
     op_info->id = list_id;
 
     /* Randomly select a possible property in the list to search for */
-    nprops = atomic_load(&(list_entry->num_prop_entries));
+    nprops = list_entry->num_prop_entries;
     r      = rand() % (int)nprops;
 
     prop_entry = &list_entry->prop_table[r];
@@ -14757,7 +14757,7 @@ search_class(thread_params_t *thread_params)
     op_info->id = class_id;
 
     /* Randomly select a possible property in the class to search for */
-    nprops = atomic_load(&(class_entry->num_prop_entries));
+    nprops = class_entry->num_prop_entries;
     r      = rand() % (int)nprops;
 
     prop_entry = &class_entry->prop_table[r];
@@ -15120,7 +15120,7 @@ search_class_ver(thread_params_t *thread_params)
     op_info->id = class_id;
 
     /* Randomly select a possible property in the class to search for */
-    nprops = atomic_load(&(class_entry->num_prop_entries));
+    nprops = class_entry->num_prop_entries;
     r      = rand() % (int)nprops;
 
     prop_entry = &class_entry->prop_table[r];
@@ -15500,7 +15500,7 @@ mod_list_create_prop(thread_params_t *thread_params)
         }
 
         /* Get the next new property to create */
-        nprops = atomic_load(&(list_entry->num_prop_entries));
+        nprops = list_entry->num_prop_entries;
 
         while (index < nprops) {
             prop_entry  = &list_entry->prop_table[index];
@@ -15890,7 +15890,7 @@ mod_list_mod_prop(thread_params_t *thread_params)
 
     if (list) {
         /* Randomly select a possible property to attempt to create a new version of */
-        nprops = atomic_load(&(list_entry->num_prop_entries));
+        nprops = list_entry->num_prop_entries;
         r      = rand() % (int)nprops;
 
         prop_entry  = &list_entry->prop_table[r];
@@ -16221,7 +16221,7 @@ mod_list_delete_prop(thread_params_t *thread_params)
 
     if (list) {
         /* Randomly select a possible property to attempt to delete */
-        nprops = atomic_load(&(list_entry->num_prop_entries));
+        nprops = list_entry->num_prop_entries;
         r      = rand() % (int)nprops;
 
         prop_entry  = &list_entry->prop_table[r];
@@ -16608,7 +16608,7 @@ mod_class_create_prop(thread_params_t *thread_params, class_table_entry_t *_clas
         }
 
         /* Get the next new property to create */
-        nprops = atomic_load(&(class_entry->num_prop_entries));
+        nprops = class_entry->num_prop_entries;
 
         while (i < nprops) {
             prop_entry  = &class_entry->prop_table[i];
@@ -16982,7 +16982,7 @@ mod_class_mod_prop(thread_params_t *thread_params)
         if (atomic_load(&(class->tag)) == H5P_MT_CLASS_TAG) {
 
             /* Randomly select a possible property to attempt to create a new version of */
-            nprops = atomic_load(&(class_entry->num_prop_entries));
+            nprops = class_entry->num_prop_entries;
             r      = rand() % (int)nprops;
 
             prop_entry  = &class_entry->prop_table[r];
@@ -17332,7 +17332,7 @@ mod_class_delete_prop(thread_params_t *thread_params)
 
     if (class) {
         /* Randomly select a possible property to attempt to delete */
-        nprops = atomic_load(&(class_entry->num_prop_entries));
+        nprops = class_entry->num_prop_entries;
         r      = rand() % (int)nprops;
 
         prop_entry  = &class_entry->prop_table[r];
