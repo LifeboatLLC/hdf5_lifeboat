@@ -454,6 +454,9 @@ H5I_init(void)
     atomic_init(&(H5I_mt_g.H5I__find_id__num_progress_cb_failures), 0ULL);
     atomic_init(&(H5I_mt_g.H5I__find_id__num_futures_resolved_by_progress), 0ULL);
     atomic_init(&(H5I_mt_g.H5I__find_id__num_future_progress_bails), 0ULL);
+    atomic_init(&(H5I_mt_g.H5I__find_id__num_futures_pthread_lock_fails), 0ULL);
+    atomic_init(&(H5I_mt_g.H5I__find_id__num_futures_pthread_wait_fails), 0ULL);
+    atomic_init(&(H5I_mt_g.H5I__find_id__num_futures_pthread_unlock_fails), 0ULL);
 #endif /* H5I_LOCK_FREE */
 #if ! H5I_LOCK_FREE
     atomic_init(&(H5I_mt_g.H5I__find_id__num_calls_to_realize_cb), 0ULL);
@@ -848,6 +851,9 @@ H5I_clear_stats(void)
     atomic_store(&(H5I_mt_g.H5I__find_id__num_progress_cb_failures), 0ULL);
     atomic_store(&(H5I_mt_g.H5I__find_id__num_futures_resolved_by_progress), 0ULL);
     atomic_store(&(H5I_mt_g.H5I__find_id__num_future_progress_bails), 0ULL);
+    atomic_store(&(H5I_mt_g.H5I__find_id__num_futures_pthread_lock_fails), 0ULL);
+    atomic_store(&(H5I_mt_g.H5I__find_id__num_futures_pthread_wait_fails), 0ULL);
+    atomic_store(&(H5I_mt_g.H5I__find_id__num_futures_pthread_unlock_fails), 0ULL);
 #endif /* H5I_LOCK_FREE */
 #if ! H5I_LOCK_FREE
     atomic_store(&(H5I_mt_g.H5I__find_id__num_calls_to_realize_cb), 0ULL);
@@ -1207,6 +1213,12 @@ H5I_dump_stats(FILE * file_ptr)
             (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__find_id__num_futures_resolved_by_progress))));
     fprintf(file_ptr, "H5I_mt_g.H5I__find_id__num_future_progress_bails                        = %lld\n",
             (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__find_id__num_future_progress_bails))));
+    fprintf(file_ptr, "H5I_mt_g.H5I__find_id__num_futures_pthread_lock_fails                        = %lld\n",
+            (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__find_id__num_futures_pthread_lock_fails))));
+    fprintf(file_ptr, "H5I_mt_g.H5I__find_id__num_futures_pthread_wait_fails                        = %lld\n",
+            (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__find_id__num_futures_pthread_wait_fails))));
+    fprintf(file_ptr, "H5I_mt_g.H5I__find_id__num_futures_pthread_unlock_fails                        = %lld\n",
+            (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__find_id__num_futures_pthread_unlock_fails))));
 #endif /* H5I_LOCK_FREE */
 #if ! H5I_LOCK_FREE
     fprintf(file_ptr, "H5I_mt_g.H5I__find_id__num_calls_to_realize_cb                         = %lld\n", 
@@ -1876,6 +1888,15 @@ H5I_dump_nz_stats(FILE * file_ptr, const char * tag)
     if ( (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__find_id__num_future_progress_bails))) > 0ULL )
         fprintf(file_ptr, "H5I_mt_g.H5I__find_id__num_future_progress_bails                                       = %lld\n", 
                 (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__find_id__num_future_progress_bails))));
+    if ( (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__find_id__num_futures_pthread_lock_fails))) > 0ULL )
+        fprintf(file_ptr, "H5I_mt_g.H5I__find_id__num_futures_pthread_lock_fails                                       = %lld\n", 
+                (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__find_id__num_futures_pthread_lock_fails))));
+    if ( (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__find_id__num_futures_pthread_wait_fails))) > 0ULL )
+        fprintf(file_ptr, "H5I_mt_g.H5I__find_id__num_futures_pthread_wait_fails                                       = %lld\n", 
+                (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__find_id__num_futures_pthread_wait_fails))));
+    if ( (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__find_id__num_futures_pthread_unlock_fails))) > 0ULL )
+        fprintf(file_ptr, "H5I_mt_g.H5I__find_id__num_futures_pthread_unlock_fails                                       = %lld\n", 
+                (unsigned long long)(atomic_load(&(H5I_mt_g.H5I__find_id__num_futures_pthread_unlock_fails))));
 #endif /* H5I_LOCK_FREE */
 
 #if ! H5I_LOCK_FREE
@@ -2393,7 +2414,6 @@ H5I_register_type_internal(const H5I_class_t *cls)
     H5I_mt_type_info_t *expected_ptr   = NULL;    /* Pointer to the ID type*/
     herr_t              result;                   /* for sanity checking */
     herr_t              ret_value      = SUCCEED; /* Return value */
-    int                 p_ret;                    /* Future-ID pthread return value*/ 
 
     FUNC_ENTER_NOAPI(FAIL)
 
@@ -2420,12 +2440,10 @@ H5I_register_type_internal(const H5I_class_t *cls)
 
 #if H5I_LOCK_FREE
         /* Initialize future wait condition variables before the type is published */
-        p_ret = pthread_mutex_init(&(type_info_ptr->future_mu), NULL);
-        if( p_ret != 0 )
+        if( pthread_mutex_init(&(type_info_ptr->future_mu), NULL) != 0 )
             HGOTO_ERROR(H5E_ID, H5E_CANTINIT, FAIL, "Future ID pthread mutex init failed");
 
-        p_ret = pthread_cond_init(&(type_info_ptr->future_cv), NULL);
-        if( p_ret != 0 )
+        if( pthread_cond_init(&(type_info_ptr->future_cv), NULL) != 0 )
             HGOTO_ERROR(H5E_ID, H5E_CANTINIT, FAIL, "Future ID pthread condvar init failed");
 
         atomic_init(&(type_info_ptr->init_count), 0ULL);
@@ -3191,7 +3209,6 @@ H5I__mark_node(void *_info, void H5_ATTR_UNUSED *key, void *_udata)
     H5I_mt_clear_type_ud_t *udata        = (H5I_mt_clear_type_ud_t *)_udata; /* udata struct */
     herr_t                  result;
     herr_t                  ret_value = SUCCEED; /* Return value */
-    int                     p_ret;  /* Future ID condvar/mutex ret value */
 
     FUNC_ENTER_NOAPI(FAIL)
 
@@ -3514,16 +3531,13 @@ H5I__mark_node(void *_info, void H5_ATTR_UNUSED *key, void *_udata)
             /* Wake waiters only if this ID is future and has been marked */
             if ( info_k.is_future ) {
 
-                p_ret = pthread_mutex_lock(&(udata->type_info->future_mu));
-                assert(p_ret == 0);
+                assert(pthread_mutex_lock(&(udata->type_info->future_mu)) == 0);
 
                 atomic_fetch_add(&(udata->type_info->future_gen), 1ULL);
 
-                p_ret = pthread_cond_broadcast(&(udata->type_info->future_cv));
-                assert(p_ret == 0);
+                assert(pthread_cond_broadcast(&(udata->type_info->future_cv)) == 0);
 
-                p_ret = pthread_mutex_unlock(&(udata->type_info->future_mu));
-                assert(p_ret == 0);
+                assert(pthread_mutex_unlock(&(udata->type_info->future_mu)) == 0);
             }
 
 
@@ -4364,7 +4378,6 @@ H5I__destroy_type(H5I_type_t type)
     hbool_t             result;
     H5I_mt_type_info_t *type_info_ptr = NULL;    /* Pointer to the ID type */
     herr_t              ret_value = SUCCEED;     /* Return value */
-    int                 p_ret;
 
     FUNC_ENTER_PACKAGE
 
@@ -4383,18 +4396,15 @@ H5I__destroy_type(H5I_type_t type)
 
 #if H5I_LOCK_FREE 
 
-    p_ret = pthread_mutex_lock(&(type_info_ptr->future_mu));
-    if ( p_ret != 0 )
+    if ( pthread_mutex_lock(&(type_info_ptr->future_mu)) != 0 )
         HGOTO_ERROR(H5E_ID, H5E_CANTLOCK, FAIL, "Future ID lock failed");
 
     atomic_fetch_add(&(type_info_ptr->future_gen), 1ULL);
 
-    p_ret = pthread_cond_broadcast(&(type_info_ptr->future_cv));
-    if ( p_ret != 0 )
+    if ( pthread_cond_broadcast(&(type_info_ptr->future_cv)) != 0 )
         HGOTO_ERROR(H5E_ID, H5E_CANTNOTIFY, FAIL, "Future ID broadcast failed");
 
-    p_ret = pthread_mutex_unlock(&(type_info_ptr->future_mu));
-    if ( p_ret != 0 )
+    if ( pthread_mutex_unlock(&(type_info_ptr->future_mu)) != 0 )
         HGOTO_ERROR(H5E_ID, H5E_CANTUNLOCK, FAIL, "Future ID unlock failure");
 
 #endif /* H5I_LOCK_FREE */
@@ -4408,12 +4418,10 @@ H5I__destroy_type(H5I_type_t type)
 
 #if H5I_LOCK_FREE
 
-    p_ret = pthread_mutex_destroy(&type_info_ptr->future_mu);
-    if ( p_ret != 0 )
+    if ( pthread_mutex_destroy(&type_info_ptr->future_mu) != 0 )
         HGOTO_ERROR(H5E_ID, H5E_CANTRELEASE, FAIL, "Future ID mutex destroy failed");
 
-    p_ret = pthread_cond_destroy(&type_info_ptr->future_cv);
-    if ( p_ret != 0 )
+    if ( pthread_cond_destroy(&type_info_ptr->future_cv) != 0 )
         HGOTO_ERROR(H5E_ID, H5E_CANTRELEASE, FAIL, "Future ID condvar destroy failed");
 
 #endif /* H5I_LOCK_FREE */
@@ -6316,7 +6324,6 @@ H5I__remove_common(H5I_type_info_t *type_info_ptr, hid_t id)
     H5I_mt_id_info_kernel_t info_k;
     H5I_mt_id_info_kernel_t mod_info_k;
     void                   *ret_value = NULL;    /* Return value */
-    int                     p_ret;               /* Future ID condvar return value */
 
     FUNC_ENTER_PACKAGE
 
@@ -6441,18 +6448,15 @@ H5I__remove_common(H5I_type_info_t *type_info_ptr, hid_t id)
                     /* Broadcast only if we transitioned FUTURE → MARKED */
                     if ( info_k.is_future ) {
 
-                        p_ret = pthread_mutex_lock(&(type_info_ptr->future_mu));
-                        if ( p_ret != 0 )
+                        if ( pthread_mutex_lock(&(type_info_ptr->future_mu)) != 0 )
                             HGOTO_ERROR(H5E_ID, H5E_CANTLOCK, FAIL, "Future ID lock failed");
 
                         atomic_fetch_add(&(type_info_ptr->future_gen), 1ULL);
 
-                        p_ret = pthread_cond_broadcast(&(type_info_ptr->future_cv));
-                        if ( p_ret != 0 )
+                        if ( pthread_cond_broadcast(&(type_info_ptr->future_cv)) != 0 )
                             HGOTO_ERROR(H5E_ID, H5E_CANTNOTIFY, FAIL, "Future ID broadcast failed");
 
-                        p_ret = pthread_mutex_unlock(&(type_info_ptr->future_mu));
-                        if ( p_ret != 0 )
+                        if ( pthread_mutex_unlock(&(type_info_ptr->future_mu)) != 0 )
                             HGOTO_ERROR(H5E_ID, H5E_CANTUNLOCK, FAIL, "Future ID unlock failure");
                     }
 
@@ -6972,7 +6976,6 @@ H5I__dec_ref(hid_t id, void **request, hbool_t app)
     H5I_mt_type_info_t      *type_info_ptr;              /* ptr to the type   */
     herr_t                   result;
     int                      ret_value           = 0;    /* Return value */
-    int                      p_ret;                      /* Future ID condvar return values */
 
     FUNC_ENTER_PACKAGE
 
@@ -7230,7 +7233,7 @@ H5I__dec_ref(hid_t id, void **request, hbool_t app)
                 atomic_fetch_add(&(H5I_mt_g.num_failed_closing_sets), 1ULL);
             }
 
-#if 0
+#if 1
             if ( closing_rpt_fcn ) {
 
                 H5_GCC_CLANG_DIAG_OFF("cast-qual")
@@ -7273,18 +7276,16 @@ H5I__dec_ref(hid_t id, void **request, hbool_t app)
             assert(info_k.closing);
             /* closing flag is true, signal cv */
             if ( info_k.is_future ) {
-                p_ret = pthread_mutex_lock(&(type_info_ptr->future_mu));
-                if ( p_ret != 0 )
+                
+                if ( 0 != pthread_mutex_lock(&(type_info_ptr->future_mu)) )
                     HGOTO_ERROR(H5E_ID, H5E_CANTLOCK, FAIL, "Future ID lock failed");
 
                 atomic_fetch_add(&(type_info_ptr->future_gen), 1ULL);
 
-                p_ret = pthread_cond_broadcast(&(type_info_ptr->future_cv));
-                if ( p_ret != 0 )
+                if ( 0 != pthread_cond_broadcast(&(type_info_ptr->future_cv)) )
                     HGOTO_ERROR(H5E_ID, H5E_CANTNOTIFY, FAIL, "Future ID broadcast failed");
 
-                p_ret = pthread_mutex_unlock(&(type_info_ptr->future_mu));
-                if ( p_ret != 0 )
+                if ( 0 != pthread_mutex_unlock(&(type_info_ptr->future_mu)) )
                     HGOTO_ERROR(H5E_ID, H5E_CANTUNLOCK, FAIL, "Future ID unlock failure");
             }
 
@@ -7390,18 +7391,17 @@ H5I__dec_ref(hid_t id, void **request, hbool_t app)
 
             /* Broadcast only if we transitioned to MARKED */
             if ( info_k.is_future ) {
-                p_ret = pthread_mutex_lock(&(type_info_ptr->future_mu));
-                if ( p_ret != 0 )
+
+                if ( 0 != pthread_mutex_lock(&(type_info_ptr->future_mu)) )
                     HGOTO_ERROR(H5E_ID, H5E_CANTLOCK, FAIL, "Future ID lock failed");
 
                 atomic_fetch_add(&(type_info_ptr->future_gen), 1ULL);
 
-                p_ret = pthread_cond_broadcast(&(type_info_ptr->future_cv));
-                if ( p_ret != 0 )
+                if ( 0 != pthread_cond_broadcast(&(type_info_ptr->future_cv)) )
                     HGOTO_ERROR(H5E_ID, H5E_CANTNOTIFY, FAIL, "Future ID broadcast failed");
 
-                p_ret = pthread_mutex_unlock(&(type_info_ptr->future_mu));
-                if ( p_ret != 0 )
+
+                if ( 0 != pthread_mutex_unlock(&(type_info_ptr->future_mu)) )
                     HGOTO_ERROR(H5E_ID, H5E_CANTUNLOCK, FAIL, "Future ID unlock failure");
             }
 
@@ -11476,7 +11476,6 @@ herr_t H5I__define_future_id(H5I_type_t type, hid_t id, void *object)
     H5I_mt_id_info_kernel_t   new_k;               /* proposed new kernel */
     hbool_t                   published     = FALSE;
     herr_t                    ret_value     = SUCCEED;
-    int                       p_ret;               /* pthread return value */
 
     FUNC_ENTER_PACKAGE_NOERR
 
@@ -11549,18 +11548,15 @@ herr_t H5I__define_future_id(H5I_type_t type, hid_t id, void *object)
     /* signal only if no progress_cb is registered */
     if ( info_ptr->progress_cb == NULL ) {
 
-        p_ret = pthread_mutex_lock(&(type_info_ptr->future_mu));
-        if ( p_ret != 0 )
+        if ( pthread_mutex_lock(&(type_info_ptr->future_mu)) != 0 )
             HGOTO_DONE(FAIL);
 
         atomic_fetch_add(&(type_info_ptr->future_gen), 1ULL);
 
-        p_ret = pthread_cond_broadcast(&(type_info_ptr->future_cv));
-        if ( p_ret != 0 )
+        if ( pthread_cond_broadcast(&(type_info_ptr->future_cv)) != 0 )
            HGOTO_DONE(FAIL);
 
-        p_ret = pthread_mutex_unlock(&(type_info_ptr->future_mu));
-        if ( p_ret != 0 )
+        if ( pthread_mutex_unlock(&(type_info_ptr->future_mu)) != 0 )
             HGOTO_DONE(FAIL);
     }
 
@@ -11624,7 +11620,6 @@ H5I__find_id(hid_t id, hbool_t stall_on_future)
     H5I_mt_id_info_t       *id_info_ptr        = NULL; /* ID's info */
     H5I_mt_id_info_kernel_t info_k;
     H5I_mt_id_info_t       *ret_value          = NULL; /* Return value */
-    int                     p_ret;                     /* Future ID condvar return value */
 
     FUNC_ENTER_PACKAGE_NOERR
 
@@ -11750,13 +11745,17 @@ H5I__find_id(hid_t id, hbool_t stall_on_future)
                     HGOTO_DONE(id_info_ptr);
                 }
 
-
                 atomic_fetch_add(&H5I_mt_g.H5I__find_id__num_calls_to_progress_cb, 1ULL);
 
                 if ( (id_info_ptr->progress_cb)(id) < 0 ) {
                     atomic_fetch_add(&H5I_mt_g.H5I__find_id__num_progress_cb_failures, 1ULL);
                     HGOTO_DONE(NULL);
                 }
+
+                /* Load the atomic kernel from *id_info_ptr into info_k. Note that this is a snapshot of the
+                *  state of *id_info_ptr, and may have changed since the progress callback ran.
+                */
+                info_k = atomic_load(&(id_info_ptr->k));
 
                 if ( !info_k.is_future ) 
                     atomic_fetch_add(&H5I_mt_g.H5I__find_id__num_futures_resolved_by_progress, 1ULL);
@@ -11776,20 +11775,29 @@ H5I__find_id(hid_t id, hbool_t stall_on_future)
             */
             gen = atomic_load(&(type_info_ptr->future_gen));
 
-            p_ret = pthread_mutex_lock(&type_info_ptr->future_mu);
-            if ( p_ret != 0 )
+            if ( pthread_mutex_lock(&type_info_ptr->future_mu) != 0 ) {
+
+                atomic_fetch_add(&H5I_mt_g.H5I__find_id__num_futures_pthread_lock_fails, 1ULL);
                 HGOTO_DONE(NULL);
+
+            }
 
             while ( atomic_load(&(type_info_ptr->future_gen)) == gen ) {
 
-                p_ret = pthread_cond_wait(&type_info_ptr->future_cv, &type_info_ptr->future_mu);
-                if ( p_ret != 0 )
+                if ( pthread_cond_wait(&type_info_ptr->future_cv, &type_info_ptr->future_mu) != 0 ) {
+
+                    atomic_fetch_add(&H5I_mt_g.H5I__find_id__num_futures_pthread_wait_fails, 1ULL);
                     HGOTO_DONE(NULL);
 
+                }
+
             }
-            p_ret = pthread_mutex_unlock(&type_info_ptr->future_mu);
-            if ( p_ret != 0 )
+
+            if ( pthread_mutex_unlock(&type_info_ptr->future_mu) != 0 ) {
+
+                atomic_fetch_add(&H5I_mt_g.H5I__find_id__num_futures_pthread_unlock_fails, 1ULL);
                 HGOTO_DONE(NULL);
+            }
             
             continue; /* re-find and re-check */
         }

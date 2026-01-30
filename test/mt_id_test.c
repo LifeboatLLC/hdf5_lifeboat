@@ -419,6 +419,24 @@ typedef struct id_object_t {
  * failed_remove_verifies: Atomic long long integer used to track the number of
  *              failed attempts to remove the ID and return a pointer to its
  *              associated object.
+ * 
+ * Future ID Statistics
+ * 
+ * successful_future_reserves: Atomic long long integer used to track the number
+ *              of successful attempts to reserve a futurre ID.
+ * 
+ * failed_future_reserves: Atomic long long integer used to track the number of
+ *              failed attempts to reserve a future ID.
+ * 
+ * successful_future_defines: Atomic long long integer used to track the number
+ *              of successful attempts to define a future ID and return a pointer
+ *              to its associated object.
+ * 
+ * failed_future_defines: Atomic long long integer used to track the number
+ *              of failed attempts to define a future ID.
+ * 
+ * progress_calls: Atomic long long integer used to track the number of times
+ *              the progress callback is invoked for a future ID. 
  *
  *********************************************************************************/
 
@@ -585,6 +603,20 @@ typedef struct test_progress_event_t{
  * Progress is driven naturally by existing H5I lookup and reference operations,
  * closely matching how real users are expected to drive progress through library
  * calls. 
+ * 
+ * Concurrency / Race-Tolerance:
+ * 
+ *      This queue is intentionally NOT a fully-correct lock-free MPMC queue.
+ *      Producers and consumers may race on head/tail snapshots, and the buf[]
+ *      slots are not protected by per-slot sequence numbers.
+ * 
+ *      This is acceptable for the test harness because:
+ *          - Events are hints, not correctness requirements.
+ *          - Dropping, duplicating, or reordering events only changes timing
+ *            and the number of define attempts; it must not violate library
+ *            semantics.
+ *          - The progress path is bounded and re-tries later; forward progress
+ *            does not depend on any single event being delivered. 
  * 
  * The fields of this structure are discussed individually below.
  *
@@ -1122,9 +1154,11 @@ free_func(void * obj, void H5_ATTR_UNUSED ** request)
  *
  *                                                      JRM -- 10/27/25
  * 
- *      Modified to allow for the very rare possiblity that the ID has been defined internally,
- *      though the test harness has not yet been updated in which case an object will be passed
- *      in and the free func will be called but the id instance kernel is still marked as future.
+ *      Modified to explicitly handle the rare race where a future ID is being defined
+ *      concurrently with a close/free. If free_func() is invoked while the harness 
+ *      considers the object to be in-progress or not yet allocated, the free is treated as
+ *      invalid and fails, enforcing the rule that either definition or free must fail in this
+ *      interleaving.
  *      
  *                                                      AZO -- 1/15/25
  *      
@@ -1147,6 +1181,8 @@ free_func(void * obj, void H5_ATTR_UNUSED ** request)
     assert(ID_OBJECT_T__TAG == object_ptr->tag);
 
     id_index = atomic_load(&(object_ptr->id_index));
+    if (id_index < 0 || id_index >= NUM_ID_INSTANCES)
+        return FAIL; /* called before harness cross-links were published */
 
     assert( ( 0 <= id_index ) && ( id_index < NUM_ID_INSTANCES ) );
     assert( ID_INSTANCE_T__TAG == id_instance_array[id_index].tag );
@@ -1161,13 +1197,10 @@ free_func(void * obj, void H5_ATTR_UNUSED ** request)
      * function may not have updated the test-side variables yet. In this case, ignore if the
      * object is in the process of being defined.
      */
-#if 1
-    if ( !obj_k.in_progress )
-        assert( obj_k.allocated );
-#else
-    assert( obj_k.allocated );
-#endif
-    
+    if (obj_k.in_progress || !obj_k.allocated) {
+        return FAIL;
+    }    
+
     assert( ! obj_k.discarded );
     assert( ! obj_k.future );
 
@@ -1247,17 +1280,23 @@ free_func(void * obj, void H5_ATTR_UNUSED ** request)
  *      Update harness bookkeeping for a future ID that is freed/discarded without free_func.
  * 
  *      Marks id_instance_array[id_index].k.discarded = TRUE, and marks the associated would-be
- *      associated object (objects_array[obj_index].k.discarded) TRUE. 
+ *      associated object (objects_array[obj_index].k.discarded) TRUE, if present.
  * 
- *      The test suite is built upon the assumption that any id must also have an associated
- *      object. With the introduction of lock-free future IDs, future IDs are allowed to
- *      contain no object and still be operated on before it is defined and an object is 
- *      assigned. That being said, if there is an attempt to free or discard an unrealized
- *      future ID, H5I marks the ID as 'marked' and skips the free func call - no object to
- *      cleanup. And, for futures if no free_func is called the test-side stats/values 
- *      are updated with a call to update_freed_future(). 
- *  
- *      Returns success - this should never fail.
+ *      The test suite is built upon the assumption that IDs have associated objects. With
+ *      the introduction of lock-free future IDs, IDs may exist and be operated on before 
+ *      an object is defined or associated. If an unrealized future ID is freed or discarded,
+ *      H5I marks the ID as closing/marked and intentionally skips the free_func() call,
+ *      since no object exists to clean up.
+ * 
+ *      In such cases, update_freed_future() is used to bring the test harness state into
+ *      agreement with the library state by marking the ID and any would be associated object
+ *      as discarded.
+ * 
+ *      Repeated calls are benign: If the ID or object is already marked as discarded, no
+ *      additional action is taken.
+ * 
+ *      Returns success. This function is not expected to fail. 
+ * 
  * 
  *                                                                AZO -- 1/02/26
  * 
@@ -1268,6 +1307,8 @@ update_freed_future(int id_index)
 {
     id_instance_kernel_t id_inst_k, mod_id_inst_k;
     id_object_kernel_t obj_k, mod_obj_k;
+    int obj_index;
+
     memset(&mod_id_inst_k, 0, sizeof(id_object_kernel_t));
     memset(&id_inst_k, 0, sizeof(id_object_kernel_t));        
     memset(&obj_k, 0, sizeof(id_object_kernel_t));
@@ -1301,28 +1342,38 @@ update_freed_future(int id_index)
             break;
     }
 
+    /* Update the mapped harness object slot - if any */
+    obj_index = atomic_load(&(id_instance_array[id_index].obj_index));
+
+    /* If no mapping exists yet, nothing to do (future may have had no harness object) */
+    if ( obj_index < 0 || obj_index >= NUM_ID_OBJECTS )
+        return SUCCEED;
+
     /* Update the harness object */
     obj_k = atomic_load(&(objects_array[id_index].k));
 
-    /* if the object is already marked return */
-    if( obj_k.discarded ) {
-        return SUCCEED;
+    while ( 1 ) {
+        /* if the object is already marked return */
+        if( obj_k.discarded ) {
+            break;
+        }
+        
+            mod_obj_k.in_progress         = obj_k.in_progress;
+            mod_obj_k.allocated           = obj_k.allocated;
+            mod_obj_k.discarded           = TRUE;
+            mod_obj_k.future              = obj_k.future;
+            mod_obj_k.real_id_def_in_prog = obj_k.real_id_def_in_prog;
+            mod_obj_k.real_id_defined     = obj_k.real_id_defined;
+            mod_obj_k.future_id_realized  = obj_k.future_id_realized;
+            mod_obj_k.future_id_discarded = obj_k.future_id_discarded;
+            mod_obj_k.id                  = H5I_INVALID_HID;
+            mod_obj_k.id_info_ptr         = obj_k.id_info_ptr;
+        
+        /* If CAS fails, someone else updated it */
+        if (atomic_compare_exchange_strong(&(objects_array[id_index].k), &obj_k, mod_obj_k))
+            break;
+        /* else: retry */
     }
-    
-        mod_obj_k.in_progress         = obj_k.in_progress;
-        mod_obj_k.allocated           = obj_k.allocated;
-        mod_obj_k.discarded           = TRUE;
-        mod_obj_k.future              = obj_k.future;
-        mod_obj_k.real_id_def_in_prog = obj_k.real_id_def_in_prog;
-        mod_obj_k.real_id_defined     = obj_k.real_id_defined;
-        mod_obj_k.future_id_realized  = obj_k.future_id_realized;
-        mod_obj_k.future_id_discarded = obj_k.future_id_discarded;
-        mod_obj_k.id                  = H5I_INVALID_HID;
-        mod_obj_k.id_info_ptr         = obj_k.id_info_ptr;
-    
-
-    /* If CAS fails, someone else updated it */
-    atomic_compare_exchange_strong(&(objects_array[id_index].k), &obj_k, mod_obj_k);
 
     return SUCCEED;
 
@@ -7222,7 +7273,7 @@ try_get_ref(int id_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
                 assert(success);
             }
         } else if ( ( ( ! pre_id_inst_k.created ) && ( ! post_id_inst_k.created ) ) ||
-                    ( ( pre_id_inst_k.discarded ) ) ) {
+                    ( ( pre_id_inst_k.discarded ) && ( post_id_inst_k.discarded ) ) ) {
 
             assert(!success);
 
@@ -10480,7 +10531,6 @@ mt_test_fcn_2(void * _params)
          params->objects_start, params->objects_count, params->objects_stride);
     }
 
-    // H5E_BEGIN_TRY {
 
     /* setup the types assigned array, and register the assigned types in passing.
      *
@@ -11498,7 +11548,9 @@ mt_future_test_fcn_3(void * _params)
                 case 47:
                 case 48:
                 case 49:
-                    /*CONDVAR*/
+                    /* Try to look up and define the future ID with stall enabled,
+                     * using the condition variables.
+                     */
                     ik = atomic_load(&id_instance_array[target_id_index].k);
                     fid = ik.id;
 
@@ -12933,6 +12985,10 @@ mt_future_test_2_helper(int num_threads)
  *      Intended usage:
  *          - Called once after a successful future-ID reservation
  *          - May be called sparingly from test paths to model asynchronous work.
+ * 
+ *      Note: Best-effort queue.
+ *      Head/tail snapshots can race and events may be dropped/reordered.
+ *      This is intentional for the test harness: events are advisory only.
  * 
  *      This function must never block
  * 

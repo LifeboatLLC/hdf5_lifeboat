@@ -759,6 +759,15 @@ typedef struct H5I_suint64_t {
  *
  * H5I__find_id__future_id_conversions_completed: Number of times that H5I__find_id()
  *      successfully converts a future ID to a real ID.
+ * 
+ * H5I__find_id__futures_pthread_lock_fails: Number of times that H5I__find_id() fails
+ *      to lock the future ID condition variable pthread.
+ * 
+ * H5I__find_id__futures_pthread_wait_fails: Number of times that H5I__find_id() fails
+ *      to wait for the future ID per-type condition variable signal.
+ * 
+ * H5I__find_id__futures_pthread_unlock_fails: Number of times that H5I__find_id() fails
+ *      to unlock the future ID condition variable pthread.
 #endif
  * H5I__find_id__retries: Number of times that H5I__find_id() has to re-try the 
  *      operation.  This is caused by either another thread modifying the kernel of
@@ -1295,6 +1304,9 @@ typedef struct H5I_mt_t {
     _Atomic uint64_t H5I__find_id__num_progress_cb_failures;
     _Atomic uint64_t H5I__find_id__num_futures_resolved_by_progress;
     _Atomic uint64_t H5I__find_id__num_future_progress_bails;
+    _Atomic uint64_t H5I__find_id__num_futures_pthread_lock_fails;
+    _Atomic uint64_t H5I__find_id__num_futures_pthread_wait_fails;
+    _Atomic uint64_t H5I__find_id__num_futures_pthread_unlock_fails;
 #endif /* H5I_LOCK_FREE */
 #if ! H5I_LOCK_FREE
     _Atomic uint64_t H5I__find_id__num_calls_to_realize_cb;
