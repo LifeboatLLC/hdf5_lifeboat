@@ -6449,15 +6449,15 @@ H5I__remove_common(H5I_type_info_t *type_info_ptr, hid_t id)
                     if ( info_k.is_future ) {
 
                         if ( pthread_mutex_lock(&(type_info_ptr->future_mu)) != 0 )
-                            HGOTO_ERROR(H5E_ID, H5E_CANTLOCK, FAIL, "Future ID lock failed");
+                            HGOTO_ERROR(H5E_ID, H5E_CANTLOCK, NULL, "Future ID lock failed");
 
                         atomic_fetch_add(&(type_info_ptr->future_gen), 1ULL);
 
                         if ( pthread_cond_broadcast(&(type_info_ptr->future_cv)) != 0 )
-                            HGOTO_ERROR(H5E_ID, H5E_CANTNOTIFY, FAIL, "Future ID broadcast failed");
+                            HGOTO_ERROR(H5E_ID, H5E_CANTNOTIFY, NULL, "Future ID broadcast failed");
 
                         if ( pthread_mutex_unlock(&(type_info_ptr->future_mu)) != 0 )
-                            HGOTO_ERROR(H5E_ID, H5E_CANTUNLOCK, FAIL, "Future ID unlock failure");
+                            HGOTO_ERROR(H5E_ID, H5E_CANTUNLOCK, NULL, "Future ID unlock failure");
                     }
 
                     done = TRUE;
@@ -6941,12 +6941,6 @@ done:
  *              test harness values can be updated accordingly and in 
  *              a timely fashion.
  * 
- *              Changed the call to the closing report function in the
- *              event the CAS fails (typically caused by a concurrent 
- *              define here) to call the updated kernel (base_info_k) 
- *              rather than the old one (mod_info_k). This in theory
- *              should not cause any issues or side-effects as its 
- *              just a slight change of contract. 
  * 
  *                                               AZO -- 1/15/26
  *
@@ -7233,7 +7227,6 @@ H5I__dec_ref(hid_t id, void **request, hbool_t app)
                 atomic_fetch_add(&(H5I_mt_g.num_failed_closing_sets), 1ULL);
             }
 
-#if 1
             if ( closing_rpt_fcn ) {
 
                 H5_GCC_CLANG_DIAG_OFF("cast-qual")
@@ -7243,26 +7236,6 @@ H5I__dec_ref(hid_t id, void **request, hbool_t app)
                 (closing_rpt_fcn)(id, (void *)(mod_info_k.object), H5I_CLOSING_STAT__FAIL);
                 H5_GCC_CLANG_DIAG_ON("cast-qual")
             }
-#else
-            if ( closing_rpt_fcn ) {
-
-                H5_GCC_CLANG_DIAG_OFF("cast-qual")
-                /* CAS failed: atomic_compare_exchange_strong() has updated base_info_k
-                 * to the current kernel value that won the race.
-                 * 
-                 * With the introduction of future IDs, the object pointer may change
-                 * concurrently (e.g., future->realized, object NULL -> non-NULL). In 
-                 * this case, reporting the attempted snapshaot (mod_info_k) can pass
-                 * a stale or misleading object pointer. 
-                 * 
-                 * For FAIL reports, we therefore report the current state (base_info_k),
-                 * not the attempted state, so the callback observes a consistent view of
-                 * the ID at the time of the failure.  
-                 */
-                (closing_rpt_fcn)(id, (void *)(base_info_k.object), H5I_CLOSING_STAT__FAIL);
-                H5_GCC_CLANG_DIAG_ON("cast-qual")
-            }
-#endif
 
             /* done is false, so nothing to do to trigger the retry */
             assert( ! done );

@@ -746,7 +746,6 @@ done:
 
 #ifdef H5I_LOCK_FREE
 
-#define H5I_MAKE(g, i) ((((hid_t)(g)&TYPE_MASK) << ID_BITS) | ((hid_t)(i)&ID_MASK))
 
 /*-------------------------------------------------------------------------
  * Function:    H5Ireserve_future_id
@@ -759,8 +758,10 @@ done:
  *-------------------------------------------------------------------------
  */
 hid_t 
-H5Ireserve_future_id(H5I_type_t type, H5I_progress_func_t progress_cb){
-    void *ret_value = NULL; /* Return value */
+H5Ireserve_future_id(H5I_type_t type, H5I_progress_func_t progress_cb)
+{
+
+    hid_t ret_value = H5I_INVALID_HID; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX(H5I_INVALID_HID)
     H5TRACE2("i", "It*xIRID", type, progress_cb);
@@ -768,7 +769,7 @@ H5Ireserve_future_id(H5I_type_t type, H5I_progress_func_t progress_cb){
     H5I__enter(TRUE);
 
     if (H5I_IS_LIB_TYPE(type))
-        HGOTO_ERROR(H5E_ID, H5E_BADGROUP, NULL, "cannot call public function on library type");
+        HGOTO_ERROR(H5E_ID, H5E_BADGROUP, H5I_INVALID_HID, "cannot call public function on library type");
 
     /* Remove the id */
     ret_value = H5I__reserve_future_id(type, progress_cb);
@@ -791,8 +792,9 @@ done:
  *-------------------------------------------------------------------------
  */
 herr_t 
-H5Idefine_future_id(H5I_type_t type, hid_t id, void *actual_object){
-    void *ret_value = NULL; /* Return value */
+H5Idefine_future_id(H5I_type_t type, hid_t id, void *actual_object)
+{
+    herr_t ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX(FAIL)
     H5TRACE3("i", "It*xIRID", type, id, actual_object);
@@ -801,12 +803,12 @@ H5Idefine_future_id(H5I_type_t type, hid_t id, void *actual_object){
 
     /* Check arguments */
     if (H5I_IS_LIB_TYPE(type))
-        HGOTO_ERROR(H5E_ID, H5E_BADGROUP, NULL, "cannot call public function on library type");
+        HGOTO_ERROR(H5E_ID, H5E_BADGROUP, H5I_INVALID_HID, "cannot call public function on library type");
 
     if (NULL == actual_object)
         HGOTO_ERROR(H5E_ID, H5E_BADVALUE, H5I_INVALID_HID, "NULL pointer for object");
 
-    if (NULL == id)
+    if (!id)
         HGOTO_ERROR(H5E_ID, H5E_BADVALUE, H5I_INVALID_HID, "NULL id is not allowed");
 
     /* Define the id */

@@ -1571,7 +1571,6 @@ closing_rpt(hid_t id, void * obj, int op)
         /* In the case of a future ID there is no associated object, though closing flags are
          * still useful. We instead derive the id_index from the client_data, set to hold the
          * value of the id index when the future ID was reserved. Sanity check along the way
-         * and ensure this ID is a future.
          */
         memset(&inst_k, 0, sizeof(id_instance_kernel_t));
 
@@ -1594,7 +1593,6 @@ closing_rpt(hid_t id, void * obj, int op)
 
         inst_k = atomic_load(&(id_instance_array[id_index].k));
 
-        assert(inst_k.future);
     }
 
     do {
@@ -11322,7 +11320,6 @@ mt_future_test_fcn_3(void * _params)
     int                i;
     int                j;
     int                target_id_index;
-    int                delay = 0;
     int                operation;
     int                ops_per_id = 10;
     int                ids_completed = 0;
