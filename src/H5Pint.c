@@ -534,7 +534,6 @@ H5P_init_phase1(void)
         HGOTO_ERROR(H5E_ID, H5E_CANTINIT, FAIL, "unable to initialize ID group");
     }
 
-#if 1
     /**
      * Initializes the H5P_mt_g global struct which contains the free lists for
      * classes, lists, and properties, and global stats for H5P.
@@ -542,7 +541,6 @@ H5P_init_phase1(void)
     if (0 > H5P_mt_init_free_lists()) {
         HGOTO_ERROR(H5E_PLIST, H5E_CANTINIT, FAIL, "unable to initialize H5P MT safe free lists");
     }
-#endif
 
     /* Repeatedly pass over the list of property list classes for the library,
      * initializing each class if its parent class is initialized, until no

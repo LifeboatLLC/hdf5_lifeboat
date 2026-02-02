@@ -365,8 +365,6 @@ H5P__mt_create_class(H5P_mt_class_t *parent, const char *name, H5P_plist_type_t 
     /* Initializes the class's stats fields */
     H5P__init_stats_class(new_class);
 
-#if 1 /* testing increment parent's id ref_count */
-
     /**
      * If the parent isn't NULL (should only occur for root class),
      * increment the ID for the parent in the index.
@@ -377,8 +375,6 @@ H5P__mt_create_class(H5P_mt_class_t *parent, const char *name, H5P_plist_type_t 
             HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, NULL, "unable to increment parent's ID ref_count in index");
         }
     }
-
-#endif
 
     do {
         thrd = atomic_load(&(new_class->thrd));
@@ -595,8 +591,6 @@ H5P__mt_copy_class(H5P_mt_class_t *og_class)
     /* Initializes the class's stats fields */
     H5P__init_stats_class(new_class);
 
-#if 1 /* testing increment parent's id ref_count */
-
     /**
      * If the parent isn't NULL (should only occur for root class),
      * increment the ID for the parent in the index.
@@ -607,8 +601,6 @@ H5P__mt_copy_class(H5P_mt_class_t *og_class)
             HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, NULL, "unable to increment parent's ID ref_count in index");
         }
     }
-
-#endif
 
     do {
         thrd = atomic_load(&(new_class->thrd));
@@ -1101,14 +1093,10 @@ H5P__mt_create_list(H5P_mt_class_t *parent, H5P_mt_list_t *og_list, bool copy, u
 
     atomic_store(&(new_list->thrd), list_thrd);
 
-#if 1 /* testing increment parent's id's ref_count */
-
     if (0 >= H5I_inc_ref(atomic_load(&(parent->id)), FALSE)) {
         assert(FALSE);
         HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, NULL, "unable to increment parent's ID ref_count in index");
     }
-
-#endif
 
 done:
 
@@ -2494,8 +2482,6 @@ H5P__mt_ins_or_mod_prop__class(H5P_mt_class_t *class, const char *name, void *va
     /* Increment physical length of the lfsll */
     atomic_fetch_add(&(class->phys_pl_len), 1);
 
-    /** TODO: add #if debug for updating avg and max visited */
-
     /* update stats */
     atomic_store(&(class->num_insert_nodes_visited), visited);
 
@@ -2528,8 +2514,6 @@ done:
     if (ver_updated) {
         /* Update the class's current version */
         curr_version = atomic_fetch_add(&(class->curr_version), 1);
-
-        // next_version = atomic_load(&(class->next_version));
         assert(curr_version + 1 == next_version);
 
         /* update stats */
@@ -2830,8 +2814,6 @@ H5P__mt_ins_or_mod_prop__list(H5P_mt_list_t *list, const char *name, void *value
     /* Increment physical length of the lfsll */
     atomic_fetch_add(&(list->phys_pl_len), 1);
 
-    /** TODO: add #if debug for updating avg and max visited */
-
     /* update stats */
     atomic_store(&(list->num_insert_nodes_visited), visited);
 
@@ -2864,8 +2846,6 @@ done:
     if (ver_updated) {
         /* Update the list's current version */
         curr_version = atomic_fetch_add(&(list->curr_version), 1);
-
-        // next_version = atomic_load(&(list->next_version));
         assert(curr_version + 1 == next_version);
 
         /* update stats */
@@ -3200,8 +3180,6 @@ done:
     if (ver_updated) {
         /* Update the class's current version */
         curr_version = atomic_fetch_add(&(class->curr_version), 1);
-
-        // next_version = atomic_load(&(class->next_version));
         assert(curr_version + 1 == next_version);
 
         /* update stats */
@@ -3439,11 +3417,6 @@ H5P__mt_delete_prop__list(H5P_mt_list_t *list, const char *name)
 
     } /* end while ( ! done ) */
 
-/**
- * NOTE: May have to change how del callbacks are handled,
- * if when testing multithread this causes problems.
- */
-#if 1
     /* If the prop has a del callback, call it */
     if (prop->del) {
         value = atomic_load(&(prop->value));
@@ -3452,7 +3425,6 @@ H5P__mt_delete_prop__list(H5P_mt_list_t *list, const char *name)
             HGOTO_ERROR(H5E_PLIST, H5E_CANTFREE, FAIL, "can't release property value");
         }
     }
-#endif
 
     /* update stats */
     atomic_fetch_add(&(list->num_set_delete__success), 1);
@@ -3479,8 +3451,6 @@ done:
     if (ver_updated) {
         /* Update the list's current version */
         curr_version = atomic_fetch_add(&(list->curr_version), 1);
-
-        // next_version = atomic_load(&(list->next_version));
         assert(curr_version + 1 == next_version);
 
         /* update stats */
@@ -3531,7 +3501,6 @@ H5P__mt_search__class(H5P_mt_class_t *class, const char *name, uint64_t version)
 {
     H5P_mt_prop_t *prop = NULL; /* Prop being searched for */
     H5P_mt_prop_t *pl_head;     /* Head of the LFSLL */
-    // uint64_t       curr_version = 0; /* Current version of list or class */
     int64_t  chksum; /* Chksum for the prop from name */
     uint64_t avg_visited   = 0;
     uint64_t num_calls     = 0;
@@ -3564,8 +3533,6 @@ H5P__mt_search__class(H5P_mt_class_t *class, const char *name, uint64_t version)
     else {
         inc_thrd_flag = TRUE;
     }
-
-    /** TODO: add #if for debuggin */
 
     /**
      * stat for tracking number of searches that occur
@@ -3672,20 +3639,17 @@ done:
 H5P_mt_prop_t *
 H5P__mt_search__list(H5P_mt_list_t *list, const char *name, uint64_t version)
 {
-    H5P_mt_prop_t             *prop = NULL; /* Prop being searched for */
-    H5P_mt_prop_t             *pl_head;     /* Head of the LFSLL */
-    H5P_mt_list_table_entry_t *entry;       /* Entry in a list's lkup_tbl */
-    // H5P_mt_list_prop_ref_t     curr;             /* Curr struct field for list's entry */
-    // H5P_mt_list_prop_ref_t     base;             /* Base struct field for list's entry */
-    uint64_t curr_version;
-    uint64_t next_version;
-    // uint64_t                   create_version;
-    uint64_t visited = 0;
-    int64_t  chksum;                /* Chksum for the prop from name */
-    bool     done          = FALSE; /* Flag to exit a loop to set atomics */
-    bool     inc_thrd_flag = FALSE; /* Flag to dec thrd count of struct */
-    bool     chksum_cols   = FALSE;
-    bool     base_flag     = FALSE;
+    H5P_mt_prop_t  *prop = NULL;           /* Prop being searched for */
+    H5P_mt_prop_t  *pl_head;               /* Head of the LFSLL */
+    H5P_mt_list_table_entry_t *entry;      /* Entry in a list's lkup_tbl */
+    uint64_t        curr_version;
+    uint64_t        next_version;
+    uint64_t        visited = 0;
+    int64_t         chksum;                /* Chksum for the prop from name */
+    bool            done          = FALSE; /* Flag to exit a loop to set atomics */
+    bool            inc_thrd_flag = FALSE; /* Flag to dec thrd count of struct */
+    bool            chksum_cols   = FALSE;
+    bool            base_flag     = FALSE;
 
     H5P_mt_prop_t *ret_value = NULL;
 
@@ -3693,13 +3657,11 @@ H5P__mt_search__list(H5P_mt_list_t *list, const char *name, uint64_t version)
 
     assert(name);
     assert(list);
-#if 1 /* debug */
-
+#ifndef NDEBUG
     if (atomic_load(&(list->tag)) != H5P_MT_LIST_TAG) {
         fprintf(stderr, "\nList tag is NOT valid\n");
         return NULL;
     }
-
 #endif
     assert(atomic_load(&(list->tag)) == H5P_MT_LIST_TAG);
 
@@ -3715,8 +3677,6 @@ H5P__mt_search__list(H5P_mt_list_t *list, const char *name, uint64_t version)
     else {
         inc_thrd_flag = TRUE;
     }
-
-    /** TODO: add #if for debuggin */
 
     /**
      * stat for tracking number of searches that occur
@@ -3762,59 +3722,6 @@ H5P__mt_search__list(H5P_mt_list_t *list, const char *name, uint64_t version)
             HGOTO_ERROR(H5E_PLIST, H5E_BADTYPE, NULL, "Property is marked deleted.");
         }
 
-#if 0
-        curr = atomic_load(&(entry->curr));
-
-        /* If curr.ptr isn't NULL, then find the correct version */
-        if (curr.ptr) {
-            prop = curr.ptr;
-
-            /* Ensure property isn't already deleted */
-            if ((0 == atomic_load(&(prop->delete_version))) ||
-                (atomic_load(&(prop->delete_version)) > version)) {
-                atomic_fetch_add(&(list->num_search_list__found_curr), 1);
-
-                done = TRUE;
-            }
-            else {
-                atomic_fetch_add(&(list->num_target_prop_found_but_deleted), 1);
-
-                HGOTO_ERROR(H5E_PLIST, H5E_BADTYPE, NULL, "Property is marked deleted.");
-            }
-        }
-        else /* If curr.ptr is NULL, most current version is base */
-        {
-            base = atomic_load(&(entry->base));
-            if (base.ptr) {
-                /* If base_delete_version isn't set return base.ptr */
-                if (entry->base_delete_version == 0 || entry->base_delete_version > curr_version) {
-                    prop = base.ptr;
-
-                    assert(atomic_load(&(prop->tag)) == H5P_MT_PROP_TAG);
-
-                    /* update stats */
-                    atomic_fetch_add(&(list->num_search_list__found_base), 1);
-
-                    done = TRUE;
-                }
-                else {
-                    atomic_fetch_add(&(list->num_target_prop_found_but_deleted), 1);
-                    HGOTO_ERROR(H5E_PLIST, H5E_BADTYPE, NULL, "Property is marked deleted.");
-                }
-            }
-            /**
-             * Base may be NULL if list was copied and the
-             * base was deleted from the original
-             */
-            else {
-                prop = NULL;
-
-                done = TRUE;
-            }
-
-        } /* end else */
-#endif
-
     } /* end if ( entry ) */
 
     /* If not in the lkup_tbl search the LFSLL */
@@ -3838,18 +3745,6 @@ H5P__mt_search__list(H5P_mt_list_t *list, const char *name, uint64_t version)
 
         done = TRUE;
     }
-
-#if 0 /** TODO:This needs double checked when actually implement version from context */
-    
-    create_version = atomic_load(&(prop->create_version));
-
-    /* Ensure the prop version is valid for the context version */
-    if ( create_version > cx_version )
-    {
-
-    }
-
-#endif
 
     ret_value = prop;
 
@@ -5463,92 +5358,6 @@ done:
 
 } /* H5P__mt_cmp_next_prop() */
 
-#if 0 /** NOTE: Didn't actually need this, just put what this does in H5P_get() */
-/****************************************************************************************
- * Function:    H5P__mt_get_value()
- *
- * Purpose:     Gets the value of a specified property and copies the value into a
- *              provided buffer.
- *
- *              H5P__mt_search__list() is called to return the most recent version of the
- *              property with the matching chksum as the one provided, from the list
- *              passed in.
- *
- *              The property returned by H5P__mt_search__list() is checked if it has a
- *              get callback. If it does then a tmp buffer is allocated to store the
- *              value in case the callback fails, then the callback is called to get the
- *              value. If the property does not have a get callback, the value is simply
- *              copied into the supplied buffer.
- *
- * Return:      SUCCEED/FAIL
-
- ****************************************************************************************
- */
-herr_t
-H5P__mt_get_value(H5P_mt_list_t *list, const char *name, void *value_ptr)
-{
-    H5P_mt_prop_t      *prop;
-    H5P_mt_prop_value_t prop_value;
-    void               *tmp_value_buf = NULL;
-    uint64_t            version;
-
-    herr_t ret_value = SUCCEED;
-
-    FUNC_ENTER_PACKAGE
-
-    assert(list);
-    assert(atomic_load(&(list->tag)) == H5P_MT_PROP_TAG);
-    assert(value_ptr);
-
-
-
-    prop = H5P__mt_search__list(list, name);
-
-    if (NULL == prop) {
-        HGOTO_ERROR(H5E_PLIST, H5E_CANTFIND, FAIL, "Target prop isn't in list.");
-    }
-
-    prop_value = atomic_load(&(prop->value));
-
-    if (prop_value.size == 0) {
-        HGOTO_ERROR(H5E_PLIST, H5E_BADVALUE, FAIL, "property has zero size");
-    }
-
-    /* If the prop has the get callback, call it */
-    if (prop->get) {
-        /* Make a copy of the current value, in case the callback fails */
-        if (NULL == (tmp_value_buf = H5MM_malloc(prop_value.size))) {
-            HGOTO_ERROR(H5E_PLIST, H5E_CANTALLOC, FAIL, "memory allocation for tmp prop value failed");
-        }
-
-        H5MM_memcpy(tmp_value_buf, prop_value.ptr, prop_value.size);
-
-        /* Call user's callback */
-        if ((*(prop->get))(list->plist_id, name, prop_value.size, tmp_value_buf) < 0) {
-            HGOTO_ERROR(H5E_PLIST, H5E_CANTINIT, FAIL, "can't set property value");
-        }
-
-        /* Copy new [possibly unchanged] value into return value */
-        H5MM_memcpy(value_ptr, tmp_value_buf, prop_value.size);
-
-    } /* end if ( prop->get ) */
-
-    /* No callback, just copy value */
-    else {
-        H5MM_memcpy(value_ptr, prop_value.ptr, prop_value.size);
-    }
-
-done:
-
-    /* Free the tmp value buf */
-    if (tmp_value_buf)
-        H5MM_xfree(tmp_value_buf);
-
-    FUNC_LEAVE_NOAPI(ret_value)
-
-} /* H5P__mt_get_value() */
-#endif
-
 /****************************************************************************************
  * Function:    H5P__mt_encode()
  *
@@ -5593,11 +5402,18 @@ H5P__mt_encode(H5P_mt_list_t *list, uint64_t version, void *buf, size_t *nalloc)
     bool                       base_flag   = FALSE;
     uint64_t                   curr_version;
     uint64_t                   next_version;
-    size_t                     nprops;           /* total # of props in lkup_tbl + lfsll */
     size_t                     nprops_inherited; /* Number of entries in the lkup_tbl */
-    size_t                     log_pl_len;       /* Number of props in the lfsll */
-    uint64_t                   prop_count = 0;
     uint32_t                   idx; /* Index of the lkup_tbl */
+
+/**
+ * Fields used in asserts during debug mode to ensure 
+ * the correct number of properties are being encoded.
+ */
+#ifndef NDEBUG 
+    size_t   nprops     = 0; /* total # of props in lkup_tbl + lfsll */
+    size_t   log_pl_len = 0; /* Number of props in the lfsll */
+    uint64_t prop_count = 0; /* Used to check the correct number of props were encoded */
+#endif
 
     herr_t ret_value = SUCCEED;
 
@@ -5616,7 +5432,6 @@ H5P__mt_encode(H5P_mt_list_t *list, uint64_t version, void *buf, size_t *nalloc)
         }
     }
 
-    nprops           = atomic_load(&(list->nprops));
     nprops_inherited = list->nprops_inherited;
 
     /* Sanity Check */
@@ -5663,15 +5478,14 @@ H5P__mt_encode(H5P_mt_list_t *list, uint64_t version, void *buf, size_t *nalloc)
     assert(prev_prop);
     assert(prev_prop->sentinel);
 
-    log_pl_len = atomic_load(&(list->log_pl_len));
-
     do {
         /* Gets the next valid prop or NULL if there isn't another valid prop */
         valid_prop = H5P__get_next_valid_prop(prev_prop, version, NULL);
 
         if (valid_prop) {
+#ifndef NDEBUG
             prop_count++;
-
+#endif
             /* If in_lkup_tbl is TRUE, the property was already encoded */
             if (!valid_prop->in_lkup_tbl) {
                 if (H5P__mt_encode_prop(valid_prop, encode, &encode_size, &p) < 0) {
@@ -5683,11 +5497,12 @@ H5P__mt_encode(H5P_mt_list_t *list, uint64_t version, void *buf, size_t *nalloc)
 
     } while (valid_prop);
 
-    assert(prop_count == log_pl_len);
-
+#ifndef NDEBUG
+    log_pl_len = atomic_load(&(list->log_pl_len));
     nprops = atomic_load(&(list->nprops));
-
+    assert(prop_count == log_pl_len);
     assert(nprops == (idx + prop_count));
+#endif
 
     /* Encode a terminator for the list of properties */
     if (encode) {
@@ -5740,7 +5555,7 @@ H5P__mt_encode_prop(H5P_mt_prop_t *prop, bool encode, size_t *encode_size, uint8
             HDstrcpy((char *)*(p), prop->name);
             *(uint8_t **)(p) += name_len;
         }
-        encode_size += name_len;
+        *encode_size += name_len;
 
         value_size = 0;
 
@@ -5749,7 +5564,7 @@ H5P__mt_encode_prop(H5P_mt_prop_t *prop, bool encode, size_t *encode_size, uint8
             HGOTO_ERROR(H5E_PLIST, H5E_CANTENCODE, FAIL, "property encoding routine failed");
         }
 
-        encode_size += value_size;
+        *encode_size += value_size;
 
     } /* end if ( prop-> encode ) */
 
@@ -6272,14 +6087,14 @@ H5P__mt_close_class(H5P_mt_class_t *class)
                 atomic_fetch_add(&(class->num_thrd_opening_flag_set), 1);
 
                 /** NOTE: This assert is to prevent an infinite loop while testing */
-                // assert(H5P_MT_ASSERT_FAIL);
+                assert(H5P_MT_ASSERT_FAIL);
 
                 sleep(1);
             }
             /* If there are any other threads in the struct, wait for them to drain out */
             else if (local_thrd.count > 0) {
                 /** NOTE: This assert is to prevent an infinite loop while testing */
-                // assert(H5P_MT_ASSERT_FAIL);
+                assert(H5P_MT_ASSERT_FAIL);
 
                 sleep(1);
             }
@@ -6492,21 +6307,6 @@ done:
             HDONE_ERROR(H5E_PLIST, H5E_BADVALUE, FAIL, "Failure to decrement thrd_count.");
         }
 
-#if 0 /* testing increment parent's id's ref_count */
-
-        ref_count = atomic_load(&(parent->ref_count));
-
-        /**
-         * If the parent's ref counts for derived classes and lists are zero,
-         * and it's marked deleted, then call the close function on it.
-         */
-        if (ref_count.pl == 0 && ref_count.plc == 0 && ref_count.deleted) {
-            if (0 > H5P__mt_close_class(parent)) {
-                HGOTO_ERROR(H5E_PLIST, H5E_BADVALUE, FAIL, "Failed to close the property list class.");
-            }
-        }
-#else
-
         ref_count = atomic_load(&(parent->ref_count));
 
         if (ref_count.deleted == FALSE) {
@@ -6516,8 +6316,6 @@ done:
                             "unable to decrement parent's ID ref_count in index");
             }
         }
-
-#endif
 
     } /* end if ( parent != NULL && inc_thrd_flag ) */
 
@@ -6736,14 +6534,14 @@ H5P__mt_close_list(H5P_mt_list_t *list)
             atomic_fetch_add(&(list->num_thrd_opening_flag_set), 1);
 
             /** NOTE: This assert is to prevent an infinite loop while testing */
-            // assert(H5P_MT_ASSERT_FAIL);
+            assert(H5P_MT_ASSERT_FAIL);
 
             sleep(1);
         }
         /* If there are any other threads in the struct, wait for them to drain out */
         else if (local_thrd.count > 0) {
             /** NOTE: This assert is to prevent an infinite loop while testing */
-            // assert(H5P_MT_ASSERT_FAIL);
+            assert(H5P_MT_ASSERT_FAIL);
 
             sleep(1);
         }
@@ -7052,21 +6850,6 @@ done:
             HDONE_ERROR(H5E_PLIST, H5E_BADVALUE, FAIL, "Failure to decrement thrd_count.");
         }
 
-#if 0 /* testing increment parent's id's ref_count */
-
-        ref_count = atomic_load(&(parent->ref_count));
-
-        /**
-         * If the parent's ref counts for derived classes and lists are zero,
-         * and it's marked deleted, then call the close function on it.
-         */
-        if (ref_count.pl == 0 && ref_count.plc == 0 && ref_count.deleted) {
-            if (0 > H5P__mt_close_class(parent)) {
-                HGOTO_ERROR(H5E_PLIST, H5E_BADVALUE, FAIL, "Failed to close the property list class.");
-            }
-        }
-#else
-
         ref_count = atomic_load(&(parent->ref_count));
 
         if (ref_count.deleted == FALSE) {
@@ -7076,8 +6859,6 @@ done:
                             "unable to decrement parent's ID ref_count in index");
             }
         }
-
-#endif
     }
 
     FUNC_LEAVE_NOAPI(ret_value)
@@ -7364,10 +7145,10 @@ H5P__inc_thrd_count(void *param)
                 atomic_fetch_add(&(list->num_thrd_opening_flag_set), 1);
             }
 
-#if 1
+#ifndef H5_HAVE_MULTITHREAD
 
             /**
-             * This is for testing that this MT safty net gets trigged while running
+             * This is for testing that this MT safety net gets trigged while running
              * tests in single thread, to prevent an infinite loop.
              */
             return FAIL;
@@ -8620,8 +8401,6 @@ H5P__dump_stats_list(FILE *file_ptr, H5P_mt_list_t *list)
             (unsigned long long)(atomic_load(&(list->num_search_list__found_base))));
     fprintf(file_ptr, "list->num_search_list__found_curr            = %lld\n",
             (unsigned long long)(atomic_load(&(list->num_search_list__found_curr))));
-    // fprintf(file_ptr, "list->num_search_list__found_older_curr = %lld\n",
-    //(unsigned long long)(atomic_load(&(list->num_search_list__found_older_curr))));
     fprintf(file_ptr, "list->num_target_prop_found_but_deleted = %lld\n",
             (unsigned long long)(atomic_load(&(list->num_target_prop_found_but_deleted))));
 
@@ -8867,10 +8646,6 @@ H5P__mt_term_free_lists(void)
     assert(NULL == fl_prop_head.ptr);
     assert(NULL == fl_prop_tail.ptr);
 
-    // H5P__reset_stats_global();
-
     FUNC_LEAVE_NOAPI(ret_value);
 
 } /* H5P__mt_term_free_lists() */
-
-//#endif

@@ -40,8 +40,9 @@
 
 /**
  * Macro used for testing so the program will stop executing if hit.
+ * 1 means it will not fail, 0 means it will fail if hit.
  */
-#define H5P_MT_ASSERT_FAIL TRUE
+#define H5P_MT_ASSERT_FAIL 1
 
 /****************************/
 /* Package Private Typedefs */
@@ -2382,14 +2383,10 @@ herr_t                     H5P__find_mod_point(H5P_mt_prop_t *pl_head, H5P_mt_pr
 H5P_mt_prop_t             *H5P__get_next_valid_prop(H5P_mt_prop_t *prop, uint64_t version, uint64_t *visited);
 H5P_mt_prop_t             *H5P__find_valid_version(H5P_mt_prop_t *prop, uint64_t version, uint64_t *visited);
 int32_t                    H5P__is_valid(H5P_mt_prop_t *prop, uint64_t version);
-#if 0
-int32_t
-    H5P__mt_compare_prop(H5P_mt_prop_t *prop1, H5P_mt_prop_t *prop2);
-#endif
+
 int32_t H5P__mt_prop_cmp(H5P_mt_prop_t *prop1, H5P_mt_prop_t *prop2);
 int32_t H5P__mt_cmp_class(H5P_mt_class_t *class1, uint64_t version1, H5P_mt_class_t *class2,
                           uint64_t version2);
-
 int32_t H5P__mt_cmp_list(H5P_mt_list_t *list1, uint64_t version1, H5P_mt_list_t *list2, uint64_t version2);
 int32_t H5P__mt_is_derived__class(H5P_mt_class_t *parent, uint64_t version1, H5P_mt_class_t *derived,
                                   uint64_t version2);
@@ -2408,10 +2405,6 @@ herr_t          H5P__inc_thrd_count(void *param);
 herr_t          H5P__dec_thrd_count(void *param);
 herr_t          H5P__inc_ref_count(H5P_mt_class_t *parent, bool plc);
 herr_t          H5P__dec_ref_count(H5P_mt_class_t *parent, bool plc);
-#if 0 /** NOTE: Didn't actually need this, just put what this does in H5P_get() */
-herr_t 
-    H5P__mt_get_value(H5P_mt_list_t *list, const char *name, void *value_ptr);
-#endif
 herr_t   H5P__mt_encode(H5P_mt_list_t *list, uint64_t version, void *buf, size_t *nalloc);
 herr_t   H5P__mt_encode_prop(H5P_mt_prop_t *prop, bool encode, size_t *encode_size, uint8_t **p);
 uint64_t H5P__calc_avg_visited(uint64_t avg_visited, uint64_t num_calls, uint64_t visited);
