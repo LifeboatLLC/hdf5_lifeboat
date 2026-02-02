@@ -5459,7 +5459,7 @@ object_verify(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_t 
 
     if ( success ) {
 
-        if ( ( id_type_k.in_progress) || ( ! id_type_k.created ) || ( id_type_k.discarded ) ) {
+        if ( ( id_type_k.in_progress ) || ( ! id_type_k.created ) || ( id_type_k.discarded ) ) {
 
             assert(FALSE);
 
