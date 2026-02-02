@@ -466,7 +466,6 @@ H5Pregister2(hid_t cls_id, const char *name, size_t size, void *def_value, H5P_p
              H5P_prp_copy_func_t prp_copy, H5P_prp_compare_func_t prp_cmp, H5P_prp_close_func_t prp_close)
 {
     H5P_mt_class_t *pclass;
-    // H5P_mt_prop_t  * prop;
 
     herr_t ret_value; /* Return value */
 
@@ -1942,7 +1941,7 @@ H5Pget(hid_t plist_id, const char *name, void *value /*out*/)
     if (value == NULL)
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "invalid property value");
 
-#ifdef H5_HAVE_MULTITHREAD /* debug */
+#ifdef H5_HAVE_MULTITHREAD  /* debug */
 
     if (atomic_load(&(plist->tag)) != H5P_MT_LIST_TAG) {
         assert(FALSE);
