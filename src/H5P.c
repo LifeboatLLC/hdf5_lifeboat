@@ -1942,7 +1942,7 @@ H5Pget(hid_t plist_id, const char *name, void *value /*out*/)
     if (value == NULL)
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "invalid property value");
 
-#ifdef H5_HAVE_MULTITHREAD  /* debug */
+#ifdef H5_HAVE_MULTITHREAD /* debug */
 
     if (atomic_load(&(plist->tag)) != H5P_MT_LIST_TAG) {
         assert(FALSE);
