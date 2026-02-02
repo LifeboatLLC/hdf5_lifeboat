@@ -1630,7 +1630,6 @@ H5Pequal(hid_t id1, hid_t id2)
     if (NULL == (obj1 = H5I_object(id1)) || NULL == (obj2 = H5I_object(id2))) {
         HGOTO_ERROR(H5E_PLIST, H5E_NOTFOUND, FAIL, "property object doesn't exist");
     }
-
     /* Compare property lists */
     if (H5I_GENPROP_LST == H5I_get_type(id1)) {
         if (H5P__cmp_plist((H5P_genplist_t *)obj1, (H5P_genplist_t *)obj2, &cmp_ret) < 0) {
@@ -1943,7 +1942,7 @@ H5Pget(hid_t plist_id, const char *name, void *value /*out*/)
     if (value == NULL)
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "invalid property value");
 
-#if 1 /* debug */
+#ifdef H5_HAVE_MULTITHREAD  /* debug */
 
     if (atomic_load(&(plist->tag)) != H5P_MT_LIST_TAG) {
         assert(FALSE);
