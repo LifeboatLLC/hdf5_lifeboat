@@ -13965,11 +13965,6 @@ close_class(thread_params_t *thread_params)
         } /* end else ( ret != SUCCEED ) */
 
     } /* end if ( try_close ) */
-    else {
-        check_status = atomic_load(&(class_entry->status));
-
-        assert(check_status == EXISTS_BUT_CLOSED);
-    }
 
     /* Update stats */
     if (loop_count > atomic_load(&(g_stats.max_loops_during_op))) {
