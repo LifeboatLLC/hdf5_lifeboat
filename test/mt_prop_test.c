@@ -724,6 +724,7 @@ typedef struct global_stats_t {
     _Atomic uint64_t mod_list_create_num_searched_between_ver;
     _Atomic uint64_t mod_list_create_num_list_doesnt_exist;
     _Atomic uint64_t mod_list_create_num_list_deleted;
+    _Atomic uint64_t mod_list_create_num_prop_status_updated_elsewhere;
 
     /* mod_list_mod_prop() stats */
     _Atomic uint64_t mod_list_mod__num_class;
@@ -757,6 +758,7 @@ typedef struct global_stats_t {
     _Atomic uint64_t mod_class_create_num_searched_later_ver;
     _Atomic uint64_t mod_class_create_num_class_doesnt_exist;
     _Atomic uint64_t mod_class_create_num_class_deleted;
+    _Atomic uint64_t mod_class_create_num_prop_status_updated_elsewhere;
 
     /* mod_class_mod_prop() stats */
     _Atomic uint64_t mod_class_mod__num_class;
@@ -12544,7 +12546,6 @@ copy_class(thread_params_t *thread_params)
 
                                     if (!atomic_compare_exchange_strong(&(prop_entry->status), &prop_status,
                                                                         update_prop_status)) {
-
                                         /* Update stats */
                                         atomic_fetch_add(&(g_stats.num_prop_status_thrd_cols), 1);
                                     }
@@ -13354,9 +13355,6 @@ close_list(thread_params_t *thread_params)
 
             if (list_status == CLOSING_IN_PROGRESS) {
                 if (!atomic_compare_exchange_strong(&(list_entry->status), &list_status, update_status)) {
-                    list_status = atomic_load(&(list_entry->status));
-                    assert(list_status == EXISTS || list_status == IN_PROGRESS);
-
                     /* Update stats */
                     atomic_fetch_add(&(g_stats.num_list_status_thrd_cols), 1);
                 }
@@ -15711,14 +15709,27 @@ mod_list_create_prop(thread_params_t *thread_params)
             do {
                 prop_status = atomic_load(&(prop_entry->status));
 
-                /* Attempt to atomically update prop_status */
-                if (!atomic_compare_exchange_strong(&(prop_entry->status), &prop_status, update_status)) {
-                    /* Update stats */
-                    atomic_fetch_add(&(g_stats.num_prop_status_thrd_cols), 1);
+                if ( prop_status == IN_PROGRESS )
+                {
+                    /* Attempt to atomically update prop_status */
+                    if (!atomic_compare_exchange_strong(&(prop_entry->status), &prop_status, update_status)) {
+                        /* Update stats */
+                        atomic_fetch_add(&(g_stats.num_prop_status_thrd_cols), 1);
+                    }
+                    else {
+                        /* Update stats */
+                        atomic_fetch_add(&(g_stats.num_prop_status_update_success), 1);
+
+                        done = TRUE;
+                    }
                 }
-                else {
-                    /* Update stats */
-                    atomic_fetch_add(&(g_stats.num_prop_status_update_success), 1);
+                else if ( prop_status == DELETED )
+                {
+                    /**
+                     * NOTE: this means that another thread deleted the property 
+                     * just created before the status could be updated.
+                     */
+                    atomic_fetch_add(&(g_stats.mod_list_create_num_prop_status_updated_elsewhere), 1);
 
                     done = TRUE;
                 }
@@ -16390,17 +16401,10 @@ mod_list_delete_prop(thread_params_t *thread_params)
 
                 /* Attempt to atomically update prop_status */
                 if (!atomic_compare_exchange_strong(&(prop_entry->status), &prop_status, update_status)) {
-
-                    assert(prop_status == IN_PROGRESS || prop_status == EXISTS ||
-                           prop_status == DOESNT_EXIST);
-
                     /* Update stats */
                     atomic_fetch_add(&(g_stats.num_prop_status_thrd_cols), 1);
                 }
                 else {
-                    prop_status = atomic_load(&(prop_entry->status));
-                    assert(prop_status == DELETED);
-
                     /* Update stats */
                     atomic_fetch_add(&(g_stats.num_prop_status_update_success), 1);
 
@@ -16818,18 +16822,27 @@ mod_class_create_prop(thread_params_t *thread_params, class_table_entry_t *_clas
             do {
                 prop_status = atomic_load(&(prop_entry->status));
 
-                /* Attempt to atomically update prop_status */
-                if (!atomic_compare_exchange_strong(&(prop_entry->status), &prop_status, update_status)) {
-                    assert(prop_status == IN_PROGRESS);
+                if ( prop_status == IN_PROGRESS )
+                {
+                    /* Attempt to atomically update prop_status */
+                    if (!atomic_compare_exchange_strong(&(prop_entry->status), &prop_status, update_status)) {
+                        /* Update stats */
+                        atomic_fetch_add(&(g_stats.num_prop_status_thrd_cols), 1);
+                    }
+                    else {
+                        /* Update stats */
+                        atomic_fetch_add(&(g_stats.num_prop_status_update_success), 1);
 
-                    /* Update stats */
-                    atomic_fetch_add(&(g_stats.num_prop_status_thrd_cols), 1);
+                        done = TRUE;
+                    }
                 }
-                else {
-                    assert(atomic_load(&(prop_entry->status)) == EXISTS);
-
-                    /* Update stats */
-                    atomic_fetch_add(&(g_stats.num_prop_status_update_success), 1);
+                else if ( prop_status == DELETED )
+                {
+                    /**
+                     * NOTE: this means that another thread deleted the property 
+                     * just created before the status could be updated.
+                     */
+                    atomic_fetch_add(&(g_stats.mod_class_create_num_prop_status_updated_elsewhere), 1);
 
                     done = TRUE;
                 }
@@ -17501,14 +17514,10 @@ mod_class_delete_prop(thread_params_t *thread_params)
 
                 /* Attempt to atomically update prop_status */
                 if (!atomic_compare_exchange_strong(&(prop_entry->status), &prop_status, update_status)) {
-                    assert(prop_status == IN_PROGRESS || prop_status == EXISTS);
                     /* Update stats */
                     atomic_fetch_add(&(g_stats.num_prop_status_thrd_cols), 1);
                 }
                 else {
-                    prop_status = atomic_load(&(prop_entry->status));
-                    assert(prop_status == DELETED);
-
                     /* Update stats */
                     atomic_fetch_add(&(g_stats.num_prop_status_update_success), 1);
 
@@ -19471,6 +19480,8 @@ init_g_stats(void)
     atomic_init(&(g_stats.mod_list_create_num_searched_between_ver), 0ULL);
     atomic_init(&(g_stats.mod_list_create_num_list_doesnt_exist), 0ULL);
     atomic_init(&(g_stats.mod_list_create_num_list_deleted), 0ULL);
+    atomic_init(&(g_stats.mod_list_create_num_prop_status_updated_elsewhere), 0ULL);
+
 
     /* mod_list_mod_prop() stats */
     atomic_init(&(g_stats.mod_list_mod__num_class), 0ULL);
@@ -19504,6 +19515,7 @@ init_g_stats(void)
     atomic_init(&(g_stats.mod_class_create_num_searched_later_ver), 0ULL);
     atomic_init(&(g_stats.mod_class_create_num_class_doesnt_exist), 0ULL);
     atomic_init(&(g_stats.mod_class_create_num_class_deleted), 0ULL);
+    atomic_init(&(g_stats.mod_class_create_num_prop_status_updated_elsewhere), 0ULL);
 
     /* mod_class_mod_prop() stats */
     atomic_init(&(g_stats.mod_class_mod__num_class), 0ULL);
@@ -19683,6 +19695,7 @@ reset_g_stats(void)
     atomic_store(&(g_stats.mod_list_create_num_searched_between_ver), 0ULL);
     atomic_store(&(g_stats.mod_list_create_num_list_doesnt_exist), 0ULL);
     atomic_store(&(g_stats.mod_list_create_num_list_deleted), 0ULL);
+    atomic_store(&(g_stats.mod_list_create_num_prop_status_updated_elsewhere), 0ULL);
 
     /* mod_list_mod_prop() stats */
     atomic_store(&(g_stats.mod_list_mod__num_class), 0ULL);
@@ -19716,6 +19729,7 @@ reset_g_stats(void)
     atomic_store(&(g_stats.mod_class_create_num_searched_later_ver), 0ULL);
     atomic_store(&(g_stats.mod_class_create_num_class_doesnt_exist), 0ULL);
     atomic_store(&(g_stats.mod_class_create_num_class_deleted), 0ULL);
+    atomic_store(&(g_stats.mod_class_create_num_prop_status_updated_elsewhere), 0ULL);
 
     /* mod_class_mod_prop() stats */
     atomic_store(&(g_stats.mod_class_mod__num_class), 0ULL);
