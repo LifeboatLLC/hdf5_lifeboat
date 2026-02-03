@@ -2405,9 +2405,9 @@ herr_t          H5P__inc_thrd_count(void *param);
 herr_t          H5P__dec_thrd_count(void *param);
 herr_t          H5P__inc_ref_count(H5P_mt_class_t *parent, bool plc);
 herr_t          H5P__dec_ref_count(H5P_mt_class_t *parent, bool plc);
-herr_t   H5P__mt_encode(H5P_mt_list_t *list, uint64_t version, void *buf, size_t *nalloc);
-herr_t   H5P__mt_encode_prop(H5P_mt_prop_t *prop, bool encode, size_t *encode_size, uint8_t **p);
-uint64_t H5P__calc_avg_visited(uint64_t avg_visited, uint64_t num_calls, uint64_t visited);
+herr_t          H5P__mt_encode(H5P_mt_list_t *list, uint64_t version, void *buf, size_t *nalloc);
+herr_t          H5P__mt_encode_prop(H5P_mt_prop_t *prop, bool encode, size_t *encode_size, uint8_t **p);
+uint64_t        H5P__calc_avg_visited(uint64_t avg_visited, uint64_t num_calls, uint64_t visited);
 
 /* Stats functions */
 herr_t H5P__init_stats_global(void);

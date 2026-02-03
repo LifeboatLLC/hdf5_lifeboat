@@ -3501,12 +3501,12 @@ H5P__mt_search__class(H5P_mt_class_t *class, const char *name, uint64_t version)
 {
     H5P_mt_prop_t *prop = NULL; /* Prop being searched for */
     H5P_mt_prop_t *pl_head;     /* Head of the LFSLL */
-    int64_t  chksum; /* Chksum for the prop from name */
-    uint64_t avg_visited   = 0;
-    uint64_t num_calls     = 0;
-    uint64_t visited       = 0;
-    bool     inc_thrd_flag = FALSE; /* Flag to dec thrd count of struct */
-    bool     chksum_cols   = FALSE;
+    int64_t        chksum;      /* Chksum for the prop from name */
+    uint64_t       avg_visited   = 0;
+    uint64_t       num_calls     = 0;
+    uint64_t       visited       = 0;
+    bool           inc_thrd_flag = FALSE; /* Flag to dec thrd count of struct */
+    bool           chksum_cols   = FALSE;
 
     H5P_mt_prop_t *ret_value = NULL;
 
@@ -3639,17 +3639,17 @@ done:
 H5P_mt_prop_t *
 H5P__mt_search__list(H5P_mt_list_t *list, const char *name, uint64_t version)
 {
-    H5P_mt_prop_t  *prop = NULL;           /* Prop being searched for */
-    H5P_mt_prop_t  *pl_head;               /* Head of the LFSLL */
-    H5P_mt_list_table_entry_t *entry;      /* Entry in a list's lkup_tbl */
-    uint64_t        curr_version;
-    uint64_t        next_version;
-    uint64_t        visited = 0;
-    int64_t         chksum;                /* Chksum for the prop from name */
-    bool            done          = FALSE; /* Flag to exit a loop to set atomics */
-    bool            inc_thrd_flag = FALSE; /* Flag to dec thrd count of struct */
-    bool            chksum_cols   = FALSE;
-    bool            base_flag     = FALSE;
+    H5P_mt_prop_t             *prop = NULL; /* Prop being searched for */
+    H5P_mt_prop_t             *pl_head;     /* Head of the LFSLL */
+    H5P_mt_list_table_entry_t *entry;       /* Entry in a list's lkup_tbl */
+    uint64_t                   curr_version;
+    uint64_t                   next_version;
+    uint64_t                   visited = 0;
+    int64_t                    chksum;                /* Chksum for the prop from name */
+    bool                       done          = FALSE; /* Flag to exit a loop to set atomics */
+    bool                       inc_thrd_flag = FALSE; /* Flag to dec thrd count of struct */
+    bool                       chksum_cols   = FALSE;
+    bool                       base_flag     = FALSE;
 
     H5P_mt_prop_t *ret_value = NULL;
 
@@ -5403,13 +5403,13 @@ H5P__mt_encode(H5P_mt_list_t *list, uint64_t version, void *buf, size_t *nalloc)
     uint64_t                   curr_version;
     uint64_t                   next_version;
     size_t                     nprops_inherited; /* Number of entries in the lkup_tbl */
-    uint32_t                   idx; /* Index of the lkup_tbl */
+    uint32_t                   idx;              /* Index of the lkup_tbl */
 
 /**
- * Fields used in asserts during debug mode to ensure 
+ * Fields used in asserts during debug mode to ensure
  * the correct number of properties are being encoded.
  */
-#ifndef NDEBUG 
+#ifndef NDEBUG
     size_t   nprops     = 0; /* total # of props in lkup_tbl + lfsll */
     size_t   log_pl_len = 0; /* Number of props in the lfsll */
     uint64_t prop_count = 0; /* Used to check the correct number of props were encoded */
@@ -5499,7 +5499,7 @@ H5P__mt_encode(H5P_mt_list_t *list, uint64_t version, void *buf, size_t *nalloc)
 
 #ifndef NDEBUG
     log_pl_len = atomic_load(&(list->log_pl_len));
-    nprops = atomic_load(&(list->nprops));
+    nprops     = atomic_load(&(list->nprops));
     assert(prop_count == log_pl_len);
     assert(nprops == (idx + prop_count));
 #endif
