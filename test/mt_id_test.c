@@ -5452,7 +5452,7 @@ object_verify(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_t 
 
             success = FALSE;
 
-            fprintf(stderr, "object_verify():%d:i id_obj_ptr->index = %d != %d = id_inst_ptr->obj_index.\n", 
+            fprintf(stderr, "object_verify():%d: id_obj_ptr->index = %d != %d = id_inst_ptr->obj_index.\n", 
                     tid, id_obj_ptr->index, atomic_load(&(id_inst_ptr->obj_index)));
         }        
     }
