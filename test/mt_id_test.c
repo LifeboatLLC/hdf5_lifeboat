@@ -12678,7 +12678,7 @@ mt_future_test_2(TestParams_t *params)
     }
 
     return SUCCEED;
-}
+} /*mt_future_test_2*/
 
 static void
 mt_future_test_2_helper(int num_threads)
@@ -12691,6 +12691,7 @@ mt_future_test_2_helper(int num_threads)
     int              err_cnt = 0;
     int              ambig_cnt = 0;
     int              types_per_thread;
+    int              test_express    = GetTestExpress();
     long long int    type_successful_registers = 0;
     long long int    type_failed_registers = 0;
     long long int    type_successful_clears = 0;
@@ -12753,7 +12754,15 @@ mt_future_test_2_helper(int num_threads)
         params[i].types_stride   = num_threads;
 
         params[i].ids_start      = 0;
-        params[i].ids_count      = NUM_ID_INSTANCES;
+
+        /* Half the amount of ids unless doing a full-extensive test to conform with timing standards */
+        if ( test_express == 0 ) {
+            params[i].ids_count      = NUM_ID_INSTANCES;
+        }
+        else {
+            params[i].ids_count      = (512 * 1024);
+        }
+
         params[i].ids_stride     = 1;
 
         params[i].objects_start  = 0; /* these fields */
@@ -13185,7 +13194,7 @@ future_progress_cb(hid_t id)
         return FAIL;
 
     /* Fast path: try define now */
-    if ( ( try_define_future_id(id_index, id_index, FALSE, FALSE, TRUE, 0) == 0 ) ) 
+    if ( ( try_define_future_id(id_index, id_index, FALSE, FALSE, FALSE, 0) == 0 ) ) 
         return SUCCEED;
     
 
@@ -13207,7 +13216,7 @@ future_progress_cb(hid_t id)
             if ( progress_event.id == id ) {
                 obj_k = atomic_load(&(objects_array[id_index].k));
                 if ( !obj_k.discarded ) {
-                    (void)try_define_future_id(id_index, id_index, FALSE, FALSE, TRUE, 0);
+                    (void)try_define_future_id(id_index, id_index, FALSE, FALSE, FALSE, 0);
                 }
                 return SUCCEED;
             }
@@ -13294,6 +13303,7 @@ mt_future_test_3_helper(int num_threads)
     int              err_cnt = 0;
     int              ambig_cnt = 0;
     int              types_per_thread;
+    int              test_express = GetTestExpress();
     long long int    type_successful_registers = 0;
     long long int    type_failed_registers = 0;
     long long int    type_successful_clears = 0;
@@ -13357,7 +13367,15 @@ mt_future_test_3_helper(int num_threads)
         params[i].types_stride   = num_threads;
 
         params[i].ids_start      = 0;
-        params[i].ids_count      = NUM_ID_INSTANCES;
+
+        /* Half the amount of ids unless doing a full-extensive test to conform with timing standards*/
+        if ( test_express == 0 ) {
+            params[i].ids_count      = NUM_ID_INSTANCES;
+        }
+        else {
+            params[i].ids_count      = (512 * 1024);
+        }
+
         params[i].ids_stride     = 1;
 
         params[i].objects_start  = 0; /* these fields */
