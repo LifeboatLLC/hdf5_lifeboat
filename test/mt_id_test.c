@@ -11988,6 +11988,14 @@ mt_test_1_helper(int num_threads)
  *      4) Wait for all threads to complete.
  *
  *      5) destroy the types created in 2).
+ * 
+ * Changes:
+ * 
+ *      Altered the amount of IDs for test express level 2 to 1/4 the original amount of IDs
+ *      to account for the time the future ID tests take. This can be toggled and is only
+ *      an issue in git's build-and-test.
+ * 
+ *                                                              AZO - 2/3/2026
  *
  *      
  *******************************************************************************************/
@@ -12041,6 +12049,7 @@ mt_test_2_helper(int num_threads)
     int              err_cnt = 0;
     int              ambig_cnt = 0;
     int              types_per_thread;
+    int              test_express = GetTestExpress();
     long long int    type_successful_registers = 0;
     long long int    type_failed_registers = 0;
     long long int    type_successful_clears = 0;
@@ -12098,7 +12107,16 @@ mt_test_2_helper(int num_threads)
         params[i].types_stride   = num_threads;
 
         params[i].ids_start      = 0;
+#if 1
+        if ( test_express == 2 ) {
+            params[i].ids_count      = (512 * 1024);;
+        }
+        else {
+            params[i].ids_count      = NUM_ID_INSTANCES;
+        }
+#else
         params[i].ids_count      = NUM_ID_INSTANCES;
+#endif
         params[i].ids_stride     = 1;
 
         params[i].objects_start  = 0; /* these fields */
@@ -12756,12 +12774,16 @@ mt_future_test_2_helper(int num_threads)
         params[i].ids_start      = 0;
 
         /* Half the amount of ids unless doing a full-extensive test to conform with timing standards */
-        if ( test_express == 0 ) {
-            params[i].ids_count      = NUM_ID_INSTANCES;
+#if 1
+        if ( test_express == 2 ) {
+            params[i].ids_count      = (512 * 1024);;
         }
         else {
-            params[i].ids_count      = (512 * 1024);
+            params[i].ids_count      = NUM_ID_INSTANCES;
         }
+#else
+        params[i].ids_count      = NUM_ID_INSTANCES;
+#endif
 
         params[i].ids_stride     = 1;
 
@@ -13369,12 +13391,16 @@ mt_future_test_3_helper(int num_threads)
         params[i].ids_start      = 0;
 
         /* Half the amount of ids unless doing a full-extensive test to conform with timing standards*/
-        if ( test_express == 0 ) {
-            params[i].ids_count      = NUM_ID_INSTANCES;
+#if 1
+        if ( test_express == 2 ) {
+            params[i].ids_count      = (512 * 1024);;
         }
         else {
-            params[i].ids_count      = (512 * 1024);
+            params[i].ids_count      = NUM_ID_INSTANCES;
         }
+#else
+        params[i].ids_count      = NUM_ID_INSTANCES;
+#endif
 
         params[i].ids_stride     = 1;
 
