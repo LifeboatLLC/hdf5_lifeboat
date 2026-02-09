@@ -9413,42 +9413,6 @@ create_starting_classes_and_lists(void)
 
 } /* end create_starting_classes_and_lists() */
 
-#if 0
-/****************************************************************************************
- * Function:    generate_prop_value
- *
- * Purpose:     Randomly creates a value for a property. The value can be of type, int,
- *              double, float, or char *. This allows involved testing of properties with
- *              different value types ensuring there are no problems.
- *
- *
- * Return:      Success: Returns a new H5P_mt_prop_value_t for a H5P_mt_prop_t
- *
- *              Can only fail during the strdup() functions and will assert stop if a
- *              failure occurs there.
- *
- ****************************************************************************************
- */
-uint64_t
-generate_prop_value( *prop_entry, uint64_t version)
-{
-    uint64_t      value;
-    
-    H5P_mt_prop_value_t ret_value = {NULL, 0};
-
-    assert(prop_entry);
-
-    value = version;
-
-    ret_value.size = sizeof(value);
-
-    memcpy(ret_value.ptr, &value, ret_value.size);
-
-    return(ret_value);
-
-} /* end generate_prop_value() */
-#endif
-
 /****************************************************************************************
  * Function:    search_prop_table
  *
@@ -13455,24 +13419,34 @@ close_list(thread_params_t *thread_params)
     /* If closing the list failed, find why */
     else {
 
-        list_status = atomic_load(&(list_entry->status));
-
         /**
          * If the list has been created but closing it failed,
          * it was already closed. Double check
          */
-        if (list) {
+        if (list || list_status == DELETED) {
 
-            if (atomic_load(&(list->tag)) != H5P_MT_LIST_INVALID_TAG) {
-                fprintf(stderr, "start_status: %d\n", start_status);
-                assert(FALSE);
+            assert(atomic_load(&(list->tag)) == H5P_MT_LIST_INVALID_TAG);
+
+            while ( 0 == atomic_load(&(list_entry->ver_deleted)) )
+            {
+                sleep(1);
+            }
+
+            /* Update stats */
+            atomic_fetch_add(&(g_stats.close_list_num_already_deleted), 1);
+
+            if ( ! list )
+            {
+                list_sptr = atomic_load(&(list_entry->list_sptr));
+                list      = list_sptr.ptr;
+
+                assert(list);
+                assert(atomic_load(&(list->tag)) == H5P_MT_LIST_TAG ||
+                       atomic_load(&(list->tag)) == H5P_MT_LIST_INVALID_TAG);
             }
 
             op_info->obj_ver = atomic_load(&(list->curr_version));
             op_info->result  = LIST_DELETED;
-
-            /* Update stats */
-            atomic_fetch_add(&(g_stats.close_list_num_already_deleted), 1);
 
         } /* end if ( list ) */
         else {
@@ -13483,21 +13457,23 @@ close_list(thread_params_t *thread_params)
             atomic_fetch_add(&(g_stats.close_list_num_doesnt_exist), 1);
 
             /* Attempt to atomically set status back to start_status */
-            if (list_status == CLOSING_IN_PROGRESS) {
-                do {
-                    if (!atomic_compare_exchange_strong(&(list_entry->status), &list_status, start_status)) {
-                        /* Update stats */
-                        atomic_fetch_add(&(g_stats.num_list_status_thrd_cols), 1);
-                    }
-                    else {
-                        /* Update stats */
-                        atomic_fetch_add(&(g_stats.num_list_status_update_success), 1);
+            done = FALSE;
+            do {
+                list_status = atomic_load(&(list_entry->status));
+                assert(list_status == CLOSING_IN_PROGRESS);
 
-                        done = TRUE;
-                    }
+                if (!atomic_compare_exchange_strong(&(list_entry->status), &list_status, start_status)) {
+                    /* Update stats */
+                    atomic_fetch_add(&(g_stats.num_list_status_thrd_cols), 1);
+                }
+                else {
+                    /* Update stats */
+                    atomic_fetch_add(&(g_stats.num_list_status_update_success), 1);
 
-                } while (!done);
-            }
+                    done = TRUE;
+                }
+
+            } while (!done);
         }
 
     } /* end else ( ret != SUCCEED ) */
@@ -13919,13 +13895,29 @@ close_class(thread_params_t *thread_params)
         } /* end if ( ret == SUCCEED ) */
         else {
             /* If closing the class failed, find why */
-            if (class) {
+            if (class || class_status == DELETED) {
                 assert(atomic_load(&(class->tag)) == H5P_MT_CLASS_INVALID_TAG);
+
+                while ( 0 == atomic_load(&(class_entry->ver_deleted)) )
+                {
+                    sleep(1);
+                }
 
                 /* Update stats */
                 atomic_fetch_add(&(g_stats.close_class_num_already_deleted), 1);
 
-                op_info->result = CLASS_DELETED;
+                if ( ! class )
+                {
+                    class_sptr = atomic_load(&(class_entry->class_sptr));
+                    class      = class_sptr.ptr;
+
+                    assert(class);
+                    assert(atomic_load(&(class->tag)) == H5P_MT_CLASS_TAG ||
+                           atomic_load(&(class->tag)) == H5P_MT_CLASS_INVALID_TAG);
+                }
+
+                op_info->obj_ver = atomic_load(&(class->curr_version));
+                op_info->result  = CLASS_DELETED;
             }
             else {
                 op_info->result = CLASS_DOESNT_EXIST;
@@ -18422,8 +18414,32 @@ verify_class_props_at_creation(class_table_entry_t *class_entry)
 
 } /* end verify_class_props_at_creation() */
 
-/**
+/****************************************************************************************
+ * Function:    verify_list_props_at_creation
  *
+ * Purpose:     Verifies that all valid properties were inherited by the list correctly,
+ *              when derived from a class.
+ *
+ * Details:     The list's lkup_tbl is iterated and if a lkup_tbl's first_ver_of_curr 
+ *              equals 1, the first property that curr.ptr would have pointed to is 
+ *              grabbed from the lfsll, else the base.ptr property is grabbed. Then the 
+ *              parent's lfsll is iterated until a property that was valid at the version
+ *              of the parent the list was derived from is found.
+ *
+ *              These two properties are then compared to see if they're the same. If
+ *              they are the parent's lfsll is iterated to next different property to
+ *              ensure an older version of the property just checked isn't grabbed.
+ *
+ *              NOTE: This process works due to the way the lfslls are sorted, first by
+ *              chksum, then name, then version. Thus when a list is created the lkup_tbl
+ *              is initialized in the same order. Thus, the order both of the list and 
+ *              parent find the properties that should have been inherited will be the
+ *              same, so if one differs the properties were not inherited correctly.
+ *
+ *
+ * Return:      SUCCEED/FAIL
+ *
+ ****************************************************************************************
  */
 herr_t
 verify_list_props_at_creation(list_table_entry_t *list_entry)
@@ -18567,8 +18583,44 @@ verify_list_props_at_creation(list_table_entry_t *list_entry)
 
 } /* end verify_list_props_at_creation() */
 
-/**
+/****************************************************************************************
+ * Function:    verify_copy_list_props_at_creation
  *
+ * Purpose:     Verifies that all valid properties were copied from a list correctly into
+ *              a new copy of the list
+ * 
+ *              NOTE: og_list refers to the original list being copied, and list or copy 
+ *              refers to the new copy.
+ *
+ * Details:     The list's and og_list's lkup_tbl are iterated and the list's first 
+ *              property for that lkup_tbl entry is grabbed (whether it's curr.ptr or
+ *              base.ptr) and the og_list's property for that lkup_tbl entry at the
+ *              version it was copied at is grabbed. 
+ * 
+ *              These two properties are compared to ensure the property was copied 
+ *              correctly.
+ *
+ *              Next the lfslls of both the copy list and the og_list are iterated. Any
+ *              property in the copy at version 1 that has the flag in_lkup_tbl as FALSE
+ *              is grabbed, and any property in the og_list that is valid at the version
+ *              the og_list was copied and has the flag in_lkup_tbl as FALSE is grabbed.
+ *              
+ *              These two properties are compared to ensure they were copied correctly.
+ * 
+ *              NOTE: when iterating the lfsll properties that have the flag in_lkup_tbl
+ *              set to TRUE are skipped because they would have already been checked 
+ *              when comparing the lkup_tbls of the two lists.
+ *
+ *              NOTE: This process works due to the way the lfslls are sorted, first by
+ *              chksum, then name, then version. Thus when a list is created the lkup_tbl
+ *              is initialized in the same order. Thus, both the og_list and new copy 
+ *              will find the properties that should have been copied in the same order, 
+ *              so if one differs the properties were not copied correctly.
+ *
+ *
+ * Return:      SUCCEED/FAIL
+ *
+ ****************************************************************************************
  */
 herr_t
 verify_copy_list_props_at_creation(list_table_entry_t *list_entry)
@@ -19339,8 +19391,14 @@ check_operations(thread_params_t *thread_params, uint64_t num_threads)
 
 #endif /* ifdef H5_HAVE_MULTITHREAD */
 
-/**
+/****************************************************************************************
+ * Function:    init_g_stats
  *
+ * Purpose:     Initializes the stat fields of the global variable g_stats.
+ *
+ * Return:      SUCCEED/FAIL
+ *
+ ****************************************************************************************
  */
 static herr_t
 init_g_stats(void)
@@ -19552,8 +19610,15 @@ init_g_stats(void)
 
 } /* end init_g_stats() */
 
-/**
+/****************************************************************************************
+ * Function:    reset_g_stats
  *
+ * Purpose:     Resets the stat fields of the global variable g_stats, so the stats are
+ *              fresh for each iteration of the test.
+ *
+ * Return:      SUCCEED/FAIL
+ *
+ ****************************************************************************************
  */
 static herr_t
 reset_g_stats(void)
