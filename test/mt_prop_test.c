@@ -13427,16 +13427,14 @@ close_list(thread_params_t *thread_params)
 
             assert(atomic_load(&(list->tag)) == H5P_MT_LIST_INVALID_TAG);
 
-            while ( 0 == atomic_load(&(list_entry->ver_deleted)) )
-            {
+            while (0 == atomic_load(&(list_entry->ver_deleted))) {
                 sleep(1);
             }
 
             /* Update stats */
             atomic_fetch_add(&(g_stats.close_list_num_already_deleted), 1);
 
-            if ( ! list )
-            {
+            if (!list) {
                 list_sptr = atomic_load(&(list_entry->list_sptr));
                 list      = list_sptr.ptr;
 
@@ -13898,16 +13896,14 @@ close_class(thread_params_t *thread_params)
             if (class || class_status == DELETED) {
                 assert(atomic_load(&(class->tag)) == H5P_MT_CLASS_INVALID_TAG);
 
-                while ( 0 == atomic_load(&(class_entry->ver_deleted)) )
-                {
+                while (0 == atomic_load(&(class_entry->ver_deleted))) {
                     sleep(1);
                 }
 
                 /* Update stats */
                 atomic_fetch_add(&(g_stats.close_class_num_already_deleted), 1);
 
-                if ( ! class )
-                {
+                if (!class) {
                     class_sptr = atomic_load(&(class_entry->class_sptr));
                     class      = class_sptr.ptr;
 
@@ -18420,9 +18416,9 @@ verify_class_props_at_creation(class_table_entry_t *class_entry)
  * Purpose:     Verifies that all valid properties were inherited by the list correctly,
  *              when derived from a class.
  *
- * Details:     The list's lkup_tbl is iterated and if a lkup_tbl's first_ver_of_curr 
- *              equals 1, the first property that curr.ptr would have pointed to is 
- *              grabbed from the lfsll, else the base.ptr property is grabbed. Then the 
+ * Details:     The list's lkup_tbl is iterated and if a lkup_tbl's first_ver_of_curr
+ *              equals 1, the first property that curr.ptr would have pointed to is
+ *              grabbed from the lfsll, else the base.ptr property is grabbed. Then the
  *              parent's lfsll is iterated until a property that was valid at the version
  *              of the parent the list was derived from is found.
  *
@@ -18432,7 +18428,7 @@ verify_class_props_at_creation(class_table_entry_t *class_entry)
  *
  *              NOTE: This process works due to the way the lfslls are sorted, first by
  *              chksum, then name, then version. Thus when a list is created the lkup_tbl
- *              is initialized in the same order. Thus, the order both of the list and 
+ *              is initialized in the same order. Thus, the order both of the list and
  *              parent find the properties that should have been inherited will be the
  *              same, so if one differs the properties were not inherited correctly.
  *
@@ -18588,33 +18584,33 @@ verify_list_props_at_creation(list_table_entry_t *list_entry)
  *
  * Purpose:     Verifies that all valid properties were copied from a list correctly into
  *              a new copy of the list
- * 
- *              NOTE: og_list refers to the original list being copied, and list or copy 
+ *
+ *              NOTE: og_list refers to the original list being copied, and list or copy
  *              refers to the new copy.
  *
- * Details:     The list's and og_list's lkup_tbl are iterated and the list's first 
+ * Details:     The list's and og_list's lkup_tbl are iterated and the list's first
  *              property for that lkup_tbl entry is grabbed (whether it's curr.ptr or
  *              base.ptr) and the og_list's property for that lkup_tbl entry at the
- *              version it was copied at is grabbed. 
- * 
- *              These two properties are compared to ensure the property was copied 
+ *              version it was copied at is grabbed.
+ *
+ *              These two properties are compared to ensure the property was copied
  *              correctly.
  *
  *              Next the lfslls of both the copy list and the og_list are iterated. Any
  *              property in the copy at version 1 that has the flag in_lkup_tbl as FALSE
  *              is grabbed, and any property in the og_list that is valid at the version
  *              the og_list was copied and has the flag in_lkup_tbl as FALSE is grabbed.
- *              
+ *
  *              These two properties are compared to ensure they were copied correctly.
- * 
+ *
  *              NOTE: when iterating the lfsll properties that have the flag in_lkup_tbl
- *              set to TRUE are skipped because they would have already been checked 
+ *              set to TRUE are skipped because they would have already been checked
  *              when comparing the lkup_tbls of the two lists.
  *
  *              NOTE: This process works due to the way the lfslls are sorted, first by
  *              chksum, then name, then version. Thus when a list is created the lkup_tbl
- *              is initialized in the same order. Thus, both the og_list and new copy 
- *              will find the properties that should have been copied in the same order, 
+ *              is initialized in the same order. Thus, both the og_list and new copy
+ *              will find the properties that should have been copied in the same order,
  *              so if one differs the properties were not copied correctly.
  *
  *
