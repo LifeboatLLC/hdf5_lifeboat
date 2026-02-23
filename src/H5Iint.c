@@ -3182,6 +3182,19 @@ done:
  *              variables can be updated as needed at an appropriate time.
  * 
  *                                                   AZO -- 1/15/26
+ * 
+ *              Addendum 2/18/26:
+ * 
+ *              In forced teardown (udata->force == TRUE), it is possible
+ *              for an ID to already be marked closing by another thread.
+ *              In this case, the normal closing owner visibility rule 
+ *              may be overriden by adopting the closing ownership (tid)
+ *              so the ID can be marked and removed. This is limited to
+ *              force-mode teardown and does not change normal lifecycle
+ *              behavior. As of now this only seems to be an issue present
+ *              on MacOS and does not appear on different operating systems.
+ * 
+ *                                                  -- AZO
  *
  * Return:      SUCCEED/FAIL
  *
@@ -3284,9 +3297,25 @@ H5I__mark_node(void *_info, void H5_ATTR_UNUSED *key, void *_udata)
             if ( init_info_k.tid != H5TS_thread_id() ) 
 #endif /* H5I_BYPASS_HDF5_TID */
             {
-                /* update stats for entries skipped due to closing set and tid mismatch */
-                atomic_fetch_add(&(H5I_mt_g.H5I__mark_node__id_ignored__closing_set_and_wrong_thread), 1ULL);
-                break;
+                if ( !udata->force ) {
+                    /* update stats for entries skipped due to closing set and tid mismatch */
+                    atomic_fetch_add(&(H5I_mt_g.H5I__mark_node__id_ignored__closing_set_and_wrong_thread), 1ULL);
+                    break;
+                }
+
+                /* Force teardown, adopt closing ownership so we can complete mark + cleanup */
+                mod_info_k = init_info_k;
+#if H5I_BYPASS_HDF5_TID
+                mod_info_k.tid = pthread_self();
+                mod_info_k.tid_valid = TRUE;
+#else
+                adopt_k.tid = H5TS_thread_id();
+#endif 
+                if ( !atomic_compare_exchange_strong(&(id_info_ptr->k), &(init_info_k), mod_info_k)) {
+                    continue; /* someone changed it, retry outer loop */
+                }
+
+                continue; /* re-load kernel and proceed */
 
             } else {
 
@@ -3368,7 +3397,7 @@ H5I__mark_node(void *_info, void H5_ATTR_UNUSED *key, void *_udata)
 
         } else {
 
-            if ( closing_rpt_fcn ) {
+            if ( ( closing_rpt_fcn ) && ( !init_info_k.closing ) ) {
 
                 H5_GCC_CLANG_DIAG_OFF("cast-qual")
                 (closing_rpt_fcn)(id_info_ptr->id, (void *)(init_info_k.object), H5I_CLOSING_STAT__SUCCESS);
@@ -7187,7 +7216,7 @@ H5I__dec_ref(hid_t id, void **request, hbool_t app)
 
                 assert(mod_info_k.closing);
 
-                if ( closing_rpt_fcn ) {
+                if ( ( closing_rpt_fcn ) && ( !base_info_k.closing ) ) {
 
                     H5_GCC_CLANG_DIAG_OFF("cast-qual")
                     (closing_rpt_fcn)(id, (void *)(base_info_k.object), H5I_CLOSING_STAT__SUCCESS);

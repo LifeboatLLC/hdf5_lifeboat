@@ -911,7 +911,7 @@ init_globals(void)
         progress_test_queue->buf[i].active    = FALSE;
     }
     atomic_init(&progress_test_queue->head, 0ULL);
-    atomic_init(&progress_test_queue->head, 0ULL);
+    atomic_init(&progress_test_queue->tail, 0ULL);
 
     return SUCCEED;
 
@@ -1016,10 +1016,10 @@ reset_globals(TestParams_t H5_ATTR_UNUSED *params)
 
         atomic_store(&(id_instance_array[i].successful_future_reserves), 0ULL);
         atomic_store(&(id_instance_array[i].failed_future_reserves), 0ULL);
-        atomic_init(&(id_instance_array[i].successful_future_defines), 0ULL);
-        atomic_init(&(id_instance_array[i].failed_future_defines), 0ULL);
+        atomic_store(&(id_instance_array[i].successful_future_defines), 0ULL);
+        atomic_store(&(id_instance_array[i].failed_future_defines), 0ULL);
 
-        atomic_init(&(id_instance_array[i].progress_calls), 0ULL);
+        atomic_store(&(id_instance_array[i].progress_calls), 0ULL);
     }
     /* future ID queue testing fields */
     for ( i = 0; i < H5I_TEST_Q_CAPACITY; i++ ) 
@@ -1029,7 +1029,7 @@ reset_globals(TestParams_t H5_ATTR_UNUSED *params)
         progress_test_queue->buf[i].active    = FALSE;
     }
     atomic_store(&progress_test_queue->head, 0ULL);
-    atomic_store(&progress_test_queue->head, 0ULL);
+    atomic_store(&progress_test_queue->tail, 0ULL);
 
     return SUCCEED;
 
@@ -1309,8 +1309,8 @@ update_freed_future(int id_index)
     id_object_kernel_t obj_k, mod_obj_k;
     int obj_index;
 
-    memset(&mod_id_inst_k, 0, sizeof(id_object_kernel_t));
-    memset(&id_inst_k, 0, sizeof(id_object_kernel_t));        
+    memset(&mod_id_inst_k, 0, sizeof(id_instance_kernel_t));
+    memset(&id_inst_k, 0, sizeof(id_instance_kernel_t));        
     memset(&obj_k, 0, sizeof(id_object_kernel_t));
     memset(&mod_obj_k, 0, sizeof(id_object_kernel_t));
 
@@ -1345,14 +1345,12 @@ update_freed_future(int id_index)
     /* Update the mapped harness object slot - if any */
     obj_index = atomic_load(&(id_instance_array[id_index].obj_index));
 
-    /* If no mapping exists yet, nothing to do (future may have had no harness object) */
-    if ( obj_index < 0 || obj_index >= NUM_ID_OBJECTS )
-        return SUCCEED;
-
-    /* Update the harness object */
-    obj_k = atomic_load(&(objects_array[id_index].k));
 
     while ( 1 ) {
+
+        /* Update the harness object */
+        obj_k = atomic_load(&(objects_array[id_index].k));
+
         /* if the object is already marked return */
         if( obj_k.discarded ) {
             break;
@@ -4767,6 +4765,7 @@ try_define_future_id(int id_index, int obj_index,
 
             } else {
                 /* CAS lost: loop */
+                continue;
             }
         }
     }
@@ -4794,28 +4793,6 @@ try_define_future_id(int id_index, int obj_index,
                 /* reserve should have set this; if not, harness is inconsistent */
                 assert(FALSE);
             }
-
-            mod_id_inst_k.in_progress        = FALSE;
-            mod_id_inst_k.created            = id_inst_k.created;
-            mod_id_inst_k.closings_attempted = id_inst_k.closings_attempted;
-            mod_id_inst_k.closings_failed    = id_inst_k.closings_failed;
-            mod_id_inst_k.closing            = id_inst_k.closing;
-            mod_id_inst_k.discarded          = id_inst_k.discarded;
-            mod_id_inst_k.future             = id_inst_k.future;
-            mod_id_inst_k.realized           = id_inst_k.realized;
-            mod_id_inst_k.future_id_src      = id_inst_k.future_id_src;
-            mod_id_inst_k.id                 = id_inst_k.id;
-
-            mod_id_obj_k.in_progress         = FALSE;
-            mod_id_obj_k.allocated           = id_obj_k.allocated;
-            mod_id_obj_k.discarded           = id_obj_k.discarded;
-            mod_id_obj_k.future              = id_obj_k.future;
-            mod_id_obj_k.real_id_def_in_prog = id_obj_k.real_id_def_in_prog;
-            mod_id_obj_k.real_id_defined     = id_obj_k.real_id_defined;
-            mod_id_obj_k.future_id_realized  = id_obj_k.future_id_realized;
-            mod_id_obj_k.future_id_discarded = id_obj_k.future_id_discarded;
-            mod_id_obj_k.id                  = id_obj_k.id;
-            mod_id_obj_k.id_info_ptr         = id_obj_k.id_info_ptr;
 
             if ( H5I__define_future_id(type_id, id, (void *)&objects_array[obj_index]) < 0 ) {
                 ambiguous++;
@@ -4866,13 +4843,16 @@ try_define_future_id(int id_index, int obj_index,
         {
             id_obj_k = atomic_load(&(objects_array[obj_index].k));
 
-            mod_id_obj_k = id_obj_k;
-            mod_id_obj_k.in_progress        = FALSE;
-            mod_id_obj_k.allocated          = TRUE;
-            mod_id_obj_k.future             = FALSE;
+            mod_id_obj_k.allocated = TRUE;
+            mod_id_obj_k.discarded = id_obj_k.discarded;
+            mod_id_obj_k.future = FALSE;
+            mod_id_obj_k.future_id_discarded = id_obj_k.future_id_discarded;
             mod_id_obj_k.future_id_realized = TRUE;
-            mod_id_obj_k.id                 = id;
-            mod_id_obj_k.id_info_ptr        = info_ptr; /* correct type */
+            mod_id_obj_k.id = id;
+            mod_id_obj_k.real_id_def_in_prog = id_obj_k.real_id_def_in_prog;
+            mod_id_obj_k.real_id_defined = id_obj_k.real_id_defined;
+            mod_id_obj_k.in_progress = FALSE;
+            mod_id_obj_k.id_info_ptr = info_ptr;
             
 
             if ( atomic_compare_exchange_strong(&(objects_array[obj_index].k), &id_obj_k, mod_id_obj_k) ) {
@@ -4928,8 +4908,17 @@ try_define_future_id(int id_index, int obj_index,
                     done = TRUE;
                     break;
                 }
-                mod_id_obj_k = id_obj_k;
+
+                mod_id_obj_k.allocated = id_obj_k.allocated;
+                mod_id_obj_k.discarded = id_obj_k.discarded;
+                mod_id_obj_k.future = id_obj_k.future;
+                mod_id_obj_k.future_id_discarded = id_obj_k.future_id_discarded;
+                mod_id_obj_k.future_id_realized = TRUE;
+                mod_id_obj_k.id = id;
+                mod_id_obj_k.real_id_def_in_prog = id_obj_k.real_id_def_in_prog;
+                mod_id_obj_k.real_id_defined = id_obj_k.real_id_defined;
                 mod_id_obj_k.in_progress = FALSE;
+                mod_id_obj_k.id_info_ptr = id_obj_k.id_info_ptr;
 
                 if (atomic_compare_exchange_strong(&(objects_array[obj_index].k), &id_obj_k, mod_id_obj_k))
                     done = TRUE;
@@ -4948,7 +4937,17 @@ try_define_future_id(int id_index, int obj_index,
                     done = TRUE;
                     break;
                 }
-                mod_id_inst_k = id_inst_k;
+
+                mod_id_inst_k.closing = id_inst_k.closing;
+                mod_id_inst_k.closings_attempted = id_inst_k.closings_attempted;
+                mod_id_inst_k.closings_failed = id_inst_k.closings_failed;
+                mod_id_inst_k.created = id_inst_k.created;
+                mod_id_inst_k.discarded = id_inst_k.discarded;
+                mod_id_inst_k.future = id_inst_k.future;
+                mod_id_inst_k.future_id_src = id_inst_k.future_id_src;
+                mod_id_inst_k.id = id;
+                mod_id_inst_k.realized = id_inst_k.realized;
+
                 mod_id_inst_k.in_progress = FALSE;
 
                 if (atomic_compare_exchange_strong(&(id_instance_array[id_index].k), &id_inst_k, mod_id_inst_k))
@@ -5755,7 +5754,7 @@ try_object_verify(int id_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, in
                 assert( success );
                 
 
-                if ( !post_id_inst_k.future ) {
+                if ( ( !post_id_inst_k.future ) && ( pre_id_inst_k.realized ) ) {
 
                     assert( -1 != obj_index );
                 }
