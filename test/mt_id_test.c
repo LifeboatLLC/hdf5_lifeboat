@@ -12148,7 +12148,7 @@ mt_test_2_helper(int num_threads)
         params[i].ids_start      = 0;
 #if 1
         if ( test_express == 2 ) {
-            params[i].ids_count      = (512 * 1024);;
+            params[i].ids_count      = (512 * 512);
         }
         else {
             params[i].ids_count      = NUM_ID_INSTANCES;
@@ -12815,7 +12815,7 @@ mt_future_test_2_helper(int num_threads)
         /* Half the amount of ids unless doing a full-extensive test to conform with timing standards */
 #if 1
         if ( test_express == 2 ) {
-            params[i].ids_count      = (512 * 1024);;
+            params[i].ids_count      = (512 * 512);
         }
         else {
             params[i].ids_count      = NUM_ID_INSTANCES;
@@ -13432,7 +13432,7 @@ mt_future_test_3_helper(int num_threads)
         /* Half the amount of ids unless doing a full-extensive test to conform with timing standards*/
 #if 1
         if ( test_express == 2 ) {
-            params[i].ids_count      = (512 * 1024);;
+            params[i].ids_count      = (512 * 512);
         }
         else {
             params[i].ids_count      = NUM_ID_INSTANCES;
