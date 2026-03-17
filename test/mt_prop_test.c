@@ -918,13 +918,12 @@ static herr_t reset_globals(TestParams_t H5_ATTR_UNUSED *params);
  * Functions for mt_context_test
  */
 static herr_t mt_context_test(TestParams_t *params);
-uint64_t H5P__test_cx_get_version(hid_t list_id, uint64_t version);
-herr_t test_cx_lists_get(H5P_mt_list_t *list, uint64_t version);
-herr_t test_cx_lists_set_1(H5P_mt_list_t *list, const char *name, H5P_mt_prop_value_t value, 
-                                uint64_t version, _Atomic uint64_t *def_global_ver_ptr, 
-                                H5P_plist_type_t type);
-herr_t test_cx_lists_set_2(H5P_mt_list_t *list, const char *name, H5P_mt_prop_value_t value, 
-                                uint64_t version, H5P_plist_type_t type, int i);
+uint64_t      H5P__test_cx_get_version(hid_t list_id, uint64_t version);
+herr_t        test_cx_lists_get(H5P_mt_list_t *list, uint64_t version);
+herr_t test_cx_lists_set_1(H5P_mt_list_t *list, const char *name, H5P_mt_prop_value_t value, uint64_t version,
+                           _Atomic uint64_t *def_global_ver_ptr, H5P_plist_type_t type);
+herr_t test_cx_lists_set_2(H5P_mt_list_t *list, const char *name, H5P_mt_prop_value_t value, uint64_t version,
+                           H5P_plist_type_t type, int i);
 
 /**
  * Functions for mt_test_2
@@ -2962,7 +2961,7 @@ test_h5p_mt_functions(void *_test_params)
 static herr_t
 test_h5p_mt_class_1(test_params_t *test_params)
 {
-    hid_t                       class1_id = H5I_INVALID_HID;
+    hid_t class1_id = H5I_INVALID_HID;
 
     H5P_mt_class_t              *test_root = NULL;
     H5P_mt_class_t              *class1;
@@ -2999,7 +2998,7 @@ test_h5p_mt_class_1(test_params_t *test_params)
 
     /**
      * Create a new class derived from the test root.
-     * 
+     *
      * This test is using the internal function H5P__mt_create_class() to test creating
      * a default class during initialization of H5P.
      */
@@ -3030,9 +3029,9 @@ test_h5p_mt_class_1(test_params_t *test_params)
 
     /**
      * Insert class1's default properties
-     * 
-     * These inserts are using H5P__register_real to test inserting the default 
-     * properties of a default class during initialization. 
+     *
+     * These inserts are using H5P__register_real to test inserting the default
+     * properties of a default class during initialization.
      */
 
     /* create default prop1 */
@@ -3114,12 +3113,11 @@ test_h5p_mt_class_1(test_params_t *test_params)
     CHECK_I(ret, "H5P__class_get");
     assert(ret == 0);
 
-    table_prop = class_prop_table[0].prop;
+    table_prop  = class_prop_table[0].prop;
     table_value = atomic_load(&(table_prop->value));
 
     VERIFY(value1, *(int *)table_value.ptr, "H5P__class_get");
     assert(0 == memcmp(&value1, table_value.ptr, table_value.size));
-
 
     /* Search for default prop2 */
     if (NULL == (prop2 = H5P__mt_search__class(class1, class_prop_table[1].name, version))) {
@@ -3142,12 +3140,11 @@ test_h5p_mt_class_1(test_params_t *test_params)
     CHECK_I(ret, "H5P__class_get");
     assert(ret == 0);
 
-    table_prop = class_prop_table[1].prop;
+    table_prop  = class_prop_table[1].prop;
     table_value = atomic_load(&(table_prop->value));
 
     VERIFY(value2, *(float *)table_value.ptr, "H5P__class_get");
     assert(0 == memcmp(&value2, table_value.ptr, table_value.size));
-
 
     /* Search for default prop3 */
     if (NULL == (prop3 = H5P__mt_search__class(class1, class_prop_table[2].name, version))) {
@@ -3170,15 +3167,14 @@ test_h5p_mt_class_1(test_params_t *test_params)
     CHECK_I(ret, "H5P__class_get");
     assert(ret == 0);
 
-    //fprintf(stderr, "prop string value: %s\n", value3);
+    // fprintf(stderr, "prop string value: %s\n", value3);
 
-    table_prop = class_prop_table[2].prop;
+    table_prop  = class_prop_table[2].prop;
     table_value = atomic_load(&(table_prop->value));
 
     ret = strcmp(value3, table_value.ptr);
     CHECK_I(ret, "H5P__class_get");
     assert(ret == 0);
-
 
     /**
      * Insert a new property
@@ -3188,8 +3184,8 @@ test_h5p_mt_class_1(test_params_t *test_params)
     table_value = atomic_load(&(table_prop->value));
 
     /* Create and insert prop4 */
-    ret = H5Pregister2(class1_id, class_prop_table[3].name, table_value.size, table_value.ptr,
-                                                        NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+    ret = H5Pregister2(class1_id, class_prop_table[3].name, table_value.size, table_value.ptr, NULL, NULL,
+                       NULL, NULL, NULL, NULL, NULL);
     CHECK_I(ret, "H5Pregister2");
     assert(ret == 0);
 
@@ -3227,7 +3223,7 @@ test_h5p_mt_class_1(test_params_t *test_params)
     CHECK_I(ret, "H5P__class_get");
     assert(ret == 0);
 
-    table_prop = class_prop_table[3].prop;
+    table_prop  = class_prop_table[3].prop;
     table_value = atomic_load(&(table_prop->value));
 
     VERIFY(value4, *(double *)table_value.ptr, "H5P__class_get");
@@ -3241,7 +3237,6 @@ test_h5p_mt_class_1(test_params_t *test_params)
     table_value = atomic_load(&(table_prop->value));
 
     assert(0 == strcmp(table_prop->name, class_prop_table[0].name));
-
 
     /* Create and insert a second version of property 1 */
     ret = H5P__class_set(class1, class_prop_table[0].name, table_value.ptr);
@@ -3282,7 +3277,6 @@ test_h5p_mt_class_1(test_params_t *test_params)
     VERIFY(value1, *(int *)table_value.ptr, "H5P__class_get");
     assert(0 == memcmp(&value1, table_value.ptr, table_value.size));
 
-
     /**
      * Modified an added property
      */
@@ -3295,7 +3289,6 @@ test_h5p_mt_class_1(test_params_t *test_params)
     H5P__class_set(class1, table_prop->name, table_value.ptr);
     CHECK_I(ret, "H5P__class_set");
     assert(ret == 0);
-
 
     version = atomic_load(&(class1->curr_version));
 
@@ -3362,7 +3355,6 @@ test_h5p_mt_class_1(test_params_t *test_params)
     VERIFY(ret, FAIL, "H5P__class_get");
     assert(ret < 0);
 
-
     /**
      * Delete a modified property (property with multiple vesrions)
      */
@@ -3394,7 +3386,6 @@ test_h5p_mt_class_1(test_params_t *test_params)
     H5E_END_TRY
     VERIFY(ret, FAIL, "H5P__class_get");
     assert(ret < 0);
-
 
     /**
      * Delete an added property
@@ -3441,17 +3432,16 @@ test_h5p_mt_class_1(test_params_t *test_params)
     VERIFY(ret, FAIL, "H5P__class_set");
     assert(ret < 0);
 
-
     /**
      * Test creating an entirely new property of a deleted property. Should SUCCEED
-     * 
+     *
      * This is done on two properties so there are more properties in class1 at the
-     * beginning of test_h5p_mt_class_2(). Additionally the properties are not 
-     * checked after H5Pregister2, due to class1's entire LFSLL is iterated and 
+     * beginning of test_h5p_mt_class_2(). Additionally the properties are not
+     * checked after H5Pregister2, due to class1's entire LFSLL is iterated and
      * every property is checked afterwards.
      */
-    ret = H5Pregister2(class1_id, table_prop->name, table_value.size, table_value.ptr,
-                                                NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+    ret = H5Pregister2(class1_id, table_prop->name, table_value.size, table_value.ptr, NULL, NULL, NULL, NULL,
+                       NULL, NULL, NULL);
     CHECK_I(ret, "H5Pregister2");
     assert(ret == SUCCEED);
 
@@ -3460,8 +3450,8 @@ test_h5p_mt_class_1(test_params_t *test_params)
     table_prop  = get_table_prop_ver(class_prop_table[1], 2);
     table_value = atomic_load(&(table_prop->value));
 
-    ret = H5Pregister2(class1_id, table_prop->name, table_value.size, table_value.ptr,
-                                                NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+    ret = H5Pregister2(class1_id, table_prop->name, table_value.size, table_value.ptr, NULL, NULL, NULL, NULL,
+                       NULL, NULL, NULL);
     CHECK_I(ret, "H5Pregister2");
     assert(ret == SUCCEED);
 
@@ -3567,7 +3557,7 @@ test_h5p_mt_class_2(test_params_t *test_params)
     herr_t ret_value = SUCCEED;
 
     /* Get class1 from the LFSLL of test classes */
-    class1 = test_params->test_classes_head.ptr;
+    class1    = test_params->test_classes_head.ptr;
     class1_id = atomic_load(&(class1->id));
 
     assert(class1);
@@ -3619,12 +3609,10 @@ test_h5p_mt_class_2(test_params_t *test_params)
     assert(thrd.opening == FALSE);
     assert(thrd.closing == FALSE);
 
-
     /* Compare class1 and class2 (should be equal) */
     ret = H5Pequal(class1_id, class2_id);
     VERIFY(ret, TRUE, "H5Pequal");
     assert(ret == TRUE);
-
 
     /**
      * Modify a property in class2, and compare class1 and class2 again.
@@ -3657,7 +3645,6 @@ test_h5p_mt_class_2(test_params_t *test_params)
     H5E_END_TRY
     VERIFY(ret, FALSE, "H5Pequal");
     assert(ret == FALSE);
-
 
     /**
      * Change the modified property back to default value and compare
@@ -3762,11 +3749,11 @@ test_h5p_mt_class_2(test_params_t *test_params)
          * NOTE: to make it easy, I am manually swapping the position of the two
          * classes in the class free list. This is so when the class is allocated
          * for reuse from the free list, the properties in class2 will be closed
-         * and inserted into the property free list, for further testing. 
-         * 
-         * This is simply an easy way to do this without having to create new 
+         * and inserted into the property free list, for further testing.
+         *
+         * This is simply an easy way to do this without having to create new
          * structures just to close them. Also, using atomic_store here instead
-         * of atomic_compare_exchange_strong, because this is done only in 
+         * of atomic_compare_exchange_strong, because this is done only in
          * single thread.
          */
         fl_head.ptr = test_class;
@@ -3961,7 +3948,6 @@ test_h5p_mt_list_1(test_params_t *test_params)
     assert(atomic_load(&(class2->tag)) == H5P_MT_CLASS_TAG);
     assert(0 == strcmp(class2->name, CLASS2_NAME));
 
-
     /**
      * Derive a new list1 from class1
      */
@@ -4039,7 +4025,7 @@ test_h5p_mt_list_1(test_params_t *test_params)
     CHECK_I(ret, "H5Pget");
     assert(ret == 0);
 
-    table_prop = list_prop_table[0].prop;
+    table_prop  = list_prop_table[0].prop;
     table_value = atomic_load(&(table_prop->value));
 
     VERIFY(value1, *(int *)table_value.ptr, "H5Pget");
@@ -4061,7 +4047,7 @@ test_h5p_mt_list_1(test_params_t *test_params)
     CHECK_I(ret, "H5Pget");
     assert(ret == 0);
 
-    table_prop = list_prop_table[1].prop;
+    table_prop  = list_prop_table[1].prop;
     table_value = atomic_load(&(table_prop->value));
 
     VERIFY(value2, *(float *)table_value.ptr, "H5Pget");
@@ -4083,7 +4069,7 @@ test_h5p_mt_list_1(test_params_t *test_params)
     CHECK_I(ret, "H5Pget");
     assert(ret == 0);
 
-    table_prop = list_prop_table[2].prop;
+    table_prop  = list_prop_table[2].prop;
     table_value = atomic_load(&(table_prop->value));
 
     ret = strcmp(value3, table_value.ptr);
@@ -4115,16 +4101,15 @@ test_h5p_mt_list_1(test_params_t *test_params)
     table_value = atomic_load(&(table_prop->value));
 
     /* Create and insert a new property */
-    ret = H5Pinsert2(list1_id, table_prop->name, table_value.size, table_value.ptr,
-                                                    NULL, NULL, NULL, NULL, NULL, NULL);
+    ret = H5Pinsert2(list1_id, table_prop->name, table_value.size, table_value.ptr, NULL, NULL, NULL, NULL,
+                     NULL, NULL);
     CHECK_I(ret, "H5Pinsert2");
     assert(ret == 0);
 
     version = atomic_load(&(list1->curr_version));
 
     /* Check list1's fields */
-    ret =
-        list_ver_and_len_check(list1, version, (version + 1), 3, 1, 4, 1, 3, "H5Pinsert2");
+    ret = list_ver_and_len_check(list1, version, (version + 1), 3, 1, 4, 1, 3, "H5Pinsert2");
     CHECK_I(ret, "H5Pinsert2");
 
     /* Update the list's table_prop create_version to match */
@@ -4177,8 +4162,7 @@ test_h5p_mt_list_1(test_params_t *test_params)
     version = atomic_load(&(list1->curr_version));
 
     /* Ensure list1's fields are correct */
-    ret =
-        list_ver_and_len_check(list1, version, (version + 1), 3, 1, 4, 2, 4, "H5Pset");
+    ret = list_ver_and_len_check(list1, version, (version + 1), 3, 1, 4, 2, 4, "H5Pset");
     CHECK_I(ret, "H5Pset");
 
     /* Update the table_prop create_verson to match */
@@ -4218,8 +4202,7 @@ test_h5p_mt_list_1(test_params_t *test_params)
     version = atomic_load(&(list1->curr_version));
 
     /* Ensure list1's fields are correct */
-    ret =
-        list_ver_and_len_check(list1, version, (version + 1), 3, 1, 4, 2, 5, "H5Pset");
+    ret = list_ver_and_len_check(list1, version, (version + 1), 3, 1, 4, 2, 5, "H5Pset");
     CHECK_I(ret, "H5Pset");
 
     /* Update the table_prop create_version to match */
@@ -4257,14 +4240,12 @@ test_h5p_mt_list_1(test_params_t *test_params)
     version = atomic_load(&(list1->curr_version));
 
     /* Ensure list1's fields are correct */
-    ret =
-        list_ver_and_len_check(list1, version, (version + 1), 3, 1, 3, 2, 5, "H5Premove");
+    ret = list_ver_and_len_check(list1, version, (version + 1), 3, 1, 3, 2, 5, "H5Premove");
     CHECK_I(ret, "H5Premove");
 
     /* Ensure the entry's base_delete_version is set */
     entry = &list1->lkup_tbl[2];
-    VERIFY(atomic_load(&(entry->base_delete_version)), atomic_load(&(list1->curr_version)),
-           "H5Premove");
+    VERIFY(atomic_load(&(entry->base_delete_version)), atomic_load(&(list1->curr_version)), "H5Premove");
     assert(atomic_load(&(entry->base_delete_version)) == atomic_load(&(list1->curr_version)));
 
     /**
@@ -4289,8 +4270,7 @@ test_h5p_mt_list_1(test_params_t *test_params)
     version = atomic_load(&(list1->curr_version));
 
     /* Ensure list1's fields are correct */
-    ret =
-        list_ver_and_len_check(list1, version, (version + 1), 3, 1, 2, 1, 5, "H5Premove");
+    ret = list_ver_and_len_check(list1, version, (version + 1), 3, 1, 2, 1, 5, "H5Premove");
     CHECK_I(ret, "H5Premove");
 
     /**
@@ -4314,8 +4294,7 @@ test_h5p_mt_list_1(test_params_t *test_params)
     version = atomic_load(&(list1->curr_version));
 
     /* Ensure list1's fields are correct */
-    ret =
-        list_ver_and_len_check(list1, version, (version + 1), 3, 0, 1, 0, 5, "H5Premove");
+    ret = list_ver_and_len_check(list1, version, (version + 1), 3, 0, 1, 0, 5, "H5Premove");
     CHECK_I(ret, "H5Premove");
 
     /**
@@ -4345,22 +4324,20 @@ test_h5p_mt_list_1(test_params_t *test_params)
     VERIFY(ret, FAIL, "H5Pset");
     assert(ret < 0);
 
-
     /**
      * Test creating an entirely new property of a deleted property. Should SUCCEED
      */
 
     /* Create and insert a new version of deleted prop4 */
-    ret = H5Pinsert2(list1_id, table_prop->name, table_value.size, table_value.ptr,
-                                                    NULL, NULL, NULL, NULL, NULL, NULL);
+    ret = H5Pinsert2(list1_id, table_prop->name, table_value.size, table_value.ptr, NULL, NULL, NULL, NULL,
+                     NULL, NULL);
     CHECK(ret, H5I_INVALID_HID, "H5Pinsert2");
     assert(ret == 0);
 
     version = atomic_load(&(list1->curr_version));
 
     /* Check list1's fields */
-    ret =
-        list_ver_and_len_check(list1, version, (version + 1), 3, 1, 2, 1, 6, "H5Pinsert2");
+    ret = list_ver_and_len_check(list1, version, (version + 1), 3, 1, 2, 1, 6, "H5Pinsert2");
     CHECK_I(ret, "H5Pinsert2");
 
     /* Update the table_prop's create_version to match */
@@ -4383,21 +4360,19 @@ test_h5p_mt_list_1(test_params_t *test_params)
     VERIFY(value4, *(double *)table_value.ptr, "H5Pget");
     assert(0 == memcmp(&value4, table_value.ptr, table_value.size));
 
-
     /* Create and insert a new version of the deleted inherited prop3 */
     table_prop  = get_table_prop_ver(list_prop_table[2], 2);
     table_value = atomic_load(&(table_prop->value));
 
-    ret = H5Pinsert2(list1_id, table_prop->name, table_value.size, table_value.ptr,
-                                                    NULL, NULL, NULL, NULL, NULL, NULL);
+    ret = H5Pinsert2(list1_id, table_prop->name, table_value.size, table_value.ptr, NULL, NULL, NULL, NULL,
+                     NULL, NULL);
     CHECK(ret, H5I_INVALID_HID, "H5Pinsert2");
     assert(ret == 0);
 
     version = atomic_load(&(list1->curr_version));
 
     /* Check list1's fields */
-    ret =
-        list_ver_and_len_check(list1, version, (version + 1), 3, 1, 3, 2, 7, "H5Pinsert2");
+    ret = list_ver_and_len_check(list1, version, (version + 1), 3, 1, 3, 2, 7, "H5Pinsert2");
     CHECK_I(ret, "H5Pinsert2");
 
     /* Update the table_prop's create_version to match */
@@ -4519,15 +4494,15 @@ test_h5p_mt_list_2(test_params_t *test_params)
     H5P_mt_prop_aptr_t           prop_fl_next;
     uint64_t                     version;
 
-    hid_t                        class1_id;
-    hid_t                        class2_id;
-    hid_t                        list1_id;
-    hid_t                        list2_id;
-    hid_t                        list3_id;
-    int                          value1 = 0;
-    float                        value2 = 0;
-    char                         value3[80];
-    herr_t                       ret; /* Generic return value */
+    hid_t  class1_id;
+    hid_t  class2_id;
+    hid_t  list1_id;
+    hid_t  list2_id;
+    hid_t  list3_id;
+    int    value1 = 0;
+    float  value2 = 0;
+    char   value3[80];
+    herr_t ret; /* Generic return value */
 
     herr_t ret_value = SUCCEED;
 
@@ -4601,7 +4576,7 @@ test_h5p_mt_list_2(test_params_t *test_params)
      * list2 was copied, thus prop1 should also be deleted in list2.
      */
     H5E_BEGIN_TRY
-        ret = H5Pget(list2_id, list2_prop_table[0].name, &value1);
+    ret = H5Pget(list2_id, list2_prop_table[0].name, &value1);
     H5E_END_TRY
     VERIFY(ret, FAIL, "H5Pget");
     assert(ret < 0);
@@ -4666,7 +4641,7 @@ test_h5p_mt_list_2(test_params_t *test_params)
 
     /**
      * The base was deleted at the version list1 was copied at. Thus the base of the copy
-     * should not have been set and should not have incremented the class's property's 
+     * should not have been set and should not have incremented the class's property's
      * ret_count should not have been incremented.
      */
     VERIFY(atomic_load(&(test_prop->ref_count)), 1, "H5P__mt_create_list");
@@ -4682,7 +4657,6 @@ test_h5p_mt_list_2(test_params_t *test_params)
     ret = H5Pisa_class(list2_id, class1_id);
     CHECK_I(ret, "H5Pisa_class");
     assert(ret == TRUE);
-
 
     /**
      * Modify a property in list2's LFSLL, and compare list1 and list2 again.
@@ -4702,13 +4676,12 @@ test_h5p_mt_list_2(test_params_t *test_params)
     atomic_store(&(table_prop->create_version), version);
 
     /* Ensure list2's fields are correct */
-    ret =
-        list_ver_and_len_check(list2, version, (version + 1), 3, 1, 3, 2, 6, "H5Pset");
+    ret = list_ver_and_len_check(list2, version, (version + 1), 3, 1, 3, 2, 6, "H5Pset");
     CHECK_I(ret, "H5Pset");
 
     /* Compare list1 and list2 (should not be equal) */
     H5E_BEGIN_TRY
-        ret = H5Pequal(list1_id, list2_id);
+    ret = H5Pequal(list1_id, list2_id);
     H5E_END_TRY
     VERIFY(ret, FALSE, "H5Pequal");
     assert(ret == FALSE);
@@ -4732,13 +4705,12 @@ test_h5p_mt_list_2(test_params_t *test_params)
     atomic_store(&(table_prop->create_version), version);
 
     /* Ensure list2's fields are correct */
-    ret =
-        list_ver_and_len_check(list2, version, (version + 1), 3, 1, 3, 2, 7, "H5Pset");
+    ret = list_ver_and_len_check(list2, version, (version + 1), 3, 1, 3, 2, 7, "H5Pset");
     CHECK_I(ret, "H5Pset");
 
     /* Compare list1 and list2 (Should be equal) */
     H5E_BEGIN_TRY
-        ret = H5Pequal(list1_id, list2_id);
+    ret = H5Pequal(list1_id, list2_id);
     H5E_END_TRY
     VERIFY(ret, TRUE, "H5Pequal");
     assert(ret == TRUE);
@@ -4763,13 +4735,12 @@ test_h5p_mt_list_2(test_params_t *test_params)
     atomic_store(&(table_prop->create_version), version);
 
     /* Ensure list2's fields are correct */
-    ret =
-        list_ver_and_len_check(list2, version, (version + 1), 3, 1, 3, 3, 8, "H5Pset");
+    ret = list_ver_and_len_check(list2, version, (version + 1), 3, 1, 3, 3, 8, "H5Pset");
     CHECK_I(ret, "H5Pset");
 
     /* Compare list1 and list2 (should not be equal) */
     H5E_BEGIN_TRY
-        ret = H5Pequal(list1_id, list2_id);
+    ret = H5Pequal(list1_id, list2_id);
     H5E_END_TRY
     VERIFY(ret, FALSE, "H5Pequal");
     assert(ret == FALSE);
@@ -4794,13 +4765,12 @@ test_h5p_mt_list_2(test_params_t *test_params)
     atomic_store(&(table_prop->create_version), version);
 
     /* Ensure list2's fields are correct */
-    ret =
-        list_ver_and_len_check(list2, version, (version + 1), 3, 1, 3, 3, 9, "H5Pset");
+    ret = list_ver_and_len_check(list2, version, (version + 1), 3, 1, 3, 3, 9, "H5Pset");
     CHECK_I(ret, "H5Pset");
 
     /* Compare list1 and list2 (Should be equal) */
     H5E_BEGIN_TRY
-        ret = H5Pequal(list1_id, list2_id);
+    ret = H5Pequal(list1_id, list2_id);
     H5E_END_TRY
     VERIFY(ret, TRUE, "H5Pequal");
     assert(ret == TRUE);
@@ -4845,11 +4815,11 @@ test_h5p_mt_list_2(test_params_t *test_params)
          * NOTE: to make it easy, I am manually swapping the position of the two
          * lists in the list free list. This is so when the list is allocated
          * for reuse from the free list, the properties in list2 will be closed
-         * and inserted into the property free list, for further testing. 
-         * 
-         * This is simply an easy way to do this without having to create new 
+         * and inserted into the property free list, for further testing.
+         *
+         * This is simply an easy way to do this without having to create new
          * structures just to close them. Also, using atomic_store here instead
-         * of atomic_compare_exchange_strong, because this is done only in 
+         * of atomic_compare_exchange_strong, because this is done only in
          * single thread.
          */
         fl_head.ptr = test_list;
@@ -6235,7 +6205,7 @@ reset_globals(TestParams_t H5_ATTR_UNUSED *params)
 /****************************************************************************************
  * Function:    mt_context_test
  *
- * Purpose:     
+ * Purpose:
  *
  * Return:      SUCCEED/FAIL
  *
@@ -6255,7 +6225,7 @@ mt_context_test(TestParams_t H5_ATTR_UNUSED *params)
     H5P_plist_type_t    list_type;
     hid_t               default_list_id_array[19];
     _Atomic uint64_t   *default_list_ver_array[19];
-    uint64_t            version = 0;
+    uint64_t            version     = 0;
     uint64_t            updated_ver = 0;
     const char         *name        = "test_prop";
     int                 test_value  = 404;
@@ -6267,8 +6237,8 @@ mt_context_test(TestParams_t H5_ATTR_UNUSED *params)
     fflush(stdout);
 
     /**
-     * NOTE: H5P_TYPE_USER and H5P_TYPE_ROOT are not in the array, 
-     * due to H5P_TYPE_USER neither being stored in the context. 
+     * NOTE: H5P_TYPE_USER and H5P_TYPE_ROOT are not in the array,
+     * due to H5P_TYPE_USER neither being stored in the context.
      */
     list_type_array[0]  = H5P_TYPE_FILE_CREATE;
     list_type_array[1]  = H5P_TYPE_FILE_ACCESS;
@@ -6330,39 +6300,34 @@ mt_context_test(TestParams_t H5_ATTR_UNUSED *params)
     default_list_ver_array[17] = &H5P_MAPL_VER_g;
     default_list_ver_array[18] = &H5P_RAPL_VER_g;
 
-
     /* Test all default lists */
-    for ( int i = 0; i < 19; i++ )
-    {
-        list_type   = list_type_array[i];
-        list_id     = default_list_id_array[i];
-        version     = *default_list_ver_array[i];
+    for (int i = 0; i < 19; i++) {
+        list_type = list_type_array[i];
+        list_id   = default_list_id_array[i];
+        version   = *default_list_ver_array[i];
 
         list = (H5P_mt_list_t *)H5I_object(list_id);
         assert(list);
         assert(atomic_load(&(list->tag)) == H5P_MT_LIST_TAG);
 
-
-        /** 
-         * Tests getting a version of a default list from the context 
+        /**
+         * Tests getting a version of a default list from the context
          */
 
         ret = test_cx_lists_get(list, version);
         CHECK_I(ret, "test_cx__default_lists_get");
         assert(ret == SUCCEED);
 
-
-        /** 
-         * Tests modifying a default list and ensuring the next context has the updated version 
+        /**
+         * Tests modifying a default list and ensuring the next context has the updated version
          */
 
         new_value.ptr  = &test_value;
         new_value.size = sizeof(test_value);
 
         /* Inserts a new property to increment the version of the default list */
-        ret = H5P__mt_ins_or_mod_prop__list(list, name, new_value.ptr, new_value.size, FALSE,
-                                            FALSE, TRUE, NULL, NULL, NULL, NULL, NULL, NULL, 
-                                                                            NULL, NULL, NULL);
+        ret = H5P__mt_ins_or_mod_prop__list(list, name, new_value.ptr, new_value.size, FALSE, FALSE, TRUE,
+                                            NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
         CHECK_I(ret, "H5P__mt_ins_or_mod_prop__list");
         assert(ret == SUCCEED);
 
@@ -6377,21 +6342,18 @@ mt_context_test(TestParams_t H5_ATTR_UNUSED *params)
         CHECK_I(ret, "test_cx__default_lists_get");
         assert(ret == SUCCEED);
 
-
         /**
          * Tests storing a default list in the context, nothing should change.
          * Tests updating the list and getting the version from the context,
          * which should return the version prior to the list being updated.
          */
-        ret = test_cx_lists_set_1(list, name, new_value, updated_ver, 
-                                        default_list_ver_array[i], list_type);
+        ret = test_cx_lists_set_1(list, name, new_value, updated_ver, default_list_ver_array[i], list_type);
         CHECK_I(ret, "test_cx_lists_set_1");
         assert(ret == SUCCEED);
 
-
         /**
-         * Tests storing the updated version of the default list in the context 
-         * and getting the version from the context again, to ensure it was 
+         * Tests storing the updated version of the default list in the context
+         * and getting the version from the context again, to ensure it was
          * updated correctly.
          */
 
@@ -6403,20 +6365,18 @@ mt_context_test(TestParams_t H5_ATTR_UNUSED *params)
         CHECK_I(ret, "test_cx_lists_set_1");
         assert(ret == SUCCEED);
 
-
-
         /**
          * Tests storing a non-default list in the context, modifying the list, and
-         * then getting the version from the context to ensure it didn't change. 
+         * then getting the version from the context to ensure it didn't change.
          */
-        
+
         /* Get the default class to create a new list of that type */
         parent_id = list->pclass_id;
 
         new_list_id = H5Pcreate(parent_id);
         CHECK(new_list_id, H5I_INVALID_HID, "H5Pcreate");
         assert(new_list_id > 0);
-        
+
         new_list = (H5P_mt_list_t *)H5I_object(new_list_id);
         CHECK_PTR(new_list, "H5I_object");
         assert(new_list);
@@ -6428,10 +6388,9 @@ mt_context_test(TestParams_t H5_ATTR_UNUSED *params)
         CHECK_I(ret, "test_cx_lists_set_1");
         assert(ret == SUCCEED);
 
-
         /**
-         * Tests storing the updated version of the non-default list in the context 
-         * and getting the version from the context again, to ensure it was 
+         * Tests storing the updated version of the non-default list in the context
+         * and getting the version from the context again, to ensure it was
          * updated correctly.
          */
         updated_ver = atomic_load(&(new_list->curr_version));
@@ -6443,17 +6402,14 @@ mt_context_test(TestParams_t H5_ATTR_UNUSED *params)
 
     } /* end for ( int i = 0; i < 20; i++ ) */
 
-
     PASSED();
 
     return SUCCEED;
 
 } /* end mt_context_test() */
 
-
-
 /**
- * 
+ *
  */
 uint64_t
 H5P__test_cx_get_version(hid_t list_id, uint64_t version)
@@ -6466,23 +6422,20 @@ H5P__test_cx_get_version(hid_t list_id, uint64_t version)
     VERIFY(ret_value, version, "H5CX_get_plist_version");
     assert(ret_value == version);
 
-
     FUNC_LEAVE_NOAPI(ret_value)
 
 } /* end H5P__test_cx_get_version() */
 
-
-
 /**
- * 
+ *
  */
 herr_t
 test_cx_lists_get(H5P_mt_list_t *list, uint64_t version)
 {
-    hid_t            list_id;
-    uint64_t         cx_ver    = 0;
+    hid_t    list_id;
+    uint64_t cx_ver = 0;
 
-    herr_t           ret_value = SUCCEED;
+    herr_t ret_value = SUCCEED;
 
     FUNC_ENTER_API(FAIL)
 
@@ -6494,31 +6447,27 @@ test_cx_lists_get(H5P_mt_list_t *list, uint64_t version)
     /* Get the version from the context */
     cx_ver = H5P__test_cx_get_version(list_id, version);
     VERIFY(cx_ver, version, "H5P__test_cx_get_version");
-    assert(cx_ver == version);  
+    assert(cx_ver == version);
 
-
-done: 
+done:
 
     FUNC_LEAVE_API(ret_value)
 
 } /* end test_cx_lists_get() */
 
-
-
 /**
- * 
+ *
  */
 herr_t
-test_cx_lists_set_1(H5P_mt_list_t *list, const char *name, H5P_mt_prop_value_t value, 
-                    uint64_t version, _Atomic uint64_t *def_global_ver_ptr,
-                    H5P_plist_type_t type)
+test_cx_lists_set_1(H5P_mt_list_t *list, const char *name, H5P_mt_prop_value_t value, uint64_t version,
+                    _Atomic uint64_t *def_global_ver_ptr, H5P_plist_type_t type)
 {
-    hid_t            list_id;
-    uint64_t         updated_ver = 0;
-    uint64_t         cx_ver      = 0;
-    herr_t           ret;
+    hid_t    list_id;
+    uint64_t updated_ver = 0;
+    uint64_t cx_ver      = 0;
+    herr_t   ret;
 
-    herr_t           ret_value  = SUCCEED;
+    herr_t ret_value = SUCCEED;
 
     FUNC_ENTER_API(FAIL)
 
@@ -6534,7 +6483,7 @@ test_cx_lists_set_1(H5P_mt_list_t *list, const char *name, H5P_mt_prop_value_t v
 
     /**
      * Store the list in the context.
-     * If working with a default list, nothing will change, but if working 
+     * If working with a default list, nothing will change, but if working
      * with a non-default list it needs to be inserted into the context.
      * Also, tests using H5CX_set_plist for all types of plists.
      */
@@ -6542,23 +6491,18 @@ test_cx_lists_set_1(H5P_mt_list_t *list, const char *name, H5P_mt_prop_value_t v
     CHECK_I(ret, "H5CX_set_plist");
     assert(ret == SUCCEED);
 
-
     /* Modify the list to update it's version */
     /**
      * If list is a default list, it has already had this property inserted.
      * Must treat as a set not create.
      */
-    if ( list->def_ver_ptr )
-    {
-        ret = H5P__mt_ins_or_mod_prop__list(list, name, value.ptr, value.size, FALSE,
-                                            FALSE, FALSE, NULL, NULL, NULL, NULL, NULL, 
-                                                            NULL, NULL, NULL, NULL);
+    if (list->def_ver_ptr) {
+        ret = H5P__mt_ins_or_mod_prop__list(list, name, value.ptr, value.size, FALSE, FALSE, FALSE, NULL,
+                                            NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     }
-    else
-    {
-        ret = H5P__mt_ins_or_mod_prop__list(list, name, value.ptr, value.size, FALSE,
-                                            FALSE, TRUE, NULL, NULL, NULL, NULL, NULL, 
-                                                            NULL, NULL, NULL, NULL);
+    else {
+        ret = H5P__mt_ins_or_mod_prop__list(list, name, value.ptr, value.size, FALSE, FALSE, TRUE, NULL, NULL,
+                                            NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     }
 
     CHECK_I(ret, "H5P__mt_ins_or_mod_prop__list");
@@ -6568,8 +6512,7 @@ test_cx_lists_set_1(H5P_mt_list_t *list, const char *name, H5P_mt_prop_value_t v
     VERIFY(updated_ver, version + 1, "H5P__mt_ins_or_mod_prop__list");
     assert(updated_ver == version + 1);
 
-    if ( def_global_ver_ptr )
-    {
+    if (def_global_ver_ptr) {
         /* Ensures the global version variable was updated correctly */
         VERIFY(updated_ver, *def_global_ver_ptr, "H5P__mt_ins_or_mod_prop__list");
         VERIFY(updated_ver, (version + 1), "H5P__mt_ins_or_mod_prop__list");
@@ -6581,27 +6524,24 @@ test_cx_lists_set_1(H5P_mt_list_t *list, const char *name, H5P_mt_prop_value_t v
     VERIFY(cx_ver, version, "H5P__test_cx_get_version");
     assert(cx_ver == version);
 
-
-done: 
+done:
 
     FUNC_LEAVE_API(ret_value)
 
 } /* end test_cx_lists_set_1() */
 
-
-
 /**
- * 
+ *
  */
 herr_t
-test_cx_lists_set_2(H5P_mt_list_t *list, const char *name, H5P_mt_prop_value_t value, 
-                    uint64_t version, H5P_plist_type_t type, int i)
+test_cx_lists_set_2(H5P_mt_list_t *list, const char *name, H5P_mt_prop_value_t value, uint64_t version,
+                    H5P_plist_type_t type, int i)
 {
-    hid_t            list_id;
-    uint64_t         cx_ver = 0;
-    herr_t           ret;
+    hid_t    list_id;
+    uint64_t cx_ver = 0;
+    herr_t   ret;
 
-    herr_t           ret_value  = SUCCEED;
+    herr_t ret_value = SUCCEED;
 
     FUNC_ENTER_API(FAIL)
 
@@ -6614,48 +6554,47 @@ test_cx_lists_set_2(H5P_mt_list_t *list, const char *name, H5P_mt_prop_value_t v
     assert(version == atomic_load(&(list->curr_version)));
 
     list_id = atomic_load(&(list->plist_id));
-   /**
-     * Store the updated plist in the context to update the version 
+    /**
+     * Store the updated plist in the context to update the version
      */
 
-    if ( i == 1 ) /* FAPL */
+    if (i == 1) /* FAPL */
     {
         ret = H5CX_set_apl(&list_id, H5P_CLS_FACC, H5I_INVALID_HID, FALSE);
         CHECK_I(ret, "H5CX_set_apl");
         assert(ret == SUCCEED);
     }
-    else if ( i == 2 ) /* DCPL */
+    else if (i == 2) /* DCPL */
     {
         ret = H5CX_set_dcpl(list_id);
         CHECK_I(ret, "H5CX_set_dcpl");
         assert(ret == SUCCEED);
     }
-    else if ( i == 3 ) /* DAPL */
+    else if (i == 3) /* DAPL */
     {
         ret = H5CX_set_apl(&list_id, H5P_CLS_DACC, H5I_INVALID_HID, FALSE);
         CHECK_I(ret, "H5CX_set_apl");
         assert(ret == SUCCEED);
     }
-    else if ( i == 4 ) /* DXPL */
+    else if (i == 4) /* DXPL */
     {
         ret = H5CX_set_dxpl(list_id);
         CHECK_I(ret, "H5CX_set_dxpl");
         assert(ret == SUCCEED);
     }
-    else if ( i == 12 ) /* LCPL */
+    else if (i == 12) /* LCPL */
     {
         ret = H5CX_set_lcpl(list_id);
         CHECK_I(ret, "H5CX_set_lcpl");
         assert(ret == SUCCEED);
     }
-    else if ( i == 13 ) /* LAPL */
+    else if (i == 13) /* LAPL */
     {
         ret = H5CX_set_apl(&list_id, H5P_CLS_LACC, H5I_INVALID_HID, FALSE);
         CHECK_I(ret, "H5CX_set_apl");
         assert(ret == SUCCEED);
     }
-    else
-    {
+    else {
         ret = H5CX_set_plist(list_id, type);
         CHECK_I(ret, "H5CX_set_plist");
         assert(ret == SUCCEED);
@@ -6666,16 +6605,14 @@ test_cx_lists_set_2(H5P_mt_list_t *list, const char *name, H5P_mt_prop_value_t v
     VERIFY(cx_ver, version, "H5P__test_cx_get_version");
     assert(cx_ver == version);
 
-done: 
+done:
 
     FUNC_LEAVE_API(ret_value)
 
 } /* end test_cx_lists_set_2() */
 
-
-
-/** 
- * mt_test_2 functions start 
+/**
+ * mt_test_2 functions start
  */
 
 /****************************************************************************************

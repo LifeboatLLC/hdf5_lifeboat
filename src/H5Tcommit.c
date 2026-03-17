@@ -154,8 +154,7 @@ H5T__commit_api_common(hid_t loc_id, const char *name, hid_t type_id, hid_t lcpl
 
 #ifdef H5_HAVE_MULTITHREAD
     /* Set the TCPL for the API context */
-    if ( H5CX_set_plist(tcpl_id, H5P_TYPE_DATATYPE_CREATE) < 0)
-    {
+    if (H5CX_set_plist(tcpl_id, H5P_TYPE_DATATYPE_CREATE) < 0) {
         HGOTO_ERROR(H5E_ATTR, H5E_CANTSET, H5I_INVALID_HID, "can't set tcpl in context");
     }
 #endif
@@ -388,8 +387,7 @@ H5Tcommit_anon(hid_t loc_id, hid_t type_id, hid_t tcpl_id, hid_t tapl_id)
 
 #ifdef H5_HAVE_MULTITHREAD
     /* Set the TCPL for the API context */
-    if ( H5CX_set_plist(tcpl_id, H5P_TYPE_DATATYPE_CREATE) < 0)
-    {
+    if (H5CX_set_plist(tcpl_id, H5P_TYPE_DATATYPE_CREATE) < 0) {
         HGOTO_ERROR(H5E_ATTR, H5E_CANTSET, H5I_INVALID_HID, "can't set tcpl in context");
     }
 #endif

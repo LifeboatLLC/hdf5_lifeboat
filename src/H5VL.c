@@ -155,8 +155,7 @@ H5VLregister_connector_by_name(const char *name, hid_t vipl_id)
 
 #ifdef H5_HAVE_MULTITHREAD
     /* Set the property list in the context */
-    if ( H5CX_set_plist(vipl_id, H5P_TYPE_REFERENCE_ACCESS) < 0)
-    {
+    if (H5CX_set_plist(vipl_id, H5P_TYPE_REFERENCE_ACCESS) < 0) {
         HGOTO_ERROR(H5E_ATTR, H5E_CANTSET, H5I_INVALID_HID, "can't set vipl in context");
     }
 #endif
@@ -214,8 +213,7 @@ H5VLregister_connector_by_value(H5VL_class_value_t value, hid_t vipl_id)
 
 #ifdef H5_HAVE_MULTITHREAD
     /* Set the property list in the context */
-    if ( H5CX_set_plist(vipl_id, H5P_TYPE_REFERENCE_ACCESS) < 0)
-    {
+    if (H5CX_set_plist(vipl_id, H5P_TYPE_REFERENCE_ACCESS) < 0) {
         HGOTO_ERROR(H5E_ATTR, H5E_CANTSET, H5I_INVALID_HID, "can't set vipl in context");
     }
 #endif

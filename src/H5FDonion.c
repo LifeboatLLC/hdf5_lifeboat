@@ -1685,8 +1685,7 @@ H5FDonion_get_revision_count(const char *filename, hid_t fapl_id, uint64_t *revi
 
 #ifdef H5_HAVE_MULTITHREAD
     /* Set the property list in the context */
-    if ( H5CX_set_plist(fapl_id, H5P_TYPE_FILE_ACCESS) < 0)
-    {
+    if (H5CX_set_plist(fapl_id, H5P_TYPE_FILE_ACCESS) < 0) {
         HGOTO_ERROR(H5E_ATTR, H5E_CANTSET, H5I_INVALID_HID, "can't set fapl in context");
     }
 #endif

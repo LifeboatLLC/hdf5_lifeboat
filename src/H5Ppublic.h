@@ -560,8 +560,8 @@ H5_DLL herr_t H5Pclose_class(hid_t plist_id);
 /**
  * \ingroup PLCR
  *
- * \brief Copies an existing property list or property list class to 
- *        create a new property list or new property list class 
+ * \brief Copies an existing property list or property list class to
+ *        create a new property list or new property list class
  *        respectively.
  *
  * \plist_id
@@ -570,8 +570,8 @@ H5_DLL herr_t H5Pclose_class(hid_t plist_id);
  *
  * \details H5Pcopy() copies an existing property list to create a new
  *          property list or an existing property list class to create a
- *          new property list class. The new property list or property 
- *          list class has the same properties and values as the original 
+ *          new property list class. The new property list or property
+ *          list class has the same properties and values as the original
  *          property list or property list class.
  *
  * \since 1.0.0

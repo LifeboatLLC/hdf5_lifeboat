@@ -447,8 +447,7 @@ H5Fget_vfd_handle(hid_t file_id, hid_t fapl_id, void **file_handle /*out*/)
 
 #ifdef H5_HAVE_MULTITHREAD
     /* Store fapl in the context and set up collective metadata if appropriate */
-    if ( H5CX_set_apl(&fapl_id, H5P_CLS_FACC, H5I_INVALID_HID, TRUE) < 0 )
-    {
+    if (H5CX_set_apl(&fapl_id, H5P_CLS_FACC, H5I_INVALID_HID, TRUE) < 0) {
         HGOTO_ERROR(H5E_FILE, H5E_CANTSET, FAIL, "can't set access property list info");
     }
 #endif
@@ -505,8 +504,7 @@ H5Fis_accessible(const char *filename, hid_t fapl_id)
 
 #ifdef H5_HAVE_MULTITHREAD
     /* Store fapl in the context and set up collective metadata if appropriate */
-    if ( H5CX_set_apl(&fapl_id, H5P_CLS_FACC, H5I_INVALID_HID, FALSE) < 0 )
-    {
+    if (H5CX_set_apl(&fapl_id, H5P_CLS_FACC, H5I_INVALID_HID, FALSE) < 0) {
         HGOTO_ERROR(H5E_FILE, H5E_CANTSET, FAIL, "can't set access property list info");
     }
 #endif
@@ -620,8 +618,7 @@ H5F__create_api_common(const char *filename, unsigned flags, hid_t fcpl_id, hid_
 
 #ifdef H5_HAVE_MULTITHREAD
     /* Set the property list in the context */
-    if ( H5CX_set_plist(fcpl_id, H5P_TYPE_FILE_CREATE) < 0)
-    {
+    if (H5CX_set_plist(fcpl_id, H5P_TYPE_FILE_CREATE) < 0) {
         HGOTO_ERROR(H5E_ATTR, H5E_CANTSET, H5I_INVALID_HID, "can't set fcpl in context");
     }
 #endif
@@ -1326,8 +1323,7 @@ H5Fmount(hid_t loc_id, const char *name, hid_t child_id, hid_t plist_id)
 
 #ifdef H5_HAVE_MULTITHREAD
     /* Set the property list in the context */
-    if ( H5CX_set_plist(plist_id, H5P_TYPE_FILE_MOUNT) < 0)
-    {
+    if (H5CX_set_plist(plist_id, H5P_TYPE_FILE_MOUNT) < 0) {
         HGOTO_ERROR(H5E_ATTR, H5E_CANTSET, H5I_INVALID_HID, "can't set fmpl in context");
     }
 #endif

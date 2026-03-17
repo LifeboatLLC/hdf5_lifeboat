@@ -122,7 +122,7 @@ static herr_t          H5P__do_prop(H5P_genplist_t *plist, const char *name, H5P
 static int             H5P__open_class_path_cb(void *_obj, hid_t H5_ATTR_UNUSED id, void *_key);
 static H5P_genprop_t  *H5P__find_prop_pclass(H5P_genclass_t *pclass, const char *name);
 static herr_t          H5P__free_prop_cb(void *item, void H5_ATTR_UNUSED *key, void *op_data);
-static herr_t   H5P__free_del_name_cb(void *item, void H5_ATTR_UNUSED *key, void H5_ATTR_UNUSED *op_data);
+static herr_t H5P__free_del_name_cb(void *item, void H5_ATTR_UNUSED *key, void H5_ATTR_UNUSED *op_data);
 #endif /* ! H5_HAVE_MULTITHREAD */
 
 /*********************/
@@ -131,8 +131,8 @@ static herr_t   H5P__free_del_name_cb(void *item, void H5_ATTR_UNUSED *key, void
 
 #if H5_HAVE_MULTITHREAD
 /**
- * Flag to know if the context is initialized, so 
- * the plist version can be grabbed from there 
+ * Flag to know if the context is initialized, so
+ * the plist version can be grabbed from there
  */
 bool H5P_H5CX_INIT_g = FALSE;
 
@@ -226,12 +226,11 @@ hid_t H5P_LST_OBJECT_COPY_ID_g      = H5I_INVALID_HID;
 hid_t H5P_LST_REFERENCE_ACCESS_ID_g = H5I_INVALID_HID;
 hid_t H5P_LST_VOL_INITIALIZE_ID_g   = H5I_INVALID_HID;
 
-
 #ifdef H5_HAVE_MULTITHREAD
 /**
  * Atomic global versions for each of the predefined property lists. These are
  * pointed to by the default property list structures to be used by the context
- * as a way to ensure that a version of list isn't changed out from under a 
+ * as a way to ensure that a version of list isn't changed out from under a
  * thread during API calls.
  */
 _Atomic uint64_t H5P_AAPL_VER_g   = 0;
@@ -255,7 +254,6 @@ _Atomic uint64_t H5P_RAPL_VER_g   = 0;
 _Atomic uint64_t H5P_VIPL_VER_g   = 0;
 
 #endif
-
 
 /* Root property list class library initialization object */
 const H5P_libclass_t H5P_CLS_ROOT[1] = {{
@@ -630,14 +628,13 @@ H5P_init_phase1(void)
 
                 atomic_store(&(new_class->id), *(lib_class->class_id));
 
-
                 H5P_mt_list_t *def_plist;
 
                 /* Only register the default property list if it hasn't been created yet */
-                if (lib_class->def_plist_id && *lib_class->def_plist_id == (-1)) {    
+                if (lib_class->def_plist_id && *lib_class->def_plist_id == (-1)) {
 
                     /* Register the default MT property list for the new MT class */
-                    def_plist = H5P__mt_create_list(*lib_class->pclass, NULL, FALSE, 
+                    def_plist = H5P__mt_create_list(*lib_class->pclass, NULL, FALSE,
                                                     atomic_load(&(new_class->curr_version)), FALSE);
 
                     if (0 > (*lib_class->def_plist_id = atomic_load(&(def_plist->plist_id)))) {
@@ -645,107 +642,86 @@ H5P_init_phase1(void)
                                     "can't register default MT property list for MT class");
                     }
 
-
                     /**
                      * Set the atomic global plist version with the current version and set
                      * the default plist's def_ver_ptr to point to its associated global.
                      */
-                    if ( *lib_class->def_plist_id == H5P_LST_ATTRIBUTE_ACCESS_ID_g )
-                    {
+                    if (*lib_class->def_plist_id == H5P_LST_ATTRIBUTE_ACCESS_ID_g) {
                         atomic_store(&(H5P_AAPL_VER_g), atomic_load(&(def_plist->curr_version)));
                         def_plist->def_ver_ptr = &H5P_AAPL_VER_g;
                     }
-                    else if ( *lib_class->def_plist_id == H5P_LST_ATTRIBUTE_CREATE_ID_g )
-                    {
+                    else if (*lib_class->def_plist_id == H5P_LST_ATTRIBUTE_CREATE_ID_g) {
                         atomic_store(&(H5P_ACPL_VER_g), atomic_load(&(def_plist->curr_version)));
                         def_plist->def_ver_ptr = &H5P_ACPL_VER_g;
                     }
-                    else if ( *lib_class->def_plist_id == H5P_LST_DATASET_ACCESS_ID_g )
-                    {
+                    else if (*lib_class->def_plist_id == H5P_LST_DATASET_ACCESS_ID_g) {
                         atomic_store(&(H5P_DAPL_VER_g), atomic_load(&(def_plist->curr_version)));
                         def_plist->def_ver_ptr = &H5P_DAPL_VER_g;
                     }
-                    else if ( *lib_class->def_plist_id == H5P_LST_DATASET_CREATE_ID_g )
-                    {
+                    else if (*lib_class->def_plist_id == H5P_LST_DATASET_CREATE_ID_g) {
                         atomic_store(&(H5P_DCPL_VER_g), atomic_load(&(def_plist->curr_version)));
                         def_plist->def_ver_ptr = &H5P_DCPL_VER_g;
                     }
-                    else if ( *lib_class->def_plist_id == H5P_LST_DATASET_XFER_ID_g )
-                    {
+                    else if (*lib_class->def_plist_id == H5P_LST_DATASET_XFER_ID_g) {
                         atomic_store(&(H5P_DXPL_VER_g), atomic_load(&(def_plist->curr_version)));
                         def_plist->def_ver_ptr = &H5P_DXPL_VER_g;
                     }
-                    else if ( *lib_class->def_plist_id == H5P_LST_DATATYPE_ACCESS_ID_g )
-                    {
+                    else if (*lib_class->def_plist_id == H5P_LST_DATATYPE_ACCESS_ID_g) {
                         atomic_store(&(H5P_TAPL_VER_g), atomic_load(&(def_plist->curr_version)));
                         def_plist->def_ver_ptr = &H5P_TAPL_VER_g;
                     }
-                    else if ( *lib_class->def_plist_id == H5P_LST_DATATYPE_CREATE_ID_g )
-                    {
+                    else if (*lib_class->def_plist_id == H5P_LST_DATATYPE_CREATE_ID_g) {
                         atomic_store(&(H5P_TCPL_VER_g), atomic_load(&(def_plist->curr_version)));
                         def_plist->def_ver_ptr = &H5P_TCPL_VER_g;
                     }
-                    else if ( *lib_class->def_plist_id == H5P_LST_FILE_ACCESS_ID_g )
-                    {
+                    else if (*lib_class->def_plist_id == H5P_LST_FILE_ACCESS_ID_g) {
                         atomic_store(&(H5P_FAPL_VER_g), atomic_load(&(def_plist->curr_version)));
                         def_plist->def_ver_ptr = &H5P_FAPL_VER_g;
                     }
-                    else if ( *lib_class->def_plist_id == H5P_LST_FILE_CREATE_ID_g )
-                    {
+                    else if (*lib_class->def_plist_id == H5P_LST_FILE_CREATE_ID_g) {
                         atomic_store(&(H5P_FCPL_VER_g), atomic_load(&(def_plist->curr_version)));
                         def_plist->def_ver_ptr = &H5P_FCPL_VER_g;
                     }
-                    else if ( *lib_class->def_plist_id == H5P_LST_FILE_MOUNT_ID_g )
-                    {
+                    else if (*lib_class->def_plist_id == H5P_LST_FILE_MOUNT_ID_g) {
                         atomic_store(&(H5P_FMPL_VER_g), atomic_load(&(def_plist->curr_version)));
                         def_plist->def_ver_ptr = &H5P_FMPL_VER_g;
                     }
-                    else if ( *lib_class->def_plist_id == H5P_LST_GROUP_ACCESS_ID_g )
-                    {
+                    else if (*lib_class->def_plist_id == H5P_LST_GROUP_ACCESS_ID_g) {
                         atomic_store(&(H5P_GAPL_VER_g), atomic_load(&(def_plist->curr_version)));
                         def_plist->def_ver_ptr = &H5P_GAPL_VER_g;
                     }
-                    else if ( *lib_class->def_plist_id == H5P_LST_GROUP_CREATE_ID_g )
-                    {
+                    else if (*lib_class->def_plist_id == H5P_LST_GROUP_CREATE_ID_g) {
                         atomic_store(&(H5P_GCPL_VER_g), atomic_load(&(def_plist->curr_version)));
                         def_plist->def_ver_ptr = &H5P_GCPL_VER_g;
                     }
-                    else if ( *lib_class->def_plist_id == H5P_LST_LINK_ACCESS_ID_g )
-                    {
+                    else if (*lib_class->def_plist_id == H5P_LST_LINK_ACCESS_ID_g) {
                         atomic_store(&(H5P_LAPL_VER_g), atomic_load(&(def_plist->curr_version)));
                         def_plist->def_ver_ptr = &H5P_LAPL_VER_g;
                     }
-                    else if ( *lib_class->def_plist_id == H5P_LST_LINK_CREATE_ID_g )
-                    {
+                    else if (*lib_class->def_plist_id == H5P_LST_LINK_CREATE_ID_g) {
                         atomic_store(&(H5P_LCPL_VER_g), atomic_load(&(def_plist->curr_version)));
                         def_plist->def_ver_ptr = &H5P_LCPL_VER_g;
                     }
-                    else if ( *lib_class->def_plist_id == H5P_LST_MAP_ACCESS_ID_g )
-                    {
+                    else if (*lib_class->def_plist_id == H5P_LST_MAP_ACCESS_ID_g) {
                         atomic_store(&(H5P_MAPL_VER_g), atomic_load(&(def_plist->curr_version)));
                         def_plist->def_ver_ptr = &H5P_MAPL_VER_g;
                     }
-                    else if ( *lib_class->def_plist_id == H5P_LST_MAP_CREATE_ID_g )
-                    {
+                    else if (*lib_class->def_plist_id == H5P_LST_MAP_CREATE_ID_g) {
                         atomic_store(&(H5P_MCPL_VER_g), atomic_load(&(def_plist->curr_version)));
                         def_plist->def_ver_ptr = &H5P_MCPL_VER_g;
                     }
-                    else if ( *lib_class->def_plist_id == H5P_LST_OBJECT_COPY_ID_g )
-                    {
+                    else if (*lib_class->def_plist_id == H5P_LST_OBJECT_COPY_ID_g) {
                         atomic_store(&(H5P_OCPYPL_VER_g), atomic_load(&(def_plist->curr_version)));
                         def_plist->def_ver_ptr = &H5P_OCPYPL_VER_g;
                     }
-                    else if ( *lib_class->def_plist_id == H5P_LST_REFERENCE_ACCESS_ID_g )
-                    {
+                    else if (*lib_class->def_plist_id == H5P_LST_REFERENCE_ACCESS_ID_g) {
                         atomic_store(&(H5P_RAPL_VER_g), atomic_load(&(def_plist->curr_version)));
                         def_plist->def_ver_ptr = &H5P_RAPL_VER_g;
                     }
-                    else if ( *lib_class->def_plist_id == H5P_LST_VOL_INITIALIZE_ID_g )
-                    {
+                    else if (*lib_class->def_plist_id == H5P_LST_VOL_INITIALIZE_ID_g) {
                         atomic_store(&(H5P_VIPL_VER_g), atomic_load(&(def_plist->curr_version)));
                         def_plist->def_ver_ptr = &H5P_VIPL_VER_g;
                     }
-
 
                 } /* end if */
 
@@ -942,9 +918,9 @@ done:
 #ifdef H5_HAVE_MULTITHREAD
 
 /**
- * 
+ *
  */
-herr_t 
+herr_t
 H5P_set_cx_init(void)
 {
     herr_t ret_value = SUCCEED;
@@ -957,9 +933,9 @@ H5P_set_cx_init(void)
 } /* end H5P_set_cx_init() */
 
 /**
- * 
+ *
  */
-herr_t 
+herr_t
 H5P_unset_cx_init(void)
 {
     herr_t ret_value = SUCCEED;
@@ -1603,14 +1579,12 @@ H5P_copy_plist(H5P_mt_list_t *plist, hbool_t app_ref)
     parent = plist->pclass_ptr;
 
     /* If the context is initialized grab version from it */
-    if ( H5P_H5CX_INIT_g )
-    {
-        if ( 0 == (version = H5CX_get_plist_version(atomic_load(&(plist->plist_id)))) ) {
+    if (H5P_H5CX_INIT_g) {
+        if (0 == (version = H5CX_get_plist_version(atomic_load(&(plist->plist_id))))) {
             version = atomic_load(&(plist->curr_version));
         }
     }
-    else 
-    {
+    else {
         version = atomic_load(&(plist->curr_version));
     }
 
@@ -2905,8 +2879,8 @@ H5P_create_id(H5P_mt_class_t *pclass, hbool_t app_ref)
     assert(pclass);
 
     /* Create the new MT property list */
-    if (NULL == (plist = H5P__mt_create_list(pclass, NULL, FALSE, 
-                                    atomic_load(&(pclass->curr_version)), app_ref))) {
+    if (NULL ==
+        (plist = H5P__mt_create_list(pclass, NULL, FALSE, atomic_load(&(pclass->curr_version)), app_ref))) {
         HGOTO_ERROR(H5E_PLIST, H5E_CANTCREATE, H5I_INVALID_HID, "unable to create MT property list");
     }
 
@@ -4154,14 +4128,12 @@ H5P_poke(H5P_mt_list_t *plist, const char *name, void *value)
     FUNC_ENTER_NOAPI(FAIL)
 
     /* If the context is initialized grab version from it */
-    if ( H5P_H5CX_INIT_g )
-    {
-        if ( 0 == (version = H5CX_get_plist_version(atomic_load(&(plist->plist_id)))) ) {
+    if (H5P_H5CX_INIT_g) {
+        if (0 == (version = H5CX_get_plist_version(atomic_load(&(plist->plist_id))))) {
             version = atomic_load(&(plist->curr_version));
         }
     }
-    else 
-    {
+    else {
         version = atomic_load(&(plist->curr_version));
     }
 
@@ -4889,14 +4861,12 @@ H5P_exist_plist(H5P_mt_list_t *plist, const char *name)
     assert(name);
 
     /* If the context is initialized grab version from it */
-    if ( H5P_H5CX_INIT_g )
-    {
-        if ( 0 == (version = H5CX_get_plist_version(atomic_load(&(plist->plist_id)))) ) {
+    if (H5P_H5CX_INIT_g) {
+        if (0 == (version = H5CX_get_plist_version(atomic_load(&(plist->plist_id))))) {
             version = atomic_load(&(plist->curr_version));
         }
     }
-    else 
-    {
+    else {
         version = atomic_load(&(plist->curr_version));
     }
 
@@ -5114,14 +5084,12 @@ H5P__get_size_plist(H5P_genplist_t *plist, const char *name, size_t *size)
     version = atomic_load(&(plist->curr_version));
 #endif
     /* If the context is initialized grab version from it */
-    if ( H5P_H5CX_INIT_g )
-    {
-        if ( 0 == (version = H5CX_get_plist_version(atomic_load(&(plist->plist_id)))) ) {
+    if (H5P_H5CX_INIT_g) {
+        if (0 == (version = H5CX_get_plist_version(atomic_load(&(plist->plist_id))))) {
             version = atomic_load(&(plist->curr_version));
         }
     }
-    else 
-    {
+    else {
         version = atomic_load(&(plist->curr_version));
     }
 
@@ -5292,7 +5260,7 @@ done:
 
 #ifdef H5_HAVE_MULTITHREAD
 /**
- * 
+ *
  */
 herr_t
 H5P__get_nprops_plist(const H5P_genplist_t *plist, size_t *nprops)
@@ -5368,18 +5336,15 @@ H5P_get_nprops_pclass(const H5P_genclass_t *pclass, size_t *nprops, hbool_t recu
      * recent version, including all valid properties inherited from its parent.
      * Else nprops_added is used, which only counts the properties that have added
      * or modified in this class specifically.
-     * 
+     *
      * NOTE: the public API H5Pget_nprops always calls this with recurse as FALSE.
      */
-    if (recurse)
-    {
+    if (recurse) {
         *nprops = atomic_load(&(pclass->log_pl_len));
     }
-    else
-    {
+    else {
         *nprops = atomic_load(&(pclass->nprops_added));
     }
-    
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P_get_nprops_pclass() */
@@ -6431,14 +6396,12 @@ H5P__iterate_plist(const H5P_genplist_t *plist, hbool_t iter_all_prop, int *idx,
     version = atomic_load(&(plist->curr_version));
 #endif
     /* If the context is initialized grab version from it */
-    if ( H5P_H5CX_INIT_g )
-    {
-        if ( 0 == (version = H5CX_get_plist_version(atomic_load(&(plist->plist_id)))) ) {
+    if (H5P_H5CX_INIT_g) {
+        if (0 == (version = H5CX_get_plist_version(atomic_load(&(plist->plist_id))))) {
             version = atomic_load(&(plist->curr_version));
         }
     }
-    else 
-    {
+    else {
         version = atomic_load(&(plist->curr_version));
     }
 
@@ -6941,9 +6904,8 @@ H5P_peek(H5P_genplist_t *plist, const char *name, void *value)
     FUNC_ENTER_NOAPI(FAIL)
 
     /* If the context is initialized grab version from it */
-    if ( H5P_H5CX_INIT_g )
-    {
-        if ( 0 == (version = H5CX_get_plist_version(atomic_load(&(plist->plist_id)))) ) {
+    if (H5P_H5CX_INIT_g) {
+        if (0 == (version = H5CX_get_plist_version(atomic_load(&(plist->plist_id))))) {
 
 #if H5P_PLIST_CX_LOG
             H5P_mt_class_t *parent = plist->pclass_ptr;
@@ -6958,8 +6920,7 @@ H5P_peek(H5P_genplist_t *plist, const char *name, void *value)
             version = atomic_load(&(plist->curr_version));
         }
     }
-    else 
-    {
+    else {
         version = atomic_load(&(plist->curr_version));
     }
 
@@ -7138,9 +7099,8 @@ H5P_get(H5P_mt_list_t *plist, const char *name, void *value)
     assert(value);
 
     /* If the context is initialized grab version from it */
-    if ( H5P_H5CX_INIT_g )
-    {
-        if ( 0 == (version = H5CX_get_plist_version(atomic_load(&(plist->plist_id)))) ) {
+    if (H5P_H5CX_INIT_g) {
+        if (0 == (version = H5CX_get_plist_version(atomic_load(&(plist->plist_id))))) {
 
 #if H5P_PLIST_CX_LOG
             H5P_mt_class_t *parent = plist->pclass_ptr;
@@ -7154,8 +7114,7 @@ H5P_get(H5P_mt_list_t *plist, const char *name, void *value)
             version = atomic_load(&(plist->curr_version));
         }
     }
-    else 
-    {
+    else {
         version = atomic_load(&(plist->curr_version));
     }
 

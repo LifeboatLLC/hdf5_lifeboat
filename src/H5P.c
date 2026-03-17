@@ -137,13 +137,12 @@ H5Pcopy(hid_t id)
         /* Store the id in class struct */
         atomic_store(&(copy_class->id), ret_value);
 #endif
-        
+
     } /* end else */
 
 done:
     FUNC_LEAVE_API(ret_value)
 } /* H5Pcopy() */
-
 
 #ifdef H5_HAVE_MULTITHREAD
 /****************************************************************************************
@@ -193,8 +192,9 @@ H5Pcreate_class(hid_t parent, const char *name, H5P_cls_create_func_t cls_create
     }
 
     /* Create the new MT property list class */
-    if (NULL == (pclass = H5P__mt_create_class(par_class, name, H5P_TYPE_USER, atomic_load(&(par_class->curr_version)), 
-                                                cls_create, create_data, cls_copy, copy_data, cls_close, close_data))) {
+    if (NULL == (pclass = H5P__mt_create_class(par_class, name, H5P_TYPE_USER,
+                                               atomic_load(&(par_class->curr_version)), cls_create,
+                                               create_data, cls_copy, copy_data, cls_close, close_data))) {
         HGOTO_ERROR(H5E_PLIST, H5E_CANTCREATE, H5I_INVALID_HID, "unable to create MT property list class");
     }
 
@@ -297,7 +297,6 @@ done:
 
 #endif
 
-
 /*--------------------------------------------------------------------------
  NAME
     H5Pcreate
@@ -340,7 +339,6 @@ H5Pcreate(hid_t cls_id)
 done:
     FUNC_LEAVE_API(ret_value)
 } /* H5Pcreate() */
-
 
 #ifdef H5_HAVE_MULTITHREAD
 
@@ -990,7 +988,7 @@ H5Pget_size(hid_t id, const char *name, size_t *size /*out*/)
     if (H5I_GENPROP_LST == H5I_get_type(id)) {
         if (NULL == (plist = (H5P_mt_list_t *)H5I_object(id))) {
             HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a MT property list");
-        }      
+        }
 
         /* Check the property size */
         if ((ret_value = H5P__get_size_plist(plist, name, size)) < 0)
@@ -1229,7 +1227,7 @@ H5Pget_class(hid_t plist_id)
          * Additionally, in the multithread redesign of H5P when a class or list is derived from
          * a parent class they increment the ID ref count on their parent class, and decrement it
          * when they are closed. This action should make it impossible for a class to have its ID
-         * removed from the index if it has existing derived objects. However, these functions 
+         * removed from the index if it has existing derived objects. However, these functions
          * were to test other posibilities, and should probably be removed if the current plan of
          * having derived objects increment their parent on creations stays.
          */
@@ -2131,7 +2129,6 @@ H5Pget_class_name(hid_t pclass_id)
 done:
     FUNC_LEAVE_API(ret_value)
 } /* H5Pget_class_name() */
-
 
 #ifdef H5_HAVE_MULTITHREAD
 

@@ -165,8 +165,7 @@ H5G__create_api_common(hid_t loc_id, const char *name, hid_t lcpl_id, hid_t gcpl
 
 #ifdef H5_HAVE_MULTITHREAD
     /* Set the GAPL for the API context */
-    if ( H5CX_set_plist(gapl_id, H5P_TYPE_GROUP_ACCESS) < 0)
-    {
+    if (H5CX_set_plist(gapl_id, H5P_TYPE_GROUP_ACCESS) < 0) {
         HGOTO_ERROR(H5E_ATTR, H5E_CANTSET, H5I_INVALID_HID, "can't set gapl in context");
     }
 #endif
@@ -202,8 +201,7 @@ H5G__create_api_common(hid_t loc_id, const char *name, hid_t lcpl_id, hid_t gcpl
 
 #ifdef H5_HAVE_MULTITHREAD
     /* Set the GCPL for the API context */
-    if ( H5CX_set_plist(gcpl_id, H5P_TYPE_ATTRIBUTE_CREATE) < 0)
-    {
+    if (H5CX_set_plist(gcpl_id, H5P_TYPE_ATTRIBUTE_CREATE) < 0) {
         HGOTO_ERROR(H5E_ATTR, H5E_CANTSET, H5I_INVALID_HID, "can't set gcpl in context");
     }
 #endif
@@ -390,8 +388,7 @@ H5Gcreate_anon(hid_t loc_id, hid_t gcpl_id, hid_t gapl_id)
 
 #ifdef H5_HAVE_MULTITHREAD
     /* Set the property list in the context */
-    if ( H5CX_set_plist(gcpl_id, H5P_TYPE_ATTRIBUTE_CREATE) < 0)
-    {
+    if (H5CX_set_plist(gcpl_id, H5P_TYPE_ATTRIBUTE_CREATE) < 0) {
         HGOTO_ERROR(H5E_ATTR, H5E_CANTSET, H5I_INVALID_HID, "can't set gcpl in context");
     }
 #endif

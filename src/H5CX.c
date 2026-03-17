@@ -212,57 +212,57 @@ typedef struct H5CX_t {
     int32_t         fapl_inc; /* Number of times the index was incremented in this instance */
 
     /* AAPL */
-    hid_t           aapl_id;  
-    H5P_genplist_t *aapl;     
+    hid_t           aapl_id;
+    H5P_genplist_t *aapl;
     uint64_t        aapl_ver;
     int32_t         aapl_inc;
 
     /* ACPL */
-    hid_t           acpl_id;  
-    H5P_genplist_t *acpl;     
+    hid_t           acpl_id;
+    H5P_genplist_t *acpl;
     uint64_t        acpl_ver;
     int32_t         acpl_inc;
 
     /* FCPL */
-    hid_t           fcpl_id;  
-    H5P_genplist_t *fcpl;     
+    hid_t           fcpl_id;
+    H5P_genplist_t *fcpl;
     uint64_t        fcpl_ver;
-    int32_t         fcpl_inc; 
+    int32_t         fcpl_inc;
 
     /* FMPL */
-    hid_t           fmpl_id;  
-    H5P_genplist_t *fmpl;     
+    hid_t           fmpl_id;
+    H5P_genplist_t *fmpl;
     uint64_t        fmpl_ver;
-    int32_t         fmpl_inc; 
+    int32_t         fmpl_inc;
 
     /* GAPL */
-    hid_t           gapl_id;  
-    H5P_genplist_t *gapl;     
+    hid_t           gapl_id;
+    H5P_genplist_t *gapl;
     uint64_t        gapl_ver;
-    int32_t         gapl_inc; 
+    int32_t         gapl_inc;
 
     /* GCPL */
-    hid_t           gcpl_id;  
-    H5P_genplist_t *gcpl;     
+    hid_t           gcpl_id;
+    H5P_genplist_t *gcpl;
     uint64_t        gcpl_ver;
     int32_t         gcpl_inc;
 
     /* MAPL */
-    hid_t           mapl_id;  
-    H5P_genplist_t *mapl;     
+    hid_t           mapl_id;
+    H5P_genplist_t *mapl;
     uint64_t        mapl_ver;
-    int32_t         mapl_inc; 
+    int32_t         mapl_inc;
 
     /* MCPL */
-    hid_t           mcpl_id;  
-    H5P_genplist_t *mcpl;     
+    hid_t           mcpl_id;
+    H5P_genplist_t *mcpl;
     uint64_t        mcpl_ver;
-    int32_t         mcpl_inc; 
+    int32_t         mcpl_inc;
 
     /* OCPYPL */
-    hid_t           ocpypl_id;  
-    H5P_genplist_t *ocpypl;     
-    uint64_t        ocpypl_ver; 
+    hid_t           ocpypl_id;
+    H5P_genplist_t *ocpypl;
+    uint64_t        ocpypl_ver;
     int32_t         ocpypl_inc;
 
 #if 0
@@ -270,37 +270,37 @@ typedef struct H5CX_t {
     hid_t           oapl_id;  
     H5P_genplist_t *oapl;     
     uint64_t        oapl_ver;
-    int32_t         oapl_inc; 
+    int32_t         oapl_inc;
 #endif
     /* OCPL */
-    hid_t           ocpl_id;  
-    H5P_genplist_t *ocpl;     
+    hid_t           ocpl_id;
+    H5P_genplist_t *ocpl;
     uint64_t        ocpl_ver;
-    int32_t         ocpl_inc; 
+    int32_t         ocpl_inc;
 
     /* RAPL */
-    hid_t           rapl_id;  
-    H5P_genplist_t *rapl;     
+    hid_t           rapl_id;
+    H5P_genplist_t *rapl;
     uint64_t        rapl_ver;
-    int32_t         rapl_inc; 
+    int32_t         rapl_inc;
 
     /* TAPL */
-    hid_t           tapl_id;  
-    H5P_genplist_t *tapl;     
+    hid_t           tapl_id;
+    H5P_genplist_t *tapl;
     uint64_t        tapl_ver;
-    int32_t         tapl_inc; 
+    int32_t         tapl_inc;
 
     /* TCPL */
-    hid_t           tcpl_id;  
-    H5P_genplist_t *tcpl;     
+    hid_t           tcpl_id;
+    H5P_genplist_t *tcpl;
     uint64_t        tcpl_ver;
-    int32_t         tcpl_inc; 
+    int32_t         tcpl_inc;
 
     /* VIPL */
-    hid_t           vipl_id;  
-    H5P_genplist_t *vipl;     
+    hid_t           vipl_id;
+    H5P_genplist_t *vipl;
     uint64_t        vipl_ver;
-    int32_t         vipl_inc; 
+    int32_t         vipl_inc;
 
     /* Internal: Object tagging info */
     haddr_t tag; /* Current object's tag (ohdr chunk #0 address) */
@@ -902,84 +902,84 @@ H5CX__push_common(H5CX_node_t *cnode)
     assert(head);
 
     /* Set non-zero context info */
-    cnode->ctx.dxpl_id    = H5P_DATASET_XFER_DEFAULT;
-    cnode->ctx.dxpl_ver   = H5P_DEFAULT_DXPL_VER;
-    cnode->ctx.dxpl_inc   = 0;
+    cnode->ctx.dxpl_id  = H5P_DATASET_XFER_DEFAULT;
+    cnode->ctx.dxpl_ver = H5P_DEFAULT_DXPL_VER;
+    cnode->ctx.dxpl_inc = 0;
 
-    cnode->ctx.dcpl_id    = H5P_DATASET_CREATE_DEFAULT;
-    cnode->ctx.dcpl_ver   = H5P_DEFAULT_DCPL_VER;
-    cnode->ctx.dcpl_inc   = 0;
+    cnode->ctx.dcpl_id  = H5P_DATASET_CREATE_DEFAULT;
+    cnode->ctx.dcpl_ver = H5P_DEFAULT_DCPL_VER;
+    cnode->ctx.dcpl_inc = 0;
 
-    cnode->ctx.dapl_id    = H5P_DATASET_ACCESS_DEFAULT;
-    cnode->ctx.dapl_ver   = H5P_DEFAULT_DAPL_VER;
-    cnode->ctx.dapl_inc   = 0;
+    cnode->ctx.dapl_id  = H5P_DATASET_ACCESS_DEFAULT;
+    cnode->ctx.dapl_ver = H5P_DEFAULT_DAPL_VER;
+    cnode->ctx.dapl_inc = 0;
 
-    cnode->ctx.lcpl_id    = H5P_LINK_CREATE_DEFAULT;
-    cnode->ctx.lcpl_ver   = H5P_DEFAULT_LCPL_VER;
-    cnode->ctx.lcpl_inc   = 0;
+    cnode->ctx.lcpl_id  = H5P_LINK_CREATE_DEFAULT;
+    cnode->ctx.lcpl_ver = H5P_DEFAULT_LCPL_VER;
+    cnode->ctx.lcpl_inc = 0;
 
-    cnode->ctx.lapl_id    = H5P_LINK_ACCESS_DEFAULT;
-    cnode->ctx.lapl_ver   = H5P_DEFAULT_LAPL_VER;
-    cnode->ctx.lapl_inc   = 0;
+    cnode->ctx.lapl_id  = H5P_LINK_ACCESS_DEFAULT;
+    cnode->ctx.lapl_ver = H5P_DEFAULT_LAPL_VER;
+    cnode->ctx.lapl_inc = 0;
 
-    cnode->ctx.fapl_id    = H5P_FILE_ACCESS_DEFAULT;
-    cnode->ctx.fapl_ver   = H5P_DEFAULT_FAPL_VER;
-    cnode->ctx.fapl_inc   = 0;
+    cnode->ctx.fapl_id  = H5P_FILE_ACCESS_DEFAULT;
+    cnode->ctx.fapl_ver = H5P_DEFAULT_FAPL_VER;
+    cnode->ctx.fapl_inc = 0;
 
-    cnode->ctx.aapl_id    = H5P_ATTRIBUTE_ACCESS_DEFAULT;
-    cnode->ctx.aapl_ver   = H5P_DEFAULT_AAPL_VER;
-    cnode->ctx.aapl_inc   = 0;
+    cnode->ctx.aapl_id  = H5P_ATTRIBUTE_ACCESS_DEFAULT;
+    cnode->ctx.aapl_ver = H5P_DEFAULT_AAPL_VER;
+    cnode->ctx.aapl_inc = 0;
 
-    cnode->ctx.acpl_id    = H5P_ATTRIBUTE_CREATE_DEFAULT;
-    cnode->ctx.acpl_ver   = H5P_DEFAULT_ACPL_VER;
-    cnode->ctx.acpl_inc   = 0;
+    cnode->ctx.acpl_id  = H5P_ATTRIBUTE_CREATE_DEFAULT;
+    cnode->ctx.acpl_ver = H5P_DEFAULT_ACPL_VER;
+    cnode->ctx.acpl_inc = 0;
 
-    cnode->ctx.fcpl_id    = H5P_FILE_CREATE_DEFAULT;
-    cnode->ctx.fcpl_ver   = H5P_DEFAULT_FCPL_VER;
-    cnode->ctx.fcpl_inc   = 0;
+    cnode->ctx.fcpl_id  = H5P_FILE_CREATE_DEFAULT;
+    cnode->ctx.fcpl_ver = H5P_DEFAULT_FCPL_VER;
+    cnode->ctx.fcpl_inc = 0;
 
-    cnode->ctx.fmpl_id    = H5P_FILE_MOUNT_DEFAULT;
-    cnode->ctx.fmpl_ver   = H5P_DEFAULT_FMPL_VER;
-    cnode->ctx.fmpl_inc   = 0;
+    cnode->ctx.fmpl_id  = H5P_FILE_MOUNT_DEFAULT;
+    cnode->ctx.fmpl_ver = H5P_DEFAULT_FMPL_VER;
+    cnode->ctx.fmpl_inc = 0;
 
-    cnode->ctx.gapl_id    = H5P_GROUP_ACCESS_DEFAULT;
-    cnode->ctx.gapl_ver   = H5P_DEFAULT_GAPL_VER;
-    cnode->ctx.gapl_inc   = 0;
+    cnode->ctx.gapl_id  = H5P_GROUP_ACCESS_DEFAULT;
+    cnode->ctx.gapl_ver = H5P_DEFAULT_GAPL_VER;
+    cnode->ctx.gapl_inc = 0;
 
-    cnode->ctx.gcpl_id    = H5P_GROUP_CREATE_DEFAULT;
-    cnode->ctx.gcpl_ver   = H5P_DEFAULT_GCPL_VER;
-    cnode->ctx.gcpl_inc   = 0;
+    cnode->ctx.gcpl_id  = H5P_GROUP_CREATE_DEFAULT;
+    cnode->ctx.gcpl_ver = H5P_DEFAULT_GCPL_VER;
+    cnode->ctx.gcpl_inc = 0;
 
-    cnode->ctx.mapl_id    = H5P_MAP_ACCESS_DEFAULT;
-    cnode->ctx.mapl_ver   = H5P_DEFAULT_MAPL_VER;
-    cnode->ctx.mapl_inc   = 0;
+    cnode->ctx.mapl_id  = H5P_MAP_ACCESS_DEFAULT;
+    cnode->ctx.mapl_ver = H5P_DEFAULT_MAPL_VER;
+    cnode->ctx.mapl_inc = 0;
 
-    cnode->ctx.mcpl_id    = H5P_MAP_CREATE_DEFAULT;
-    cnode->ctx.mcpl_ver   = H5P_DEFAULT_MCPL_VER;
-    cnode->ctx.mcpl_inc   = 0;
+    cnode->ctx.mcpl_id  = H5P_MAP_CREATE_DEFAULT;
+    cnode->ctx.mcpl_ver = H5P_DEFAULT_MCPL_VER;
+    cnode->ctx.mcpl_inc = 0;
 
     cnode->ctx.ocpypl_id  = H5P_OBJECT_COPY_DEFAULT;
     cnode->ctx.ocpypl_ver = H5P_DEFAULT_OCPYPL_VER;
     cnode->ctx.ocpypl_inc = 0;
 
-    cnode->ctx.rapl_id    = H5P_REFERENCE_ACCESS_DEFAULT;
-    cnode->ctx.rapl_ver   = H5P_DEFAULT_RAPL_VER;
-    cnode->ctx.rapl_inc   = 0;
+    cnode->ctx.rapl_id  = H5P_REFERENCE_ACCESS_DEFAULT;
+    cnode->ctx.rapl_ver = H5P_DEFAULT_RAPL_VER;
+    cnode->ctx.rapl_inc = 0;
 
-    cnode->ctx.tapl_id    = H5P_DATATYPE_ACCESS_DEFAULT;
-    cnode->ctx.tapl_ver   = H5P_DEFAULT_TAPL_VER;
-    cnode->ctx.tapl_inc   = 0;
+    cnode->ctx.tapl_id  = H5P_DATATYPE_ACCESS_DEFAULT;
+    cnode->ctx.tapl_ver = H5P_DEFAULT_TAPL_VER;
+    cnode->ctx.tapl_inc = 0;
 
-    cnode->ctx.tcpl_id    = H5P_DATATYPE_CREATE_DEFAULT;
-    cnode->ctx.tcpl_ver   = H5P_DEFAULT_TCPL_VER;
-    cnode->ctx.tcpl_inc   = 0;
+    cnode->ctx.tcpl_id  = H5P_DATATYPE_CREATE_DEFAULT;
+    cnode->ctx.tcpl_ver = H5P_DEFAULT_TCPL_VER;
+    cnode->ctx.tcpl_inc = 0;
 
-    cnode->ctx.vipl_id    = H5P_VOL_INITIALIZE_DEFAULT;
-    cnode->ctx.vipl_ver   = H5P_DEFAULT_VIPL_VER;
-    cnode->ctx.vipl_inc   = 0;
+    cnode->ctx.vipl_id  = H5P_VOL_INITIALIZE_DEFAULT;
+    cnode->ctx.vipl_ver = H5P_DEFAULT_VIPL_VER;
+    cnode->ctx.vipl_inc = 0;
 
-    cnode->ctx.tag        = H5AC__INVALID_TAG;
-    cnode->ctx.ring       = H5AC_RING_USER;
+    cnode->ctx.tag  = H5AC__INVALID_TAG;
+    cnode->ctx.ring = H5AC_RING_USER;
 
     /* Push context node onto stack */
     cnode->next = *head;
@@ -1348,8 +1348,8 @@ H5CX_is_def_dxpl(void)
 herr_t
 H5CX_set_dxpl(hid_t dxpl_id)
 {
-    H5CX_node_t  **head = NULL; /* Pointer to head of API context list */
-    H5P_mt_list_t *dxpl = NULL;
+    H5CX_node_t  **head      = NULL; /* Pointer to head of API context list */
+    H5P_mt_list_t *dxpl      = NULL;
     herr_t         ret_value = SUCCEED;
 
     FUNC_ENTER_NOAPI(FAIL)
@@ -1361,14 +1361,12 @@ H5CX_set_dxpl(hid_t dxpl_id)
     /* Set the API context's DXPL to a new value */
     assert((*head)->ctx.dxpl_inc == 0);
 
-    if ( dxpl_id != H5P_DATASET_XFER_DEFAULT ) 
-    {
-        if (0 >= H5I_inc_ref(dxpl_id, FALSE) ) {
+    if (dxpl_id != H5P_DATASET_XFER_DEFAULT) {
+        if (0 >= H5I_inc_ref(dxpl_id, FALSE)) {
             HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL, "unable to increment dxpl's ID ref_count in index");
         }
 
         (*head)->ctx.dxpl_inc++;
-        
 
         if (NULL == (dxpl = (H5P_mt_list_t *)H5I_object_verify(dxpl_id, H5I_GENPROP_LST))) {
             HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a property list");
@@ -1379,12 +1377,9 @@ H5CX_set_dxpl(hid_t dxpl_id)
         (*head)->ctx.dxpl     = dxpl;
     }
     /* If still default property list, grab default's version */
-    else if ( dxpl_id == H5P_DATASET_XFER_DEFAULT )
-    {
+    else if (dxpl_id == H5P_DATASET_XFER_DEFAULT) {
         (*head)->ctx.dxpl_ver = H5P_DEFAULT_DXPL_VER;
     }
-
-
 
 done:
 
@@ -1423,8 +1418,8 @@ H5CX_set_dxpl(hid_t dxpl_id)
 herr_t
 H5CX_set_dcpl(hid_t dcpl_id)
 {
-    H5CX_node_t  **head = NULL; /* Pointer to head of API context list */
-    H5P_mt_list_t *dcpl = NULL;
+    H5CX_node_t  **head      = NULL; /* Pointer to head of API context list */
+    H5P_mt_list_t *dcpl      = NULL;
     herr_t         ret_value = SUCCEED;
 
     FUNC_ENTER_NOAPI(FAIL)
@@ -1436,14 +1431,12 @@ H5CX_set_dcpl(hid_t dcpl_id)
     /* Set the API context's DCPL to a new value */
     assert((*head)->ctx.dcpl_inc == 0);
 
-    if ( dcpl_id != H5P_DATASET_CREATE_DEFAULT ) 
-    {
-        if (0 >= H5I_inc_ref(dcpl_id, FALSE) ) {
+    if (dcpl_id != H5P_DATASET_CREATE_DEFAULT) {
+        if (0 >= H5I_inc_ref(dcpl_id, FALSE)) {
             HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL, "unable to increment dcpl's ID ref_count in index");
         }
 
         (*head)->ctx.dcpl_inc++;
-        
 
         if (NULL == (dcpl = (H5P_mt_list_t *)H5I_object_verify(dcpl_id, H5I_GENPROP_LST))) {
             HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a property list");
@@ -1454,8 +1447,7 @@ H5CX_set_dcpl(hid_t dcpl_id)
         (*head)->ctx.dcpl     = dcpl;
     }
     /* If default property list, grab default's version */
-    else
-    {
+    else {
         (*head)->ctx.dcpl_ver = H5P_DEFAULT_DCPL_VER;
     }
 
@@ -1529,8 +1521,8 @@ H5CX_set_libver_bounds(H5F_t *f)
 herr_t
 H5CX_set_lcpl(hid_t lcpl_id)
 {
-    H5CX_node_t  **head = NULL; /* Pointer to head of API context list */
-    H5P_mt_list_t *lcpl = NULL;
+    H5CX_node_t  **head      = NULL; /* Pointer to head of API context list */
+    H5P_mt_list_t *lcpl      = NULL;
     herr_t         ret_value = SUCCEED;
 
     FUNC_ENTER_NOAPI(FAIL)
@@ -1542,25 +1534,23 @@ H5CX_set_lcpl(hid_t lcpl_id)
     /* Set the API context's LCPL to a new value */
     assert((*head)->ctx.lcpl_inc == 0);
 
-    if ( lcpl_id != H5P_LINK_ACCESS_DEFAULT ) 
-    {
-        if (0 >= H5I_inc_ref(lcpl_id, FALSE) ) {
+    if (lcpl_id != H5P_LINK_ACCESS_DEFAULT) {
+        if (0 >= H5I_inc_ref(lcpl_id, FALSE)) {
             HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL, "unable to increment lcpl's ID ref_count in index");
         }
 
         (*head)->ctx.lcpl_inc++;
-        
+
         if (NULL == (lcpl = (H5P_mt_list_t *)H5I_object_verify(lcpl_id, H5I_GENPROP_LST))) {
             HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a property list");
         }
 
-        (*head)->ctx.lcpl_id = lcpl_id;
+        (*head)->ctx.lcpl_id  = lcpl_id;
         (*head)->ctx.lcpl_ver = atomic_load(&(lcpl->curr_version));
         (*head)->ctx.lcpl     = lcpl;
     }
     /* If default property list, grab default's version */
-    else 
-    {
+    else {
         (*head)->ctx.lcpl_ver = H5P_DEFAULT_LCPL_VER;
     }
 
@@ -1615,13 +1605,13 @@ H5CX_set_lapl(hid_t lapl_id)
 } /* end H5CX_set_lapl() */
 
 /**
- * 
+ *
  */
-herr_t 
+herr_t
 H5CX_set_plist(hid_t plist_id, H5P_plist_type_t type)
 {
-    H5CX_node_t  **head  = NULL; /* Pointer to head of API context list */
-    H5P_mt_list_t *plist = NULL;
+    H5CX_node_t  **head      = NULL; /* Pointer to head of API context list */
+    H5P_mt_list_t *plist     = NULL;
     herr_t         ret_value = SUCCEED;
 
     FUNC_ENTER_NOAPI(FAIL)
@@ -1630,14 +1620,12 @@ H5CX_set_plist(hid_t plist_id, H5P_plist_type_t type)
     head = H5CX_get_my_context(); /* Get the pointer to the head of the API context, for this thread */
     assert(head && *head);
 
-
-    if ( type == H5P_TYPE_ATTRIBUTE_ACCESS )
-    {
+    if (type == H5P_TYPE_ATTRIBUTE_ACCESS) {
         /* Set the API context's AAPL to a new value */
-        if ((*head)->ctx.aapl_id != plist_id && plist_id != H5P_DEFAULT)
-        {
-            if (0 >= H5I_inc_ref(plist_id, FALSE) ) {
-                HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL, "unable to increment plist's ID ref_count in index");
+        if ((*head)->ctx.aapl_id != plist_id && plist_id != H5P_DEFAULT) {
+            if (0 >= H5I_inc_ref(plist_id, FALSE)) {
+                HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL,
+                            "unable to increment plist's ID ref_count in index");
             }
 
             (*head)->ctx.aapl_inc++;
@@ -1651,18 +1639,16 @@ H5CX_set_plist(hid_t plist_id, H5P_plist_type_t type)
             (*head)->ctx.aapl     = plist;
         }
         /* If still default property list, grab default's version in case it changed */
-        else if ( plist_id == H5P_ATTRIBUTE_ACCESS_DEFAULT)
-        {
+        else if (plist_id == H5P_ATTRIBUTE_ACCESS_DEFAULT) {
             (*head)->ctx.aapl_ver = H5P_DEFAULT_AAPL_VER;
         }
     }
-    else if ( type == H5P_TYPE_ATTRIBUTE_CREATE )
-    {
+    else if (type == H5P_TYPE_ATTRIBUTE_CREATE) {
         /* Set the API context's ACPL to a new value */
-        if ((*head)->ctx.acpl_id != plist_id && plist_id != H5P_DEFAULT)
-        {
-            if (0 >= H5I_inc_ref(plist_id, FALSE) ) {
-                HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL, "unable to increment plist's ID ref_count in index");
+        if ((*head)->ctx.acpl_id != plist_id && plist_id != H5P_DEFAULT) {
+            if (0 >= H5I_inc_ref(plist_id, FALSE)) {
+                HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL,
+                            "unable to increment plist's ID ref_count in index");
             }
 
             (*head)->ctx.acpl_inc++;
@@ -1676,18 +1662,16 @@ H5CX_set_plist(hid_t plist_id, H5P_plist_type_t type)
             (*head)->ctx.acpl     = plist;
         }
         /* If still default property list, grab default's version in case it changed */
-        else if ( plist_id == H5P_ATTRIBUTE_CREATE_DEFAULT)
-        {
+        else if (plist_id == H5P_ATTRIBUTE_CREATE_DEFAULT) {
             (*head)->ctx.acpl_ver = H5P_DEFAULT_ACPL_VER;
         }
     }
-    else if ( type == H5P_TYPE_DATASET_ACCESS )
-    {
+    else if (type == H5P_TYPE_DATASET_ACCESS) {
         /* Set the API context's DAPL to a new value */
-        if ((*head)->ctx.dapl_id != plist_id && plist_id != H5P_DEFAULT)
-        {
-            if (0 >= H5I_inc_ref(plist_id, FALSE) ) {
-                HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL, "unable to increment plist's ID ref_count in index");
+        if ((*head)->ctx.dapl_id != plist_id && plist_id != H5P_DEFAULT) {
+            if (0 >= H5I_inc_ref(plist_id, FALSE)) {
+                HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL,
+                            "unable to increment plist's ID ref_count in index");
             }
 
             (*head)->ctx.dapl_inc++;
@@ -1701,18 +1685,16 @@ H5CX_set_plist(hid_t plist_id, H5P_plist_type_t type)
             (*head)->ctx.dapl     = plist;
         }
         /* If still default property list, grab default's version in case it changed */
-        else if ( plist_id == H5P_DATASET_ACCESS_DEFAULT)
-        {
+        else if (plist_id == H5P_DATASET_ACCESS_DEFAULT) {
             (*head)->ctx.dapl_ver = H5P_DEFAULT_DAPL_VER;
         }
     }
-    else if ( type == H5P_TYPE_DATASET_CREATE )
-    {
+    else if (type == H5P_TYPE_DATASET_CREATE) {
         /* Set the API context's DCPL to a new value */
-        if ((*head)->ctx.dcpl_id != plist_id && plist_id != H5P_DEFAULT)
-        {
-            if (0 >= H5I_inc_ref(plist_id, FALSE) ) {
-                HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL, "unable to increment plist's ID ref_count in index");
+        if ((*head)->ctx.dcpl_id != plist_id && plist_id != H5P_DEFAULT) {
+            if (0 >= H5I_inc_ref(plist_id, FALSE)) {
+                HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL,
+                            "unable to increment plist's ID ref_count in index");
             }
 
             (*head)->ctx.dcpl_inc++;
@@ -1726,18 +1708,16 @@ H5CX_set_plist(hid_t plist_id, H5P_plist_type_t type)
             (*head)->ctx.dcpl     = plist;
         }
         /* If still default property list, grab default's version in case it changed */
-        else if ( plist_id == H5P_DATASET_CREATE_DEFAULT)
-        {
+        else if (plist_id == H5P_DATASET_CREATE_DEFAULT) {
             (*head)->ctx.dcpl_ver = H5P_DEFAULT_DCPL_VER;
         }
     }
-    else if ( type == H5P_TYPE_DATASET_XFER )
-    {
+    else if (type == H5P_TYPE_DATASET_XFER) {
         /* Set the API context's DXPL to a new value */
-        if ((*head)->ctx.dxpl_id != plist_id && plist_id != H5P_DEFAULT)
-        {
-            if (0 >= H5I_inc_ref(plist_id, FALSE) ) {
-                HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL, "unable to increment plist's ID ref_count in index");
+        if ((*head)->ctx.dxpl_id != plist_id && plist_id != H5P_DEFAULT) {
+            if (0 >= H5I_inc_ref(plist_id, FALSE)) {
+                HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL,
+                            "unable to increment plist's ID ref_count in index");
             }
 
             (*head)->ctx.dxpl_inc++;
@@ -1751,18 +1731,16 @@ H5CX_set_plist(hid_t plist_id, H5P_plist_type_t type)
             (*head)->ctx.dxpl     = plist;
         }
         /* If still default property list, grab default's version in case it changed */
-        else if ( plist_id == H5P_DATASET_XFER_DEFAULT)
-        {
+        else if (plist_id == H5P_DATASET_XFER_DEFAULT) {
             (*head)->ctx.dxpl_ver = H5P_DEFAULT_DXPL_VER;
         }
     }
-    else if ( type == H5P_TYPE_FILE_ACCESS )
-    {
+    else if (type == H5P_TYPE_FILE_ACCESS) {
         /* Set the API context's FAPL to a new value */
-        if ((*head)->ctx.fapl_id != plist_id && plist_id != H5P_DEFAULT)
-        {
-            if (0 >= H5I_inc_ref(plist_id, FALSE) ) {
-                HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL, "unable to increment plist's ID ref_count in index");
+        if ((*head)->ctx.fapl_id != plist_id && plist_id != H5P_DEFAULT) {
+            if (0 >= H5I_inc_ref(plist_id, FALSE)) {
+                HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL,
+                            "unable to increment plist's ID ref_count in index");
             }
 
             (*head)->ctx.fapl_inc++;
@@ -1776,18 +1754,16 @@ H5CX_set_plist(hid_t plist_id, H5P_plist_type_t type)
             (*head)->ctx.fapl     = plist;
         }
         /* If still default property list, grab default's version in case it changed */
-        else if ( plist_id == H5P_FILE_ACCESS_DEFAULT)
-        {
+        else if (plist_id == H5P_FILE_ACCESS_DEFAULT) {
             (*head)->ctx.fapl_ver = H5P_DEFAULT_FAPL_VER;
         }
     }
-    else if ( type == H5P_TYPE_FILE_CREATE )
-    {
+    else if (type == H5P_TYPE_FILE_CREATE) {
         /* Set the API context's FCPL to a new value */
-        if ((*head)->ctx.fcpl_id != plist_id && plist_id != H5P_DEFAULT)
-        {
-            if (0 >= H5I_inc_ref(plist_id, FALSE) ) {
-                HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL, "unable to increment plist's ID ref_count in index");
+        if ((*head)->ctx.fcpl_id != plist_id && plist_id != H5P_DEFAULT) {
+            if (0 >= H5I_inc_ref(plist_id, FALSE)) {
+                HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL,
+                            "unable to increment plist's ID ref_count in index");
             }
 
             (*head)->ctx.fcpl_inc++;
@@ -1801,18 +1777,16 @@ H5CX_set_plist(hid_t plist_id, H5P_plist_type_t type)
             (*head)->ctx.fcpl     = plist;
         }
         /* If still default property list, grab default's version in case it changed */
-        else if ( plist_id == H5P_FILE_CREATE_DEFAULT)
-        {
+        else if (plist_id == H5P_FILE_CREATE_DEFAULT) {
             (*head)->ctx.fcpl_ver = H5P_DEFAULT_FCPL_VER;
         }
     }
-    else if ( type == H5P_TYPE_FILE_MOUNT )
-    {
+    else if (type == H5P_TYPE_FILE_MOUNT) {
         /* Set the API context's FMPL to a new value */
-        if ((*head)->ctx.fmpl_id != plist_id && plist_id != H5P_DEFAULT)
-        {
-            if (0 >= H5I_inc_ref(plist_id, FALSE) ) {
-                HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL, "unable to increment plist's ID ref_count in index");
+        if ((*head)->ctx.fmpl_id != plist_id && plist_id != H5P_DEFAULT) {
+            if (0 >= H5I_inc_ref(plist_id, FALSE)) {
+                HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL,
+                            "unable to increment plist's ID ref_count in index");
             }
 
             (*head)->ctx.fmpl_inc++;
@@ -1826,18 +1800,16 @@ H5CX_set_plist(hid_t plist_id, H5P_plist_type_t type)
             (*head)->ctx.fmpl     = plist;
         }
         /* If still default property list, grab default's version in case it changed */
-        else if ( plist_id == H5P_FILE_MOUNT_DEFAULT)
-        {
+        else if (plist_id == H5P_FILE_MOUNT_DEFAULT) {
             (*head)->ctx.fmpl_ver = H5P_DEFAULT_FMPL_VER;
         }
     }
-    else if ( type == H5P_TYPE_GROUP_ACCESS )
-    {
+    else if (type == H5P_TYPE_GROUP_ACCESS) {
         /* Set the API context's GAPL to a new value */
-        if ((*head)->ctx.gapl_id != plist_id && plist_id != H5P_DEFAULT)
-        {
-            if (0 >= H5I_inc_ref(plist_id, FALSE) ) {
-                HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL, "unable to increment plist's ID ref_count in index");
+        if ((*head)->ctx.gapl_id != plist_id && plist_id != H5P_DEFAULT) {
+            if (0 >= H5I_inc_ref(plist_id, FALSE)) {
+                HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL,
+                            "unable to increment plist's ID ref_count in index");
             }
 
             (*head)->ctx.gapl_inc++;
@@ -1851,18 +1823,16 @@ H5CX_set_plist(hid_t plist_id, H5P_plist_type_t type)
             (*head)->ctx.gapl     = plist;
         }
         /* If still default property list, grab default's version in case it changed */
-        else if ( plist_id == H5P_GROUP_ACCESS_DEFAULT)
-        {
+        else if (plist_id == H5P_GROUP_ACCESS_DEFAULT) {
             (*head)->ctx.gapl_ver = H5P_DEFAULT_GAPL_VER;
         }
     }
-    else if ( type == H5P_TYPE_GROUP_CREATE )
-    {
+    else if (type == H5P_TYPE_GROUP_CREATE) {
         /* Set the API context's GCPL to a new value */
-        if ((*head)->ctx.gcpl_id != plist_id && plist_id != H5P_DEFAULT)
-        {
-            if (0 >= H5I_inc_ref(plist_id, FALSE) ) {
-                HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL, "unable to increment plist's ID ref_count in index");
+        if ((*head)->ctx.gcpl_id != plist_id && plist_id != H5P_DEFAULT) {
+            if (0 >= H5I_inc_ref(plist_id, FALSE)) {
+                HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL,
+                            "unable to increment plist's ID ref_count in index");
             }
 
             (*head)->ctx.gcpl_inc++;
@@ -1876,18 +1846,16 @@ H5CX_set_plist(hid_t plist_id, H5P_plist_type_t type)
             (*head)->ctx.gcpl     = plist;
         }
         /* If still default property list, grab default's version in case it changed */
-        else if ( plist_id == H5P_GROUP_CREATE_DEFAULT)
-        {
+        else if (plist_id == H5P_GROUP_CREATE_DEFAULT) {
             (*head)->ctx.gcpl_ver = H5P_DEFAULT_GCPL_VER;
         }
     }
-    else if ( type == H5P_TYPE_LINK_ACCESS )
-    {
+    else if (type == H5P_TYPE_LINK_ACCESS) {
         /* Set the API context's LAPL to a new value */
-        if ((*head)->ctx.lapl_id != plist_id && plist_id != H5P_DEFAULT)
-        {
-            if (0 >= H5I_inc_ref(plist_id, FALSE) ) {
-                HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL, "unable to increment plist's ID ref_count in index");
+        if ((*head)->ctx.lapl_id != plist_id && plist_id != H5P_DEFAULT) {
+            if (0 >= H5I_inc_ref(plist_id, FALSE)) {
+                HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL,
+                            "unable to increment plist's ID ref_count in index");
             }
 
             (*head)->ctx.lapl_inc++;
@@ -1901,18 +1869,16 @@ H5CX_set_plist(hid_t plist_id, H5P_plist_type_t type)
             (*head)->ctx.lapl     = plist;
         }
         /* If still default property list, grab default's version in case it changed */
-        else if ( plist_id == H5P_LINK_ACCESS_DEFAULT)
-        {
+        else if (plist_id == H5P_LINK_ACCESS_DEFAULT) {
             (*head)->ctx.lapl_ver = H5P_DEFAULT_LAPL_VER;
         }
     }
-    else if ( type == H5P_TYPE_LINK_CREATE )
-    {
+    else if (type == H5P_TYPE_LINK_CREATE) {
         /* Set the API context's LCPL to a new value */
-        if ((*head)->ctx.lcpl_id != plist_id && plist_id != H5P_DEFAULT)
-        {
-            if (0 >= H5I_inc_ref(plist_id, FALSE) ) {
-                HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL, "unable to increment plist's ID ref_count in index");
+        if ((*head)->ctx.lcpl_id != plist_id && plist_id != H5P_DEFAULT) {
+            if (0 >= H5I_inc_ref(plist_id, FALSE)) {
+                HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL,
+                            "unable to increment plist's ID ref_count in index");
             }
 
             (*head)->ctx.lcpl_inc++;
@@ -1926,18 +1892,16 @@ H5CX_set_plist(hid_t plist_id, H5P_plist_type_t type)
             (*head)->ctx.lcpl     = plist;
         }
         /* If still default property list, grab default's version in case it changed */
-        else if ( plist_id == H5P_LINK_CREATE_DEFAULT)
-        {
+        else if (plist_id == H5P_LINK_CREATE_DEFAULT) {
             (*head)->ctx.lcpl_ver = H5P_DEFAULT_LCPL_VER;
         }
     }
-    else if ( type == H5P_TYPE_MAP_ACCESS )
-    {
+    else if (type == H5P_TYPE_MAP_ACCESS) {
         /* Set the API context's MAPL to a new value */
-        if ((*head)->ctx.mapl_id != plist_id && plist_id != H5P_DEFAULT)
-        {
-            if (0 >= H5I_inc_ref(plist_id, FALSE) ) {
-                HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL, "unable to increment plist's ID ref_count in index");
+        if ((*head)->ctx.mapl_id != plist_id && plist_id != H5P_DEFAULT) {
+            if (0 >= H5I_inc_ref(plist_id, FALSE)) {
+                HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL,
+                            "unable to increment plist's ID ref_count in index");
             }
 
             (*head)->ctx.mapl_inc++;
@@ -1951,18 +1915,16 @@ H5CX_set_plist(hid_t plist_id, H5P_plist_type_t type)
             (*head)->ctx.mapl     = plist;
         }
         /* If still default property list, grab default's version in case it changed */
-        else if ( plist_id == H5P_MAP_ACCESS_DEFAULT)
-        {
+        else if (plist_id == H5P_MAP_ACCESS_DEFAULT) {
             (*head)->ctx.mapl_ver = H5P_DEFAULT_MAPL_VER;
         }
     }
-    else if ( type == H5P_TYPE_MAP_CREATE )
-    {
+    else if (type == H5P_TYPE_MAP_CREATE) {
         /* Set the API context's MCPL to a new value */
-        if ((*head)->ctx.mcpl_id != plist_id && plist_id != H5P_DEFAULT)
-        {
-            if (0 >= H5I_inc_ref(plist_id, FALSE) ) {
-                HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL, "unable to increment plist's ID ref_count in index");
+        if ((*head)->ctx.mcpl_id != plist_id && plist_id != H5P_DEFAULT) {
+            if (0 >= H5I_inc_ref(plist_id, FALSE)) {
+                HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL,
+                            "unable to increment plist's ID ref_count in index");
             }
 
             (*head)->ctx.mcpl_inc++;
@@ -1976,18 +1938,16 @@ H5CX_set_plist(hid_t plist_id, H5P_plist_type_t type)
             (*head)->ctx.mcpl     = plist;
         }
         /* If still default property list, grab default's version in case it changed */
-        else if ( plist_id == H5P_MAP_CREATE_DEFAULT)
-        {
+        else if (plist_id == H5P_MAP_CREATE_DEFAULT) {
             (*head)->ctx.mcpl_ver = H5P_DEFAULT_MCPL_VER;
         }
     }
-    else if ( type == H5P_TYPE_OBJECT_COPY )
-    {
+    else if (type == H5P_TYPE_OBJECT_COPY) {
         /* Set the API context's OCPYPL to a new value */
-        if ((*head)->ctx.ocpypl_id != plist_id && plist_id != H5P_DEFAULT)
-        {
-            if (0 >= H5I_inc_ref(plist_id, FALSE) ) {
-                HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL, "unable to increment plist's ID ref_count in index");
+        if ((*head)->ctx.ocpypl_id != plist_id && plist_id != H5P_DEFAULT) {
+            if (0 >= H5I_inc_ref(plist_id, FALSE)) {
+                HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL,
+                            "unable to increment plist's ID ref_count in index");
             }
 
             (*head)->ctx.ocpypl_inc++;
@@ -2001,13 +1961,12 @@ H5CX_set_plist(hid_t plist_id, H5P_plist_type_t type)
             (*head)->ctx.ocpypl     = plist;
         }
         /* If still default property list, grab default's version in case it changed */
-        else if ( plist_id == H5P_OBJECT_COPY_DEFAULT)
-        {
+        else if (plist_id == H5P_OBJECT_COPY_DEFAULT) {
             (*head)->ctx.ocpypl_ver = H5P_DEFAULT_OCPYPL_VER;
         }
     }
     /**
-     * NOTE: There doesn't seem to be a default object create plist. 
+     * NOTE: There doesn't seem to be a default object create plist.
      * In H5R.c oapl_id uses the default H5P_TYPE_LINK_ACCESS.
      */
 #if 0
@@ -2032,13 +1991,12 @@ H5CX_set_plist(hid_t plist_id, H5P_plist_type_t type)
         }
     }
 #endif
-    else if ( type == H5P_TYPE_REFERENCE_ACCESS )
-    {
+    else if (type == H5P_TYPE_REFERENCE_ACCESS) {
         /* Set the API context's RAPL to a new value */
-        if ((*head)->ctx.rapl_id != plist_id && plist_id != H5P_DEFAULT)
-        {
-            if (0 >= H5I_inc_ref(plist_id, FALSE) ) {
-                HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL, "unable to increment plist's ID ref_count in index");
+        if ((*head)->ctx.rapl_id != plist_id && plist_id != H5P_DEFAULT) {
+            if (0 >= H5I_inc_ref(plist_id, FALSE)) {
+                HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL,
+                            "unable to increment plist's ID ref_count in index");
             }
 
             (*head)->ctx.rapl_inc++;
@@ -2052,18 +2010,16 @@ H5CX_set_plist(hid_t plist_id, H5P_plist_type_t type)
             (*head)->ctx.rapl     = plist;
         }
         /* If still default property list, grab default's version in case it changed */
-        else if ( plist_id == H5P_REFERENCE_ACCESS_DEFAULT)
-        {
+        else if (plist_id == H5P_REFERENCE_ACCESS_DEFAULT) {
             (*head)->ctx.rapl_ver = H5P_DEFAULT_RAPL_VER;
         }
     }
-    else if ( type == H5P_TYPE_DATATYPE_ACCESS )
-    {
+    else if (type == H5P_TYPE_DATATYPE_ACCESS) {
         /* Set the API context's TAPL to a new value */
-        if ((*head)->ctx.tapl_id != plist_id && plist_id != H5P_DEFAULT)
-        {
-            if (0 >= H5I_inc_ref(plist_id, FALSE) ) {
-                HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL, "unable to increment plist's ID ref_count in index");
+        if ((*head)->ctx.tapl_id != plist_id && plist_id != H5P_DEFAULT) {
+            if (0 >= H5I_inc_ref(plist_id, FALSE)) {
+                HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL,
+                            "unable to increment plist's ID ref_count in index");
             }
 
             (*head)->ctx.tapl_inc++;
@@ -2077,18 +2033,16 @@ H5CX_set_plist(hid_t plist_id, H5P_plist_type_t type)
             (*head)->ctx.tapl     = plist;
         }
         /* If still default property list, grab default's version in case it changed */
-        else if ( plist_id == H5P_DATATYPE_ACCESS_DEFAULT)
-        {
+        else if (plist_id == H5P_DATATYPE_ACCESS_DEFAULT) {
             (*head)->ctx.tapl_ver = H5P_DEFAULT_TAPL_VER;
         }
     }
-    else if ( type == H5P_TYPE_DATATYPE_CREATE )
-    {
+    else if (type == H5P_TYPE_DATATYPE_CREATE) {
         /* Set the API context's TCPL to a new value */
-        if ((*head)->ctx.tcpl_id != plist_id && plist_id != H5P_DEFAULT)
-        {
-            if (0 >= H5I_inc_ref(plist_id, FALSE) ) {
-                HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL, "unable to increment plist's ID ref_count in index");
+        if ((*head)->ctx.tcpl_id != plist_id && plist_id != H5P_DEFAULT) {
+            if (0 >= H5I_inc_ref(plist_id, FALSE)) {
+                HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL,
+                            "unable to increment plist's ID ref_count in index");
             }
 
             (*head)->ctx.tcpl_inc++;
@@ -2102,18 +2056,16 @@ H5CX_set_plist(hid_t plist_id, H5P_plist_type_t type)
             (*head)->ctx.tcpl     = plist;
         }
         /* If still default property list, grab default's version in case it changed */
-        else if ( plist_id == H5P_DATATYPE_CREATE_DEFAULT)
-        {
+        else if (plist_id == H5P_DATATYPE_CREATE_DEFAULT) {
             (*head)->ctx.tcpl_ver = H5P_DEFAULT_TCPL_VER;
         }
     }
-    else if ( type == H5P_TYPE_VOL_INITIALIZE )
-    {
+    else if (type == H5P_TYPE_VOL_INITIALIZE) {
         /* Set the API context's VIPL to a new value */
-        if ((*head)->ctx.vipl_id != plist_id && plist_id != H5P_DEFAULT)
-        {
-            if (0 >= H5I_inc_ref(plist_id, FALSE) ) {
-                HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL, "unable to increment plist's ID ref_count in index");
+        if ((*head)->ctx.vipl_id != plist_id && plist_id != H5P_DEFAULT) {
+            if (0 >= H5I_inc_ref(plist_id, FALSE)) {
+                HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL,
+                            "unable to increment plist's ID ref_count in index");
             }
 
             (*head)->ctx.vipl_inc++;
@@ -2127,12 +2079,10 @@ H5CX_set_plist(hid_t plist_id, H5P_plist_type_t type)
             (*head)->ctx.vipl     = plist;
         }
         /* If still default property list, grab default's version in case it changed */
-        else if ( plist_id == H5P_VOL_INITIALIZE_DEFAULT)
-        {
+        else if (plist_id == H5P_VOL_INITIALIZE_DEFAULT) {
             (*head)->ctx.vipl_ver = H5P_DEFAULT_VIPL_VER;
         }
     }
-
 
 done:
 
@@ -2198,29 +2148,25 @@ H5CX_set_apl(hid_t *acspl_id, const H5P_libclass_t *libclass,
         /* Check for link access property and set API context if so */
         if ((is_lapl = H5P_class_isa(*libclass->pclass, *H5P_CLS_LACC->pclass)) < 0)
             HGOTO_ERROR(H5E_CONTEXT, H5E_CANTGET, FAIL, "can't check for link access class");
-        else if (is_lapl)
-        {
+        else if (is_lapl) {
 #ifdef H5_HAVE_MULTITHREAD
-            if ( *acspl_id != (*head)->ctx.lapl_id ) 
-            {
-                if ( (*head)->ctx.lapl_inc > 0 )
-                {
-                    if ( (*head)->ctx.lapl_id != H5P_LINK_ACCESS_DEFAULT || 
-                         (*head)->ctx.lapl_id != H5P_GROUP_ACCESS_DEFAULT )
-                    {
-                        if ( H5I_dec_ref((*head)->ctx.lapl_id) < 0 )
-                        {
-                            HGOTO_ERROR(H5E_CONTEXT, H5E_CANTDEC, FAIL, "can't decrement plist's ID in index");
+            if (*acspl_id != (*head)->ctx.lapl_id) {
+                if ((*head)->ctx.lapl_inc > 0) {
+                    if ((*head)->ctx.lapl_id != H5P_LINK_ACCESS_DEFAULT ||
+                        (*head)->ctx.lapl_id != H5P_GROUP_ACCESS_DEFAULT) {
+                        if (H5I_dec_ref((*head)->ctx.lapl_id) < 0) {
+                            HGOTO_ERROR(H5E_CONTEXT, H5E_CANTDEC, FAIL,
+                                        "can't decrement plist's ID in index");
                         }
 
                         (*head)->ctx.lapl_inc--;
                     }
                 }
 
-                if ( *acspl_id != H5P_LINK_ACCESS_DEFAULT || *acspl_id != H5P_GROUP_ACCESS_DEFAULT )
-                {
-                    if (0 >= H5I_inc_ref(*acspl_id, FALSE) ) {
-                        HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL, "unable to increment acspl's ID ref_count in index");
+                if (*acspl_id != H5P_LINK_ACCESS_DEFAULT || *acspl_id != H5P_GROUP_ACCESS_DEFAULT) {
+                    if (0 >= H5I_inc_ref(*acspl_id, FALSE)) {
+                        HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL,
+                                    "unable to increment acspl's ID ref_count in index");
                     }
 
                     (*head)->ctx.lapl_inc++;
@@ -2230,16 +2176,14 @@ H5CX_set_apl(hid_t *acspl_id, const H5P_libclass_t *libclass,
                     HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a property list");
                 }
 
-                (*head)->ctx.lapl_id = *acspl_id;
+                (*head)->ctx.lapl_id  = *acspl_id;
                 (*head)->ctx.lapl_ver = atomic_load(&(acspl->curr_version));
                 (*head)->ctx.lapl     = acspl;
             }
-            else if ( *acspl_id == H5P_LINK_ACCESS_DEFAULT )
-            {
+            else if (*acspl_id == H5P_LINK_ACCESS_DEFAULT) {
                 (*head)->ctx.lapl_ver = H5P_DEFAULT_LAPL_VER;
             }
-            else if ( *acspl_id == H5P_GROUP_ACCESS_DEFAULT )
-            {
+            else if (*acspl_id == H5P_GROUP_ACCESS_DEFAULT) {
                 (*head)->ctx.lapl_ver = H5P_DEFAULT_GAPL_VER;
             }
 
@@ -2250,46 +2194,40 @@ H5CX_set_apl(hid_t *acspl_id, const H5P_libclass_t *libclass,
         /* Check for dataset access property and set API context if so */
         if ((is_dapl = H5P_class_isa(*libclass->pclass, *H5P_CLS_DACC->pclass)) < 0)
             HGOTO_ERROR(H5E_CONTEXT, H5E_CANTGET, FAIL, "can't check for dataset access class");
-        else if (is_dapl)
-        {
+        else if (is_dapl) {
 #ifdef H5_HAVE_MULTITHREAD
-            if ( *acspl_id != (*head)->ctx.dapl_id ) 
-            {
-                if ( (*head)->ctx.dapl_inc > 0 )
-                {
-                    if ( (*head)->ctx.dapl_id != H5P_DATASET_ACCESS_DEFAULT )
-                    {
-                        if ( H5I_dec_ref((*head)->ctx.dapl_id) < 0 )
-                        {
-                            HGOTO_ERROR(H5E_CONTEXT, H5E_CANTDEC, FAIL, "can't decrement plist's ID in index");
+            if (*acspl_id != (*head)->ctx.dapl_id) {
+                if ((*head)->ctx.dapl_inc > 0) {
+                    if ((*head)->ctx.dapl_id != H5P_DATASET_ACCESS_DEFAULT) {
+                        if (H5I_dec_ref((*head)->ctx.dapl_id) < 0) {
+                            HGOTO_ERROR(H5E_CONTEXT, H5E_CANTDEC, FAIL,
+                                        "can't decrement plist's ID in index");
                         }
 
                         (*head)->ctx.dapl_inc--;
                     }
                 }
 
-                if ( *acspl_id != H5P_DATASET_ACCESS_DEFAULT )
-                {
-                    if (0 >= H5I_inc_ref(*acspl_id, FALSE) ) {
-                        HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL, "unable to increment acspl's ID ref_count in index");
+                if (*acspl_id != H5P_DATASET_ACCESS_DEFAULT) {
+                    if (0 >= H5I_inc_ref(*acspl_id, FALSE)) {
+                        HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL,
+                                    "unable to increment acspl's ID ref_count in index");
                     }
 
                     (*head)->ctx.dapl_inc++;
                 }
 
-                if ( ! acspl )
-                {
+                if (!acspl) {
                     if (NULL == (acspl = (H5P_mt_list_t *)H5I_object_verify(*acspl_id, H5I_GENPROP_LST))) {
                         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a property list");
                     }
                 }
 
-                (*head)->ctx.dapl_id = *acspl_id;
+                (*head)->ctx.dapl_id  = *acspl_id;
                 (*head)->ctx.dapl_ver = atomic_load(&(acspl->curr_version));
                 (*head)->ctx.dapl     = acspl;
             }
-            else if ( *acspl_id == H5P_DATASET_ACCESS_DEFAULT )
-            {
+            else if (*acspl_id == H5P_DATASET_ACCESS_DEFAULT) {
                 (*head)->ctx.dapl_ver = H5P_DEFAULT_DAPL_VER;
             }
 #else
@@ -2300,46 +2238,40 @@ H5CX_set_apl(hid_t *acspl_id, const H5P_libclass_t *libclass,
         /* Check for file access property and set API context if so */
         if ((is_fapl = H5P_class_isa(*libclass->pclass, *H5P_CLS_FACC->pclass)) < 0)
             HGOTO_ERROR(H5E_CONTEXT, H5E_CANTGET, FAIL, "can't check for file access class");
-        else if (is_fapl)
-        {
+        else if (is_fapl) {
 #ifdef H5_HAVE_MULTITHREAD
-            if ( *acspl_id != (*head)->ctx.fapl_id ) 
-            {
-                if ( (*head)->ctx.fapl_inc > 0 )
-                {
-                    if ( (*head)->ctx.fapl_id != H5P_FILE_ACCESS_DEFAULT )
-                    {
-                        if ( H5I_dec_ref((*head)->ctx.fapl_id) < 0 )
-                        {
-                            HGOTO_ERROR(H5E_CONTEXT, H5E_CANTDEC, FAIL, "can't decrement plist's ID in index");
+            if (*acspl_id != (*head)->ctx.fapl_id) {
+                if ((*head)->ctx.fapl_inc > 0) {
+                    if ((*head)->ctx.fapl_id != H5P_FILE_ACCESS_DEFAULT) {
+                        if (H5I_dec_ref((*head)->ctx.fapl_id) < 0) {
+                            HGOTO_ERROR(H5E_CONTEXT, H5E_CANTDEC, FAIL,
+                                        "can't decrement plist's ID in index");
                         }
 
                         (*head)->ctx.fapl_inc--;
                     }
                 }
 
-                if ( *acspl_id != H5P_FILE_ACCESS_DEFAULT )
-                {
-                    if (0 >= H5I_inc_ref(*acspl_id, FALSE) ) {
-                        HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL, "unable to increment acspl's ID ref_count in index");
+                if (*acspl_id != H5P_FILE_ACCESS_DEFAULT) {
+                    if (0 >= H5I_inc_ref(*acspl_id, FALSE)) {
+                        HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL,
+                                    "unable to increment acspl's ID ref_count in index");
                     }
 
                     (*head)->ctx.fapl_inc++;
                 }
 
-                if ( ! acspl )
-                {
+                if (!acspl) {
                     if (NULL == (acspl = (H5P_mt_list_t *)H5I_object_verify(*acspl_id, H5I_GENPROP_LST))) {
                         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a property list");
                     }
                 }
 
-                (*head)->ctx.fapl_id = *acspl_id;
+                (*head)->ctx.fapl_id  = *acspl_id;
                 (*head)->ctx.fapl_ver = atomic_load(&(acspl->curr_version));
                 (*head)->ctx.fapl     = acspl;
             }
-            else if ( *acspl_id == H5P_FILE_ACCESS_DEFAULT )
-            {
+            else if (*acspl_id == H5P_FILE_ACCESS_DEFAULT) {
                 (*head)->ctx.fapl_ver = H5P_DEFAULT_FAPL_VER;
             }
 #else
@@ -2816,99 +2748,77 @@ H5CX_get_mpio_rank0_bcast(void)
 
 #ifdef H5_HAVE_MULTITHREAD
 /**
- * 
+ *
  */
 uint64_t
 H5CX_get_plist_version(hid_t plist_id)
 {
-    H5CX_node_t  **head      = NULL; /* Pointer to head of API context list */
+    H5CX_node_t **head = NULL; /* Pointer to head of API context list */
 
-    uint64_t       ret_value = 0;
+    uint64_t ret_value = 0;
 
     FUNC_ENTER_NOAPI_NOERR
 
     /* Sanity check */
     head = H5CX_get_my_context(); /* Get the pointer to the head of the API context, for this thread */
 
-
-    if ( plist_id == (*head)->ctx.dxpl_id )
-    {
+    if (plist_id == (*head)->ctx.dxpl_id) {
         ret_value = (*head)->ctx.dxpl_ver;
     }
-    else if ( plist_id == (*head)->ctx.dcpl_id )
-    {
+    else if (plist_id == (*head)->ctx.dcpl_id) {
         ret_value = (*head)->ctx.dcpl_ver;
     }
-    else if ( plist_id == (*head)->ctx.dapl_id )
-    {
+    else if (plist_id == (*head)->ctx.dapl_id) {
         ret_value = (*head)->ctx.dapl_ver;
     }
-    else if ( plist_id == (*head)->ctx.lcpl_id )
-    {
+    else if (plist_id == (*head)->ctx.lcpl_id) {
         ret_value = (*head)->ctx.lcpl_ver;
     }
-    else if ( plist_id == (*head)->ctx.lapl_id )
-    {
+    else if (plist_id == (*head)->ctx.lapl_id) {
         ret_value = (*head)->ctx.lapl_ver;
     }
-    else if ( plist_id == (*head)->ctx.fapl_id )
-    {
+    else if (plist_id == (*head)->ctx.fapl_id) {
         ret_value = (*head)->ctx.fapl_ver;
     }
-    else if ( plist_id == (*head)->ctx.aapl_id )
-    {
+    else if (plist_id == (*head)->ctx.aapl_id) {
         ret_value = (*head)->ctx.aapl_ver;
     }
-    else if ( plist_id == (*head)->ctx.acpl_id )
-    {
+    else if (plist_id == (*head)->ctx.acpl_id) {
         ret_value = (*head)->ctx.acpl_ver;
     }
-    else if ( plist_id == (*head)->ctx.fcpl_id )
-    {
+    else if (plist_id == (*head)->ctx.fcpl_id) {
         ret_value = (*head)->ctx.fcpl_ver;
     }
-    else if ( plist_id == (*head)->ctx.fmpl_id )
-    {
+    else if (plist_id == (*head)->ctx.fmpl_id) {
         ret_value = (*head)->ctx.fmpl_ver;
     }
-    else if ( plist_id == (*head)->ctx.gapl_id )
-    {
+    else if (plist_id == (*head)->ctx.gapl_id) {
         ret_value = (*head)->ctx.gapl_ver;
     }
-    else if ( plist_id == (*head)->ctx.gcpl_id )
-    {
+    else if (plist_id == (*head)->ctx.gcpl_id) {
         ret_value = (*head)->ctx.gcpl_ver;
     }
-    else if ( plist_id == (*head)->ctx.mapl_id )
-    {
+    else if (plist_id == (*head)->ctx.mapl_id) {
         ret_value = (*head)->ctx.mapl_ver;
     }
-    else if ( plist_id == (*head)->ctx.mcpl_id )
-    {
+    else if (plist_id == (*head)->ctx.mcpl_id) {
         ret_value = (*head)->ctx.mcpl_ver;
     }
-    else if ( plist_id == (*head)->ctx.ocpypl_id )
-    {
+    else if (plist_id == (*head)->ctx.ocpypl_id) {
         ret_value = (*head)->ctx.ocpypl_ver;
     }
-    else if ( plist_id == (*head)->ctx.rapl_id )
-    {
+    else if (plist_id == (*head)->ctx.rapl_id) {
         ret_value = (*head)->ctx.rapl_ver;
     }
-    else if ( plist_id == (*head)->ctx.tapl_id )
-    {
+    else if (plist_id == (*head)->ctx.tapl_id) {
         ret_value = (*head)->ctx.tapl_ver;
     }
-    else if ( plist_id == (*head)->ctx.tcpl_id )
-    {
+    else if (plist_id == (*head)->ctx.tcpl_id) {
         ret_value = (*head)->ctx.tcpl_ver;
     }
-    else if ( plist_id == (*head)->ctx.vipl_id )
-    {
+    else if (plist_id == (*head)->ctx.vipl_id) {
         ret_value = (*head)->ctx.vipl_ver;
     }
-
-
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5CX_get_plist_version() */
@@ -4659,10 +4569,8 @@ H5CX__pop_common(hbool_t update_dxpl_props)
      * Decrement them.
      */
     /* DXPL */
-    if ( (*head)->ctx.dxpl_inc > 0 && H5P_DATASET_XFER_DEFAULT != -1 )
-    {
-        if ( H5I_dec_ref((*head)->ctx.dxpl_id) < 0 )
-        {
+    if ((*head)->ctx.dxpl_inc > 0 && H5P_DATASET_XFER_DEFAULT != -1) {
+        if (H5I_dec_ref((*head)->ctx.dxpl_id) < 0) {
             HGOTO_ERROR(H5E_CONTEXT, H5E_CANTDEC, NULL, "can't decrement plist's ID in index");
         }
 
@@ -4671,10 +4579,8 @@ H5CX__pop_common(hbool_t update_dxpl_props)
         assert((*head)->ctx.dxpl_inc == 0);
     }
     /* DCPL */
-    if ( (*head)->ctx.dcpl_inc > 0 && H5P_DATASET_CREATE_DEFAULT != -1 )
-    {
-        if ( H5I_dec_ref((*head)->ctx.dcpl_id) < 0 )
-        {
+    if ((*head)->ctx.dcpl_inc > 0 && H5P_DATASET_CREATE_DEFAULT != -1) {
+        if (H5I_dec_ref((*head)->ctx.dcpl_id) < 0) {
             HGOTO_ERROR(H5E_CONTEXT, H5E_CANTDEC, NULL, "can't decrement plist's ID in index");
         }
 
@@ -4683,10 +4589,8 @@ H5CX__pop_common(hbool_t update_dxpl_props)
         assert((*head)->ctx.dcpl_inc == 0);
     }
     /* DAPL */
-    if ( (*head)->ctx.dapl_inc > 0 && H5P_DATASET_ACCESS_DEFAULT != -1 )
-    {
-        if ( H5I_dec_ref((*head)->ctx.dapl_id) < 0 )
-        {
+    if ((*head)->ctx.dapl_inc > 0 && H5P_DATASET_ACCESS_DEFAULT != -1) {
+        if (H5I_dec_ref((*head)->ctx.dapl_id) < 0) {
             HGOTO_ERROR(H5E_CONTEXT, H5E_CANTDEC, NULL, "can't decrement plist's ID in index");
         }
 
@@ -4695,10 +4599,8 @@ H5CX__pop_common(hbool_t update_dxpl_props)
         assert((*head)->ctx.dapl_inc == 0);
     }
     /* LCPL */
-    if ( (*head)->ctx.lcpl_inc > 0 && H5P_LINK_CREATE_DEFAULT != -1 )
-    {
-        if ( H5I_dec_ref((*head)->ctx.lcpl_id) < 0 )
-        {
+    if ((*head)->ctx.lcpl_inc > 0 && H5P_LINK_CREATE_DEFAULT != -1) {
+        if (H5I_dec_ref((*head)->ctx.lcpl_id) < 0) {
             HGOTO_ERROR(H5E_CONTEXT, H5E_CANTDEC, NULL, "can't decrement plist's ID in index");
         }
 
@@ -4707,10 +4609,8 @@ H5CX__pop_common(hbool_t update_dxpl_props)
         assert((*head)->ctx.lcpl_inc == 0);
     }
     /* LAPL */
-    if ( (*head)->ctx.lapl_inc > 0 && H5P_LINK_ACCESS_DEFAULT != -1 )
-    {
-        if ( H5I_dec_ref((*head)->ctx.lapl_id) < 0 )
-        {
+    if ((*head)->ctx.lapl_inc > 0 && H5P_LINK_ACCESS_DEFAULT != -1) {
+        if (H5I_dec_ref((*head)->ctx.lapl_id) < 0) {
             HGOTO_ERROR(H5E_CONTEXT, H5E_CANTDEC, NULL, "can't decrement plist's ID in index");
         }
 
@@ -4719,10 +4619,8 @@ H5CX__pop_common(hbool_t update_dxpl_props)
         assert((*head)->ctx.lapl_inc == 0);
     }
     /* FAPL */
-    if ( (*head)->ctx.fapl_inc > 0 && H5P_FILE_ACCESS_DEFAULT != -1 )
-    {
-        if ( H5I_dec_ref((*head)->ctx.fapl_id) < 0 )
-        {
+    if ((*head)->ctx.fapl_inc > 0 && H5P_FILE_ACCESS_DEFAULT != -1) {
+        if (H5I_dec_ref((*head)->ctx.fapl_id) < 0) {
             HGOTO_ERROR(H5E_CONTEXT, H5E_CANTDEC, NULL, "can't decrement plist's ID in index");
         }
 
@@ -4731,10 +4629,8 @@ H5CX__pop_common(hbool_t update_dxpl_props)
         assert((*head)->ctx.fapl_inc == 0);
     }
     /* AAPL */
-    if ( (*head)->ctx.aapl_inc > 0 && H5P_ATTRIBUTE_ACCESS_DEFAULT != -1 )
-    {
-        if ( H5I_dec_ref((*head)->ctx.aapl_id) < 0 )
-        {
+    if ((*head)->ctx.aapl_inc > 0 && H5P_ATTRIBUTE_ACCESS_DEFAULT != -1) {
+        if (H5I_dec_ref((*head)->ctx.aapl_id) < 0) {
             HGOTO_ERROR(H5E_CONTEXT, H5E_CANTDEC, NULL, "can't decrement plist's ID in index");
         }
 
@@ -4743,10 +4639,8 @@ H5CX__pop_common(hbool_t update_dxpl_props)
         assert((*head)->ctx.aapl_inc == 0);
     }
     /* ACPL */
-    if ( (*head)->ctx.acpl_inc > 0 && H5P_ATTRIBUTE_CREATE_DEFAULT != -1 )
-    {
-        if ( H5I_dec_ref((*head)->ctx.acpl_id) < 0 )
-        {
+    if ((*head)->ctx.acpl_inc > 0 && H5P_ATTRIBUTE_CREATE_DEFAULT != -1) {
+        if (H5I_dec_ref((*head)->ctx.acpl_id) < 0) {
             HGOTO_ERROR(H5E_CONTEXT, H5E_CANTDEC, NULL, "can't decrement plist's ID in index");
         }
 
@@ -4755,10 +4649,8 @@ H5CX__pop_common(hbool_t update_dxpl_props)
         assert((*head)->ctx.acpl_inc == 0);
     }
     /* FCPL */
-    if ( (*head)->ctx.fcpl_inc > 0 && H5P_FILE_CREATE_DEFAULT != -1 )
-    {
-        if ( H5I_dec_ref((*head)->ctx.fcpl_id) < 0 )
-        {
+    if ((*head)->ctx.fcpl_inc > 0 && H5P_FILE_CREATE_DEFAULT != -1) {
+        if (H5I_dec_ref((*head)->ctx.fcpl_id) < 0) {
             HGOTO_ERROR(H5E_CONTEXT, H5E_CANTDEC, NULL, "can't decrement plist's ID in index");
         }
 
@@ -4767,10 +4659,8 @@ H5CX__pop_common(hbool_t update_dxpl_props)
         assert((*head)->ctx.fcpl_inc == 0);
     }
     /* FMPL */
-    if ( (*head)->ctx.fmpl_inc > 0 && H5P_FILE_MOUNT_DEFAULT != -1 )
-    {
-        if ( H5I_dec_ref((*head)->ctx.fmpl_id) < 0 )
-        {
+    if ((*head)->ctx.fmpl_inc > 0 && H5P_FILE_MOUNT_DEFAULT != -1) {
+        if (H5I_dec_ref((*head)->ctx.fmpl_id) < 0) {
             HGOTO_ERROR(H5E_CONTEXT, H5E_CANTDEC, NULL, "can't decrement plist's ID in index");
         }
 
@@ -4779,10 +4669,8 @@ H5CX__pop_common(hbool_t update_dxpl_props)
         assert((*head)->ctx.fmpl_inc == 0);
     }
     /* GAPL */
-    if ( (*head)->ctx.gapl_inc > 0 && H5P_GROUP_ACCESS_DEFAULT != -1 )
-    {
-        if ( H5I_dec_ref((*head)->ctx.gapl_id) < 0 )
-        {
+    if ((*head)->ctx.gapl_inc > 0 && H5P_GROUP_ACCESS_DEFAULT != -1) {
+        if (H5I_dec_ref((*head)->ctx.gapl_id) < 0) {
             HGOTO_ERROR(H5E_CONTEXT, H5E_CANTDEC, NULL, "can't decrement plist's ID in index");
         }
 
@@ -4791,10 +4679,8 @@ H5CX__pop_common(hbool_t update_dxpl_props)
         assert((*head)->ctx.gapl_inc == 0);
     }
     /* GCPL */
-    if ( (*head)->ctx.gcpl_inc > 0 && H5P_GROUP_CREATE_DEFAULT != -1 )
-    {
-        if ( H5I_dec_ref((*head)->ctx.gcpl_id) < 0 )
-        {
+    if ((*head)->ctx.gcpl_inc > 0 && H5P_GROUP_CREATE_DEFAULT != -1) {
+        if (H5I_dec_ref((*head)->ctx.gcpl_id) < 0) {
             HGOTO_ERROR(H5E_CONTEXT, H5E_CANTDEC, NULL, "can't decrement plist's ID in index");
         }
 
@@ -4803,10 +4689,8 @@ H5CX__pop_common(hbool_t update_dxpl_props)
         assert((*head)->ctx.gcpl_inc == 0);
     }
     /* MAPL */
-    if ( (*head)->ctx.mapl_inc > 0 && H5P_MAP_ACCESS_DEFAULT != -1 )
-    {
-        if ( H5I_dec_ref((*head)->ctx.mapl_id) < 0 )
-        {
+    if ((*head)->ctx.mapl_inc > 0 && H5P_MAP_ACCESS_DEFAULT != -1) {
+        if (H5I_dec_ref((*head)->ctx.mapl_id) < 0) {
             HGOTO_ERROR(H5E_CONTEXT, H5E_CANTDEC, NULL, "can't decrement plist's ID in index");
         }
 
@@ -4815,10 +4699,8 @@ H5CX__pop_common(hbool_t update_dxpl_props)
         assert((*head)->ctx.mapl_inc == 0);
     }
     /* MCPL */
-    if ( (*head)->ctx.mcpl_inc > 0 && H5P_MAP_CREATE_DEFAULT != -1 )
-    {
-        if ( H5I_dec_ref((*head)->ctx.mcpl_id) < 0 )
-        {
+    if ((*head)->ctx.mcpl_inc > 0 && H5P_MAP_CREATE_DEFAULT != -1) {
+        if (H5I_dec_ref((*head)->ctx.mcpl_id) < 0) {
             HGOTO_ERROR(H5E_CONTEXT, H5E_CANTDEC, NULL, "can't decrement plist's ID in index");
         }
 
@@ -4827,10 +4709,8 @@ H5CX__pop_common(hbool_t update_dxpl_props)
         assert((*head)->ctx.mcpl_inc == 0);
     }
     /* OCPYPL */
-    if ( (*head)->ctx.ocpypl_inc > 0 && H5P_OBJECT_COPY_DEFAULT != -1 )
-    {
-        if ( H5I_dec_ref((*head)->ctx.ocpypl_id) < 0 )
-        {
+    if ((*head)->ctx.ocpypl_inc > 0 && H5P_OBJECT_COPY_DEFAULT != -1) {
+        if (H5I_dec_ref((*head)->ctx.ocpypl_id) < 0) {
             HGOTO_ERROR(H5E_CONTEXT, H5E_CANTDEC, NULL, "can't decrement plist's ID in index");
         }
 
@@ -4839,10 +4719,8 @@ H5CX__pop_common(hbool_t update_dxpl_props)
         assert((*head)->ctx.ocpypl_inc == 0);
     }
     /* RAPL */
-    if ( (*head)->ctx.rapl_inc > 0 && H5P_REFERENCE_ACCESS_DEFAULT != -1 )
-    {
-        if ( H5I_dec_ref((*head)->ctx.rapl_id) < 0 )
-        {
+    if ((*head)->ctx.rapl_inc > 0 && H5P_REFERENCE_ACCESS_DEFAULT != -1) {
+        if (H5I_dec_ref((*head)->ctx.rapl_id) < 0) {
             HGOTO_ERROR(H5E_CONTEXT, H5E_CANTDEC, NULL, "can't decrement plist's ID in index");
         }
 
@@ -4851,10 +4729,8 @@ H5CX__pop_common(hbool_t update_dxpl_props)
         assert((*head)->ctx.rapl_inc == 0);
     }
     /* TAPL */
-    if ( (*head)->ctx.tapl_inc > 0 && H5P_DATATYPE_ACCESS_DEFAULT != -1 )
-    {
-        if ( H5I_dec_ref((*head)->ctx.tapl_id) < 0 )
-        {
+    if ((*head)->ctx.tapl_inc > 0 && H5P_DATATYPE_ACCESS_DEFAULT != -1) {
+        if (H5I_dec_ref((*head)->ctx.tapl_id) < 0) {
             HGOTO_ERROR(H5E_CONTEXT, H5E_CANTDEC, NULL, "can't decrement plist's ID in index");
         }
 
@@ -4863,10 +4739,8 @@ H5CX__pop_common(hbool_t update_dxpl_props)
         assert((*head)->ctx.tapl_inc == 0);
     }
     /* TCPL */
-    if ( (*head)->ctx.tcpl_inc > 0 && H5P_DATATYPE_CREATE_DEFAULT != -1 )
-    {
-        if ( H5I_dec_ref((*head)->ctx.tcpl_id) < 0 )
-        {
+    if ((*head)->ctx.tcpl_inc > 0 && H5P_DATATYPE_CREATE_DEFAULT != -1) {
+        if (H5I_dec_ref((*head)->ctx.tcpl_id) < 0) {
             HGOTO_ERROR(H5E_CONTEXT, H5E_CANTDEC, NULL, "can't decrement plist's ID in index");
         }
 
@@ -4875,10 +4749,8 @@ H5CX__pop_common(hbool_t update_dxpl_props)
         assert((*head)->ctx.tcpl_inc == 0);
     }
     /* VIPL */
-    if ( (*head)->ctx.vipl_inc > 0 && H5P_VOL_INITIALIZE_DEFAULT != -1 )
-    {
-        if ( H5I_dec_ref((*head)->ctx.vipl_id) < 0 )
-        {
+    if ((*head)->ctx.vipl_inc > 0 && H5P_VOL_INITIALIZE_DEFAULT != -1) {
+        if (H5I_dec_ref((*head)->ctx.vipl_id) < 0) {
             HGOTO_ERROR(H5E_CONTEXT, H5E_CANTDEC, NULL, "can't decrement plist's ID in index");
         }
 

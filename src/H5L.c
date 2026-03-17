@@ -357,7 +357,7 @@ H5L__create_soft_api_common(const char *link_target, hid_t link_loc_id, const ch
 
 /**
  * This call to H5CX_set_apl() is redundant because the function immediately below,
- * H5VL_setup_name_args() makes the same call to H5CX_set_apl() with the same 
+ * H5VL_setup_name_args() makes the same call to H5CX_set_apl() with the same
  * parameters. Thus, for the multithread version this call is removed for tracking,
  * debugging, and efficiency.
  */

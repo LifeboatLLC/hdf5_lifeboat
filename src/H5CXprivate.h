@@ -76,10 +76,10 @@ H5_DLL void   H5CX_set_lapl(hid_t lapl_id);
 H5_DLL herr_t H5CX_set_dcpl(hid_t dcpl_id);
 H5_DLL herr_t H5CX_set_plist(hid_t plist_id, H5P_plist_type_t type);
 #else
-H5_DLL void   H5CX_set_dxpl(hid_t dxpl_id);
-H5_DLL void   H5CX_set_lcpl(hid_t lcpl_id);
-H5_DLL void   H5CX_set_lapl(hid_t lapl_id);
-H5_DLL void   H5CX_set_dcpl(hid_t dcpl_id);
+H5_DLL void H5CX_set_dxpl(hid_t dxpl_id);
+H5_DLL void H5CX_set_lcpl(hid_t lcpl_id);
+H5_DLL void H5CX_set_lapl(hid_t lapl_id);
+H5_DLL void H5CX_set_dcpl(hid_t dcpl_id);
 #endif
 H5_DLL herr_t H5CX_set_libver_bounds(H5F_t *f);
 H5_DLL herr_t H5CX_set_apl(hid_t *acspl_id, const H5P_libclass_t *libclass, hid_t loc_id,
