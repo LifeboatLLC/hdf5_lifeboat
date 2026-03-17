@@ -106,6 +106,14 @@ H5Rcreate_object(hid_t loc_id, const char *name, hid_t oapl_id, H5R_ref_t *ref_p
     else if (TRUE != H5P_isa_class(oapl_id, H5P_LINK_ACCESS))
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "oapl_id is not a link access property list ID");
 
+#ifdef H5_HAVE_MULTITHREAD
+    /* Set the property list in the context */
+    if ( H5CX_set_plist(oapl_id, H5P_TYPE_LINK_ACCESS) < 0)
+    {
+        HGOTO_ERROR(H5E_ATTR, H5E_CANTSET, H5I_INVALID_HID, "can't set oapl in context");
+    }
+#endif
+
     /* Get the VOL object */
     if (NULL == (vol_obj = H5VL_vol_object(loc_id)))
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "invalid location identifier");
@@ -207,6 +215,14 @@ H5Rcreate_region(hid_t loc_id, const char *name, hid_t space_id, hid_t oapl_id, 
     else if (TRUE != H5P_isa_class(oapl_id, H5P_LINK_ACCESS))
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "oapl_id is not a link access property list ID");
 
+#ifdef H5_HAVE_MULTITHREAD
+    /* Set the property list in the context */
+    if ( H5CX_set_plist(oapl_id, H5P_TYPE_LINK_ACCESS) < 0)
+    {
+        HGOTO_ERROR(H5E_ATTR, H5E_CANTSET, H5I_INVALID_HID, "can't set oapl in context");
+    }
+#endif
+
     /* Get the VOL object */
     if (NULL == (vol_obj = H5VL_vol_object(loc_id)))
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "invalid location identifier");
@@ -304,6 +320,14 @@ H5Rcreate_attr(hid_t loc_id, const char *name, const char *attr_name, hid_t oapl
         oapl_id = H5P_LINK_ACCESS_DEFAULT;
     else if (TRUE != H5P_isa_class(oapl_id, H5P_LINK_ACCESS))
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "oapl_id is not a link access property list ID");
+
+#ifdef H5_HAVE_MULTITHREAD
+    /* Set the property list in the context */
+    if ( H5CX_set_plist(oapl_id, H5P_TYPE_LINK_ACCESS) < 0)
+    {
+        HGOTO_ERROR(H5E_ATTR, H5E_CANTSET, H5I_INVALID_HID, "can't set oapl in context");
+    }
+#endif
 
     /* Get the VOL object */
     if (NULL == (vol_obj = H5VL_vol_object(loc_id)))
@@ -518,6 +542,28 @@ H5R__open_object_api_common(H5R_ref_t *ref_ptr, hid_t rapl_id, hid_t oapl_id, vo
     if (oapl_id < 0)
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5I_INVALID_HID, "not a property list");
 
+#ifdef H5_HAVE_MULTITHREAD
+
+    if ( rapl_id != H5P_DEFAULT )
+    {
+        /* Set the RAPL in the context */
+        if ( H5CX_set_plist(rapl_id, H5P_TYPE_REFERENCE_ACCESS) < 0)
+        {
+            HGOTO_ERROR(H5E_ATTR, H5E_CANTSET, H5I_INVALID_HID, "can't set rapl in context");
+        }
+    }
+
+    if ( oapl_id != H5P_DEFAULT )
+    {
+        /* Set the AAPL in the context */
+        if ( H5CX_set_plist(oapl_id, H5P_TYPE_LINK_ACCESS) < 0)
+        {
+            HGOTO_ERROR(H5E_ATTR, H5E_CANTSET, H5I_INVALID_HID, "can't set oapl in context");
+        }
+    }
+
+#endif
+
     /* Retrieve loc_id from reference */
     if (H5I_INVALID_HID == (loc_id = H5R__get_loc_id((const H5R_ref_priv_t *)ref_ptr))) {
         /* Attempt to re-open file and pass rapl_id as a fapl_id */
@@ -660,6 +706,27 @@ H5R__open_region_api_common(H5R_ref_t *ref_ptr, hid_t rapl_id, hid_t oapl_id, vo
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5I_INVALID_HID, "not a property list");
     if (oapl_id < 0)
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5I_INVALID_HID, "not a property list");
+
+#ifdef H5_HAVE_MULTITHREAD
+    
+    if ( rapl_id != H5P_DEFAULT )
+    {
+        /* Set the RAPL in the context */
+        if ( H5CX_set_plist(rapl_id, H5P_TYPE_REFERENCE_ACCESS) < 0)
+        {
+            HGOTO_ERROR(H5E_ATTR, H5E_CANTSET, H5I_INVALID_HID, "can't set rapl in context");
+        }
+    }
+
+    if ( oapl_id != H5P_DEFAULT )
+    {
+        /* Set the OAPL in the context */
+        if ( H5CX_set_plist(oapl_id, H5P_TYPE_LINK_ACCESS) < 0)
+        {
+            HGOTO_ERROR(H5E_ATTR, H5E_CANTSET, H5I_INVALID_HID, "can't set oapl in context");
+        }
+    }
+#endif
 
     /* Retrieve loc_id from reference */
     if (H5I_INVALID_HID == (loc_id = H5R__get_loc_id((const H5R_ref_priv_t *)ref_ptr))) {
@@ -826,6 +893,20 @@ H5R__open_attr_api_common(H5R_ref_t *ref_ptr, hid_t rapl_id, hid_t aapl_id, void
     if (aapl_id < 0)
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5I_INVALID_HID, "not a property list");
 
+#ifdef H5_HAVE_MULTITHREAD
+    /* Set the RAPL in the context */
+    if ( H5CX_set_plist(rapl_id, H5P_TYPE_REFERENCE_ACCESS) < 0)
+    {
+        HGOTO_ERROR(H5E_ATTR, H5E_CANTSET, H5I_INVALID_HID, "can't set rapl in context");
+    }
+
+    /* Set the AAPL in the context */
+    if ( H5CX_set_plist(aapl_id, H5P_TYPE_ATTRIBUTE_ACCESS) < 0)
+    {
+        HGOTO_ERROR(H5E_ATTR, H5E_CANTSET, H5I_INVALID_HID, "can't set aapl in context");
+    }
+#endif
+
     /* Retrieve loc_id from reference */
     if (H5I_INVALID_HID == (loc_id = H5R__get_loc_id((const H5R_ref_priv_t *)ref_ptr))) {
         /* Attempt to re-open file and pass rapl_id as a fapl_id */
@@ -991,6 +1072,19 @@ H5Rget_obj_type3(H5R_ref_t *ref_ptr, hid_t rapl_id, H5O_type_t *obj_type /*out*/
     if (rapl_id < 0)
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a property list");
 
+#ifdef H5_HAVE_MULTITHREAD
+
+    if ( rapl_id != H5P_DEFAULT )
+    {
+        /* Set the property list in the context */
+        if ( H5CX_set_plist(rapl_id, H5P_TYPE_REFERENCE_ACCESS) < 0)
+        {
+            HGOTO_ERROR(H5E_ATTR, H5E_CANTSET, H5I_INVALID_HID, "can't set rapl in context");
+        }
+    }
+
+#endif
+
     /* Retrieve loc_id from reference */
     if (H5I_INVALID_HID == (loc_id = H5R__get_loc_id((const H5R_ref_priv_t *)ref_ptr)))
         /* Attempt to re-open file and pass rapl_id as a fapl_id */
@@ -1115,6 +1209,14 @@ H5Rget_obj_name(H5R_ref_t *ref_ptr, hid_t rapl_id, char *buf /*out*/, size_t siz
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, (-1), "invalid reference type");
     if (rapl_id < 0)
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, (-1), "not a property list");
+
+#ifdef H5_HAVE_MULTITHREAD
+    /* Set the property list in the context */
+    if ( H5CX_set_plist(rapl_id, H5P_TYPE_REFERENCE_ACCESS) < 0)
+    {
+        HGOTO_ERROR(H5E_ATTR, H5E_CANTSET, H5I_INVALID_HID, "can't set rapl in context");
+    }
+#endif
 
     /* Retrieve loc_id from reference */
     if (H5I_INVALID_HID == (loc_id = H5R__get_loc_id((const H5R_ref_priv_t *)ref_ptr)))

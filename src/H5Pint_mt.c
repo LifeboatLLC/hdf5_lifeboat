@@ -91,11 +91,10 @@ H5P_mt_class_t *H5P_MT_CLS_VOL_INITIALIZE_g   = NULL;
  *              classes, lists, and properties, and global stats for H5P.
  *
  *              NOTE: Once initialized, the free lists will always contain at least one
- *              entry of H5P_mt_prop_apt_t for the prop free list, H5P_mt_class_sptr_t
- *              for the class free list, and one H5P_mt_list_sptr_t for the list free
- *              list. Until an object is closed and added to their respective free list
- *              the H5P_mt_prop_apt_t's, H5P_mt_class_sptr_t's, and H5P_mt_list_sptr_t's
- *              ptr field will be set to NULL.
+ *              entry of H5P_mt_prop_t for the prop free list, H5P_mt_class_t for the 
+ *              class free list, and one H5P_mt_list_t for the list free list. The free
+ *              lists are considered empty if both the head and tail of the free list
+ *              point to the same object.
  *
  * Return:      SUCCEED/FAIL
  *
@@ -104,43 +103,137 @@ H5P_mt_class_t *H5P_MT_CLS_VOL_INITIALIZE_g   = NULL;
 herr_t
 H5P_mt_init_free_lists(void)
 {
-    H5P_mt_prop_aptr_t  fl_prop;
-    H5P_mt_list_sptr_t  fl_list;
-    H5P_mt_class_sptr_t fl_class;
+    H5P_mt_prop_aptr_t  fl_aptr = {NULL, FALSE, FALSE, FALSE, FALSE};
+    H5P_mt_prop_t      *fl_prop;
+    H5P_mt_prop_value_t value = {NULL, 0};
+    H5P_mt_list_sptr_t  fl_lsptr = {NULL, 0};
+    H5P_mt_list_t      *fl_list;
+    H5P_mt_class_sptr_t fl_csptr = {NULL, 0};
+    H5P_mt_class_t     *fl_class;
+    H5P_mt_class_ref_counts_t ref_counts = {0, 0, TRUE, FALSE, FALSE, FALSE};
+    H5P_mt_active_thread_count_t thrd = {0, FALSE, TRUE};
 
     herr_t ret_value = SUCCEED;
 
-    FUNC_ENTER_NOAPI_NOERR
+    FUNC_ENTER_NOAPI(FAIL)
 
-    /* Initialize a property free list node */
-    fl_prop.ptr          = NULL;
-    fl_prop.deleted      = FALSE;
-    fl_prop.dummy_bool_1 = FALSE;
-    fl_prop.dummy_bool_2 = FALSE;
-    fl_prop.dummy_bool_3 = FALSE;
+    /* Allocate and initialize a property free list node */
+    if ( (fl_prop = (H5P_mt_prop_t *)malloc(sizeof(H5P_mt_prop_t))) == NULL ) {
+        assert(H5P_MT_ASSERT_FAIL);
+        HGOTO_ERROR(H5E_PLIST, H5E_CANTALLOC, FAIL, "property allocation failed");
+    }
 
-    fl_class.ptr = NULL;
-    fl_class.sn  = 0;
+    atomic_init(&(fl_prop->tag), H5P_MT_PROP_VALID_ONFL_TAG); 
+    atomic_init(&(fl_prop->next), fl_aptr);
+    fl_prop->sentinel       = FALSE;
+    fl_prop->in_prop_class  = FALSE;
+    atomic_init(&(fl_prop->ref_count), 0);
+    fl_prop->in_lkup_tbl    = FALSE;
+    fl_prop->chksum         = 0;
+    fl_prop->name           = NULL;
+    atomic_init(&(fl_prop->value), value);
+    atomic_init(&(fl_prop->create_version), 0);
+    atomic_init(&(fl_prop->delete_version), 0);
+    fl_prop->callbacks_mt_safe = FALSE;
+    fl_prop->create         = NULL;
+    fl_prop->set            = NULL;
+    fl_prop->get            = NULL;
+    fl_prop->encode         = NULL;
+    fl_prop->decode         = NULL;
+    fl_prop->del            = NULL;
+    fl_prop->copy           = NULL;
+    fl_prop->cmp            = NULL;
+    fl_prop->close          = NULL;
+    
 
-    fl_list.ptr = NULL;
-    fl_list.sn  = 0;
+    fl_aptr.ptr = fl_prop;
 
-    atomic_init(&(H5P_mt_g.prop_fl_head), fl_prop);
-    atomic_init(&(H5P_mt_g.prop_fl_tail), fl_prop);
+    atomic_init(&(H5P_mt_g.prop_fl_head), fl_aptr);
+    atomic_init(&(H5P_mt_g.prop_fl_tail), fl_aptr);
     atomic_init(&(H5P_mt_g.prop_fl_len), 0ULL);
     atomic_init(&(H5P_mt_g.prop_max_desired_fl_len), H5P__MAX_PROP_FL_LEN);
 
-    atomic_init(&(H5P_mt_g.list_fl_head), fl_list);
-    atomic_init(&(H5P_mt_g.list_fl_tail), fl_list);
-    atomic_init(&(H5P_mt_g.list_fl_len), 0ULL);
+
+    /* Allocate and initialize a class free list node */
+    if ( (fl_class = (H5P_mt_class_t *)malloc(sizeof(H5P_mt_class_t))) == NULL)
+    {
+        assert(H5P_MT_ASSERT_FAIL);
+        HGOTO_ERROR(H5E_PLIST, H5E_CANTALLOC, FAIL, "property list class allocation failed");
+    }
+    
+    atomic_init(&(fl_class->tag), H5P_MT_CLASS_INVALID_TAG); 
+    fl_class->parent_id = H5I_INVALID_HID;
+    fl_class->parent_ptr = NULL;
+    fl_class->parent_version = 0;
+    fl_class->name = NULL;
+    fl_class->id = H5I_INVALID_HID;
+    fl_class->type = 0;
+    atomic_init(&(fl_class->curr_version), 0);
+    atomic_init(&(fl_class->next_version), 0);
+    fl_class->pl_head = NULL;
+    atomic_init(&(fl_class->nprops_added), 0);
+    atomic_init(&(fl_class->log_pl_len), 0);
+    atomic_init(&(fl_class->phys_pl_len), 0);
+    atomic_init(&(fl_class->ref_count), ref_counts);
+    fl_class->create_func = NULL;
+    fl_class->create_data = NULL;
+    fl_class->copy_func = NULL;
+    fl_class->copy_data = NULL;
+    fl_class->close_func = NULL;
+    fl_class->close_data = NULL;
+    atomic_init(&(fl_class->thrd), thrd);
+    atomic_init(&(fl_class->fl_next), fl_csptr);
+
+    H5P__init_stats_class(fl_class);
+
+    fl_csptr.ptr = fl_class;
+
+    atomic_init(&(H5P_mt_g.class_fl_head), fl_csptr);
+    atomic_init(&(H5P_mt_g.class_fl_tail), fl_csptr);
+    atomic_init(&(H5P_mt_g.class_fl_len), 0ULL);
     atomic_init(&(H5P_mt_g.class_max_desired_fl_len), H5P__MAX_CLASS_FL_LEN);
 
-    atomic_init(&(H5P_mt_g.class_fl_head), fl_class);
-    atomic_init(&(H5P_mt_g.class_fl_tail), fl_class);
-    atomic_init(&(H5P_mt_g.class_fl_len), 0ULL);
+
+    /* Allocate and initialize a list free list node */
+    if ( (fl_list = (H5P_mt_list_t *)malloc(sizeof(H5P_mt_list_t))) == NULL)
+    {
+        assert(H5P_MT_ASSERT_FAIL);
+        HGOTO_ERROR(H5E_PLIST, H5E_CANTALLOC, FAIL, "property list class allocation failed");
+    }
+
+    atomic_init(&(fl_list->tag), H5P_MT_LIST_INVALID_TAG);
+    fl_list->pclass_id = H5I_INVALID_HID;
+    fl_list->pclass_ptr = NULL;
+    fl_list->pclass_version = 0;
+    atomic_init(&(fl_list->plist_id), H5I_INVALID_HID);
+    atomic_init(&(fl_list->curr_version), 0);
+    atomic_init(&(fl_list->next_version), 0);
+    fl_list->def_ver_ptr = NULL;
+    fl_list->lkup_tbl = NULL;
+    fl_list->nprops_inherited = 0;
+    atomic_init(&(fl_list->nprops_added), 0);
+    atomic_init(&(fl_list->nprops), 0);
+    fl_list->pl_head = NULL;
+    atomic_init(&(fl_list->log_pl_len), 0);
+    atomic_init(&(fl_list->phys_pl_len), 0);
+    atomic_init(&(fl_list->class_init), TRUE);
+    atomic_init(&(fl_list->thrd), thrd);
+    atomic_init(&(fl_list->fl_next), fl_lsptr);
+
+    H5P__init_stats_list(fl_list);
+
+    fl_lsptr.ptr = fl_list;
+
+
+    atomic_init(&(H5P_mt_g.list_fl_head), fl_lsptr);
+    atomic_init(&(H5P_mt_g.list_fl_tail), fl_lsptr);
+    atomic_init(&(H5P_mt_g.list_fl_len), 0ULL);
     atomic_init(&(H5P_mt_g.list_max_desired_fl_len), H5P__MAX_LIST_FL_LEN);
 
+
     H5P__init_stats_global();
+
+done:
 
     FUNC_LEAVE_NOAPI(ret_value)
 
@@ -231,7 +324,6 @@ H5P__mt_create_class(H5P_mt_class_t *parent, const char *name, H5P_plist_type_t 
     size_t                       phys_pl_len;           /* new class's LFSLL physical length */
     size_t                       log_pl_len;            /* new class's LFSLL logical length */
     bool                         inc_thrd_flag = FALSE; /* Flag to dec parent's thrd count */
-    bool                         done          = FALSE; /* Flag to exit do-while loop */
 
     H5P_mt_class_t *ret_value = NULL;
 
@@ -376,31 +468,19 @@ H5P__mt_create_class(H5P_mt_class_t *parent, const char *name, H5P_plist_type_t 
         }
     }
 
-    do {
-        thrd = atomic_load(&(new_class->thrd));
+    thrd = atomic_load(&(new_class->thrd));
 
-        assert(thrd.opening);
-        assert(!thrd.closing);
+    assert(thrd.opening);
+    assert(!thrd.closing);
 
-        update_thrd.count   = thrd.count;
-        update_thrd.opening = FALSE;
-        update_thrd.closing = FALSE;
+    update_thrd.count   = thrd.count;
+    update_thrd.opening = FALSE;
+    update_thrd.closing = FALSE;
 
-        if (!atomic_compare_exchange_strong(&(new_class->thrd), &thrd, update_thrd)) {
-            /* attempt failed, update stats and try again */
-            atomic_fetch_add(&(new_class->num_thrd_update_cols), 1);
+    atomic_store(&(new_class->thrd), update_thrd);
 
-            /* assert is to not get stuck in an infinite loop while testing */
-            assert(H5P_MT_ASSERT_FAIL);
-        }
-        else {
-            /* attempt succeded update stats and set done */
-            atomic_fetch_add(&(new_class->num_thrd_count_update), 1);
+    atomic_fetch_add(&(new_class->num_thrd_count_update), 1);
 
-            done = TRUE;
-        }
-
-    } while (!done);
 
     ret_value = new_class;
 
@@ -458,7 +538,6 @@ H5P__mt_copy_class(H5P_mt_class_t *og_class)
     size_t                       log_pl_len;            /* new class's LFSLL logical length */
     bool                         inc_thrd_flag = FALSE; /* Flag to dec og_class's thrd count*/
     bool                         par_thrd_flag = FALSE; /* Flag to dec parent's thrd count */
-    bool                         done          = FALSE; /* Flag to exit do-while loop */
 
     H5P_mt_class_t *ret_value = NULL;
 
@@ -602,31 +681,20 @@ H5P__mt_copy_class(H5P_mt_class_t *og_class)
         }
     }
 
-    do {
-        thrd = atomic_load(&(new_class->thrd));
 
-        assert(thrd.opening);
-        assert(!thrd.closing);
+    thrd = atomic_load(&(new_class->thrd));
 
-        update_thrd.count   = thrd.count;
-        update_thrd.opening = FALSE;
-        update_thrd.closing = FALSE;
+    assert(thrd.opening);
+    assert(!thrd.closing);
 
-        if (!atomic_compare_exchange_strong(&(new_class->thrd), &thrd, update_thrd)) {
-            /* attempt failed, update stats and try again */
-            atomic_fetch_add(&(new_class->num_thrd_update_cols), 1);
+    update_thrd.count   = thrd.count;
+    update_thrd.opening = FALSE;
+    update_thrd.closing = FALSE;
 
-            /* assert is to not get stuck in an infinite loop while testing */
-            assert(H5P_MT_ASSERT_FAIL);
-        }
-        else {
-            /* attempt succeded update stats and set done */
-            atomic_fetch_add(&(new_class->num_thrd_count_update), 1);
+    atomic_store(&(new_class->thrd), update_thrd);
 
-            done = TRUE;
-        }
+    atomic_fetch_add(&(new_class->num_thrd_count_update), 1);
 
-    } while (!done);
 
     ret_value = new_class;
 
@@ -867,11 +935,10 @@ H5P__mt_create_list(H5P_mt_class_t *parent, H5P_mt_list_t *og_list, bool copy, u
                     bool app_ref)
 {
     H5P_mt_list_t               *new_list = NULL;            /* New list to be created */
+    H5P_mt_class_t              *parent_walk = NULL;
     hid_t                        parent_id;                  /* ID of the parent class */
     H5P_mt_active_thread_count_t list_thrd;                  /* thrd struct for new list */
     H5P_mt_list_sptr_t           fl_next;                    /* new list's free list struct */
-    uint64_t                     new_list_version;           /* parent's version to derive from */
-    uint64_t                     og_version         = 0;     /* version of the original list */
     bool                         inc_thrd_flag      = FALSE; /* Flag to dec parent's thrd count */
     bool                         inc_thrd_flag_list = FALSE; /* flag to dec og_list thrd count */
     hid_t                        new_plist_id;               /* ID of the new list */
@@ -886,27 +953,20 @@ H5P__mt_create_list(H5P_mt_class_t *parent, H5P_mt_list_t *og_list, bool copy, u
     assert(parent);
     assert((atomic_load(&(parent->tag))) == H5P_MT_CLASS_TAG);
 
+    assert(src_version > 0);
+
     /* Get current version of parent to derive from */
-    new_list_version = atomic_load(&(parent->curr_version));
+    //new_list_version = atomic_load(&(parent->curr_version));
 
     /* if og_list isn't NULL ensure it's valid */
     if (og_list) {
-        assert(og_list->tag == H5P_MT_LIST_TAG);
-        og_version = atomic_load(&(og_list->curr_version));
-
-        /**
-         * Internal testing purposes
-         */
-        if (H5P_mt_cb.ver_cb) {
-            (H5P_mt_cb.ver_cb)(og_version);
-        }
-        /**
-         * end testing function
-         */
+        assert(og_list->tag == H5P_MT_LIST_TAG);        
     }
 
     /* If copying an existing list */
     if (copy) {
+        assert(og_list);
+
         /* Increment the original list's thrd.count */
         if (H5P__inc_thrd_count(og_list) < 0) {
             HGOTO_ERROR(H5E_PLIST, H5E_BADTYPE, NULL, "Couldn't increment old list's thread count.");
@@ -914,9 +974,6 @@ H5P__mt_create_list(H5P_mt_class_t *parent, H5P_mt_list_t *og_list, bool copy, u
         else {
             inc_thrd_flag_list = TRUE; /* Set flag to dec thrd count */
         }
-
-        /* If copying a list, the version derived from is the same as the original */
-        new_list_version = og_list->pclass_version;
     }
 
     /* Increment parent's thrd count */
@@ -925,21 +982,6 @@ H5P__mt_create_list(H5P_mt_class_t *parent, H5P_mt_list_t *og_list, bool copy, u
     }
     else {
         inc_thrd_flag = TRUE;
-    }
-
-    /**
-     * NOTE: This is for testing to choose a specific version to create the list at to
-     * ensure only the valid properties for that version are stored in the lkup_tbl.
-     */
-    if (src_version > 0) {
-        /* If src_version is larger than any version of the parent, throw an error */
-        if (src_version > new_list_version) {
-            assert(src_version <= new_list_version);
-            HGOTO_ERROR(H5E_PLIST, H5E_BADTYPE, NULL,
-                        "src_version is greater than parents's most current version.");
-        }
-
-        new_list_version = src_version;
     }
 
     /* Update parent's ref count. Currently can't fail */
@@ -958,11 +1000,19 @@ H5P__mt_create_list(H5P_mt_class_t *parent, H5P_mt_list_t *og_list, bool copy, u
     new_list->pclass_id = parent_id;
 
     new_list->pclass_ptr     = parent;
-    new_list->pclass_version = new_list_version;
+    if (og_list) {
+        new_list->pclass_version = og_list->pclass_version;
+    }
+    else
+    {
+        new_list->pclass_version = src_version;
+    }
 
     atomic_store(&(new_list->plist_id), H5I_INVALID_HID);
     atomic_store(&(new_list->curr_version), 1);
     atomic_store(&(new_list->next_version), 2);
+
+    new_list->def_ver_ptr = NULL;
 
     new_list->lkup_tbl = NULL;
 
@@ -996,19 +1046,21 @@ H5P__mt_create_list(H5P_mt_class_t *parent, H5P_mt_list_t *og_list, bool copy, u
 
     /* If copy, then we must copy the original list's lkup_tbl and lfsll */
     if (copy) {
+        assert(og_list);
+
         /* Copy original list's lkup_tbl */
-        if (0 > (H5P__init_lkup_tbl_copy(og_list, og_version, new_list))) {
+        if (0 > (H5P__init_lkup_tbl_copy(og_list, src_version, new_list))) {
             HGOTO_ERROR(H5E_PLIST, H5E_CANTCREATE, NULL, "Failed to copy lkup_tbl.");
         }
 
         /* Iterate the og_list's LFSLL and copy the valid props into the new list */
-        if (0 > H5P__mt_copy_lfsll(new_list, og_list->pl_head, og_version)) {
+        if (0 > H5P__mt_copy_lfsll(new_list, og_list->pl_head, src_version)) {
             HGOTO_ERROR(H5E_PLIST, H5E_CANTCOPY, NULL, "Failed to copy list's lfsll");
         }
     }
     /* Else we must initialize the lkup_tbl from the parent class */
     else {
-        if (0 > (H5P__init_lkup_tbl(parent, new_list_version, new_list))) {
+        if (0 > (H5P__init_lkup_tbl(parent, src_version, new_list))) {
             HGOTO_ERROR(H5E_PLIST, H5E_CANTCREATE, NULL, "Failed to create lkup_tbl.");
         }
     }
@@ -1028,14 +1080,18 @@ H5P__mt_create_list(H5P_mt_class_t *parent, H5P_mt_list_t *og_list, bool copy, u
      * parent classes up the inheritance tree, if it exists.
      */
     if (copy) {
-        while (parent) {
+        assert(og_list);
+
+        parent_walk = parent;
+
+        while (parent_walk) {
             /* If the class has a copy callback, call it */
-            if (parent->copy_func) {
+            if (parent_walk->copy_func) {
                 hid_t new_list_id = atomic_load(&(new_list->plist_id));
                 hid_t og_list_id  = atomic_load(&(og_list->plist_id));
 
                 /* If the copy callback fails remove the list's id from the index */
-                if ((parent->copy_func)(new_list_id, og_list_id, parent->copy_data) < 0) {
+                if ((parent_walk->copy_func)(new_list_id, og_list_id, parent_walk->copy_data) < 0) {
                     H5I_remove(new_plist_id);
 
                     assert(H5P_MT_ASSERT_FAIL);
@@ -1045,12 +1101,9 @@ H5P__mt_create_list(H5P_mt_class_t *parent, H5P_mt_list_t *og_list, bool copy, u
             } /* end if ( parent0>copy_func ) */
 
             /* Increment up the parent tree */
-            parent = parent->parent_ptr;
+            parent_walk = parent_walk->parent_ptr;
 
-        } /* end while ( parent ) */
-
-        /* Reset parent to point to the new list's direct parent class */
-        parent = new_list->pclass_ptr;
+        } /* end while ( parent_walk ) */
 
     } /* end if ( copy ) */
     /**
@@ -1058,13 +1111,16 @@ H5P__mt_create_list(H5P_mt_class_t *parent, H5P_mt_list_t *og_list, bool copy, u
      * the parent classes up the inheritance tree, if it exits.
      */
     else {
-        while (parent) {
+
+        parent_walk = parent;
+
+        while (parent_walk) {
             /* If the parent has a create callback, call it */
-            if (parent->create_func) {
+            if (parent_walk->create_func) {
                 hid_t new_list_id = atomic_load(&(new_list->plist_id));
 
                 /* If the create callback fails remove the list's id from the index */
-                if ((parent->create_func)(new_list_id, parent->create_data) < 0) {
+                if ((parent_walk->create_func)(new_list_id, parent_walk->create_data) < 0) {
                     H5I_remove(new_plist_id);
 
                     assert(H5P_MT_ASSERT_FAIL);
@@ -1074,12 +1130,9 @@ H5P__mt_create_list(H5P_mt_class_t *parent, H5P_mt_list_t *og_list, bool copy, u
             } /* end if ( parent->create_func ) */
 
             /* Increment up the parent tree */
-            parent = parent->parent_ptr;
+            parent_walk = parent_walk->parent_ptr;
 
         } /* end while ( parent ) */
-
-        /* Reset parent to point to the new list's direct parent class */
-        parent = new_list->pclass_ptr;
 
     } /* end else */
 
@@ -1093,10 +1146,14 @@ H5P__mt_create_list(H5P_mt_class_t *parent, H5P_mt_list_t *og_list, bool copy, u
 
     atomic_store(&(new_list->thrd), list_thrd);
 
+    atomic_fetch_add(&(new_list->num_thrd_count_update), 1);
+
     if (0 >= H5I_inc_ref(atomic_load(&(parent->id)), FALSE)) {
         assert(FALSE);
         HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, NULL, "unable to increment parent's ID ref_count in index");
     }
+
+    ret_value = new_list;
 
 done:
 
@@ -1123,8 +1180,6 @@ done:
             H5P__mt_close_list(new_list);
         }
     }
-
-    ret_value = new_list;
 
     FUNC_LEAVE_NOAPI(ret_value)
 
@@ -2428,10 +2483,19 @@ H5P__mt_ins_or_mod_prop__class(H5P_mt_class_t *class, const char *name, void *va
      * end testing function
      */
 
-    /* If this is a new property being inserted, ensure it doesn't already exist */
+    /* Search the class to see if the property already exists in it */
+    new_prop = H5P__mt_search__class(class, name, curr_version);
+
+    /* If this is a new property, the property should not already exist in the class */
     if (is_new) {
-        if (NULL != (new_prop = H5P__mt_search__class(class, name, curr_version))) {
+        if (new_prop) {
             HGOTO_ERROR(H5E_PLIST, H5E_BADVALUE, FAIL, "Property already exists in the class.");
+        }
+    }
+    /* else if not a new property, the property must already exist in the class */
+    else {
+        if (! new_prop ) {
+            HGOTO_ERROR(H5E_PLIST, H5E_BADVALUE, FAIL, "Property to modify doesn't exists in the class.");
         }
     }
 
@@ -2522,7 +2586,7 @@ done:
         }
     }
 
-    /* If the parent's thrd_count was increment, decrement it */
+    /* If the class's thrd_count was increment, decrement it */
     if (inc_thrd_flag) {
         if (0 > H5P__dec_thrd_count(class)) {
             HDONE_ERROR(H5E_PLIST, H5E_BADVALUE, FAIL, "Failure to decrement thrd_count.");
@@ -2661,12 +2725,23 @@ H5P__mt_ins_or_mod_prop__list(H5P_mt_list_t *list, const char *name, void *value
      * end testing function
      */
 
-    /* If this is a new property being inserted, ensure it doesn't already exist */
+    /* Search the list to see if the property already exists in it */
+    new_prop = H5P__mt_search__list(list, name, curr_version);
+
+    /* If this is a new property, the property should not already exist in the class */
     if (is_new) {
-        if (NULL != (new_prop = H5P__mt_search__list(list, name, curr_version))) {
+        if (new_prop) {
             HGOTO_ERROR(H5E_PLIST, H5E_BADVALUE, FAIL, "Property already exists in the list.");
         }
     }
+    /* else if not a new property, the property must already exist in the list */
+    else {
+        if (! new_prop ) {
+            HGOTO_ERROR(H5E_PLIST, H5E_BADVALUE, FAIL, "Property to modify doesn't exists in the list.");
+        }
+    }
+
+
 
     /* This thread can now proceed and create the new property */
     new_prop = H5P__mt_create_prop(name, value, size, FALSE, next_version, prp_create, prp_set, prp_get,
@@ -2851,6 +2926,12 @@ done:
         /* update stats */
         if (atomic_load(&(list->curr_version)) > atomic_load(&(H5P_mt_g.max_list_version_number))) {
             atomic_store(&(H5P_mt_g.max_list_version_number), atomic_load(&(list->curr_version)));
+        }
+
+        /* Update global atomic plist version if list is a default plist */
+        if ( list->def_ver_ptr )
+        {
+            atomic_fetch_add((list->def_ver_ptr), 1);
         }
     }
 
@@ -3283,7 +3364,7 @@ H5P__mt_delete_prop__list(H5P_mt_list_t *list, const char *name)
 
     /* Increment thread count */
     if (H5P__inc_thrd_count(list) < 0) {
-        HGOTO_ERROR(H5E_PLIST, H5E_BADTYPE, FAIL, "Couldn't increment class's thread count.");
+        HGOTO_ERROR(H5E_PLIST, H5E_BADTYPE, FAIL, "Couldn't increment list's thread count.");
     }
     else {
         inc_thrd_flag = TRUE;
@@ -3456,6 +3537,12 @@ done:
         /* update stats */
         if (atomic_load(&(list->curr_version)) > atomic_load(&(H5P_mt_g.max_list_version_number))) {
             atomic_store(&(H5P_mt_g.max_list_version_number), atomic_load(&(list->curr_version)));
+        }
+
+        /* Update global atomic plist version if list is a default plist */
+        if ( list->def_ver_ptr )
+        {
+            atomic_fetch_add((list->def_ver_ptr), atomic_load(&(list->curr_version)));
         }
     }
 
@@ -4486,7 +4573,7 @@ H5P__is_valid(H5P_mt_prop_t *prop, uint64_t version)
         ret_value = 0;
     }
     /* If TRUE then no version of this property is valid */
-    else if ((delete_ver > 0) && (delete_ver <= version)) {
+    else if ( (create_ver <= version) && (delete_ver > 0) && (delete_ver <= version)) {
         ret_value = -1;
     }
     /* If TRUE this property is not valid, but another version might be */
@@ -5370,7 +5457,8 @@ done:
  *              may be encoded, and only predefined ones that have not had any completely
  *              new properties added that don't exist in the parent class.
  *
- *              First the functions calls H5P__mt_enforce_serialization() to ensure there
+ *              First increment the thread count of the list and set inc_thrd_flag to 
+ *              TRUE. Then call H5P__mt_enforce_serialization() to ensure there
  *              isn't another operation that can change the list occuring, before
  *              continuing.
  *
@@ -5385,6 +5473,9 @@ done:
  *              valid properties and encode them via H5P__mt_encode_prop.
  *
  *              A terminator is encoded for the list.
+ * 
+ *              Before returning, decrement the thread count of the list if 
+ *              inc_thrd_flag is TRUE.
  *
  * Return:      SUCCEED/FAIL
 
@@ -5398,8 +5489,10 @@ H5P__mt_encode(H5P_mt_list_t *list, uint64_t version, void *buf, size_t *nalloc)
     H5P_mt_prop_t             *prev_prop;                    /* previous valid_prop in the lfsll */
     uint8_t                   *p           = (uint8_t *)buf; /* tmp pointer to encode buffer */
     size_t                     encode_size = 0;              /* size of buf needed to encode properties */
-    bool                       encode      = TRUE;           /* bool for if the list should be encoded */
-    bool                       base_flag   = FALSE;
+    bool                       encode        = TRUE;         /* bool for if the list should be encoded */
+    bool                       base_flag     = FALSE;
+    bool                       inc_thrd_flag = FALSE;
+    bool                       ver_updated   = FALSE;
     uint64_t                   curr_version;
     uint64_t                   next_version;
     size_t                     nprops_inherited; /* Number of entries in the lkup_tbl */
@@ -5423,8 +5516,17 @@ H5P__mt_encode(H5P_mt_list_t *list, uint64_t version, void *buf, size_t *nalloc)
     assert(atomic_load(&(list->tag)) == H5P_MT_LIST_TAG);
     assert(atomic_load(&(list->curr_version)) >= version);
 
+    /* Increment thread count */
+    if (H5P__inc_thrd_count(list) < 0) {
+        HGOTO_ERROR(H5E_PLIST, H5E_BADTYPE, FAIL, "Couldn't increment list's thread count.");
+    }
+    else {
+        inc_thrd_flag = TRUE;
+    }
+
     curr_version = atomic_load(&(list->curr_version));
     next_version = atomic_fetch_add(&(list->next_version), 1);
+    ver_updated  = TRUE;
 
     if ((curr_version + 1) < next_version) {
         if ((curr_version = H5P__mt_enforce_serialization(list, curr_version, next_version)) == 0) {
@@ -5516,6 +5618,24 @@ H5P__mt_encode(H5P_mt_list_t *list, uint64_t version, void *buf, size_t *nalloc)
 
 done:
 
+    if (ver_updated) {
+        /* Update the list's current version */
+        curr_version = atomic_fetch_add(&(list->curr_version), 1);
+        assert(curr_version + 1 == next_version);
+
+        /* update stats */
+        if (atomic_load(&(list->curr_version)) > atomic_load(&(H5P_mt_g.max_list_version_number))) {
+            atomic_store(&(H5P_mt_g.max_list_version_number), atomic_load(&(list->curr_version)));
+        }
+    }
+
+    /* If the thrd_count was incremented, decremented it */
+    if (inc_thrd_flag) {
+        if (0 > H5P__dec_thrd_count(list)) {
+            HDONE_ERROR(H5E_PLIST, H5E_BADVALUE, FAIL, "Failure to decrement thrd_count.");
+        }
+    }
+
     FUNC_LEAVE_NOAPI(ret_value)
 
 } /* H5P__mt_encode() */
@@ -5573,102 +5693,6 @@ done:
     FUNC_LEAVE_NOAPI(ret_value)
 
 } /* H5P__mt_encode_prop() */
-
-/****************************************************************************************
- * Function:    H5P__mt_get_version()
- *
- * Purpose:     Will eventually get the version of a list or class that is stored in the
- *              CX.
- *
- * Return:      Success: the version of a list or class that is stored in the CX for that
- *                       list or class.
- *
- *              Failure: 0
-
- ****************************************************************************************
- */
-uint64_t
-H5P__mt_get_version(void *param)
-{
-    uint32_t tag;
-    H5P_mt_class_t *class        = NULL;
-    H5P_mt_list_t *list          = NULL;
-    bool           inc_thrd_flag = FALSE;
-
-    uint64_t ret_value = 0;
-
-    FUNC_ENTER_PACKAGE
-
-    tag = *(uint32_t *)param;
-
-    /* If param is a class */
-    if (tag == H5P_MT_CLASS_TAG) {
-        class = (H5P_mt_class_t *)param;
-
-        assert(class);
-        assert(atomic_load(&(class->tag)) == H5P_MT_CLASS_TAG);
-
-        /** TODO: assert(class->ref_count.deleted == FALSE) */
-
-        /* update stats */
-        /** TODO: add stats for number of times version is gotten */
-
-        /* Increment thread count */
-        if ((H5P__inc_thrd_count(class)) < 0) {
-            HGOTO_ERROR(H5E_PLIST, H5E_BADTYPE, 0, "Couldn't increment parent's thread count.");
-        }
-        else {
-            inc_thrd_flag = TRUE;
-        }
-
-        /** TODO: replace this with function that gets version from context */
-        ret_value = atomic_load(&(class->curr_version));
-    }
-    /* If param is a list */
-    else if (tag == H5P_MT_LIST_TAG) {
-        list = (H5P_mt_list_t *)param;
-
-        assert(list);
-        assert(atomic_load(&(list->tag)) == H5P_MT_LIST_TAG);
-
-        /* update stats */
-        /** TODO: add stats for number of times version is gotten */
-
-        /* Increment thread count */
-        if ((H5P__inc_thrd_count(list)) < 0) {
-            HGOTO_ERROR(H5E_PLIST, H5E_BADTYPE, 0, "Couldn't increment parent's thread count.");
-        }
-        else {
-            inc_thrd_flag = TRUE;
-        }
-
-        /** TODO: replace this with function that gets version from context */
-        ret_value = atomic_load(&(list->curr_version));
-    }
-    else {
-        assert(H5P_MT_ASSERT_FAIL);
-        HGOTO_ERROR(H5E_PLIST, H5E_BADTYPE, 0, "Type passed in wasn't a class or list.");
-    }
-
-done:
-
-    /* If the parent's thrd_count was incremented, it must be decremented */
-    if (inc_thrd_flag) {
-        if (class) {
-            if (0 > H5P__dec_thrd_count(class)) {
-                HDONE_ERROR(H5E_PLIST, H5E_BADVALUE, 0, "Failure to decrement thrd_count.");
-            }
-        }
-        else {
-            if (0 > H5P__dec_thrd_count(list)) {
-                HDONE_ERROR(H5E_PLIST, H5E_BADVALUE, 0, "Failure to decrement thrd_count.");
-            }
-        }
-    }
-
-    FUNC_LEAVE_NOAPI(ret_value)
-
-} /* H5P__mt_get_version() */
 
 /****************************************************************************************
  * Function:    H5P__mt_close_prop
@@ -5871,7 +5895,8 @@ H5P__mt_close_prop(H5P_mt_prop_t *prop)
 /****************************************************************************************
  * Function:    H5P__clear_mt_prop
  *
- * Purpose:     Frees a property's name and the property itself.
+ * Purpose:     Clears all fields to default values, and frees a property's name and 
+ *              value buffers, if they exist.
  *
  * Return:      SUCCEED/FAIL
  *
@@ -5890,6 +5915,11 @@ H5P__clear_mt_prop(H5P_mt_prop_t *prop)
 
     assert(prop);
     assert(atomic_load(&(prop->tag)) == H5P_MT_PROP_FL_REALLOC_TAG);
+
+    if ( atomic_load(&(prop->tag)) != H5P_MT_PROP_FL_REALLOC_TAG )
+    {
+        HGOTO_ERROR(H5E_PLIST, H5E_BADVALUE, NULL, "The property being cleared has an incorrect tag");
+    }
 
     nulls_prop_ptr.ptr          = NULL;
     nulls_prop_ptr.deleted      = FALSE;
@@ -6359,6 +6389,11 @@ H5P__clear_mt_class(H5P_mt_class_t *class)
     assert(class);
     assert(atomic_load(&(class->tag)) == H5P_MT_CLASS_FL_REALLOC_TAG);
 
+    if ( atomic_load(&(class->tag)) != H5P_MT_CLASS_FL_REALLOC_TAG )
+    {
+        HGOTO_ERROR(H5E_PLIST, H5E_BADVALUE, NULL, "The class being cleared has an incorrect tag");
+    }
+
     thrd = atomic_load(&(class->thrd));
 
     assert(thrd.count == 0);
@@ -6406,6 +6441,8 @@ H5P__clear_mt_class(H5P_mt_class_t *class)
     /* Ensure the LFSLL is empty, then free the class */
     first_prop = class->pl_head;
     assert(!first_prop);
+
+    class->pl_head = NULL;
 
     assert(0 == (atomic_load(&(class->log_pl_len))));
     assert(0 == (atomic_load(&(class->phys_pl_len))));
@@ -6903,6 +6940,11 @@ H5P__clear_mt_list(H5P_mt_list_t *list)
     assert(list);
     assert(atomic_load(&(list->tag)) == H5P_MT_LIST_FL_REALLOC_TAG);
 
+    if ( atomic_load(&(list->tag)) != H5P_MT_LIST_FL_REALLOC_TAG )
+    {
+        HGOTO_ERROR(H5E_PLIST, H5E_BADVALUE, NULL, "The list being cleared has an incorrect tag");
+    }
+
     thrd = atomic_load(&(list->thrd));
 
     assert(thrd.count == 0);
@@ -7255,13 +7297,19 @@ H5P__dec_thrd_count(void *param)
         HGOTO_ERROR(H5E_PLIST, H5E_BADVALUE, FAIL, "Tag is not a list or a class.");
     }
 
-    /* Ensure the class isn't opening or closing and increment thread count */
+    /* Ensure the class isn't opening and decrement the thread count */
     do {
         if (class) {
             thrd = atomic_load(&(class->thrd));
         }
         else {
             thrd = atomic_load(&(list->thrd));
+        }
+
+        if ( thrd.opening )
+        {
+            assert(FALSE);
+            HGOTO_ERROR(H5E_PLIST, H5E_BADVALUE, FAIL, "Opening flag is set, but shouldn't be");
         }
 
         update_thrd = thrd;
@@ -8509,15 +8557,17 @@ H5P__mt_term_free_lists(void)
         head_list = NULL;
 
         fl_list_head = atomic_load(&(H5P_mt_g.list_fl_head));
+        fl_list_tail = atomic_load(&(H5P_mt_g.list_fl_tail));
 
-        atomic_fetch_sub(&(H5P_mt_g.list_fl_len), 1);
+        if ( fl_list_head.ptr )
+        {
+            assert(fl_list_tail.ptr);
+            atomic_fetch_sub(&(H5P_mt_g.list_fl_len), 1);            
+        }        
 
     } /* end while ( fl_list_head.ptr ) */
 
     /* Ensure the head and tail of the list's free list are NULL */
-    fl_list_head = atomic_load(&(H5P_mt_g.list_fl_head));
-    fl_list_tail = atomic_load(&(H5P_mt_g.list_fl_tail));
-
     assert(NULL == fl_list_head.ptr);
     assert(NULL == fl_list_tail.ptr);
 
@@ -8575,15 +8625,18 @@ H5P__mt_term_free_lists(void)
         head_class = NULL;
 
         fl_class_head = atomic_load(&(H5P_mt_g.class_fl_head));
+        fl_class_tail = atomic_load(&(H5P_mt_g.class_fl_tail));
 
-        atomic_fetch_sub(&(H5P_mt_g.class_fl_len), 1);
+        if ( fl_class_head.ptr )
+        {
+            assert(fl_class_tail.ptr);
+            atomic_fetch_sub(&(H5P_mt_g.class_fl_len), 1);
+        }  
+
 
     } /* end while ( fl_class_head.ptr ) */
 
     /* Ensure the head and tail of the free list are NULL */
-    fl_class_head = atomic_load(&(H5P_mt_g.class_fl_head));
-    fl_class_tail = atomic_load(&(H5P_mt_g.class_fl_tail));
-
     assert(NULL == fl_class_head.ptr);
     assert(NULL == fl_class_tail.ptr);
 
@@ -8634,15 +8687,17 @@ H5P__mt_term_free_lists(void)
         head_prop = NULL;
 
         fl_prop_head = atomic_load(&(H5P_mt_g.prop_fl_head));
+        fl_prop_tail = atomic_load(&(H5P_mt_g.prop_fl_tail));
 
-        atomic_fetch_sub(&(H5P_mt_g.prop_fl_len), 1);
+        if ( fl_prop_head.ptr )
+        {
+            assert(fl_prop_tail.ptr);
+            atomic_fetch_sub(&(H5P_mt_g.prop_fl_len), 1);            
+        }  
 
     } /* while ( fl_prop_head.ptr ) */
 
     /* Ensure the head and tail of the free list are NULL */
-    fl_prop_head = atomic_load(&(H5P_mt_g.prop_fl_head));
-    fl_prop_tail = atomic_load(&(H5P_mt_g.prop_fl_tail));
-
     assert(NULL == fl_prop_head.ptr);
     assert(NULL == fl_prop_tail.ptr);
 

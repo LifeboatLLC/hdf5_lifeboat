@@ -153,6 +153,14 @@ H5VLregister_connector_by_name(const char *name, hid_t vipl_id)
             HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5I_INVALID_HID, "not a VOL initialize property list");
     }
 
+#ifdef H5_HAVE_MULTITHREAD
+    /* Set the property list in the context */
+    if ( H5CX_set_plist(vipl_id, H5P_TYPE_REFERENCE_ACCESS) < 0)
+    {
+        HGOTO_ERROR(H5E_ATTR, H5E_CANTSET, H5I_INVALID_HID, "can't set vipl in context");
+    }
+#endif
+
     /* Register connector */
     if ((ret_value = H5VL__register_connector_by_name(name, TRUE, vipl_id)) < 0)
         HGOTO_ERROR(H5E_VOL, H5E_CANTREGISTER, H5I_INVALID_HID, "unable to register VOL connector");
@@ -203,6 +211,14 @@ H5VLregister_connector_by_value(H5VL_class_value_t value, hid_t vipl_id)
         if (TRUE != ret)
             HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5I_INVALID_HID, "not a VOL initialize property list");
     }
+
+#ifdef H5_HAVE_MULTITHREAD
+    /* Set the property list in the context */
+    if ( H5CX_set_plist(vipl_id, H5P_TYPE_REFERENCE_ACCESS) < 0)
+    {
+        HGOTO_ERROR(H5E_ATTR, H5E_CANTSET, H5I_INVALID_HID, "can't set vipl in context");
+    }
+#endif
 
     /* Register connector */
     if ((ret_value = H5VL__register_connector_by_value(value, TRUE, vipl_id)) < 0)

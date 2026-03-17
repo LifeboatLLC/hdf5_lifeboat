@@ -92,6 +92,29 @@
 #define H5P_VOL_INITIALIZE_DEFAULT   (H5OPEN H5P_LST_VOL_INITIALIZE_ID_g)
 #define H5P_REFERENCE_ACCESS_DEFAULT (H5OPEN H5P_LST_REFERENCE_ACCESS_ID_g)
 
+/*
+ * Versions for the library's default property lists (used by the context)
+ */
+#define H5P_DEFAULT_AAPL_VER   (H5OPEN H5P_AAPL_VER_g)
+#define H5P_DEFAULT_ACPL_VER   (H5OPEN H5P_ACPL_VER_g)
+#define H5P_DEFAULT_DAPL_VER   (H5OPEN H5P_DAPL_VER_g)
+#define H5P_DEFAULT_DCPL_VER   (H5OPEN H5P_DCPL_VER_g)
+#define H5P_DEFAULT_DXPL_VER   (H5OPEN H5P_DXPL_VER_g)
+#define H5P_DEFAULT_TAPL_VER   (H5OPEN H5P_TAPL_VER_g)
+#define H5P_DEFAULT_TCPL_VER   (H5OPEN H5P_TCPL_VER_g)
+#define H5P_DEFAULT_FAPL_VER   (H5OPEN H5P_FAPL_VER_g)
+#define H5P_DEFAULT_FCPL_VER   (H5OPEN H5P_FCPL_VER_g)
+#define H5P_DEFAULT_FMPL_VER   (H5OPEN H5P_FMPL_VER_g)
+#define H5P_DEFAULT_GAPL_VER   (H5OPEN H5P_GAPL_VER_g)
+#define H5P_DEFAULT_GCPL_VER   (H5OPEN H5P_GCPL_VER_g)
+#define H5P_DEFAULT_LAPL_VER   (H5OPEN H5P_LAPL_VER_g)
+#define H5P_DEFAULT_LCPL_VER   (H5OPEN H5P_LCPL_VER_g)
+#define H5P_DEFAULT_MAPL_VER   (H5OPEN H5P_MAPL_VER_g)
+#define H5P_DEFAULT_MCPL_VER   (H5OPEN H5P_MCPL_VER_g)
+#define H5P_DEFAULT_OCPYPL_VER (H5OPEN H5P_OCPYPL_VER_g)
+#define H5P_DEFAULT_RAPL_VER   (H5OPEN H5P_RAPL_VER_g)
+#define H5P_DEFAULT_VIPL_VER   (H5OPEN H5P_VIPL_VER_g)
+
 /* Common creation order flags (for links in groups and attributes on objects) */
 #define H5P_CRT_ORDER_TRACKED 0x0001
 #define H5P_CRT_ORDER_INDEXED 0x0002
@@ -471,6 +494,28 @@ H5_DLLVAR hid_t H5P_LST_LINK_ACCESS_ID_g;
 H5_DLLVAR hid_t H5P_LST_VOL_INITIALIZE_ID_g;
 H5_DLLVAR hid_t H5P_LST_REFERENCE_ACCESS_ID_g;
 
+/* Default property list versions */
+/* (Internal to library, do not use!  Use macros above) */
+H5_DLLVAR _Atomic uint64_t H5P_AAPL_VER_g;
+H5_DLLVAR _Atomic uint64_t H5P_ACPL_VER_g;
+H5_DLLVAR _Atomic uint64_t H5P_DAPL_VER_g;
+H5_DLLVAR _Atomic uint64_t H5P_DCPL_VER_g;
+H5_DLLVAR _Atomic uint64_t H5P_DXPL_VER_g;
+H5_DLLVAR _Atomic uint64_t H5P_TAPL_VER_g;
+H5_DLLVAR _Atomic uint64_t H5P_TCPL_VER_g;
+H5_DLLVAR _Atomic uint64_t H5P_FAPL_VER_g;
+H5_DLLVAR _Atomic uint64_t H5P_FCPL_VER_g;
+H5_DLLVAR _Atomic uint64_t H5P_FMPL_VER_g;
+H5_DLLVAR _Atomic uint64_t H5P_GAPL_VER_g;
+H5_DLLVAR _Atomic uint64_t H5P_GCPL_VER_g;
+H5_DLLVAR _Atomic uint64_t H5P_LAPL_VER_g;
+H5_DLLVAR _Atomic uint64_t H5P_LCPL_VER_g;
+H5_DLLVAR _Atomic uint64_t H5P_MAPL_VER_g;
+H5_DLLVAR _Atomic uint64_t H5P_MCPL_VER_g;
+H5_DLLVAR _Atomic uint64_t H5P_OCPYPL_VER_g;
+H5_DLLVAR _Atomic uint64_t H5P_RAPL_VER_g;
+H5_DLLVAR _Atomic uint64_t H5P_VIPL_VER_g;
+
 /*********************/
 /* Public Prototypes */
 /*********************/
@@ -515,20 +560,24 @@ H5_DLL herr_t H5Pclose_class(hid_t plist_id);
 /**
  * \ingroup PLCR
  *
- * \brief Copies an existing property list to create a new property list
+ * \brief Copies an existing property list or property list class to 
+ *        create a new property list or new property list class 
+ *        respectively.
  *
  * \plist_id
  *
  * \return \hid_t{property list}
  *
  * \details H5Pcopy() copies an existing property list to create a new
- *          property list. The new property list has the same properties
- *          and values as the original property list.
+ *          property list or an existing property list class to create a
+ *          new property list class. The new property list or property 
+ *          list class has the same properties and values as the original 
+ *          property list or property list class.
  *
  * \since 1.0.0
  *
  */
-H5_DLL hid_t H5Pcopy(hid_t plist_id);
+H5_DLL hid_t H5Pcopy(hid_t id);
 /**
  * \ingroup PLCRA
  *

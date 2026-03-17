@@ -445,6 +445,14 @@ H5Fget_vfd_handle(hid_t file_id, hid_t fapl_id, void **file_handle /*out*/)
     if (NULL == (vol_obj = (H5VL_object_t *)H5I_object(file_id)))
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "invalid file identifier");
 
+#ifdef H5_HAVE_MULTITHREAD
+    /* Store fapl in the context and set up collective metadata if appropriate */
+    if ( H5CX_set_apl(&fapl_id, H5P_CLS_FACC, H5I_INVALID_HID, TRUE) < 0 )
+    {
+        HGOTO_ERROR(H5E_FILE, H5E_CANTSET, FAIL, "can't set access property list info");
+    }
+#endif
+
     /* Set up VOL callback arguments */
     file_opt_args.get_vfd_handle.fapl_id     = fapl_id;
     file_opt_args.get_vfd_handle.file_handle = file_handle;
@@ -494,6 +502,14 @@ H5Fis_accessible(const char *filename, hid_t fapl_id)
         if (TRUE != ret_value)
             HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not file access property list");
     }
+
+#ifdef H5_HAVE_MULTITHREAD
+    /* Store fapl in the context and set up collective metadata if appropriate */
+    if ( H5CX_set_apl(&fapl_id, H5P_CLS_FACC, H5I_INVALID_HID, FALSE) < 0 )
+    {
+        HGOTO_ERROR(H5E_FILE, H5E_CANTSET, FAIL, "can't set access property list info");
+    }
+#endif
 
     /* Set up VOL callback arguments */
     vol_cb_args.op_type                       = H5VL_FILE_IS_ACCESSIBLE;
@@ -601,6 +617,14 @@ H5F__create_api_common(const char *filename, unsigned flags, hid_t fcpl_id, hid_
 
     if (ret_value < 0)
         HGOTO_ERROR(H5E_FILE, H5E_CANTSET, H5I_INVALID_HID, "can't set access property list info");
+
+#ifdef H5_HAVE_MULTITHREAD
+    /* Set the property list in the context */
+    if ( H5CX_set_plist(fcpl_id, H5P_TYPE_FILE_CREATE) < 0)
+    {
+        HGOTO_ERROR(H5E_ATTR, H5E_CANTSET, H5I_INVALID_HID, "can't set fcpl in context");
+    }
+#endif
 
     /* Get the VOL info from the fapl */
     if (NULL == (plist = (H5P_genplist_t *)H5I_object(fapl_id)))
@@ -1299,6 +1323,14 @@ H5Fmount(hid_t loc_id, const char *name, hid_t child_id, hid_t plist_id)
         if (TRUE != ret)
             HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "plist_id is not a file mount property list ID");
     }
+
+#ifdef H5_HAVE_MULTITHREAD
+    /* Set the property list in the context */
+    if ( H5CX_set_plist(plist_id, H5P_TYPE_FILE_MOUNT) < 0)
+    {
+        HGOTO_ERROR(H5E_ATTR, H5E_CANTSET, H5I_INVALID_HID, "can't set fmpl in context");
+    }
+#endif
 
     /* Set up collective metadata if appropriate */
     H5_API_LOCK

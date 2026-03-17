@@ -69,10 +69,18 @@ H5_DLL herr_t H5CX_restore_state(const H5CX_state_t *api_state);
 H5_DLL herr_t H5CX_free_state(H5CX_state_t *api_state);
 
 /* "Setter" routines for API context info */
+#ifdef H5_HAVE_MULTITHREAD
+H5_DLL herr_t H5CX_set_dxpl(hid_t dxpl_id);
+H5_DLL herr_t H5CX_set_lcpl(hid_t lcpl_id);
+H5_DLL void   H5CX_set_lapl(hid_t lapl_id);
+H5_DLL herr_t H5CX_set_dcpl(hid_t dcpl_id);
+H5_DLL herr_t H5CX_set_plist(hid_t plist_id, H5P_plist_type_t type);
+#else
 H5_DLL void   H5CX_set_dxpl(hid_t dxpl_id);
 H5_DLL void   H5CX_set_lcpl(hid_t lcpl_id);
 H5_DLL void   H5CX_set_lapl(hid_t lapl_id);
 H5_DLL void   H5CX_set_dcpl(hid_t dcpl_id);
+#endif
 H5_DLL herr_t H5CX_set_libver_bounds(H5F_t *f);
 H5_DLL herr_t H5CX_set_apl(hid_t *acspl_id, const H5P_libclass_t *libclass, hid_t loc_id,
                            hbool_t is_collective);
@@ -93,6 +101,11 @@ H5_DLL herr_t  H5CX_get_mpi_coll_datatypes(MPI_Datatype *btype, MPI_Datatype *ft
 H5_DLL hbool_t H5CX_get_mpi_file_flushing(void);
 H5_DLL hbool_t H5CX_get_mpio_rank0_bcast(void);
 #endif /* H5_HAVE_PARALLEL */
+
+#ifdef H5_HAVE_MULTITHREAD
+/* Get version routines */
+H5_DLL uint64_t H5CX_get_plist_version(hid_t plist_id);
+#endif
 
 /* "Getter" routines for DXPL properties cached in API context */
 H5_DLL herr_t H5CX_get_btree_split_ratios(double split_ratio[3]);

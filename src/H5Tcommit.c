@@ -152,6 +152,14 @@ H5T__commit_api_common(hid_t loc_id, const char *name, hid_t type_id, hid_t lcpl
     if (H5VL_setup_acc_args(loc_id, H5P_CLS_TACC, TRUE, &tapl_id, vol_obj_ptr, &loc_params) < 0)
         HGOTO_ERROR(H5E_DATATYPE, H5E_CANTSET, FAIL, "can't set object access arguments");
 
+#ifdef H5_HAVE_MULTITHREAD
+    /* Set the TCPL for the API context */
+    if ( H5CX_set_plist(tcpl_id, H5P_TYPE_DATATYPE_CREATE) < 0)
+    {
+        HGOTO_ERROR(H5E_ATTR, H5E_CANTSET, H5I_INVALID_HID, "can't set tcpl in context");
+    }
+#endif
+
     /* Commit the type */
     if (NULL == (data = H5VL_datatype_commit(*vol_obj_ptr, &loc_params, name, type_id, lcpl_id, tcpl_id,
                                              tapl_id, H5P_DATASET_XFER_DEFAULT, token_ptr)))
@@ -377,6 +385,14 @@ H5Tcommit_anon(hid_t loc_id, hid_t type_id, hid_t tcpl_id, hid_t tapl_id)
     H5_API_LOCK
     ret_value = H5CX_set_apl(&tapl_id, H5P_CLS_TACC, loc_id, TRUE);
     H5_API_UNLOCK
+
+#ifdef H5_HAVE_MULTITHREAD
+    /* Set the TCPL for the API context */
+    if ( H5CX_set_plist(tcpl_id, H5P_TYPE_DATATYPE_CREATE) < 0)
+    {
+        HGOTO_ERROR(H5E_ATTR, H5E_CANTSET, H5I_INVALID_HID, "can't set tcpl in context");
+    }
+#endif
 
     if (ret_value < 0)
         HGOTO_ERROR(H5E_DATATYPE, H5E_CANTSET, FAIL, "can't set access property list info");

@@ -71,74 +71,6 @@ typedef struct {
 /* Local Variables */
 /*******************/
 
-#ifdef H5_HAVE_MULTITHREAD
-
-/****************************************************************************************
- * Function:    H5Pcopy
- *
- * Purpose:     Multithread version of H5Pcopy() which is a routine to copy a property
- *              list or class.
- *
- * Return:      SUCCEED / FAIL
- *
- ****************************************************************************************
- */
-hid_t
-H5Pcopy(hid_t id)
-{
-    H5P_mt_class_t *copy_class;                  /* Copy of the class */
-    void           *obj;                         /* Property object to copy */
-    hid_t           ret_value = H5I_INVALID_HID; /* return value */
-
-    FUNC_ENTER_API(H5I_INVALID_HID)
-    H5TRACE1("i", "i", id);
-
-    if (H5P_DEFAULT == id) {
-        HGOTO_DONE(H5P_DEFAULT);
-    }
-
-    /* Check arguments. */
-    if (H5I_GENPROP_LST != H5I_get_type(id) && H5I_GENPROP_CLS != H5I_get_type(id)) {
-        HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5I_INVALID_HID, "not property object");
-    }
-    if (NULL == (obj = H5I_object(id))) {
-        HGOTO_ERROR(H5E_PLIST, H5E_NOTFOUND, H5I_INVALID_HID, "property object doesn't exist");
-    }
-
-    /* Compare property lists */
-    if (H5I_GENPROP_LST == H5I_get_type(id)) {
-        if ((ret_value = H5P_copy_plist((H5P_mt_list_t *)obj, TRUE)) < 0) {
-            HGOTO_ERROR(H5E_PLIST, H5E_CANTCOPY, H5I_INVALID_HID, "can't copy MT property list");
-        }
-    }
-    /* Compare property list classes */
-    else {
-        /* Copy the class */
-        if ((copy_class = H5P__mt_copy_class((H5P_mt_class_t *)obj)) == NULL) {
-            HGOTO_ERROR(H5E_PLIST, H5E_CANTCOPY, H5I_INVALID_HID, "can't copy MT property class");
-        }
-
-        /* Get an ID for the copied class */
-        if ((ret_value = H5I_register(H5I_GENPROP_CLS, copy_class, TRUE)) < 0) {
-            /* If getting an ID for the copied class fails */
-            H5P__mt_close_class(copy_class);
-
-            HGOTO_ERROR(H5E_PLIST, H5E_CANTREGISTER, H5I_INVALID_HID,
-                        "unable to register MT property list class");
-        }
-
-        /* Now that the copied class is registered, opening process is complete */
-        atomic_store(&(copy_class->id), ret_value);
-    }
-
-done:
-
-    FUNC_LEAVE_API(ret_value)
-
-} /* H5Pcopy() MT safe version */
-
-#else
-
 /*--------------------------------------------------------------------------
  NAME
     H5Pcopy
@@ -201,13 +133,17 @@ H5Pcopy(hid_t id)
 
         } /* end if */
 
+#ifdef H5_HAVE_MULTITHREAD
+        /* Store the id in class struct */
+        atomic_store(&(copy_class->id), ret_value);
+#endif
+        
     } /* end else */
 
 done:
     FUNC_LEAVE_API(ret_value)
 } /* H5Pcopy() */
 
-#endif
 
 #ifdef H5_HAVE_MULTITHREAD
 /****************************************************************************************
@@ -257,8 +193,8 @@ H5Pcreate_class(hid_t parent, const char *name, H5P_cls_create_func_t cls_create
     }
 
     /* Create the new MT property list class */
-    if (NULL == (pclass = H5P__mt_create_class(par_class, name, H5P_TYPE_USER, 0, cls_create, create_data,
-                                               cls_copy, copy_data, cls_close, close_data))) {
+    if (NULL == (pclass = H5P__mt_create_class(par_class, name, H5P_TYPE_USER, atomic_load(&(par_class->curr_version)), 
+                                                cls_create, create_data, cls_copy, copy_data, cls_close, close_data))) {
         HGOTO_ERROR(H5E_PLIST, H5E_CANTCREATE, H5I_INVALID_HID, "unable to create MT property list class");
     }
 
@@ -361,44 +297,6 @@ done:
 
 #endif
 
-#ifdef H5_HAVE_MULTITHREAD
-/****************************************************************************************
- * Function:    H5Pcreate
- *
- * Purpose:     Multithread version of H5Pcreate() which creates a new property
- *              list derived from a property list class.
- *
- * Return:      Success: Returns a pointer to the new H5P_mt_class_t structure
- *
- *              Failure: NULL
- *
- ****************************************************************************************
- */
-hid_t
-H5Pcreate(hid_t cls_id)
-{
-    H5P_mt_class_t *pclass;
-
-    hid_t ret_value = H5I_INVALID_HID; /* return value */
-
-    FUNC_ENTER_API(H5I_INVALID_HID)
-    H5TRACE1("i", "i", cls_id);
-
-    /* Check arguments, and get class to derive the list from */
-    if (NULL == (pclass = (H5P_mt_class_t *)H5I_object_verify(cls_id, H5I_GENPROP_CLS))) {
-        HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5I_INVALID_HID, "not a MT property list class");
-    }
-
-    /* Create the new property list */
-    if ((ret_value = H5P_create_id(pclass, TRUE)) < 0) {
-        HGOTO_ERROR(H5E_PLIST, H5E_CANTCREATE, H5I_INVALID_HID, "unable to create property list");
-    }
-
-done:
-    FUNC_LEAVE_API(ret_value)
-} /* H5Pcreate() */
-
-#else
 
 /*--------------------------------------------------------------------------
  NAME
@@ -443,7 +341,6 @@ done:
     FUNC_LEAVE_API(ret_value)
 } /* H5Pcreate() */
 
-#endif
 
 #ifdef H5_HAVE_MULTITHREAD
 
@@ -1093,7 +990,7 @@ H5Pget_size(hid_t id, const char *name, size_t *size /*out*/)
     if (H5I_GENPROP_LST == H5I_get_type(id)) {
         if (NULL == (plist = (H5P_mt_list_t *)H5I_object(id))) {
             HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a MT property list");
-        }
+        }      
 
         /* Check the property size */
         if ((ret_value = H5P__get_size_plist(plist, name, size)) < 0)
@@ -1285,20 +1182,6 @@ done:
  *              In this multithread version we are trying to avoid that, and are instead
  *              simply incrementing the ref count of the ID in the index and returning
  *              the existing ID.
- *              However, it is possible that the class's ID gets decrement to 0 via a
- *              call to H5Pclose_class(). Generally this won't happen for the standard
- *              hdf5 library property list classes, however, it does occur in testing
- *              due to a new unique class being created to perform the tests on. Meaning
- *              that a user designed class could potentially have this happen as well.
- *              Since the property list class structure will still be available, due to
- *              having a derived property list that still has a pointer to the class
- *              (the class structure will only be closed and added to the free list if it
- *              has no derived property lists or property list classes, for more info on
- *              this process see the typedef H5P_mt_class_t struct comment description in
- *              H5Pint_mt.c), a new ID will be assigned to the class since it does not
- *              have an existing ID in the index. This prevents a property list class
- *              from ever having two IDs but still able to be removed and re-added to the
- *              index as needed.
  *
  * Return:      Success: Returns the ID of the parent class
  *
@@ -1343,20 +1226,12 @@ H5Pget_class(hid_t plist_id)
          * prevent this, the use of H5I_inc_ref() is implemented to simply increment the index's
          * reference count on the ID for that class.
          *
-         * However, if an ID's ref_count for a class were to drop to 0 the ID would be removed
-         * from the index, but if the class has existing derived classes or lists the structure
-         * would not be deleted. Then if H5Pget_class() is called on a derived list or class
-         * H5I_inc_ref() would fail (which is most likely why the original H5P code used
-         * H5I_register() ), so H5I_register_using_existing_id() is called to attempt to re-insert
-         * a class's ID back into the index (H5P_mt_class_t structs have a field for their ID).
-         * There is a chance H5I_register_using _existing_id() could fail if the ID has been
-         * assigned to another instance of H5P_mt_class_t (which is unlikely to occur). But if it
-         * does fail H5I_register() is called to register a new ID in the index for the class.
-         *
-         * This is something that should not occur during regular use of the library, however, does
-         * occur during existing H5P tests. This design is mostly done to handle that test, and to
-         * handle the off chance that a class is closed enough times it is removed from the index before
-         * it's derived classes and lists are closed.
+         * Additionally, in the multithread redesign of H5P when a class or list is derived from
+         * a parent class they increment the ID ref count on their parent class, and decrement it
+         * when they are closed. This action should make it impossible for a class to have its ID
+         * removed from the index if it has existing derived objects. However, these functions 
+         * were to test other posibilities, and should probably be removed if the current plan of
+         * having derived objects increment their parent on creations stays.
          */
 
         /* If the class's ID isn't in the index, register it back in */
@@ -1494,26 +1369,16 @@ H5Pget_nprops(hid_t id, size_t *nprops /*out*/)
             HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a MT property list");
         }
 
-        /**
-         * The multithread safe list structs us nprops to track the total number of
-         * properties in the most current version of the lkup_tbl plus LFSLL of the
-         * list. For more information on the multhithread structures see the description
-         * in H5Ppkg_mt.h
-         */
-        *nprops = atomic_load(&(plist->nprops));
+        if (H5P__get_nprops_plist(plist, nprops) < 0)
+            HGOTO_ERROR(H5E_PLIST, H5E_CANTREGISTER, FAIL, "unable to query # of properties in plist");
     }
     else if (H5I_GENPROP_CLS == H5I_get_type(id)) {
         if (NULL == (pclass = (H5P_mt_class_t *)H5I_object(id))) {
             HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a MT property class");
         }
 
-        /**
-         * The original H5P class structures don't inherite the properties from their
-         * parent class, while the MT H5P class structures do. To account for this the
-         * field nprops_added only tracks the number of properties that were added and
-         * not inherited.
-         */
-        *nprops = atomic_load(&(pclass->nprops_added));
+        if (H5P_get_nprops_pclass(pclass, nprops, FALSE) < 0)
+            HGOTO_ERROR(H5E_PLIST, H5E_CANTREGISTER, FAIL, "unable to query # of properties in pclass");
     }
     else {
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a property object");
@@ -1941,13 +1806,12 @@ H5Pget(hid_t plist_id, const char *name, void *value /*out*/)
     if (value == NULL)
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "invalid property value");
 
-#ifdef H5_HAVE_MULTITHREAD /* debug */
-
+#ifdef H5_HAVE_MULTITHREAD
     if (atomic_load(&(plist->tag)) != H5P_MT_LIST_TAG) {
         assert(FALSE);
     }
-
 #endif
+
     /* Go get the value */
     if (H5P_get(plist, name, value) < 0)
         HGOTO_ERROR(H5E_PLIST, H5E_CANTGET, FAIL, "unable to query property value");
@@ -2227,45 +2091,6 @@ done:
     FUNC_LEAVE_API(ret_value)
 } /* H5Pclose() */
 
-#ifdef H5_HAVE_MULTITHREAD
-
-/****************************************************************************************
- * Function:    H5Pget_class_name
- *
- * Purpose:     Multithread version of H5Pget_class_name() which is a routine to query
- *              the name of a property list class
- *
- * Return:      SUCCEED/FAIL
- *
- ****************************************************************************************
- */
-char *
-H5Pget_class_name(hid_t pclass_id)
-{
-    H5P_mt_class_t *pclass;
-
-    char *ret_value; /* return value */
-
-    FUNC_ENTER_API(NULL)
-    H5TRACE1("*s", "i", pclass_id);
-
-    /* Check arguments. */
-    if (NULL == (pclass = (H5P_mt_class_t *)H5I_object_verify(pclass_id, H5I_GENPROP_CLS))) {
-        HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, NULL, "not a MT property class");
-    }
-
-    ret_value = strdup(pclass->name);
-
-    if (!ret_value) {
-        HGOTO_ERROR(H5E_PLIST, H5E_NOTFOUND, NULL, "unable to query name of MT class");
-    }
-
-done:
-    FUNC_LEAVE_API(ret_value)
-} /* H5Pget_class_name() */
-
-#else
-
 /*--------------------------------------------------------------------------
  NAME
     H5Pget_class_name
@@ -2307,7 +2132,6 @@ done:
     FUNC_LEAVE_API(ret_value)
 } /* H5Pget_class_name() */
 
-#endif
 
 #ifdef H5_HAVE_MULTITHREAD
 

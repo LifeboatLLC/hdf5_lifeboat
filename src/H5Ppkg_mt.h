@@ -108,7 +108,7 @@ typedef struct H5P_mt_prop_aptr_t {
  * Description:
  *
  * Properties in a property list consist of a void pointer and a size.  To avoid race
- * conditions, the size and poitner must be set atomically.  This structure exists to
+ * conditions, the size and pointer must be set atomically.  This structure exists to
  * facilitate this.
  *
  * Fields:
@@ -147,9 +147,9 @@ typedef struct H5P_mt_prop_value_t {
  * Struct H5P_mt_prop_t is a revised version of H5P_genprop_t designed for use in a
  * multi-thread safe version of H5P. The data structures supporting property lists
  * are lock free to the extent practical, and thus instances of H5P_mt_prop_t will
- * typically appear in lock free singly linked list.
+ * typically appear in lock free singly linked lists.
  *
- * Further, to support versioning in property list classes,instances of H5P_mt_prop_t
+ * Further, to support versioning in property list classes, instances of H5P_mt_prop_t
  * in property list classes maintain reference counts of the number of property lists
  * that refer to them for default values, the create_version at which they were
  * inserted into the containing property list class or property list, and (if deleted)
@@ -169,9 +169,9 @@ typedef struct H5P_mt_prop_value_t {
  *      for a new property.
  *
  *      NOTE: The current implementation of the multithread H5P package only uses the
- *      property free list to store property structures that have been deleted from a
- *      property list or property list class. All new properties are allocated from
- *      memory, until further testing is done.
+ *      property free list to store instances of H5P_mt_prop_t that have been deleted 
+ *      and removed from a property list or property list class. All new properties are 
+ *      allocated from memory, until further testing is done.
  *
  *
  * next (_Atomic H5P_mt_prop_aptr_t):
@@ -196,7 +196,8 @@ typedef struct H5P_mt_prop_value_t {
  *      zero if in_prop_class is FALSE.
  *
  *      Note that this ref_count is only increased when a new property list
- *      is created, and is decremented when the property list is discarded.
+ *      is created (including a copy being created of an existing property list), 
+ *      and is decremented when the property list is discarded.
  *
  *      Thus this instance of H5P_mt_prop_t can be safely deleted if:
  *
@@ -227,7 +228,7 @@ typedef struct H5P_mt_prop_value_t {
  * The lock free singly linked list used to store most instances of H5P_mt_prop_t
  * requires sentinels at the beginning and end of the list with values (conceptually)
  * of negative and positive infinity respectively. This is a bit awkward with strings,
- * so for this reason, the (name, creation_version) key is augmented with a 32 bit
+ * so for this reason, the (name, create_version) key is augmented with a 32 bit
  * checksum on the name, converting the key to a (chksum, name, create_version)
  * triplet.
  *
@@ -237,7 +238,7 @@ typedef struct H5P_mt_prop_value_t {
  *
  * The addition of the chksum changes the sorting order to ascending checksum, name, and
  * then decreasing create_version. This ordering, along with the delete_version
- * field, allows us to operate on specific versions of a property list classes and
+ * field, allows us to operate on specific versions of property list classes and
  * property lists -- thus allowing concurrent operations without introducing
  * corruption.
  *
@@ -311,10 +312,10 @@ typedef struct H5P_mt_prop_value_t {
  *          fields must be modified to update their reference count.
  *
  *          This callback is invoked in two places by the library: During the creation
- *          of a new property list in H5P__create_prop(), and when copying a property from
- *          one plist to another plist that does not already contain it in
- *          H5P__copy_prop_plist(). (If the target plist for a copy operation does
- *          already contain the property, the copy callback is used instead.)
+ *          of a new property list, and when copying a property from one plist to another 
+ *          plist that does not already contain it. (If the target plist for a copy 
+ *          operation does already contain the property, the copy callback is used 
+ *          instead.)
  *
  *
  * set:     Function to call when a property value is set.
@@ -361,10 +362,10 @@ typedef struct H5P_mt_prop_value_t {
  *          a simple memcpy() from the application buffer to the property value buffer.
  *
  *          NOTE: Due to the versioning system the multithread safe structures utilize,
- *          when a property is having its value 'set' the process is a new property is
- *          created that is a copy of the property to 'set' the value of with its
- *          create_version set to the containing list's or class's next_version. After
- *          the new property is created, the set callback function is called on that new
+ *          when a property is having its value 'set' the process is a new H5P_mt_prop_t 
+ *          instance is created as a copy of the property with its create_version set to 
+ *          the containing list's or class's next_version. After the new property is 
+ *          created, the set callback function (if it exists) is called on that new 
  *          version of the property.
  *
  *
@@ -425,7 +426,7 @@ typedef struct H5P_mt_prop_value_t {
  *          Unlike decode, the encode callback should not increment the provided
  *          value pointer after encoding.
  *
- *          NOTE: in the multithread property structure, its value in the field
+ *          NOTE: in H5P_mt_prop_t, the value is located in the field
  *          H5P_mt_prop_value_t value.ptr.
  *
  *
@@ -444,7 +445,7 @@ typedef struct H5P_mt_prop_value_t {
  *          This incrementing is necessary for H5P__decode() to iterate through
  *          all properties in an encoded property list.
  *
- *          NOTE: in the multithread property structure, its value in the field
+ *          NOTE: in H5P_mt_prop_t, the value is located in the field
  *          H5P_mt_prop_value_t value.ptr.
  *
  *
@@ -610,14 +611,14 @@ typedef struct H5P_mt_prop_t {
  *
  * Description:
  *
- * Struct H5P_mt_active_thread_count_t is structure designed to contain a counter of the
- * number of threads currently active in the host structure and opening and closing flags
- * in a single atomic structure. The objectives are to prevent access to the containing
+ * Struct H5P_mt_active_thread_count_t is designed to contain a counter of the number of 
+ * threads currently active in the host structure and opening and closing flags in a 
+ * single atomic structure. The objectives are to prevent access to the containing
  * structure during setup, and to provide a mechanism for delaying the discard of the
  * containing structure until all threads currently active in the structure have exited.
  *
- * The possibility of access to a property list class or property list that is in the
- * process of being set stems from two points.
+ * The possibility of accessing a property list class or property list that is in the
+ * process of being initialized stems from two points.
  *
  * First, some callbacks that must be called during setup require the ID of the host
  * property list. This requires that the property list be inserted into the index,
@@ -631,22 +632,17 @@ typedef struct H5P_mt_prop_t {
  * To prevent this, the opening flag in the contained instance of
  * H5P_mt_active_thread_count_t is initialized to TRUE, and not set to FALSE until setup
  * completes. Any thread that wants to access the host property list much check this flag
- * on entry, and fail if it is TRUE.
+ * on entry, and if the opening flag is set to TRUE must wait until it's FALSE.
  *
- * NOTE: When opening a list the call to H5I_register() is done in the function
- * H5P__mt_create_list(), thus the OPENING flag is set to FALSE at the end of that
- * function when the set up for the list has completed before returning.
- * However, for classes, the call to H5I_register() is not done in the function
- * H5P__mt_create_class() and must be called by the function that is calling
- * H5P__mt_create_class(). This is due to following the same procedure of the original
- * H5P package to make the multithread safe H5P functions easier to fit into the existing
- * code. This does mean that after calling H5P__mt_create_class(), a call to
- * H5I_register() must be done, and then the new class's id field must be set to the
- * returned ID from H5I_register(). Finally, the function that called
- * H5P__mt_create_class() must also atomically load the class's
- * H5P_mt_active_thread_count_t thrd structure field into a local copy and update the
- * opening flag to FALSE and then attempt to update the shared copy via a call to
- * atomic_compare_exchange_strong().
+ * NOTE: When creating a property list class, at the end of H5P__mt_create_class(), the
+ * opening flag is set to FALSE, however, the class has not yet been inserted into the
+ * index, which must be done by the function calling H5P__mt_create_class(). The two 
+ * functions that call H5P__mt_create_class() are the public API H5Pcreate_class and
+ * the initialization function H5P_init_phase1(). Both of these functions handle
+ * registering the new class into the index via H5I_register and atomically store the
+ * returned ID into the class's id field. The reason for this is to follow the same
+ * process as the original non-multithread H5P code for an easier transition for the new
+ * H5P multithread structures and functions.
  *
  * In principle, it should be impossible for any thread to access a property list class
  * or property list that is in the process of being taken down. However, it seems prudent
@@ -657,13 +653,13 @@ typedef struct H5P_mt_prop_t {
  * another time.
  *
  * In the typical case of a thread that reads or modifies the host data structure, it
- * must first do an atomic fetch on the associated instance of
- * H5P_mt_active_thread_count_t and fail if either the opening or closing flag is set. If
- * neither flag is set, it must increment the thread counter in the local copy, and
- * attempt to overwrite the shared copy with the local copy using a call to
- * atomic_compare_exchange_strong(). If this fails, it must repeat the procedure until
- * successful, or until the closing flag is set. When the thread is done with the host
- * data structure, it must again load the associated instance of
+ * must first do an atomic fetch on the associated instance of 
+ * H5P_mt_active_thread_count_t and waits if the opening flag is set or fails if the 
+ * closing flag is set. If neither flag is set, it must increment the thread counter in 
+ * the local copy, and attempt to overwrite the shared copy with the local copy using a 
+ * call to atomic_compare_exchange_strong(). If this fails, it must repeat the procedure 
+ * until successful, or until the closing flag is set. When the thread is done with the 
+ * host data structure, it must again load the associated instance of
  * H5P_mt_active_thread_count_t, decrement the thread count in the local copy, and
  * attempt to overwrite the shared copy with the local copy with another call to
  * atomic_compare_exchange_strong() – repeating the procedure until successful. Note that
@@ -737,10 +733,23 @@ typedef struct H5P_mt_active_thread_count_t {
  * This is solved by combining the various reference counts into a single atomic
  * structure, and not allowing any reference count to be incremented once all the
  * reference counts have dropped to zero.
+ * 
+ * NOTE: The current implementation of the multithread version of H5P has changed the
+ * original methods of H5Pget_class() and H5Pget_class_parent() to instead call 
+ * H5I_inc_ref() to increment the ref count on the index instead of the original method
+ * of always calling H5I_register() to assign a new ID to a class regardless of whether
+ * it already had an ID or not. As a safety net when a class or list is created they
+ * also increment the ref count on their parent's ID in the index, and when deleted they
+ * decrement the ref count of their parent's ID. This ensures that even if the class is 
+ * closed, as long as it has derived lists or classes that have incremented it's index 
+ * ref count, it's ID will not be removed from the index until all derived objects are 
+ * closed and removed from the index. This prevents any class from having multiple IDs, 
+ * and prevents any class having it's ID removed from the index while it still exists. 
+ * However, this has rendered the deleted flag effectively useless, but for now it is 
+ * being kept in case this ID incrementing process needs to be removed.
  *
  * This structure is intended to fulfill this role. The individual fields are discussed
- * below. Observe that the size of the structure is less that 128 bits, which should
- * allow true atomic operation on most modern machines.
+ * below. 
  *
  * With padding, this structure is 128 bits, which allows true atomic operation on
  * many (most?) modern CPUs. However, it this becomes a problem, we can obtain the
@@ -1593,13 +1602,13 @@ typedef struct H5P_mt_list_prop_ref_t {
  *      chagnes visible.
  *
  * first_ver_of_curr (_Atomic uint64_t first_ver_of_curr):
- *      Atomic uint64_t to store the version of the list a default property was modified
- *      at. Due to curr being updated to point to and store the version number of the
- *      most current version of the property the entry in the lkup_tbl is associated
- *      with, this field is used to prevent the LFSLL of a list to be iterated for no
- *      reason. If the version number of the list we are searching for a property in is
- *      less than the field first_ver_of_curr, we know that at this version the base is
- *      valid version of the property and thus no need to iterated the LFSLL.
+ *      Atomic uint64_t to store the first version of the list a default property was 
+ *      modified at. Due to curr being updated to point to and store the version number 
+ *      of the most current version of the property the entry in the lkup_tbl is 
+ *      associated with, this field is used to prevent needless searches of the LFSLL of 
+ *      a list. If the version  the list we are searching for a property in is less than 
+ *      the field first_ver_of_curr, we know that the base is valid version of the 
+ *      property and thus have no need to iterated the LFSLL.
  *
  ****************************************************************************************
  */
@@ -1780,6 +1789,15 @@ typedef struct H5P_mt_list_table_entry_t {
  *      be executed in next_version issue order. Thus, a thread that modifies the propery
  *      list, must not increment curr_version until its value is one less than the
  *      version number it obtained when it started.
+ * 
+ * def_ver_ptr (_Atomic uint64_t *):
+ *      If the property list is a default property list, this field points to a global 
+ *      atomic uint64_t that stores the version of the default property list. The atomic
+ *      global version is used by the context as a means to grab the version of the 
+ *      default property lists upon API entry to ensure that the version cannot be 
+ *      modified out from under a thread during API calls prior to the thread accessing
+ *      the property list structure. For property lists that are not default lists this
+ *      pointer will always be NULL.    
  *
  * lkup_tbl (H5P_mt_list_table_entry_t *):
  *      Pointer to an array of H5P_mt_list_table_entry_t that permits fast lookup of
@@ -2043,6 +2061,8 @@ typedef struct H5P_mt_list_t {
     _Atomic hid_t    plist_id;
     _Atomic uint64_t curr_version;
     _Atomic uint64_t next_version;
+
+    _Atomic uint64_t *def_ver_ptr;
 
     H5P_mt_list_table_entry_t *lkup_tbl;
 
@@ -2369,20 +2389,20 @@ herr_t H5P__mt_ins_or_mod_prop__lfsll_ins(H5P_mt_prop_t *pl_head, H5P_mt_prop_t 
                                           uint32_t *thrd_cols_ptr, bool *chksum_cols_ptr);
 herr_t H5P__mt_delete_prop__class(H5P_mt_class_t *class, const char *name);
 herr_t H5P__mt_delete_prop__list(H5P_mt_list_t *list, const char *name);
-H5P_mt_prop_t             *H5P__mt_search__class(H5P_mt_class_t *class, const char *name, uint64_t version);
-H5P_mt_prop_t             *H5P__mt_search__list(H5P_mt_list_t *list, const char *name, uint64_t version);
+H5P_mt_prop_t *H5P__mt_search__class(H5P_mt_class_t *class, const char *name, uint64_t version);
+H5P_mt_prop_t *H5P__mt_search__list(H5P_mt_list_t *list, const char *name, uint64_t version);
 H5P_mt_list_table_entry_t *H5P__mt_search_lkup_tbl(H5P_mt_list_table_entry_t *lkup_tbl, size_t left_entry,
                                                    size_t right_entry, int64_t chksum, const char *name);
-H5P_mt_prop_t             *H5P__mt_search_lfsll(H5P_mt_prop_t *pl_head, int64_t chksum, const char *name,
-                                                uint64_t version, uint64_t *visited, bool *chksum_cols);
-H5P_mt_prop_t             *H5P__mt_entry_find_version(H5P_mt_list_table_entry_t *entry, uint64_t version,
+H5P_mt_prop_t *H5P__mt_search_lfsll(H5P_mt_prop_t *pl_head, int64_t chksum, const char *name,
+                                        uint64_t version, uint64_t *visited, bool *chksum_cols);
+H5P_mt_prop_t *H5P__mt_entry_find_version(H5P_mt_list_table_entry_t *entry, uint64_t version,
                                                       bool *base_flag);
-herr_t                     H5P__find_mod_point(H5P_mt_prop_t *pl_head, H5P_mt_prop_t **first_ptr_ptr,
+herr_t        H5P__find_mod_point(H5P_mt_prop_t *pl_head, H5P_mt_prop_t **first_ptr_ptr,
                                                H5P_mt_prop_t **second_ptr_ptr, uint32_t *deletes_ptr, uint32_t *nodes_visited_ptr,
                                                uint32_t *thrd_cols_ptr, int64_t chksum, const char *name, uint64_t version);
-H5P_mt_prop_t             *H5P__get_next_valid_prop(H5P_mt_prop_t *prop, uint64_t version, uint64_t *visited);
-H5P_mt_prop_t             *H5P__find_valid_version(H5P_mt_prop_t *prop, uint64_t version, uint64_t *visited);
-int32_t                    H5P__is_valid(H5P_mt_prop_t *prop, uint64_t version);
+H5P_mt_prop_t *H5P__get_next_valid_prop(H5P_mt_prop_t *prop, uint64_t version, uint64_t *visited);
+H5P_mt_prop_t *H5P__find_valid_version(H5P_mt_prop_t *prop, uint64_t version, uint64_t *visited);
+int32_t       H5P__is_valid(H5P_mt_prop_t *prop, uint64_t version);
 
 int32_t H5P__mt_prop_cmp(H5P_mt_prop_t *prop1, H5P_mt_prop_t *prop2);
 int32_t H5P__mt_cmp_class(H5P_mt_class_t *class1, uint64_t version1, H5P_mt_class_t *class2,
@@ -2393,7 +2413,6 @@ int32_t H5P__mt_is_derived__class(H5P_mt_class_t *parent, uint64_t version1, H5P
 int32_t H5P__mt_is_derived__list(H5P_mt_class_t *parent, uint64_t version1, H5P_mt_list_t *derived,
                                  uint64_t version2);
 H5P_mt_prop_t  *H5P__mt_next_prop_to_cmp(H5P_mt_prop_t *prop, uint64_t version);
-uint64_t        H5P__mt_get_version(void *param);
 herr_t          H5P__mt_close_prop(H5P_mt_prop_t *prop);
 H5P_mt_prop_t  *H5P__clear_mt_prop(H5P_mt_prop_t *prop);
 herr_t          H5P__mt_close_class(H5P_mt_class_t *class);

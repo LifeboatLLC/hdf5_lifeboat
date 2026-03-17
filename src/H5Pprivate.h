@@ -364,4 +364,10 @@ H5_DLL herr_t H5P_get_fill_value(H5P_genplist_t *plist, const struct H5T_t *type
 H5_DLL int    H5P_ignore_cmp(const void H5_ATTR_UNUSED *val1, const void H5_ATTR_UNUSED *val2,
                              size_t H5_ATTR_UNUSED size);
 
+/* Functions for the H5CX to tell H5P when it's initialized and when it shutting down */
+#ifdef H5_HAVE_MULTITHREAD
+H5_DLL herr_t H5P_set_cx_init(void);
+H5_DLL herr_t H5P_unset_cx_init(void);
+#endif
+
 #endif /* H5Pprivate_H */
