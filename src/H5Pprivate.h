@@ -318,10 +318,10 @@ H5_DLL char *H5P_get_class_name(H5P_genclass_t *pclass);
 
 /* Internal helper routines */
 #ifdef H5_HAVE_MULTITHREAD
-H5_DLL herr_t      H5P_get_nprops_pclass(H5P_mt_class_t *pclass, size_t *nprops, hbool_t recurse);
+H5_DLL herr_t H5P_get_nprops_pclass(H5P_mt_class_t *pclass, size_t *nprops, hbool_t recurse);
 
 #else
-H5_DLL herr_t      H5P_get_nprops_pclass(const H5P_genclass_t *pclass, size_t *nprops, hbool_t recurse);
+H5_DLL herr_t H5P_get_nprops_pclass(const H5P_genclass_t *pclass, size_t *nprops, hbool_t recurse);
 #endif
 H5_DLL hid_t       H5P_peek_driver(H5P_genplist_t *plist);
 H5_DLL const void *H5P_peek_driver_info(H5P_genplist_t *plist);

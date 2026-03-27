@@ -280,7 +280,6 @@ _Atomic uint64_t H5P_VIPL_VER_g   = 0;
 
 #endif
 
-
 #ifdef H5_HAVE_MULTITHREAD
 
 /* Root property list class library initialization object */
@@ -439,7 +438,7 @@ const H5P_libclass_t H5P_CLS_ROOT[1] = {{
 
     NULL, /* Parent class                 */
 
-    &H5P_CLS_ROOT_g,             /* Pointer to class             */
+    &H5P_CLS_ROOT_g, /* Pointer to class             */
 
     &H5P_CLS_ROOT_ID_g, /* Pointer to class ID          */
     NULL,               /* Pointer to default property list ID */
@@ -480,8 +479,8 @@ const H5P_libclass_t H5P_CLS_GACC[1] = {{
     "group access",        /* Class name for debugging     */
     H5P_TYPE_GROUP_ACCESS, /* Class type                   */
 
-    &H5P_CLS_LINK_ACCESS_g,      /* Parent class                 */
-    &H5P_CLS_GROUP_ACCESS_g,     /* Pointer to class             */
+    &H5P_CLS_LINK_ACCESS_g,  /* Parent class                 */
+    &H5P_CLS_GROUP_ACCESS_g, /* Pointer to class             */
 
     &H5P_CLS_GROUP_ACCESS_ID_g, /* Pointer to class ID          */
     &H5P_LST_GROUP_ACCESS_ID_g, /* Pointer to default property list ID */
@@ -501,8 +500,8 @@ const H5P_libclass_t H5P_CLS_TCRT[1] = {{
     "datatype create",        /* Class name for debugging     */
     H5P_TYPE_DATATYPE_CREATE, /* Class type                   */
 
-    &H5P_CLS_OBJECT_CREATE_g,    /* Parent class                 */
-    &H5P_CLS_DATATYPE_CREATE_g,  /* Pointer to class             */
+    &H5P_CLS_OBJECT_CREATE_g,   /* Parent class                 */
+    &H5P_CLS_DATATYPE_CREATE_g, /* Pointer to class             */
 
     &H5P_CLS_DATATYPE_CREATE_ID_g, /* Pointer to class ID          */
     &H5P_LST_DATATYPE_CREATE_ID_g, /* Pointer to default property list ID */
@@ -522,8 +521,8 @@ const H5P_libclass_t H5P_CLS_TACC[1] = {{
     "datatype access",        /* Class name for debugging     */
     H5P_TYPE_DATATYPE_ACCESS, /* Class type                   */
 
-    &H5P_CLS_LINK_ACCESS_g,      /* Parent class                 */
-    &H5P_CLS_DATATYPE_ACCESS_g,  /* Pointer to class             */
+    &H5P_CLS_LINK_ACCESS_g,     /* Parent class                 */
+    &H5P_CLS_DATATYPE_ACCESS_g, /* Pointer to class             */
 
     &H5P_CLS_DATATYPE_ACCESS_ID_g, /* Pointer to class ID          */
     &H5P_LST_DATATYPE_ACCESS_ID_g, /* Pointer to default property list ID */
@@ -543,8 +542,8 @@ const H5P_libclass_t H5P_CLS_VINI[1] = {{
     "VOL initialization",    /* Class name for debugging     */
     H5P_TYPE_VOL_INITIALIZE, /* Class type                   */
 
-    &H5P_CLS_ROOT_g,             /* Parent class                 */
-    &H5P_CLS_VOL_INITIALIZE_g,   /* Pointer to class             */
+    &H5P_CLS_ROOT_g,           /* Parent class                 */
+    &H5P_CLS_VOL_INITIALIZE_g, /* Pointer to class             */
 
     &H5P_CLS_VOL_INITIALIZE_ID_g, /* Pointer to class ID          */
     &H5P_LST_VOL_INITIALIZE_ID_g, /* Pointer to default property list ID */
@@ -604,8 +603,8 @@ H5_DLLVAR const H5P_libclass_t H5P_CLS_ACRT[1];   /* Attribute creation */
 #ifdef H5_HAVE_MULTITHREAD
 
 /**
- * The multithread version of H5P no longer uses revision count anymore, 
- * as each of the multithread structures have versions and instead track 
+ * The multithread version of H5P no longer uses revision count anymore,
+ * as each of the multithread structures have versions and instead track
  * the version they are currently on.
  */
 
@@ -647,14 +646,14 @@ static H5P_libclass_t const *const init_class[] = {
 
 #ifdef H5_HAVE_MULTITHREAD
 
-/** 
+/**
  * Global structure that contains the property free list,
  * plist free list, class free list, and global H5P stats.
  */
 H5P_mt_t H5P_mt_g;
 
 /**
- * Thread specific multithread callback used in testing to pass back the 
+ * Thread specific multithread callback used in testing to pass back the
  * exact version of a class or plist a function is being performed on.
  */
 _Thread_local H5P_mt_cb_t H5P_mt_cb = {0};
@@ -691,22 +690,22 @@ static const H5I_class_t H5I_GENPROPLST_CLS[1] = {{
 /****************************************************************************************
  * Function:    H5P_init_phase1
  *
- *              Multithread safe version of H5P_init_phase1() 
- * 
+ *              Multithread safe version of H5P_init_phase1()
+ *
  * Purpose:     Initialize the interface from some other layer. This should
  *              be followed with a call to H5P_init_phase2 after the H5P
  *              interface is completely setup.
- * 
- *              NOTE: This multithread version sets up the default library property 
- *              classes and property lists, and stores pointers to the class, parent 
+ *
+ *              NOTE: This multithread version sets up the default library property
+ *              classes and property lists, and stores pointers to the class, parent
  *              class, and pointers to the IDs of the class and its derived default list
  *              in a H5P_libclass_t struct same as the non-multithread safe version.
  *              In addition to that though a global variable to store current version of
- *              default property lists is also initialized. These global variables are 
+ *              default property lists is also initialized. These global variables are
  *              used by H5CX to store the version of default lists on public API entry to
- *              ensure that the correct version of a list is used throughout the entire 
+ *              ensure that the correct version of a list is used throughout the entire
  *              public API call.
- *              
+ *
  *
  * Return:      Success:    non-negative
  *              Failure:    negative
@@ -716,12 +715,12 @@ static const H5I_class_t H5I_GENPROPLST_CLS[1] = {{
 herr_t
 H5P_init_phase1(void)
 {
-    size_t tot_init = 0; /* Total # of classes initialized */
-    size_t pass_init;    /* # of classes initialized in each pass */
-    size_t u;
-    H5P_mt_class_t *new_class;  /* Class created this iteration */
-    H5P_mt_list_t  *def_plist;  /* Default plist of new_class */
-    herr_t ret_value = SUCCEED; /* Return value */
+    size_t          tot_init = 0; /* Total # of classes initialized */
+    size_t          pass_init;    /* # of classes initialized in each pass */
+    size_t          u;
+    H5P_mt_class_t *new_class;           /* Class created this iteration */
+    H5P_mt_list_t  *def_plist;           /* Default plist of new_class */
+    herr_t          ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_NOAPI(FAIL)
 
@@ -929,13 +928,11 @@ done:
 
 } /* H5P_init_phase1() MT safe version */
 
-
-
 /****************************************************************************************
  * Function:    H5P_init_phase2
  *
  *              No changes were made for multithread H5P.
- * 
+ *
  * Purpose:     Finish initializing the interface from some other package.
  *
  * NOTE:        This is broken out as a separate routine so that the
@@ -963,18 +960,16 @@ done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5P_init_phase2() */
 
-
-
 /****************************************************************************************
  * Function:    H5P_mt_init_free_lists
  *
  *              Multithread version only function
- * 
+ *
  * Purpose:     Initializes the H5P_mt_g global struct which contains the free lists for
  *              classes, lists, and properties, and global stats for H5P.
  *
  *              NOTE: Once initialized, the free lists will always contain at least one
- *              entry of H5P_mt_prop_t for the prop free list, H5P_mt_class_t for the 
+ *              entry of H5P_mt_prop_t for the prop free list, H5P_mt_class_t for the
  *              class free list, and one H5P_mt_list_t for the list free list. The free
  *              lists are considered empty if both the head and tail of the free list
  *              point to the same object.
@@ -986,48 +981,47 @@ done:
 herr_t
 H5P_mt_init_free_lists(void)
 {
-    H5P_mt_prop_aptr_t  fl_aptr = {NULL, FALSE, FALSE, FALSE, FALSE};
-    H5P_mt_prop_t      *fl_prop;
-    H5P_mt_prop_value_t value = {NULL, 0};
-    H5P_mt_list_sptr_t  fl_lsptr = {NULL, 0};
-    H5P_mt_list_t      *fl_list;
-    H5P_mt_class_sptr_t fl_csptr = {NULL, 0};
-    H5P_mt_class_t     *fl_class;
-    H5P_mt_class_ref_counts_t ref_counts = {0, 0, TRUE, FALSE, FALSE, FALSE};
-    H5P_mt_active_thread_count_t thrd = {0, FALSE, TRUE};
+    H5P_mt_prop_aptr_t           fl_aptr = {NULL, FALSE, FALSE, FALSE, FALSE};
+    H5P_mt_prop_t               *fl_prop;
+    H5P_mt_prop_value_t          value    = {NULL, 0};
+    H5P_mt_list_sptr_t           fl_lsptr = {NULL, 0};
+    H5P_mt_list_t               *fl_list;
+    H5P_mt_class_sptr_t          fl_csptr = {NULL, 0};
+    H5P_mt_class_t              *fl_class;
+    H5P_mt_class_ref_counts_t    ref_counts = {0, 0, TRUE, FALSE, FALSE, FALSE};
+    H5P_mt_active_thread_count_t thrd       = {0, FALSE, TRUE};
 
     herr_t ret_value = SUCCEED;
 
     FUNC_ENTER_NOAPI(FAIL)
 
     /* Allocate and initialize a property free list node */
-    if ( (fl_prop = (H5P_mt_prop_t *)malloc(sizeof(H5P_mt_prop_t))) == NULL ) {
+    if ((fl_prop = (H5P_mt_prop_t *)malloc(sizeof(H5P_mt_prop_t))) == NULL) {
         assert(H5P_MT_ASSERT_FAIL);
         HGOTO_ERROR(H5E_PLIST, H5E_CANTALLOC, FAIL, "property allocation failed");
     }
 
-    atomic_init(&(fl_prop->tag), H5P_MT_PROP_VALID_ONFL_TAG); 
+    atomic_init(&(fl_prop->tag), H5P_MT_PROP_VALID_ONFL_TAG);
     atomic_init(&(fl_prop->next), fl_aptr);
-    fl_prop->sentinel       = FALSE;
-    fl_prop->in_prop_class  = FALSE;
+    fl_prop->sentinel      = FALSE;
+    fl_prop->in_prop_class = FALSE;
     atomic_init(&(fl_prop->ref_count), 0);
-    fl_prop->in_lkup_tbl    = FALSE;
-    fl_prop->chksum         = 0;
-    fl_prop->name           = NULL;
+    fl_prop->in_lkup_tbl = FALSE;
+    fl_prop->chksum      = 0;
+    fl_prop->name        = NULL;
     atomic_init(&(fl_prop->value), value);
     atomic_init(&(fl_prop->create_version), 0);
     atomic_init(&(fl_prop->delete_version), 0);
     fl_prop->callbacks_mt_safe = FALSE;
-    fl_prop->create         = NULL;
-    fl_prop->set            = NULL;
-    fl_prop->get            = NULL;
-    fl_prop->encode         = NULL;
-    fl_prop->decode         = NULL;
-    fl_prop->del            = NULL;
-    fl_prop->copy           = NULL;
-    fl_prop->cmp            = NULL;
-    fl_prop->close          = NULL;
-    
+    fl_prop->create            = NULL;
+    fl_prop->set               = NULL;
+    fl_prop->get               = NULL;
+    fl_prop->encode            = NULL;
+    fl_prop->decode            = NULL;
+    fl_prop->del               = NULL;
+    fl_prop->copy              = NULL;
+    fl_prop->cmp               = NULL;
+    fl_prop->close             = NULL;
 
     fl_aptr.ptr = fl_prop;
 
@@ -1036,21 +1030,19 @@ H5P_mt_init_free_lists(void)
     atomic_init(&(H5P_mt_g.prop_fl_len), 0ULL);
     atomic_init(&(H5P_mt_g.prop_max_desired_fl_len), H5P__MAX_PROP_FL_LEN);
 
-
     /* Allocate and initialize a class free list node */
-    if ( (fl_class = (H5P_mt_class_t *)malloc(sizeof(H5P_mt_class_t))) == NULL)
-    {
+    if ((fl_class = (H5P_mt_class_t *)malloc(sizeof(H5P_mt_class_t))) == NULL) {
         assert(H5P_MT_ASSERT_FAIL);
         HGOTO_ERROR(H5E_PLIST, H5E_CANTALLOC, FAIL, "property list class allocation failed");
     }
-    
-    atomic_init(&(fl_class->tag), H5P_MT_CLASS_INVALID_TAG); 
-    fl_class->parent_id = H5I_INVALID_HID;
-    fl_class->parent_ptr = NULL;
+
+    atomic_init(&(fl_class->tag), H5P_MT_CLASS_INVALID_TAG);
+    fl_class->parent_id      = H5I_INVALID_HID;
+    fl_class->parent_ptr     = NULL;
     fl_class->parent_version = 0;
-    fl_class->name = NULL;
-    fl_class->id = H5I_INVALID_HID;
-    fl_class->type = 0;
+    fl_class->name           = NULL;
+    fl_class->id             = H5I_INVALID_HID;
+    fl_class->type           = 0;
     atomic_init(&(fl_class->curr_version), 0);
     atomic_init(&(fl_class->next_version), 0);
     fl_class->pl_head = NULL;
@@ -1060,10 +1052,10 @@ H5P_mt_init_free_lists(void)
     atomic_init(&(fl_class->ref_count), ref_counts);
     fl_class->create_func = NULL;
     fl_class->create_data = NULL;
-    fl_class->copy_func = NULL;
-    fl_class->copy_data = NULL;
-    fl_class->close_func = NULL;
-    fl_class->close_data = NULL;
+    fl_class->copy_func   = NULL;
+    fl_class->copy_data   = NULL;
+    fl_class->close_func  = NULL;
+    fl_class->close_data  = NULL;
     atomic_init(&(fl_class->thrd), thrd);
     atomic_init(&(fl_class->fl_next), fl_csptr);
 
@@ -1076,23 +1068,21 @@ H5P_mt_init_free_lists(void)
     atomic_init(&(H5P_mt_g.class_fl_len), 0ULL);
     atomic_init(&(H5P_mt_g.class_max_desired_fl_len), H5P__MAX_CLASS_FL_LEN);
 
-
     /* Allocate and initialize a list free list node */
-    if ( (fl_list = (H5P_mt_list_t *)malloc(sizeof(H5P_mt_list_t))) == NULL)
-    {
+    if ((fl_list = (H5P_mt_list_t *)malloc(sizeof(H5P_mt_list_t))) == NULL) {
         assert(H5P_MT_ASSERT_FAIL);
         HGOTO_ERROR(H5E_PLIST, H5E_CANTALLOC, FAIL, "property list class allocation failed");
     }
 
     atomic_init(&(fl_list->tag), H5P_MT_LIST_INVALID_TAG);
-    fl_list->pclass_id = H5I_INVALID_HID;
-    fl_list->pclass_ptr = NULL;
+    fl_list->pclass_id      = H5I_INVALID_HID;
+    fl_list->pclass_ptr     = NULL;
     fl_list->pclass_version = 0;
     atomic_init(&(fl_list->plist_id), H5I_INVALID_HID);
     atomic_init(&(fl_list->curr_version), 0);
     atomic_init(&(fl_list->next_version), 0);
-    fl_list->def_ver_ptr = NULL;
-    fl_list->lkup_tbl = NULL;
+    fl_list->def_ver_ptr      = NULL;
+    fl_list->lkup_tbl         = NULL;
     fl_list->nprops_inherited = 0;
     atomic_init(&(fl_list->nprops_added), 0);
     atomic_init(&(fl_list->nprops), 0);
@@ -1107,12 +1097,10 @@ H5P_mt_init_free_lists(void)
 
     fl_lsptr.ptr = fl_list;
 
-
     atomic_init(&(H5P_mt_g.list_fl_head), fl_lsptr);
     atomic_init(&(H5P_mt_g.list_fl_tail), fl_lsptr);
     atomic_init(&(H5P_mt_g.list_fl_len), 0ULL);
     atomic_init(&(H5P_mt_g.list_max_desired_fl_len), H5P__MAX_LIST_FL_LEN);
-
 
     H5P__init_stats_global();
 
@@ -1122,19 +1110,17 @@ done:
 
 } /* H5P_mt_init_free_lists() */
 
-
-
 /****************************************************************************************
  * Function:    H5P_set_cx_init
  *
  *              Multithread only function
- * 
+ *
  * Purpose:     Function called by H5CX to set global H5P_H5CX_INIT_g to
- *              TRUE. 
- * 
+ *              TRUE.
+ *
  * NOTE:        If H5P_H5CX_INIT_g is TRUE functions in H5P will grab the
  *              version of the plist parameter from the context, else they
- *              will use the current version of the plist. 
+ *              will use the current version of the plist.
  *
  * Return:      Success:    Non-negative
  *              Failure:    Negative
@@ -1153,19 +1139,17 @@ H5P_set_cx_init(void)
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5P_set_cx_init() */
 
-
-
 /****************************************************************************************
  * Function:    H5P_unset_cx_init
  *
  *              Multithread only function
- * 
+ *
  * Purpose:     Function called by H5CX to set global H5P_H5CX_INIT_g to
- *              FALSE. 
- * 
+ *              FALSE.
+ *
  * NOTE:        If H5P_H5CX_INIT_g is TRUE functions in H5P will grab the
  *              version of the plist parameter from the context, else they
- *              will use the current version of the plist. 
+ *              will use the current version of the plist.
  *
  * Return:      Success:    Non-negative
  *              Failure:    Negative
@@ -1184,13 +1168,11 @@ H5P_unset_cx_init(void)
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5P_unset_cx_init() */
 
-
-
 /****************************************************************************************
  * Function:    H5P_term_package
  *
- *              Multithread safe version 
- * 
+ *              Multithread safe version
+ *
  * Purpose:     Terminate various H5P objects
  *
  * Return:      Success:    Positive if any action was taken that might
@@ -1324,13 +1306,11 @@ H5P_term_package(void)
 
 } /* end H5P_term_package() MT safe version */
 
-
-
 /****************************************************************************************
  * Function:    H5P__mt_term_free_lists
  *
  *              Multithread version only function
- * 
+ *
  * Purpose:     Function for terminating all H5P structures still on their free lists.
  *
  * Return:      VOID
@@ -1413,11 +1393,10 @@ H5P__mt_term_free_lists(void)
         fl_list_head = atomic_load(&(H5P_mt_g.list_fl_head));
         fl_list_tail = atomic_load(&(H5P_mt_g.list_fl_tail));
 
-        if ( fl_list_head.ptr )
-        {
+        if (fl_list_head.ptr) {
             assert(fl_list_tail.ptr);
-            atomic_fetch_sub(&(H5P_mt_g.list_fl_len), 1);            
-        }        
+            atomic_fetch_sub(&(H5P_mt_g.list_fl_len), 1);
+        }
 
     } /* end while ( fl_list_head.ptr ) */
 
@@ -1460,8 +1439,8 @@ H5P__mt_term_free_lists(void)
                 assert(next_class.ptr == NULL);
 
                 if (!atomic_compare_exchange_strong(&(H5P_mt_g.class_fl_tail), &fl_class_tail, next_class)) {
-                /* atomic update failed, update stats and try again */
-                atomic_fetch_add(&(H5P_mt_g.class_fl_tail_update_cols), 1);
+                    /* atomic update failed, update stats and try again */
+                    atomic_fetch_add(&(H5P_mt_g.class_fl_tail_update_cols), 1);
                 }
                 else {
                     atomic_fetch_add(&(H5P_mt_g.class_fl_tail_update), 1);
@@ -1481,12 +1460,10 @@ H5P__mt_term_free_lists(void)
         fl_class_head = atomic_load(&(H5P_mt_g.class_fl_head));
         fl_class_tail = atomic_load(&(H5P_mt_g.class_fl_tail));
 
-        if ( fl_class_head.ptr )
-        {
+        if (fl_class_head.ptr) {
             assert(fl_class_tail.ptr);
             atomic_fetch_sub(&(H5P_mt_g.class_fl_len), 1);
-        }  
-
+        }
 
     } /* end while ( fl_class_head.ptr ) */
 
@@ -1543,11 +1520,10 @@ H5P__mt_term_free_lists(void)
         fl_prop_head = atomic_load(&(H5P_mt_g.prop_fl_head));
         fl_prop_tail = atomic_load(&(H5P_mt_g.prop_fl_tail));
 
-        if ( fl_prop_head.ptr )
-        {
+        if (fl_prop_head.ptr) {
             assert(fl_prop_tail.ptr);
-            atomic_fetch_sub(&(H5P_mt_g.prop_fl_len), 1);            
-        }  
+            atomic_fetch_sub(&(H5P_mt_g.prop_fl_len), 1);
+        }
 
     } /* while ( fl_prop_head.ptr ) */
 
@@ -1559,13 +1535,11 @@ H5P__mt_term_free_lists(void)
 
 } /* H5P__mt_term_free_lists() */
 
-
-
 /****************************************************************************************
  * Function:    H5P__close_class_cb
  *
  *              No changes were made for multithread H5P
- * 
+ *
  * Purpose:     Called by H5I when the ref count reaches zero on a property class's ID.
  *
  * Return:      SUCCEED / FAIL
@@ -1597,13 +1571,11 @@ done:
 
 } /* end H5P__close_class_cb() MT safe version */
 
-
-
 /****************************************************************************************
  * Function:    H5P__close_list_cb
  *
  *              No changes were made for multithread H5P
- * 
+ *
  * Purpose:     Called by H5I when the ref count reaches zero on a property list's ID.
  *
  * Return:      SUCCEED / FAIL
@@ -1632,11 +1604,9 @@ done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5P__close_list_cb() */
 
-
-
 /****************************************************************************************
  * Function:    H5P__create_class
- * 
+ *
  *              Multithread version of H5P__create_class().
  *
  * Purpose:     Internal routine to create a new property list class.
@@ -1645,38 +1615,38 @@ done:
  *              are referred to as lists.
  *
  *              A multi-thread safe function to create a new class derived from an
- *              existing class. The new class creates copies of the properties from it's 
- *              parent class that are valid for the version of the parent class the new 
+ *              existing class. The new class creates copies of the properties from it's
+ *              parent class that are valid for the version of the parent class the new
  *              class is being derived from.
  *
  * Details:     NOTE: for more information on the H5P_mt_class_t structure or specific
  *              fields, check the detailed comment for the structure in H5Ppkg_mt.h
  *
- *              Call H5P__inc_thrd_count() on the parent to check its opening and 
+ *              Call H5P__inc_thrd_count() on the parent to check its opening and
  *              closing flags, and to increment the thrd.count field.
- * 
+ *
  *              Call H5P__mt_create_class__internal() to allocate and initialize the
  *              new class structure.
  *
  *              The parent class's LFSLL is then iterated to find and create copies of
- *              the valid properties using the function H5P__mt_copy_lfsll(), if the 
+ *              the valid properties using the function H5P__mt_copy_lfsll(), if the
  *              parent class has any properties other than the sentinel nodes.
  *
- *              Call H5I_inc_ref() to increment the parent class's ID ref count. 
+ *              Call H5I_inc_ref() to increment the parent class's ID ref count.
  *
- *              Lastly, call H5P__dec_thrd_count() to decrement the parent's thrd.count 
+ *              Lastly, call H5P__dec_thrd_count() to decrement the parent's thrd.count
  *              field.
  *
- * 
+ *
  * Parameters:  H5P_mt_class_t *parent: Property class to derive the new class from.
  *              const char *name:       Name of the class being created.
  *              H5P_plist_type_t type:  Type of the class being created.
  *              uint64_t src_version:   Version of the parent class being copied.
- *              H5P_cls_create_func_t:  Callback function for when each property list 
+ *              H5P_cls_create_func_t:  Callback function for when each property list
  *                                      derived from this class is created.
  *              void *create_data:      Pointer to user data to pass along to class
  *                                      create callback.
- *              H5P_cls_copy_func_t:    Callback function for when each property list 
+ *              H5P_cls_copy_func_t:    Callback function for when each property list
  *                                      derived from this class is copied.
  *              void *copy_data:        Pointer to user data to pass along to class
  *                                      copy callback.
@@ -1684,7 +1654,7 @@ done:
  *                                      derived from this class is closed.
  *              void *close_data:       Pointer to user data to pass along to class
  *                                      close callback.
- * 
+ *
  *
  * Return:      Success: Returns a pointer to the new H5P_mt_class_t struct.
  *
@@ -1694,14 +1664,14 @@ done:
  */
 H5P_mt_class_t *
 H5P__create_class(H5P_mt_class_t *parent, const char *name, H5P_plist_type_t type, uint64_t src_version,
-                     H5P_cls_create_func_t create_func, void *create_data, H5P_cls_copy_func_t copy_func,
-                     void *copy_data, H5P_cls_close_func_t close_func, void *close_data)
+                  H5P_cls_create_func_t create_func, void *create_data, H5P_cls_copy_func_t copy_func,
+                  void *copy_data, H5P_cls_close_func_t close_func, void *close_data)
 {
-    H5P_mt_class_t              *new_class = NULL;      /* New class to be created */
-    H5P_mt_active_thread_count_t thrd;                  /* thrd struct for new class */
-    H5P_mt_active_thread_count_t update_thrd;           /* used to atomically update thrd */
-    uint64_t                     parent_version = 0;    /* Parent's version to derive */
-    bool                         inc_thrd_flag = FALSE; /* Flag to dec parent's thrd count */
+    H5P_mt_class_t              *new_class = NULL;       /* New class to be created */
+    H5P_mt_active_thread_count_t thrd;                   /* thrd struct for new class */
+    H5P_mt_active_thread_count_t update_thrd;            /* used to atomically update thrd */
+    uint64_t                     parent_version = 0;     /* Parent's version to derive */
+    bool                         inc_thrd_flag  = FALSE; /* Flag to dec parent's thrd count */
 
     H5P_mt_class_t *ret_value = NULL;
 
@@ -1726,12 +1696,10 @@ H5P__create_class(H5P_mt_class_t *parent, const char *name, H5P_plist_type_t typ
 
         inc_thrd_flag = TRUE;
     }
-    else
-    {
+    else {
         /* update stats */
         atomic_fetch_add(&(H5P_mt_g.num_classes_created_wo_parent), 1);
     }
-
 
     if (src_version > 0) {
         /* If src_version is larger than any version of the parent, throw an error */
@@ -1745,14 +1713,11 @@ H5P__create_class(H5P_mt_class_t *parent, const char *name, H5P_plist_type_t typ
     }
 
     /* Allocates and initialize a new property class */
-    if ( NULL == (new_class = H5P__mt_create_class__internal(parent, name, type, parent_version, 
-                                                                create_func, create_data, 
-                                                                copy_func, copy_data, 
-                                                                close_func, close_data)) ) 
-    {
+    if (NULL == (new_class = H5P__mt_create_class__internal(parent, name, type, parent_version, create_func,
+                                                            create_data, copy_func, copy_data, close_func,
+                                                            close_data))) {
         HGOTO_ERROR(H5E_PLIST, H5E_CANTCREATE, NULL, "Failed to create property class.");
     }
-
 
     /**
      * Copy the valid props from the parent into the new_class.
@@ -1812,22 +1777,20 @@ done:
 
 } /* H5P__create_class() MT safe version*/
 
-
-
 /****************************************************************************************
  * Function:    H5P__copy_pclass
- * 
+ *
  *              Multithread safe version of H5P__copy_pclass.
  *
- * Purpose:     Internal routine to create a copy of an existing property class 
+ * Purpose:     Internal routine to create a copy of an existing property class
  *              (H5P_mt_class_t).
- * 
+ *
  *              NOTE: og_class is the original class that is being copied.
- * 
+ *
  *              NOTE: This routine does not make any callbacks. Those are only made when
  *              operating on property lists.
  *
- * 
+ *
  * Return:      Success: Returns a pointer to the new H5P_mt_class_t structure
  *
  *              Failure: NULL
@@ -1841,7 +1804,7 @@ H5P__copy_pclass(H5P_mt_class_t *og_class)
     H5P_mt_class_t              *new_class = NULL;      /* Copy of the og_class */
     H5P_mt_active_thread_count_t thrd;                  /* thrd struct for new class */
     H5P_mt_active_thread_count_t update_thrd;           /* used to atomically update thrd */
-    uint64_t                     ver_at_copy = 0;       /* version of parent og_class is derived */
+    uint64_t                     ver_at_copy   = 0;     /* version of parent og_class is derived */
     bool                         inc_thrd_flag = FALSE; /* Flag to dec og_class's thrd count*/
     bool                         par_thrd_flag = FALSE; /* Flag to dec parent's thrd count */
 
@@ -1869,7 +1832,7 @@ H5P__copy_pclass(H5P_mt_class_t *og_class)
     ver_at_copy = atomic_load(&(og_class->curr_version));
 
     /**
-     * Callback function for testing, to pass the exact version 
+     * Callback function for testing, to pass the exact version
      * of the original class the new class is being copied from.
      */
     if (H5P_mt_cb.ver_cb) {
@@ -1895,22 +1858,18 @@ H5P__copy_pclass(H5P_mt_class_t *og_class)
 
         par_thrd_flag = TRUE;
     }
-    else
-    {
+    else {
         /* update stats */
         atomic_fetch_add(&(H5P_mt_g.num_classes_created_wo_parent), 1);
     }
 
     /* Allocates and initialize a new property class */
-    if ( NULL == (new_class = H5P__mt_create_class__internal(parent, og_class->name, og_class->type, 
-                                                            og_class->parent_version, og_class->create_func, 
-                                                            og_class->create_data, og_class->copy_func, 
-                                                            og_class->copy_data, og_class->close_func, 
-                                                            og_class->close_data)) ) 
-    {
+    if (NULL == (new_class = H5P__mt_create_class__internal(
+                     parent, og_class->name, og_class->type, og_class->parent_version, og_class->create_func,
+                     og_class->create_data, og_class->copy_func, og_class->copy_data, og_class->close_func,
+                     og_class->close_data))) {
         HGOTO_ERROR(H5E_PLIST, H5E_CANTCREATE, NULL, "Failed to create property class.");
     }
-
 
     /* Copy the valid properties from the original class's LFSLL */
     if (0 > H5P__mt_copy_lfsll(new_class, og_class->pl_head, ver_at_copy)) {
@@ -1928,7 +1887,6 @@ H5P__copy_pclass(H5P_mt_class_t *og_class)
         }
     }
 
-
     thrd = atomic_load(&(new_class->thrd));
 
     assert(thrd.opening);
@@ -1939,7 +1897,6 @@ H5P__copy_pclass(H5P_mt_class_t *og_class)
     update_thrd.closing = FALSE;
 
     atomic_store(&(new_class->thrd), update_thrd);
-
 
     ret_value = new_class;
 
@@ -1968,21 +1925,19 @@ done:
 
 } /* H5P__copy_pclass() MT safe version */
 
-
-
 /****************************************************************************************
  * Function:    H5P__mt_create_class__internal
  *
  *              Multithread version only function.
- * 
+ *
  * Purpose:     Allocates and initializes a property class struct.
- * 
+ *
  * Details:     Increment the parent's ref_count (if this is a root class it won't have a
  *              parent class). Allocate memory for the new class structure. Initialize
  *              the new class fields, including allocating a name buffer for the name of
- *              the class, and allocating and initializing the sentinel nodes for the 
- *              LFSLL. Set thrd.opening flag to TRUE. Lastly initialize the class's 
- *              statistics fields               
+ *              the class, and allocating and initializing the sentinel nodes for the
+ *              LFSLL. Set thrd.opening flag to TRUE. Lastly initialize the class's
+ *              statistics fields
  *
  * Return:      Success: Pointer to the new H5P_mt_class_t struct.
  *
@@ -1991,18 +1946,18 @@ done:
  ****************************************************************************************
  */
 H5P_mt_class_t *
-H5P__mt_create_class__internal(H5P_mt_class_t *parent, const char *name, H5P_plist_type_t type, 
-                                uint64_t src_version, H5P_cls_create_func_t create_func, 
-                                void *create_data, H5P_cls_copy_func_t copy_func, void *copy_data, 
-                                H5P_cls_close_func_t close_func, void *close_data)
+H5P__mt_create_class__internal(H5P_mt_class_t *parent, const char *name, H5P_plist_type_t type,
+                               uint64_t src_version, H5P_cls_create_func_t create_func, void *create_data,
+                               H5P_cls_copy_func_t copy_func, void *copy_data,
+                               H5P_cls_close_func_t close_func, void *close_data)
 {
-    H5P_mt_class_t              *new_class = NULL;            
+    H5P_mt_class_t              *new_class    = NULL;
     bool                         inc_ref_flag = FALSE;
-    H5P_mt_class_ref_counts_t    ref_count;             
-    H5P_mt_active_thread_count_t thrd;      
-    H5P_mt_class_sptr_t          fl_next;       
+    H5P_mt_class_ref_counts_t    ref_count;
+    H5P_mt_active_thread_count_t thrd;
+    H5P_mt_class_sptr_t          fl_next;
 
-    H5P_mt_class_t              *ret_value = NULL;
+    H5P_mt_class_t *ret_value = NULL;
 
     FUNC_ENTER_PACKAGE
 
@@ -2026,7 +1981,8 @@ H5P__mt_create_class__internal(H5P_mt_class_t *parent, const char *name, H5P_pli
 
     /* If root class then there is no parent */
     if (parent != NULL) {
-        new_class->parent_id = atomic_load(&(parent->id));;
+        new_class->parent_id = atomic_load(&(parent->id));
+        ;
     }
     else {
         new_class->parent_id = H5I_INVALID_HID;
@@ -2086,13 +2042,11 @@ H5P__mt_create_class__internal(H5P_mt_class_t *parent, const char *name, H5P_pli
 done:
 
     /* If an error occured, properly handle the allocated memory */
-    if ( ! ret_value ) {
-        if ( new_class )
-        {
+    if (!ret_value) {
+        if (new_class) {
             H5P__close_class(new_class);
         }
-        if ( inc_ref_flag )
-        {
+        if (inc_ref_flag) {
             H5P__dec_ref_count(parent, TRUE);
         }
     }
@@ -2103,7 +2057,7 @@ done:
 
 /****************************************************************************************
  * Function:    H5P__mt_alloc_class
- * 
+ *
  *              Multithread version only function.
  *
  * Purpose:     Gets a pointer to a valid H5P_mt_class_t struct by either reallocating
@@ -2140,8 +2094,7 @@ H5P__mt_alloc_class(void)
     head_class = fl_head.ptr;
 
     /* If no class structs are reallocable, alloc from memory */
-    if (atomic_load(&(head_class->tag)) != H5P_MT_CLASS_FL_REALLOC_TAG ||
-                                                    (fl_head.ptr == fl_tail.ptr)) {
+    if (atomic_load(&(head_class->tag)) != H5P_MT_CLASS_FL_REALLOC_TAG || (fl_head.ptr == fl_tail.ptr)) {
         new_class = (H5P_mt_class_t *)malloc(sizeof(H5P_mt_class_t));
         if (NULL == new_class) {
             assert(H5P_MT_ASSERT_FAIL);
@@ -2209,8 +2162,7 @@ H5P__mt_alloc_class(void)
         } while (!done);
 
         /* Ensure the struct is cleared of any previous data */
-        if ( NULL == (new_class = H5P__clear_mt_class(fl_head.ptr)) )
-        {
+        if (NULL == (new_class = H5P__clear_mt_class(fl_head.ptr))) {
             HGOTO_ERROR(H5E_PLIST, H5E_BADVALUE, NULL, "Failed clearing class");
         }
 
@@ -2227,11 +2179,9 @@ done:
 
 } /* H5P__mt_alloc_class() */
 
-
-
 /****************************************************************************************
  * Function:    H5P_create_id
- * 
+ *
  *              Multithread safe version of H5P_create_id()
  *
  * Purpose:     Internal routine to create a new property list of a property list class.
@@ -2239,17 +2189,17 @@ done:
  *              NOTE: property list classes are referred to as classes and property lists
  *              are referred to as lists.
  *
- *              This function is basically just a passthrough function calling 
+ *              This function is basically just a passthrough function calling
  *              H5P__create_list() to actually allocate and initialize a new list derived
- *              from the provided pclass. This was done due to the need of having a 
- *              function that returns the ID of the newly created list to fit with most 
- *              of the existing functions. But also a function that returns a pointer to 
+ *              from the provided pclass. This was done due to the need of having a
+ *              function that returns the ID of the newly created list to fit with most
+ *              of the existing functions. But also a function that returns a pointer to
  *              the newly created list (H5P_mt_list_t), due to the complexity of ensuring
- *              H5P be multithread safe. 
- * 
- *              NOTE: the primary example of needing a function to return a pointer to 
+ *              H5P be multithread safe.
+ *
+ *              NOTE: the primary example of needing a function to return a pointer to
  *              the list is the multithread version of H5P_init_phase1(). After creating
- *              the default list of a class it stores the ID of the list in the 
+ *              the default list of a class it stores the ID of the list in the
  *              associated H5P_libclass_t struct, but the multithread version also sets
  *              up a global variable for the version of every main hdf5 library default
  *              list (see the description of the multithread version of H5P_init_phase1()
@@ -2279,8 +2229,7 @@ H5P_create_id(H5P_mt_class_t *pclass, hbool_t app_ref)
     /* update stats */
     atomic_fetch_add(&(H5P_mt_g.H5P_create_id__num_calls), 1);
 
-    if ( NULL == (plist = H5P__create_list(pclass, app_ref)) )
-    {
+    if (NULL == (plist = H5P__create_list(pclass, app_ref))) {
         HGOTO_ERROR(H5E_PLIST, H5E_CANTCREATE, H5I_INVALID_HID, "unable to create MT property list");
     }
 
@@ -2288,16 +2237,13 @@ H5P_create_id(H5P_mt_class_t *pclass, hbool_t app_ref)
 
 done:
 
-
     FUNC_LEAVE_NOAPI(ret_value)
 
 } /* H5P_create_id() MT safe version */
 
-
-
 /****************************************************************************************
  * Function:    H5P__create_list
- * 
+ *
  *              Multithread version only function
  *
  * Purpose:     Internal routine to create a new property list of a property list class.
@@ -2313,26 +2259,26 @@ done:
  * Details:     NOTE: for more information of the H5P_mt_list_t structure or specific
  *              fields, check the detailed comment for the struture in H5Ppkg_mt.h
  *
- *              Call H5P__inc_thrd_count() on the parent to check its opening and 
+ *              Call H5P__inc_thrd_count() on the parent to check its opening and
  *              closing flags, and to increment the thrd.count field.
- * 
+ *
  *              Call H5P__mt_create_list__internal() to allocate and initialize the
  *              new list structure.
  *
  *              Call H5P__init_lkup_tbl() to allocated and initialize the new list's
  *              lkup_tbl to have an entry that points to every valid property in the
  *              parent's LFSLL at the version being derived from.
- * 
+ *
  *              Register the new list in the index via H5I_register().
- * 
+ *
  *              Walk up the parent inheritance tree and call each create callback, if
- *              that specific parent has one. 
- * 
+ *              that specific parent has one.
+ *
  *              Call H5I_inc_ref to increment the parent's ID ref count.
- * 
+ *
  *              Set thrd.opening flag to FALSE.
- * 
- *              Lastly, call H5P__dec_thrd_count() to decrement the parent's thrd.count 
+ *
+ *              Lastly, call H5P__dec_thrd_count() to decrement the parent's thrd.count
  *              field.
  *
  *
@@ -2345,11 +2291,11 @@ done:
 H5P_mt_list_t *
 H5P__create_list(H5P_mt_class_t *pclass, hbool_t app_ref)
 {
-    H5P_mt_list_t *plist = NULL;
-    hid_t          plist_id;
-    H5P_mt_class_t *parent_walk = NULL;
-    bool           inc_thrd_flag      = FALSE; /* Flag to dec parent's thrd count */
-    uint64_t       version = 0; /* version of the original list being copied */
+    H5P_mt_list_t               *plist = NULL;
+    hid_t                        plist_id;
+    H5P_mt_class_t              *parent_walk   = NULL;
+    bool                         inc_thrd_flag = FALSE; /* Flag to dec parent's thrd count */
+    uint64_t                     version       = 0;     /* version of the original list being copied */
     H5P_mt_active_thread_count_t thrd;
 
     H5P_mt_list_t *ret_value = NULL; /* return value */
@@ -2362,7 +2308,7 @@ H5P__create_list(H5P_mt_class_t *pclass, hbool_t app_ref)
     /* update stats */
     atomic_fetch_add(&(H5P_mt_g.H5P__create_list__num_calls), 1);
 
-     /* Increment parent's thrd count */
+    /* Increment parent's thrd count */
     if (H5P__inc_thrd_count(pclass) < 0) {
         HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, NULL, "Couldn't increment parent's thread count.");
     }
@@ -2390,7 +2336,7 @@ H5P__create_list(H5P_mt_class_t *pclass, hbool_t app_ref)
     atomic_store(&(plist->plist_id), plist_id);
 
     /**
-     * Call the class create callback on the parent 
+     * Call the class create callback on the parent
      * classes up the inheritance tree, if it exits.
      */
     parent_walk = pclass;
@@ -2398,7 +2344,7 @@ H5P__create_list(H5P_mt_class_t *pclass, hbool_t app_ref)
     while (parent_walk) {
         /* If the parent has a create callback, call it */
         if (parent_walk->create_func) {
-            
+
             /* If the create callback fails remove the list's id from the index */
             if ((parent_walk->create_func)(plist_id, parent_walk->create_data) < 0) {
                 H5I_remove(plist_id);
@@ -2414,7 +2360,6 @@ H5P__create_list(H5P_mt_class_t *pclass, hbool_t app_ref)
 
     } /* end while ( parent ) */
 
-
     /* Set the class initialization flag */
     atomic_store(&(plist->class_init), TRUE);
 
@@ -2429,7 +2374,6 @@ H5P__create_list(H5P_mt_class_t *pclass, hbool_t app_ref)
     thrd.closing = FALSE;
 
     atomic_store(&(plist->thrd), thrd);
-
 
     ret_value = plist;
 
@@ -2450,18 +2394,16 @@ done:
 
 } /* H5P__create_list() MT safe version */
 
-
-
 /****************************************************************************************
  * Function:    H5P_copy_plist
  *
  *              Multithread safe version of H5P__copy_plist.
- * 
+ *
  * Purpose:     Internal routine to copy a property list (H5P_mt_list_t).
  *
- *              NOTE: og_list is the original plist that is being copied. 
- *  
- * Details:     
+ *              NOTE: og_list is the original plist that is being copied.
+ *
+ * Details:
  *
  * Return:      Success: ID of the new copy of the plist
  *
@@ -2474,12 +2416,12 @@ H5P_copy_plist(H5P_mt_list_t *og_list, hbool_t app_ref)
 {
     H5P_mt_class_t *parent;
     H5P_mt_class_t *parent_walk = NULL; /* The current parent when iterating the inheritance tree */
-    H5P_mt_list_t  *new_list = NULL;
+    H5P_mt_list_t  *new_list    = NULL;
     hid_t           new_plist_id;
     H5P_mt_active_thread_count_t thrd;
-    uint64_t        ver_at_copy = 0; /* version of the original list being copied */
-    bool            inc_thrd_flag_list = FALSE; /* flag to dec og_list thrd count */
-    bool            inc_thrd_flag      = FALSE; /* Flag to dec parent's thrd count */
+    uint64_t                     ver_at_copy        = 0;     /* version of the original list being copied */
+    bool                         inc_thrd_flag_list = FALSE; /* flag to dec og_list thrd count */
+    bool                         inc_thrd_flag      = FALSE; /* Flag to dec parent's thrd count */
 
     hid_t ret_value = H5I_INVALID_HID; /* return value */
 
@@ -2500,26 +2442,23 @@ H5P_copy_plist(H5P_mt_list_t *og_list, hbool_t app_ref)
     }
 
     /* If the context is initialized grab version from it */
-    if ( H5P_H5CX_INIT_g )
-    {
-        if ( 0 == (ver_at_copy = H5CX_get_plist_version(atomic_load(&(og_list->plist_id)))) ) {
+    if (H5P_H5CX_INIT_g) {
+        if (0 == (ver_at_copy = H5CX_get_plist_version(atomic_load(&(og_list->plist_id))))) {
             ver_at_copy = atomic_load(&(og_list->curr_version));
         }
-        else
-        {
+        else {
             /* update stats */
             atomic_fetch_add(&(H5P_mt_g.num_list_version_from_ctx), 1);
         }
     }
-    else 
-    {
+    else {
         ver_at_copy = atomic_load(&(og_list->curr_version));
     }
 
     assert(ver_at_copy > 0);
 
     /**
-     * Callback function for testing, to pass the exact version 
+     * Callback function for testing, to pass the exact version
      * of the original list the new list is being copied from.
      */
     if (H5P_mt_cb.ver_cb) {
@@ -2529,12 +2468,11 @@ H5P_copy_plist(H5P_mt_list_t *og_list, hbool_t app_ref)
      * end testing function
      */
 
-    
     parent = og_list->pclass_ptr;
     assert(parent);
     assert((atomic_load(&(parent->tag))) == H5P_MT_CLASS_TAG);
-    
-     /* Increment parent's thrd count */
+
+    /* Increment parent's thrd count */
     if (H5P__inc_thrd_count(parent) < 0) {
         HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, H5I_INVALID_HID, "Failed to increment parent's thread count.");
     }
@@ -2543,8 +2481,7 @@ H5P_copy_plist(H5P_mt_list_t *og_list, hbool_t app_ref)
     }
 
     /* Allocates and initialize a new property list */
-    if ( NULL == (new_list = H5P__mt_create_list__internal(parent, og_list->pclass_version)) )
-    {
+    if (NULL == (new_list = H5P__mt_create_list__internal(parent, og_list->pclass_version))) {
         HGOTO_ERROR(H5E_PLIST, H5E_CANTCREATE, H5I_INVALID_HID, "Failed to create property list.");
     }
 
@@ -2562,13 +2499,14 @@ H5P_copy_plist(H5P_mt_list_t *og_list, hbool_t app_ref)
 
     /* Register the new list in the index and get and ID. */
     if ((new_plist_id = H5I_register(H5I_GENPROP_LST, new_list, app_ref)) < 0) {
-        HGOTO_ERROR(H5E_PLIST, H5E_CANTREGISTER, H5I_INVALID_HID, "Failed to register property list in index");
+        HGOTO_ERROR(H5E_PLIST, H5E_CANTREGISTER, H5I_INVALID_HID,
+                    "Failed to register property list in index");
     }
 
     atomic_store(&(new_list->plist_id), new_plist_id);
 
     /**
-     * Call the class copy callback on the parent classes 
+     * Call the class copy callback on the parent classes
      * up the inheritance tree, if it exists.
      */
     parent_walk = parent;
@@ -2599,7 +2537,8 @@ H5P_copy_plist(H5P_mt_list_t *og_list, hbool_t app_ref)
 
     if (0 >= H5I_inc_ref(atomic_load(&(parent->id)), FALSE)) {
         assert(FALSE);
-        HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, H5I_INVALID_HID, "Failed to increment parent's ID index ref count");
+        HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, H5I_INVALID_HID,
+                    "Failed to increment parent's ID index ref count");
     }
 
     /* update thrd struct of the new_list to mark opening FALSE */
@@ -2608,7 +2547,6 @@ H5P_copy_plist(H5P_mt_list_t *og_list, hbool_t app_ref)
     thrd.closing = FALSE;
 
     atomic_store(&(new_list->thrd), thrd);
-
 
     ret_value = atomic_load(&(new_list->plist_id));
 
@@ -2637,19 +2575,17 @@ done:
 
 } /* H5P_copy_plist() MT safe version */
 
-
-
 /****************************************************************************************
  * Function:    H5P__mt_create_list__internal
  *
  *              Multithread version only function.
- * 
+ *
  * Purpose:     Allocates and initializes a property list struct.
- * 
- * Details:     Increment the parent's ref_count. Allocate memory for the new list 
- *              structure. Initialize the new list's fields, including allocating and 
- *              initializing the sentinel nodes for the LFSLL. Set thrd.opening flag to 
- *              TRUE. Lastly initialize the list's statistics fields               
+ *
+ * Details:     Increment the parent's ref_count. Allocate memory for the new list
+ *              structure. Initialize the new list's fields, including allocating and
+ *              initializing the sentinel nodes for the LFSLL. Set thrd.opening flag to
+ *              TRUE. Lastly initialize the list's statistics fields
  *
  * Return:      Success: Pointer to the new H5P_mt_list_t struct.
  *
@@ -2660,10 +2596,10 @@ done:
 H5P_mt_list_t *
 H5P__mt_create_list__internal(H5P_mt_class_t *parent, uint64_t src_version)
 {
-    H5P_mt_list_t *new_list = NULL;            /* New list to be created */
-    bool           inc_ref_flag = FALSE;
-    H5P_mt_active_thread_count_t list_thrd;                  /* thrd struct for new list */
-    H5P_mt_list_sptr_t           fl_next;                    /* new list's free list struct */
+    H5P_mt_list_t               *new_list     = NULL; /* New list to be created */
+    bool                         inc_ref_flag = FALSE;
+    H5P_mt_active_thread_count_t list_thrd; /* thrd struct for new list */
+    H5P_mt_list_sptr_t           fl_next;   /* new list's free list struct */
 
     H5P_mt_list_t *ret_value = NULL;
 
@@ -2730,16 +2666,13 @@ H5P__mt_create_list__internal(H5P_mt_class_t *parent, uint64_t src_version)
 done:
 
     /* If an error occured, properly handle the allocated memory */
-    if ( ! ret_value ) {
-        if ( new_list )
-        {
+    if (!ret_value) {
+        if (new_list) {
             H5P_close(new_list);
         }
-        if ( inc_ref_flag )
-        {
+        if (inc_ref_flag) {
             H5P__dec_ref_count(parent, FALSE);
         }
-        
     }
 
     FUNC_LEAVE_NOAPI(ret_value)
@@ -2784,8 +2717,7 @@ H5P__mt_alloc_list(void)
     head_list = fl_head.ptr;
 
     /* If no list structs are reallocable, alloc from memory */
-    if (atomic_load(&(head_list->tag)) != H5P_MT_LIST_FL_REALLOC_TAG ||
-                                                    (fl_head.ptr == fl_tail.ptr)) {
+    if (atomic_load(&(head_list->tag)) != H5P_MT_LIST_FL_REALLOC_TAG || (fl_head.ptr == fl_tail.ptr)) {
         new_list = (H5P_mt_list_t *)malloc(sizeof(H5P_mt_list_t));
         if (NULL == new_list) {
             assert(H5P_MT_ASSERT_FAIL);
@@ -2876,11 +2808,9 @@ done:
 
 } /* H5P__mt_alloc_list() */
 
-
-
 /****************************************************************************************
  * Function:    H5P__init_lkup_tbl
- * 
+ *
  *              Multithread version only function.
  *
  * Purpose:     Allocates and initializes an array of H5P_mt_list_table_entry_t structs
@@ -3015,10 +2945,10 @@ H5P__init_lkup_tbl(H5P_mt_class_t *parent, uint64_t version, H5P_mt_list_t *new_
                     valid_prop_value = atomic_load(&(valid_prop->value));
 
                     new_prop =
-                        H5P__create_prop(valid_prop->name, valid_prop_value.ptr, valid_prop_value.size,
-                                            FALSE, 1, valid_prop->create, valid_prop->set, valid_prop->get,
-                                            valid_prop->encode, valid_prop->decode, valid_prop->del,
-                                            valid_prop->copy, valid_prop->cmp, valid_prop->close);
+                        H5P__create_prop(valid_prop->name, valid_prop_value.ptr, valid_prop_value.size, FALSE,
+                                         1, valid_prop->create, valid_prop->set, valid_prop->get,
+                                         valid_prop->encode, valid_prop->decode, valid_prop->del,
+                                         valid_prop->copy, valid_prop->cmp, valid_prop->close);
                     if (NULL == new_prop)
                         HGOTO_ERROR(H5E_PLIST, H5E_CANTINIT, FAIL,
                                     "Failed creating property for property list.");
@@ -3100,7 +3030,7 @@ done:
 
 /****************************************************************************************
  * Function:    H5P__init_lkup_tbl_copy
- * 
+ *
  *              Multithread version only function.
  *
  * Purpose:     Allocates and initializes an array of H5P_mt_list_table_entry_t structs
@@ -3217,10 +3147,10 @@ H5P__init_lkup_tbl_copy(H5P_mt_list_t *old_list, uint64_t version, H5P_mt_list_t
                 (version < (atomic_load(&(old_prop->delete_version))))) {
 
                 /* Create a new property that's a copy of the old_prop */
-                new_prop = H5P__create_prop(old_prop->name, old_prop_value.ptr, old_prop_value.size, FALSE,
-                                               1, old_prop->create, old_prop->set, old_prop->get,
-                                               old_prop->encode, old_prop->decode, old_prop->del,
-                                               old_prop->copy, old_prop->cmp, old_prop->close);
+                new_prop = H5P__create_prop(old_prop->name, old_prop_value.ptr, old_prop_value.size, FALSE, 1,
+                                            old_prop->create, old_prop->set, old_prop->get, old_prop->encode,
+                                            old_prop->decode, old_prop->del, old_prop->copy, old_prop->cmp,
+                                            old_prop->close);
                 if (NULL == new_prop)
                     HGOTO_ERROR(H5E_PLIST, H5E_CANTINIT, FAIL, "Failed creating property for property list.");
 
@@ -3256,10 +3186,10 @@ H5P__init_lkup_tbl_copy(H5P_mt_list_t *old_list, uint64_t version, H5P_mt_list_t
             }
             else {
                 /* Create a new property that's a copy of the old_prop */
-                new_prop = H5P__create_prop(old_prop->name, old_prop_value.ptr, old_prop_value.size, FALSE,
-                                               1, old_prop->create, old_prop->set, old_prop->get,
-                                               old_prop->encode, old_prop->decode, old_prop->del,
-                                               old_prop->copy, old_prop->cmp, old_prop->close);
+                new_prop = H5P__create_prop(old_prop->name, old_prop_value.ptr, old_prop_value.size, FALSE, 1,
+                                            old_prop->create, old_prop->set, old_prop->get, old_prop->encode,
+                                            old_prop->decode, old_prop->del, old_prop->copy, old_prop->cmp,
+                                            old_prop->close);
                 if (NULL == new_prop)
                     HGOTO_ERROR(H5E_PLIST, H5E_CANTINIT, FAIL, "Failed creating property for property list.");
 
@@ -3389,11 +3319,9 @@ done:
 
 } /* H5P__init_lkup_tbl_copy() */
 
-
-
 /****************************************************************************************
  * Function:    H5P__create_sentinels
- * 
+ *
  *              Multithread version only function.
  *
  * Purpose:     Creates the two sentinel nodes for a class's or list's LFSLL.
@@ -3540,11 +3468,9 @@ done:
 
 } /* H5P__create_setinels() */
 
-
-
 /****************************************************************************************
  * Function:    H5P__create_prop
- * 
+ *
  *              Multithread version of H5P__create_prop().
  *
  * Purpose:     Creates a new property (H5P_mt_prop_t)
@@ -3574,8 +3500,7 @@ H5P__create_prop(const char *name, const void *value_ptr, size_t value_size, boo
                  uint64_t version, H5P_prp_create_func_t prp_create, H5P_prp_set_func_t prp_set,
                  H5P_prp_get_func_t prp_get, H5P_prp_encode_func_t prp_encode,
                  H5P_prp_decode_func_t prp_decode, H5P_prp_delete_func_t prp_del,
-                 H5P_prp_copy_func_t prp_copy, H5P_prp_compare_func_t prp_cmp,
-                 H5P_prp_close_func_t prp_close)
+                 H5P_prp_copy_func_t prp_copy, H5P_prp_compare_func_t prp_cmp, H5P_prp_close_func_t prp_close)
 {
     H5P_mt_prop_t      *new_prop; /* The new property to be created */
     H5P_mt_prop_aptr_t  next;     /* The new property's next field */
@@ -3656,10 +3581,8 @@ H5P__create_prop(const char *name, const void *value_ptr, size_t value_size, boo
     new_prop->del    = prp_del;
     new_prop->copy   = prp_copy;
 
-    
-    if ( prp_create == NULL && prp_set == NULL && prp_get == NULL && prp_encode == NULL &&
-         prp_decode == NULL && prp_del == NULL && prp_copy == NULL )
-    {
+    if (prp_create == NULL && prp_set == NULL && prp_get == NULL && prp_encode == NULL &&
+        prp_decode == NULL && prp_del == NULL && prp_copy == NULL) {
         /* update stats */
         atomic_fetch_add(&(H5P_mt_g.num_props_created_wo_cbs), 1);
     }
@@ -3687,11 +3610,9 @@ done:
 
 } /* H5P__create_prop() */
 
-
-
 /****************************************************************************************
  * Function:    H5P__mt_alloc_prop
- * 
+ *
  *              Multithread version only function.
  *
  * Purpose:     Gets a pointer to a valid H5P_mt_prop_t struct by either reallocating
@@ -3727,8 +3648,7 @@ H5P__mt_alloc_prop(void)
     head_prop = fl_head.ptr;
 
     /* If no prop structs are reallocable, alloc from memory */
-    if (atomic_load(&(head_prop->tag)) != H5P_MT_PROP_FL_REALLOC_TAG ||
-                                            (fl_head.ptr == fl_tail.ptr)) {
+    if (atomic_load(&(head_prop->tag)) != H5P_MT_PROP_FL_REALLOC_TAG || (fl_head.ptr == fl_tail.ptr)) {
         new_prop = (H5P_mt_prop_t *)malloc(sizeof(H5P_mt_prop_t));
 
         if (NULL == new_prop) {
@@ -3811,8 +3731,6 @@ done:
     FUNC_LEAVE_NOAPI(ret_value)
 
 } /* H5P__mt_alloc_prop() */
-
-
 
 /****************************************************************************************
  * Function:    H5P__mt_copy_lfsll
@@ -3966,35 +3884,33 @@ done:
 
 } /* H5P__mt_copy_lfsll() */
 
-
-
 /****************************************************************************************
  * Function:    H5P__register_real
- * 
+ *
  *              Multithread safe version of H5P__register_real().
  *
- * Purpose:     Internal routine to register a new property in a property list class 
+ * Purpose:     Internal routine to register a new property in a property list class
  *              during H5P initialization.
- * 
- *              This function has had a pretty significant change from the original to 
- *              the multithread safe version. 
- * 
+ *
+ *              This function has had a pretty significant change from the original to
+ *              the multithread safe version.
+ *
  *              The original version was called by H5P__register() to actually insert the
- *              new property into the class after potentially creating a copy of the 
+ *              new property into the class after potentially creating a copy of the
  *              class (see making_H5P_multi-thread_safe_sketch_design for details on that
  *              process). The multithread safe H5P structures removed the need to do
- *              that, instead going with a structure versioning system (more details in 
- *              the document mentioned, or in H5Ppkg_mt.h). 
- * 
+ *              that, instead going with a structure versioning system (more details in
+ *              the document mentioned, or in H5Ppkg_mt.h).
+ *
  *              Because of that H5P__register_real() was repurposed to instead insert new
- *              properties into a LFSLL (specifically only used on a class's LFSLL), 
+ *              properties into a LFSLL (specifically only used on a class's LFSLL),
  *              during H5P initialization. This allows a class's default properties to be
- *              inserted without incrementing the version of the class or incrementing 
+ *              inserted without incrementing the version of the class or incrementing
  *              other unnecessary class or global statistics for testing and debugging
  *              that inserting default properties during initialization aren't needed to
  *              be counted towards.
- * 
- *              NOTE: In the future the name of H5P__register_real() may be changed to 
+ *
+ *              NOTE: In the future the name of H5P__register_real() may be changed to
  *              more accurately depict its purpose, but to fit existing tests without
  *              altering too much, the name is kept the same.
  *
@@ -4024,14 +3940,14 @@ H5P__register_real(H5P_mt_class_t *pclass, const char *name, size_t size, const 
     atomic_fetch_add(&(pclass->H5P__register_real__num_calls), 1);
 
     /**
-     * Create the new MT property structure 
-     * 
-     * NOTE: the version of the property is always 1, because this 
+     * Create the new MT property structure
+     *
+     * NOTE: the version of the property is always 1, because this
      * function should only be used during initialization of H5P.
      */
     if (NULL ==
-        (new_prop = H5P__create_prop(name, def_value, size, TRUE, 1, prp_create, prp_set, prp_get,
-                                        prp_encode, prp_decode, prp_delete, prp_copy, prp_cmp, prp_close))) {
+        (new_prop = H5P__create_prop(name, def_value, size, TRUE, 1, prp_create, prp_set, prp_get, prp_encode,
+                                     prp_decode, prp_delete, prp_copy, prp_cmp, prp_close))) {
         HGOTO_ERROR(H5E_PLIST, H5E_CANTCREATE, FAIL, "Can't create property");
     }
 
@@ -4057,73 +3973,71 @@ done:
 
 } /* H5P__register_real() MT safe version*/
 
-
-
 /****************************************************************************************
  * Function:    H5P__register
- * 
+ *
  *              Multithread safe version of H5P__register().
  *
- * Purpose:     Internal routine to register a new property in a property list class at 
+ * Purpose:     Internal routine to register a new property in a property list class at
  *              the next_version of the class and increments the current version of the
  *              class to that next version upon completion.
  *
- *              This function has had a significant change from the original to the 
+ *              This function has had a significant change from the original to the
  *              multithread safe version.
  *
  *              The original version of this function potentially created a copy of the
- *              class originally intended to have the new property inserted into, in the 
+ *              class originally intended to have the new property inserted into, in the
  *              case where the original class had existing derived classes or lists. Then
- *              call H5P__register_real() to actually insert the new property into the 
- *              new copy of the class. The updated multithread H5P structures removed the 
- *              need to do this, instead using an in-structure versioning system that 
- *              only allows derived list to access properties valid at the version they 
- *              were derived from, and derived clases create their own copies of the 
- *              valid properties at the version they were derived from (see 
- *              making_H5P_multi-thread_safe_sketch_design or H5Ppkg_mt.h for more 
- *              details). 
- * 
+ *              call H5P__register_real() to actually insert the new property into the
+ *              new copy of the class. The updated multithread H5P structures removed the
+ *              need to do this, instead using an in-structure versioning system that
+ *              only allows derived list to access properties valid at the version they
+ *              were derived from, and derived clases create their own copies of the
+ *              valid properties at the version they were derived from (see
+ *              making_H5P_multi-thread_safe_sketch_design or H5Ppkg_mt.h for more
+ *              details).
+ *
  *              Because of these changes H5P__register() and H5P__register_real() were
- *              altered to fit these new methods. H5P__register() now handles the process 
- *              of creating the new property and inserting it into the target class 
- *              during normal library operations (of course still calling other functions 
- *              for more their more specific tasks). While H5P__register_real() is used 
- *              during initialization of H5P to remove some of the process that isn't 
+ *              altered to fit these new methods. H5P__register() now handles the process
+ *              of creating the new property and inserting it into the target class
+ *              during normal library operations (of course still calling other functions
+ *              for more their more specific tasks). While H5P__register_real() is used
+ *              during initialization of H5P to remove some of the process that isn't
  *              necessary until the library (or at least H5P) is fully initialized.
- * 
- * Details:     First check the class's thrd.opening and thrd.closing flags and 
- *              increments the thrd.count of the class by calling H5P__inc_thrd_count(). 
- *              Then calls H5P__mt_enforce_serialization() to check if this thread is 
+ *
+ * Details:     First check the class's thrd.opening and thrd.closing flags and
+ *              increments the thrd.count of the class by calling H5P__inc_thrd_count().
+ *              Then calls H5P__mt_enforce_serialization() to check if this thread is
  *              allowed to continue, or if there are other threads actively modifying the
- *              class structure (see the above mentioned document for more details). If 
- *              there are already threads modifying the structure, this thread waits 
+ *              class structure (see the above mentioned document for more details). If
+ *              there are already threads modifying the structure, this thread waits
  *              until its turn before searching the class's LFSLL to ensure the property
  *              doesn't already exist in the class.
- * 
+ *
  *              NOTE: The current operation only searches the class for the property
  *              after H5P__mt_enforce_serialization(), because if done prior, the result
- *              can change. Two examples are if the property doesn't exist in the class 
+ *              can change. Two examples are if the property doesn't exist in the class
  *              prior, but another inserts it while this class is waiting for that thread
  *              to finish. Or if the property does exist in the class, but another thread
  *              is in the process of deleting it so it wouldn't by the time this thread
- *              can actually modify the class. Thus, this thread still has to search the 
+ *              can actually modify the class. Thus, this thread still has to search the
  *              the class after H5P__mt_enforce_serialization() completes, so searching
  *              the class is only done after.
- * 
- *              H5P__mt_ins_or_mod_prop__class() is called to create the property 
+ *
+ *              H5P__mt_ins_or_mod_prop__class() is called to create the property
  *              structure, insert it into the class's LFSLL, and correctly adjust other
  *              of the class's fields and stats as necessary for this specific instance.
- * 
+ *
  *              NOTE: Zero-sized properties are allowed and do not store any data in the
  *              property list.  These may be used as flags to indicate the presence or
- *              absence of a particular piece of information.  The 'default' pointer for 
+ *              absence of a particular piece of information.  The 'default' pointer for
  *              a zero-sized property may be set to NULL. The property 'create' & 'close'
  *              callbacks are called for zero-sized properties, but the 'set' and 'get'
  *              callbacks are never called.
- * 
- *              Lastly, update the class's current version to the next_version this 
+ *
+ *              Lastly, update the class's current version to the next_version this
  *              thread got upon entering the class, and decrement the class's thrd.count.
- * 
+ *
  * Parameters:  H5P_mt_class_t **ppclass:   Pointer to the property class to modify.
  *              const cont *name:           Name of the property to register.
  *              size_t size:                Size of the property's value in bytes.
@@ -4138,10 +4052,10 @@ done:
  *              H5P_prp_copy_func_t         Function pointer to property copy callback.
  *              H5P_prp_compare_func_t      Function pointer to property compare callback
  *              H5P_prp_close_func_t        Function pointer to property close callback.
- * 
- *              NOTE: for more details on the property callbacks see the detailed 
+ *
+ *              NOTE: for more details on the property callbacks see the detailed
  *              structure description for H5P_mt_prop_t in H5Ppkg_mt.h.
- * 
+ *
  *
  * Return:      SUCCEED/FAIL
  *
@@ -4155,13 +4069,13 @@ H5P__register(H5P_mt_class_t **ppclass, const char *name, size_t size, void *def
               H5P_prp_close_func_t prp_close)
 {
     H5P_mt_class_t *class;
-    H5P_mt_prop_t  *new_prop       = NULL;  /* New prop to be created and inserted */
-    uint64_t        curr_version   = 0;     /* Current version of the class */
-    uint64_t        next_version   = 0;     /* Next version of the class */
-    bool            inc_thrd_flag  = FALSE; /* Flag to dec class's thrd count */
-    bool            ver_updated    = FALSE;
+    H5P_mt_prop_t *new_prop      = NULL;  /* New prop to be created and inserted */
+    uint64_t       curr_version  = 0;     /* Current version of the class */
+    uint64_t       next_version  = 0;     /* Next version of the class */
+    bool           inc_thrd_flag = FALSE; /* Flag to dec class's thrd count */
+    bool           ver_updated   = FALSE;
 
-    herr_t          ret_value = SUCCEED;
+    herr_t ret_value = SUCCEED;
 
     FUNC_ENTER_PACKAGE
 
@@ -4199,7 +4113,7 @@ H5P__register(H5P_mt_class_t **ppclass, const char *name, size_t size, void *def
     assert(curr_version + 1 == next_version);
 
     /**
-     * Callback function for testing, to pass the exact version 
+     * Callback function for testing, to pass the exact version
      * of the class the new property is being inserted at without
      * having to search the LFSLL try to find the property and check.
      */
@@ -4217,9 +4131,9 @@ H5P__register(H5P_mt_class_t **ppclass, const char *name, size_t size, void *def
     }
 
     /* Create and insert the property into the class */
-    if ((ret_value = H5P__mt_ins_or_mod_prop__class(class, name, def_value, size, TRUE, next_version, prp_create, prp_set,
-                                                    prp_get, prp_encode, prp_decode, prp_delete, prp_copy,
-                                                    prp_cmp, prp_close)) < 0) {
+    if ((ret_value = H5P__mt_ins_or_mod_prop__class(class, name, def_value, size, TRUE, next_version,
+                                                    prp_create, prp_set, prp_get, prp_encode, prp_decode,
+                                                    prp_delete, prp_copy, prp_cmp, prp_close)) < 0) {
         HGOTO_ERROR(H5E_PLIST, H5E_CANTREGISTER, FAIL, "unable to register property in class");
     }
 
@@ -4244,37 +4158,34 @@ done:
         }
     }
 
-
     FUNC_LEAVE_NOAPI(ret_value)
 
 } /* H5P__register() MT safe version */
-
-
 
 /****************************************************************************************
  * Function:    H5P__mt_ins_or_mod_prop__class
  *
  *              Multithread safe version only function
- * 
- * Purpose:     Creates a new property structure (H5P_mt_prop_t), either for a new 
- *              property or for a new version of an existing property, and inserts it 
+ *
+ * Purpose:     Creates a new property structure (H5P_mt_prop_t), either for a new
+ *              property or for a new version of an existing property, and inserts it
  *              into the LFSLL of the provided property class (H5P_mt_class_t).
  *
  *              NOTE: When 'modifying' a property is this multithread safe version of
  *              H5P, a new property struct must be created with a new create_version.
  *
- *              H5P__create_prop() is called to allocate and initialize the new 
+ *              H5P__create_prop() is called to allocate and initialize the new
  *              property struct.
  *
  *              H5P__mt_ins_or_mod_prop__lfsll_ins() is called to insert the new property
  *              into the class's LFSLL.
  *
  *              If this is a new property, and not a new version of a property that
- *              already exists in the class, increment increment logical length of the 
+ *              already exists in the class, increment increment logical length of the
  *              lfsll and nprops_added.
- * 
- *              Increment phys_pl_len. 
- * 
+ *
+ *              Increment phys_pl_len.
+ *
  *              Any necessary stats fields are then updated.
  *
  * Return:      SUCCEED/FAIL
@@ -4282,25 +4193,24 @@ done:
  ****************************************************************************************
  */
 herr_t
-H5P__mt_ins_or_mod_prop__class(H5P_mt_class_t *class, const char *name, void *value, size_t size, 
-                               bool is_new, uint64_t prop_version,
-                               H5P_prp_create_func_t prp_create, H5P_prp_set_func_t prp_set,
-                               H5P_prp_get_func_t prp_get, H5P_prp_encode_func_t prp_encode,
-                               H5P_prp_decode_func_t prp_decode, H5P_prp_delete_func_t prp_del,
-                               H5P_prp_copy_func_t prp_copy, H5P_prp_compare_func_t prp_cmp,
-                               H5P_prp_close_func_t prp_close)
+H5P__mt_ins_or_mod_prop__class(H5P_mt_class_t *class, const char *name, void *value, size_t size, bool is_new,
+                               uint64_t prop_version, H5P_prp_create_func_t prp_create,
+                               H5P_prp_set_func_t prp_set, H5P_prp_get_func_t prp_get,
+                               H5P_prp_encode_func_t prp_encode, H5P_prp_decode_func_t prp_decode,
+                               H5P_prp_delete_func_t prp_del, H5P_prp_copy_func_t prp_copy,
+                               H5P_prp_compare_func_t prp_cmp, H5P_prp_close_func_t prp_close)
 {
-    H5P_mt_prop_t     *new_prop = NULL;    /* New prop to be created and inserted */
-    H5P_mt_prop_t     *pl_head;            /* Head of the LFSLL of the class */
-    H5P_mt_prop_t     *next_prop;          /* Next prop in LFSLL after the new prop */
-    H5P_mt_prop_aptr_t next;               /* New prop's next struct field */
-    //uint64_t           delete_version = 0;
-    uint32_t           deletes        = 0;     /* Tracks number of deletes */
-    uint32_t           visited        = 0;     /* Tracks number of nodes visited */
-    uint32_t           thrd_cols      = 0;     /* Tracks number of thread collisions */
-    uint64_t           avg_visited    = 0;     /* Stats variable */
-    uint64_t           num_calls      = 0;     /* Stats variable */
-    bool               chksum_cols    = FALSE;
+    H5P_mt_prop_t     *new_prop = NULL; /* New prop to be created and inserted */
+    H5P_mt_prop_t     *pl_head;         /* Head of the LFSLL of the class */
+    H5P_mt_prop_t     *next_prop;       /* Next prop in LFSLL after the new prop */
+    H5P_mt_prop_aptr_t next;            /* New prop's next struct field */
+    // uint64_t           delete_version = 0;
+    uint32_t deletes     = 0; /* Tracks number of deletes */
+    uint32_t visited     = 0; /* Tracks number of nodes visited */
+    uint32_t thrd_cols   = 0; /* Tracks number of thread collisions */
+    uint64_t avg_visited = 0; /* Stats variable */
+    uint64_t num_calls   = 0; /* Stats variable */
+    bool     chksum_cols = FALSE;
 
     herr_t ret_value = SUCCEED;
 
@@ -4316,7 +4226,7 @@ H5P__mt_ins_or_mod_prop__class(H5P_mt_class_t *class, const char *name, void *va
 
     /* This thread can now proceed and create the new property */
     new_prop = H5P__create_prop(name, value, size, TRUE, prop_version, prp_create, prp_set, prp_get,
-                                   prp_encode, prp_decode, prp_del, prp_copy, prp_cmp, prp_close);
+                                prp_encode, prp_decode, prp_del, prp_copy, prp_cmp, prp_close);
     if (new_prop == NULL) {
         HGOTO_ERROR(H5E_PLIST, H5E_CANTCREATE, FAIL, "Failed to create new property.");
     }
@@ -4359,8 +4269,7 @@ H5P__mt_ins_or_mod_prop__class(H5P_mt_class_t *class, const char *name, void *va
         atomic_fetch_add(&(class->nprops_added), 1);
     }
 #else
-    if ( is_new )
-    {
+    if (is_new) {
         atomic_fetch_add(&(class->log_pl_len), 1);
         atomic_fetch_add(&(class->nprops_added), 1);
     }
@@ -4401,38 +4310,36 @@ done:
 
 } /* H5P__mt_ins_or_mod_prop__class() */
 
-
-
 /****************************************************************************************
  * Function:    H5P_insert
  *
  *              Multithread safe version of H5P_insert().
- * 
- * Purpose:     Internal routine to insert a new property in a property list at the 
- *              list's next_version and increments the current version of the list to 
+ *
+ * Purpose:     Internal routine to insert a new property in a property list at the
+ *              list's next_version and increments the current version of the list to
  *              that next_version upon completion.
- *              
- * Details:     First check the list's thrd.opening and thrd.closing flags and 
- *              increments the thrd.count of the list by calling H5P__inc_thrd_count(). 
- *              Then calls H5P__mt_enforce_serialization() to check if this thread is 
+ *
+ * Details:     First check the list's thrd.opening and thrd.closing flags and
+ *              increments the thrd.count of the list by calling H5P__inc_thrd_count().
+ *              Then calls H5P__mt_enforce_serialization() to check if this thread is
  *              allowed to continue, or if there are other threads actively modifying the
- *              list structure. If there are already threads modifying the structure, 
- *              this thread waits until its turn before searching the list to ensure the 
+ *              list structure. If there are already threads modifying the structure,
+ *              this thread waits until its turn before searching the list to ensure the
  *              property doesn't already exist in the list.
- * 
- *              H5P__mt_ins_or_mod_prop__list() is called to create the property 
+ *
+ *              H5P__mt_ins_or_mod_prop__list() is called to create the property
  *              structure, insert it into the list's LFSLL, call the appropriate callback
- *              if necessary, and correctly adjust other of the list's fields and stats 
+ *              if necessary, and correctly adjust other of the list's fields and stats
  *              as necessary for this specific instance.
- * 
+ *
  *              NOTE: Zero-sized properties are allowed and do not store any data in the
  *              property list.  These may be used as flags to indicate the presence or
- *              absence of a particular piece of information.  The 'default' pointer for 
+ *              absence of a particular piece of information.  The 'default' pointer for
  *              a zero-sized property may be set to NULL. The property 'create' & 'close'
  *              callbacks are called for zero-sized properties, but the 'set' and 'get'
  *              callbacks are never called.
- * 
- *              Lastly, update the list's current version to the next_version this 
+ *
+ *              Lastly, update the list's current version to the next_version this
  *              thread got upon entering the list, and decrement the list's thrd.count.
  *
  *
@@ -4446,11 +4353,11 @@ H5P_insert(H5P_mt_list_t *list, const char *name, size_t size, void *value, H5P_
            H5P_prp_delete_func_t prp_delete, H5P_prp_copy_func_t prp_copy, H5P_prp_compare_func_t prp_cmp,
            H5P_prp_close_func_t prp_close)
 {
-    H5P_mt_prop_t *new_prop = NULL;       /* New prop to be created and inserted */
+    H5P_mt_prop_t *new_prop      = NULL;  /* New prop to be created and inserted */
     uint64_t       curr_version  = 0;     /* Current version of list or class */
     uint64_t       next_version  = 0;     /* Next version of list or class */
     bool           inc_thrd_flag = FALSE; /* Flag to dec parent's thrd count */
-    bool           ver_updated  = FALSE;
+    bool           ver_updated   = FALSE;
 
     herr_t ret_value = SUCCEED; /* Return value */
 
@@ -4487,7 +4394,7 @@ H5P_insert(H5P_mt_list_t *list, const char *name, size_t size, void *value, H5P_
     assert(curr_version + 1 == next_version);
 
     /**
-     * Callback function for testing, to pass the exact version 
+     * Callback function for testing, to pass the exact version
      * of the list the new property is being inserted at without
      * having to search the LFSLL try to find the property and check.
      */
@@ -4501,13 +4408,13 @@ H5P_insert(H5P_mt_list_t *list, const char *name, size_t size, void *value, H5P_
     /* Ensure the property doesn't already exist in the list */
     new_prop = H5P__mt_search__list(list, name, curr_version);
     if (new_prop) {
-            HGOTO_ERROR(H5E_PLIST, H5E_BADVALUE, FAIL, "Property already exists in the list.");
+        HGOTO_ERROR(H5E_PLIST, H5E_BADVALUE, FAIL, "Property already exists in the list.");
     }
 
     /* Create the new property and insert it into the property list */
-    if ((ret_value = H5P__mt_ins_or_mod_prop__list(list, name, value, size, FALSE, FALSE, TRUE, 
-                                                   next_version, NULL, prp_set, prp_get, prp_encode, 
-                                                   prp_decode, prp_delete, prp_copy, prp_cmp, prp_close)) < 0) {
+    if ((ret_value = H5P__mt_ins_or_mod_prop__list(list, name, value, size, FALSE, FALSE, TRUE, next_version,
+                                                   NULL, prp_set, prp_get, prp_encode, prp_decode, prp_delete,
+                                                   prp_copy, prp_cmp, prp_close)) < 0) {
         HGOTO_ERROR(H5E_PLIST, H5E_CANTREGISTER, FAIL, "unable to register MT property in MT plist");
     }
 
@@ -4525,8 +4432,7 @@ done:
         }
 
         /* Update global atomic plist version if list is a default plist */
-        if ( list->def_ver_ptr )
-        {
+        if (list->def_ver_ptr) {
             atomic_fetch_add((list->def_ver_ptr), 1);
 
             /* update stats */
@@ -4545,40 +4451,38 @@ done:
 
 } /* H5P_insert() MT safe version */
 
-
-
 /****************************************************************************************
  * Function:    H5P__mt_ins_or_mod_prop__list
- * 
+ *
  *              Multithread safe only function
  *
- * Purpose:     Creates a new property structure (H5P_mt_prop_t), either for a new 
- *              property or for a new version of an existing property, and inserts it 
+ * Purpose:     Creates a new property structure (H5P_mt_prop_t), either for a new
+ *              property or for a new version of an existing property, and inserts it
  *              into the LFSLL of the provided property list (H5P_mt_list_t).
  *
  *              NOTE: When 'modifying' a property is this multithread safe version of
  *              H5P, a new property struct must be created with a new create_version.
  *
- *              H5P__create_prop() is called to allocate and initialize the new 
+ *              H5P__create_prop() is called to allocate and initialize the new
  *              property struct.
  *
- *              If the copy flag parameter or the create flag parameter is TRUE the 
- *              property is checked for a copy or create callback respectively, and if 
+ *              If the copy flag parameter or the create flag parameter is TRUE the
+ *              property is checked for a copy or create callback respectively, and if
  *              it exists it is called.
  *
  *              H5P__mt_ins_or_mod_prop__lfsll_ins() is called to insert the new property
  *              into the lists's LFSLL.
- * 
- *              The list's lkup_tbl is searched and if there is an entry for the new 
+ *
+ *              The list's lkup_tbl is searched and if there is an entry for the new
  *              property, that entry is updated so curr.ptr points to the new property
  *              and curr.ver is set to the new property's create_version. Additionally,
  *              the fields log_pl_len and nprops are updated if necessary.
  *
- *              If this is a new property and doesn't have an entry in the lkup_tbl 
+ *              If this is a new property and doesn't have an entry in the lkup_tbl
  *              increment logical length of the lfsll, nprops, and nprops_added.
- * 
- *              Increment phys_pl_len. 
- * 
+ *
+ *              Increment phys_pl_len.
+ *
  *              Any necessary stats fields are then updated.
  *
  * Return:      SUCCEED/FAIL
@@ -4593,11 +4497,11 @@ H5P__mt_ins_or_mod_prop__list(H5P_mt_list_t *list, const char *name, void *value
                               H5P_prp_delete_func_t prp_del, H5P_prp_copy_func_t prp_copy,
                               H5P_prp_compare_func_t prp_cmp, H5P_prp_close_func_t prp_close)
 {
-    H5P_mt_prop_t             *new_prop = NULL;       /* New prop to be created and inserted */
-    H5P_mt_prop_t             *pl_head;               /* Head of the LFSLL of the class or list */
-    H5P_mt_prop_value_t        prop_value;            /* Value of the new prop */
-    bool                       done          = FALSE; /* Flag to exit a loop to setting atomics */
-    bool                       base_flag     = FALSE;
+    H5P_mt_prop_t             *new_prop = NULL;   /* New prop to be created and inserted */
+    H5P_mt_prop_t             *pl_head;           /* Head of the LFSLL of the class or list */
+    H5P_mt_prop_value_t        prop_value;        /* Value of the new prop */
+    bool                       done      = FALSE; /* Flag to exit a loop to setting atomics */
+    bool                       base_flag = FALSE;
     H5P_mt_list_table_entry_t *entry;            /* An entry in lkup_tbl if param is a list */
     H5P_mt_list_prop_ref_t     curr;             /* Curr struct field for list's entry */
     H5P_mt_list_prop_ref_t     new_curr;         /* Updated curr for list's entry if needed */
@@ -4621,10 +4525,9 @@ H5P__mt_ins_or_mod_prop__list(H5P_mt_list_t *list, const char *name, void *value
     assert(name);
     assert((size > 0 && value != NULL) || (size == 0));
 
-
     /* This thread can now proceed and create the new property */
     new_prop = H5P__create_prop(name, value, size, FALSE, prop_version, prp_create, prp_set, prp_get,
-                                   prp_encode, prp_decode, prp_del, prp_copy, prp_cmp, prp_close);
+                                prp_encode, prp_decode, prp_del, prp_copy, prp_cmp, prp_close);
     if (new_prop == NULL) {
         HGOTO_ERROR(H5E_PLIST, H5E_CANTCREATE, FAIL, "Failed to create new property.");
     }
@@ -4768,8 +4671,7 @@ H5P__mt_ins_or_mod_prop__list(H5P_mt_list_t *list, const char *name, void *value
     }
 #else
     /* If this is a new property update counts */
-    if ( !new_prop->in_lkup_tbl && is_new )
-    {
+    if (!new_prop->in_lkup_tbl && is_new) {
         /* Update counts */
         atomic_fetch_add(&(list->nprops), 1);
         atomic_fetch_add(&(list->nprops_added), 1);
@@ -4807,18 +4709,16 @@ done:
 
     /* Cleanup if error occurred */
     if ((ret_value == FAIL) && (new_prop != NULL) && (prop_cleanup)) {
-        H5P__mt_close_prop(new_prop); 
+        H5P__mt_close_prop(new_prop);
     }
 
     FUNC_LEAVE_NOAPI(ret_value)
 
 } /* H5P__mt_ins_or_mod_prop__list() */
 
-
-
 /****************************************************************************************
  * Function:    H5P__mt_ins_or_mod_prop__lfsll_ins
- * 
+ *
  *              Multithread safe only function
  *
  * Purpose:     Inserts a new property (H5P_mt_prop_t struct) into the LFSLL of a
@@ -4947,20 +4847,18 @@ done:
 
 } /* H5P__mt_ins_or_mod_prop__lfsll_ins() */
 
-
-
 /****************************************************************************************
  * Function:    H5P__unregister
- * 
+ *
  *              Multithread safe version of H5P__unregister().
  *
- * Purpose:     Internal routine to set the delete_version of a property (H5P_mt_prop_t) 
+ * Purpose:     Internal routine to set the delete_version of a property (H5P_mt_prop_t)
  *              in a property list class (H5P_mt_class_t).
  *
- *              Gets the property's chksum by calling H5_checksum_metadata() on the 
+ *              Gets the property's chksum by calling H5_checksum_metadata() on the
  *              provided property name.
- * 
- *              Calls H5P__inc_thrd_count() to check the class's thrd.opening and 
+ *
+ *              Calls H5P__inc_thrd_count() to check the class's thrd.opening and
  *              thrd.closing flags and to increment thrd.count.
  *
  *              H5P__mt_enforce_serialization() is called to check if there is another
@@ -4968,15 +4866,15 @@ done:
  *              must wait it's turn.
  *
  *              Then iterate the LFSLL to find the target property by calling the
- *              function H5P__find_mod_point(). The target property is pointed to by prop 
- *              and its delete_version is set to the class's next_version. *              
+ *              function H5P__find_mod_point(). The target property is pointed to by prop
+ *              and its delete_version is set to the class's next_version. *
  *
- *              Update the log_pl_len and nprops_added fields if necessary, and update 
+ *              Update the log_pl_len and nprops_added fields if necessary, and update
  *              stats.
- * 
+ *
  *              Update the class's curr_version to the next_version (same version number
  *              that was set as the property's delete_version).
- * 
+ *
  *              Decrement the class's thrd.count.
  *
  *
@@ -5039,7 +4937,7 @@ H5P__unregister(H5P_mt_class_t *class, const char *name)
     assert(curr_version + 1 == next_version);
 
     /**
-     * Callback function for testing, to pass the exact version 
+     * Callback function for testing, to pass the exact version
      * of the class the new property is being deleted at without
      * having to search the LFSLL try to find the property and check.
      */
@@ -5151,33 +5049,31 @@ done:
 
 } /* H5P__unregister() */
 
-
-
 /****************************************************************************************
  * Function:    H5P_remove
- * 
+ *
  *              Multithread safe version of H5P__remove().
  *
- * Purpose:     Internal routine to set the delete_version of a property (H5P_mt_prop_t) 
+ * Purpose:     Internal routine to set the delete_version of a property (H5P_mt_prop_t)
  *              in a property list (H5P_mt_list_t).
  *
- *              Gets the property's chksum by calling H5_checksum_metadata() on the 
+ *              Gets the property's chksum by calling H5_checksum_metadata() on the
  *              provided property name.
- * 
- *              Calls H5P__inc_thrd_count() to check the list's thrd.opening and 
+ *
+ *              Calls H5P__inc_thrd_count() to check the list's thrd.opening and
  *              thrd.closing flags and to increment thrd.count.
  *
  *              H5P__mt_enforce_serialization() is called to check if there is another
  *              thread modifying the LFSLL. If not then proceed, if there is this thread
  *              must wait it's turn.
- * 
+ *
  *              Calls H5P__mt_delete_prop__list() to find the target property, set its
  *              delete_version, call the delete callback if the property has one, update
  *              other necessary fields (i.e log_pl_len, etc.), and update stats.
- * 
+ *
  *              Update the list's curr_version to the next_version (same version number
  *              that was set as the base_delete_version or property's delete_version).
- * 
+ *
  *              Decrement the list's thrd.count.
  *
  * Return:      SUCCEED/FAIL
@@ -5187,11 +5083,11 @@ done:
 herr_t
 H5P_remove(H5P_mt_list_t *list, const char *name)
 {
-    uint64_t                   curr_version;          /* Current version of the list */
-    uint64_t                   next_version;          /* Next version of the list */
-    bool                       inc_thrd_flag = FALSE; /* Flag to dec thrd count */
-    int64_t                    chksum;                /* chksum of the target prop */
-    bool                       ver_updated = FALSE;
+    uint64_t curr_version;          /* Current version of the list */
+    uint64_t next_version;          /* Next version of the list */
+    bool     inc_thrd_flag = FALSE; /* Flag to dec thrd count */
+    int64_t  chksum;                /* chksum of the target prop */
+    bool     ver_updated = FALSE;
 
     herr_t ret_value = SUCCEED;
 
@@ -5230,8 +5126,8 @@ H5P_remove(H5P_mt_list_t *list, const char *name)
     assert(curr_version + 1 == next_version);
 
     /**
-     * Callback function for testing, to pass the exact version of the 
-     * list the new property is being deleted at without having to search 
+     * Callback function for testing, to pass the exact version of the
+     * list the new property is being deleted at without having to search
      * the lkup_tbl and LFSLL to find the property and check.
      */
     if (H5P_mt_cb.ver_cb) {
@@ -5241,10 +5137,8 @@ H5P_remove(H5P_mt_list_t *list, const char *name)
      * end testing function
      */
 
-     
 #if 1
-    if ((H5P__mt_delete_prop__list(list, chksum, name, curr_version, next_version)) < 0 )
-    {
+    if ((H5P__mt_delete_prop__list(list, chksum, name, curr_version, next_version)) < 0) {
         HGOTO_ERROR(H5E_PLIST, H5E_CANTDELETE, FAIL, "Can't delete property");
     }
 #else
@@ -5394,8 +5288,7 @@ done:
         }
 
         /* Update global atomic plist version if list is a default plist */
-        if ( list->def_ver_ptr )
-        {
+        if (list->def_ver_ptr) {
             atomic_fetch_add((list->def_ver_ptr), 1);
 
             /* update stats */
@@ -5413,14 +5306,12 @@ done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P_remove() MT safe version */
 
-
-
 /****************************************************************************************
  * Function:    H5P__mt_delete_prop__list
- * 
+ *
  *              Multithread safe only function
  *
- * Purpose:     Internal function that sets the delete_version on a property in a 
+ * Purpose:     Internal function that sets the delete_version on a property in a
  *              property list to the list's next_version.
  *
  *              Iterate the lkup_tbl by calling H5P__mt_search_lkup_tbl(). If entry
@@ -5437,7 +5328,7 @@ done:
  *              The property is checked for a delete callback, and if it exists it is
  *              called.
  *
- *              Update the log_pl_len, nprops, and nprops_added fields if necessary, and 
+ *              Update the log_pl_len, nprops, and nprops_added fields if necessary, and
  *              stats are updated.
  *
  *
@@ -5446,22 +5337,22 @@ done:
  ****************************************************************************************
  */
 herr_t
-H5P__mt_delete_prop__list(H5P_mt_list_t *list, int64_t chksum, const char *name, 
-                         uint64_t curr_version, uint64_t next_version)
+H5P__mt_delete_prop__list(H5P_mt_list_t *list, int64_t chksum, const char *name, uint64_t curr_version,
+                          uint64_t next_version)
 {
-    H5P_mt_prop_t             *prev_prop = NULL;      /* Previous prop in the LFSLL */
-    H5P_mt_prop_t             *prop      = NULL;      /* Target prop found in the list */
-    H5P_mt_prop_t             *pl_head;               /* Head of the LFSLL */
-    H5P_mt_prop_value_t        value;                 /* Value of the target prop */
-    H5P_mt_list_table_entry_t *entry;                 /* Entry in a list's lkup_tbl */
-    H5P_mt_list_prop_ref_t     curr;                  /* Curr field of the entry */
-    bool                       done          = FALSE; /* Flag to exit loops to set atomics */
-    bool                       base_flag     = FALSE; /* Flag if entry's base is target prop */
-    uint32_t                   deletes     = 0;       /* Tracks number of deletes */
-    uint32_t                   visited     = 0;       /* Tracks number of nodes visited */
-    uint32_t                   thrd_cols   = 0;       /* Tracks number of thread cols */
-    uint64_t                   avg_visited = 0;       /* Stats variable */
-    uint64_t                   num_calls   = 0;       /* Stats variable */
+    H5P_mt_prop_t             *prev_prop = NULL;    /* Previous prop in the LFSLL */
+    H5P_mt_prop_t             *prop      = NULL;    /* Target prop found in the list */
+    H5P_mt_prop_t             *pl_head;             /* Head of the LFSLL */
+    H5P_mt_prop_value_t        value;               /* Value of the target prop */
+    H5P_mt_list_table_entry_t *entry;               /* Entry in a list's lkup_tbl */
+    H5P_mt_list_prop_ref_t     curr;                /* Curr field of the entry */
+    bool                       done        = FALSE; /* Flag to exit loops to set atomics */
+    bool                       base_flag   = FALSE; /* Flag if entry's base is target prop */
+    uint32_t                   deletes     = 0;     /* Tracks number of deletes */
+    uint32_t                   visited     = 0;     /* Tracks number of nodes visited */
+    uint32_t                   thrd_cols   = 0;     /* Tracks number of thread cols */
+    uint64_t                   avg_visited = 0;     /* Stats variable */
+    uint64_t                   num_calls   = 0;     /* Stats variable */
 
     herr_t ret_value = SUCCEED;
 
@@ -5611,18 +5502,16 @@ done:
 
 } /* H5P__mt_delete_prop__list() */
 
-
-
 /****************************************************************************************
  * Function:    H5P__mt_search__class
- * 
- *              Multithread only function that replaces the original function 
+ *
+ *              Multithread only function that replaces the original function
  *              H5P__find_prop_pclass().
- * 
+ *
  *              NOTE: H5P__find_prop_pclass() was replaced due to H5P__mt_search__class()
- *              being made to search a specific provided version of a class, and upon 
- *              further modifications to H5P to make it multithread safe, 
- *              H5P__find_prop_pclass() wasn't used by anything anymore.              
+ *              being made to search a specific provided version of a class, and upon
+ *              further modifications to H5P to make it multithread safe,
+ *              H5P__find_prop_pclass() wasn't used by anything anymore.
  *
  * Purpose:     Searches a property class (H5P_mt_class_t) for a property (H5P_mt_prop_t)
  *              at a specified version.
@@ -5746,8 +5635,6 @@ done:
 
 } /* H5P__mt_search__class() */
 
-
-
 /****************************************************************************************
  * Function:    H5P__find_prop_plist
  *
@@ -5779,19 +5666,16 @@ H5P__find_prop_plist(H5P_genplist_t *plist, const char *name)
     atomic_fetch_add(&(plist->H5P__find_prop_plist__num_calls), 1);
 
     /* If the context is initialized grab version from it */
-    if ( H5P_H5CX_INIT_g )
-    {
-        if ( 0 == (version = H5CX_get_plist_version(atomic_load(&(plist->plist_id)))) ) {
+    if (H5P_H5CX_INIT_g) {
+        if (0 == (version = H5CX_get_plist_version(atomic_load(&(plist->plist_id))))) {
             version = atomic_load(&(plist->curr_version));
         }
-        else
-        {
+        else {
             /* update stats */
             atomic_fetch_add(&(H5P_mt_g.num_list_version_from_ctx), 1);
         }
     }
-    else 
-    {
+    else {
         version = atomic_load(&(plist->curr_version));
     }
 
@@ -5806,17 +5690,15 @@ done:
 
 } /* H5P__find_prop_plist() MT safe version */
 
-
-
 /****************************************************************************************
  * Function:    H5P__mt_search__list
- * 
- *              Multithread only function that mostly replaces the original function 
+ *
+ *              Multithread only function that mostly replaces the original function
  *              H5P__find_prop_plist().
- * 
+ *
  *              NOTE: H5P__find_prop_plist() was mostly replaced due to H5P__mt_search__list()
- *              being made to search a specific provided version of a list, and upon 
- *              further modifications to H5P to make it multithread safe, 
+ *              being made to search a specific provided version of a list, and upon
+ *              further modifications to H5P to make it multithread safe,
  *              H5P__find_prop_plist() was only used by H5P__decode()
  *
  * Purpose:     Searches a property list (H5P_mt_list_t) for a property (H5P_mt_prop_t)
@@ -5829,7 +5711,7 @@ done:
  *              The list's lkup_tbl is searched first, and if the target property isn't
  *              found the LFSLL is then searched.
  *
- *              If the property is found at the specified version is returned after 
+ *              If the property is found at the specified version is returned after
  *              decrementing the list's thread count.
  *
  * Return:      Success: Returns a pointer to the target property valid at the specified
@@ -5970,11 +5852,9 @@ done:
 
 } /* H5P__mt_search__list() */
 
-
-
 /****************************************************************************************
  * Function:    H5P__mt_search_lkup_tbl
- * 
+ *
  *              Multithread safe only function
  *
  * Purpose:     Searches a property list's (H5P_mt_list_t) lkup_tbl for an entry that has
@@ -6047,11 +5927,9 @@ H5P__mt_search_lkup_tbl(H5P_mt_list_table_entry_t *lkup_tbl, size_t left_entry, 
 
 } /* H5P__mt_search_lkup_tbl() */
 
-
-
 /****************************************************************************************
  * Function:    H5P__mt_entry_find_version
- * 
+ *
  *              Multithread safe only version
  *
  * Purpose:     Finds the correct version of a property from a list's lkup_tbl.
@@ -6188,11 +6066,9 @@ done:
 
 } /* H5P__mt_entry_find_version() */
 
-
-
 /****************************************************************************************
  * Function:    H5P__find_mod_point
- * 
+ *
  *              Multithread version only function
  *
  * Purpose:     Iterates the lock free singly linked list (LFSLL) of a property list
@@ -6349,7 +6225,7 @@ H5P__find_mod_point(H5P_mt_prop_t *pl_head, H5P_mt_prop_t **first_ptr_ptr, H5P_m
 
 /****************************************************************************************
  * Function:    H5P__mt_search_lfsll
- * 
+ *
  *              Multithread version only function
  *
  * Purpose:     Searches a LFSLL to find the most recent version of property.
@@ -6433,11 +6309,9 @@ H5P__mt_search_lfsll(H5P_mt_prop_t *pl_head, int64_t chksum, const char *name, u
 
 } /* H5P__mt_search_lfsll() */
 
-
-
 /****************************************************************************************
  * Function:    H5P__get_next_valid_prop
- * 
+ *
  *              New function for multithread safe H5P
  *
  * Purpose:     Gets the next valid prop in the LFSLL.
@@ -6470,7 +6344,7 @@ H5P__mt_search_lfsll(H5P_mt_prop_t *pl_head, int64_t chksum, const char *name, u
  *              list, which will throw off the statistics tracking lengths of searches.
  *
  *
- * Return:      Success: Returns a pointer to the next valid property in a LFSLL, 
+ * Return:      Success: Returns a pointer to the next valid property in a LFSLL,
  *
  *              Failure: NULL if there is not a next valid.
  *
@@ -6569,11 +6443,9 @@ H5P__get_next_valid_prop(H5P_mt_prop_t *prop, uint64_t version, uint64_t *visite
 
 } /* H5P__get_next_valid_prop() */
 
-
-
 /****************************************************************************************
  * Function:    H5P__find_valid_version
- * 
+ *
  *              New function for multithread safe H5P
  *
  * Purpose:     Iterates the LFSLL to find the valid version of a given property in
@@ -6667,11 +6539,9 @@ H5P__find_valid_version(H5P_mt_prop_t *prop, uint64_t version, uint64_t *visited
 
 } /* H5P__find_valid_version() */
 
-
-
 /****************************************************************************************
  * Function:    H5P__is_valid
- * 
+ *
  *              New function for multithread safe H5P
  *
  * Purpose:     Checks if a given property is valid based on the provided version.
@@ -6710,7 +6580,7 @@ H5P__is_valid(H5P_mt_prop_t *prop, uint64_t version)
         ret_value = 0;
     }
     /* If TRUE then no version of this property is valid */
-    else if ( (create_ver <= version) && (delete_ver > 0) && (delete_ver <= version)) {
+    else if ((create_ver <= version) && (delete_ver > 0) && (delete_ver <= version)) {
         ret_value = -1;
     }
     /* If TRUE this property is not valid, but another version might be */
@@ -6722,15 +6592,13 @@ H5P__is_valid(H5P_mt_prop_t *prop, uint64_t version)
 
 } /* H5P__is_valid() */
 
-
-
 /****************************************************************************************
  * Function:    H5P_poke
- * 
+ *
  *              Multithread safe version of H5P_poke().
  *
  * Purpose:     Internal routine to create a new version of a property with an updated
- *              value in a property list, without calling its set or get callback 
+ *              value in a property list, without calling its set or get callback
  *              routines.
  *
  * Return:      SUCCEED/FAIL
@@ -6745,9 +6613,9 @@ H5P_poke(H5P_mt_list_t *list, const char *name, void *value)
     uint64_t            curr_version  = 0;     /* Current version of list or class */
     uint64_t            next_version  = 0;     /* Next version of list or class */
     bool                inc_thrd_flag = FALSE; /* Flag to dec parent's thrd count */
-    bool                ver_updated  = FALSE;
+    bool                ver_updated   = FALSE;
 
-    herr_t              ret_value = SUCCEED; /* Return value */
+    herr_t ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_NOAPI(FAIL)
 
@@ -6792,7 +6660,7 @@ H5P_poke(H5P_mt_list_t *list, const char *name, void *value)
 
     /* Create a new version of the property that is a copy of it with the new value */
     if (0 > H5P__mt_ins_or_mod_prop__list(list, name, value, prop_value.size, FALSE, FALSE, FALSE,
-                                          next_version, prop->create, prop->set, prop->get, prop->encode, 
+                                          next_version, prop->create, prop->set, prop->get, prop->encode,
                                           prop->decode, prop->del, prop->copy, prop->cmp, prop->close)) {
         HGOTO_ERROR(H5E_PLIST, H5E_CANTOPERATE, FAIL,
                     "can't create new property version for the updated value");
@@ -6812,8 +6680,7 @@ done:
         }
 
         /* Update global atomic plist version if list is a default plist */
-        if ( list->def_ver_ptr )
-        {
+        if (list->def_ver_ptr) {
             atomic_fetch_add((list->def_ver_ptr), 1);
 
             /* update stats */
@@ -6832,16 +6699,14 @@ done:
 
 } /* H5P_poke() MT safe version */
 
-
-
 /****************************************************************************************
  * Function:    H5P_set
- * 
+ *
  *              Multithread safe version of H5P_set().
  *
  * Purpose:     Internal routine to create a new version of a property in a property list
  *              with an updated value, and calls the property's 'set' callback on the new
- *              property copy, if it has one. 
+ *              property copy, if it has one.
  *
  * Return:      SUCCEED/FAIL
  *
@@ -6853,13 +6718,13 @@ H5P_set(H5P_mt_list_t *list, const char *name, const void *value)
     H5P_mt_prop_t      *prop;
     H5P_mt_prop_value_t prop_value;
     H5P_mt_prop_value_t new_value;
-    H5P_mt_prop_value_t tmp_value = {NULL, 0};
-    const void         *prp_value = NULL;
+    H5P_mt_prop_value_t tmp_value     = {NULL, 0};
+    const void         *prp_value     = NULL;
     uint64_t            curr_version  = 0;     /* Current version of list or class */
     uint64_t            next_version  = 0;     /* Next version of list or class */
     bool                inc_thrd_flag = FALSE; /* Flag to dec list's thrd count */
-    bool                ver_updated  = FALSE;    
-    bool                done      = TRUE;
+    bool                ver_updated   = FALSE;
+    bool                done          = TRUE;
 
     herr_t ret_value = SUCCEED; /* Return value */
 
@@ -6892,8 +6757,8 @@ H5P_set(H5P_mt_list_t *list, const char *name, const void *value)
     assert(curr_version + 1 == next_version);
 
     /**
-     * Callback function for testing, to pass the exact version of the 
-     * list the new verion of the property is being inserted at without 
+     * Callback function for testing, to pass the exact version of the
+     * list the new verion of the property is being inserted at without
      * having to search the lkup_tbl and LFSLL to find the property and check.
      */
     if (H5P_mt_cb.ver_cb) {
@@ -6913,9 +6778,9 @@ H5P_set(H5P_mt_list_t *list, const char *name, const void *value)
     prop_value = atomic_load(&(prop->value));
 
     /* Create a new version of the property that is a copy of it */
-    if (0 > H5P__mt_ins_or_mod_prop__list(list, name, (void *)prop_value.ptr, prop_value.size, FALSE, 
-                                          FALSE, FALSE, next_version, prop->create, prop->set, prop->get, 
-                                          prop->encode, prop->decode, prop->del, prop->copy, prop->cmp, 
+    if (0 > H5P__mt_ins_or_mod_prop__list(list, name, (void *)prop_value.ptr, prop_value.size, FALSE, FALSE,
+                                          FALSE, next_version, prop->create, prop->set, prop->get,
+                                          prop->encode, prop->decode, prop->del, prop->copy, prop->cmp,
                                           prop->close)) {
         HGOTO_ERROR(H5E_PLIST, H5E_CANTOPERATE, FAIL, "can't operate on MT plist to set value");
     }
@@ -7030,8 +6895,7 @@ done:
         }
 
         /* Update global atomic plist version if list is a default plist */
-        if ( list->def_ver_ptr )
-        {
+        if (list->def_ver_ptr) {
             atomic_fetch_add((list->def_ver_ptr), 1);
 
             /* update stats */
@@ -7050,17 +6914,15 @@ done:
 
 } /* H5P_set() MT safe version */
 
-
-
 /****************************************************************************************
  * Function:    H5P__class_get
- * 
+ *
  *              Multithread safe version of H5P__class_get().
  *
  * Purpose:     Internal routine to get a property's value from a property class
  *
  *              NOTE: currently this will always grab the most current version of the
- *              property in the class, but H5P__mt_search__class() can be used for 
+ *              property in the class, but H5P__mt_search__class() can be used for
  *              searching a specific version of a class.
  *
  * Return:      SUCCEED/FAIL
@@ -7095,7 +6957,7 @@ H5P__class_get(H5P_genclass_t *pclass, const char *name, void *value)
     version = atomic_load(&(pclass->curr_version));
 
     /**
-     * Callback function for testing, to pass the exact version 
+     * Callback function for testing, to pass the exact version
      * of the class the property is being searched for.
      */
     if (H5P_mt_cb.ver_cb) {
@@ -7129,20 +6991,18 @@ done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P__class_get() */
 
-
-
 /****************************************************************************************
  * Function:    H5P__class_set
- * 
+ *
  *              Multithread safe version of H5P__class_set().
  *
- * Purpose:     Internal routine to create a new version of a property in a class with an 
+ * Purpose:     Internal routine to create a new version of a property in a class with an
  *              updated value.
- * 
+ *
  *              NOTE: The set callback routine registered for this property will _NOT_ be
  *              called. This routine is designed for internal library use only, and the
  *              previous value is overwritten, not released in any way.
- * 
+ *
  *
  * Return:      SUCCEED/FAIL
  *
@@ -7156,7 +7016,7 @@ H5P__class_set(H5P_genclass_t *pclass, const char *name, void *value)
     uint64_t            curr_version  = 0;     /* Current version of list or class */
     uint64_t            next_version  = 0;     /* Next version of list or class */
     bool                inc_thrd_flag = FALSE; /* Flag to dec list's thrd count */
-    bool                ver_updated  = FALSE;   
+    bool                ver_updated   = FALSE;
 
     herr_t ret_value = SUCCEED; /* Return value */
 
@@ -7194,8 +7054,8 @@ H5P__class_set(H5P_genclass_t *pclass, const char *name, void *value)
     assert(curr_version + 1 == next_version);
 
     /**
-     * Callback function for testing, to pass the exact version of the 
-     * class the new verion of the property is being inserted at without 
+     * Callback function for testing, to pass the exact version of the
+     * class the new verion of the property is being inserted at without
      * having to search the LFSLL to find the property and check.
      */
     if (H5P_mt_cb.ver_cb) {
@@ -7217,10 +7077,9 @@ H5P__class_set(H5P_genclass_t *pclass, const char *name, void *value)
         HGOTO_ERROR(H5E_PLIST, H5E_BADVALUE, FAIL, "property has zero size");
 
     /* Create and insert the new property struct for the updated value */
-    if ((H5P__mt_ins_or_mod_prop__class(pclass, name, value, prop_value.size, FALSE, next_version, 
-                                        prop->create, prop->set, prop->get, prop->encode, 
-                                        prop->decode, prop->del, prop->copy,
-                                        prop->cmp, prop->close)) < 0) {
+    if ((H5P__mt_ins_or_mod_prop__class(pclass, name, value, prop_value.size, FALSE, next_version,
+                                        prop->create, prop->set, prop->get, prop->encode, prop->decode,
+                                        prop->del, prop->copy, prop->cmp, prop->close)) < 0) {
         HGOTO_ERROR(H5E_PLIST, H5E_CANTOPERATE, FAIL,
                     "can't create new property version for the updated value");
     }
@@ -7250,11 +7109,9 @@ done:
 
 } /* H5P__class_set() MT safe version */
 
-
-
 /****************************************************************************************
  * Function:    H5P_exist_plist
- * 
+ *
  *              Multithread safe version of H5P_exist_plist().
  *
  * Purpose:     Internal routine to query the existence of a property in a property list.
@@ -7272,7 +7129,6 @@ H5P_exist_plist(H5P_mt_list_t *list, const char *name)
     uint64_t       version;
     bool           inc_thrd_flag = FALSE; /* Flag to dec list's thrd count */
 
-
     htri_t ret_value = FAIL; /* return value */
 
     FUNC_ENTER_NOAPI(FAIL)
@@ -7289,19 +7145,16 @@ H5P_exist_plist(H5P_mt_list_t *list, const char *name)
     }
 
     /* If the context is initialized grab version from it */
-    if ( H5P_H5CX_INIT_g )
-    {
-        if ( 0 == (version = H5CX_get_plist_version(atomic_load(&(list->plist_id)))) ) {
+    if (H5P_H5CX_INIT_g) {
+        if (0 == (version = H5CX_get_plist_version(atomic_load(&(list->plist_id))))) {
             version = atomic_load(&(list->curr_version));
         }
-        else
-        {
+        else {
             /* update stats */
             atomic_fetch_add(&(H5P_mt_g.num_list_version_from_ctx), 1);
         }
     }
-    else 
-    {
+    else {
         version = atomic_load(&(list->curr_version));
     }
 
@@ -7313,7 +7166,7 @@ H5P_exist_plist(H5P_mt_list_t *list, const char *name)
         ret_value = TRUE;
     }
 
-done: 
+done:
 
     /* If the list's thrd_count was increment, decrement it */
     if (inc_thrd_flag) {
@@ -7326,11 +7179,9 @@ done:
 
 } /* H5P_exist_plist() MT safe version */
 
-
-
 /****************************************************************************************
  * Function:    H5P__exist_pclass
- * 
+ *
  *              Multithread safe version of H5P__exist_pclass().
  *
  * Purpose:     Internal routine to query the existence of a property in a property class
@@ -7347,7 +7198,6 @@ H5P__exist_pclass(H5P_genclass_t *pclass, const char *name)
     H5P_mt_prop_t *prop;
     uint64_t       version;
     bool           inc_thrd_flag = FALSE; /* Flag to dec class's thrd count */
-
 
     htri_t ret_value = FAIL; /* return value */
 
@@ -7387,11 +7237,9 @@ done:
 
 } /* H5P__exist_pclass() MT safe version */
 
-
-
 /****************************************************************************************
  * Function:    H5P__get_size_plist
- * 
+ *
  *              Multithread safe version of H5P__get_size_plist().
  *
  * Purpose:     Internal routine to query the size of a property in a property list.
@@ -7408,7 +7256,7 @@ H5P__get_size_plist(H5P_genplist_t *plist, const char *name, size_t *size)
     uint64_t            version;
     bool                inc_thrd_flag = FALSE; /* Flag to dec list's thrd count */
 
-    herr_t              ret_value = SUCCEED; /* return value */
+    herr_t ret_value = SUCCEED; /* return value */
 
     FUNC_ENTER_PACKAGE
 
@@ -7425,19 +7273,16 @@ H5P__get_size_plist(H5P_genplist_t *plist, const char *name, size_t *size)
     }
 
     /* If the context is initialized grab version from it */
-    if ( H5P_H5CX_INIT_g )
-    {
-        if ( 0 == (version = H5CX_get_plist_version(atomic_load(&(plist->plist_id)))) ) {
+    if (H5P_H5CX_INIT_g) {
+        if (0 == (version = H5CX_get_plist_version(atomic_load(&(plist->plist_id))))) {
             version = atomic_load(&(plist->curr_version));
         }
-        else
-        {
+        else {
             /* update stats */
             atomic_fetch_add(&(H5P_mt_g.num_list_version_from_ctx), 1);
         }
     }
-    else 
-    {
+    else {
         version = atomic_load(&(plist->curr_version));
     }
 
@@ -7464,11 +7309,9 @@ done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P__get_size_plist() */
 
-
-
 /****************************************************************************************
  * Function:    H5P__get_size_pclass
- * 
+ *
  *              Multithread safe version of H5P__get_size_pclass().
  *
  * Purpose:     Internal routine to query the size of a property in a property class.
@@ -7485,7 +7328,7 @@ H5P__get_size_pclass(H5P_genclass_t *pclass, const char *name, size_t *size)
     uint64_t            version;
     bool                inc_thrd_flag = FALSE; /* Flag to dec list's thrd count */
 
-    herr_t              ret_value = SUCCEED; /* return value */
+    herr_t ret_value = SUCCEED; /* return value */
 
     FUNC_ENTER_PACKAGE
 
@@ -7525,21 +7368,19 @@ done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P__get_size_pclass() */
 
-
-
 /****************************************************************************************
  * Function:    H5P__get_nprops_plist
- * 
+ *
  *              Multithread safe version of H5P__get_nprops_plist().
  *
  * Purpose:     Internal routine to query the number of properties in a property list at
- *              the most recent version of the list. 
- * 
- *              NOTE: In the multithread safe H5P structure H5P_mt_list_t, the nprops 
+ *              the most recent version of the list.
+ *
+ *              NOTE: In the multithread safe H5P structure H5P_mt_list_t, the nprops
  *              field counts the number of valid properties in the lkup_tbl and LFSLL at
- *              the most recent. Due to the nature of multithreaded programming this 
- *              value may be briefly incorrect during property additions or deletions. 
- *              For a more accurate count, or for a count at an older version of the 
+ *              the most recent. Due to the nature of multithreaded programming this
+ *              value may be briefly incorrect during property additions or deletions.
+ *              For a more accurate count, or for a count at an older version of the
  *              list, the lkup_tbl and LFSLL will need to be scanned at the version,
  *              which can be done via the multithread function H5P__count_nprops_plist().
  *
@@ -7550,8 +7391,8 @@ done:
 herr_t
 H5P__get_nprops_plist(H5P_mt_list_t *plist, size_t *nprops)
 {
-    bool   inc_thrd_flag = FALSE; /* Flag to dec list's thrd count */
-    herr_t ret_value = SUCCEED; /* Return value */
+    bool   inc_thrd_flag = FALSE;   /* Flag to dec list's thrd count */
+    herr_t ret_value     = SUCCEED; /* Return value */
 
     FUNC_ENTER_PACKAGE
 
@@ -7580,17 +7421,15 @@ done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P__get_nprops_plist() */
 
-
-
 /****************************************************************************************
  * Function:    H5P__count_nprops_plist
- * 
+ *
  *              New function for multithread safe H5P.
  *
- * Purpose:     Internal routine that iterates the list's lkup_tbl and LFSLL to get an 
- *              accurate count of the number of valid properties in a property list at a 
+ * Purpose:     Internal routine that iterates the list's lkup_tbl and LFSLL to get an
+ *              accurate count of the number of valid properties in a property list at a
  *              specified version.
- * 
+ *
  *              NOTE: If the parameter version is 0, the most recent version of the list
  *              is used.
  *
@@ -7601,11 +7440,11 @@ done:
 herr_t
 H5P__count_nprops_plist(H5P_mt_list_t *list, size_t *_nprops, uint64_t version)
 {
-    H5P_mt_prop_t *prop = NULL;
-    H5P_mt_list_table_entry_t *entry; 
-    bool inc_thrd_flag = FALSE; /* Flag to dec thrd count */
-    bool base_flag = FALSE;
-    size_t nprops = 0;
+    H5P_mt_prop_t             *prop = NULL;
+    H5P_mt_list_table_entry_t *entry;
+    bool                       inc_thrd_flag = FALSE; /* Flag to dec thrd count */
+    bool                       base_flag     = FALSE;
+    size_t                     nprops        = 0;
 
     herr_t ret_value = SUCCEED; /* Return value */
 
@@ -7623,42 +7462,34 @@ H5P__count_nprops_plist(H5P_mt_list_t *list, size_t *_nprops, uint64_t version)
     }
 
     /* If parameter version is 0 get curr_version */
-    if (version == 0)
-    {
+    if (version == 0) {
         version = atomic_load(&(list->curr_version));
     }
 
     /* Iterate the lkup_tbl and count valid props */
-    for ( size_t i = 0; i < list->nprops_inherited; i++ )
-    {
+    for (size_t i = 0; i < list->nprops_inherited; i++) {
         entry = &list->lkup_tbl[i];
 
-        if ((prop = H5P__mt_entry_find_version(entry, version, &base_flag)) != NULL )
-        {
+        if ((prop = H5P__mt_entry_find_version(entry, version, &base_flag)) != NULL) {
             nprops++;
         }
     }
 
     /* If the LFSLL has more than sentinel nodes, iterate it and count valid props */
-    if ( atomic_load(&(list->phys_pl_len)) > 2 )
-    {
+    if (atomic_load(&(list->phys_pl_len)) > 2) {
         prop = list->pl_head;
         assert(prop);
         assert(atomic_load(&(prop->tag)) == H5P_MT_PROP_TAG);
         assert(prop->sentinel);
 
-        do
-        {
-            if ((prop = H5P__get_next_valid_prop(prop, version, NULL)) != NULL )
-            {
-                if ( ! prop->in_lkup_tbl )
-                {
+        do {
+            if ((prop = H5P__get_next_valid_prop(prop, version, NULL)) != NULL) {
+                if (!prop->in_lkup_tbl) {
                     nprops++;
                 }
             }
 
-        } while ( prop );
-        
+        } while (prop);
     }
 
     *_nprops = nprops;
@@ -7676,32 +7507,30 @@ done:
 
 } /* H5P__count_nprops_plist() */
 
-
-
 /****************************************************************************************
  * Function:    H5P_get_nprops_pclass
- * 
+ *
  *              Multithread safe version of H5P_get_nprops_pclass().
  *
  * Purpose:     Internal routine to query the number of properties in a property class at
- *              the most recent version of the class. 
- * 
- *              If parameter recurse is TRUE log_pl_len is used, which tracks the total 
+ *              the most recent version of the class.
+ *
+ *              If parameter recurse is TRUE log_pl_len is used, which tracks the total
  *              number of valid properties at the most recent version, which the original
- *              H5P_genclass_t would have to iterate up the inheritance tree to count, 
+ *              H5P_genclass_t would have to iterate up the inheritance tree to count,
  *              but H5P_mt_class_t inherits its parent's valid properties at the version
  *              it is derived from.
- * 
+ *
  *              If recurse is FALSE nprops_added is used, which tracks the number of
- *              valid properties that have been added or modified in this class 
+ *              valid properties that have been added or modified in this class
  *              specifically, at the most recent version.
- * 
+ *
  *              NOTE: public API H5Pget_nprops always calls this with recurse as FALSE.
- * 
- *              NOTE: Due to the nature of multithreaded programming these values may be 
- *              briefly incorrect during property additions or deletions. For a more 
- *              accurate count, or for a count at an older version of the class, the 
- *              LFSLL will need to be scanned at the version, which can be done via the 
+ *
+ *              NOTE: Due to the nature of multithreaded programming these values may be
+ *              briefly incorrect during property additions or deletions. For a more
+ *              accurate count, or for a count at an older version of the class, the
+ *              LFSLL will need to be scanned at the version, which can be done via the
  *              multithread function H5P__count_nprops_pclass().
  *
  * Return:      SUCCEED/FAIL
@@ -7711,8 +7540,8 @@ done:
 herr_t
 H5P_get_nprops_pclass(H5P_mt_class_t *pclass, size_t *nprops, hbool_t recurse)
 {
-    bool   inc_thrd_flag = FALSE; /* Flag to dec thrd count */
-    herr_t ret_value = SUCCEED; /* Return value */
+    bool   inc_thrd_flag = FALSE;   /* Flag to dec thrd count */
+    herr_t ret_value     = SUCCEED; /* Return value */
 
     FUNC_ENTER_NOAPI(FAIL)
 
@@ -7727,15 +7556,13 @@ H5P_get_nprops_pclass(H5P_mt_class_t *pclass, size_t *nprops, hbool_t recurse)
         inc_thrd_flag = TRUE;
     }
 
-    if (recurse)
-    {
+    if (recurse) {
         *nprops = atomic_load(&(pclass->log_pl_len));
     }
-    else
-    {
+    else {
         *nprops = atomic_load(&(pclass->nprops_added));
     }
-    
+
 done:
 
     /* If the thrd_count was increment, decrement it */
@@ -7749,27 +7576,25 @@ done:
 
 } /* H5P_get_nprops_pclass() */
 
-
-
 /****************************************************************************************
  * Function:    H5P__count_nprops_pclass
- * 
+ *
  *              New function for the multithread safe H5P
  *
  * Purpose:     Internal routine that iterates the class's LFSLL to get an accurate count
- *              of the number of valid properties in a class at a specified version. 
- * 
+ *              of the number of valid properties in a class at a specified version.
+ *
  *              NOTE: If the parameter version is 0, the most recent version of the class
  *              is used.
- * 
- *              If parameter recurse is TRUE log_pl_len is used, which tracks the total 
+ *
+ *              If parameter recurse is TRUE log_pl_len is used, which tracks the total
  *              number of valid properties at the most recent version, which the original
- *              H5P_genclass_t would have to iterate up the inheritance tree to count, 
+ *              H5P_genclass_t would have to iterate up the inheritance tree to count,
  *              but H5P_mt_class_t inherits its parent's valid properties at the version
  *              it is derived from.
- * 
+ *
  *              If recurse is FALSE nprops_added is used, which tracks the number of
- *              valid properties that have been added or modified in this class 
+ *              valid properties that have been added or modified in this class
  *              specifically, at the most recent version.
  *
  * Return:      SUCCEED/FAIL
@@ -7779,9 +7604,9 @@ done:
 herr_t
 H5P__count_nprops_pclass(H5P_mt_class_t *class, size_t *_nprops, uint64_t version, hbool_t recurse)
 {
-    H5P_mt_prop_t *prop = NULL;
-    bool   inc_thrd_flag = FALSE; /* Flag to dec class's thrd count */
-    size_t nprops = 0;
+    H5P_mt_prop_t *prop          = NULL;
+    bool           inc_thrd_flag = FALSE; /* Flag to dec class's thrd count */
+    size_t         nprops        = 0;
 
     herr_t ret_value = SUCCEED; /* Return value */
 
@@ -7797,28 +7622,23 @@ H5P__count_nprops_pclass(H5P_mt_class_t *class, size_t *_nprops, uint64_t versio
     else {
         inc_thrd_flag = TRUE;
     }
-    
+
     /* If parameter version is 0 get curr_version */
-    if (version == 0)
-    {
+    if (version == 0) {
         version = atomic_load(&(class->curr_version));
     }
 
-    if (recurse)
-    {
+    if (recurse) {
         /* If there are more properties than just the sentinel nodes */
-        if ( atomic_load(&(class->phys_pl_len)) > 2 )
-        {
+        if (atomic_load(&(class->phys_pl_len)) > 2) {
             prop = class->pl_head;
             assert(prop);
             assert(atomic_load(&(prop->tag)) == H5P_MT_PROP_TAG);
             assert(prop->sentinel);
 
             /* Iterate the LFSLL */
-            do 
-            {
-                if ((prop = H5P__get_next_valid_prop(prop, version, NULL)) != NULL )
-                {
+            do {
+                if ((prop = H5P__get_next_valid_prop(prop, version, NULL)) != NULL) {
                     assert(prop);
                     assert(atomic_load(&(prop->tag)) == H5P_MT_PROP_TAG);
 
@@ -7826,42 +7646,37 @@ H5P__count_nprops_pclass(H5P_mt_class_t *class, size_t *_nprops, uint64_t versio
                     nprops++;
                 }
 
-            } while ( prop );
-        
+            } while (prop);
+
         } /* end if ( atomic_load(&(class->phys_pl_len)) > 2 ) */
     }
-    else
-    {
+    else {
         /* If there are more properties than just the sentinel nodes */
-        if ( atomic_load(&(class->phys_pl_len)) > 2 )
-        {
+        if (atomic_load(&(class->phys_pl_len)) > 2) {
             prop = class->pl_head;
             assert(prop);
             assert(atomic_load(&(prop->tag)) == H5P_MT_PROP_TAG);
             assert(prop->sentinel);
 
             /* Iterate the LFSLL */
-            do 
-            {
-                if ((prop = H5P__get_next_valid_prop(prop, version, NULL)) != NULL )
-                {
+            do {
+                if ((prop = H5P__get_next_valid_prop(prop, version, NULL)) != NULL) {
                     /**
                      * If the create_version of this property is 1, then it is an
                      * inherited property and can't be counted since recurse is FALSE.
                      */
-                    if ( 1 < atomic_load(&(prop->create_version)) )
-                    {
+                    if (1 < atomic_load(&(prop->create_version))) {
                         nprops++;
                     }
                 }
 
-            } while ( prop );
-        
+            } while (prop);
+
         } /* end if ( atomic_load(&(class->phys_pl_len)) > 2 ) */
     }
 
     *_nprops = nprops;
-    
+
 done:
 
     /* If the class's thrd_count was increment, decrement it */
@@ -7875,11 +7690,9 @@ done:
 
 } /* H5P__count_nprops_pclass() */
 
-
-
 /****************************************************************************************
  * Function:    H5P__cmp_class
- * 
+ *
  *              Multithread safe version of H5P__cmp_class().
  *
  * Purpose:     Internal routine to compare two property classes at their most current
@@ -7916,16 +7729,14 @@ done:
 
 } /* H5P__cmp_class() MT safe version */
 
-
-
 /****************************************************************************************
  * Function:    H5P__mt_cmp_class()
- * 
+ *
  *              New function for multithread safe H5P.
  *
  * Purpose:     Compares two classes (H5P_mt_class_t) and determines if they are equal at
  *              the specified versions.
- * 
+ *
  *              NOTE: This function is kept as a separate function from H5P__cmp_class()
  *              because it allows two classes to be compared at versions specified by the
  *              user, which is useful for testing and debugging, and may be useful to
@@ -8089,11 +7900,9 @@ done:
 
 } /* H5P__mt_cmp_class() */
 
-
-
 /****************************************************************************************
  * Function:    H5P__cmp_plist
- * 
+ *
  *              Multithread safe version of H5P__cmp_plist().
  *
  * Purpose:     Internal routine to compare two property lists at their most current
@@ -8130,11 +7939,9 @@ done:
 
 } /* H5P__cmp_plist() MT safe version */
 
-
-
 /****************************************************************************************
  * Function:    H5P__mt_cmp_list()
- * 
+ *
  *              New function for multithread safe H5P.
  *
  * Purpose:     Compares two lists (H5P_mt_list_t) and determines if they are equal at
@@ -8142,9 +7949,9 @@ done:
  *
  *              NOTE: This function is kept as a separate function from H5P__cmp_plist()
  *              because it allows two lists to be compared at versions specified by the
- *              user, which is useful for testing and debugging, and may be useful to 
+ *              user, which is useful for testing and debugging, and may be useful to
  *              other functions in future iterations of multithread H5P.
- * 
+ *
  * Details:     First each list has it's thread count incremented, and the current
  *              version grabbed from both.
  *
@@ -8319,11 +8126,9 @@ done:
 
 } /* H5P__mt_cmp_list() */
 
-
-
 /****************************************************************************************
  * Function:    H5P__mt_prop_cmp()
- * 
+ *
  *              New function for the multithread H5P
  *
  * Purpose:     Checks if the two properties are the same or different property
@@ -8450,31 +8255,29 @@ done:
 
 } /* H5P__mt_prop_cmp() */
 
-
-
 /****************************************************************************************
  * Function:    H5P_class_isa
- * 
+ *
  *              Multithread safe version of H5P_class_isa().
  *
- * Purpose:     Internal routine to query whether a property class is the same another 
+ * Purpose:     Internal routine to query whether a property class is the same another
  *              class, or that class's parent, at their most current versions.
  *
  *              Gets the current versions of both classes and calls H5P__mt_cmp_class()
- *              which actually does the comparison. 
- * 
- *              If they are not equal the parent class of pclass1 is retrieved, and 
+ *              which actually does the comparison.
+ *
+ *              If they are not equal the parent class of pclass1 is retrieved, and
  *              pclass2 is compared to that class. This will iterate up the inheritance
- *              tree until either two classes are equal or a class is reached that 
- *              doesn't have a parent. 
- * 
- *              NOTE: the return values of this function and H5P__mt_cmp_class() were 
- *              kept the same as the original H5P_class_isa() and H5P__cmp_class(), 
+ *              tree until either two classes are equal or a class is reached that
+ *              doesn't have a parent.
+ *
+ *              NOTE: the return values of this function and H5P__mt_cmp_class() were
+ *              kept the same as the original H5P_class_isa() and H5P__cmp_class(),
  *              however that means they are opposite of each other. Where H5P_class_isa()
  *              returns 1 if the classes are equal (or if a parent of pclass1 is equal to
  *              pclass2), while H5P__cmp_class() and the multithread H5P__mt_cmp_class()
- *              return 0 if the two classes are equal. This is something that may be 
- *              updated in the future to avoid confusion, but are left the same as the 
+ *              return 0 if the two classes are equal. This is something that may be
+ *              updated in the future to avoid confusion, but are left the same as the
  *              originals for now.
  *
  * Return:      Success: 1 if TRUE, 0 if FALSE
@@ -8524,22 +8327,20 @@ done:
 
 } /* H5P_class_isa() MT safe version */
 
-
-
 /****************************************************************************************
  * Function:    H5P_isa_class
- * 
+ *
  *              Multithread safe version of H5P_isa_class().
  *
  * Purpose:     Internal routine to query whether a property list is a certain class
  *
- *              This function grabs the parent class of the target property list and 
+ *              This function grabs the parent class of the target property list and
  *              calls H5P_class_isa() to compare the list's parent with the provided
- *              pclass_id, to see if the provided list's parent, or a parent up the 
+ *              pclass_id, to see if the provided list's parent, or a parent up the
  *              inheritance tree is equal to the provided class.
- * 
+ *
  *              NOTE: With the updated H5P multithread structures it would probably be
- *              better to simply iterate the inheritance tree comparing the parent 
+ *              better to simply iterate the inheritance tree comparing the parent
  *              pointers to the target class's pointer to see if they are equal, and then
  *              determining which version of the class the list is derived from. However,
  *              this wouldn't take into account if the target class is a copy of a class
@@ -8557,8 +8358,7 @@ H5P_isa_class(hid_t plist_id, hid_t pclass_id)
 {
     H5P_genplist_t *plist;  /* Property list to query */
     H5P_genclass_t *pclass; /* Property list class */
-    bool inc_thrd_flag = FALSE;
-
+    bool            inc_thrd_flag = FALSE;
 
     htri_t ret_value = FAIL; /* Return value */
 
@@ -8573,7 +8373,7 @@ H5P_isa_class(hid_t plist_id, hid_t pclass_id)
     if ((H5P__inc_thrd_count(plist)) < 0) {
         HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, (-1), "Couldn't increment class's thread count.");
     }
-    
+
     inc_thrd_flag = TRUE;
 
     if (NULL == (pclass = (H5P_genclass_t *)H5I_object_verify(pclass_id, H5I_GENPROP_CLS))) {
@@ -8604,11 +8404,9 @@ done:
 
 } /* H5P_isa_class() */
 
-
-
 /****************************************************************************************
  * Function:    H5P_object_verify
- * 
+ *
  *              No changes were made for multithread H5P, other than updating to the
  *              multithread H5P structures.
  *
@@ -8644,33 +8442,31 @@ done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P_object_verify() */
 
-
-
 /****************************************************************************************
  * Function:    H5P__iterate_plist
- * 
+ *
  *              Multithread safe version of H5P__iterate_plist().
  *
  * Purpose:     Internal routine to iterate over the properties in a property list.
- * 
- *              NOTE: This function was only updated for multithread H5P to ensure 
- *              existing tests that use it still pass. Other than those tests its 
+ *
+ *              NOTE: This function was only updated for multithread H5P to ensure
+ *              existing tests that use it still pass. Other than those tests its
  *              functionality has been taken over by other functions that search the list
- *              as a whole or specifically search the list's lkup_tbl or LFSLL at the 
+ *              as a whole or specifically search the list's lkup_tbl or LFSLL at the
  *              list's current version or an older specified version. Thus, this function
  *              will most likely no longer be used in future iterations of multithread
  *              H5P.
  *
  *              NOTE: The multithread safe version of H5P doesn't use skip lists and thus
  *              doesn't iterate the same way. Do to the versioning system the function
- *              H5P__get_next_valid_prop() is called to get the next valid property in 
- *              the list's LFSLL, skipping over any non-valid properties, for the most 
- *              current version of the plist. Which is what would be stored in the 
- *              original H5P_genlist_t structure. Then if iter_all_prop is TRUE the 
- *              lkup_tbl of the plist is then iterated skipping any entry where the 
+ *              H5P__get_next_valid_prop() is called to get the next valid property in
+ *              the list's LFSLL, skipping over any non-valid properties, for the most
+ *              current version of the plist. Which is what would be stored in the
+ *              original H5P_genlist_t structure. Then if iter_all_prop is TRUE the
+ *              lkup_tbl of the plist is then iterated skipping any entry where the
  *              entry's curr.ptr is valid version, because it was already iterated over
- *              when iterating the LFSLL. The properties in the lkup_tbl are the 
- *              properties inherited from the parent, which the original non multithread 
+ *              when iterating the LFSLL. The properties in the lkup_tbl are the
+ *              properties inherited from the parent, which the original non multithread
  *              safe H5P list would have iterated over the parent class's properties.
  *
  *              NOTE: the index field curr_idx tracks the index of the LFSLL when
@@ -8693,14 +8489,14 @@ int
 H5P__iterate_plist(H5P_genplist_t *plist, hbool_t iter_all_prop, int *idx, H5P_iterate_int_t cb_func,
                    void *udata)
 {
-    H5P_mt_prop_t             *valid_prop;        /* Next valid property to iterate over */
-    H5P_mt_prop_t             *prev_prop;         /* Prev prop that was iterated over */
-    uint64_t                   version;           /* Current version of the plist */
-    H5P_mt_list_table_entry_t *entry = NULL;      /* Entry in the lkup_tbl to iterate over */
-    uint32_t                   tbl_idx;           /* Index of the lkup_tbl */
-    bool                       base_flag = FALSE; /* Flag for lkup_tbl entries */
-    int                        dest_idx;          /* Index to start callback ops on */
-    int                        curr_idx = 0;      /* Current index in LFSLL and lkup_tbl */
+    H5P_mt_prop_t             *valid_prop;            /* Next valid property to iterate over */
+    H5P_mt_prop_t             *prev_prop;             /* Prev prop that was iterated over */
+    uint64_t                   version;               /* Current version of the plist */
+    H5P_mt_list_table_entry_t *entry = NULL;          /* Entry in the lkup_tbl to iterate over */
+    uint32_t                   tbl_idx;               /* Index of the lkup_tbl */
+    bool                       base_flag = FALSE;     /* Flag for lkup_tbl entries */
+    int                        dest_idx;              /* Index to start callback ops on */
+    int                        curr_idx      = 0;     /* Current index in LFSLL and lkup_tbl */
     bool                       inc_thrd_flag = FALSE; /* Flag to dec thrd count */
 
     int ret_value = 0; /* Return value */
@@ -8716,19 +8512,16 @@ H5P__iterate_plist(H5P_genplist_t *plist, hbool_t iter_all_prop, int *idx, H5P_i
     }
 
     /* If the context is initialized grab version from it */
-    if ( H5P_H5CX_INIT_g )
-    {
-        if ( 0 == (version = H5CX_get_plist_version(atomic_load(&(plist->plist_id)))) ) {
+    if (H5P_H5CX_INIT_g) {
+        if (0 == (version = H5CX_get_plist_version(atomic_load(&(plist->plist_id))))) {
             version = atomic_load(&(plist->curr_version));
         }
-        else
-        {
+        else {
             /* update stats */
             atomic_fetch_add(&(H5P_mt_g.num_list_version_from_ctx), 1);
         }
     }
-    else 
-    {
+    else {
         version = atomic_load(&(plist->curr_version));
     }
 
@@ -8818,20 +8611,18 @@ done:
 
 } /* H5P__iterate_plist() MT safe version*/
 
-
-
 /****************************************************************************************
  * Function:    H5P__iterate_pclass
- * 
+ *
  *              Multithread safe version of H5P__iterate_pclass().
  *
  * Purpose:     Internal routine to iterate over the properties in a property list.
  *
- *              NOTE: This function was only updated for multithread H5P to ensure 
- *              existing tests that specifically use it still pass. Other than those tests its 
- *              functionality has been taken over by other functions that search the 
- *              class's LFSLL at the current version or an older specified version. Thus, 
- *              this function will most likely no longer be used in future iterations of 
+ *              NOTE: This function was only updated for multithread H5P to ensure
+ *              existing tests that specifically use it still pass. Other than those tests its
+ *              functionality has been taken over by other functions that search the
+ *              class's LFSLL at the current version or an older specified version. Thus,
+ *              this function will most likely no longer be used in future iterations of
  *              multithread H5P.
  *
  * Return:      0
@@ -8845,10 +8636,10 @@ H5P__iterate_pclass(H5P_mt_class_t *pclass, int *idx, H5P_iterate_int_t cb_func,
     H5P_mt_prop_t *prev_prop;
     uint64_t       version;
     int            dest_idx;
-    int            curr_idx  = 0; /* Current iteration index */
+    int            curr_idx      = 0;     /* Current iteration index */
     bool           inc_thrd_flag = FALSE; /* Flag to dec thrd count */
 
-    int            ret_value = 0; /* Return value */
+    int ret_value = 0; /* Return value */
 
     FUNC_ENTER_PACKAGE
 
@@ -8914,14 +8705,12 @@ done:
 
 } /* H5P__iterate_pclass() MT safe version*/
 
-
-
 /****************************************************************************************
  * Function:    H5P_peek
- * 
+ *
  *              Multithread safe version of H5P_peek().
  *
- * Purpose:     Internal routine that retrieves a "shallow" copy of the value for the 
+ * Purpose:     Internal routine that retrieves a "shallow" copy of the value for the
  *              valid property, with the provided name, in a property list. If there is a
  *              'get' callback routine registered for this property, it is _NOT_ called.
  *
@@ -8937,7 +8726,6 @@ H5P_peek(H5P_genplist_t *plist, const char *name, void *value)
     uint64_t            version;
     bool                inc_thrd_flag = FALSE; /* Flag to dec thrd count */
 
-
     herr_t ret_value = SUCCEED;
 
     FUNC_ENTER_NOAPI(FAIL)
@@ -8951,9 +8739,8 @@ H5P_peek(H5P_genplist_t *plist, const char *name, void *value)
     }
 
     /* If the context is initialized grab version from it */
-    if ( H5P_H5CX_INIT_g )
-    {
-        if ( 0 == (version = H5CX_get_plist_version(atomic_load(&(plist->plist_id)))) ) {
+    if (H5P_H5CX_INIT_g) {
+        if (0 == (version = H5CX_get_plist_version(atomic_load(&(plist->plist_id))))) {
 
 #if H5P_PLIST_CX_LOG /* Used for testing and debugging */
             H5P_mt_class_t *parent = plist->pclass_ptr;
@@ -8967,14 +8754,12 @@ H5P_peek(H5P_genplist_t *plist, const char *name, void *value)
 
             version = atomic_load(&(plist->curr_version));
         }
-        else
-        {
+        else {
             /* update stats */
             atomic_fetch_add(&(H5P_mt_g.num_list_version_from_ctx), 1);
         }
     }
-    else 
-    {
+    else {
         version = atomic_load(&(plist->curr_version));
     }
 
@@ -9006,16 +8791,14 @@ done:
 
 } /* H5P_peek() MT safe version */
 
-
-
 /****************************************************************************************
  * Function:    H5P_get
- * 
+ *
  *              Multithread safe version of H5P_get().
  *
- * Purpose:     Internal routine to retrieve a copy of the value for a property in a 
+ * Purpose:     Internal routine to retrieve a copy of the value for a property in a
  *              property list.
- * 
+ *
  *              The property name must exist or this routine will fail. If the property
  *              has a registered 'get' callback routine, the copy of the value of the
  *              property will first be passed to that callback routine and any changes
@@ -9035,7 +8818,6 @@ H5P_get(H5P_mt_list_t *plist, const char *name, void *value)
     uint64_t            version;
     bool                inc_thrd_flag = FALSE; /* Flag to dec thrd count */
 
-
     herr_t ret_value = SUCCEED;
 
     FUNC_ENTER_NOAPI(FAIL)
@@ -9054,9 +8836,8 @@ H5P_get(H5P_mt_list_t *plist, const char *name, void *value)
     }
 
     /* If the context is initialized grab version from it */
-    if ( H5P_H5CX_INIT_g )
-    {
-        if ( 0 == (version = H5CX_get_plist_version(atomic_load(&(plist->plist_id)))) ) {
+    if (H5P_H5CX_INIT_g) {
+        if (0 == (version = H5CX_get_plist_version(atomic_load(&(plist->plist_id))))) {
 
 #if H5P_PLIST_CX_LOG /* Used for testing and debugging */
             H5P_mt_class_t *parent = plist->pclass_ptr;
@@ -9069,14 +8850,12 @@ H5P_get(H5P_mt_list_t *plist, const char *name, void *value)
 #endif
             version = atomic_load(&(plist->curr_version));
         }
-        else
-        {
+        else {
             /* update stats */
             atomic_fetch_add(&(H5P_mt_g.num_list_version_from_ctx), 1);
         }
     }
-    else 
-    {
+    else {
         version = atomic_load(&(plist->curr_version));
     }
 
@@ -9132,51 +8911,49 @@ done:
 
 } /* H5P_get MT safe version */
 
-
-
 /****************************************************************************************
  * Function:    H5P__copy_prop_plist
- * 
+ *
  *              Multithread safe version of H5P__copy_prop_plist().
  *
  * Purpose:     Internal routine to copy a property from one list to another.
  *
  *              If the target property already exists in the destination list, it must be
- *              deleted and have its delete callback be called, if it has one. Then a 
+ *              deleted and have its delete callback be called, if it has one. Then a
  *              copy of the target property from the source list is created and inserted
  *              in the destination list and if the property has a copy callback, call it.
- * 
+ *
  *              NOTE: Because two modifications to the list are done in this case, the
- *              version of the list must be incremented twice. After incrementing 
+ *              version of the list must be incremented twice. After incrementing
  *              thrd.count for both lists and searching the source list for the target
  *              property, the current version of the destination list is atomically
  *              grabbed, and its next version is grabbed and incremented atomically by
- *              atomic_fetch_add. This is followed by the usual call to 
+ *              atomic_fetch_add. This is followed by the usual call to
  *              H5P__mt_enforce_serialization(). Then the destination list is searched
  *              to check if the target property already exists in it. If it does, the
  *              destination list has its next_version grabbed and incremented atomically
- *              again, storing the new grabbed next_version into the variable 
+ *              again, storing the new grabbed next_version into the variable
  *              next_version2. The property is deleted from the destination list, and
  *              its current version is updated. H5P__mt_enforce_serialization() must be
- *              called a second time to ensure it's safe to continue, or if another 
+ *              called a second time to ensure it's safe to continue, or if another
  *              thread entered the structure waiting for its turn to make a modification,
  *              this thread must wait for its turn. Once this thread can continue, a
  *              copy of the source list's target property is created and inserted into
  *              the destination list and the copy callback is called if it exists. Then
  *              the current version of destination list must be incremented again after
  *              the second modification is completed.
- * 
+ *
  *              NOTE: The property wouldn't need to be deleted from the destination list
  *              and could normally just be inserted due to the versioning system of the
  *              multithread H5P structures. However, because the property delete callback
- *              is expected, it must be deleted first. 
- *              
- * 
- *              If the target property does not already exist in the destination list, 
- *              a copy of the target property from the source list is created and 
- *              inserted in the destination list and if the property has a create 
+ *              is expected, it must be deleted first.
+ *
+ *
+ *              If the target property does not already exist in the destination list,
+ *              a copy of the target property from the source list is created and
+ *              inserted in the destination list and if the property has a create
  *              callback, call it.
- * 
+ *
  *
  * Return:      SUCCEED/FAIL
  *
@@ -9190,16 +8967,15 @@ H5P__copy_prop_plist(hid_t dst_id, hid_t src_id, const char *name)
     H5P_mt_prop_t      *dst_prop;
     H5P_mt_prop_t      *src_prop;
     H5P_mt_prop_value_t value;
-    int64_t             chksum = 0;
-    uint64_t            src_version = 0;
-    uint64_t            dst_version = 0;
-    uint64_t            next_version = 0;
-    uint64_t            next_version2 = 0;
+    int64_t             chksum            = 0;
+    uint64_t            src_version       = 0;
+    uint64_t            dst_version       = 0;
+    uint64_t            next_version      = 0;
+    uint64_t            next_version2     = 0;
     bool                inc_thrd_flag_src = FALSE; /* Flag to dec thrd count */
     bool                inc_thrd_flag_dst = FALSE; /* Flag to dec thrd count */
-    bool                ver_updated = FALSE;
-    bool                ver2_updated = FALSE;
-
+    bool                ver_updated       = FALSE;
+    bool                ver2_updated      = FALSE;
 
     herr_t ret_value = SUCCEED; /* return value */
 
@@ -9275,11 +9051,10 @@ H5P__copy_prop_plist(hid_t dst_id, hid_t src_id, const char *name)
         chksum = H5_checksum_metadata(name, strlen(name), 0);
 
         /**
-         * Delete the property from the destination list, 
+         * Delete the property from the destination list,
          * and call the close callback if it has one.
          */
-        if ((H5P__mt_delete_prop__list(dst_plist, chksum, name, dst_version, next_version)) < 0 )
-        {
+        if ((H5P__mt_delete_prop__list(dst_plist, chksum, name, dst_version, next_version)) < 0) {
             HGOTO_ERROR(H5E_PLIST, H5E_CANTDELETE, FAIL, "unable to remove property");
         }
 
@@ -9297,8 +9072,7 @@ H5P__copy_prop_plist(hid_t dst_id, hid_t src_id, const char *name)
             }
 
             /* Update global atomic plist version if list is a default plist */
-            if ( dst_plist->def_ver_ptr )
-            {
+            if (dst_plist->def_ver_ptr) {
                 atomic_fetch_add((dst_plist->def_ver_ptr), 1);
 
                 /* update stats */
@@ -9322,10 +9096,10 @@ H5P__copy_prop_plist(hid_t dst_id, hid_t src_id, const char *name)
          * call the copy callback,
          * and insert it into the dst_plist
          */
-        if (0 < H5P__mt_ins_or_mod_prop__list(dst_plist, src_prop->name, value.ptr, value.size, FALSE, TRUE,
-                                              TRUE, next_version2, src_prop->create, src_prop->set, 
-                                              src_prop->get, src_prop->encode, src_prop->decode, src_prop->del,
-                                              src_prop->copy, src_prop->cmp, src_prop->close)) {
+        if (0 < H5P__mt_ins_or_mod_prop__list(
+                    dst_plist, src_prop->name, value.ptr, value.size, FALSE, TRUE, TRUE, next_version2,
+                    src_prop->create, src_prop->set, src_prop->get, src_prop->encode, src_prop->decode,
+                    src_prop->del, src_prop->copy, src_prop->cmp, src_prop->close)) {
             HGOTO_ERROR(H5E_PLIST, H5E_CANTCOPY, FAIL, "Failed copying and inserting MT property");
         }
 
@@ -9338,10 +9112,10 @@ H5P__copy_prop_plist(hid_t dst_id, hid_t src_id, const char *name)
          * call the create callback,
          * and insert it into the dst_plist
          */
-        if (0 < H5P__mt_ins_or_mod_prop__list(dst_plist, src_prop->name, value.ptr, value.size, TRUE, FALSE,
-                                              TRUE, next_version, src_prop->create, src_prop->set, 
-                                              src_prop->get, src_prop->encode, src_prop->decode, src_prop->del,
-                                              src_prop->copy, src_prop->cmp, src_prop->close)) {
+        if (0 < H5P__mt_ins_or_mod_prop__list(
+                    dst_plist, src_prop->name, value.ptr, value.size, TRUE, FALSE, TRUE, next_version,
+                    src_prop->create, src_prop->set, src_prop->get, src_prop->encode, src_prop->decode,
+                    src_prop->del, src_prop->copy, src_prop->cmp, src_prop->close)) {
             HGOTO_ERROR(H5E_PLIST, H5E_CANTCOPY, FAIL, "Failed copying and inserting MT property");
         }
     }
@@ -9360,8 +9134,7 @@ done:
         }
 
         /* Update global atomic plist version if list is a default plist */
-        if ( dst_plist->def_ver_ptr )
-        {
+        if (dst_plist->def_ver_ptr) {
             atomic_fetch_add((dst_plist->def_ver_ptr), 1);
 
             /* update stats */
@@ -9381,8 +9154,7 @@ done:
         }
 
         /* Update global atomic plist version if list is a default plist */
-        if ( dst_plist->def_ver_ptr )
-        {
+        if (dst_plist->def_ver_ptr) {
             atomic_fetch_add((dst_plist->def_ver_ptr), 1);
 
             /* update stats */
@@ -9408,21 +9180,19 @@ done:
 
 } /* H5P__copy_prop_plist() MT safe version */
 
-
-
 /****************************************************************************************
  * Function:    H5P__copy_prop_pclass
- * 
+ *
  *              Multithread safe version of H5P__copy_prop_pclass().
  *
  * Purpose:     Internal routine to copy a property from one class to another
- * 
+ *
  *              In the non-multithread version of H5P__copy_prop_pclass() if the property
  *              already exists in the destination class it is deleted first, just like in
  *              H5P__copy_prop_plist(). However in this multithread version that is not
  *              necessary, due to the versioning system of the multithread H5P structures
- *              and for H5P__copy_prop_pclass() the property delete callback is not 
- *              called. 
+ *              and for H5P__copy_prop_pclass() the property delete callback is not
+ *              called.
  *
  *
  * Return:      SUCCEED/FAIL
@@ -9436,12 +9206,12 @@ H5P__copy_prop_pclass(hid_t dst_id, hid_t src_id, const char *name)
     H5P_mt_class_t     *src_pclass;
     H5P_mt_prop_t      *prop;
     H5P_mt_prop_value_t value;
-    uint64_t            src_version = 0;
-    uint64_t            dst_version = 0;
-    uint64_t            next_version = 0;
+    uint64_t            src_version       = 0;
+    uint64_t            dst_version       = 0;
+    uint64_t            next_version      = 0;
     bool                inc_thrd_flag_src = FALSE; /* Flag to dec thrd count */
     bool                inc_thrd_flag_dst = FALSE; /* Flag to dec thrd count */
-    bool                ver_updated = FALSE;
+    bool                ver_updated       = FALSE;
 
     herr_t ret_value = SUCCEED; /* return value */
 
@@ -9501,8 +9271,8 @@ H5P__copy_prop_pclass(hid_t dst_id, hid_t src_id, const char *name)
 
     /* Create a copy of the source prop, and insert it into the dst_pclass */
     if (0 < H5P__mt_ins_or_mod_prop__class(dst_pclass, prop->name, value.ptr, value.size, TRUE, next_version,
-                                            prop->create, prop->set, prop->get, prop->encode, prop->decode, 
-                                            prop->del, prop->copy, prop->cmp, prop->close)) {
+                                           prop->create, prop->set, prop->get, prop->encode, prop->decode,
+                                           prop->del, prop->copy, prop->cmp, prop->close)) {
         HGOTO_ERROR(H5E_PLIST, H5E_CANTCOPY, FAIL, "Failed copying and inserting MT property");
     }
 
@@ -9538,16 +9308,14 @@ done:
 
 } /* H5P__copy_prop_pclass() MT safe version */
 
-
-
 /****************************************************************************************
  * Function:    H5P_close
- * 
+ *
  *              Multithread safe version of H5P_close()
  *
  * Purpose:     Internal routine to close a property list.
  *
- *              Check if the list is already marked closing and if it is throw an error, 
+ *              Check if the list is already marked closing and if it is throw an error,
  *              because it shouldn't be marked closing until it is actually closing.
  *
  *              Then set closing to TRUE, and check if opening is TRUE, or if there
@@ -9565,7 +9333,7 @@ done:
  *              the tail of the list free list instead of freeing the struct.
  *
  *              Decrement the parent's thrd.count.
- * 
+ *
  *              Call H5I_dec_ref() to decrement the parent's ID ref count now that this
  *              list is closed.
  *
@@ -9983,8 +9751,6 @@ done:
 
 } /* H5P_close() MT safe version */
 
-
-
 /****************************************************************************************
  * Function:    H5P__clear_mt_list
  *
@@ -10105,18 +9871,16 @@ done:
 
 } /* H5P__clear_mt_list() */
 
-
-
 /****************************************************************************************
  * Function:    H5P_get_class_name
- * 
+ *
  *              Multithread safe version of H5P_get_class_name().
  *
  * Purpose:     Internal routine to query the name of a generic property list class
- * 
- *              NOTE: The pointer to the name must be free'd by the user for successful 
+ *
+ *              NOTE: The pointer to the name must be free'd by the user for successful
  *              calls.
- * 
+ *
  *              NOTE: Only changes were incrementing and decrementing the class's
  *              thrd.count.
  *
@@ -10127,7 +9891,7 @@ done:
 char *
 H5P_get_class_name(H5P_mt_class_t *pclass)
 {
-    bool  inc_thrd_flag = FALSE; /* Flag to dec thrd count */
+    bool inc_thrd_flag = FALSE; /* Flag to dec thrd count */
 
     char *ret_value = NULL; /* Return value */
 
@@ -10159,16 +9923,14 @@ done:
 
 } /* H5P_get_class_name() */
 
-
-
 /****************************************************************************************
  * Function:    H5P__get_class_path
- * 
+ *
  *              Multithread safe version of H5P__get_class_path().
  *
  * Purpose:     Internal routine to query the full path of a property list class
  *
- *              The pointer to the malloc'ed string must be free'd by the user for 
+ *              The pointer to the malloc'ed string must be free'd by the user for
  *              successful calls.
  *
  *              NOTE: Only changes were incrementing and decrementing the class's
@@ -10183,7 +9945,7 @@ done:
 char *
 H5P__get_class_path(H5P_mt_class_t *pclass)
 {
-    bool  inc_thrd_flag = FALSE; /* Flag to dec thrd count */
+    bool inc_thrd_flag = FALSE; /* Flag to dec thrd count */
 
     char *ret_value = NULL; /* Return value */
 
@@ -10245,11 +10007,9 @@ done:
 
 } /* H5P__get_class_path() MT safe version */
 
-
-
 /****************************************************************************************
  * Function:    H5P__open_class_path_cb
- * 
+ *
  *              Multithread safe version of H5P__open_class_path_cb().
  *
  * Purpose:     Multithread safe version of H5P__open_class_path_cb() which is an
@@ -10291,15 +10051,13 @@ H5P__open_class_path_cb(void *_obj, hid_t H5_ATTR_UNUSED id, void *_key)
 
 } /* end H5P__open_class_path_cb() MT safe version */
 
-
-
 /****************************************************************************************
  * Function:    H5P__open_class_path
- * 
+ *
  *              No changes were made to this function for multithread safe H5P
  *
  * Purpose:     Internal routine to open [a copy of] a class with its full path name
- * 
+ *
  *
  * Return:      Success: Pointer to the new copy property class object
  *
@@ -10377,15 +10135,13 @@ done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P__open_class_path() */
 
-
-
 /****************************************************************************************
  * Function:    H5P__get_class_parent
- * 
+ *
  *              No changes were made to this function for multithread H5P
  *
  * Purpose:     Internal routine to query the parent class of a property class
- * 
+ *
  *
  * Return:      Success: Pointer to the parent class of a property class
  *
@@ -10396,7 +10152,7 @@ done:
 H5P_mt_class_t *
 H5P__get_class_parent(H5P_mt_class_t *pclass)
 {
-    bool  inc_thrd_flag = FALSE; /* Flag to dec thrd count */
+    bool inc_thrd_flag = FALSE; /* Flag to dec thrd count */
 
     H5P_genclass_t *ret_value = NULL; /* Return value */
 
@@ -10429,11 +10185,9 @@ done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P__get_class_parent() */
 
-
-
 /****************************************************************************************
  * Function:    H5P__close_class
- * 
+ *
  *              Multithread safe version of H5P__close_class()
  *
  * Purpose:     Internal routine to close a property list class.
@@ -10441,34 +10195,34 @@ done:
  *              Check if the class is already marked deleted, and if it isn't mark
  *              it deleted.
  *
- *              Check if it's marked as closing, if it is throw an error, because it 
+ *              Check if it's marked as closing, if it is throw an error, because it
  *              shouldn't be marked as closing until it is actually being closed.
  *
  *              Check if ref_count.pl == 0, ref_count.plc == 0, and ref_count.delete is
- *              TRUE. If one of those is not correct, return and when one of the 
+ *              TRUE. If one of those is not correct, return and when one of the
  *              ref_counts is decremented it will be checked again.
- *              
+ *
  *              NOTE: H5P__close_class() should only be called by H5I when and ID ref
  *              count hits zero, or during the clean up of specific functions when an
  *              error occurs. Because of this ref_count.pl and ref_count.plc should
  *              always be 0 when H5P__close_class() is called, since derived objects
- *              also increment the ID ref count of their parent. 
+ *              also increment the ID ref count of their parent.
  *
- *              If both ref counts are zero, mark it as closing. This will prevent more 
+ *              If both ref counts are zero, mark it as closing. This will prevent more
  *              threads from accessing the struct so it can close when any other current
- *              threads in the struct exit. We then check if it's opening or contains 
+ *              threads in the struct exit. We then check if it's opening or contains
  *              other threads. If either are true we sleep and check again.
  *
- *              When opening is FALSE and there are no other threads in the struct, 
- *              increment the parent's thrd.count then decrement the parent's 
+ *              When opening is FALSE and there are no other threads in the struct,
+ *              increment the parent's thrd.count then decrement the parent's
  *              ref_count.plc.
- * 
+ *
  *              Add this struct to the tail of the class free list. If the length of the
  *              class free list is greater than the max desired length attempt to free
  *              a struct from the free list, if one is available to be freed.
  *
  *              Decrement the parent's thrd.count.
- * 
+ *
  *              Call H5I_dec_ref() to decrement the parent's ID index.
  *
  * Return:      SUCCEED/FAIL
@@ -10825,8 +10579,6 @@ done:
 
 } /* H5P__close_class() MT safe version*/
 
-
-
 /****************************************************************************************
  * Function:    H5P__clear_mt_class
  *
@@ -10932,8 +10684,6 @@ done:
 
 } /* H5P__clear_mt_class() */
 
-
-
 /****************************************************************************************
  * Function:    H5P__mt_next_prop_to_cmp
  *
@@ -10999,7 +10749,7 @@ done:
  *              may be encoded, and only predefined ones that have not had any completely
  *              new properties added that don't exist in the parent class.
  *
- *              First increment the thread count of the list and set inc_thrd_flag to 
+ *              First increment the thread count of the list and set inc_thrd_flag to
  *              TRUE. Then call H5P__mt_enforce_serialization() to ensure there
  *              isn't another operation that can change the list occuring, before
  *              continuing.
@@ -11015,8 +10765,8 @@ done:
  *              valid properties and encode them via H5P__mt_encode_prop.
  *
  *              A terminator is encoded for the list.
- * 
- *              Before returning, decrement the thread count of the list if 
+ *
+ *              Before returning, decrement the thread count of the list if
  *              inc_thrd_flag is TRUE.
  *
  * Return:      SUCCEED/FAIL
@@ -11026,12 +10776,12 @@ done:
 herr_t
 H5P__mt_encode(H5P_mt_list_t *list, uint64_t version, void *buf, size_t *nalloc)
 {
-    H5P_mt_list_table_entry_t *entry;                        /* entry in the lkup_tbl */
-    H5P_mt_prop_t             *valid_prop;                   /* prop to try encoding next */
-    H5P_mt_prop_t             *prev_prop;                    /* previous valid_prop in the lfsll */
-    uint8_t                   *p           = (uint8_t *)buf; /* tmp pointer to encode buffer */
-    size_t                     encode_size = 0;              /* size of buf needed to encode properties */
-    bool                       encode        = TRUE;         /* bool for if the list should be encoded */
+    H5P_mt_list_table_entry_t *entry;                          /* entry in the lkup_tbl */
+    H5P_mt_prop_t             *valid_prop;                     /* prop to try encoding next */
+    H5P_mt_prop_t             *prev_prop;                      /* previous valid_prop in the lfsll */
+    uint8_t                   *p             = (uint8_t *)buf; /* tmp pointer to encode buffer */
+    size_t                     encode_size   = 0;              /* size of buf needed to encode properties */
+    bool                       encode        = TRUE;           /* bool for if the list should be encoded */
     bool                       base_flag     = FALSE;
     bool                       inc_thrd_flag = FALSE;
     bool                       ver_updated   = FALSE;
@@ -11436,7 +11186,7 @@ H5P__mt_close_prop(H5P_mt_prop_t *prop)
 /****************************************************************************************
  * Function:    H5P__clear_mt_prop
  *
- * Purpose:     Clears all fields to default values, and frees a property's name and 
+ * Purpose:     Clears all fields to default values, and frees a property's name and
  *              value buffers, if they exist.
  *
  * Return:      SUCCEED/FAIL
@@ -11502,8 +11252,6 @@ done:
     FUNC_LEAVE_NOAPI(ret_value)
 
 } /* H5P__clear_mt_prop() */
-
-
 
 /****************************************************************************************
  * Function:    H5P__mt_enforce_serialization
@@ -11793,8 +11541,7 @@ H5P__dec_thrd_count(void *param)
             thrd = atomic_load(&(list->thrd));
         }
 
-        if ( thrd.opening )
-        {
+        if (thrd.opening) {
             assert(FALSE);
             HGOTO_ERROR(H5E_PLIST, H5E_BADVALUE, FAIL, "Opening flag is set, but shouldn't be");
         }
@@ -12009,8 +11756,6 @@ H5P__calc_avg_visited(uint64_t avg_visited, uint64_t num_calls, uint64_t visited
 
 } /* H5P__calc_avg_visited() */
 
-
-
 /****************************************************************************************
  * Function:    H5P__new_plist_of_type
  *
@@ -12154,18 +11899,16 @@ done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5P__new_plist_of_type() MT safe version */
 
-
-
 /****************************************************************************************
  * Function:    H5P_get_class
- * 
+ *
  *              Multithread safe version of H5P_get_class().
  *
  * Purpose:     Internal routine which queries the parent class of a property list.
  *
  *              Additionally checks if the deleted flag has been set, and if so
  *              atomically resets it to FALSE.
- * 
+ *
  *              NOTE: in the current iteration of multithread H5P a class's delete flag
  *              should not be set to TRUE while the class has existing derived objects,
  *              but this is left as a safety net.
@@ -12224,8 +11967,6 @@ H5P_get_class(H5P_genplist_t *plist)
     FUNC_LEAVE_NOAPI(ret_value);
 
 } /* end H5P_get_class() MT safe version */
-
-
 
 /****************************************************************************************
  * Function:    H5P__mt_is_derived__class()
@@ -12484,8 +12225,6 @@ done:
     FUNC_LEAVE_NOAPI(ret_value)
 
 } /* H5P__mt_is_derived__list() */
-
-
 
 /****************************************************************************************
  * Function:    H5P__init_stats_global
@@ -13544,7 +13283,6 @@ H5P__dump_stats_list(FILE *file_ptr, H5P_mt_list_t *list)
     fprintf(file_ptr, "list->num_lkup_tbl_copy_entries_blank            = %lld\n",
             (unsigned long long)(atomic_load(&(list->num_lkup_tbl_copy_entries_blank))));
 
-
 done:
 
     if (name) {
@@ -13554,8 +13292,6 @@ done:
     FUNC_LEAVE_NOAPI(ret_value)
 
 } /* H5P__dump_stats_class() */
-
-
 
 #else /* H5_HAVE_MULTITHREAD */
 
@@ -13672,7 +13408,6 @@ done:
     FUNC_LEAVE_NOAPI(ret_value)
 }
 
-
 /*-------------------------------------------------------------------------
  * Function:    H5P_init_phase2
  *
@@ -13702,7 +13437,6 @@ H5P_init_phase2(void)
 done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5P_init_phase2() */
-
 
 /*--------------------------------------------------------------------------
  NAME
@@ -13833,7 +13567,6 @@ H5P_term_package(void)
     FUNC_LEAVE_NOAPI(n)
 } /* end H5P_term_package() */
 
-
 /*-------------------------------------------------------------------------
  * Function:    H5P__close_class_cb
  *
@@ -13863,7 +13596,6 @@ done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5P__close_class_cb() */
 
-
 /*-------------------------------------------------------------------------
  * Function:    H5P__close_list_cb
  *
@@ -13892,7 +13624,6 @@ H5P__close_list_cb(void *_plist, void H5_ATTR_UNUSED **request)
 done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5P__close_list_cb() */
-
 
 /*--------------------------------------------------------------------------
  NAME
@@ -13963,7 +13694,6 @@ done:
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5P__do_prop_cb1() */
-
 
 /*--------------------------------------------------------------------------
  NAME
@@ -14038,7 +13768,6 @@ done:
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P__copy_pclass() */
-
 
 /*--------------------------------------------------------------------------
  NAME
@@ -14362,7 +14091,6 @@ done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P__dup_prop() */
 
-
 /*--------------------------------------------------------------------------
  NAME
     H5P__create_prop
@@ -14500,7 +14228,6 @@ H5P__add_prop(H5SL_t *slist, H5P_genprop_t *prop)
 done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P__add_prop() */
-
 
 /*--------------------------------------------------------------------------
  NAME
@@ -14950,7 +14677,6 @@ done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P__create_class() */
 
-
 /*--------------------------------------------------------------------------
  NAME
     H5P__create
@@ -15093,7 +14819,6 @@ done:
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P__create() */
-
 
 /*--------------------------------------------------------------------------
  NAME
@@ -15656,7 +15381,6 @@ done:
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P__register() */
-
 
 /*--------------------------------------------------------------------------
  NAME
@@ -16452,7 +16176,6 @@ done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P__class_set() */
 
-
 /*--------------------------------------------------------------------------
  NAME
     H5P_exist_plist
@@ -17231,7 +16954,6 @@ done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P_isa_class() */
 
-
 /*-------------------------------------------------------------------------
  * Function:    H5P_is_default_plist
  *
@@ -17265,7 +16987,6 @@ H5P_is_default_plist(hid_t plist_id)
 
     return false;
 }
-
 
 /*--------------------------------------------------------------------------
  NAME

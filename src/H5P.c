@@ -77,7 +77,7 @@ typedef struct {
  NAME
     H5Pcopy
  PURPOSE
-    Multithread version of H5Pcopy. 
+    Multithread version of H5Pcopy.
     Routine to copy a property list or class.
  USAGE
     hid_t H5Pcopy(id)
@@ -91,7 +91,7 @@ typedef struct {
     (assuming all property 'copy' callbacks return successfully).
 
     The only difference in the multithread version is an added line when
-    creating a copy of a class, to atomically store the new ID in the 
+    creating a copy of a class, to atomically store the new ID in the
     class's id field.
 
  GLOBAL VARIABLES
@@ -142,19 +142,18 @@ H5Pcopy(hid_t id)
 
         /* Store the id in class struct */
         atomic_store(&(copy_class->id), ret_value);
-        
+
     } /* end else */
 
 done:
     FUNC_LEAVE_API(ret_value)
 } /* H5Pcopy() */
 
-
 /*--------------------------------------------------------------------------
  NAME
     H5Pcreate_class
  PURPOSE
-    Multithread version of H5Pcopy. 
+    Multithread version of H5Pcopy.
     Create a new property list class.
  USAGE
     hid_t H5Pcreate_class(parent, name, cls_create, create_data,
@@ -182,7 +181,7 @@ done:
     Allocates memory and attaches a class to the property list class hierarchy.
 
     The only difference in the multithread version is an added line when
-    creating the new class, to atomically store the new ID in the class's id 
+    creating the new class, to atomically store the new ID in the class's id
     field, and an update to the parameters in H5P__create_class() for the new
     multithread version of that function.
 
@@ -226,8 +225,9 @@ H5Pcreate_class(hid_t parent, const char *name, H5P_cls_create_func_t cls_create
     }
 
     /* Create the new MT property list class */
-    if (NULL == (pclass = H5P__create_class(par_class, name, H5P_TYPE_USER, atomic_load(&(par_class->curr_version)), 
-                                                cls_create, create_data, cls_copy, copy_data, cls_close, close_data))) {
+    if (NULL ==
+        (pclass = H5P__create_class(par_class, name, H5P_TYPE_USER, atomic_load(&(par_class->curr_version)),
+                                    cls_create, create_data, cls_copy, copy_data, cls_close, close_data))) {
         HGOTO_ERROR(H5E_PLIST, H5E_CANTCREATE, H5I_INVALID_HID, "unable to create MT property list class");
     }
 
@@ -247,7 +247,6 @@ done:
     FUNC_LEAVE_API(ret_value)
 
 } /* H5Pcreate_class() MT safe version */
-
 
 /*--------------------------------------------------------------------------
  NAME
@@ -293,12 +292,11 @@ done:
     FUNC_LEAVE_API(ret_value)
 } /* H5Pcreate() */
 
-
 /*--------------------------------------------------------------------------
  NAME
     H5Pregister2
  PURPOSE
-    Multithread version of H5Pregister2. 
+    Multithread version of H5Pregister2.
     Routine to register a new property in a property list class.
  USAGE
     herr_t H5Pregister2(class, name, size, default, prp_create, prp_set, prp_get, prp_close)
@@ -320,15 +318,15 @@ done:
     Returns non-negative on success, negative on failure.
  DESCRIPTION
         Registers a new property with a property list class. Using the updated
-    multithread H5P structures, the new property is created and inserted into the class's 
-    LFSLL (lock-free singly linked list) and the current version of the class is 
-    increment. Thus any previously derived list's will not have an entry in their 
-    lkup_tbl that points to the new property in this class. Also, any previously derived 
-    class will not have this new property due to it not existing at the time the derived 
+    multithread H5P structures, the new property is created and inserted into the class's
+    LFSLL (lock-free singly linked list) and the current version of the class is
+    increment. Thus any previously derived list's will not have an entry in their
+    lkup_tbl that points to the new property in this class. Also, any previously derived
+    class will not have this new property due to it not existing at the time the derived
     class created copied instances of the parent's valid properties.
 
-    Thus the previous process of creating a copy of the class to not affect previously 
-    derived property lists is no longer necessary, and is not done. See 
+    Thus the previous process of creating a copy of the class to not affect previously
+    derived property lists is no longer necessary, and is not done. See
     making_H5P_multi-thread_safe_sketch_design doc for more information on the design
     change.
 
@@ -489,7 +487,6 @@ done:
     FUNC_LEAVE_API(ret_value)
 
 } /* H5Pregister2() MT safe version */
-
 
 /*--------------------------------------------------------------------------
  NAME
@@ -660,7 +657,6 @@ done:
     FUNC_LEAVE_API(ret_value)
 } /* H5Pinsert2() */
 
-
 /*--------------------------------------------------------------------------
  NAME
     H5Pset
@@ -717,7 +713,6 @@ H5Pset(hid_t plist_id, const char *name, const void *value)
 done:
     FUNC_LEAVE_API(ret_value)
 } /* H5Pset() */
-
 
 /*--------------------------------------------------------------------------
  NAME
@@ -791,7 +786,6 @@ done:
 
 } /* H5Pexist() MT safe version */
 
-
 /*--------------------------------------------------------------------------
  NAME
     H5Pget_size
@@ -841,7 +835,7 @@ H5Pget_size(hid_t id, const char *name, size_t *size /*out*/)
     if (H5I_GENPROP_LST == H5I_get_type(id)) {
         if (NULL == (plist = (H5P_mt_list_t *)H5I_object(id))) {
             HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a MT property list");
-        }      
+        }
 
         /* Check the property size */
         if ((ret_value = H5P__get_size_plist(plist, name, size)) < 0)
@@ -863,7 +857,6 @@ H5Pget_size(hid_t id, const char *name, size_t *size /*out*/)
 done:
     FUNC_LEAVE_API(ret_value)
 } /* H5Pget_size() */
-
 
 /*--------------------------------------------------------------------------
  NAME
@@ -916,7 +909,6 @@ done:
     FUNC_LEAVE_API(ret_value)
 } /* H5Pencode2() */
 
-
 /*--------------------------------------------------------------------------
  NAME
     H5Pdecode
@@ -958,7 +950,6 @@ done:
     FUNC_LEAVE_API(ret_value)
 } /* H5Pdecode() */
 
-
 /****************************************************************************************
  * Function:    H5Pget_class
  *
@@ -997,13 +988,13 @@ done:
     NOTE: The original H5P code didn't use H5I_inc_ref(), instead using H5I_register() to
     assign a new ID to the class regardless of whether the class had an existing ID or not.
     Meaning that multiple IDs in the index could point to the same class instance. To
-    prevent this, the use of H5I_inc_ref() is implemented to increment the index's 
+    prevent this, the use of H5I_inc_ref() is implemented to increment the index's
     reference count on the ID for that class.
-    
+
     Additionally, in the multithread redesign of H5P when a class or list is derived from
     a parent class they increment the ID ref count on their parent class, and decrement it
     when they are closed. This action should make it impossible for a class to have its ID
-    removed from the index if it has existing derived objects. See 
+    removed from the index if it has existing derived objects. See
     making_H5P_multi-thread_safe_sketch_design doc for more information on this change.
 
  GLOBAL VARIABLES
@@ -1043,9 +1034,9 @@ H5Pget_class(hid_t plist_id)
     if (0 >= H5I_inc_ref(pclass_id, TRUE)) {
 
         /**
-         * These functions were to test in the case a class was removed from the index while still 
-         * having existing derived objects, which no longer occurs. 
-         * They should probably be removed if the current plan of having derived objects increment 
+         * These functions were to test in the case a class was removed from the index while still
+         * having existing derived objects, which no longer occurs.
+         * They should probably be removed if the current plan of having derived objects increment
          * their parent's ID on creation and decrement their parent's ID on closure stays.
          */
 
@@ -1090,13 +1081,12 @@ done:
     FUNC_LEAVE_API(ret_value)
 } /* H5Pget_class() */
 
-
 /*--------------------------------------------------------------------------
  NAME
     H5Pget_nprops
  PURPOSE
     Only changes are update structures to multithread H5P structures
-    
+
     Routine to query the number of properties in a property list or class.
  USAGE
     herr_t H5Pget_nprops(id, nprops)
@@ -1160,12 +1150,11 @@ done:
     FUNC_LEAVE_API(ret_value)
 } /* H5Pget_nprops() */
 
-
 /*--------------------------------------------------------------------------
  NAME
     H5Pequal
  PURPOSE
-    Multithread version of H5Pequal(). 
+    Multithread version of H5Pequal().
 
     Routine to query whether two property lists or two property classes are equal
  USAGE
@@ -1181,7 +1170,7 @@ done:
     NOTE: The only difference in the multithread version of this function and
     the original is const is removed from H5P_genplist_t and H5P_genclass_t in
     the parameters of the functions H5PP__cmp_plist() and H5P__cmp_class()
-    respectively. This was done because the multitrhead structures track the 
+    respectively. This was done because the multitrhead structures track the
     number of threads that currently are accessing the structures, thus at least
     the thrd->count field will always be modified.
 
@@ -1233,7 +1222,6 @@ done:
     FUNC_LEAVE_API(ret_value)
 } /* H5Pequal() */
 
-
 /*--------------------------------------------------------------------------
  NAME
     H5Pisa_class
@@ -1283,7 +1271,6 @@ H5Pisa_class(hid_t plist_id, hid_t pclass_id)
 done:
     FUNC_LEAVE_API(ret_value)
 } /* H5Pisa_class() */
-
 
 /*--------------------------------------------------------------------------
  NAME
@@ -1427,7 +1414,6 @@ done:
     FUNC_LEAVE_API(ret_value)
 } /* H5Piterate() */
 
-
 /*--------------------------------------------------------------------------
  NAME
     H5Pget
@@ -1489,7 +1475,6 @@ H5Pget(hid_t plist_id, const char *name, void *value /*out*/)
 done:
     FUNC_LEAVE_API(ret_value)
 } /* H5Pget() */
-
 
 /*--------------------------------------------------------------------------
  NAME
@@ -1619,7 +1604,6 @@ done:
     FUNC_LEAVE_API(ret_value)
 } /* H5Pcopy_prop() */
 
-
 /*--------------------------------------------------------------------------
  NAME
     H5Punregister
@@ -1672,7 +1656,6 @@ done:
     FUNC_LEAVE_API(ret_value)
 
 } /* H5Punregister() */
-
 
 /*--------------------------------------------------------------------------
  NAME
@@ -1766,7 +1749,6 @@ done:
     FUNC_LEAVE_API(ret_value)
 } /* H5Pget_class_name() */
 
-
 /*--------------------------------------------------------------------------
  NAME
     H5Pget_class_parent
@@ -1786,13 +1768,13 @@ done:
     NOTE: The original H5P code didn't use H5I_inc_ref(), instead using H5I_register() to
     assign a new ID to the class regardless of whether the class had an existing ID or not.
     Meaning that multiple IDs in the index could point to the same class instance. To
-    prevent this, the use of H5I_inc_ref() is implemented to increment the index's 
+    prevent this, the use of H5I_inc_ref() is implemented to increment the index's
     reference count on the ID for that class.
-    
+
     Additionally, in the multithread redesign of H5P when a class or list is derived from
     a parent class they increment the ID ref count on their parent class, and decrement it
     when they are closed. This action should make it impossible for a class to have its ID
-    removed from the index if it has existing derived objects. See 
+    removed from the index if it has existing derived objects. See
     making_H5P_multi-thread_safe_sketch_design doc for more information on this change.
 
  GLOBAL VARIABLES
@@ -1858,7 +1840,6 @@ done:
 
 } /* H5Pget_class_parent() */
 
-
 /*--------------------------------------------------------------------------
  NAME
     H5Pclose_class
@@ -1876,9 +1857,9 @@ done:
     Releases memory and de-attach a class from the property list class hierarchy.
 
     NOTE: In this iteration of H5P.c where the multithread structures and
-    functions have been implemented, there is not a difference in the original 
+    functions have been implemented, there is not a difference in the original
     and multithread version of H5Pclose_class().
- 
+
     NOTE: The original version of H5P would generate new IDs for classes in
     some functions (i.e. H5Pget_class_parent() ), without checking if they
     already have an existing ID. Thus this class would have two IDs. This
@@ -1887,7 +1868,7 @@ done:
     of those IDs in the index and only generate a new ID if that class did
     not have one already. Due to this change, H5Pclose_class is able to
     remain identical.
-  
+
  GLOBAL VARIABLES
  COMMENTS, BUGS, ASSUMPTIONS
  EXAMPLES
@@ -1912,7 +1893,6 @@ H5Pclose_class(hid_t cls_id)
 done:
     FUNC_LEAVE_API(ret_value)
 } /* H5Pclose_class() */
-
 
 #else
 
@@ -1977,13 +1957,12 @@ H5Pcopy(hid_t id)
                         "unable to register property list class");
 
         } /* end if */
-        
+
     } /* end else */
 
 done:
     FUNC_LEAVE_API(ret_value)
 } /* H5Pcopy() */
-
 
 /*--------------------------------------------------------------------------
  NAME
@@ -2063,7 +2042,6 @@ done:
     FUNC_LEAVE_API(ret_value)
 } /* H5Pcreate_class() */
 
-
 /*--------------------------------------------------------------------------
  NAME
     H5Pcreate
@@ -2106,7 +2084,6 @@ H5Pcreate(hid_t cls_id)
 done:
     FUNC_LEAVE_API(ret_value)
 } /* H5Pcreate() */
-
 
 /*--------------------------------------------------------------------------
  NAME
@@ -2308,7 +2285,6 @@ done:
     FUNC_LEAVE_API(ret_value)
 } /* H5Pregister2() */
 
-
 /*--------------------------------------------------------------------------
  NAME
     H5Pinsert2
@@ -2533,7 +2509,6 @@ done:
     FUNC_LEAVE_API(ret_value)
 } /* H5Pset() */
 
-
 /*--------------------------------------------------------------------------
  NAME
     H5Pexist
@@ -2592,7 +2567,6 @@ H5Pexist(hid_t id, const char *name)
 done:
     FUNC_LEAVE_API(ret_value)
 } /* H5Pexist() */
-
 
 /*--------------------------------------------------------------------------
  NAME
@@ -2658,7 +2632,6 @@ H5Pget_size(hid_t id, const char *name, size_t *size /*out*/)
 done:
     FUNC_LEAVE_API(ret_value)
 } /* H5Pget_size() */
-
 
 /*--------------------------------------------------------------------------
  NAME
@@ -2748,7 +2721,6 @@ done:
     FUNC_LEAVE_API(ret_value)
 } /* H5Pdecode() */
 
-
 /*--------------------------------------------------------------------------
  NAME
     H5Pget_class
@@ -2802,7 +2774,6 @@ done:
 
     FUNC_LEAVE_API(ret_value)
 } /* H5Pget_class() */
-
 
 /*--------------------------------------------------------------------------
  NAME
@@ -2863,7 +2834,6 @@ done:
     FUNC_LEAVE_API(ret_value)
 } /* H5Pget_nprops() */
 
-
 /*--------------------------------------------------------------------------
  NAME
     H5Pequal
@@ -2920,7 +2890,6 @@ H5Pequal(hid_t id1, hid_t id2)
 done:
     FUNC_LEAVE_API(ret_value)
 } /* H5Pequal() */
-
 
 /*--------------------------------------------------------------------------
  NAME
@@ -3283,7 +3252,6 @@ done:
     FUNC_LEAVE_API(ret_value)
 } /* H5Pcopy_prop() */
 
-
 /*--------------------------------------------------------------------------
  NAME
     H5Punregister
@@ -3470,7 +3438,6 @@ done:
     FUNC_LEAVE_API(ret_value)
 
 } /* H5Pget_class_parent() */
-
 
 /*--------------------------------------------------------------------------
  NAME

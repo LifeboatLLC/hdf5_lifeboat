@@ -1594,8 +1594,8 @@ H5CX_set_lapl(hid_t lapl_id)
 /*-------------------------------------------------------------------------
  * Function:    H5CX_set_plist
  *
- * Purpose:     Sets the plist_id and curr_version (and if not a default 
- *              list sets a pointer to the list) for the current API call 
+ * Purpose:     Sets the plist_id and curr_version (and if not a default
+ *              list sets a pointer to the list) for the current API call
  *              context.
  *
  * Return:      SUCCEED/FAIL
@@ -1960,8 +1960,7 @@ H5CX_set_plist(hid_t plist_id, H5P_plist_type_t type)
             (*head)->ctx.ocpypl_ver = H5P_DEFAULT_OCPYPL_VER;
         }
     }
-    else if ( type == H5P_TYPE_REFERENCE_ACCESS )
-    {
+    else if (type == H5P_TYPE_REFERENCE_ACCESS) {
         /* Set the API context's RAPL to a new value */
         if ((*head)->ctx.rapl_id != plist_id && plist_id != H5P_DEFAULT) {
             if (0 >= H5I_inc_ref(plist_id, FALSE)) {
@@ -2085,9 +2084,9 @@ H5CX_set_apl(hid_t *acspl_id, const H5P_libclass_t *libclass,
 #endif /* H5_HAVE_PARALLEL */
                      is_collective)
 {
-    H5CX_node_t **head      = NULL;    /* Pointer to head of API context list */
-    H5P_mt_list_t *acspl = NULL;
-    herr_t        ret_value = SUCCEED; /* Return value */
+    H5CX_node_t  **head      = NULL; /* Pointer to head of API context list */
+    H5P_mt_list_t *acspl     = NULL;
+    herr_t         ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_NOAPI(FAIL)
 
@@ -2117,18 +2116,14 @@ H5CX_set_apl(hid_t *acspl_id, const H5P_libclass_t *libclass,
         /* Check for link access property and set API context if so */
         if ((is_lapl = H5P_class_isa(*libclass->pclass, *H5P_CLS_LACC->pclass)) < 0)
             HGOTO_ERROR(H5E_CONTEXT, H5E_CANTGET, FAIL, "can't check for link access class");
-        else if (is_lapl)
-        {
-            if ( *acspl_id != (*head)->ctx.lapl_id ) 
-            {
-                if ( (*head)->ctx.lapl_inc > 0 )
-                {
-                    if ( (*head)->ctx.lapl_id != H5P_LINK_ACCESS_DEFAULT || 
-                         (*head)->ctx.lapl_id != H5P_GROUP_ACCESS_DEFAULT )
-                    {
-                        if ( H5I_dec_ref((*head)->ctx.lapl_id) < 0 )
-                        {
-                            HGOTO_ERROR(H5E_CONTEXT, H5E_CANTDEC, FAIL, "can't decrement plist's ID in index");
+        else if (is_lapl) {
+            if (*acspl_id != (*head)->ctx.lapl_id) {
+                if ((*head)->ctx.lapl_inc > 0) {
+                    if ((*head)->ctx.lapl_id != H5P_LINK_ACCESS_DEFAULT ||
+                        (*head)->ctx.lapl_id != H5P_GROUP_ACCESS_DEFAULT) {
+                        if (H5I_dec_ref((*head)->ctx.lapl_id) < 0) {
+                            HGOTO_ERROR(H5E_CONTEXT, H5E_CANTDEC, FAIL,
+                                        "can't decrement plist's ID in index");
                         }
 
                         (*head)->ctx.lapl_inc--;
@@ -2162,17 +2157,13 @@ H5CX_set_apl(hid_t *acspl_id, const H5P_libclass_t *libclass,
         /* Check for dataset access property and set API context if so */
         if ((is_dapl = H5P_class_isa(*libclass->pclass, *H5P_CLS_DACC->pclass)) < 0)
             HGOTO_ERROR(H5E_CONTEXT, H5E_CANTGET, FAIL, "can't check for dataset access class");
-        else if (is_dapl)
-        {
-            if ( *acspl_id != (*head)->ctx.dapl_id ) 
-            {
-                if ( (*head)->ctx.dapl_inc > 0 )
-                {
-                    if ( (*head)->ctx.dapl_id != H5P_DATASET_ACCESS_DEFAULT )
-                    {
-                        if ( H5I_dec_ref((*head)->ctx.dapl_id) < 0 )
-                        {
-                            HGOTO_ERROR(H5E_CONTEXT, H5E_CANTDEC, FAIL, "can't decrement plist's ID in index");
+        else if (is_dapl) {
+            if (*acspl_id != (*head)->ctx.dapl_id) {
+                if ((*head)->ctx.dapl_inc > 0) {
+                    if ((*head)->ctx.dapl_id != H5P_DATASET_ACCESS_DEFAULT) {
+                        if (H5I_dec_ref((*head)->ctx.dapl_id) < 0) {
+                            HGOTO_ERROR(H5E_CONTEXT, H5E_CANTDEC, FAIL,
+                                        "can't decrement plist's ID in index");
                         }
 
                         (*head)->ctx.dapl_inc--;
@@ -2206,17 +2197,13 @@ H5CX_set_apl(hid_t *acspl_id, const H5P_libclass_t *libclass,
         /* Check for file access property and set API context if so */
         if ((is_fapl = H5P_class_isa(*libclass->pclass, *H5P_CLS_FACC->pclass)) < 0)
             HGOTO_ERROR(H5E_CONTEXT, H5E_CANTGET, FAIL, "can't check for file access class");
-        else if (is_fapl)
-        {
-            if ( *acspl_id != (*head)->ctx.fapl_id ) 
-            {
-                if ( (*head)->ctx.fapl_inc > 0 )
-                {
-                    if ( (*head)->ctx.fapl_id != H5P_FILE_ACCESS_DEFAULT )
-                    {
-                        if ( H5I_dec_ref((*head)->ctx.fapl_id) < 0 )
-                        {
-                            HGOTO_ERROR(H5E_CONTEXT, H5E_CANTDEC, FAIL, "can't decrement plist's ID in index");
+        else if (is_fapl) {
+            if (*acspl_id != (*head)->ctx.fapl_id) {
+                if ((*head)->ctx.fapl_inc > 0) {
+                    if ((*head)->ctx.fapl_id != H5P_FILE_ACCESS_DEFAULT) {
+                        if (H5I_dec_ref((*head)->ctx.fapl_id) < 0) {
+                            HGOTO_ERROR(H5E_CONTEXT, H5E_CANTDEC, FAIL,
+                                        "can't decrement plist's ID in index");
                         }
 
                         (*head)->ctx.fapl_inc--;
@@ -2327,7 +2314,6 @@ H5CX_set_apl(hid_t *acspl_id, const H5P_libclass_t *libclass,
     H5CX_node_t **head      = NULL;    /* Pointer to head of API context list */
     herr_t        ret_value = SUCCEED; /* Return value */
 
-
     FUNC_ENTER_NOAPI(FAIL)
 
     /* Sanity checks */
@@ -2356,23 +2342,20 @@ H5CX_set_apl(hid_t *acspl_id, const H5P_libclass_t *libclass,
         /* Check for link access property and set API context if so */
         if ((is_lapl = H5P_class_isa(*libclass->pclass, *H5P_CLS_LACC->pclass)) < 0)
             HGOTO_ERROR(H5E_CONTEXT, H5E_CANTGET, FAIL, "can't check for link access class");
-        else if (is_lapl)
-        {
+        else if (is_lapl) {
             (*head)->ctx.lapl_id = *acspl_id;
         }
         /* Check for dataset access property and set API context if so */
         if ((is_dapl = H5P_class_isa(*libclass->pclass, *H5P_CLS_DACC->pclass)) < 0)
             HGOTO_ERROR(H5E_CONTEXT, H5E_CANTGET, FAIL, "can't check for dataset access class");
-        else if (is_dapl)
-        {
+        else if (is_dapl) {
             (*head)->ctx.dapl_id = *acspl_id;
         }
 
         /* Check for file access property and set API context if so */
         if ((is_fapl = H5P_class_isa(*libclass->pclass, *H5P_CLS_FACC->pclass)) < 0)
             HGOTO_ERROR(H5E_CONTEXT, H5E_CANTGET, FAIL, "can't check for file access class");
-        else if (is_fapl)
-        {
+        else if (is_fapl) {
             (*head)->ctx.fapl_id = *acspl_id;
         }
 
@@ -2397,7 +2380,7 @@ H5CX_set_apl(hid_t *acspl_id, const H5P_libclass_t *libclass,
             if (H5P_USER_TRUE == md_coll_read)
                 is_collective = TRUE;
         } /* end if */
-#endif    /* H5_HAVE_PARALLEL */
+#endif /* H5_HAVE_PARALLEL */
     }     /* end else */
 
 #ifdef H5_HAVE_PARALLEL
@@ -2422,7 +2405,7 @@ H5CX_set_apl(hid_t *acspl_id, const H5P_libclass_t *libclass,
                 MPI_Barrier(mpi_comm);
         } /* end if */
     }     /* end if */
-#endif    /* H5_HAVE_PARALLEL */
+#endif /* H5_HAVE_PARALLEL */
 
 done:
     FUNC_LEAVE_NOAPI(ret_value)

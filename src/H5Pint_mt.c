@@ -640,8 +640,6 @@ done:
 
 } /* H5P__mt_copy_class() */
 
-
-
 #if 0
 /****************************************************************************************
  * Function:    H5P__mt_create_class__internal
@@ -1302,7 +1300,6 @@ done:
 
 } /* H5P__mt_copy_list() */
 
-
 #if 0
 /**
  * 
@@ -1394,7 +1391,7 @@ done:
     FUNC_LEAVE_NOAPI(ret_value)
 
 } /* H5P__mt_create_list__internal*/
- #endif
+#endif
 
 /****************************************************************************************
  * Function:    H5P__mt_alloc_list
@@ -8923,6 +8920,6 @@ H5P__mt_term_free_lists(void)
 } /* H5P__mt_term_free_lists() */
 #endif
 
-#endif 
+#endif
 
 #endif

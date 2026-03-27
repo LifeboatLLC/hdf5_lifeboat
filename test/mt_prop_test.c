@@ -1109,8 +1109,8 @@ init_class_props(void)
     value.ptr              = (&prop1_value);
     value.size             = sizeof(prop1_value);
 
-    class_prop_table[0].prop = H5P__create_prop(name, value.ptr, value.size, TRUE, 1, NULL, NULL, NULL,
-                                                   NULL, NULL, NULL, NULL, NULL, NULL);
+    class_prop_table[0].prop = H5P__create_prop(name, value.ptr, value.size, TRUE, 1, NULL, NULL, NULL, NULL,
+                                                NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(class_prop_table[0].prop, "H5P__create_prop");
 
     test_prop = class_prop_table[0].prop;
@@ -1139,7 +1139,7 @@ init_class_props(void)
     value.size                  = (sizeof(prop1_ver2_value));
 
     new_prop = H5P__create_prop(class_prop_table[0].name, value.ptr, value.size, TRUE, 2, NULL, NULL, NULL,
-                                   NULL, NULL, NULL, NULL, NULL, NULL);
+                                NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(new_prop, "H5P__create_prop");
 
     assert(new_prop);
@@ -1174,7 +1174,7 @@ init_class_props(void)
     value.size                  = (sizeof(prop1_ver3_value));
 
     new_prop = H5P__create_prop(class_prop_table[0].name, value.ptr, value.size, TRUE, 3, NULL, NULL, NULL,
-                                   NULL, NULL, NULL, NULL, NULL, NULL);
+                                NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(new_prop, "H5P__create_prop");
 
     assert(new_prop);
@@ -1218,7 +1218,7 @@ init_class_props(void)
     value.size               = sizeof(prop2_value);
 
     class_prop_table[1].prop = H5P__create_prop(class_prop_table[1].name, value.ptr, value.size, TRUE, 1,
-                                                   NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+                                                NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(class_prop_table[1].prop, "H5P__create_prop");
 
     test_prop = class_prop_table[1].prop;
@@ -1247,7 +1247,7 @@ init_class_props(void)
     value.size                    = (sizeof(prop2_ver2_value));
 
     new_prop = H5P__create_prop(class_prop_table[1].name, value.ptr, value.size, TRUE, 2, NULL, NULL, NULL,
-                                   NULL, NULL, NULL, NULL, NULL, NULL);
+                                NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(new_prop, "H5P__create_prop");
 
     assert(new_prop);
@@ -1289,7 +1289,7 @@ init_class_props(void)
     value.size                  = sizeof(prop3_value);
 
     class_prop_table[2].prop = H5P__create_prop(class_prop_table[2].name, value.ptr, value.size, TRUE, 1,
-                                                   NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+                                                NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(class_prop_table[2].prop, "H5P__create_prop");
 
     test_prop = class_prop_table[2].prop;
@@ -1327,7 +1327,7 @@ init_class_props(void)
     value.size                = sizeof(prop4_value);
 
     class_prop_table[3].prop = H5P__create_prop(class_prop_table[3].name, value.ptr, value.size, TRUE, 1,
-                                                   NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+                                                NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(class_prop_table[3].prop, "H5P__create_prop");
 
     test_prop = class_prop_table[3].prop;
@@ -1356,7 +1356,7 @@ init_class_props(void)
     value.size                     = sizeof(prop4_ver2_value);
 
     new_prop = H5P__create_prop(class_prop_table[3].name, value.ptr, value.size, TRUE, 2, NULL, NULL, NULL,
-                                   NULL, NULL, NULL, NULL, NULL, NULL);
+                                NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(new_prop, "H5P__create_prop");
 
     assert(new_prop);
@@ -1445,8 +1445,8 @@ init_class2_props(void)
     value.ptr              = (&prop1_value);
     value.size             = sizeof(prop1_value);
 
-    class2_prop_table[0].prop = H5P__create_prop(name, value.ptr, value.size, TRUE, 1, NULL, NULL, NULL,
-                                                    NULL, NULL, NULL, NULL, NULL, NULL);
+    class2_prop_table[0].prop = H5P__create_prop(name, value.ptr, value.size, TRUE, 1, NULL, NULL, NULL, NULL,
+                                                 NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(class2_prop_table[0].prop, "H5P__create_prop");
 
     test_prop = class2_prop_table[0].prop;
@@ -1486,7 +1486,7 @@ init_class2_props(void)
     value.size               = sizeof(prop2_value);
 
     class2_prop_table[1].prop = H5P__create_prop(class2_prop_table[1].name, value.ptr, value.size, TRUE, 1,
-                                                    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+                                                 NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(class2_prop_table[1].prop, "H5P__create_prop");
 
     test_prop = class2_prop_table[1].prop;
@@ -1524,7 +1524,7 @@ init_class2_props(void)
     value.size                  = sizeof(prop3_value);
 
     class2_prop_table[2].prop = H5P__create_prop(class2_prop_table[2].name, value.ptr, value.size, TRUE, 1,
-                                                    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+                                                 NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(class2_prop_table[2].prop, "H5P__create_prop");
 
     test_prop = class2_prop_table[2].prop;
@@ -1552,8 +1552,8 @@ init_class2_props(void)
     value.ptr                        = (&prop3_ver2_value);
     value.size                       = sizeof(prop3_ver2_value);
 
-    new_prop = H5P__create_prop(class2_prop_table[2].name, value.ptr, value.size, TRUE, 1, NULL, NULL,
-                                   NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+    new_prop = H5P__create_prop(class2_prop_table[2].name, value.ptr, value.size, TRUE, 1, NULL, NULL, NULL,
+                                NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(new_prop, "H5P__create_prop");
 
     assert(new_prop);
@@ -1587,8 +1587,8 @@ init_class2_props(void)
     value.ptr                        = (&prop3_ver3_value);
     value.size                       = sizeof(prop3_ver3_value);
 
-    new_prop = H5P__create_prop(class2_prop_table[2].name, value.ptr, value.size, TRUE, 1, NULL, NULL,
-                                   NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+    new_prop = H5P__create_prop(class2_prop_table[2].name, value.ptr, value.size, TRUE, 1, NULL, NULL, NULL,
+                                NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(new_prop, "H5P__create_prop");
 
     assert(new_prop);
@@ -1691,8 +1691,8 @@ init_list_props(void)
     value            = atomic_load(&(class_table_prop->value));
 
     list_prop_table[0].prop = H5P__create_prop(class_table_prop->name, value.ptr, value.size, TRUE,
-                                                  atomic_load(&(class_table_prop->create_version)), NULL,
-                                                  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+                                               atomic_load(&(class_table_prop->create_version)), NULL, NULL,
+                                               NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(list_prop_table[0].prop, "init_list_props");
     assert(list_prop_table[0].prop);
 
@@ -1725,7 +1725,7 @@ init_list_props(void)
     value.size                  = (sizeof(prop1_ver2_value));
 
     new_prop = H5P__create_prop(list_prop_table[0].name, value.ptr, value.size, FALSE, 2, NULL, NULL, NULL,
-                                   NULL, NULL, NULL, NULL, NULL, NULL);
+                                NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(new_prop, "H5P__create_prop");
 
     assert(new_prop);
@@ -1761,7 +1761,7 @@ init_list_props(void)
     value.size                  = (sizeof(prop1_ver3_value));
 
     new_prop = H5P__create_prop(list_prop_table[0].name, value.ptr, value.size, FALSE, 3, NULL, NULL, NULL,
-                                   NULL, NULL, NULL, NULL, NULL, NULL);
+                                NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(new_prop, "H5P__create_prop");
 
     assert(new_prop);
@@ -1809,8 +1809,8 @@ init_list_props(void)
     value            = atomic_load(&(class_table_prop->value));
 
     list_prop_table[1].prop = H5P__create_prop(class_table_prop->name, value.ptr, value.size, TRUE,
-                                                  atomic_load(&(class_table_prop->create_version)), NULL,
-                                                  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+                                               atomic_load(&(class_table_prop->create_version)), NULL, NULL,
+                                               NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(list_prop_table[1].prop, "init_list_props");
     assert(list_prop_table[1].prop);
 
@@ -1855,8 +1855,8 @@ init_list_props(void)
     value            = atomic_load(&(class_table_prop->value));
 
     list_prop_table[2].prop = H5P__create_prop(class_table_prop->name, value.ptr, value.size, TRUE,
-                                                  atomic_load(&(class_table_prop->create_version)), NULL,
-                                                  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+                                               atomic_load(&(class_table_prop->create_version)), NULL, NULL,
+                                               NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(list_prop_table[2].prop, "init_list_props");
     assert(list_prop_table[2].prop);
 
@@ -1889,7 +1889,7 @@ init_list_props(void)
     value.size = sizeof(prop3_ver2_value);
 
     new_prop = H5P__create_prop(list_prop_table[2].name, value.ptr, value.size, FALSE, 2, NULL, NULL, NULL,
-                                   NULL, NULL, NULL, NULL, NULL, NULL);
+                                NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(new_prop, "H5P__create_prop");
 
     assert(new_prop);
@@ -1933,8 +1933,8 @@ init_list_props(void)
     value.ptr                 = (&prop4_value);
     value.size                = sizeof(prop4_value);
 
-    list_prop_table[3].prop = H5P__create_prop(list_prop_table[3].name, value.ptr, value.size, FALSE, 1,
-                                                  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+    list_prop_table[3].prop = H5P__create_prop(list_prop_table[3].name, value.ptr, value.size, FALSE, 1, NULL,
+                                               NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(list_prop_table[3].prop, "H5P__create_prop");
 
     test_prop = list_prop_table[3].prop;
@@ -1963,7 +1963,7 @@ init_list_props(void)
     value.size                     = (sizeof(prop4_ver2_value));
 
     new_prop = H5P__create_prop(list_prop_table[3].name, value.ptr, value.size, FALSE, 3, NULL, NULL, NULL,
-                                   NULL, NULL, NULL, NULL, NULL, NULL);
+                                NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(new_prop, "H5P__create_prop");
 
     assert(new_prop);
@@ -2061,8 +2061,8 @@ init_list2_props(void)
 
     /* This prop is inherited, but also deleted */
     list2_prop_table[0].prop = H5P__create_prop(list_table_prop->name, value.ptr, value.size, FALSE,
-                                                   atomic_load(&(list_table_prop->create_version)), NULL,
-                                                   NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+                                                atomic_load(&(list_table_prop->create_version)), NULL, NULL,
+                                                NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(list2_prop_table[0].prop, "init_list2_props");
     assert(list2_prop_table[0].prop);
 
@@ -2107,8 +2107,8 @@ init_list2_props(void)
     value           = atomic_load(&(list_table_prop->value));
 
     list2_prop_table[1].prop = H5P__create_prop(list_table_prop->name, value.ptr, value.size, TRUE,
-                                                   atomic_load(&(list_table_prop->create_version)), NULL,
-                                                   NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+                                                atomic_load(&(list_table_prop->create_version)), NULL, NULL,
+                                                NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(list2_prop_table[1].prop, "init_list2_props");
     assert(list2_prop_table[1].prop);
 
@@ -2140,8 +2140,8 @@ init_list2_props(void)
     value.ptr                     = (&prop2_ver2_value);
     value.size                    = (sizeof(prop2_ver2_value));
 
-    new_prop = H5P__create_prop(list2_prop_table[1].name, value.ptr, value.size, FALSE, 2, NULL, NULL,
-                                   NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+    new_prop = H5P__create_prop(list2_prop_table[1].name, value.ptr, value.size, FALSE, 2, NULL, NULL, NULL,
+                                NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(new_prop, "H5P__create_prop");
 
     assert(new_prop);
@@ -2175,8 +2175,8 @@ init_list2_props(void)
     list_table_prop = list2_prop_table[1].prop;
     value           = atomic_load(&(list_table_prop->value));
 
-    new_prop = H5P__create_prop(list2_prop_table[1].name, value.ptr, value.size, FALSE, 3, NULL, NULL,
-                                   NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+    new_prop = H5P__create_prop(list2_prop_table[1].name, value.ptr, value.size, FALSE, 3, NULL, NULL, NULL,
+                                NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(new_prop, "H5P__create_prop");
 
     assert(new_prop);
@@ -2222,8 +2222,8 @@ init_list2_props(void)
     list_table_prop = next.ptr;
     value           = atomic_load(&(list_table_prop->value));
 
-    list2_prop_table[2].prop = H5P__create_prop(list_table_prop->name, value.ptr, value.size, FALSE, 1,
-                                                   NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+    list2_prop_table[2].prop = H5P__create_prop(list_table_prop->name, value.ptr, value.size, FALSE, 1, NULL,
+                                                NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(list2_prop_table[2].prop, "init_list_props");
     assert(list2_prop_table[2].prop);
 
@@ -2269,8 +2269,8 @@ init_list2_props(void)
     list_table_prop = next.ptr;
     value           = atomic_load(&(list_table_prop->value));
 
-    list2_prop_table[3].prop = H5P__create_prop(list_table_prop->name, value.ptr, value.size, FALSE, 1,
-                                                   NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+    list2_prop_table[3].prop = H5P__create_prop(list_table_prop->name, value.ptr, value.size, FALSE, 1, NULL,
+                                                NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(list2_prop_table[3].prop, "init_list_props");
     assert(list2_prop_table[3].prop);
 
@@ -2302,8 +2302,8 @@ init_list2_props(void)
     value.ptr                      = (&prop4_ver2_value);
     value.size                     = (sizeof(prop4_ver2_value));
 
-    new_prop = H5P__create_prop(list2_prop_table[3].name, value.ptr, value.size, FALSE, 3, NULL, NULL,
-                                   NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+    new_prop = H5P__create_prop(list2_prop_table[3].name, value.ptr, value.size, FALSE, 3, NULL, NULL, NULL,
+                                NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(new_prop, "H5P__create_prop");
 
     assert(new_prop);
@@ -2336,8 +2336,8 @@ init_list2_props(void)
     list_table_prop = list2_prop_table[3].prop;
     value           = atomic_load(&(list_table_prop->value));
 
-    new_prop = H5P__create_prop(list2_prop_table[3].name, value.ptr, value.size, FALSE, 3, NULL, NULL,
-                                   NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+    new_prop = H5P__create_prop(list2_prop_table[3].name, value.ptr, value.size, FALSE, 3, NULL, NULL, NULL,
+                                NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(new_prop, "H5P__create_prop");
 
     assert(new_prop);
@@ -2420,9 +2420,9 @@ init_list3_props(void)
     class_table_prop = class2_prop_table[0].prop;
     value            = atomic_load(&(class_table_prop->value));
 
-    list3_prop_table[0].prop = H5P__create_prop(name, value.ptr, value.size, TRUE,
-                                                   atomic_load(&(class_table_prop->create_version)), NULL,
-                                                   NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+    list3_prop_table[0].prop =
+        H5P__create_prop(name, value.ptr, value.size, TRUE, atomic_load(&(class_table_prop->create_version)),
+                         NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(list3_prop_table[0].prop, "H5P__create_prop");
 
     test_prop = list3_prop_table[0].prop;
@@ -2459,9 +2459,9 @@ init_list3_props(void)
     class_table_prop = class2_prop_table[1].prop;
     value            = atomic_load(&(class_table_prop->value));
 
-    list3_prop_table[1].prop = H5P__create_prop(name, value.ptr, value.size, TRUE,
-                                                   atomic_load(&(class_table_prop->create_version)), NULL,
-                                                   NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+    list3_prop_table[1].prop =
+        H5P__create_prop(name, value.ptr, value.size, TRUE, atomic_load(&(class_table_prop->create_version)),
+                         NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(list3_prop_table[1].prop, "H5P__create_prop");
 
     test_prop = list3_prop_table[1].prop;
@@ -2498,9 +2498,9 @@ init_list3_props(void)
     class_table_prop = class2_prop_table[2].prop;
     value            = atomic_load(&(class_table_prop->value));
 
-    list3_prop_table[2].prop = H5P__create_prop(name, value.ptr, value.size, TRUE,
-                                                   atomic_load(&(class_table_prop->create_version)), NULL,
-                                                   NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+    list3_prop_table[2].prop =
+        H5P__create_prop(name, value.ptr, value.size, TRUE, atomic_load(&(class_table_prop->create_version)),
+                         NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(list3_prop_table[2].prop, "H5P__create_prop");
 
     test_prop = list3_prop_table[2].prop;
@@ -2554,8 +2554,8 @@ create_test_root_class(void)
 
     hid_t ret_value;
 
-    if (NULL == (test_root = H5P__create_class(NULL, TEST_ROOT_NAME, H5P_TYPE_ROOT, 0, NULL, NULL, NULL,
-                                                  NULL, NULL, NULL))) {
+    if (NULL == (test_root = H5P__create_class(NULL, TEST_ROOT_NAME, H5P_TYPE_ROOT, 0, NULL, NULL, NULL, NULL,
+                                               NULL, NULL))) {
         fprintf(stderr, "create_test_root_class(): Failed creating test root class.");
         return -1;
     }
@@ -2998,12 +2998,11 @@ test_h5p_mt_class_1(test_params_t *test_params)
 
     /**
      * Create a new class derived from the test root.
-     * 
+     *
      * This test is using the internal function H5P__create_class() to test creating
      * a default class during initialization of H5P.
      */
-    class1 =
-        H5P__create_class(test_root, CLASS1_NAME, H5P_TYPE_USER, 0, NULL, NULL, NULL, NULL, NULL, NULL);
+    class1 = H5P__create_class(test_root, CLASS1_NAME, H5P_TYPE_USER, 0, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(class1, "H5P__create_class");
     assert(class1);
     assert(atomic_load(&(class1->tag)) == H5P_MT_CLASS_TAG);
@@ -6135,7 +6134,7 @@ close_test_structs(test_params_t *test_params)
 
     /* Check all of list3's stats that have changed */
     assert(atomic_load(&(list3->num_thrd_closing_flag_set)) == 1);
-    
+
     return (ret_value);
 
 } /* end close_test_structs() */
@@ -6156,15 +6155,15 @@ close_test_structs(test_params_t *test_params)
 static herr_t
 term_test_free_lists(int _num_threads)
 {
-    uint64_t num_threads = (uint64_t)_num_threads;
-    H5P_mt_list_sptr_t           fl_list_head;
-    H5P_mt_list_sptr_t           fl_list_tail;
-    H5P_mt_class_sptr_t          fl_class_head;
-    H5P_mt_class_sptr_t          fl_class_tail;
-    H5P_mt_prop_aptr_t           fl_prop_head;
-    H5P_mt_prop_aptr_t           fl_prop_tail;
+    uint64_t            num_threads = (uint64_t)_num_threads;
+    H5P_mt_list_sptr_t  fl_list_head;
+    H5P_mt_list_sptr_t  fl_list_tail;
+    H5P_mt_class_sptr_t fl_class_head;
+    H5P_mt_class_sptr_t fl_class_tail;
+    H5P_mt_prop_aptr_t  fl_prop_head;
+    H5P_mt_prop_aptr_t  fl_prop_tail;
 
-    herr_t   ret;
+    herr_t ret;
 
     ret = H5P__mt_term_free_lists();
     CHECK_I(ret, "H5P__mt_term_free_lists");
@@ -6188,7 +6187,6 @@ term_test_free_lists(int _num_threads)
     CHECK_PTR_NULL(fl_prop_tail.ptr, "H5P__mt_term_free_lists");
     assert(!fl_prop_head.ptr);
     assert(!fl_prop_tail.ptr);
-
 
     /* Check all the global stats that have changed */
     if (num_threads == 1) {
@@ -6387,8 +6385,8 @@ mt_context_test(TestParams_t H5_ATTR_UNUSED *params)
         new_value.size = sizeof(test_value);
 
         /* Inserts a new property to increment the version of the default list */
-        ret = H5P_insert(list, name, new_value.size, new_value.ptr, 
-                         NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+        ret = H5P_insert(list, name, new_value.size, new_value.ptr, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+                         NULL);
         CHECK_I(ret, "H5P_insert");
         assert(ret == SUCCEED);
 
@@ -6557,14 +6555,11 @@ test_cx_lists_set_1(H5P_mt_list_t *list, const char *name, H5P_mt_prop_value_t v
      * If list is a default list, it has already had this property inserted.
      * Modify it, instead of create a new one.
      */
-    if ( list->def_ver_ptr )
-    {
+    if (list->def_ver_ptr) {
         ret = H5P_set(list, name, value.ptr);
     }
-    else
-    {
-        ret = H5P_insert(list, name, value.size, value.ptr, NULL, 
-                         NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+    else {
+        ret = H5P_insert(list, name, value.size, value.ptr, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     }
 
     CHECK_I(ret, "H5P_insert");
@@ -9947,8 +9942,8 @@ create_starting_classes_and_lists(void)
          * H5P__create_class() being used to create the default classes
          * during regular HDF5 initialization.
          */
-        class = H5P__create_class(parent, class_entry->name, H5P_TYPE_USER, 0, NULL, NULL, NULL, NULL,
-                                     NULL, NULL);
+        class = H5P__create_class(parent, class_entry->name, H5P_TYPE_USER, 0, NULL, NULL, NULL, NULL, NULL,
+                                  NULL);
         CHECK_PTR(class, "H5P__create_class");
         assert(class);
         assert(atomic_load(&(class->tag)) == H5P_MT_CLASS_TAG);
@@ -9962,8 +9957,8 @@ create_starting_classes_and_lists(void)
             prop_entry = &class_entry->prop_table[j];
             assert(atomic_load(&(prop_entry->status)) == DOESNT_EXIST);
 
-            prop = H5P__create_prop(prop_entry->name, &value, sizeof(value), TRUE, 1, NULL, NULL, NULL,
-                                       NULL, NULL, NULL, NULL, NULL, NULL);
+            prop = H5P__create_prop(prop_entry->name, &value, sizeof(value), TRUE, 1, NULL, NULL, NULL, NULL,
+                                    NULL, NULL, NULL, NULL, NULL);
             CHECK_PTR(prop, "H5P__create_prop");
             assert(prop);
             assert(atomic_load(&(prop->tag)) == H5P_MT_PROP_TAG);
