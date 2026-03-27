@@ -1109,20 +1109,20 @@ init_class_props(void)
     value.ptr              = (&prop1_value);
     value.size             = sizeof(prop1_value);
 
-    class_prop_table[0].prop = H5P__mt_create_prop(name, value.ptr, value.size, TRUE, 1, NULL, NULL, NULL,
+    class_prop_table[0].prop = H5P__create_prop(name, value.ptr, value.size, TRUE, 1, NULL, NULL, NULL,
                                                    NULL, NULL, NULL, NULL, NULL, NULL);
-    CHECK_PTR(class_prop_table[0].prop, "H5P__mt_create_prop");
+    CHECK_PTR(class_prop_table[0].prop, "H5P__create_prop");
 
     test_prop = class_prop_table[0].prop;
-    VERIFY(atomic_load(&(test_prop->tag)), H5P_MT_PROP_TAG, "H5P__mt_create_prop");
-    VERIFY(test_prop->chksum, class_prop_table[0].chksum, "H5P__mt_create_prop");
-    CHECK_PTR(test_prop->name, "H5P__mt_create_prop");
+    VERIFY(atomic_load(&(test_prop->tag)), H5P_MT_PROP_TAG, "H5P__create_prop");
+    VERIFY(test_prop->chksum, class_prop_table[0].chksum, "H5P__create_prop");
+    CHECK_PTR(test_prop->name, "H5P__create_prop");
     if (HDstrcmp(test_prop->name, "Property 1") != 0) {
         TestErrPrintf("Property names don't match! name = %s, Property 1\n", test_prop->name);
     }
 
     test_value = atomic_load(&(test_prop->value));
-    VERIFY(test_value.size, value.size, "H5P__mt_create_prop");
+    VERIFY(test_value.size, value.size, "H5P__create_prop");
     if (memcmp(test_value.ptr, value.ptr, value.size) != 0) {
         TestErrPrintf("Property 1 value doesn't match! line=%d\n", __LINE__);
     }
@@ -1138,20 +1138,20 @@ init_class_props(void)
     value.ptr                   = (&prop1_ver2_value);
     value.size                  = (sizeof(prop1_ver2_value));
 
-    new_prop = H5P__mt_create_prop(class_prop_table[0].name, value.ptr, value.size, TRUE, 2, NULL, NULL, NULL,
+    new_prop = H5P__create_prop(class_prop_table[0].name, value.ptr, value.size, TRUE, 2, NULL, NULL, NULL,
                                    NULL, NULL, NULL, NULL, NULL, NULL);
-    CHECK_PTR(new_prop, "H5P__mt_create_prop");
+    CHECK_PTR(new_prop, "H5P__create_prop");
 
     assert(new_prop);
     assert(atomic_load(&(new_prop->tag)) == H5P_MT_PROP_TAG);
 
-    VERIFY(new_prop->chksum, test_prop->chksum, "H5P__mt_create_prop");
+    VERIFY(new_prop->chksum, test_prop->chksum, "H5P__create_prop");
     if (HDstrcmp(new_prop->name, test_prop->name) != 0) {
         TestErrPrintf("Property names don't match! name = %s, Property 1\n", new_prop->name);
     }
 
     new_value = atomic_load(&(new_prop->value));
-    VERIFY(new_value.size, value.size, "H5P__mt_create_prop");
+    VERIFY(new_value.size, value.size, "H5P__create_prop");
     if (memcmp(new_value.ptr, value.ptr, value.size) != 0) {
         TestErrPrintf("Property 1 version 2 value doesn't match! line=%d\n", __LINE__);
     }
@@ -1173,20 +1173,20 @@ init_class_props(void)
     value.ptr                   = (&prop1_ver3_value);
     value.size                  = (sizeof(prop1_ver3_value));
 
-    new_prop = H5P__mt_create_prop(class_prop_table[0].name, value.ptr, value.size, TRUE, 3, NULL, NULL, NULL,
+    new_prop = H5P__create_prop(class_prop_table[0].name, value.ptr, value.size, TRUE, 3, NULL, NULL, NULL,
                                    NULL, NULL, NULL, NULL, NULL, NULL);
-    CHECK_PTR(new_prop, "H5P__mt_create_prop");
+    CHECK_PTR(new_prop, "H5P__create_prop");
 
     assert(new_prop);
     assert(atomic_load(&(new_prop->tag)) == H5P_MT_PROP_TAG);
 
-    VERIFY(new_prop->chksum, test_prop_ver2->chksum, "H5P__mt_create_prop");
+    VERIFY(new_prop->chksum, test_prop_ver2->chksum, "H5P__create_prop");
     if (HDstrcmp(new_prop->name, test_prop_ver2->name) != 0) {
         TestErrPrintf("Property names don't match! name = %s, Property 1\n", new_prop->name);
     }
 
     new_value = atomic_load(&(new_prop->value));
-    VERIFY(new_value.size, value.size, "H5P__mt_create_prop");
+    VERIFY(new_value.size, value.size, "H5P__create_prop");
     if (memcmp(new_value.ptr, value.ptr, value.size) != 0) {
         TestErrPrintf("Property 1 version 3 value doesn't match! line=%d\n", __LINE__);
     }
@@ -1217,20 +1217,20 @@ init_class_props(void)
     value.ptr                = (&prop2_value);
     value.size               = sizeof(prop2_value);
 
-    class_prop_table[1].prop = H5P__mt_create_prop(class_prop_table[1].name, value.ptr, value.size, TRUE, 1,
+    class_prop_table[1].prop = H5P__create_prop(class_prop_table[1].name, value.ptr, value.size, TRUE, 1,
                                                    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-    CHECK_PTR(class_prop_table[1].prop, "H5P__mt_create_prop");
+    CHECK_PTR(class_prop_table[1].prop, "H5P__create_prop");
 
     test_prop = class_prop_table[1].prop;
-    VERIFY(atomic_load(&(test_prop->tag)), H5P_MT_PROP_TAG, "H5P__mt_create_prop");
-    VERIFY(test_prop->chksum, class_prop_table[1].chksum, "H5P__mt_create_prop");
-    CHECK_PTR(test_prop->name, "H5P__mt_create_prop");
+    VERIFY(atomic_load(&(test_prop->tag)), H5P_MT_PROP_TAG, "H5P__create_prop");
+    VERIFY(test_prop->chksum, class_prop_table[1].chksum, "H5P__create_prop");
+    CHECK_PTR(test_prop->name, "H5P__create_prop");
     if (HDstrcmp(test_prop->name, "Property 2") != 0) {
         TestErrPrintf("Property names don't match! name = %s, Property 2\n", test_prop->name);
     }
 
     test_value = atomic_load(&(test_prop->value));
-    VERIFY(test_value.size, value.size, "H5P__mt_create_prop");
+    VERIFY(test_value.size, value.size, "H5P__create_prop");
     if (memcmp(test_value.ptr, value.ptr, value.size) != 0) {
         TestErrPrintf("Property 2 value doesn't match! line=%d\n", __LINE__);
     }
@@ -1246,20 +1246,20 @@ init_class_props(void)
     value.ptr                     = (&prop2_ver2_value);
     value.size                    = (sizeof(prop2_ver2_value));
 
-    new_prop = H5P__mt_create_prop(class_prop_table[1].name, value.ptr, value.size, TRUE, 2, NULL, NULL, NULL,
+    new_prop = H5P__create_prop(class_prop_table[1].name, value.ptr, value.size, TRUE, 2, NULL, NULL, NULL,
                                    NULL, NULL, NULL, NULL, NULL, NULL);
-    CHECK_PTR(new_prop, "H5P__mt_create_prop");
+    CHECK_PTR(new_prop, "H5P__create_prop");
 
     assert(new_prop);
     assert(atomic_load(&(new_prop->tag)) == H5P_MT_PROP_TAG);
 
-    VERIFY(new_prop->chksum, test_prop->chksum, "H5P__mt_create_prop");
+    VERIFY(new_prop->chksum, test_prop->chksum, "H5P__create_prop");
     if (HDstrcmp(new_prop->name, test_prop->name) != 0) {
         TestErrPrintf("Property names don't match! name = %s, Property 2\n", new_prop->name);
     }
 
     new_value = atomic_load(&(new_prop->value));
-    VERIFY(new_value.size, value.size, "H5P__mt_create_prop");
+    VERIFY(new_value.size, value.size, "H5P__create_prop");
     if (memcmp(new_value.ptr, value.ptr, value.size) != 0) {
         TestErrPrintf("Property 2 version 2 value doesn't match! line=%d\n", __LINE__);
     }
@@ -1288,20 +1288,20 @@ init_class_props(void)
     value.ptr                   = (&prop3_value);
     value.size                  = sizeof(prop3_value);
 
-    class_prop_table[2].prop = H5P__mt_create_prop(class_prop_table[2].name, value.ptr, value.size, TRUE, 1,
+    class_prop_table[2].prop = H5P__create_prop(class_prop_table[2].name, value.ptr, value.size, TRUE, 1,
                                                    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-    CHECK_PTR(class_prop_table[2].prop, "H5P__mt_create_prop");
+    CHECK_PTR(class_prop_table[2].prop, "H5P__create_prop");
 
     test_prop = class_prop_table[2].prop;
-    VERIFY(atomic_load(&(test_prop->tag)), H5P_MT_PROP_TAG, "H5P__mt_create_prop");
-    VERIFY(test_prop->chksum, class_prop_table[2].chksum, "H5P__mt_create_prop");
-    CHECK_PTR(test_prop->name, "H5P__mt_create_prop");
+    VERIFY(atomic_load(&(test_prop->tag)), H5P_MT_PROP_TAG, "H5P__create_prop");
+    VERIFY(test_prop->chksum, class_prop_table[2].chksum, "H5P__create_prop");
+    CHECK_PTR(test_prop->name, "H5P__create_prop");
     if (HDstrcmp(test_prop->name, "Property 3") != 0) {
         TestErrPrintf("Property names don't match! name = %s, Property 3\n", test_prop->name);
     }
 
     test_value = atomic_load(&(test_prop->value));
-    VERIFY(test_value.size, value.size, "H5P__mt_create_prop");
+    VERIFY(test_value.size, value.size, "H5P__create_prop");
     if (memcmp(test_value.ptr, value.ptr, value.size) != 0) {
         TestErrPrintf("Property 3 value doesn't match! line=%d\n", __LINE__);
     }
@@ -1326,20 +1326,20 @@ init_class_props(void)
     value.ptr                 = (&prop4_value);
     value.size                = sizeof(prop4_value);
 
-    class_prop_table[3].prop = H5P__mt_create_prop(class_prop_table[3].name, value.ptr, value.size, TRUE, 1,
+    class_prop_table[3].prop = H5P__create_prop(class_prop_table[3].name, value.ptr, value.size, TRUE, 1,
                                                    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-    CHECK_PTR(class_prop_table[3].prop, "H5P__mt_create_prop");
+    CHECK_PTR(class_prop_table[3].prop, "H5P__create_prop");
 
     test_prop = class_prop_table[3].prop;
-    VERIFY(atomic_load(&(test_prop->tag)), H5P_MT_PROP_TAG, "H5P__mt_create_prop");
-    VERIFY(test_prop->chksum, class_prop_table[3].chksum, "H5P__mt_create_prop");
-    CHECK_PTR(test_prop->name, "H5P__mt_create_prop");
+    VERIFY(atomic_load(&(test_prop->tag)), H5P_MT_PROP_TAG, "H5P__create_prop");
+    VERIFY(test_prop->chksum, class_prop_table[3].chksum, "H5P__create_prop");
+    CHECK_PTR(test_prop->name, "H5P__create_prop");
     if (HDstrcmp(test_prop->name, "Property 4") != 0) {
         TestErrPrintf("Property names don't match! name = %s, Property 4\n", test_prop->name);
     }
 
     test_value = atomic_load(&(test_prop->value));
-    VERIFY(test_value.size, value.size, "H5P__mt_create_prop");
+    VERIFY(test_value.size, value.size, "H5P__create_prop");
     if (memcmp(test_value.ptr, value.ptr, value.size) != 0) {
         TestErrPrintf("Property 4 value doesn't match! line=%d\n", __LINE__);
     }
@@ -1355,20 +1355,20 @@ init_class_props(void)
     value.ptr                      = (&prop4_ver2_value);
     value.size                     = sizeof(prop4_ver2_value);
 
-    new_prop = H5P__mt_create_prop(class_prop_table[3].name, value.ptr, value.size, TRUE, 2, NULL, NULL, NULL,
+    new_prop = H5P__create_prop(class_prop_table[3].name, value.ptr, value.size, TRUE, 2, NULL, NULL, NULL,
                                    NULL, NULL, NULL, NULL, NULL, NULL);
-    CHECK_PTR(new_prop, "H5P__mt_create_prop");
+    CHECK_PTR(new_prop, "H5P__create_prop");
 
     assert(new_prop);
     assert(atomic_load(&(new_prop->tag)) == H5P_MT_PROP_TAG);
 
-    VERIFY(new_prop->chksum, test_prop->chksum, "H5P__mt_create_prop");
+    VERIFY(new_prop->chksum, test_prop->chksum, "H5P__create_prop");
     if (HDstrcmp(new_prop->name, test_prop->name) != 0) {
         TestErrPrintf("Property names don't match! name = %s, Property 4\n", new_prop->name);
     }
 
     new_value = atomic_load(&(new_prop->value));
-    VERIFY(new_value.size, value.size, "H5P__mt_create_prop");
+    VERIFY(new_value.size, value.size, "H5P__create_prop");
     if (memcmp(new_value.ptr, value.ptr, value.size) != 0) {
         TestErrPrintf("Property 4 version 2 value doesn't match! line=%d\n", __LINE__);
     }
@@ -1445,20 +1445,20 @@ init_class2_props(void)
     value.ptr              = (&prop1_value);
     value.size             = sizeof(prop1_value);
 
-    class2_prop_table[0].prop = H5P__mt_create_prop(name, value.ptr, value.size, TRUE, 1, NULL, NULL, NULL,
+    class2_prop_table[0].prop = H5P__create_prop(name, value.ptr, value.size, TRUE, 1, NULL, NULL, NULL,
                                                     NULL, NULL, NULL, NULL, NULL, NULL);
-    CHECK_PTR(class2_prop_table[0].prop, "H5P__mt_create_prop");
+    CHECK_PTR(class2_prop_table[0].prop, "H5P__create_prop");
 
     test_prop = class2_prop_table[0].prop;
-    VERIFY(atomic_load(&(test_prop->tag)), H5P_MT_PROP_TAG, "H5P__mt_create_prop");
-    VERIFY(test_prop->chksum, class2_prop_table[0].chksum, "H5P__mt_create_prop");
-    CHECK_PTR(test_prop->name, "H5P__mt_create_prop");
+    VERIFY(atomic_load(&(test_prop->tag)), H5P_MT_PROP_TAG, "H5P__create_prop");
+    VERIFY(test_prop->chksum, class2_prop_table[0].chksum, "H5P__create_prop");
+    CHECK_PTR(test_prop->name, "H5P__create_prop");
     if (HDstrcmp(test_prop->name, "Property 1") != 0) {
         TestErrPrintf("Property names don't match! name = %s, Property 1\n", test_prop->name);
     }
 
     test_value = atomic_load(&(test_prop->value));
-    VERIFY(test_value.size, value.size, "H5P__mt_create_prop");
+    VERIFY(test_value.size, value.size, "H5P__create_prop");
     if (memcmp(test_value.ptr, value.ptr, value.size) != 0) {
         TestErrPrintf("Property 1 value doesn't match! line=%d\n", __LINE__);
     }
@@ -1485,20 +1485,20 @@ init_class2_props(void)
     value.ptr                = (&prop2_value);
     value.size               = sizeof(prop2_value);
 
-    class2_prop_table[1].prop = H5P__mt_create_prop(class2_prop_table[1].name, value.ptr, value.size, TRUE, 1,
+    class2_prop_table[1].prop = H5P__create_prop(class2_prop_table[1].name, value.ptr, value.size, TRUE, 1,
                                                     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-    CHECK_PTR(class2_prop_table[1].prop, "H5P__mt_create_prop");
+    CHECK_PTR(class2_prop_table[1].prop, "H5P__create_prop");
 
     test_prop = class2_prop_table[1].prop;
-    VERIFY(atomic_load(&(test_prop->tag)), H5P_MT_PROP_TAG, "H5P__mt_create_prop");
-    VERIFY(test_prop->chksum, class2_prop_table[1].chksum, "H5P__mt_create_prop");
-    CHECK_PTR(test_prop->name, "H5P__mt_create_prop");
+    VERIFY(atomic_load(&(test_prop->tag)), H5P_MT_PROP_TAG, "H5P__create_prop");
+    VERIFY(test_prop->chksum, class2_prop_table[1].chksum, "H5P__create_prop");
+    CHECK_PTR(test_prop->name, "H5P__create_prop");
     if (HDstrcmp(test_prop->name, "Property 2") != 0) {
         TestErrPrintf("Property names don't match! name = %s, Property 2\n", test_prop->name);
     }
 
     test_value = atomic_load(&(test_prop->value));
-    VERIFY(test_value.size, value.size, "H5P__mt_create_prop");
+    VERIFY(test_value.size, value.size, "H5P__create_prop");
     if (memcmp(test_value.ptr, value.ptr, value.size) != 0) {
         TestErrPrintf("Property 2 value doesn't match! line=%d\n", __LINE__);
     }
@@ -1523,20 +1523,20 @@ init_class2_props(void)
     value.ptr                   = (&prop3_value);
     value.size                  = sizeof(prop3_value);
 
-    class2_prop_table[2].prop = H5P__mt_create_prop(class2_prop_table[2].name, value.ptr, value.size, TRUE, 1,
+    class2_prop_table[2].prop = H5P__create_prop(class2_prop_table[2].name, value.ptr, value.size, TRUE, 1,
                                                     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-    CHECK_PTR(class2_prop_table[2].prop, "H5P__mt_create_prop");
+    CHECK_PTR(class2_prop_table[2].prop, "H5P__create_prop");
 
     test_prop = class2_prop_table[2].prop;
-    VERIFY(atomic_load(&(test_prop->tag)), H5P_MT_PROP_TAG, "H5P__mt_create_prop");
-    VERIFY(test_prop->chksum, class2_prop_table[2].chksum, "H5P__mt_create_prop");
-    CHECK_PTR(test_prop->name, "H5P__mt_create_prop");
+    VERIFY(atomic_load(&(test_prop->tag)), H5P_MT_PROP_TAG, "H5P__create_prop");
+    VERIFY(test_prop->chksum, class2_prop_table[2].chksum, "H5P__create_prop");
+    CHECK_PTR(test_prop->name, "H5P__create_prop");
     if (HDstrcmp(test_prop->name, "Property 3") != 0) {
         TestErrPrintf("Property names don't match! name = %s, Property 3\n", test_prop->name);
     }
 
     test_value = atomic_load(&(test_prop->value));
-    VERIFY(test_value.size, value.size, "H5P__mt_create_prop");
+    VERIFY(test_value.size, value.size, "H5P__create_prop");
     if (memcmp(test_value.ptr, value.ptr, value.size) != 0) {
         TestErrPrintf("Property 3 value doesn't match! line=%d\n", __LINE__);
     }
@@ -1552,20 +1552,20 @@ init_class2_props(void)
     value.ptr                        = (&prop3_ver2_value);
     value.size                       = sizeof(prop3_ver2_value);
 
-    new_prop = H5P__mt_create_prop(class2_prop_table[2].name, value.ptr, value.size, TRUE, 1, NULL, NULL,
+    new_prop = H5P__create_prop(class2_prop_table[2].name, value.ptr, value.size, TRUE, 1, NULL, NULL,
                                    NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-    CHECK_PTR(new_prop, "H5P__mt_create_prop");
+    CHECK_PTR(new_prop, "H5P__create_prop");
 
     assert(new_prop);
     assert(atomic_load(&(new_prop->tag)) == H5P_MT_PROP_TAG);
 
-    VERIFY(new_prop->chksum, test_prop->chksum, "H5P__mt_create_prop");
+    VERIFY(new_prop->chksum, test_prop->chksum, "H5P__create_prop");
     if (HDstrcmp(new_prop->name, test_prop->name) != 0) {
         TestErrPrintf("Property names don't match! name = %s, Property 3\n", new_prop->name);
     }
 
     new_value = atomic_load(&(new_prop->value));
-    VERIFY(new_value.size, value.size, "H5P__mt_create_prop");
+    VERIFY(new_value.size, value.size, "H5P__create_prop");
     if (memcmp(new_value.ptr, value.ptr, value.size) != 0) {
         TestErrPrintf("Property 1 version 2 value doesn't match! line=%d\n", __LINE__);
     }
@@ -1587,20 +1587,20 @@ init_class2_props(void)
     value.ptr                        = (&prop3_ver3_value);
     value.size                       = sizeof(prop3_ver3_value);
 
-    new_prop = H5P__mt_create_prop(class2_prop_table[2].name, value.ptr, value.size, TRUE, 1, NULL, NULL,
+    new_prop = H5P__create_prop(class2_prop_table[2].name, value.ptr, value.size, TRUE, 1, NULL, NULL,
                                    NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-    CHECK_PTR(new_prop, "H5P__mt_create_prop");
+    CHECK_PTR(new_prop, "H5P__create_prop");
 
     assert(new_prop);
     assert(atomic_load(&(new_prop->tag)) == H5P_MT_PROP_TAG);
 
-    VERIFY(new_prop->chksum, test_prop2->chksum, "H5P__mt_create_prop");
+    VERIFY(new_prop->chksum, test_prop2->chksum, "H5P__create_prop");
     if (HDstrcmp(new_prop->name, test_prop2->name) != 0) {
         TestErrPrintf("Property names don't match! name = %s, Property 3\n", new_prop->name);
     }
 
     new_value = atomic_load(&(new_prop->value));
-    VERIFY(new_value.size, value.size, "H5P__mt_create_prop");
+    VERIFY(new_value.size, value.size, "H5P__create_prop");
     if (memcmp(new_value.ptr, value.ptr, value.size) != 0) {
         TestErrPrintf("Property 1 version 2 value doesn't match! line=%d\n", __LINE__);
     }
@@ -1690,7 +1690,7 @@ init_list_props(void)
     class_table_prop = next.ptr;
     value            = atomic_load(&(class_table_prop->value));
 
-    list_prop_table[0].prop = H5P__mt_create_prop(class_table_prop->name, value.ptr, value.size, TRUE,
+    list_prop_table[0].prop = H5P__create_prop(class_table_prop->name, value.ptr, value.size, TRUE,
                                                   atomic_load(&(class_table_prop->create_version)), NULL,
                                                   NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(list_prop_table[0].prop, "init_list_props");
@@ -1708,7 +1708,7 @@ init_list_props(void)
 
     /* Ensure the value is correct */
     test_value = atomic_load(&(test_prop->value));
-    VERIFY(test_value.size, value.size, "H5P__mt_create_prop");
+    VERIFY(test_value.size, value.size, "H5P__create_prop");
     if (memcmp(test_value.ptr, value.ptr, value.size) != 0) {
         TestErrPrintf("Property 1 value doesn't match! line=%d\n", __LINE__);
     }
@@ -1724,14 +1724,14 @@ init_list_props(void)
     value.ptr                   = (&prop1_ver2_value);
     value.size                  = (sizeof(prop1_ver2_value));
 
-    new_prop = H5P__mt_create_prop(list_prop_table[0].name, value.ptr, value.size, FALSE, 2, NULL, NULL, NULL,
+    new_prop = H5P__create_prop(list_prop_table[0].name, value.ptr, value.size, FALSE, 2, NULL, NULL, NULL,
                                    NULL, NULL, NULL, NULL, NULL, NULL);
-    CHECK_PTR(new_prop, "H5P__mt_create_prop");
+    CHECK_PTR(new_prop, "H5P__create_prop");
 
     assert(new_prop);
     assert(atomic_load(&(new_prop->tag)) == H5P_MT_PROP_TAG);
 
-    VERIFY(new_prop->chksum, test_prop->chksum, "H5P__mt_create_prop");
+    VERIFY(new_prop->chksum, test_prop->chksum, "H5P__create_prop");
     if (HDstrcmp(new_prop->name, test_prop->name) != 0) {
         TestErrPrintf("Property names don't match! name = %s, Property 1\n", new_prop->name);
     }
@@ -1760,14 +1760,14 @@ init_list_props(void)
     value.ptr                   = (&prop1_ver3_value);
     value.size                  = (sizeof(prop1_ver3_value));
 
-    new_prop = H5P__mt_create_prop(list_prop_table[0].name, value.ptr, value.size, FALSE, 3, NULL, NULL, NULL,
+    new_prop = H5P__create_prop(list_prop_table[0].name, value.ptr, value.size, FALSE, 3, NULL, NULL, NULL,
                                    NULL, NULL, NULL, NULL, NULL, NULL);
-    CHECK_PTR(new_prop, "H5P__mt_create_prop");
+    CHECK_PTR(new_prop, "H5P__create_prop");
 
     assert(new_prop);
     assert(atomic_load(&(new_prop->tag)) == H5P_MT_PROP_TAG);
 
-    VERIFY(new_prop->chksum, test_prop_ver2->chksum, "H5P__mt_create_prop");
+    VERIFY(new_prop->chksum, test_prop_ver2->chksum, "H5P__create_prop");
     if (HDstrcmp(new_prop->name, test_prop_ver2->name) != 0) {
         TestErrPrintf("Property names don't match! name = %s, Property 1\n", new_prop->name);
     }
@@ -1808,7 +1808,7 @@ init_list_props(void)
     class_table_prop = next.ptr;
     value            = atomic_load(&(class_table_prop->value));
 
-    list_prop_table[1].prop = H5P__mt_create_prop(class_table_prop->name, value.ptr, value.size, TRUE,
+    list_prop_table[1].prop = H5P__create_prop(class_table_prop->name, value.ptr, value.size, TRUE,
                                                   atomic_load(&(class_table_prop->create_version)), NULL,
                                                   NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(list_prop_table[1].prop, "init_list_props");
@@ -1854,7 +1854,7 @@ init_list_props(void)
     class_table_prop = class_prop_table[2].prop;
     value            = atomic_load(&(class_table_prop->value));
 
-    list_prop_table[2].prop = H5P__mt_create_prop(class_table_prop->name, value.ptr, value.size, TRUE,
+    list_prop_table[2].prop = H5P__create_prop(class_table_prop->name, value.ptr, value.size, TRUE,
                                                   atomic_load(&(class_table_prop->create_version)), NULL,
                                                   NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(list_prop_table[2].prop, "init_list_props");
@@ -1888,14 +1888,14 @@ init_list_props(void)
     value.ptr  = (&prop3_ver2_value);
     value.size = sizeof(prop3_ver2_value);
 
-    new_prop = H5P__mt_create_prop(list_prop_table[2].name, value.ptr, value.size, FALSE, 2, NULL, NULL, NULL,
+    new_prop = H5P__create_prop(list_prop_table[2].name, value.ptr, value.size, FALSE, 2, NULL, NULL, NULL,
                                    NULL, NULL, NULL, NULL, NULL, NULL);
-    CHECK_PTR(new_prop, "H5P__mt_create_prop");
+    CHECK_PTR(new_prop, "H5P__create_prop");
 
     assert(new_prop);
     assert(atomic_load(&(new_prop->tag)) == H5P_MT_PROP_TAG);
 
-    VERIFY(new_prop->chksum, test_prop->chksum, "H5P__mt_create_prop");
+    VERIFY(new_prop->chksum, test_prop->chksum, "H5P__create_prop");
     if (HDstrcmp(new_prop->name, test_prop->name) != 0) {
         TestErrPrintf("Property names don't match! name = %s, Property 1\n", new_prop->name);
     }
@@ -1933,20 +1933,20 @@ init_list_props(void)
     value.ptr                 = (&prop4_value);
     value.size                = sizeof(prop4_value);
 
-    list_prop_table[3].prop = H5P__mt_create_prop(list_prop_table[3].name, value.ptr, value.size, FALSE, 1,
+    list_prop_table[3].prop = H5P__create_prop(list_prop_table[3].name, value.ptr, value.size, FALSE, 1,
                                                   NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-    CHECK_PTR(list_prop_table[3].prop, "H5P__mt_create_prop");
+    CHECK_PTR(list_prop_table[3].prop, "H5P__create_prop");
 
     test_prop = list_prop_table[3].prop;
-    VERIFY(atomic_load(&(test_prop->tag)), H5P_MT_PROP_TAG, "H5P__mt_create_prop");
-    VERIFY(test_prop->chksum, list_prop_table[3].chksum, "H5P__mt_create_prop");
-    CHECK_PTR(test_prop->name, "H5P__mt_create_prop");
+    VERIFY(atomic_load(&(test_prop->tag)), H5P_MT_PROP_TAG, "H5P__create_prop");
+    VERIFY(test_prop->chksum, list_prop_table[3].chksum, "H5P__create_prop");
+    CHECK_PTR(test_prop->name, "H5P__create_prop");
     if (HDstrcmp(test_prop->name, "Property 4") != 0) {
         TestErrPrintf("Property names don't match! name = %s, Property 4\n", test_prop->name);
     }
 
     test_value = atomic_load(&(test_prop->value));
-    VERIFY(test_value.size, value.size, "H5P__mt_create_prop");
+    VERIFY(test_value.size, value.size, "H5P__create_prop");
     if (memcmp(test_value.ptr, value.ptr, value.size) != 0) {
         TestErrPrintf("Property 4 value doesn't match! line=%d\n", __LINE__);
     }
@@ -1962,14 +1962,14 @@ init_list_props(void)
     value.ptr                      = (&prop4_ver2_value);
     value.size                     = (sizeof(prop4_ver2_value));
 
-    new_prop = H5P__mt_create_prop(list_prop_table[3].name, value.ptr, value.size, FALSE, 3, NULL, NULL, NULL,
+    new_prop = H5P__create_prop(list_prop_table[3].name, value.ptr, value.size, FALSE, 3, NULL, NULL, NULL,
                                    NULL, NULL, NULL, NULL, NULL, NULL);
-    CHECK_PTR(new_prop, "H5P__mt_create_prop");
+    CHECK_PTR(new_prop, "H5P__create_prop");
 
     assert(new_prop);
     assert(atomic_load(&(new_prop->tag)) == H5P_MT_PROP_TAG);
 
-    VERIFY(new_prop->chksum, test_prop->chksum, "H5P__mt_create_prop");
+    VERIFY(new_prop->chksum, test_prop->chksum, "H5P__create_prop");
     if (HDstrcmp(new_prop->name, test_prop->name) != 0) {
         TestErrPrintf("Property names don't match! name = %s, Property 4\n", new_prop->name);
     }
@@ -2060,7 +2060,7 @@ init_list2_props(void)
     value           = atomic_load(&(list_table_prop->value));
 
     /* This prop is inherited, but also deleted */
-    list2_prop_table[0].prop = H5P__mt_create_prop(list_table_prop->name, value.ptr, value.size, FALSE,
+    list2_prop_table[0].prop = H5P__create_prop(list_table_prop->name, value.ptr, value.size, FALSE,
                                                    atomic_load(&(list_table_prop->create_version)), NULL,
                                                    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(list2_prop_table[0].prop, "init_list2_props");
@@ -2078,7 +2078,7 @@ init_list2_props(void)
 
     /* Ensure the value is correct */
     test_value = atomic_load(&(test_prop->value));
-    VERIFY(test_value.size, value.size, "H5P__mt_create_prop");
+    VERIFY(test_value.size, value.size, "H5P__create_prop");
     if (memcmp(test_value.ptr, value.ptr, value.size) != 0) {
         TestErrPrintf("Property 1 value doesn't match! line=%d\n", __LINE__);
     }
@@ -2106,7 +2106,7 @@ init_list2_props(void)
     list_table_prop = list_prop_table[1].prop;
     value           = atomic_load(&(list_table_prop->value));
 
-    list2_prop_table[1].prop = H5P__mt_create_prop(list_table_prop->name, value.ptr, value.size, TRUE,
+    list2_prop_table[1].prop = H5P__create_prop(list_table_prop->name, value.ptr, value.size, TRUE,
                                                    atomic_load(&(list_table_prop->create_version)), NULL,
                                                    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(list2_prop_table[1].prop, "init_list2_props");
@@ -2140,14 +2140,14 @@ init_list2_props(void)
     value.ptr                     = (&prop2_ver2_value);
     value.size                    = (sizeof(prop2_ver2_value));
 
-    new_prop = H5P__mt_create_prop(list2_prop_table[1].name, value.ptr, value.size, FALSE, 2, NULL, NULL,
+    new_prop = H5P__create_prop(list2_prop_table[1].name, value.ptr, value.size, FALSE, 2, NULL, NULL,
                                    NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-    CHECK_PTR(new_prop, "H5P__mt_create_prop");
+    CHECK_PTR(new_prop, "H5P__create_prop");
 
     assert(new_prop);
     assert(atomic_load(&(new_prop->tag)) == H5P_MT_PROP_TAG);
 
-    VERIFY(new_prop->chksum, test_prop->chksum, "H5P__mt_create_prop");
+    VERIFY(new_prop->chksum, test_prop->chksum, "H5P__create_prop");
     if (HDstrcmp(new_prop->name, test_prop->name) != 0) {
         TestErrPrintf("Property names don't match! name = %s, Property 2\n", new_prop->name);
     }
@@ -2175,14 +2175,14 @@ init_list2_props(void)
     list_table_prop = list2_prop_table[1].prop;
     value           = atomic_load(&(list_table_prop->value));
 
-    new_prop = H5P__mt_create_prop(list2_prop_table[1].name, value.ptr, value.size, FALSE, 3, NULL, NULL,
+    new_prop = H5P__create_prop(list2_prop_table[1].name, value.ptr, value.size, FALSE, 3, NULL, NULL,
                                    NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-    CHECK_PTR(new_prop, "H5P__mt_create_prop");
+    CHECK_PTR(new_prop, "H5P__create_prop");
 
     assert(new_prop);
     assert(atomic_load(&(new_prop->tag)) == H5P_MT_PROP_TAG);
 
-    VERIFY(new_prop->chksum, test_prop_ver2->chksum, "H5P__mt_create_prop");
+    VERIFY(new_prop->chksum, test_prop_ver2->chksum, "H5P__create_prop");
     if (HDstrcmp(new_prop->name, test_prop_ver2->name) != 0) {
         TestErrPrintf("Property names don't match! name = %s, Property 2\n", new_prop->name);
     }
@@ -2222,7 +2222,7 @@ init_list2_props(void)
     list_table_prop = next.ptr;
     value           = atomic_load(&(list_table_prop->value));
 
-    list2_prop_table[2].prop = H5P__mt_create_prop(list_table_prop->name, value.ptr, value.size, FALSE, 1,
+    list2_prop_table[2].prop = H5P__create_prop(list_table_prop->name, value.ptr, value.size, FALSE, 1,
                                                    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(list2_prop_table[2].prop, "init_list_props");
     assert(list2_prop_table[2].prop);
@@ -2269,7 +2269,7 @@ init_list2_props(void)
     list_table_prop = next.ptr;
     value           = atomic_load(&(list_table_prop->value));
 
-    list2_prop_table[3].prop = H5P__mt_create_prop(list_table_prop->name, value.ptr, value.size, FALSE, 1,
+    list2_prop_table[3].prop = H5P__create_prop(list_table_prop->name, value.ptr, value.size, FALSE, 1,
                                                    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     CHECK_PTR(list2_prop_table[3].prop, "init_list_props");
     assert(list2_prop_table[3].prop);
@@ -2302,14 +2302,14 @@ init_list2_props(void)
     value.ptr                      = (&prop4_ver2_value);
     value.size                     = (sizeof(prop4_ver2_value));
 
-    new_prop = H5P__mt_create_prop(list2_prop_table[3].name, value.ptr, value.size, FALSE, 3, NULL, NULL,
+    new_prop = H5P__create_prop(list2_prop_table[3].name, value.ptr, value.size, FALSE, 3, NULL, NULL,
                                    NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-    CHECK_PTR(new_prop, "H5P__mt_create_prop");
+    CHECK_PTR(new_prop, "H5P__create_prop");
 
     assert(new_prop);
     assert(atomic_load(&(new_prop->tag)) == H5P_MT_PROP_TAG);
 
-    VERIFY(new_prop->chksum, test_prop->chksum, "H5P__mt_create_prop");
+    VERIFY(new_prop->chksum, test_prop->chksum, "H5P__create_prop");
     if (HDstrcmp(new_prop->name, test_prop->name) != 0) {
         TestErrPrintf("Property names don't match! name = %s, Property 4\n", new_prop->name);
     }
@@ -2336,14 +2336,14 @@ init_list2_props(void)
     list_table_prop = list2_prop_table[3].prop;
     value           = atomic_load(&(list_table_prop->value));
 
-    new_prop = H5P__mt_create_prop(list2_prop_table[3].name, value.ptr, value.size, FALSE, 3, NULL, NULL,
+    new_prop = H5P__create_prop(list2_prop_table[3].name, value.ptr, value.size, FALSE, 3, NULL, NULL,
                                    NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-    CHECK_PTR(new_prop, "H5P__mt_create_prop");
+    CHECK_PTR(new_prop, "H5P__create_prop");
 
     assert(new_prop);
     assert(atomic_load(&(new_prop->tag)) == H5P_MT_PROP_TAG);
 
-    VERIFY(new_prop->chksum, test_prop_ver2->chksum, "H5P__mt_create_prop");
+    VERIFY(new_prop->chksum, test_prop_ver2->chksum, "H5P__create_prop");
     if (HDstrcmp(new_prop->name, test_prop_ver2->name) != 0) {
         TestErrPrintf("Property names don't match! name = %s, Property 4\n", new_prop->name);
     }
@@ -2420,21 +2420,21 @@ init_list3_props(void)
     class_table_prop = class2_prop_table[0].prop;
     value            = atomic_load(&(class_table_prop->value));
 
-    list3_prop_table[0].prop = H5P__mt_create_prop(name, value.ptr, value.size, TRUE,
+    list3_prop_table[0].prop = H5P__create_prop(name, value.ptr, value.size, TRUE,
                                                    atomic_load(&(class_table_prop->create_version)), NULL,
                                                    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-    CHECK_PTR(list3_prop_table[0].prop, "H5P__mt_create_prop");
+    CHECK_PTR(list3_prop_table[0].prop, "H5P__create_prop");
 
     test_prop = list3_prop_table[0].prop;
-    VERIFY(atomic_load(&(test_prop->tag)), H5P_MT_PROP_TAG, "H5P__mt_create_prop");
-    VERIFY(test_prop->chksum, list3_prop_table[0].chksum, "H5P__mt_create_prop");
-    CHECK_PTR(test_prop->name, "H5P__mt_create_prop");
+    VERIFY(atomic_load(&(test_prop->tag)), H5P_MT_PROP_TAG, "H5P__create_prop");
+    VERIFY(test_prop->chksum, list3_prop_table[0].chksum, "H5P__create_prop");
+    CHECK_PTR(test_prop->name, "H5P__create_prop");
     if (HDstrcmp(test_prop->name, "Property 1") != 0) {
         TestErrPrintf("Property names don't match! name = %s, Property 1\n", test_prop->name);
     }
 
     test_value = atomic_load(&(test_prop->value));
-    VERIFY(test_value.size, value.size, "H5P__mt_create_prop");
+    VERIFY(test_value.size, value.size, "H5P__create_prop");
     if (memcmp(test_value.ptr, value.ptr, value.size) != 0) {
         TestErrPrintf("Property 1 value doesn't match! line=%d\n", __LINE__);
     }
@@ -2459,21 +2459,21 @@ init_list3_props(void)
     class_table_prop = class2_prop_table[1].prop;
     value            = atomic_load(&(class_table_prop->value));
 
-    list3_prop_table[1].prop = H5P__mt_create_prop(name, value.ptr, value.size, TRUE,
+    list3_prop_table[1].prop = H5P__create_prop(name, value.ptr, value.size, TRUE,
                                                    atomic_load(&(class_table_prop->create_version)), NULL,
                                                    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-    CHECK_PTR(list3_prop_table[1].prop, "H5P__mt_create_prop");
+    CHECK_PTR(list3_prop_table[1].prop, "H5P__create_prop");
 
     test_prop = list3_prop_table[1].prop;
-    VERIFY(atomic_load(&(test_prop->tag)), H5P_MT_PROP_TAG, "H5P__mt_create_prop");
-    VERIFY(test_prop->chksum, list3_prop_table[1].chksum, "H5P__mt_create_prop");
-    CHECK_PTR(test_prop->name, "H5P__mt_create_prop");
+    VERIFY(atomic_load(&(test_prop->tag)), H5P_MT_PROP_TAG, "H5P__create_prop");
+    VERIFY(test_prop->chksum, list3_prop_table[1].chksum, "H5P__create_prop");
+    CHECK_PTR(test_prop->name, "H5P__create_prop");
     if (HDstrcmp(test_prop->name, "Property 2") != 0) {
         TestErrPrintf("Property names don't match! name = %s, Property 2\n", test_prop->name);
     }
 
     test_value = atomic_load(&(test_prop->value));
-    VERIFY(test_value.size, value.size, "H5P__mt_create_prop");
+    VERIFY(test_value.size, value.size, "H5P__create_prop");
     if (memcmp(test_value.ptr, value.ptr, value.size) != 0) {
         TestErrPrintf("Property 2 value doesn't match! line=%d\n", __LINE__);
     }
@@ -2498,21 +2498,21 @@ init_list3_props(void)
     class_table_prop = class2_prop_table[2].prop;
     value            = atomic_load(&(class_table_prop->value));
 
-    list3_prop_table[2].prop = H5P__mt_create_prop(name, value.ptr, value.size, TRUE,
+    list3_prop_table[2].prop = H5P__create_prop(name, value.ptr, value.size, TRUE,
                                                    atomic_load(&(class_table_prop->create_version)), NULL,
                                                    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-    CHECK_PTR(list3_prop_table[2].prop, "H5P__mt_create_prop");
+    CHECK_PTR(list3_prop_table[2].prop, "H5P__create_prop");
 
     test_prop = list3_prop_table[2].prop;
-    VERIFY(atomic_load(&(test_prop->tag)), H5P_MT_PROP_TAG, "H5P__mt_create_prop");
-    VERIFY(test_prop->chksum, list3_prop_table[2].chksum, "H5P__mt_create_prop");
-    CHECK_PTR(test_prop->name, "H5P__mt_create_prop");
+    VERIFY(atomic_load(&(test_prop->tag)), H5P_MT_PROP_TAG, "H5P__create_prop");
+    VERIFY(test_prop->chksum, list3_prop_table[2].chksum, "H5P__create_prop");
+    CHECK_PTR(test_prop->name, "H5P__create_prop");
     if (HDstrcmp(test_prop->name, "Property 3") != 0) {
         TestErrPrintf("Property names don't match! name = %s, Property 3\n", test_prop->name);
     }
 
     test_value = atomic_load(&(test_prop->value));
-    VERIFY(test_value.size, value.size, "H5P__mt_create_prop");
+    VERIFY(test_value.size, value.size, "H5P__create_prop");
     if (memcmp(test_value.ptr, value.ptr, value.size) != 0) {
         TestErrPrintf("Property 3 value doesn't match! line=%d\n", __LINE__);
     }
@@ -2554,7 +2554,7 @@ create_test_root_class(void)
 
     hid_t ret_value;
 
-    if (NULL == (test_root = H5P__mt_create_class(NULL, TEST_ROOT_NAME, H5P_TYPE_ROOT, 0, NULL, NULL, NULL,
+    if (NULL == (test_root = H5P__create_class(NULL, TEST_ROOT_NAME, H5P_TYPE_ROOT, 0, NULL, NULL, NULL,
                                                   NULL, NULL, NULL))) {
         fprintf(stderr, "create_test_root_class(): Failed creating test root class.");
         return -1;
@@ -2998,13 +2998,13 @@ test_h5p_mt_class_1(test_params_t *test_params)
 
     /**
      * Create a new class derived from the test root.
-     *
-     * This test is using the internal function H5P__mt_create_class() to test creating
+     * 
+     * This test is using the internal function H5P__create_class() to test creating
      * a default class during initialization of H5P.
      */
     class1 =
-        H5P__mt_create_class(test_root, CLASS1_NAME, H5P_TYPE_USER, 0, NULL, NULL, NULL, NULL, NULL, NULL);
-    CHECK_PTR(class1, "H5P__mt_create_class");
+        H5P__create_class(test_root, CLASS1_NAME, H5P_TYPE_USER, 0, NULL, NULL, NULL, NULL, NULL, NULL);
+    CHECK_PTR(class1, "H5P__create_class");
     assert(class1);
     assert(atomic_load(&(class1->tag)) == H5P_MT_CLASS_TAG);
 
@@ -3013,18 +3013,18 @@ test_h5p_mt_class_1(test_params_t *test_params)
     }
 
     /* Verify class1's parent info is correct */
-    VERIFY(class1->parent_id, test_root->id, "H5P__mt_create_class");
-    VERIFY(class1->parent_ptr, test_root, "H5P__mt_create_class");
-    VERIFY(class1->parent_version, atomic_load(&(test_root->curr_version)), "H5P__mt_create_class");
+    VERIFY(class1->parent_id, test_root->id, "H5P__create_class");
+    VERIFY(class1->parent_ptr, test_root, "H5P__create_class");
+    VERIFY(class1->parent_version, atomic_load(&(test_root->curr_version)), "H5P__create_class");
 
     /* Ensure class fields are correct */
-    ret = class_ver_and_len_check(class1, 1, 2, 0, 0, 2, "H5P__mt_create_class");
-    CHECK_I(ret, "H5P__mt_create_class");
+    ret = class_ver_and_len_check(class1, 1, 2, 0, 0, 2, "H5P__create_class");
+    CHECK_I(ret, "H5P__create_class");
 
     /* Check test_root's ref_count */
     if (test_params->num_threads == 1) {
-        ret = check_class_ref_counts(test_root, 0, 1, FALSE, "H5P__mt_create_class");
-        CHECK_I(ret, "H5P__mt_create_class");
+        ret = check_class_ref_counts(test_root, 0, 1, FALSE, "H5P__create_class");
+        CHECK_I(ret, "H5P__create_class");
     }
 
     /**
@@ -3573,8 +3573,7 @@ test_h5p_mt_class_2(test_params_t *test_params)
 
     /**
      * Create a copy of class1, check test_root's derived class ref count,
-     * and insert class2 into the index and set ID in class2->id and set
-     * opening flag to FALSE.
+     * and insert class2 into the index and set ID in class2->id
      */
     class2_id = H5Pcopy(atomic_load(&(class1->id)));
     CHECK(class2_id, H5I_INVALID_HID, "H5Pcopy");
@@ -3788,7 +3787,7 @@ test_h5p_mt_class_2(test_params_t *test_params)
     /* Check test_root's fields */
     if (test_params->num_threads == 1) {
         ret = check_class_ref_counts(test_root, 0, 1, FALSE, "H5Pcreate_class");
-        CHECK_I(ret, "H5P__mt_create_class");
+        CHECK_I(ret, "H5Pcreate_class");
     }
 
     /* Ensure class1's fields are correct */
@@ -4131,7 +4130,7 @@ test_h5p_mt_list_1(test_params_t *test_params)
          * property structure from it.
          */
 
-        VERIFY(atomic_load(&(H5P_mt_g.prop_fl_len)), 6, "H5P__mt_ins_or_mod_prop__list");
+        VERIFY(atomic_load(&(H5P_mt_g.prop_fl_len)), 6, "H5Pinsert2");
 
         prop_fl_head = atomic_load(&(H5P_mt_g.prop_fl_head));
         test_prop    = prop_fl_head.ptr;
@@ -5506,29 +5505,32 @@ check_stats(test_params_t *test_params)
      */
 
     /* Insert stats  */
-    assert(atomic_load(&(class1->H5P__insert_prop_class__num_calls)) == 5);
+    assert(atomic_load(&(class1->H5P__register_real__num_calls)) == 3);
+    assert(atomic_load(&(class1->H5P__register__num_calls)) == 3);
+    assert(atomic_load(&(class1->H5P__mt_ins_or_mod_prop__class__num_calls)) == 5);
+    assert(atomic_load(&(class1->H5P__class_set__num_calls)) == 3);
     assert(atomic_load(&(class1->insert_max_nodes_visited)) == 5);
     assert(atomic_load(&(class1->insert_avg_nodes_visited)) == 4);
-    assert(atomic_load(&(class1->num_insert_nodes_visited)) > 0);
+    assert(atomic_load(&(class1->num_insert_nodes_visited)) == 4); // > 0
     assert(atomic_load(&(class1->num_insert_prop__cols)) == 0);
     assert(atomic_load(&(class1->num_insert_prop__success)) == 5);
     assert(atomic_load(&(class1->num_insert_prop__chksum_cols)) == 0);
 
     /* Delete stats */
-    assert(atomic_load(&(class1->H5P__delete_prop__class__num_calls)) == 3);
-    assert(atomic_load(&(class1->set_delete__max_nodes_visited)) == 5);
-    assert(atomic_load(&(class1->set_delete__avg_nodes_visited)) == 4);
-    assert(atomic_load(&(class1->num_set_delete__nodes_visited)) > 0);
-    assert(atomic_load(&(class1->num_set_delete__cols)) == 0);
-    assert(atomic_load(&(class1->num_set_delete__success)) == 3);
-    assert(atomic_load(&(class1->num_set_delete_chksum_cols)) == 0);
+    assert(atomic_load(&(class1->H5P__unregister__num_calls)) == 3);
+    assert(atomic_load(&(class1->delete_prop__max_nodes_visited)) == 5);
+    assert(atomic_load(&(class1->delete_prop__avg_nodes_visited)) == 4);
+    assert(atomic_load(&(class1->num_delete_prop__nodes_visited)) == 5); // > 0
+    assert(atomic_load(&(class1->num_delete_prop__cols)) == 0);
+    assert(atomic_load(&(class1->num_delete_prop__success)) == 3);
+    assert(atomic_load(&(class1->num_delete_prop__chksum_cols)) == 0);
 
     /* Search stats */
-    assert(atomic_load(&(class1->H5P__search_prop__class__num_calls)) == 24);
+    assert(atomic_load(&(class1->H5P__mt_search_prop__class__num_calls)) == 22);
     assert(atomic_load(&(class1->search_class__max_nodes_visited)) == 8);
     assert(atomic_load(&(class1->search_class__avg_nodes_visited)) == 1);
-    assert(atomic_load(&(class1->num_search_class__nodes_visited)) > 0);
-    assert(atomic_load(&(class1->num_search_class__success)) == 17);
+    assert(atomic_load(&(class1->num_search_class__nodes_visited)) == 6); // > 0
+    assert(atomic_load(&(class1->num_search_class__success)) == 15);
     assert(atomic_load(&(class1->num_search_chksum_cols)) == 0);
 
     /* Version stats */
@@ -5536,7 +5538,7 @@ check_stats(test_params_t *test_params)
 
     /* H5P_mt_active_thread_count_t stats */
     assert(atomic_load(&(class1->num_thrd_update_cols)) == 0);
-    assert(atomic_load(&(class1->num_thrd_count_update)) == 91);
+    assert(atomic_load(&(class1->num_thrd_count_update)) == 106);
     assert(atomic_load(&(class1->num_thrd_closing_flag_set)) == 0);
     assert(atomic_load(&(class1->num_thrd_opening_flag_set)) == 0);
 
@@ -5555,7 +5557,10 @@ check_stats(test_params_t *test_params)
      */
 
     /* Insert stats  */
-    assert(atomic_load(&(class2->H5P__insert_prop_class__num_calls)) == 0);
+    assert(atomic_load(&(class2->H5P__register_real__num_calls)) == 0);
+    assert(atomic_load(&(class2->H5P__register__num_calls)) == 0);
+    assert(atomic_load(&(class2->H5P__mt_ins_or_mod_prop__class__num_calls)) == 0);
+    assert(atomic_load(&(class2->H5P__class_set__num_calls)) == 0);
     assert(atomic_load(&(class2->insert_max_nodes_visited)) == 0);
     assert(atomic_load(&(class2->insert_avg_nodes_visited)) == 0);
     assert(atomic_load(&(class2->num_insert_nodes_visited)) == 0);
@@ -5564,16 +5569,16 @@ check_stats(test_params_t *test_params)
     assert(atomic_load(&(class2->num_insert_prop__chksum_cols)) == 0);
 
     /* Delete stats */
-    assert(atomic_load(&(class2->H5P__delete_prop__class__num_calls)) == 0);
-    assert(atomic_load(&(class2->set_delete__max_nodes_visited)) == 0);
-    assert(atomic_load(&(class2->set_delete__avg_nodes_visited)) == 0);
-    assert(atomic_load(&(class2->num_set_delete__nodes_visited)) == 0);
-    assert(atomic_load(&(class2->num_set_delete__cols)) == 0);
-    assert(atomic_load(&(class2->num_set_delete__success)) == 0);
-    assert(atomic_load(&(class2->num_set_delete_chksum_cols)) == 0);
+    assert(atomic_load(&(class2->H5P__unregister__num_calls)) == 0);
+    assert(atomic_load(&(class2->delete_prop__max_nodes_visited)) == 0);
+    assert(atomic_load(&(class2->delete_prop__avg_nodes_visited)) == 0);
+    assert(atomic_load(&(class2->num_delete_prop__nodes_visited)) == 0);
+    assert(atomic_load(&(class2->num_delete_prop__cols)) == 0);
+    assert(atomic_load(&(class2->num_delete_prop__success)) == 0);
+    assert(atomic_load(&(class2->num_delete_prop__chksum_cols)) == 0);
 
     /* Search stats */
-    assert(atomic_load(&(class2->H5P__search_prop__class__num_calls)) == 0);
+    assert(atomic_load(&(class2->H5P__mt_search_prop__class__num_calls)) == 0);
     assert(atomic_load(&(class2->search_class__max_nodes_visited)) == 0);
     assert(atomic_load(&(class2->search_class__avg_nodes_visited)) == 0);
     assert(atomic_load(&(class2->num_search_class__nodes_visited)) == 0);
@@ -5585,7 +5590,7 @@ check_stats(test_params_t *test_params)
 
     /* H5P_mt_active_thread_count_t stats */
     assert(atomic_load(&(class2->num_thrd_update_cols)) == 0);
-    assert(atomic_load(&(class2->num_thrd_count_update)) == 3);
+    assert(atomic_load(&(class2->num_thrd_count_update)) == 2);
     assert(atomic_load(&(class2->num_thrd_closing_flag_set)) == 0);
     assert(atomic_load(&(class2->num_thrd_opening_flag_set)) == 0);
 
@@ -5604,7 +5609,10 @@ check_stats(test_params_t *test_params)
      */
 
     /* Insert stats  */
-    assert(atomic_load(&(list1->H5P__insert_prop_list__num_calls)) == 5);
+    assert(atomic_load(&(list1->H5P_insert__num_calls)) == 3);
+    assert(atomic_load(&(list1->H5P__mt_ins_or_mod_prop__class__num_calls)) == 5);
+    assert(atomic_load(&(list1->H5P_poke__num_calls)) == 0);
+    assert(atomic_load(&(list1->H5P_set__num_calls)) == 3);
     assert(atomic_load(&(list1->insert_max_nodes_visited)) == 3);
     assert(atomic_load(&(list1->insert_avg_nodes_visited)) == 2);
     assert(atomic_load(&(list1->num_insert_nodes_visited)) == 3);
@@ -5613,29 +5621,33 @@ check_stats(test_params_t *test_params)
     assert(atomic_load(&(list1->num_insert_update_entry)) == 3);
     assert(atomic_load(&(list1->num_insert_update_entry_cols)) == 0);
     assert(atomic_load(&(list1->num_insert_prop__chksum_cols)) == 0);
+    assert(atomic_load(&(list1->num_set_new_value_cols)) == 0);
+    assert(atomic_load(&(list1->num_set_new_value)) == 2);
 
     /* Delete stats */
-    assert(atomic_load(&(list1->H5P__delete_prop__list__num_calls)) == 3);
-    assert(atomic_load(&(list1->num_deletes_from_lfsll)) == 1);
-    assert(atomic_load(&(list1->set_delete__max_nodes_visited)) == 3);
-    assert(atomic_load(&(list1->set_delete__avg_nodes_visited)) == 3);
-    assert(atomic_load(&(list1->num_set_delete__nodes_visited)) == 3);
-    assert(atomic_load(&(list1->num_set_delete__cols)) == 0);
-    assert(atomic_load(&(list1->num_set_delete__success)) == 3);
-    assert(atomic_load(&(list1->num_set_delete_chksum_cols)) == 0);
-    assert(atomic_load(&(list1->num_set_delete__base_delete_version)) == 1);
-    assert(atomic_load(&(list1->num_set_delete__curr_entry)) == 1);
-    assert(atomic_load(&(list1->num_set_delete__older_curr)) == 0);
+    assert(atomic_load(&(list1->H5P_remove__num_calls)) == 3);
+    assert(atomic_load(&(list1->H5P__mt_delete_prop__list__num_calls)) == 3);
+    assert(atomic_load(&(list1->num_delete_props_from_lfsll)) == 1);
+    assert(atomic_load(&(list1->delete_prop__max_nodes_visited)) == 3);
+    assert(atomic_load(&(list1->delete_prop__avg_nodes_visited)) == 3);
+    assert(atomic_load(&(list1->num_delete_prop__nodes_visited)) == 3);
+    assert(atomic_load(&(list1->num_delete_prop__cols)) == 0);
+    assert(atomic_load(&(list1->num_delete_prop__success)) == 3);
+    assert(atomic_load(&(list1->num_delete_prop_chksum_cols)) == 0);
+    assert(atomic_load(&(list1->num_delete_prop__base_delete_version)) == 1);
+    assert(atomic_load(&(list1->num_delete_prop__curr_entry)) == 1);
+    assert(atomic_load(&(list1->num_delete_prop__older_curr)) == 0);
 
     /* Search stats */
-    assert(atomic_load(&(list1->H5P__search_prop__list__num_calls)) == 29);
+    assert(atomic_load(&(list1->H5P__find_prop_plist__num_calls)) == 0);
+    assert(atomic_load(&(list1->H5P__mt_search_prop__list__num_calls)) == 27);
     assert(atomic_load(&(list1->search_list__max_nodes_visited)) == 0);
     assert(atomic_load(&(list1->search_list__avg_nodes_visited)) == 0);
     assert(atomic_load(&(list1->num_search_list__nodes_visited)) == 0);
-    assert(atomic_load(&(list1->num_search_list__success)) == 22);
+    assert(atomic_load(&(list1->num_search_list__success)) == 20);
     assert(atomic_load(&(list1->num_search_chksum_cols)) == 0);
-    assert(atomic_load(&(list1->num_search_list__found_base)) == 8);
-    assert(atomic_load(&(list1->num_search_list__found_curr)) == 10);
+    assert(atomic_load(&(list1->num_search_list__found_base)) == 7);
+    assert(atomic_load(&(list1->num_search_list__found_curr)) == 9);
     assert(atomic_load(&(list1->num_target_prop_found_but_deleted)) == 3);
 
     /* Version check stats */
@@ -5643,20 +5655,23 @@ check_stats(test_params_t *test_params)
 
     /* H5P_mt_active_thread_count_t stats */
     assert(atomic_load(&(list1->num_thrd_update_cols)) == 0);
-    assert(atomic_load(&(list1->num_thrd_count_update)) == 87);
+    assert(atomic_load(&(list1->num_thrd_count_update)) == 108);
     assert(atomic_load(&(list1->num_thrd_closing_flag_set)) == 0);
     assert(atomic_load(&(list1->num_thrd_opening_flag_set)) == 0);
 
     /* initializing lkup_tbl stats */
     assert(atomic_load(&(list1->num_inherited_with_create_cb)) == 0);
-    assert(atomic_load(&(list1->num_inherited_with_create_cb)) == 0);
+    assert(atomic_load(&(list1->num_lkup_tbl_copy_entries_blank)) == 0);
 
     /**
      * Check list3's stats
      */
 
     /* Insert stats  */
-    assert(atomic_load(&(list3->H5P__insert_prop_list__num_calls)) == 0);
+    assert(atomic_load(&(list3->H5P_insert__num_calls)) == 0);
+    assert(atomic_load(&(list3->H5P__mt_ins_or_mod_prop__class__num_calls)) == 0);
+    assert(atomic_load(&(list3->H5P_poke__num_calls)) == 0);
+    assert(atomic_load(&(list3->H5P_set__num_calls)) == 0);
     assert(atomic_load(&(list3->insert_max_nodes_visited)) == 0);
     assert(atomic_load(&(list3->insert_avg_nodes_visited)) == 0);
     assert(atomic_load(&(list3->num_insert_nodes_visited)) == 0);
@@ -5667,20 +5682,22 @@ check_stats(test_params_t *test_params)
     assert(atomic_load(&(list3->num_insert_prop__chksum_cols)) == 0);
 
     /* Delete stats */
-    assert(atomic_load(&(list3->H5P__delete_prop__list__num_calls)) == 0);
-    assert(atomic_load(&(list3->num_deletes_from_lfsll)) == 0);
-    assert(atomic_load(&(list3->set_delete__max_nodes_visited)) == 0);
-    assert(atomic_load(&(list3->set_delete__avg_nodes_visited)) == 0);
-    assert(atomic_load(&(list3->num_set_delete__nodes_visited)) == 0);
-    assert(atomic_load(&(list3->num_set_delete__cols)) == 0);
-    assert(atomic_load(&(list3->num_set_delete__success)) == 0);
-    assert(atomic_load(&(list3->num_set_delete_chksum_cols)) == 0);
-    assert(atomic_load(&(list3->num_set_delete__base_delete_version)) == 0);
-    assert(atomic_load(&(list3->num_set_delete__curr_entry)) == 0);
-    assert(atomic_load(&(list3->num_set_delete__older_curr)) == 0);
+    assert(atomic_load(&(list3->H5P_remove__num_calls)) == 0);
+    assert(atomic_load(&(list3->H5P__mt_delete_prop__list__num_calls)) == 0);
+    assert(atomic_load(&(list3->num_delete_props_from_lfsll)) == 0);
+    assert(atomic_load(&(list3->delete_prop__max_nodes_visited)) == 0);
+    assert(atomic_load(&(list3->delete_prop__avg_nodes_visited)) == 0);
+    assert(atomic_load(&(list3->num_delete_prop__nodes_visited)) == 0);
+    assert(atomic_load(&(list3->num_delete_prop__cols)) == 0);
+    assert(atomic_load(&(list3->num_delete_prop__success)) == 0);
+    assert(atomic_load(&(list3->num_delete_prop_chksum_cols)) == 0);
+    assert(atomic_load(&(list3->num_delete_prop__base_delete_version)) == 0);
+    assert(atomic_load(&(list3->num_delete_prop__curr_entry)) == 0);
+    assert(atomic_load(&(list3->num_delete_prop__older_curr)) == 0);
 
     /* Search stats */
-    assert(atomic_load(&(list3->H5P__search_prop__list__num_calls)) == 0);
+    assert(atomic_load(&(list3->H5P__find_prop_plist__num_calls)) == 0);
+    assert(atomic_load(&(list3->H5P__mt_search_prop__list__num_calls)) == 0);
     assert(atomic_load(&(list3->search_list__max_nodes_visited)) == 0);
     assert(atomic_load(&(list3->search_list__avg_nodes_visited)) == 0);
     assert(atomic_load(&(list3->num_search_list__nodes_visited)) == 0);
@@ -5695,7 +5712,7 @@ check_stats(test_params_t *test_params)
 
     /* H5P_mt_active_thread_count_t stats */
     assert(atomic_load(&(list3->num_thrd_update_cols)) == 0);
-    assert(atomic_load(&(list3->num_thrd_count_update)) == 1);
+    assert(atomic_load(&(list3->num_thrd_count_update)) == 0);
     assert(atomic_load(&(list3->num_thrd_closing_flag_set)) == 0);
     assert(atomic_load(&(list3->num_thrd_opening_flag_set)) == 0);
 
@@ -5794,8 +5811,10 @@ check_global_stats(int _num_threads)
     }
 
     /* stats for creating or copying classes */
-    assert(atomic_load(&(H5P_mt_g.H5P__mt_create_class__num_calls)) == (2 * num_threads));
-    assert(atomic_load(&(H5P_mt_g.H5P__mt_copy_class__num_calls)) == (1 * num_threads));
+    assert(atomic_load(&(H5P_mt_g.H5P__create_class__num_calls)) == (2 * num_threads));
+    assert(atomic_load(&(H5P_mt_g.H5P__copy_pclass__num_calls)) == (1 * num_threads));
+    assert(atomic_load(&(H5P_mt_g.H5P__mt_create_class__internal__num_calls)) == (3 * num_threads));
+    assert(atomic_load(&(H5P_mt_g.num_classes_created_wo_parent)) == 0);
     if (num_threads == 1) {
         assert(atomic_load(&(H5P_mt_g.num_class_structs_allocated_from_heap)) == 2);
         assert(atomic_load(&(H5P_mt_g.num_class_structs_allocated_from_fl)) == 1);
@@ -5806,7 +5825,10 @@ check_global_stats(int _num_threads)
     }
 
     /* stats for creating or copying lists */
-    assert(atomic_load(&(H5P_mt_g.H5P__mt_create_list__num_calls)) == (3 * num_threads));
+    assert(atomic_load(&(H5P_mt_g.H5P_create_id__num_calls)) == (2 * num_threads));
+    assert(atomic_load(&(H5P_mt_g.H5P__create_list__num_calls)) == (2 * num_threads));
+    assert(atomic_load(&(H5P_mt_g.H5P_copy_plist__num_calls)) == (1 * num_threads));
+    assert(atomic_load(&(H5P_mt_g.H5P__mt_create_list__internal__num_calls)) == (3 * num_threads));
     if (num_threads == 1) {
         assert(atomic_load(&(H5P_mt_g.num_list_structs_allocated_from_heap)) == 2);
         assert(atomic_load(&(H5P_mt_g.num_list_structs_allocated_from_fl)) == 1);
@@ -5819,7 +5841,7 @@ check_global_stats(int _num_threads)
     assert(atomic_load(&(H5P_mt_g.H5P__init_lkup_tbl_copy__num_calls)) == (1 * num_threads));
 
     /* stats for creating props */
-    assert(atomic_load(&(H5P_mt_g.H5P__mt_create_prop__num_calls)) == (28 * num_threads));
+    assert(atomic_load(&(H5P_mt_g.H5P__create_prop__num_calls)) == (28 * num_threads));
     if (num_threads == 1) {
         assert(atomic_load(&(H5P_mt_g.num_prop_structs_allocated_from_heap)) == 39);
         assert(atomic_load(&(H5P_mt_g.num_prop_structs_allocated_from_fl)) == 1);
@@ -5829,6 +5851,7 @@ check_global_stats(int _num_threads)
                (39 * num_threads + num_threads));
         assert(atomic_load(&(H5P_mt_g.num_prop_structs_allocated_from_fl)) == 0);
     }
+    assert(atomic_load(&(H5P_mt_g.num_props_created_wo_cbs)) == (28 * num_threads));
 
     /* stats for property inserts */
     assert(atomic_load(&(H5P_mt_g.num_props_inserted_classes)) == (7 * num_threads));
@@ -5840,23 +5863,35 @@ check_global_stats(int _num_threads)
     assert(atomic_load(&(H5P_mt_g.num_props_deleted_lists)) == (3 * num_threads));
 
     /* stats for searches */
-    assert(atomic_load(&(H5P_mt_g.num_searches_classes)) == (28 * num_threads));
+    assert(atomic_load(&(H5P_mt_g.num_searches_classes)) == (24 * num_threads));
     assert(atomic_load(&(H5P_mt_g.num_searches_classes_prop_not_found)) == (7 * num_threads));
-    assert(atomic_load(&(H5P_mt_g.num_searches_while_an_op_occurs_class)) == (7 * num_threads));
-    assert(atomic_load(&(H5P_mt_g.num_searches_lists)) == (46 * num_threads));
+    assert(atomic_load(&(H5P_mt_g.num_searches_while_an_op_occurs_class)) == (8 * num_threads));
+    assert(atomic_load(&(H5P_mt_g.num_searches_lists)) == (40 * num_threads));
     assert(atomic_load(&(H5P_mt_g.num_searches_lists_prop_not_found)) == (8 * num_threads));
 
-    assert(atomic_load(&(H5P_mt_g.num_searches_while_an_op_occurs_list)) == (9 * num_threads));
+    assert(atomic_load(&(H5P_mt_g.num_searches_while_an_op_occurs_list)) == (16 * num_threads));
+
+    /* stats for getting list version from context */
+    assert(atomic_load(&(H5P_mt_g.num_list_version_from_ctx)) == 0);
 
     /* Property chksum cols stats */
     assert(atomic_load(&(H5P_mt_g.num_chksum_cols)) == (0 * num_threads));
 
     /* H5P__mt_enforce_serialization stats */
     assert(atomic_load(&(H5P_mt_g.H5P__mt_enforce_serialization__num_calls)) == (0 * num_threads));
+    assert(atomic_load(&(H5P_mt_g.num_classes_loop_enforce_serial)) == (0 * num_threads));
+    assert(atomic_load(&(H5P_mt_g.num_lists_loop_enforce_serial)) == (0 * num_threads));
 
-    /* stats for closing classes with active derivied lists and classes */
+    /* stats for closing classes */
+    assert(atomic_load(&(H5P_mt_g.H5P__close_class_cb__num_calls)) == (1 * num_threads));
+    assert(atomic_load(&(H5P_mt_g.H5P__close_class__num_calls)) == (1 * num_threads));
     assert(atomic_load(&(H5P_mt_g.close_class_but_pl_not_zero)) == (0 * num_threads));
     assert(atomic_load(&(H5P_mt_g.close_class_but_plc_not_zero)) == (0 * num_threads));
+    assert(atomic_load(&(H5P_mt_g.class_un_marked_as_deleted)) == (0 * num_threads));
+
+    /* stats for closing lists */
+    assert(atomic_load(&(H5P_mt_g.H5P__close_list_cb__num_calls)) == (1 * num_threads));
+    assert(atomic_load(&(H5P_mt_g.H5P_close__num_calls)) == (1 * num_threads));
 
     /* stats for the clear functions */
     if (num_threads == 1) {
@@ -5872,7 +5907,7 @@ check_global_stats(int _num_threads)
 
     /* H5P_mt_class_t and H5P_mt_list_t comparison stats */
     if (num_threads == 1) {
-        assert(atomic_load(&(H5P_mt_g.max_derived_classes)) >= 2);
+        assert(atomic_load(&(H5P_mt_g.max_derived_classes)) == 2);
     }
     else {
         assert(atomic_load(&(H5P_mt_g.max_derived_classes)) >= 2);
@@ -5881,8 +5916,8 @@ check_global_stats(int _num_threads)
     assert(atomic_load(&(H5P_mt_g.max_derived_lists)) == 2);
     assert(atomic_load(&(H5P_mt_g.max_class_num_phys_props)) == 10);
     assert(atomic_load(&(H5P_mt_g.max_list_num_phys_props)) == 9);
-    assert(atomic_load(&(H5P_mt_g.max_class_version_number)) == 9);
-    assert(atomic_load(&(H5P_mt_g.max_list_version_number)) == 9);
+    assert(atomic_load(&(H5P_mt_g.max_class_version_number)) == 10);
+    assert(atomic_load(&(H5P_mt_g.max_list_version_number)) == 10);
 
     return SUCCEED;
 
@@ -6084,13 +6119,13 @@ close_test_structs(test_params_t *test_params)
     assert(thrd.closing);
 
     /* Check all of class1's stats that have changed */
-    assert(atomic_load(&(class1->num_thrd_count_update)) == 99);
+    assert(atomic_load(&(class1->num_thrd_count_update)) == 114);
     assert(atomic_load(&(class1->num_thrd_closing_flag_set)) == 1);
     assert(atomic_load(&(class1->num_ref_count_update)) == 7);
     assert(atomic_load(&(class1->num_ref_count_marked_deleted)) == 1);
 
     /* Check all of class2's stats that have changed */
-    assert(atomic_load(&(class2->num_thrd_count_update)) == 7);
+    assert(atomic_load(&(class2->num_thrd_count_update)) == 6);
     assert(atomic_load(&(class2->num_thrd_closing_flag_set)) == 1);
     assert(atomic_load(&(class2->num_ref_count_update)) == 3);
     assert(atomic_load(&(class2->num_ref_count_marked_deleted)) == 1);
@@ -6100,7 +6135,7 @@ close_test_structs(test_params_t *test_params)
 
     /* Check all of list3's stats that have changed */
     assert(atomic_load(&(list3->num_thrd_closing_flag_set)) == 1);
-
+    
     return (ret_value);
 
 } /* end close_test_structs() */
@@ -6122,12 +6157,38 @@ static herr_t
 term_test_free_lists(int _num_threads)
 {
     uint64_t num_threads = (uint64_t)_num_threads;
+    H5P_mt_list_sptr_t           fl_list_head;
+    H5P_mt_list_sptr_t           fl_list_tail;
+    H5P_mt_class_sptr_t          fl_class_head;
+    H5P_mt_class_sptr_t          fl_class_tail;
+    H5P_mt_prop_aptr_t           fl_prop_head;
+    H5P_mt_prop_aptr_t           fl_prop_tail;
+
     herr_t   ret;
 
     ret = H5P__mt_term_free_lists();
     CHECK_I(ret, "H5P__mt_term_free_lists");
 
-    /** TODO: add a check to ensure the free lists are empty */
+    /* Ensure the free lists are empty */
+    fl_list_head = atomic_load(&(H5P_mt_g.list_fl_head));
+    fl_list_tail = atomic_load(&(H5P_mt_g.list_fl_tail));
+    CHECK_PTR_NULL(fl_list_head.ptr, "H5P__mt_term_free_lists");
+    CHECK_PTR_NULL(fl_list_tail.ptr, "H5P__mt_term_free_lists");
+    assert(!fl_list_head.ptr);
+    assert(!fl_list_tail.ptr);
+    fl_class_head = atomic_load(&(H5P_mt_g.class_fl_head));
+    fl_class_tail = atomic_load(&(H5P_mt_g.class_fl_tail));
+    CHECK_PTR_NULL(fl_class_head.ptr, "H5P__mt_term_free_lists");
+    CHECK_PTR_NULL(fl_class_tail.ptr, "H5P__mt_term_free_lists");
+    assert(!fl_class_head.ptr);
+    assert(!fl_class_tail.ptr);
+    fl_prop_head = atomic_load(&(H5P_mt_g.prop_fl_head));
+    fl_prop_tail = atomic_load(&(H5P_mt_g.prop_fl_tail));
+    CHECK_PTR_NULL(fl_prop_head.ptr, "H5P__mt_term_free_lists");
+    CHECK_PTR_NULL(fl_prop_tail.ptr, "H5P__mt_term_free_lists");
+    assert(!fl_prop_head.ptr);
+    assert(!fl_prop_tail.ptr);
+
 
     /* Check all the global stats that have changed */
     if (num_threads == 1) {
@@ -6326,15 +6387,15 @@ mt_context_test(TestParams_t H5_ATTR_UNUSED *params)
         new_value.size = sizeof(test_value);
 
         /* Inserts a new property to increment the version of the default list */
-        ret = H5P__mt_ins_or_mod_prop__list(list, name, new_value.ptr, new_value.size, FALSE, FALSE, TRUE,
-                                            NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-        CHECK_I(ret, "H5P__mt_ins_or_mod_prop__list");
+        ret = H5P_insert(list, name, new_value.size, new_value.ptr, 
+                         NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+        CHECK_I(ret, "H5P_insert");
         assert(ret == SUCCEED);
 
         /* Ensures the global version variable was updated correctly */
         updated_ver = atomic_load(&(list->curr_version));
-        VERIFY(updated_ver, *default_list_ver_array[i], "H5P__mt_ins_or_mod_prop__list");
-        VERIFY(updated_ver, (version + 1), "H5P__mt_ins_or_mod_prop__list");
+        VERIFY(updated_ver, *default_list_ver_array[i], "H5P_insert");
+        VERIFY(updated_ver, (version + 1), "H5P_insert");
         assert(updated_ver == version + 1);
 
         /* Ensure the next instance of the context has the correct version */
@@ -6494,28 +6555,29 @@ test_cx_lists_set_1(H5P_mt_list_t *list, const char *name, H5P_mt_prop_value_t v
     /* Modify the list to update it's version */
     /**
      * If list is a default list, it has already had this property inserted.
-     * Must treat as a set not create.
+     * Modify it, instead of create a new one.
      */
-    if (list->def_ver_ptr) {
-        ret = H5P__mt_ins_or_mod_prop__list(list, name, value.ptr, value.size, FALSE, FALSE, FALSE, NULL,
-                                            NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+    if ( list->def_ver_ptr )
+    {
+        ret = H5P_set(list, name, value.ptr);
     }
-    else {
-        ret = H5P__mt_ins_or_mod_prop__list(list, name, value.ptr, value.size, FALSE, FALSE, TRUE, NULL, NULL,
-                                            NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+    else
+    {
+        ret = H5P_insert(list, name, value.size, value.ptr, NULL, 
+                         NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     }
 
-    CHECK_I(ret, "H5P__mt_ins_or_mod_prop__list");
+    CHECK_I(ret, "H5P_insert");
     assert(ret == SUCCEED);
 
     updated_ver = atomic_load(&(list->curr_version));
-    VERIFY(updated_ver, version + 1, "H5P__mt_ins_or_mod_prop__list");
+    VERIFY(updated_ver, version + 1, "H5P_insert");
     assert(updated_ver == version + 1);
 
     if (def_global_ver_ptr) {
         /* Ensures the global version variable was updated correctly */
-        VERIFY(updated_ver, *def_global_ver_ptr, "H5P__mt_ins_or_mod_prop__list");
-        VERIFY(updated_ver, (version + 1), "H5P__mt_ins_or_mod_prop__list");
+        VERIFY(updated_ver, *def_global_ver_ptr, "H5P_insert");
+        VERIFY(updated_ver, (version + 1), "H5P_insert");
         assert(updated_ver == version + 1);
     }
 
@@ -9881,13 +9943,13 @@ create_starting_classes_and_lists(void)
 
         /**
          * Create the class
-         * H5P__mt_create_class() is used instead of H5Pcreate_class due to
-         * H5P__mt_create_class() being used to create the default classes
+         * H5P__create_class() is used instead of H5Pcreate_class due to
+         * H5P__create_class() being used to create the default classes
          * during regular HDF5 initialization.
          */
-        class = H5P__mt_create_class(parent, class_entry->name, H5P_TYPE_USER, 0, NULL, NULL, NULL, NULL,
+        class = H5P__create_class(parent, class_entry->name, H5P_TYPE_USER, 0, NULL, NULL, NULL, NULL,
                                      NULL, NULL);
-        CHECK_PTR(class, "H5P__mt_create_class");
+        CHECK_PTR(class, "H5P__create_class");
         assert(class);
         assert(atomic_load(&(class->tag)) == H5P_MT_CLASS_TAG);
 
@@ -9900,9 +9962,9 @@ create_starting_classes_and_lists(void)
             prop_entry = &class_entry->prop_table[j];
             assert(atomic_load(&(prop_entry->status)) == DOESNT_EXIST);
 
-            prop = H5P__mt_create_prop(prop_entry->name, &value, sizeof(value), TRUE, 1, NULL, NULL, NULL,
+            prop = H5P__create_prop(prop_entry->name, &value, sizeof(value), TRUE, 1, NULL, NULL, NULL,
                                        NULL, NULL, NULL, NULL, NULL, NULL);
-            CHECK_PTR(prop, "H5P__mt_create_prop");
+            CHECK_PTR(prop, "H5P__create_prop");
             assert(prop);
             assert(atomic_load(&(prop->tag)) == H5P_MT_PROP_TAG);
 
@@ -10036,11 +10098,11 @@ create_starting_classes_and_lists(void)
 
         /**
          * Create the list
-         * H5P__mt_create_list() is used instead of H5Pcreate_class due to
-         * H5P__mt_create_list() being used to create the default lists
+         * H5P__create_list() is used instead of H5Pcreate_class due to
+         * H5P__create_list() being used to create the default lists
          * during regular HDF5 initialization.
          */
-        list = H5P__mt_create_list(class, NULL, FALSE, 1, FALSE);
+        list = H5P__create_list(class, FALSE);
         CHECK_PTR(list, "H5P__mt_create_list");
         assert(list);
         assert(atomic_load(&(list->tag)) == H5P_MT_LIST_TAG);
@@ -10203,11 +10265,15 @@ mt_test_2(TestParams_t H5_ATTR_UNUSED *params)
         ret = H5P__mt_term_free_lists();
         CHECK_I(ret, "H5P__mt_term_free_lists");
 
+        /* Re-initialize the free lists */
+        ret = H5P_mt_init_free_lists();
+        CHECK_I(ret, "H5P_mt_init_free_lists");
+
         /* Reset global stats before incrementing num_thread and testing again */
         ret = H5P__reset_stats_global();
         CHECK_I(ret, "H5P__reset_stats_global");
 
-        /** TODO: add reset funtion for globals */
+        /* Reset the test globals class_table and list_table for the next iteration */
         ret = reset_globals_2();
         CHECK_I(ret, "reset_globals_2");
 
@@ -10344,10 +10410,6 @@ test_2_helper(int num_threads)
     ret = check_operations(thread_params, (uint64_t)(num_threads));
     CHECK_I(ret, "check_operations");
     assert(ret == SUCCEED);
-
-    /**
-     * TODO: add all thread collision stats to get a total thread collisions.
-     */
 
     /* Close all of the test lists */
     for (i = 0; i < LIST_TABLE_SIZE; i++) {

@@ -140,30 +140,68 @@ struct H5Z_filter_info_t;
 /******************************/
 
 /* Private functions, not part of the publicly documented API */
-H5_DLL H5P_genclass_t *H5P__create_class(H5P_genclass_t *par_class, const char *name, H5P_plist_type_t type,
-                                         H5P_cls_create_func_t cls_create, void *create_data,
-                                         H5P_cls_copy_func_t cls_copy, void *copy_data,
-                                         H5P_cls_close_func_t cls_close, void *close_data);
 #ifdef H5_HAVE_MULTITHREAD
+H5_DLL H5P_genclass_t *H5P__create_class(H5P_mt_class_t *parent, const char *name, H5P_plist_type_t type, 
+                                        uint64_t src_version, H5P_cls_create_func_t create_func, 
+                                        void *create_data, H5P_cls_copy_func_t copy_func, void *copy_data, 
+                                        H5P_cls_close_func_t close_func, void *close_data);
+
 H5_DLL H5P_mt_class_t *H5P__copy_pclass(H5P_mt_class_t *pclass);
 
-#else
-H5_DLL H5P_genclass_t *H5P__copy_pclass(H5P_genclass_t *pclass);
-#endif
-H5_DLL herr_t H5P__register_real(H5P_genclass_t *pclass, const char *name, size_t size, const void *def_value,
+H5_DLL H5P_mt_list_t *H5P__create_list(H5P_mt_class_t *pclass, hbool_t app_ref);
+
+H5P_mt_prop_t *H5P__create_prop(const char *name, const void *value_ptr, size_t value_size, bool in_prop_class,
+                 uint64_t version, H5P_prp_create_func_t prp_create, H5P_prp_set_func_t prp_set,
+                 H5P_prp_get_func_t prp_get, H5P_prp_encode_func_t prp_encode,
+                 H5P_prp_decode_func_t prp_decode, H5P_prp_delete_func_t prp_del,
+                 H5P_prp_copy_func_t prp_copy, H5P_prp_compare_func_t prp_cmp,
+                 H5P_prp_close_func_t prp_close);
+
+H5_DLL herr_t H5P__register_real(H5P_mt_class_t *pclass, const char *name, size_t size, const void *def_value,
                                  H5P_prp_create_func_t prp_create, H5P_prp_set_func_t prp_set,
                                  H5P_prp_get_func_t prp_get, H5P_prp_encode_func_t prp_encode,
                                  H5P_prp_decode_func_t prp_decode, H5P_prp_delete_func_t prp_delete,
                                  H5P_prp_copy_func_t prp_copy, H5P_prp_compare_func_t prp_cmp,
                                  H5P_prp_close_func_t prp_close);
-#ifdef H5_HAVE_MULTITHREAD
+
 H5_DLL herr_t H5P__register(H5P_mt_class_t **pclass, const char *name, size_t size, void *def_value,
                             H5P_prp_create_func_t prp_create, H5P_prp_set_func_t prp_set,
                             H5P_prp_get_func_t prp_get, H5P_prp_encode_func_t prp_encode,
                             H5P_prp_decode_func_t prp_decode, H5P_prp_delete_func_t prp_delete,
                             H5P_prp_copy_func_t prp_copy, H5P_prp_compare_func_t prp_cmp,
                             H5P_prp_close_func_t prp_close);
+
+H5_DLL herr_t H5P__class_get(H5P_mt_class_t *pclass, const char *name, void *value);
+H5_DLL herr_t H5P__class_set(H5P_mt_class_t *pclass, const char *name, void *value);
+
+H5_DLL herr_t H5P__get_size_plist(H5P_mt_list_t *plist, const char *name, size_t *size);
+H5_DLL herr_t H5P__get_nprops_plist(H5P_mt_list_t *plist, size_t *nprops);
+
+H5_DLL int    H5P__cmp_class(H5P_mt_class_t *pclass1, H5P_mt_class_t *pclass2);
+H5_DLL herr_t H5P__cmp_plist(H5P_mt_list_t *plist1, H5P_mt_list_t *plist2, int *cmp_ret);
+
+H5_DLL H5P_genprop_t *H5P__find_prop_plist(H5P_genplist_t *plist, const char *name);
+
+H5_DLL int H5P__iterate_plist(H5P_genplist_t *plist, hbool_t iter_all_prop, int *idx,
+                                 H5P_iterate_int_t iter_func, void *iter_data);
+H5_DLL int H5P__iterate_pclass(H5P_genclass_t *pclass, int *idx, H5P_iterate_int_t iter_func,
+                                  void *iter_data);
+
 #else
+H5_DLL H5P_genclass_t *H5P__create_class(H5P_genclass_t *par_class, const char *name, H5P_plist_type_t type,
+                                         H5P_cls_create_func_t cls_create, void *create_data,
+                                         H5P_cls_copy_func_t cls_copy, void *copy_data,
+                                         H5P_cls_close_func_t cls_close, void *close_data);
+
+H5_DLL H5P_genclass_t *H5P__copy_pclass(H5P_genclass_t *pclass);
+
+H5_DLL herr_t H5P__register_real(H5P_genclass_t *pclass, const char *name, size_t size, const void *def_value,
+                                 H5P_prp_create_func_t prp_create, H5P_prp_set_func_t prp_set,
+                                 H5P_prp_get_func_t prp_get, H5P_prp_encode_func_t prp_encode,
+                                 H5P_prp_decode_func_t prp_decode, H5P_prp_delete_func_t prp_delete,
+                                 H5P_prp_copy_func_t prp_copy, H5P_prp_compare_func_t prp_cmp,
+                                 H5P_prp_close_func_t prp_close);
+
 H5_DLL herr_t H5P__register(H5P_genclass_t **pclass, const char *name, size_t size, const void *def_value,
                             H5P_prp_create_func_t prp_create, H5P_prp_set_func_t prp_set,
                             H5P_prp_get_func_t prp_get, H5P_prp_encode_func_t prp_encode,
@@ -174,50 +212,49 @@ H5_DLL herr_t H5P__register(H5P_genclass_t **pclass, const char *name, size_t si
 H5_DLL herr_t H5P__add_prop(H5SL_t *props, H5P_genprop_t *prop);
 H5_DLL herr_t H5P__access_class(H5P_genclass_t *pclass, H5P_class_mod_t mod);
 
-#ifdef H5_HAVE_MULTITHREAD
-H5_DLL herr_t H5P__class_get(H5P_genclass_t *pclass, const char *name, void *value);
-H5_DLL herr_t H5P__class_set(H5P_genclass_t *pclass, const char *name, void *value);
-#else
+#ifndef H5_HAVE_MULTITHREAD
 H5_DLL herr_t H5P__class_get(const H5P_genclass_t *pclass, const char *name, void *value);
 H5_DLL herr_t H5P__class_set(const H5P_genclass_t *pclass, const char *name, const void *value);
 #endif
 H5_DLL htri_t H5P__exist_pclass(H5P_genclass_t *pclass, const char *name);
-#ifdef H5_HAVE_MULTITHREAD
-H5_DLL herr_t H5P__get_size_plist(H5P_genplist_t *plist, const char *name, size_t *size);
-#else
+#ifndef H5_HAVE_MULTITHREAD
 H5_DLL herr_t H5P__get_size_plist(const H5P_genplist_t *plist, const char *name, size_t *size);
 #endif
 H5_DLL herr_t H5P__get_size_pclass(H5P_genclass_t *pclass, const char *name, size_t *size);
+#ifndef H5_HAVE_MULTITHREAD
 H5_DLL herr_t H5P__get_nprops_plist(const H5P_genplist_t *plist, size_t *nprops);
-#ifdef H5_HAVE_MULTITHREAD
-H5_DLL int    H5P__cmp_class(H5P_genclass_t *pclass1, H5P_genclass_t *pclass2);
-H5_DLL herr_t H5P__cmp_plist(H5P_genplist_t *plist1, H5P_genplist_t *plist2, int *cmp_ret);
-#else
+
 H5_DLL int    H5P__cmp_class(const H5P_genclass_t *pclass1, const H5P_genclass_t *pclass2);
 H5_DLL herr_t H5P__cmp_plist(const H5P_genplist_t *plist1, const H5P_genplist_t *plist2, int *cmp_ret);
-#endif
+
 H5_DLL int    H5P__iterate_plist(const H5P_genplist_t *plist, hbool_t iter_all_prop, int *idx,
                                  H5P_iterate_int_t iter_func, void *iter_data);
 H5_DLL int    H5P__iterate_pclass(const H5P_genclass_t *pclass, int *idx, H5P_iterate_int_t iter_func,
                                   void *iter_data);
+#endif
 H5_DLL herr_t H5P__copy_prop_plist(hid_t dst_id, hid_t src_id, const char *name);
 H5_DLL herr_t H5P__copy_prop_pclass(hid_t dst_id, hid_t src_id, const char *name);
 H5_DLL herr_t H5P__unregister(H5P_genclass_t *pclass, const char *name);
 H5_DLL char  *H5P__get_class_path(H5P_genclass_t *pclass);
 H5_DLL H5P_genclass_t *H5P__open_class_path(const char *path);
+#ifdef H5_HAVE_MULTITHREAD
+H5_DLL H5P_genclass_t *H5P__get_class_parent(H5P_mt_class_t *pclass);
+#else
 H5_DLL H5P_genclass_t *H5P__get_class_parent(const H5P_genclass_t *pclass);
+#endif
 H5_DLL herr_t          H5P__close_class(H5P_genclass_t *pclass);
 
-#ifdef H5_HAVE_MULTITHREAD
-H5_DLL H5P_genprop_t *H5P__find_prop_plist(H5P_genplist_t *plist, const char *name);
-
-#else
+#ifndef H5_HAVE_MULTITHREAD
 H5_DLL H5P_genprop_t *H5P__find_prop_plist(const H5P_genplist_t *plist, const char *name);
 #endif
 H5_DLL hid_t H5P__new_plist_of_type(H5P_plist_type_t type);
 
 /* Encode/decode routines */
+#ifdef H5_HAVE_MULTITHREAD
+H5_DLL herr_t H5P__encode(H5P_genplist_t *plist, hbool_t enc_all_prop, void *buf, size_t *nalloc);
+#else
 H5_DLL herr_t H5P__encode(const H5P_genplist_t *plist, hbool_t enc_all_prop, void *buf, size_t *nalloc);
+#endif
 H5_DLL hid_t  H5P__decode(const void *buf);
 H5_DLL herr_t H5P__encode_hsize_t(const void *value, void **_pp, size_t *size);
 H5_DLL herr_t H5P__encode_size_t(const void *value, void **_pp, size_t *size);

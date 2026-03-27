@@ -1410,7 +1410,10 @@ typedef struct H5P_mt_class_t {
     /* Stats */
 
     /* H5P_mt_class_t insert stats */
-    _Atomic uint64_t H5P__insert_prop_class__num_calls;
+    _Atomic uint64_t H5P__register_real__num_calls;
+    _Atomic uint64_t H5P__register__num_calls;
+    _Atomic uint64_t H5P__mt_ins_or_mod_prop__class__num_calls;
+    _Atomic uint64_t H5P__class_set__num_calls;
     _Atomic uint64_t insert_max_nodes_visited;
     _Atomic uint64_t insert_avg_nodes_visited;
     _Atomic uint64_t num_insert_nodes_visited;
@@ -1419,16 +1422,16 @@ typedef struct H5P_mt_class_t {
     _Atomic uint64_t num_insert_prop__chksum_cols;
 
     /* H5P_mt_class_t set delete version stats */
-    _Atomic uint64_t H5P__delete_prop__class__num_calls;
-    _Atomic uint64_t set_delete__max_nodes_visited;
-    _Atomic uint64_t set_delete__avg_nodes_visited;
-    _Atomic uint64_t num_set_delete__nodes_visited;
-    _Atomic uint64_t num_set_delete__cols;
-    _Atomic uint64_t num_set_delete__success;
-    _Atomic uint64_t num_set_delete_chksum_cols;
+    _Atomic uint64_t H5P__unregister__num_calls;
+    _Atomic uint64_t delete_prop__max_nodes_visited;
+    _Atomic uint64_t delete_prop__avg_nodes_visited;
+    _Atomic uint64_t num_delete_prop__nodes_visited;
+    _Atomic uint64_t num_delete_prop__cols;
+    _Atomic uint64_t num_delete_prop__success;
+    _Atomic uint64_t num_delete_prop__chksum_cols;
 
     /* H5P_mt_class_t search stats */
-    _Atomic uint64_t H5P__search_prop__class__num_calls;
+    _Atomic uint64_t H5P__mt_search_prop__class__num_calls;
     _Atomic uint64_t search_class__max_nodes_visited;
     _Atomic uint64_t search_class__avg_nodes_visited;
     _Atomic uint64_t num_search_class__nodes_visited;
@@ -2086,7 +2089,10 @@ typedef struct H5P_mt_list_t {
     /* stats */
 
     /* H5P_mt_list_t insert stats */
-    _Atomic uint64_t H5P__insert_prop_list__num_calls;
+    _Atomic uint64_t H5P_insert__num_calls;
+    _Atomic uint64_t H5P__mt_ins_or_mod_prop__class__num_calls;
+    _Atomic uint64_t H5P_poke__num_calls;
+    _Atomic uint64_t H5P_set__num_calls;
     _Atomic uint64_t insert_max_nodes_visited;
     _Atomic uint64_t insert_avg_nodes_visited;
     _Atomic uint64_t num_insert_nodes_visited;
@@ -2095,22 +2101,26 @@ typedef struct H5P_mt_list_t {
     _Atomic uint64_t num_insert_update_entry;
     _Atomic uint64_t num_insert_update_entry_cols;
     _Atomic uint64_t num_insert_prop__chksum_cols;
+    _Atomic uint64_t num_set_new_value_cols;
+    _Atomic uint64_t num_set_new_value;
 
     /* H5P_mt_list_t set delete version stats */
-    _Atomic uint64_t H5P__delete_prop__list__num_calls;
-    _Atomic uint64_t num_deletes_from_lfsll;
-    _Atomic uint64_t set_delete__max_nodes_visited;
-    _Atomic uint64_t set_delete__avg_nodes_visited;
-    _Atomic uint64_t num_set_delete__nodes_visited;
-    _Atomic uint64_t num_set_delete__cols;
-    _Atomic uint64_t num_set_delete__success;
-    _Atomic uint64_t num_set_delete_chksum_cols;
-    _Atomic uint64_t num_set_delete__base_delete_version;
-    _Atomic uint64_t num_set_delete__curr_entry;
-    _Atomic uint64_t num_set_delete__older_curr;
+    _Atomic uint64_t H5P_remove__num_calls;
+    _Atomic uint64_t H5P__mt_delete_prop__list__num_calls;
+    _Atomic uint64_t num_delete_props_from_lfsll;
+    _Atomic uint64_t delete_prop__max_nodes_visited;
+    _Atomic uint64_t delete_prop__avg_nodes_visited;
+    _Atomic uint64_t num_delete_prop__nodes_visited;
+    _Atomic uint64_t num_delete_prop__cols;
+    _Atomic uint64_t num_delete_prop__success;
+    _Atomic uint64_t num_delete_prop_chksum_cols;
+    _Atomic uint64_t num_delete_prop__base_delete_version;
+    _Atomic uint64_t num_delete_prop__curr_entry;
+    _Atomic uint64_t num_delete_prop__older_curr;
 
     /* H5P_mt_list_t search stats */
-    _Atomic uint64_t H5P__search_prop__list__num_calls;
+    _Atomic uint64_t H5P__find_prop_plist__num_calls;
+    _Atomic uint64_t H5P__mt_search_prop__list__num_calls;
     _Atomic uint64_t search_list__max_nodes_visited;
     _Atomic uint64_t search_list__avg_nodes_visited;
     _Atomic uint64_t num_search_list__nodes_visited;
@@ -2251,29 +2261,35 @@ typedef struct H5P_mt_t {
     _Atomic uint64_t list_fl_head_free_skipped_no_reallocable;
 
     /* stats for creating or copying classes */
-    _Atomic uint64_t H5P__mt_create_class__num_calls;
-    _Atomic uint64_t H5P__mt_copy_class__num_calls;
+    _Atomic uint64_t H5P__create_class__num_calls;
+    _Atomic uint64_t H5P__copy_pclass__num_calls;
+    _Atomic uint64_t H5P__mt_create_class__internal__num_calls;
+    _Atomic uint64_t num_classes_created_wo_parent;
     _Atomic uint64_t num_class_structs_allocated_from_heap;
     _Atomic uint64_t num_class_structs_allocated_from_fl;
 
     /* stats for creating or copying lists */
-    _Atomic uint64_t H5P__mt_create_list__num_calls;
+    _Atomic uint64_t H5P_create_id__num_calls;
+    _Atomic uint64_t H5P__create_list__num_calls;
+    _Atomic uint64_t H5P_copy_plist__num_calls;
+    _Atomic uint64_t H5P__mt_create_list__internal__num_calls;
     _Atomic uint64_t num_list_structs_allocated_from_heap;
     _Atomic uint64_t num_list_structs_allocated_from_fl;
     _Atomic uint64_t H5P__init_lkup_tbl__num_calls;
     _Atomic uint64_t H5P__init_lkup_tbl_copy__num_calls;
 
     /* stats for creating props */
-    _Atomic uint64_t H5P__mt_create_prop__num_calls;
+    _Atomic uint64_t H5P__create_prop__num_calls;
     _Atomic uint64_t num_prop_structs_allocated_from_heap;
     _Atomic uint64_t num_prop_structs_allocated_from_fl;
+    _Atomic uint64_t num_props_created_wo_cbs;
 
     /* stats for property inserts */
     _Atomic uint64_t num_props_inserted_classes;
     _Atomic uint64_t num_props_inserted_lists;
     _Atomic uint64_t H5P__mt_ins_or_mod_prop__lfsll_ins__num_calls;
 
-    /* stats for number of deletes */
+    /* stats for property deletes (setting delete_versions) */
     _Atomic uint64_t num_props_deleted_classes;
     _Atomic uint64_t num_props_deleted_classes_prop_not_found;
     _Atomic uint64_t num_props_deleted_classes_already_deleted;
@@ -2289,16 +2305,30 @@ typedef struct H5P_mt_t {
     _Atomic uint64_t num_searches_lists_prop_not_found;
     _Atomic uint64_t num_searches_while_an_op_occurs_list;
 
+    /* Default list stats */
+    _Atomic uint64_t num_default_list_mods;
+
+    /* stats for getting list version from context */
+    _Atomic uint64_t num_list_version_from_ctx;
+
     /* Property chksum cols stats */
     _Atomic uint64_t num_chksum_cols;
 
     /* H5P__mt_enforce_serialization stats */
     _Atomic uint64_t H5P__mt_enforce_serialization__num_calls;
+    _Atomic uint64_t num_classes_loop_enforce_serial;
+    _Atomic uint64_t num_lists_loop_enforce_serial;
 
-    /* stats for marking classes deleted or unmarking classes as deleted */
+    /* stats for closing classes */
+    _Atomic uint64_t H5P__close_class_cb__num_calls;
+    _Atomic uint64_t H5P__close_class__num_calls;
     _Atomic uint64_t close_class_but_pl_not_zero;
     _Atomic uint64_t close_class_but_plc_not_zero;
     _Atomic uint64_t class_un_marked_as_deleted;
+
+    /* stats for closing lists */
+    _Atomic uint64_t H5P__close_list_cb__num_calls;
+    _Atomic uint64_t H5P_close__num_calls;
 
     /* stats for the clear functions */
     _Atomic uint64_t num_classes_freed;
@@ -2339,10 +2369,6 @@ typedef struct H5P_mt_cb_t {
 
 extern _Thread_local H5P_mt_cb_t H5P_mt_cb;
 
-// void H5P__version_tls_set(version_cb_t cb, void *ctx);
-// void H5P__version_tls_clear(void);
-
-// void H5P__version_tls_store(H5P_mt_prop_t *prop, uint64_t version);
 
 /******************************/
 /* Package Private Prototypes */
@@ -2353,10 +2379,16 @@ H5P_mt_class_t *H5P__mt_create_class(H5P_mt_class_t *parent, const char *name, H
                                      uint64_t src_version, H5P_cls_create_func_t create_func,
                                      void *create_data, H5P_cls_copy_func_t copy_func, void *copy_data,
                                      H5P_cls_close_func_t close_func, void *close_data);
-H5P_mt_class_t *H5P__mt_copy_class(H5P_mt_class_t *class);
+H5P_mt_class_t *H5P__mt_copy_class(H5P_mt_class_t *og_class);
+H5P_mt_class_t *H5P__mt_create_class__internal(H5P_mt_class_t *parent, const char *name, H5P_plist_type_t type, 
+                                                uint64_t src_version, H5P_cls_create_func_t create_func, 
+                                                void *create_data, H5P_cls_copy_func_t copy_func, void *copy_data, 
+                                                H5P_cls_close_func_t close_func, void *close_data);
 H5P_mt_class_t *H5P__mt_alloc_class(void);
-H5P_mt_list_t  *H5P__mt_create_list(H5P_mt_class_t *parent, H5P_mt_list_t *old_list, bool copy,
-                                    uint64_t src_version, bool app_ref);
+H5P_mt_list_t  *H5P__mt_create_list(H5P_mt_class_t *parent, uint64_t src_version, bool app_ref);
+H5P_mt_list_t  *H5P__mt_copy_list(H5P_mt_class_t *parent, H5P_mt_list_t *og_list, uint64_t src_version, 
+                                    bool app_ref);
+H5P_mt_list_t  *H5P__mt_create_list__internal(H5P_mt_class_t *parent, uint64_t src_version);
 H5P_mt_list_t  *H5P__mt_alloc_list(void);
 herr_t          H5P__init_lkup_tbl(H5P_mt_class_t *parent, uint64_t version, H5P_mt_list_t *list);
 herr_t          H5P__init_lkup_tbl_copy(H5P_mt_list_t *old_list, uint64_t version, H5P_mt_list_t *new_list);
@@ -2373,24 +2405,26 @@ H5P_mt_prop_t *H5P__mt_alloc_prop(void);
 
 herr_t H5P__mt_copy_lfsll(void *param, H5P_mt_prop_t *old_prop, uint64_t version);
 herr_t H5P__mt_ins_or_mod_prop__class(H5P_mt_class_t *class, const char *name, void *value, size_t size,
-                                      bool is_new, H5P_prp_create_func_t prp_create,
+                                      bool is_new, uint64_t prop_version, H5P_prp_create_func_t prp_create,
                                       H5P_prp_set_func_t prp_set, H5P_prp_get_func_t prp_get,
                                       H5P_prp_encode_func_t prp_encode, H5P_prp_decode_func_t prp_decode,
                                       H5P_prp_delete_func_t prp_del, H5P_prp_copy_func_t prp_copy,
                                       H5P_prp_compare_func_t prp_cmp, H5P_prp_close_func_t prp_close);
 herr_t H5P__mt_ins_or_mod_prop__list(H5P_mt_list_t *list, const char *name, void *value, size_t size,
-                                     bool create, bool copy, bool is_new, H5P_prp_create_func_t prp_create,
-                                     H5P_prp_set_func_t prp_set, H5P_prp_get_func_t prp_get,
-                                     H5P_prp_encode_func_t prp_encode, H5P_prp_decode_func_t prp_decode,
-                                     H5P_prp_delete_func_t prp_del, H5P_prp_copy_func_t prp_copy,
-                                     H5P_prp_compare_func_t prp_cmp, H5P_prp_close_func_t prp_close);
+                                     bool create, bool copy, bool is_new, uint64_t prop_version, 
+                                     H5P_prp_create_func_t prp_create, H5P_prp_set_func_t prp_set, 
+                                     H5P_prp_get_func_t prp_get, H5P_prp_encode_func_t prp_encode, 
+                                     H5P_prp_decode_func_t prp_decode, H5P_prp_delete_func_t prp_del, 
+                                     H5P_prp_copy_func_t prp_copy, H5P_prp_compare_func_t prp_cmp, 
+                                     H5P_prp_close_func_t prp_close);
 herr_t H5P__mt_ins_or_mod_prop__lfsll_ins(H5P_mt_prop_t *pl_head, H5P_mt_prop_t *new_prop,
                                           uint32_t *deletes_ptr, uint32_t *nodes_visited_ptr,
                                           uint32_t *thrd_cols_ptr, bool *chksum_cols_ptr);
 herr_t H5P__mt_delete_prop__class(H5P_mt_class_t *class, const char *name);
-herr_t H5P__mt_delete_prop__list(H5P_mt_list_t *list, const char *name);
-H5P_mt_prop_t             *H5P__mt_search__class(H5P_mt_class_t *class, const char *name, uint64_t version);
-H5P_mt_prop_t             *H5P__mt_search__list(H5P_mt_list_t *list, const char *name, uint64_t version);
+herr_t H5P__mt_delete_prop__list(H5P_mt_list_t *list, int64_t chksum, const char *name,
+                                 uint64_t curr_version, uint64_t next_version);
+H5P_mt_prop_t *H5P__mt_search__class(H5P_mt_class_t *class, const char *name, uint64_t version);
+H5P_mt_prop_t *H5P__mt_search__list(H5P_mt_list_t *list, const char *name, uint64_t version);
 H5P_mt_list_table_entry_t *H5P__mt_search_lkup_tbl(H5P_mt_list_table_entry_t *lkup_tbl, size_t left_entry,
                                                    size_t right_entry, int64_t chksum, const char *name);
 H5P_mt_prop_t             *H5P__mt_search_lfsll(H5P_mt_prop_t *pl_head, int64_t chksum, const char *name,
@@ -2403,6 +2437,11 @@ herr_t                     H5P__find_mod_point(H5P_mt_prop_t *pl_head, H5P_mt_pr
 H5P_mt_prop_t             *H5P__get_next_valid_prop(H5P_mt_prop_t *prop, uint64_t version, uint64_t *visited);
 H5P_mt_prop_t             *H5P__find_valid_version(H5P_mt_prop_t *prop, uint64_t version, uint64_t *visited);
 int32_t                    H5P__is_valid(H5P_mt_prop_t *prop, uint64_t version);
+
+herr_t
+    H5P__count_nprops_pclass(H5P_mt_class_t *class, size_t *_nprops, uint64_t version, hbool_t recurse);
+herr_t
+    H5P__count_nprops_plist(H5P_mt_list_t *list, size_t *_nprops, uint64_t version);
 
 int32_t H5P__mt_prop_cmp(H5P_mt_prop_t *prop1, H5P_mt_prop_t *prop2);
 int32_t H5P__mt_cmp_class(H5P_mt_class_t *class1, uint64_t version1, H5P_mt_class_t *class2,

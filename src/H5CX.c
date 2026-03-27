@@ -265,19 +265,6 @@ typedef struct H5CX_t {
     uint64_t        ocpypl_ver;
     int32_t         ocpypl_inc;
 
-#if 0
-    /* OAPL */
-    hid_t           oapl_id;  
-    H5P_genplist_t *oapl;     
-    uint64_t        oapl_ver;
-    int32_t         oapl_inc;
-#endif
-    /* OCPL */
-    hid_t           ocpl_id;
-    H5P_genplist_t *ocpl;
-    uint64_t        ocpl_ver;
-    int32_t         ocpl_inc;
-
     /* RAPL */
     hid_t           rapl_id;
     H5P_genplist_t *rapl;
@@ -1604,8 +1591,16 @@ H5CX_set_lapl(hid_t lapl_id)
     FUNC_LEAVE_NOAPI_VOID
 } /* end H5CX_set_lapl() */
 
-/**
+/*-------------------------------------------------------------------------
+ * Function:    H5CX_set_plist
  *
+ * Purpose:     Sets the plist_id and curr_version (and if not a default 
+ *              list sets a pointer to the list) for the current API call 
+ *              context.
+ *
+ * Return:      SUCCEED/FAIL
+ *
+ *-------------------------------------------------------------------------
  */
 herr_t
 H5CX_set_plist(hid_t plist_id, H5P_plist_type_t type)
@@ -1965,33 +1960,8 @@ H5CX_set_plist(hid_t plist_id, H5P_plist_type_t type)
             (*head)->ctx.ocpypl_ver = H5P_DEFAULT_OCPYPL_VER;
         }
     }
-    /**
-     * NOTE: There doesn't seem to be a default object create plist.
-     * In H5R.c oapl_id uses the default H5P_TYPE_LINK_ACCESS.
-     */
-#if 0
-    else if ( type == H5P_TYPE_OBJECT_CREATE )
+    else if ( type == H5P_TYPE_REFERENCE_ACCESS )
     {
-        /* Set the API context's OCPL to a new value */
-        if ((*head)->ctx.ocpl_id != plist_id && plist_id != H5P_DEFAULT)
-        {
-            if (0 >= H5I_inc_ref(plist_id, FALSE) ) {
-                HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL, "unable to increment plist's ID ref_count in index");
-            }
-
-            (*head)->ctx.ocpl_inc++;
-
-            if (NULL == (plist = (H5P_mt_list_t *)H5I_object_verify(plist_id, H5I_GENPROP_LST))) {
-                HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a property list");
-            }
-
-            (*head)->ctx.ocpl_id  = plist_id;
-            (*head)->ctx.ocpl_ver = atomic_load(&(plist->curr_version));
-            (*head)->ctx.ocpl     = plist;
-        }
-    }
-#endif
-    else if (type == H5P_TYPE_REFERENCE_ACCESS) {
         /* Set the API context's RAPL to a new value */
         if ((*head)->ctx.rapl_id != plist_id && plist_id != H5P_DEFAULT) {
             if (0 >= H5I_inc_ref(plist_id, FALSE)) {
@@ -2090,6 +2060,8 @@ done:
 
 } /* end H5CX_set_plist() */
 
+#ifdef H5_HAVE_MULTITHREAD
+
 /*-------------------------------------------------------------------------
  * Function:    H5CX_set_apl
  *
@@ -2114,11 +2086,8 @@ H5CX_set_apl(hid_t *acspl_id, const H5P_libclass_t *libclass,
                      is_collective)
 {
     H5CX_node_t **head      = NULL;    /* Pointer to head of API context list */
-    herr_t        ret_value = SUCCEED; /* Return value */
-
-#ifdef H5_HAVE_MULTITHREAD
     H5P_mt_list_t *acspl = NULL;
-#endif
+    herr_t        ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_NOAPI(FAIL)
 
@@ -2148,15 +2117,18 @@ H5CX_set_apl(hid_t *acspl_id, const H5P_libclass_t *libclass,
         /* Check for link access property and set API context if so */
         if ((is_lapl = H5P_class_isa(*libclass->pclass, *H5P_CLS_LACC->pclass)) < 0)
             HGOTO_ERROR(H5E_CONTEXT, H5E_CANTGET, FAIL, "can't check for link access class");
-        else if (is_lapl) {
-#ifdef H5_HAVE_MULTITHREAD
-            if (*acspl_id != (*head)->ctx.lapl_id) {
-                if ((*head)->ctx.lapl_inc > 0) {
-                    if ((*head)->ctx.lapl_id != H5P_LINK_ACCESS_DEFAULT ||
-                        (*head)->ctx.lapl_id != H5P_GROUP_ACCESS_DEFAULT) {
-                        if (H5I_dec_ref((*head)->ctx.lapl_id) < 0) {
-                            HGOTO_ERROR(H5E_CONTEXT, H5E_CANTDEC, FAIL,
-                                        "can't decrement plist's ID in index");
+        else if (is_lapl)
+        {
+            if ( *acspl_id != (*head)->ctx.lapl_id ) 
+            {
+                if ( (*head)->ctx.lapl_inc > 0 )
+                {
+                    if ( (*head)->ctx.lapl_id != H5P_LINK_ACCESS_DEFAULT || 
+                         (*head)->ctx.lapl_id != H5P_GROUP_ACCESS_DEFAULT )
+                    {
+                        if ( H5I_dec_ref((*head)->ctx.lapl_id) < 0 )
+                        {
+                            HGOTO_ERROR(H5E_CONTEXT, H5E_CANTDEC, FAIL, "can't decrement plist's ID in index");
                         }
 
                         (*head)->ctx.lapl_inc--;
@@ -2186,22 +2158,21 @@ H5CX_set_apl(hid_t *acspl_id, const H5P_libclass_t *libclass,
             else if (*acspl_id == H5P_GROUP_ACCESS_DEFAULT) {
                 (*head)->ctx.lapl_ver = H5P_DEFAULT_GAPL_VER;
             }
-
-#else
-            (*head)->ctx.lapl_id = *acspl_id;
-#endif
         }
         /* Check for dataset access property and set API context if so */
         if ((is_dapl = H5P_class_isa(*libclass->pclass, *H5P_CLS_DACC->pclass)) < 0)
             HGOTO_ERROR(H5E_CONTEXT, H5E_CANTGET, FAIL, "can't check for dataset access class");
-        else if (is_dapl) {
-#ifdef H5_HAVE_MULTITHREAD
-            if (*acspl_id != (*head)->ctx.dapl_id) {
-                if ((*head)->ctx.dapl_inc > 0) {
-                    if ((*head)->ctx.dapl_id != H5P_DATASET_ACCESS_DEFAULT) {
-                        if (H5I_dec_ref((*head)->ctx.dapl_id) < 0) {
-                            HGOTO_ERROR(H5E_CONTEXT, H5E_CANTDEC, FAIL,
-                                        "can't decrement plist's ID in index");
+        else if (is_dapl)
+        {
+            if ( *acspl_id != (*head)->ctx.dapl_id ) 
+            {
+                if ( (*head)->ctx.dapl_inc > 0 )
+                {
+                    if ( (*head)->ctx.dapl_id != H5P_DATASET_ACCESS_DEFAULT )
+                    {
+                        if ( H5I_dec_ref((*head)->ctx.dapl_id) < 0 )
+                        {
+                            HGOTO_ERROR(H5E_CONTEXT, H5E_CANTDEC, FAIL, "can't decrement plist's ID in index");
                         }
 
                         (*head)->ctx.dapl_inc--;
@@ -2230,22 +2201,22 @@ H5CX_set_apl(hid_t *acspl_id, const H5P_libclass_t *libclass,
             else if (*acspl_id == H5P_DATASET_ACCESS_DEFAULT) {
                 (*head)->ctx.dapl_ver = H5P_DEFAULT_DAPL_VER;
             }
-#else
-            (*head)->ctx.dapl_id = *acspl_id;
-#endif
         }
 
         /* Check for file access property and set API context if so */
         if ((is_fapl = H5P_class_isa(*libclass->pclass, *H5P_CLS_FACC->pclass)) < 0)
             HGOTO_ERROR(H5E_CONTEXT, H5E_CANTGET, FAIL, "can't check for file access class");
-        else if (is_fapl) {
-#ifdef H5_HAVE_MULTITHREAD
-            if (*acspl_id != (*head)->ctx.fapl_id) {
-                if ((*head)->ctx.fapl_inc > 0) {
-                    if ((*head)->ctx.fapl_id != H5P_FILE_ACCESS_DEFAULT) {
-                        if (H5I_dec_ref((*head)->ctx.fapl_id) < 0) {
-                            HGOTO_ERROR(H5E_CONTEXT, H5E_CANTDEC, FAIL,
-                                        "can't decrement plist's ID in index");
+        else if (is_fapl)
+        {
+            if ( *acspl_id != (*head)->ctx.fapl_id ) 
+            {
+                if ( (*head)->ctx.fapl_inc > 0 )
+                {
+                    if ( (*head)->ctx.fapl_id != H5P_FILE_ACCESS_DEFAULT )
+                    {
+                        if ( H5I_dec_ref((*head)->ctx.fapl_id) < 0 )
+                        {
+                            HGOTO_ERROR(H5E_CONTEXT, H5E_CANTDEC, FAIL, "can't decrement plist's ID in index");
                         }
 
                         (*head)->ctx.fapl_inc--;
@@ -2274,9 +2245,6 @@ H5CX_set_apl(hid_t *acspl_id, const H5P_libclass_t *libclass,
             else if (*acspl_id == H5P_FILE_ACCESS_DEFAULT) {
                 (*head)->ctx.fapl_ver = H5P_DEFAULT_FAPL_VER;
             }
-#else
-            (*head)->ctx.fapl_id = *acspl_id;
-#endif
         }
 
 #ifdef H5_HAVE_PARALLEL
@@ -2330,6 +2298,136 @@ H5CX_set_apl(hid_t *acspl_id, const H5P_libclass_t *libclass,
 done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5CX_set_apl() */
+
+#else
+
+/*-------------------------------------------------------------------------
+ * Function:    H5CX_set_apl
+ *
+ * Purpose:     Validaties an access property list, and sanity checking &
+ *              setting up collective operations.
+ *
+ * Return:      Non-negative on success / Negative on failure
+ *
+ *-------------------------------------------------------------------------
+ */
+herr_t
+H5CX_set_apl(hid_t *acspl_id, const H5P_libclass_t *libclass,
+             hid_t
+#ifndef H5_HAVE_PARALLEL
+                 H5_ATTR_UNUSED
+#endif /* H5_HAVE_PARALLEL */
+                     loc_id,
+             hbool_t
+#ifndef H5_HAVE_PARALLEL
+                 H5_ATTR_UNUSED
+#endif /* H5_HAVE_PARALLEL */
+                     is_collective)
+{
+    H5CX_node_t **head      = NULL;    /* Pointer to head of API context list */
+    herr_t        ret_value = SUCCEED; /* Return value */
+
+
+    FUNC_ENTER_NOAPI(FAIL)
+
+    /* Sanity checks */
+    assert(acspl_id);
+    assert(libclass);
+    head = H5CX_get_my_context(); /* Get the pointer to the head of the API context, for this thread */
+    assert(head && *head);
+
+    /* Set access plist to the default property list of the appropriate class if it's the generic default */
+    if (H5P_DEFAULT == *acspl_id)
+        *acspl_id = *libclass->def_plist_id;
+    else {
+        htri_t is_lapl; /* Whether the access property list is (or is derived from) a link access property
+                           list */
+        htri_t is_dapl; /* Whether the access property list is (or is derived from) a dataset access property
+                           list */
+        htri_t is_fapl; /* Whether the access property list is (or is derived from) a file access property
+                           list */
+
+#ifdef H5CX_DEBUG
+        /* Sanity check the access property list class */
+        if (TRUE != H5P_isa_class(*acspl_id, *libclass->class_id))
+            HGOTO_ERROR(H5E_CONTEXT, H5E_BADTYPE, FAIL, "not the required access property list");
+#endif /* H5CX_DEBUG*/
+
+        /* Check for link access property and set API context if so */
+        if ((is_lapl = H5P_class_isa(*libclass->pclass, *H5P_CLS_LACC->pclass)) < 0)
+            HGOTO_ERROR(H5E_CONTEXT, H5E_CANTGET, FAIL, "can't check for link access class");
+        else if (is_lapl)
+        {
+            (*head)->ctx.lapl_id = *acspl_id;
+        }
+        /* Check for dataset access property and set API context if so */
+        if ((is_dapl = H5P_class_isa(*libclass->pclass, *H5P_CLS_DACC->pclass)) < 0)
+            HGOTO_ERROR(H5E_CONTEXT, H5E_CANTGET, FAIL, "can't check for dataset access class");
+        else if (is_dapl)
+        {
+            (*head)->ctx.dapl_id = *acspl_id;
+        }
+
+        /* Check for file access property and set API context if so */
+        if ((is_fapl = H5P_class_isa(*libclass->pclass, *H5P_CLS_FACC->pclass)) < 0)
+            HGOTO_ERROR(H5E_CONTEXT, H5E_CANTGET, FAIL, "can't check for file access class");
+        else if (is_fapl)
+        {
+            (*head)->ctx.fapl_id = *acspl_id;
+        }
+
+#ifdef H5_HAVE_PARALLEL
+        /* If this routine is not guaranteed to be collective (i.e. it doesn't
+         * modify the structural metadata in a file), check if the application
+         * specified a collective metadata read for just this operation.
+         */
+        if (!is_collective) {
+            H5P_genplist_t         *plist;        /* Property list pointer */
+            H5P_coll_md_read_flag_t md_coll_read; /* Collective metadata read flag */
+
+            /* Get the plist structure for the access property list */
+            if (NULL == (plist = (H5P_genplist_t *)H5I_object(*acspl_id)))
+                HGOTO_ERROR(H5E_CONTEXT, H5E_BADID, FAIL, "can't find object for ID");
+
+            /* Get the collective metadata read flag */
+            if (H5P_peek(plist, H5_COLL_MD_READ_FLAG_NAME, &md_coll_read) < 0)
+                HGOTO_ERROR(H5E_CONTEXT, H5E_CANTGET, FAIL, "can't get core collective metadata read flag");
+
+            /* If collective metadata read requested, set collective metadata read flag */
+            if (H5P_USER_TRUE == md_coll_read)
+                is_collective = TRUE;
+        } /* end if */
+#endif    /* H5_HAVE_PARALLEL */
+    }     /* end else */
+
+#ifdef H5_HAVE_PARALLEL
+    /* Check for collective operation */
+    if (is_collective) {
+        /* Set collective metadata read flag */
+        (*head)->ctx.coll_metadata_read = TRUE;
+
+        /* If parallel is enabled and the file driver used is the MPI-IO
+         * VFD, issue an MPI barrier for easier debugging if the API function
+         * calling this is supposed to be called collectively.
+         */
+        if (H5_coll_api_sanity_check_g) {
+            MPI_Comm mpi_comm; /* File communicator */
+
+            /* Retrieve the MPI communicator from the loc_id or the fapl_id */
+            if (H5F_mpi_retrieve_comm(loc_id, *acspl_id, &mpi_comm) < 0)
+                HGOTO_ERROR(H5E_FILE, H5E_CANTGET, FAIL, "can't get MPI communicator");
+
+            /* issue the barrier */
+            if (mpi_comm != MPI_COMM_NULL)
+                MPI_Barrier(mpi_comm);
+        } /* end if */
+    }     /* end if */
+#endif    /* H5_HAVE_PARALLEL */
+
+done:
+    FUNC_LEAVE_NOAPI(ret_value)
+} /* end H5CX_set_apl() */
+#endif
 
 /*-------------------------------------------------------------------------
  * Function:    H5CX_set_loc

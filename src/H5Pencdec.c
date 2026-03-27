@@ -426,7 +426,7 @@ done:
  REVISION LOG
 --------------------------------------------------------------------------*/
 herr_t
-H5P__encode(const H5P_genplist_t *plist, hbool_t enc_all_prop, void *buf, size_t *nalloc)
+H5P__encode(H5P_mt_list_t *plist, hbool_t enc_all_prop, void *buf, size_t *nalloc)
 {
     H5P_enc_iter_ud_t udata;                 /* User data for property iteration callback */
     uint8_t          *p = (uint8_t *)buf;    /* Temporary pointer to encoding buffer */
