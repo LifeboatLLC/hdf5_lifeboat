@@ -75,6 +75,12 @@ typedef struct H5I_class_t {
 #define H5I_CLOSING_STAT__FAIL            2
 typedef void (*H5I_closing_rpt_t)(hid_t id, void *obj, int op);
 
+/* The future_free_rpt_fcn is used by test code to update harness-side states
+ * for future IDs who are being freed. This is used in place of a free_func
+ * only for updating those variables at appropriate times.
+ */
+typedef void (*H5I_future_free_rpt_t)(hid_t id, void *client_data);
+
 
 /*****************************/
 /* Library-private Variables */

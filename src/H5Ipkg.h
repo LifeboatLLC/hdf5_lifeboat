@@ -715,6 +715,23 @@ typedef struct H5I_suint64_t {
  *
  * H5I__find_id__ids_found: Number of times that H6I__find_id() succeeds and returns
  *      a pointer to the object associated with the supplied ID.
+#if H5I_LOCK_FREE
+ * H5I__find_id__num_calls_to_progress_cb: Number of times H5I__find_id() calls the progress
+ *      callback to drive progress towards future ID realization.
+ *
+ * H5I__find_id__num_progress_cb_failures: Number of times H5I__find_id() calls the progress
+ *      callback to drive progress towards future ID realization and does not realize the
+ *      ID.
+ * 
+ * H5I__find_id__num_futures_resolved_by_progress: Number of H5I__find_id() calls the
+ *      progress callback to drive progress towards future ID realization and
+ *      succeeds in defining.
+ * 
+ * H5I__find_id__num_future_progress_bails: Number of times H5I__find_id() calls the
+ *      progress callback to drive progress towards future ID realization and 
+ *      bails due to max spins being met.
+#endif 
+ * 
 #if ! H5I_LOCK_FREE
  * H5I__find_id__num_calls_to_realize_cb: Number of times that H5I__find_id() calls 
  *      the realize_cb.
@@ -742,6 +759,15 @@ typedef struct H5I_suint64_t {
  *
  * H5I__find_id__future_id_conversions_completed: Number of times that H5I__find_id()
  *      successfully converts a future ID to a real ID.
+ * 
+ * H5I__find_id__futures_pthread_lock_fails: Number of times that H5I__find_id() fails
+ *      to lock the future ID condition variable pthread.
+ * 
+ * H5I__find_id__futures_pthread_wait_fails: Number of times that H5I__find_id() fails
+ *      to wait for the future ID per-type condition variable signal.
+ * 
+ * H5I__find_id__futures_pthread_unlock_fails: Number of times that H5I__find_id() fails
+ *      to unlock the future ID condition variable pthread.
 #endif
  * H5I__find_id__retries: Number of times that H5I__find_id() has to re-try the 
  *      operation.  This is caused by either another thread modifying the kernel of
@@ -1273,6 +1299,15 @@ typedef struct H5I_mt_t {
     _Atomic uint64_t H5I__find_id__num_calls_with_global_mutex;
     _Atomic uint64_t H5I__find_id__num_calls_without_global_mutex;
     _Atomic uint64_t H5I__find_id__ids_found;
+#if H5I_LOCK_FREE
+    _Atomic uint64_t H5I__find_id__num_calls_to_progress_cb;
+    _Atomic uint64_t H5I__find_id__num_progress_cb_failures;
+    _Atomic uint64_t H5I__find_id__num_futures_resolved_by_progress;
+    _Atomic uint64_t H5I__find_id__num_future_progress_bails;
+    _Atomic uint64_t H5I__find_id__num_futures_pthread_lock_fails;
+    _Atomic uint64_t H5I__find_id__num_futures_pthread_wait_fails;
+    _Atomic uint64_t H5I__find_id__num_futures_pthread_unlock_fails;
+#endif /* H5I_LOCK_FREE */
 #if ! H5I_LOCK_FREE
     _Atomic uint64_t H5I__find_id__num_calls_to_realize_cb;
     _Atomic uint64_t H5I__find_id__global_mutex_locks_for_realize_cb;
@@ -1653,7 +1688,7 @@ typedef struct H5I_mt_id_info_kernel_t {
 #endif
 
     hbool_t                   marked;     /* Marked for deletion */
-#if 0 /* keep for later? */
+#if 1 /* keep for later? */
     hbool_t                   is_future;  /* Whether this ID represents a future object */
 #endif
     hbool_t                   closing;
@@ -1988,6 +2023,26 @@ typedef struct H5I_mt_id_info_kernel_t {
  *      wraps around.  While it is unlikely that this will be a problem any time 
  *      soon, this issue must be addressed in the production version.
  * 
+ * Fields Supporting H5I lock-free future IDs:
+#ifdef H5I_LOCK_FREE
+ * progress_cb: Optional progress callback associated with a future ID. 
+ * 
+ *      This callback may be invoked by threads that encounter an unrealized future
+ *      upon lookup to request that progress be made towards realizing the future ID.
+ * 
+ *      The callback must be non-blocking and idempotent. It should schedule or signal
+ *      work asynchronously rather than performing realization inline. 
+ * 
+ *      The callback may be invoked multiple times and concurrently by different
+ *      threads. Implementation must tolerate redundant calls.
+ * 
+ * client_data: Opaque user-provided context pointer associated with this ID. 
+ * 
+ *      Typical usage includes storing application-specific state or an index into
+ *      external tracking structures needed to realize, discard, or perform certain
+ *      operations on future IDs when necessary.
+#endif
+ *
  ************************************************************************************/
 
 #define H5I__ID_INFO            0x1010 /* 4112 */
@@ -2031,6 +2086,12 @@ typedef struct H5I_mt_id_info_t {
     _Atomic H5I_mt_id_info_sptr_t fl_snext;
 
     _Atomic uint64_t serial_num;
+
+#ifdef H5I_LOCK_FREE
+    H5I_progress_func_t progress_cb; /* Who can realize this future */
+
+    _Atomic(void *) client_data; 
+#endif /*H5I_LOCK_FREE*/
 
 } H5I_mt_id_info_t;
 
@@ -2101,6 +2162,41 @@ typedef struct H5I_mt_id_info_t {
  *      wraps around.  While it is unlikely that this will be a problem any time 
  *      soon, this issue must be addressed in the production version.
  * 
+ * Fields supporting H5I_mt_type_info_t future IDs:
+#if H5I_LOCK_FREE
+ * future_mu: Mutex used exclusively to coordinate condition-variable waits associated
+ *      with future ID realization.
+ * 
+ *      This mutex MUST NOT be used to protext general ID state. It exists only to 
+ *      satisfy the POSIX requirement that a condition variable be paired with a 
+ *      mutex when threads elect to block waiting for a future to be realized or 
+ *      discarded.
+ * 
+ *      In lock-free builds, this mutex is only acquired when a caller explicitly 
+ *      requests blocking behavior (e.g. H5I__find_id() with stall == TRUE). All 
+ *      normal ID operations remain lock free.
+ * 
+ * future_cv: Condition variable used to signal changes in the state of a future ID.
+ * 
+ *      This condition variable is signaled when a future terminal state (realized
+ *      or discarded), allowing threads that elected to block to resume execution.
+ * 
+ *      Threads must re-check future state after waking, as wakeups may be spurious
+ *      and multiple waiters may be released concurrently. 
+ * 
+ *      This condition variable is optional infrastructure: callers that do not request
+ *      blocking behavior will never wait on it.
+ * 
+ * future_gen: Generation counter used to detect state changes on a future ID without
+ *      relying solely on condition variable signaling.
+ * 
+ *      This counter is incremented whenever the future transitions state (e.g. future
+ *      -> false, marked -> true). Waiters may use it to distinguish genuine progress
+ *      from spurious wakeups and to avoid missed notifications. 
+ * 
+ *      This is an alternative to implementing per-id cond-vars as it is used to also
+ *      prevent against signal-before-wait deadlock. 
+#endif
  * 
  ****************************************************************************************/
 
@@ -2121,6 +2217,13 @@ typedef struct H5I_mt_type_info_t {
     _Atomic H5I_mt_type_info_sptr_t fl_snext;
 
     _Atomic uint64_t                serial_num;
+
+#if H5I_LOCK_FREE
+    pthread_mutex_t                 future_mu;
+    pthread_cond_t                  future_cv;
+
+    _Atomic unsigned long long      future_gen;   /* Future cv generation counter */
+#endif /* H5I_LOCK_FREE */
 
 } H5I_type_info_t;
 
@@ -2192,7 +2295,13 @@ H5_DLL void          *H5I__remove_verify(hid_t id, H5I_type_t type);
 H5_DLL int            H5I__inc_type_ref(H5I_type_t type);
 H5_DLL int            H5I__get_type_ref(H5I_type_t type);
 #ifdef H5_HAVE_MULTITHREAD
+#ifdef H5I_LOCK_FREE
+H5_DLL hid_t H5I__reserve_future_id(H5I_type_t type, H5I_progress_func_t progress_cb);
+H5_DLL herr_t H5I__define_future_id(H5I_type_t type, hid_t id, void *actual_obj);
+H5_DLL H5I_mt_id_info_t *H5I__find_id(hid_t id, hbool_t stall_on_future);
+#else
 H5_DLL H5I_mt_id_info_t *H5I__find_id(hid_t id);
+#endif
 H5_DLL void H5I__enter(hbool_t public_api);
 H5_DLL void H5I__exit(void);
 
