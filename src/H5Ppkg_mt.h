@@ -1241,10 +1241,17 @@ typedef struct H5P_mt_class_sptr_t {
  *
  * Insert statistics:
  *
- * H5P__insert_prop_setup__num_calls (_Atomic uint64_t):
- *      Tracks the number of H5P__insert_prop_setup() function calls. Can also be used in
- *      compination with H5P__mt_create_class() to track the number of times
- *      H5P__mt_insert_prop() and H5P__mt_create_prop were called.
+ * H5P__register_real__num_calls (_Atomic uint64_t):
+ *      Tracks the number of H5P__register_real() function calls.
+ * 
+ * H5P__register__num_calls (_Atomic uint64_t):
+ *      Tracks the number of H5P__register() function calls.
+ * 
+ * H5P__mt_ins_or_mod_prop__class__num_calls (_Atomic uint64_t):
+ *      Tracks the number of H5P__mt_ins_or_mod_prop__class() function calls.
+ * 
+ * H5P__class_set__num_calls (_Atomic uint64_t):
+ *      Tracks the number of H5P__class_set() function calls.
  *
  * insert_max_nodes_visited (_Atomic uint64_t):
  *      Keeps track of the largest number of nodes visited in the LFSLL of the class
@@ -1252,8 +1259,9 @@ typedef struct H5P_mt_class_sptr_t {
  *
  * insert_avg_nodes_visited (_Atomic uint64_t):
  *      This field tracks the the average number of nodes visited in the LFSLL of the
- *      class across all inserts. Fields H5P__insert_prop_setup__num_calls and
- *      num_insert_node_visited are needed to calculate the insert_avg_nodes_visited.
+ *      class across all inserts. 
+ *      Fields H5P__register__num_calls and num_insert_node_visited are needed to 
+ *      calculate the insert_avg_nodes_visited.
  *
  * num_insert_nodes_visited (_Atomic uint64_t):
  *      The number of nodes in the LFSLL visited during the most recent insert call.
@@ -1274,40 +1282,40 @@ typedef struct H5P_mt_class_sptr_t {
  *
  * Delete Version statistics:
  *
- * H5P__set_delete_version__num_calls (_Atomic uint64_t):
- *      Tracks the number of H5P__set_delete_version() function calls.
+ * H5P__unregister__num_calls (_Atomic uint64_t):
+ *      Tracks the number of H5P__unregister() function calls.
  *
- * set_delete_max_nodes_visited (_Atomic uint64_t):
+ * delete_prop__max_nodes_visited (_Atomic uint64_t):
  *      Keeps track of the largest number of nodes visited in the LFSLL of the class
  *      during a set delete version call.
  *
- * set_delete_avg_nodes_visited (_Atomic uint64_t):
+ * delete_prop__avg_nodes_visited (_Atomic uint64_t):
  *      This field tracks the the average number of nodes visited in the LFSLL of the
- *      class across all H5P__ set_delete_version() calls. Fields
- *      H5P__set_delete_version__num_calls and num_set_delete_nodes_visited are needed to
- *      calculate the set_delete_avg_nodes_visited.
+ *      class across all H5P__unregister() calls. 
+ *      Fields H5P__unregister__num_calls and num_delete_prop__nodes_visited are needed 
+ *      to calculate the set_delete_avg_nodes_visited.
  *
- * num_set_delete_nodes_visited (_Atomic uint64_t):
+ * num_delete_prop__nodes_visited (_Atomic uint64_t):
  *      The number of nodes visited during the most recent set_delete_version call.
  *
- * num_set_delete_prop_cols (_Atomic uint64_t):
+ * num_delete_prop__cols (_Atomic uint64_t):
  *      The number of collisions with other threads that occur when attempting to
  *      atomically set the delete_version of a property.
  *
- * num_set_delete_prop_success (_Atomic uint64_t):
+ * num_delete_prop__success (_Atomic uint64_t):
  *      The number of properties with their delete_version set successfully. Will be
  *      equal to H5P__set_delete_version__num_calls unless an error occurs during
  *      H5P__set_delete_version().
  *
- * num_set_delete_chksum_cols (_Atomic uint64_t):
+ * num_delete_prop__chksum_cols (_Atomic uint64_t):
  *      The number of properties that have their delete_version set that have another
  *      version of the property in the LFSLL of the class.
  *
  *
  * Search statistics:
  *
- * H5P__search_prop__num_calls (_Atomic uint64_t):
- *      Tracks the number of H5P__mt_search_prop() function calls.
+ * H5P__mt_search_prop__class__num_calls (_Atomic uint64_t):
+ *      Tracks the number of H5P__mt_search_prop__class() function calls.
  *
  * search_max_nodes_visited (_Atomic uint64_t):
  *      Keeps track of the largest number of nodes visited in the LFSLL of the class
@@ -1315,8 +1323,9 @@ typedef struct H5P_mt_class_sptr_t {
  *
  * search_avg_nodes_visited (_Atomic uint64_t):
  *      This field tracks the the average number of nodes visited in the LFSLL of the
- *      class across all search function calls. Fields H5P__search_prop__num_calls and
- *      num_search_nodes_visited are needed to calculate the search_avg_nodes_visited.
+ *      class across all search function calls. 
+ *      Fields H5P__mt_search_prop__class__num_calls andnum_search_nodes_visited are 
+ *      needed to calculate the search_avg_nodes_visited.
  *
  * num_search_nodes_visited (_Atomic uint64_t):
  *      The number of nodes visited during the most recent search call.
@@ -1364,6 +1373,32 @@ typedef struct H5P_mt_class_sptr_t {
  *
  * num_ref_count_update (_Atomic uint64_t):
  *      The number of times a thread updates the reference count (either pl or plc).
+ * 
+ * num_ref_count_inc_while_deleted (_Atomic uint64_t):
+ *      The number of times a thread increments the reference count (either pl or plc)
+ *      while the ref_count.deleted flag is set to TRUE.
+ * 
+ * num_ref_count_marked_deleted (_Atomic uint64_t):
+ *      The number of times this class's ref_count.deleted flag is set to TRUE.
+ * 
+ * num_ref_count_unmarked_deleted (_Atomic uint64_t):
+ *      The number of times this class's ref_count.deleted flag is reset from TRUE to
+ *      FALSE.
+ * 
+ * NOTE: Due to the multithread H5P changes where derived lists and classes increment
+ *       their parent's ID reference count, a class with existing derived objects should
+ *       not be marked deleted until this class is closed, all derived objects have been 
+ *       closed, and any other threads that have incremented this class's ID reference 
+ *       count also close this class. Thus the stats num_ref_count_inc_while_deleted, 
+ *       num_ref_count_marked_deleted and num_ref_count_unmarked_deleted should always be
+ *       zero during the life of this object until it is closed, removed from the index, 
+ *       and placed on the class free list when the deleted flag will be set once, and 
+ *       then num_ref_count_marked_deleted will be 1, but shouldn't change again. 
+ *       
+ *       However, these stats have been kept to ensure that is correct, and in case 
+ *       design changes in multithread H5P occur in the future these stats could prove
+ *       useful.
+ *
  *
  ****************************************************************************************
  */
@@ -1899,9 +1934,17 @@ typedef struct H5P_mt_list_table_entry_t {
  *
  * Insert statistics:
  *
- * H5P__insert_prop_setup__num_calls (_Atomic uint64_t):
- *      Tracks the number of H5P__insert_prop_setup() function calls. Also is the number
- *      of times H5P__mt_insert_prop() and H5P__mt_create_prop were called for the list.
+ * H5P_insert__num_calls (_Atomic uint64_t):
+ *      Tracks the number of H5P_insert() function calls.
+ * 
+ * H5P__mt_ins_or_mod_prop__class__num_calls (_Atomic uint64_t):
+ *      Tracks the number of H5P__mt_ins_or_mod_prop__class() function calls.
+ * 
+ * H5P_poke__num_calls (_Atomic uint64_t):
+ *      Tracks the number of H5P_poke() function calls.
+ * 
+ * H5P_set__num_calls (_Atomic uint64_t):
+ *      Tracks the number of H5P_set() function calls.
  *
  * insert_max_nodes_visited (_Atomic uint64_t):
  *      Keeps track of the largest number of nodes visited in the LFSLL of the list
@@ -1909,7 +1952,7 @@ typedef struct H5P_mt_list_table_entry_t {
  *
  * insert_avg_nodes_visited (_Atomic uint64_t):
  *      This field tracks the the average number of nodes visited in the LFSLL of the
- *      list across all inserts. Fields H5P__insert_prop_setup__num_calls and
+ *      list across all inserts. Fields H5P_insert__num_calls and
  *      num_insert_node_visited are needed to calculate the insert_avg_nodes_visited.
  *
  * num_insert_nodes_visited (_Atomic uint64_t):
@@ -1934,58 +1977,75 @@ typedef struct H5P_mt_list_table_entry_t {
  * num_insert_update_entry_cols (_Atomic uint64_t):
  *      The number of collisions with other threads when trying to update the curr field
  *      of an entry in the lkup_tbl.
+ * 
+ * num_set_new_value_cols (_Atomic uint64_t):
+ *      The number of collisions with other threads when updating a property's value.ptr
+ *      during H5P_set().
+ * 
+ * num_set_new_value (_Atomic uint64_t):
+ *      The number of successful updates to a property's value.ptr during H5P_set().
  *
  *
  * Delete Version statistics:
  *
- * H5P__set_delete_version__num_calls (_Atomic uint64_t):
- *      Tracks the number of H5P__set_delete_version() function calls.
+ * H5P_remove__num_calls (_Atomic uint64_t):
+ *      Tracks the number of H5P_remove() function calls.
+ * 
+ * H5P__mt_delete_prop__list__num_calls (_Atomic uint64_t):
+ *      Tracks the number of H5P__mt_delete_prop__list() function calls.
+ * 
+ * num_delete_props_from_lfsll (_Atomic uint64_t):
+ *      The number of property instances in the list's LFSLL that have had their 
+ *      delete_versions set.
  *
- * set_delete_max_nodes_visited (_Atomic uint64_t):
+ * delete_prop__max_nodes_visited (_Atomic uint64_t):
  *      Keeps track of the largest number of nodes visited in the LFSLL of the list
  *      during a set delete version call.
  *
- * set_delete_avg_nodes_visited (_Atomic uint64_t):
+ * delete_prop__avg_nodes_visited (_Atomic uint64_t):
  *      This field tracks the the average number of nodes visited in the LFSLL of the
- *      list across all H5P__ set_delete_version() calls. Fields
- *      H5P__set_delete_version__num_calls and num_set_delete_nodes_visited are needed to
- *      calculate the set_delete_avg_nodes_visited.
+ *      list across all H5P__mt_delete_prop__list() calls. 
+ *      Fields H5P__mt_delete_prop__list__num_calls and num_delete_prop__nodes_visited 
+ *      are needed to calculate the delete_prop__avg_nodes_visited.
  *
- * num_set_delete_nodes_visited (_Atomic uint64_t):
+ * num_delete_prop__nodes_visited (_Atomic uint64_t):
  *      The number of nodes visited during the most recent set_delete_version call.
  *
- * num_set_delete_prop_cols (_Atomic uint64_t):
+ * num_delete_prop__cols (_Atomic uint64_t):
  *      The number of collisions with other threads that occur when attempting to
  *      atomically set the delete_version of a property.
  *
- * num_set_delete_prop_success (_Atomic uint64_t):
+ * num_delete_prop__success (_Atomic uint64_t):
  *      The number of properties in the LFSLL with their delete_version set successfully.
  *      Will be equal to H5P__set_delete_version__num_calls plus
  *      num_set_entry_base_delete_version unless an error occurs during
  *      H5P__set_delete_version().
  *
- * num_set_delete_chksum_cols (_Atomic uint64_t):
+ * num_delete_prop_chksum_cols (_Atomic uint64_t):
  *      The number of properties that have their delete_version set that have another
  *      version of the property in the LFSLL of the list.
  *
- * num_set_entry_base_delete_version (_Atomic uint64_t):
+ * num_delete_prop__base_delete_version (_Atomic uint64_t):
  *      The number of times the property to set the delete_version of was in the lkup_tbl
  *      and the base was the most recent version, so the entry's base_delete_version was
  *      set.
  *
- * num_set_delete_on_curr_entry (_Atomic uint64_t):
+ * num_delete_prop__curr_entry (_Atomic uint64_t):
  *      The number of times the property to set the delete_version of is the property
  *      that a lkup_tbl entry's curr.ptr points to.
  *
- * num_set_delete_older_ver_than_curr (_Atomic uint64_t):
+ * num_delete_prop__older_curr (_Atomic uint64_t):
  *      The number of times a property to set the delete_version of is an older version
  *      of a property that a lkup_tbl's entry curr.ptr points to.
  *
  *
  * Search statistics:
  *
- * H5P__search_prop__num_calls (_Atomic uint64_t):
- *      Tracks the number of H5P__mt_search_prop() function calls.
+ * H5P__find_prop_plist__num_calls (_Atomic uint64_t):
+ *      Tracks the number of H5P__find_prop_plist() function calls.
+ * 
+ * H5P__mt_search_prop__list__num_calls (_Atomic uint64_t):
+ *      Tracks the number of H5P__mt_search_prop__list__num_calls() function calls.
  *
  * search_max_nodes_visited (_Atomic uint64_t):
  *      Keeps track of the largest number of nodes visited in the LFSLL of the list
@@ -1993,8 +2053,9 @@ typedef struct H5P_mt_list_table_entry_t {
  *
  * search_avg_nodes_visited (_Atomic uint64_t):
  *      This field tracks the the average number of nodes visited in the LFSLL of the
- *      list across all search function calls. Fields H5P__search_prop__num_calls and
- *      num_search_nodes_visited are needed to calculate the search_avg_nodes_visited.
+ *      list across all search function calls. 
+ *      Fields H5P__mt_search_prop__list__num_calls and num_search_nodes_visited are 
+ *      needed to calculate the search_avg_nodes_visited.
  *
  * num_search_nodes_visited (_Atomic uint64_t):
  *      The number of nodes visited during the most recent search call.
@@ -2019,6 +2080,10 @@ typedef struct H5P_mt_list_table_entry_t {
  * num_search_tbl_found_older_than_curr (_Atomic uint64_t):
  *      The number of searches in a list where the target property is an older version of
  *      the property that an entry in the lkup_tbl's curr.ptr is pointing to.
+ * 
+ * num_target_prop_found_but_deleted (_Atomic uint64_t):
+ *      The number of searches in a list where the target property has been deleted for
+ *      the version being searched.
  *
  *
  * Version check statistics:
@@ -2045,6 +2110,19 @@ typedef struct H5P_mt_list_table_entry_t {
  * num_thrd_opening_flag_set (_Atomic uint64_t):
  *      The number of times a thread tried to access this list when its thrd->opening
  *      is set to TRUE.
+ * 
+ * 
+ * Initialize lkup_tbl statistics:
+ * 
+ *  num_inherited_with_create_cb (_Atomic uint64_t):
+ *      The number of entries in the list's lkup_tbl with properties that have a create
+ *      callback. 
+ * 
+ *  num_lkup_tbl_copy_entries_blank (_Atomic uint64_t):
+ *      The number of entries in the list's lkup_tbl that are essentially "blank." Blank
+ *      means that in the original list this property is deleted and is not valid, thus
+ *      in the copy of the list the "blank" entry doesn't point to a property.
+ *      
  *
  ****************************************************************************************
  */
@@ -2139,7 +2217,7 @@ typedef struct H5P_mt_list_t {
     _Atomic uint64_t num_thrd_closing_flag_set;
     _Atomic uint64_t num_thrd_opening_flag_set;
 
-    /* init_lkup_tbl_stats */
+    /* init lkup_tbl stats */
     _Atomic uint64_t num_inherited_with_create_cb;
     _Atomic uint64_t num_lkup_tbl_copy_entries_blank;
 
@@ -2191,17 +2269,360 @@ typedef struct H5P_mt_list_t {
  * prop_fl_next_update_cols (_Atomic uint64_t):
  *      Number of times a collision occured with another thread when trying to update the
  *      next.ptr of a property on the property free list.
- *
- *
- * List Free List statistics:
- *      TODO: list free list stats
+ * 
+ * num_props_added_to_fl (_Atomic uint64_t):
+ *      Number of properties added to the property free list.
+ * 
+ * prop_fl_head_freed_due_to_max_len (_Atomic uint64_t):
+ *      Number of properties freed from the free list due to the length of the free list
+ *      exceeding the maximum desired length.
+ * 
+ * prop_fl_head_free_skipped_due_to_empty (_Atomic uint64_t):
+ *      Number of times it was attempted to free a property from the free list due to the
+ *      length of the free exceeding the maximum desired length, but was not done due to
+ *      the free list being empty.
+ * 
+ *      NOTE: This should not occur, which is why this stat is here, to track if this 
+ *      does occur because it means something went wrong when updating the free list.
+ * 
+ * prop_fl_head_free_skipped_no_reallocable (_Atomic uint64_t):
+ *      Number of times it was attempted to free a property from the free list due to the
+ *      length of the free exceeding the maximum desired length, but was not done due to
+ *      no properties on the free list being reallocable.
+ * 
  *
  * Class Free List statistics:
- *      TODO: class free list stats
+ *
+ * class_fl_head_update (_Atomic uint64_t):
+ *      Number of times the head of the class free list was updated.
+ *
+ * class_fl_head_update_cols (_Atomic uint64_t):
+ *      Number of times a collision occured with another thread when trying to update the
+ *      head of the class free list.
+ *
+ * class_fl_tail_update (_Atomic uint64_t):
+ *      Number of times the tail of the class free list was updated.
+ *
+ * class_fl_tail_update_cols (_Atomic uint64_t):
+ *      Number of times a collision occured with another thread when trying to update the
+ *      tail of the class free list.
+ *
+ * class_fl_next_update (_Atomic uint64_t):
+ *      Number of times the fl_next.ptr of a class on the class free list was updated.
+ *
+ * class_fl_next_update_cols (_Atomic uint64_t):
+ *      Number of times a collision occured with another thread when trying to update the
+ *      fl_next.ptr of a class on the class free list.
+ * 
+ * num_class_added_to_fl (_Atomic uint64_t):
+ *      Number of classes added to the class free list.
+ * 
+ * class_fl_head_freed_due_to_max_len (_Atomic uint64_t):
+ *      Number of classes freed from the free list due to the length of the free list
+ *      exceeding the maximum desired length.
+ * 
+ * class_fl_head_free_skipped_due_to_empty (_Atomic uint64_t):
+ *      Number of times it was attempted to free a class from the free list due to the
+ *      length of the free exceeding the maximum desired length, but was not done due to
+ *      the free list being empty.
+ * 
+ *      NOTE: This should not occur, which is why this stat is here, to track if this 
+ *      does occur because it means something went wrong when updating the free list.
+ * 
+ * class_fl_head_free_skipped_no_reallocable (_Atomic uint64_t):
+ *      Number of times it was attempted to free a class from the free list due to the
+ *      length of the free exceeding the maximum desired length, but was not done due to
+ *      no class on the free list being reallocable.
+ * 
+ *
+ * List Free List statistics:
+ * 
+ * list_fl_head_update (_Atomic uint64_t):
+ *      Number of times the head of the list free list was updated.
+ *
+ * list_fl_head_update_cols (_Atomic uint64_t):
+ *      Number of times a collision occured with another thread when trying to update the
+ *      head of the list free list.
+ *
+ * list_fl_tail_update (_Atomic uint64_t):
+ *      Number of times the tail of the list free list was updated.
+ *
+ * list_fl_tail_update_cols (_Atomic uint64_t):
+ *      Number of times a collision occured with another thread when trying to update the
+ *      tail of the list free list.
+ *
+ * list_fl_next_update (_Atomic uint64_t):
+ *      Number of times a the fl_next.ptr of a list on the list free list gets
+ *      updated.
+ *
+ * list_fl_next_update_cols (_Atomic uint64_t):
+ *      Number of times a collision occured with another thread when trying to update the
+ *      next.ptr of a list on the list free list.
+ * 
+ * num_list_added_to_fl (_Atomic uint64_t):
+ *      Number of lists added to the list free list.
+ * 
+ * list_fl_head_freed_due_to_max_len (_Atomic uint64_t):
+ *      Number of lists freed from the free list due to the length of the free list
+ *      exceeding the maximum desired length.
+ * 
+ * list_fl_head_free_skipped_due_to_empty (_Atomic uint64_t):
+ *      Number of times it was attempted to free a list from the free list due to the
+ *      length of the free exceeding the maximum desired length, but was not done due to
+ *      the free list being empty.
+ * 
+ *      NOTE: This should not occur, which is why this stat is here, to track if this 
+ *      does occur because it means something went wrong when updating the free list.
+ * 
+ * list_fl_head_free_skipped_no_reallocable (_Atomic uint64_t):
+ *      Number of times it was attempted to free a list from the free list due to the
+ *      length of the free exceeding the maximum desired length, but was not done due to
+ *      no lists on the free list being reallocable.
+ * 
+ *
+ * Creating or copying class statistics:
+ * 
+ * H5P__create_class__num_calls (_Atomic uint64_t):
+ *      Number of times the function H5P__create_class() was called.
+ * 
+ * H5P__copy_pclass__num_calls (_Atomic uint64_t):
+ *      Number of times the function H5P__copy_pclass() was called.
+ * 
+ * H5P__mt_create_class__internal__num_calls (_Atomic uint64_t):
+ *      Number of times the function H5P__mt_create_class__internal() was called.
+ * 
+ * num_classes_created_wo_parent (_Atomic uint64_t):
+ *      Number of classes created that do not have parent class. 
+ * 
+ *      NOTE: this should only be done once, and that is during H5P initialization when
+ *      creating the root class. However this is done other times during testing.
+ * 
+ * num_class_structs_allocated_from_heap (_Atomic uint64_t):
+ *      Number of class structures allocated from memory.
+ * 
+ * num_class_structs_allocated_from_fl (_Atomic uint64_t):
+ *      Number of class structures allocated from the class free list.
+ * 
+ * 
+ * Creating or copying list statistics:
+ * 
+ * H5P_create_id__num_calls (_Atomic uint64_t):
+ *      Number of times the function H5P_create_id() was called.
+ * 
+ * H5P__create_list__num_calls (_Atomic uint64_t):
+ *      Number of times the function H5P__create_list() was called.
+ * 
+ * H5P_copy_plist__num_calls (_Atomic uint64_t):
+ *      Number of times the function H5P_copy_plist() was called.
+ * 
+ * H5P__mt_create_list__internal__num_calls (_Atomic uint64_t):
+ *      Number of times the function H5P__mt_create_list__internal() was called.
+ * 
+ * num_list_structs_allocated_from_heap (_Atomic uint64_t):
+ *      Number of list structures allocated from memory.
+ * 
+ * num_list_structs_allocated_from_fl (_Atomic uint64_t):
+ *      Number of list structures allocated from the list free list.
+ * 
+ * H5P__init_lkup_tbl__num_calls (_Atomic uint64_t):
+ *      Number of times the function H5P__init_lkup_tbl() was called.
+ * 
+ * H5P__init_lkup_tbl_copy__num_calls (_Atomic uint64_t):
+ *      Number of times the function H5P__init_lkup_tbl_copy() was called.
  *
  *
- * Clear Function Statistics:
- *
+ * 
+ * Creating or copying property statistics:
+ * 
+ * H5P__create_prop__num_calls (_Atomic uint64_t):
+ *      Number of times the function H5P__create_prop() was called.
+ * 
+ * H5P__copy_prop_plist__num_calls (_Atomic uint64_t):
+ *      Number of times the function H5P__copy_prop_plist() was called.
+ * 
+ * H5P__copy_prop_pclass__num_calls (_Atomic uint64_t):
+ *      Number of times the function H5P__copy_prop_pclass() was called.
+ * 
+ * num_prop_structs_allocated_from_heap (_Atomic uint64_t):
+ *      Number of property structures allocated from memory.
+ * 
+ * num_prop_structs_allocated_from_fl (_Atomic uint64_t):
+ *      Number of property structures allocated from the property free list.
+ * 
+ * num_props_created_wo_cbs (_Atomic uint64_t):
+ *      Number of properties created without any callbacks.
+ * 
+ * 
+ * Inserting properties into LFSLL statistics:
+ * 
+ * H5P__mt_ins_or_mod_prop__lfsll_ins__num_calls (_Atomic uint64_t):
+ *      Number of times the function H5P__mt_ins_or_mod_prop__lfsll_ins() was called.
+ * 
+ * num_props_inserted_classes (_Atomic uint64_t):
+ *      Number of property instances inserted into all class. This includes new 
+ *      properties, a property being copied from one class to another, or modifications
+ *      to a property that cause a new property structure to be created and inserted.
+ * 
+ * num_props_inserted_lists (_Atomic uint64_t):
+ *      Number of property instances inserted into all list. This includes new 
+ *      properties, a property being copied from one list to another, or modifications
+ *      to a property that cause a new property structure to be created and inserted.
+ * 
+ * 
+ * Deleting property statistics:
+ * 
+ * NOTE: Deleting a property means setting its delete_version.
+ * 
+ * num_props_deleted_classes (_Atomic uint64_t):
+ *      Number of properties deleted from all classes
+ * 
+ * num_props_deleted_classes_prop_not_found (_Atomic uint64_t):
+ *      Number of attempts to delete a property, but the property wasn't in the class
+ * 
+ * num_props_deleted_classes_already_deleted (_Atomic uint64_t):
+ *      Number of attempts to delete a property, but the property was already deleted
+ * 
+ * num_props_deleted_lists (_Atomic uint64_t):
+ *      Number of properties deleted from all lists
+ * 
+ * num_props_deleted_lists_prop_not_found (_Atomic uint64_t):
+ *      Number of attempts to delete a property, but the property wasn't in the list
+ * 
+ * num_props_deleted_lists_already_deleted (_Atomic uint64_t):
+ *      Number of attempts to delete a property, but the property was already deleted
+ * 
+ * 
+ * Searching for property statistics:
+ * 
+ * NOTE: These stats track searching for a property during H5P__mt_search__class() and
+ *       H5P__mt_search__list(), which are called often to search for a property for
+ *       different reasons.
+ *  
+ * num_searches_classes (_Atomic uint64_t):
+ *      Number of properties searched for in classes.
+ * 
+ * num_searches_classes_prop_not_found (_Atomic uint64_t):
+ *      Number of properties searched for in classes, but the property wasn't in the 
+ *      class
+ * 
+ * num_searches_while_an_op_occurs_class (_Atomic uint64_t):
+ *      Number of times a property was searched for in a class while another operation
+ *      was being performed on the class. 
+ *      NOTE: this means if this thread is modifying the class, or if another thread is
+ *      modifying the class and this thread performs a search. Example: H5P__register()
+ *      performs a search to ensure the property doesn't exist in the class, this will
+ *      increment this count.
+ * 
+ * num_searches_lists (_Atomic uint64_t):
+ *      Number of properties searched for in lists.
+ * 
+ * num_searches_lists_prop_not_found (_Atomic uint64_t):
+ *      Number of properties searched for in classes, but the property wasn't in the list
+ * 
+ * num_searches_while_an_op_occurs_list (_Atomic uint64_t):
+ *      Number of times a property was searched for in a list while another operation
+ *      was being performed on the list.
+ *      NOTE: this means if this thread is modifying the list, or if another thread is
+ *      modifying the list and this thread performs a search. Example: H5P_insert()
+ *      performs a search to ensure the property doesn't exist in the list, this will
+ *      increment this count.
+ * 
+ * 
+ * Default list statistics:
+ * 
+ * num_default_list_mods (_Atomic uint64_t):
+ *      Number of modifications made to default property lists.
+ * 
+ * 
+ * Getting plist version from context statistics:
+ * 
+ * num_list_version_from_ctx (_Atomic uint64_t):
+ *      Number of times the version of the list to work on was grabbed from the context.
+ * 
+ * 
+ * Chksum collision statistics:
+ * 
+ * num_chksum_cols (_Atomic uint64_t):
+ *      Number of times a property chksum collision occurs.
+ * 
+ * 
+ * Enforce serialization during list and class modification statistics:
+ * 
+ * H5P__mt_enforce_serialization__num_calls (_Atomic uint64_t):
+ *      Number of times the function H5P__mt_enforce_serialization() was called.
+ * 
+ * num_classes_loop_enforce_serial (_Atomic uint64_t):
+ *      Number of times a thread sleeps and loops while waiting for its turn to make a
+ *      modification to a class.
+ * 
+ * num_lists_loop_enforce_serial (_Atomic uint64_t):
+ *      Number of times a thread sleeps and loops while waiting for its turn to make a
+ *      modification to a list.
+ * 
+ * 
+ * Closing class statistics:
+ * 
+ * H5P__close_class_cb__num_calls (_Atomic uint64_t):
+ *      Number of times the function H5P__close_class_cb() was called.
+ * 
+ * H5P__close_class__num_calls (_Atomic uint64_t):
+ *      Number of times the function H5P__close_class() was called.
+ * 
+ * close_class_but_pl_not_zero (_Atomic uint64_t):
+ *      Number of times a class is closed when its ref_count.pl is not zero.
+ * 
+ * close_class_but_plc_not_zero (_Atomic uint64_t):
+ *      Number of times a class is closed when its ref_count.plc is not zero.
+ * 
+ * class_un_marked_as_deleted (_Atomic uint64_t):
+ *      Number of times a class has its ref_count.deleted flag reset to FALSE.
+ * 
+ * NOTE: close_class_but_pl_not_zero, close_class_but_plc_not_zero, and 
+ *       class_un_marked_as_deleted should always be zero during this implementation of
+ *       multithread H5P, but they are here to ensure that is correct.
+ * 
+ * 
+ * Closing list statistics:
+ * 
+ * H5P__close_list_cb__num_calls (_Atomic uint64_t):
+ *      Number of times the function H5P__close_list_cb() was called.
+ * 
+ * H5P_close__num_calls (_Atomic uint64_t):
+ *      Number of times the function H5P_close() was called.
+ * 
+ * 
+ * clearing H5P object statistics:
+ * 
+ * num_classes_freed (_Atomic uint64_t):
+ *      Number of classes cleared either for reallocation or to be freed.
+ * 
+ * num_lists_freed (_Atomic uint64_t):
+ *      Number of lists cleared either for reallocation or to be freed.
+ * 
+ * num_props_freed (_Atomic uint64_t):
+ *      Number of props cleared either for reallocation or to be freed.
+ * 
+ * 
+ * Statistics for H5P_mt_class_t and H5P_mt_list_t uses:
+ * 
+ * max_derived_classes (_Atomic uint64_t):
+ *      Number of the most derived classes a single class has.
+ * 
+ * max_derived_lists (_Atomic uint64_t):
+ *      Number of the most derived lists a single class has.
+ * 
+ * max_class_num_phys_props (_Atomic uint64_t):
+ *      The largest phys_pl_len any class has had.
+ * 
+ * max_list_num_phys_props (_Atomic uint64_t):
+ *      The largest phys_pl_len any list has had.
+ * 
+ * max_class_version_number (_Atomic uint64_t):
+ *      The largest version number any class has had.
+ * 
+ * max_list_version_number (_Atomic uint64_t):
+ *      The largest version number any list has had.
+ * 
  *
  *
  ****************************************************************************************
@@ -2278,16 +2699,18 @@ typedef struct H5P_mt_t {
     _Atomic uint64_t H5P__init_lkup_tbl__num_calls;
     _Atomic uint64_t H5P__init_lkup_tbl_copy__num_calls;
 
-    /* stats for creating props */
+    /* stats for creating or copying props */
     _Atomic uint64_t H5P__create_prop__num_calls;
+    _Atomic uint64_t H5P__copy_prop_plist__num_calls;
+    _Atomic uint64_t H5P__copy_prop_pclass__num_calls;
     _Atomic uint64_t num_prop_structs_allocated_from_heap;
     _Atomic uint64_t num_prop_structs_allocated_from_fl;
     _Atomic uint64_t num_props_created_wo_cbs;
 
     /* stats for property inserts */
+    _Atomic uint64_t H5P__mt_ins_or_mod_prop__lfsll_ins__num_calls;
     _Atomic uint64_t num_props_inserted_classes;
     _Atomic uint64_t num_props_inserted_lists;
-    _Atomic uint64_t H5P__mt_ins_or_mod_prop__lfsll_ins__num_calls;
 
     /* stats for property deletes (setting delete_versions) */
     _Atomic uint64_t num_props_deleted_classes;
@@ -2445,10 +2868,6 @@ int32_t H5P__mt_prop_cmp(H5P_mt_prop_t *prop1, H5P_mt_prop_t *prop2);
 int32_t H5P__mt_cmp_class(H5P_mt_class_t *class1, uint64_t version1, H5P_mt_class_t *class2,
                           uint64_t version2);
 int32_t H5P__mt_cmp_list(H5P_mt_list_t *list1, uint64_t version1, H5P_mt_list_t *list2, uint64_t version2);
-int32_t H5P__mt_is_derived__class(H5P_mt_class_t *parent, uint64_t version1, H5P_mt_class_t *derived,
-                                  uint64_t version2);
-int32_t H5P__mt_is_derived__list(H5P_mt_class_t *parent, uint64_t version1, H5P_mt_list_t *derived,
-                                 uint64_t version2);
 H5P_mt_prop_t  *H5P__mt_next_prop_to_cmp(H5P_mt_prop_t *prop, uint64_t version);
 herr_t          H5P__mt_close_prop(H5P_mt_prop_t *prop);
 H5P_mt_prop_t  *H5P__clear_mt_prop(H5P_mt_prop_t *prop);
@@ -2461,8 +2880,15 @@ herr_t          H5P__inc_thrd_count(void *param);
 herr_t          H5P__dec_thrd_count(void *param);
 herr_t          H5P__inc_ref_count(H5P_mt_class_t *parent, bool plc);
 herr_t          H5P__dec_ref_count(H5P_mt_class_t *parent, bool plc);
+/**
+ * H5P__mt_encode() and H5P__mt_encod_prop() were multithread functions that
+ * were planned to replace the existing H5P__encode() and H5P__encode_cb(),
+ * however, due to lack of time and a low priority these were not finished.
+ */
+#if 0
 herr_t          H5P__mt_encode(H5P_mt_list_t *list, uint64_t version, void *buf, size_t *nalloc);
 herr_t          H5P__mt_encode_prop(H5P_mt_prop_t *prop, bool encode, size_t *encode_size, uint8_t **p);
+#endif
 uint64_t        H5P__calc_avg_visited(uint64_t avg_visited, uint64_t num_calls, uint64_t visited);
 
 /* Stats functions */

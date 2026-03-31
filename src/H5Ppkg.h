@@ -251,7 +251,7 @@ H5_DLL hid_t H5P__new_plist_of_type(H5P_plist_type_t type);
 
 /* Encode/decode routines */
 #ifdef H5_HAVE_MULTITHREAD
-H5_DLL herr_t H5P__encode(H5P_genplist_t *plist, hbool_t enc_all_prop, void *buf, size_t *nalloc);
+H5_DLL herr_t H5P__encode(H5P_mt_list_t *plist, hbool_t enc_all_prop, void *buf, size_t *nalloc);
 #else
 H5_DLL herr_t H5P__encode(const H5P_genplist_t *plist, hbool_t enc_all_prop, void *buf, size_t *nalloc);
 #endif
