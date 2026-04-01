@@ -40,6 +40,13 @@
 /* Local Typedefs */
 /******************/
 
+#ifdef H5_HAVE_MULTITHREAD
+
+typedef H5P_mt_list_t  H5P_genplist_t;
+typedef H5P_mt_class_t H5P_genclass_t;
+
+#endif
+
 /* Shared data structure for computing variable-length dataset's total size */
 /* (Used for both native and generic 'get vlen buf size' operation) */
 typedef struct {

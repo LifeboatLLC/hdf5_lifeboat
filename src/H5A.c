@@ -179,6 +179,13 @@ H5A__create_api_common(hid_t loc_id, const char *attr_name, hid_t type_id, hid_t
     if (H5P_DEFAULT == acpl_id)
         acpl_id = H5P_ATTRIBUTE_CREATE_DEFAULT;
 
+#ifdef H5_HAVE_MULTITHREAD
+    /* Set the property list in the context */
+    if (H5CX_set_plist(acpl_id, H5P_TYPE_ATTRIBUTE_CREATE) < 0) {
+        HGOTO_ERROR(H5E_ATTR, H5E_CANTSET, H5I_INVALID_HID, "can't set acpl in context");
+    }
+#endif
+
     /* Create the attribute */
     if ((ret_value = H5A__create_common(*vol_obj_ptr, &loc_params, attr_name, type_id, space_id, acpl_id,
                                         aapl_id, token_ptr)) < 0)
@@ -338,6 +345,13 @@ H5A__create_by_name_api_common(hid_t loc_id, const char *obj_name, const char *a
     /* Get correct property list */
     if (H5P_DEFAULT == acpl_id)
         acpl_id = H5P_ATTRIBUTE_CREATE_DEFAULT;
+
+#ifdef H5_HAVE_MULTITHREAD
+    /* Set the property list in the context */
+    if (H5CX_set_plist(acpl_id, H5P_TYPE_ATTRIBUTE_CREATE) < 0) {
+        HGOTO_ERROR(H5E_ATTR, H5E_CANTSET, H5I_INVALID_HID, "can't set acpl in context");
+    }
+#endif
 
     /* Create the attribute */
     if ((ret_value = H5A__create_common(*vol_obj_ptr, &loc_params, attr_name, type_id, space_id, acpl_id,

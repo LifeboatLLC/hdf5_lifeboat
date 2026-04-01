@@ -355,6 +355,13 @@ H5L__create_soft_api_common(const char *link_target, hid_t link_loc_id, const ch
     H5CX_set_lcpl(lcpl_id);
     H5_API_UNLOCK
 
+/**
+ * This call to H5CX_set_apl() is redundant because the function immediately below,
+ * H5VL_setup_name_args() makes the same call to H5CX_set_apl() with the same
+ * parameters. Thus, for the multithread version this call is removed for tracking,
+ * debugging, and efficiency.
+ */
+#ifndef H5_HAVE_MULTITHREAD
     /* Verify access property list and set up collective metadata if appropriate */
     H5_API_LOCK
     ret_value = H5CX_set_apl(&lapl_id, H5P_CLS_LACC, link_loc_id, TRUE);
@@ -362,6 +369,7 @@ H5L__create_soft_api_common(const char *link_target, hid_t link_loc_id, const ch
 
     if (ret_value < 0)
         HGOTO_ERROR(H5E_LINK, H5E_CANTSET, FAIL, "can't set access property list info");
+#endif
 
     /* Set up object access arguments */
     if (H5VL_setup_name_args(link_loc_id, link_name, TRUE, lapl_id, vol_obj_ptr, &loc_params) < 0)

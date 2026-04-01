@@ -5812,21 +5812,30 @@ done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5P_set_vol() */
 
-/*-------------------------------------------------------------------------
+#ifdef H5_HAVE_MULTITHREAD
+/****************************************************************************************
  * Function:    H5P_reset_vol_class
  *
- * Purpose:     Change the VOL connector for a file access property class.
+ * Purpose:     Multithread safe version of H5P_reset_vol_class() which changes the VOL
+ *              connector for a file access property class.
  *
- * Note:	The VOL property will be copied into the property list and
- *		the reference count on the previous VOL will _NOT_ be decremented.
- *		The reference count on the new VOL will _NOT_ be incremented.
+ * 	            NOTE: The VOL property will be copied into the property list and the
+ *              reference count on the previous VOL will _NOT_ be decremented. The
+ *              reference count on the new VOL will _NOT_ be incremented.
+ *
+ *              NOTE: The only change to this function for the multithread safe version
+ *              of H5P is the const was removed from the parameter H5P_genclass_t
+ *              *pclass. This is because the multithread safe structures track the number
+ *              of threads currently in the structure, thus at least one field must
+ *              always be modified and pclass can not be a const.
+ *
  *
  * Return:      SUCCEED/FAIL
  *
- *-------------------------------------------------------------------------
+ ****************************************************************************************
  */
 herr_t
-H5P_reset_vol_class(const H5P_genclass_t *pclass, const H5VL_connector_prop_t *vol_prop)
+H5P_reset_vol_class(H5P_genclass_t *pclass, H5VL_connector_prop_t *vol_prop)
 {
     H5VL_connector_prop_t old_vol_prop;        /* Previous VOL connector property */
     herr_t                ret_value = SUCCEED; /* Return value */
@@ -5844,6 +5853,43 @@ H5P_reset_vol_class(const H5P_genclass_t *pclass, const H5VL_connector_prop_t *v
 done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5P_set_vol_class() */
+
+#else
+
+/*-------------------------------------------------------------------------
+ * Function:    H5P_reset_vol_class
+ *
+ * Purpose:     Change the VOL connector for a file access property class.
+ *
+ * Note:	The VOL property will be copied into the property list and
+ *		the reference count on the previous VOL will _NOT_ be decremented.
+ *		The reference count on the new VOL will _NOT_ be incremented.
+ *
+ * Return:      SUCCEED/FAIL
+ *
+ *-------------------------------------------------------------------------
+ */
+herr_t
+H5P_reset_vol_class(const H5P_genclass_t *pclass, const H5VL_connector_prop_t *vol_prop)
+{
+    H5VL_connector_prop_t old_vol_prop; /* Previous VOL connector property */
+    herr_t ret_value = SUCCEED;         /* Return value */
+
+    FUNC_ENTER_NOAPI(FAIL)
+
+    /* Get the connector ID & info property */
+    if (H5P__class_get(pclass, H5F_ACS_VOL_CONN_NAME, &old_vol_prop) < 0)
+        HGOTO_ERROR(H5E_PLIST, H5E_CANTGET, FAIL, "can't get VOL connector ID & info");
+
+    /* Set the new connector ID & info property */
+    if (H5P__class_set(pclass, H5F_ACS_VOL_CONN_NAME, vol_prop) < 0)
+        HGOTO_ERROR(H5E_PLIST, H5E_CANTSET, FAIL, "can't set VOL connector ID & info");
+
+done:
+    FUNC_LEAVE_NOAPI(ret_value)
+} /* end H5P_set_vol_class() */
+
+#endif
 
 /*-------------------------------------------------------------------------
  * Function:    H5Pset_vol
