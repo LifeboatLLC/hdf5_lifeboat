@@ -3948,9 +3948,6 @@ H5P__mt_ins_or_mod_prop__class(H5P_mt_class_t *class, const char *name, void *va
 {
     H5P_mt_prop_t *new_prop = NULL; /* New prop to be created and inserted */
     H5P_mt_prop_t *pl_head;         /* Head of the LFSLL of the class */
-    // H5P_mt_prop_t     *next_prop;       /* Next prop in LFSLL after the new prop */
-    // H5P_mt_prop_aptr_t next;            /* New prop's next struct field */
-    // uint64_t           delete_version = 0;
     uint32_t deletes     = 0; /* Tracks number of deletes */
     uint32_t visited     = 0; /* Tracks number of nodes visited */
     uint32_t thrd_cols   = 0; /* Tracks number of thread collisions */
@@ -11895,8 +11892,6 @@ H5P__global_lock_prop_cb__create(H5P_mt_prop_t *prop, const char *name, size_t s
 {
     bool have_global_mutex = FALSE;
     bool mutex_acquired    = FALSE;
-    // bool   done              = FALSE;
-    // bool   cb_error          = FALSE;
 
     herr_t ret_value = SUCCEED;
 
@@ -11957,8 +11952,6 @@ H5P__global_lock_prop_cb__set(H5P_mt_prop_t *prop, hid_t plist_id, const char *n
 {
     bool have_global_mutex = TRUE;  /* trivially so in single thread builds */
     bool mutex_acquired    = FALSE; /* flag for if we have acquired the global mutex */
-    // bool   done              = FALSE;
-    // bool   cb_error          = FALSE;
 
     herr_t ret_value = SUCCEED;
 
@@ -12020,8 +12013,6 @@ H5P__global_lock_prop_cb__get(H5P_mt_prop_t *prop, hid_t plist_id, const char *n
 {
     bool have_global_mutex = TRUE;  /* trivially so in single thread builds */
     bool mutex_acquired    = FALSE; /* flag for if we have acquired the global mutex */
-    // bool   done              = FALSE;
-    // bool   cb_error          = FALSE;
 
     herr_t ret_value = SUCCEED;
 
@@ -12083,8 +12074,6 @@ H5P__global_lock_prop_cb__encode(H5P_mt_prop_t *prop, void *value, void **pp, si
 {
     bool have_global_mutex = TRUE;  /* trivially so in single thread builds */
     bool mutex_acquired    = FALSE; /* flag for if we have acquired the global mutex */
-    // bool   done              = FALSE;
-    // bool   cb_error          = FALSE;
 
     herr_t ret_value = SUCCEED;
 
@@ -12094,7 +12083,6 @@ H5P__global_lock_prop_cb__encode(H5P_mt_prop_t *prop, void *value, void **pp, si
     assert(atomic_load(&(prop->tag)) == H5P_MT_PROP_TAG);
     assert(value);
     assert(pp);
-    // assert(*pp);
     assert(value_len);
 
     atomic_fetch_add(&(H5P_mt_g.H5P__global_lock_prop_cb__encode__num_calls), 1);
@@ -12146,8 +12134,6 @@ H5P__global_lock_prop_cb__decode(H5P_mt_prop_t *prop, const void **pp, void *val
 {
     bool have_global_mutex = TRUE;  /* trivially so in single thread builds */
     bool mutex_acquired    = FALSE; /* flag for if we have acquired the global mutex */
-    // bool   done              = FALSE;
-    // bool   cb_error          = FALSE;
 
     herr_t ret_value = SUCCEED;
 
@@ -12208,8 +12194,6 @@ H5P__global_lock_prop_cb__del(H5P_mt_prop_t *prop, hid_t plist_id, const char *n
 {
     bool have_global_mutex = TRUE;  /* trivially so in single thread builds */
     bool mutex_acquired    = FALSE; /* flag for if we have acquired the global mutex */
-    // bool   done              = FALSE;
-    // bool   cb_error          = FALSE;
 
     herr_t ret_value = SUCCEED;
 
@@ -12271,8 +12255,6 @@ H5P__global_lock_prop_cb__copy(H5P_mt_prop_t *prop, const char *name, size_t siz
 {
     bool have_global_mutex = TRUE;  /* trivially so in single thread builds */
     bool mutex_acquired    = FALSE; /* flag for if we have acquired the global mutex */
-    // bool   done              = FALSE;
-    // bool   cb_error          = FALSE;
 
     herr_t ret_value = SUCCEED;
 
@@ -12334,7 +12316,6 @@ H5P__global_lock_prop_cb__cmp(H5P_mt_prop_t *prop, void *value1, void *value2, s
 {
     bool have_global_mutex = TRUE;  /* trivially so in single thread builds */
     bool mutex_acquired    = FALSE; /* flag for if we have acquired the global mutex */
-    // bool   done              = FALSE;
     int cmp_value = 0;
 
     herr_t ret_value = SUCCEED;
@@ -12397,8 +12378,6 @@ H5P__global_lock_prop_cb__close(H5P_mt_prop_t *prop, const char *name, size_t si
 {
     bool have_global_mutex = TRUE;  /* trivially so in single thread builds */
     bool mutex_acquired    = FALSE; /* flag for if we have acquired the global mutex */
-    // bool   done              = FALSE;
-    // bool   cb_error          = FALSE;
 
     herr_t ret_value = SUCCEED;
 
