@@ -77,121 +77,131 @@ static void  *mt_pass_through_wrapper_unwrap_object(void *obj);
 static herr_t mt_pass_through_wrapper_free_wrap_ctx(void *obj);
 
 /* Attribute callbacks */
-static void  *mt_pass_through_wrapper_attr_create(void *obj, const H5VL_loc_params_t *loc_params, const char *name,
-                                            hid_t type_id, hid_t space_id, hid_t acpl_id, hid_t aapl_id,
-                                            hid_t dxpl_id, void **req);
-static void  *mt_pass_through_wrapper_attr_open(void *obj, const H5VL_loc_params_t *loc_params, const char *name,
-                                          hid_t aapl_id, hid_t dxpl_id, void **req);
+static void  *mt_pass_through_wrapper_attr_create(void *obj, const H5VL_loc_params_t *loc_params,
+                                                  const char *name, hid_t type_id, hid_t space_id,
+                                                  hid_t acpl_id, hid_t aapl_id, hid_t dxpl_id, void **req);
+static void  *mt_pass_through_wrapper_attr_open(void *obj, const H5VL_loc_params_t *loc_params,
+                                                const char *name, hid_t aapl_id, hid_t dxpl_id, void **req);
 static herr_t mt_pass_through_wrapper_attr_read(void *attr, hid_t mem_type_id, void *buf, hid_t dxpl_id,
-                                          void **req);
-static herr_t mt_pass_through_wrapper_attr_write(void *attr, hid_t mem_type_id, const void *buf, hid_t dxpl_id,
-                                           void **req);
-static herr_t mt_pass_through_wrapper_attr_get(void *obj, H5VL_attr_get_args_t *args, hid_t dxpl_id, void **req);
+                                                void **req);
+static herr_t mt_pass_through_wrapper_attr_write(void *attr, hid_t mem_type_id, const void *buf,
+                                                 hid_t dxpl_id, void **req);
+static herr_t mt_pass_through_wrapper_attr_get(void *obj, H5VL_attr_get_args_t *args, hid_t dxpl_id,
+                                               void **req);
 static herr_t mt_pass_through_wrapper_attr_specific(void *obj, const H5VL_loc_params_t *loc_params,
-                                              H5VL_attr_specific_args_t *args, hid_t dxpl_id, void **req);
+                                                    H5VL_attr_specific_args_t *args, hid_t dxpl_id,
+                                                    void **req);
 static herr_t mt_pass_through_wrapper_attr_optional(void *obj, H5VL_optional_args_t *args, hid_t dxpl_id,
-                                              void **req);
+                                                    void **req);
 static herr_t mt_pass_through_wrapper_attr_close(void *attr, hid_t dxpl_id, void **req);
 
 /* Dataset callbacks */
 static void  *mt_pass_through_wrapper_dataset_create(void *obj, const H5VL_loc_params_t *loc_params,
-                                               const char *name, hid_t lcpl_id, hid_t type_id, hid_t space_id,
-                                               hid_t dcpl_id, hid_t dapl_id, hid_t dxpl_id, void **req);
-static void  *mt_pass_through_wrapper_dataset_open(void *obj, const H5VL_loc_params_t *loc_params, const char *name,
-                                             hid_t dapl_id, hid_t dxpl_id, void **req);
+                                                     const char *name, hid_t lcpl_id, hid_t type_id,
+                                                     hid_t space_id, hid_t dcpl_id, hid_t dapl_id,
+                                                     hid_t dxpl_id, void **req);
+static void  *mt_pass_through_wrapper_dataset_open(void *obj, const H5VL_loc_params_t *loc_params,
+                                                   const char *name, hid_t dapl_id, hid_t dxpl_id, void **req);
 static herr_t mt_pass_through_wrapper_dataset_read(size_t count, void *dset[], hid_t mem_type_id[],
-                                             hid_t mem_space_id[], hid_t file_space_id[], hid_t plist_id,
-                                             void *buf[], void **req);
+                                                   hid_t mem_space_id[], hid_t file_space_id[],
+                                                   hid_t plist_id, void *buf[], void **req);
 static herr_t mt_pass_through_wrapper_dataset_write(size_t count, void *dset[], hid_t mem_type_id[],
-                                              hid_t mem_space_id[], hid_t file_space_id[], hid_t plist_id,
-                                              const void *buf[], void **req);
+                                                    hid_t mem_space_id[], hid_t file_space_id[],
+                                                    hid_t plist_id, const void *buf[], void **req);
 static herr_t mt_pass_through_wrapper_dataset_get(void *dset, H5VL_dataset_get_args_t *args, hid_t dxpl_id,
-                                            void **req);
-static herr_t mt_pass_through_wrapper_dataset_specific(void *obj, H5VL_dataset_specific_args_t *args, hid_t dxpl_id,
-                                                 void **req);
+                                                  void **req);
+static herr_t mt_pass_through_wrapper_dataset_specific(void *obj, H5VL_dataset_specific_args_t *args,
+                                                       hid_t dxpl_id, void **req);
 static herr_t mt_pass_through_wrapper_dataset_optional(void *obj, H5VL_optional_args_t *args, hid_t dxpl_id,
-                                                 void **req);
+                                                       void **req);
 static herr_t mt_pass_through_wrapper_dataset_close(void *dset, hid_t dxpl_id, void **req);
 
 /* Datatype callbacks */
-static void *mt_pass_through_wrapper_datatype_commit(void *obj, const H5VL_loc_params_t *loc_params,
-                                               const char *name, hid_t type_id, hid_t lcpl_id, hid_t tcpl_id,
-                                               hid_t tapl_id, hid_t dxpl_id, void **req);
-static void *mt_pass_through_wrapper_datatype_open(void *obj, const H5VL_loc_params_t *loc_params, const char *name,
-                                             hid_t tapl_id, hid_t dxpl_id, void **req);
+static void  *mt_pass_through_wrapper_datatype_commit(void *obj, const H5VL_loc_params_t *loc_params,
+                                                      const char *name, hid_t type_id, hid_t lcpl_id,
+                                                      hid_t tcpl_id, hid_t tapl_id, hid_t dxpl_id, void **req);
+static void  *mt_pass_through_wrapper_datatype_open(void *obj, const H5VL_loc_params_t *loc_params,
+                                                    const char *name, hid_t tapl_id, hid_t dxpl_id,
+                                                    void **req);
 static herr_t mt_pass_through_wrapper_datatype_get(void *dt, H5VL_datatype_get_args_t *args, hid_t dxpl_id,
-                                             void **req);
+                                                   void **req);
 static herr_t mt_pass_through_wrapper_datatype_specific(void *obj, H5VL_datatype_specific_args_t *args,
-                                                  hid_t dxpl_id, void **req);
+                                                        hid_t dxpl_id, void **req);
 static herr_t mt_pass_through_wrapper_datatype_optional(void *obj, H5VL_optional_args_t *args, hid_t dxpl_id,
-                                                  void **req);
+                                                        void **req);
 static herr_t mt_pass_through_wrapper_datatype_close(void *dt, hid_t dxpl_id, void **req);
 
 /* File callbacks */
-static void  *mt_pass_through_wrapper_file_create(const char *name, unsigned flags, hid_t fcpl_id, hid_t fapl_id,
-                                            hid_t dxpl_id, void **req);
-static void  *mt_pass_through_wrapper_file_open(const char *name, unsigned flags, hid_t fapl_id, hid_t dxpl_id,
-                                          void **req);
-static herr_t mt_pass_through_wrapper_file_get(void *file, H5VL_file_get_args_t *args, hid_t dxpl_id, void **req);
-static herr_t mt_pass_through_wrapper_file_specific(void *file, H5VL_file_specific_args_t *args, hid_t dxpl_id,
-                                              void **req);
+static void *mt_pass_through_wrapper_file_create(const char *name, unsigned flags, hid_t fcpl_id,
+                                                 hid_t fapl_id, hid_t dxpl_id, void **req);
+static void *mt_pass_through_wrapper_file_open(const char *name, unsigned flags, hid_t fapl_id, hid_t dxpl_id,
+                                               void **req);
+static herr_t mt_pass_through_wrapper_file_get(void *file, H5VL_file_get_args_t *args, hid_t dxpl_id,
+                                               void **req);
+static herr_t mt_pass_through_wrapper_file_specific(void *file, H5VL_file_specific_args_t *args,
+                                                    hid_t dxpl_id, void **req);
 static herr_t mt_pass_through_wrapper_file_optional(void *file, H5VL_optional_args_t *args, hid_t dxpl_id,
-                                              void **req);
+                                                    void **req);
 static herr_t mt_pass_through_wrapper_file_close(void *file, hid_t dxpl_id, void **req);
 
 /* Group callbacks */
-static void  *mt_pass_through_wrapper_group_create(void *obj, const H5VL_loc_params_t *loc_params, const char *name,
-                                             hid_t lcpl_id, hid_t gcpl_id, hid_t gapl_id, hid_t dxpl_id,
-                                             void **req);
-static void  *mt_pass_through_wrapper_group_open(void *obj, const H5VL_loc_params_t *loc_params, const char *name,
-                                           hid_t gapl_id, hid_t dxpl_id, void **req);
-static herr_t mt_pass_through_wrapper_group_get(void *obj, H5VL_group_get_args_t *args, hid_t dxpl_id, void **req);
-static herr_t mt_pass_through_wrapper_group_specific(void *obj, H5VL_group_specific_args_t *args, hid_t dxpl_id,
-                                               void **req);
+static void  *mt_pass_through_wrapper_group_create(void *obj, const H5VL_loc_params_t *loc_params,
+                                                   const char *name, hid_t lcpl_id, hid_t gcpl_id,
+                                                   hid_t gapl_id, hid_t dxpl_id, void **req);
+static void  *mt_pass_through_wrapper_group_open(void *obj, const H5VL_loc_params_t *loc_params,
+                                                 const char *name, hid_t gapl_id, hid_t dxpl_id, void **req);
+static herr_t mt_pass_through_wrapper_group_get(void *obj, H5VL_group_get_args_t *args, hid_t dxpl_id,
+                                                void **req);
+static herr_t mt_pass_through_wrapper_group_specific(void *obj, H5VL_group_specific_args_t *args,
+                                                     hid_t dxpl_id, void **req);
 static herr_t mt_pass_through_wrapper_group_optional(void *obj, H5VL_optional_args_t *args, hid_t dxpl_id,
-                                               void **req);
+                                                     void **req);
 static herr_t mt_pass_through_wrapper_group_close(void *grp, hid_t dxpl_id, void **req);
 
 /* Link callbacks */
 static herr_t mt_pass_through_wrapper_link_create(H5VL_link_create_args_t *args, void *obj,
-                                            const H5VL_loc_params_t *loc_params, hid_t lcpl_id, hid_t lapl_id,
-                                            hid_t dxpl_id, void **req);
-static herr_t mt_pass_through_wrapper_link_copy(void *src_obj, const H5VL_loc_params_t *loc_params1, void *dst_obj,
-                                          const H5VL_loc_params_t *loc_params2, hid_t lcpl_id, hid_t lapl_id,
-                                          hid_t dxpl_id, void **req);
-static herr_t mt_pass_through_wrapper_link_move(void *src_obj, const H5VL_loc_params_t *loc_params1, void *dst_obj,
-                                          const H5VL_loc_params_t *loc_params2, hid_t lcpl_id, hid_t lapl_id,
-                                          hid_t dxpl_id, void **req);
+                                                  const H5VL_loc_params_t *loc_params, hid_t lcpl_id,
+                                                  hid_t lapl_id, hid_t dxpl_id, void **req);
+static herr_t mt_pass_through_wrapper_link_copy(void *src_obj, const H5VL_loc_params_t *loc_params1,
+                                                void *dst_obj, const H5VL_loc_params_t *loc_params2,
+                                                hid_t lcpl_id, hid_t lapl_id, hid_t dxpl_id, void **req);
+static herr_t mt_pass_through_wrapper_link_move(void *src_obj, const H5VL_loc_params_t *loc_params1,
+                                                void *dst_obj, const H5VL_loc_params_t *loc_params2,
+                                                hid_t lcpl_id, hid_t lapl_id, hid_t dxpl_id, void **req);
 static herr_t mt_pass_through_wrapper_link_get(void *obj, const H5VL_loc_params_t *loc_params,
-                                         H5VL_link_get_args_t *args, hid_t dxpl_id, void **req);
+                                               H5VL_link_get_args_t *args, hid_t dxpl_id, void **req);
 static herr_t mt_pass_through_wrapper_link_specific(void *obj, const H5VL_loc_params_t *loc_params,
-                                              H5VL_link_specific_args_t *args, hid_t dxpl_id, void **req);
+                                                    H5VL_link_specific_args_t *args, hid_t dxpl_id,
+                                                    void **req);
 static herr_t mt_pass_through_wrapper_link_optional(void *obj, const H5VL_loc_params_t *loc_params,
-                                              H5VL_optional_args_t *args, hid_t dxpl_id, void **req);
+                                                    H5VL_optional_args_t *args, hid_t dxpl_id, void **req);
 
 /* Object callbacks */
 static void  *mt_pass_through_wrapper_object_open(void *obj, const H5VL_loc_params_t *loc_params,
-                                            H5I_type_t *opened_type, hid_t dxpl_id, void **req);
+                                                  H5I_type_t *opened_type, hid_t dxpl_id, void **req);
 static herr_t mt_pass_through_wrapper_object_copy(void *src_obj, const H5VL_loc_params_t *src_loc_params,
-                                            const char *src_name, void *dst_obj,
-                                            const H5VL_loc_params_t *dst_loc_params, const char *dst_name,
-                                            hid_t ocpypl_id, hid_t lcpl_id, hid_t dxpl_id, void **req);
+                                                  const char *src_name, void *dst_obj,
+                                                  const H5VL_loc_params_t *dst_loc_params,
+                                                  const char *dst_name, hid_t ocpypl_id, hid_t lcpl_id,
+                                                  hid_t dxpl_id, void **req);
 static herr_t mt_pass_through_wrapper_object_get(void *obj, const H5VL_loc_params_t *loc_params,
-                                           H5VL_object_get_args_t *args, hid_t dxpl_id, void **req);
+                                                 H5VL_object_get_args_t *args, hid_t dxpl_id, void **req);
 static herr_t mt_pass_through_wrapper_object_specific(void *obj, const H5VL_loc_params_t *loc_params,
-                                                H5VL_object_specific_args_t *args, hid_t dxpl_id, void **req);
+                                                      H5VL_object_specific_args_t *args, hid_t dxpl_id,
+                                                      void **req);
 static herr_t mt_pass_through_wrapper_object_optional(void *obj, const H5VL_loc_params_t *loc_params,
-                                                H5VL_optional_args_t *args, hid_t dxpl_id, void **req);
+                                                      H5VL_optional_args_t *args, hid_t dxpl_id, void **req);
 
 /* Container/connector introspection callbacks */
 static herr_t mt_pass_through_wrapper_introspect_get_conn_cls(void *obj, H5VL_get_conn_lvl_t lvl,
-                                                        const H5VL_class_t **conn_cls);
+                                                              const H5VL_class_t **conn_cls);
 static herr_t mt_pass_through_wrapper_introspect_get_cap_flags(const void *info, uint64_t *cap_flags);
 static herr_t mt_pass_through_wrapper_introspect_opt_query(void *obj, H5VL_subclass_t cls, int opt_type,
-                                                     uint64_t *flags);
+                                                           uint64_t *flags);
 
 /* Async request callbacks */
-static herr_t mt_pass_through_wrapper_request_wait(void *req, uint64_t timeout, H5VL_request_status_t *status);
+static herr_t mt_pass_through_wrapper_request_wait(void *req, uint64_t timeout,
+                                                   H5VL_request_status_t *status);
 static herr_t mt_pass_through_wrapper_request_notify(void *obj, H5VL_request_notify_t cb, void *ctx);
 static herr_t mt_pass_through_wrapper_request_cancel(void *req, H5VL_request_status_t *status);
 static herr_t mt_pass_through_wrapper_request_specific(void *req, H5VL_request_specific_args_t *args);
@@ -199,21 +209,25 @@ static herr_t mt_pass_through_wrapper_request_optional(void *req, H5VL_optional_
 static herr_t mt_pass_through_wrapper_request_free(void *req);
 
 /* Blob callbacks */
-static herr_t mt_pass_through_wrapper_blob_put(void *obj, const void *buf, size_t size, void *blob_id, void *ctx);
-static herr_t mt_pass_through_wrapper_blob_get(void *obj, const void *blob_id, void *buf, size_t size, void *ctx);
-static herr_t mt_pass_through_wrapper_blob_specific(void *obj, void *blob_id, H5VL_blob_specific_args_t *args);
+static herr_t mt_pass_through_wrapper_blob_put(void *obj, const void *buf, size_t size, void *blob_id,
+                                               void *ctx);
+static herr_t mt_pass_through_wrapper_blob_get(void *obj, const void *blob_id, void *buf, size_t size,
+                                               void *ctx);
+static herr_t mt_pass_through_wrapper_blob_specific(void *obj, void *blob_id,
+                                                    H5VL_blob_specific_args_t *args);
 static herr_t mt_pass_through_wrapper_blob_optional(void *obj, void *blob_id, H5VL_optional_args_t *args);
 
 /* Token callbacks */
-static herr_t mt_pass_through_wrapper_token_cmp(void *obj, const H5O_token_t *token1, const H5O_token_t *token2,
-                                          int *cmp_value);
+static herr_t mt_pass_through_wrapper_token_cmp(void *obj, const H5O_token_t *token1,
+                                                const H5O_token_t *token2, int *cmp_value);
 static herr_t mt_pass_through_wrapper_token_to_str(void *obj, H5I_type_t obj_type, const H5O_token_t *token,
-                                             char **token_str);
+                                                   char **token_str);
 static herr_t mt_pass_through_wrapper_token_from_str(void *obj, H5I_type_t obj_type, const char *token_str,
-                                               H5O_token_t *token);
+                                                     H5O_token_t *token);
 
 /* Generic optional callback */
-static herr_t mt_pass_through_wrapper_optional(void *obj, H5VL_optional_args_t *args, hid_t dxpl_id, void **req);
+static herr_t mt_pass_through_wrapper_optional(void *obj, H5VL_optional_args_t *args, hid_t dxpl_id,
+                                               void **req);
 
 /*******************/
 /* Local variables */
@@ -221,13 +235,13 @@ static herr_t mt_pass_through_wrapper_optional(void *obj, H5VL_optional_args_t *
 
 /* Pass through VOL connector class struct */
 static const H5VL_class_t mt_pass_through_wrapper_g = {
-    H5VL_VERSION,                            /* VOL class struct version */
+    H5VL_VERSION,              /* VOL class struct version */
     MT_PASSTHRU_WRAPPER_VALUE, /* value        */
-    MT_PASSTHRU_WRAPPER_NAME,                      /* name         */
-    0,                   /* connector version */
+    MT_PASSTHRU_WRAPPER_NAME,  /* name         */
+    0,                         /* connector version */
     H5VL_CAP_FLAG_THREADSAFE,  /* capability flags */
-    NULL,                  /* initialize   */
-    NULL,                  /* terminate    */
+    NULL,                      /* initialize   */
+    NULL,                      /* terminate    */
     {
         /* info_cls */
         sizeof(mt_pass_through_wrapper_info_t), /* size    */
@@ -358,7 +372,6 @@ mt_pass_through_wrapper_info_copy(const void *_info)
     return H5VL_pass_through_info_copy(_info);
 } /* end mt_pass_through_wrapper_info_copy() */
 
-
 static herr_t
 mt_pass_through_wrapper_info_cmp(int *cmp_value, const void *_info1, const void *_info2)
 {
@@ -445,7 +458,7 @@ mt_pass_through_wrapper_get_object(const void *obj)
 static herr_t
 mt_pass_through_wrapper_get_wrap_ctx(const void *obj, void **wrap_ctx)
 {
-        return H5VL_pass_through_get_wrap_ctx(obj, wrap_ctx);
+    return H5VL_pass_through_get_wrap_ctx(obj, wrap_ctx);
 }
 
 /*---------------------------------------------------------------------------
@@ -511,10 +524,12 @@ mt_pass_through_wrapper_free_wrap_ctx(void *_wrap_ctx)
  *-------------------------------------------------------------------------
  */
 static void *
-mt_pass_through_wrapper_attr_create(void *obj, const H5VL_loc_params_t *loc_params, const char *name, hid_t type_id,
-                              hid_t space_id, hid_t acpl_id, hid_t aapl_id, hid_t dxpl_id, void **req)
+mt_pass_through_wrapper_attr_create(void *obj, const H5VL_loc_params_t *loc_params, const char *name,
+                                    hid_t type_id, hid_t space_id, hid_t acpl_id, hid_t aapl_id,
+                                    hid_t dxpl_id, void **req)
 {
-    return H5VL_pass_through_attr_create(obj, loc_params, name, type_id, space_id, acpl_id, aapl_id, dxpl_id, req);
+    return H5VL_pass_through_attr_create(obj, loc_params, name, type_id, space_id, acpl_id, aapl_id, dxpl_id,
+                                         req);
 }
 
 /*-------------------------------------------------------------------------
@@ -528,8 +543,8 @@ mt_pass_through_wrapper_attr_create(void *obj, const H5VL_loc_params_t *loc_para
  *-------------------------------------------------------------------------
  */
 static void *
-mt_pass_through_wrapper_attr_open(void *obj, const H5VL_loc_params_t *loc_params, const char *name, hid_t aapl_id,
-                            hid_t dxpl_id, void **req)
+mt_pass_through_wrapper_attr_open(void *obj, const H5VL_loc_params_t *loc_params, const char *name,
+                                  hid_t aapl_id, hid_t dxpl_id, void **req)
 {
     return H5VL_pass_through_attr_open(obj, loc_params, name, aapl_id, dxpl_id, req);
 }
@@ -594,7 +609,7 @@ mt_pass_through_wrapper_attr_get(void *obj, H5VL_attr_get_args_t *args, hid_t dx
  */
 static herr_t
 mt_pass_through_wrapper_attr_specific(void *obj, const H5VL_loc_params_t *loc_params,
-                                H5VL_attr_specific_args_t *args, hid_t dxpl_id, void **req)
+                                      H5VL_attr_specific_args_t *args, hid_t dxpl_id, void **req)
 {
     return H5VL_pass_through_attr_specific(obj, loc_params, args, dxpl_id, req);
 }
@@ -643,11 +658,11 @@ mt_pass_through_wrapper_attr_close(void *attr, hid_t dxpl_id, void **req)
  */
 static void *
 mt_pass_through_wrapper_dataset_create(void *obj, const H5VL_loc_params_t *loc_params, const char *name,
-                                 hid_t lcpl_id, hid_t type_id, hid_t space_id, hid_t dcpl_id, hid_t dapl_id,
-                                 hid_t dxpl_id, void **req)
+                                       hid_t lcpl_id, hid_t type_id, hid_t space_id, hid_t dcpl_id,
+                                       hid_t dapl_id, hid_t dxpl_id, void **req)
 {
-    return H5VL_pass_through_dataset_create(obj, loc_params, name, lcpl_id, type_id, space_id, dcpl_id, dapl_id,
-                                         dxpl_id, req);
+    return H5VL_pass_through_dataset_create(obj, loc_params, name, lcpl_id, type_id, space_id, dcpl_id,
+                                            dapl_id, dxpl_id, req);
 }
 /*-------------------------------------------------------------------------
  * Function:    mt_pass_through_wrapper_dataset_open
@@ -661,7 +676,7 @@ mt_pass_through_wrapper_dataset_create(void *obj, const H5VL_loc_params_t *loc_p
  */
 static void *
 mt_pass_through_wrapper_dataset_open(void *obj, const H5VL_loc_params_t *loc_params, const char *name,
-                               hid_t dapl_id, hid_t dxpl_id, void **req)
+                                     hid_t dapl_id, hid_t dxpl_id, void **req)
 {
     return H5VL_pass_through_dataset_open(obj, loc_params, name, dapl_id, dxpl_id, req);
 }
@@ -678,9 +693,10 @@ mt_pass_through_wrapper_dataset_open(void *obj, const H5VL_loc_params_t *loc_par
  */
 static herr_t
 mt_pass_through_wrapper_dataset_read(size_t count, void *dset[], hid_t mem_type_id[], hid_t mem_space_id[],
-                               hid_t file_space_id[], hid_t plist_id, void *buf[], void **req)
+                                     hid_t file_space_id[], hid_t plist_id, void *buf[], void **req)
 {
-    return H5VL_pass_through_dataset_read(count, dset, mem_type_id, mem_space_id, file_space_id, plist_id, buf, req);
+    return H5VL_pass_through_dataset_read(count, dset, mem_type_id, mem_space_id, file_space_id, plist_id,
+                                          buf, req);
 }
 
 /*-------------------------------------------------------------------------
@@ -695,9 +711,10 @@ mt_pass_through_wrapper_dataset_read(size_t count, void *dset[], hid_t mem_type_
  */
 static herr_t
 mt_pass_through_wrapper_dataset_write(size_t count, void *dset[], hid_t mem_type_id[], hid_t mem_space_id[],
-                                hid_t file_space_id[], hid_t plist_id, const void *buf[], void **req)
+                                      hid_t file_space_id[], hid_t plist_id, const void *buf[], void **req)
 {
-    return H5VL_pass_through_dataset_write(count, dset, mem_type_id, mem_space_id, file_space_id, plist_id, buf, req);
+    return H5VL_pass_through_dataset_write(count, dset, mem_type_id, mem_space_id, file_space_id, plist_id,
+                                           buf, req);
 }
 
 /*-------------------------------------------------------------------------
@@ -727,7 +744,8 @@ mt_pass_through_wrapper_dataset_get(void *dset, H5VL_dataset_get_args_t *args, h
  *-------------------------------------------------------------------------
  */
 static herr_t
-mt_pass_through_wrapper_dataset_specific(void *obj, H5VL_dataset_specific_args_t *args, hid_t dxpl_id, void **req)
+mt_pass_through_wrapper_dataset_specific(void *obj, H5VL_dataset_specific_args_t *args, hid_t dxpl_id,
+                                         void **req)
 {
     return H5VL_pass_through_dataset_specific(obj, args, dxpl_id, req);
 }
@@ -776,10 +794,11 @@ mt_pass_through_wrapper_dataset_close(void *dset, hid_t dxpl_id, void **req)
  */
 static void *
 mt_pass_through_wrapper_datatype_commit(void *obj, const H5VL_loc_params_t *loc_params, const char *name,
-                                  hid_t type_id, hid_t lcpl_id, hid_t tcpl_id, hid_t tapl_id, hid_t dxpl_id,
-                                  void **req)
+                                        hid_t type_id, hid_t lcpl_id, hid_t tcpl_id, hid_t tapl_id,
+                                        hid_t dxpl_id, void **req)
 {
-    return H5VL_pass_through_datatype_commit(obj, loc_params, name, type_id, lcpl_id, tcpl_id, tapl_id, dxpl_id, req);
+    return H5VL_pass_through_datatype_commit(obj, loc_params, name, type_id, lcpl_id, tcpl_id, tapl_id,
+                                             dxpl_id, req);
 }
 
 /*-------------------------------------------------------------------------
@@ -794,7 +813,7 @@ mt_pass_through_wrapper_datatype_commit(void *obj, const H5VL_loc_params_t *loc_
  */
 static void *
 mt_pass_through_wrapper_datatype_open(void *obj, const H5VL_loc_params_t *loc_params, const char *name,
-                                hid_t tapl_id, hid_t dxpl_id, void **req)
+                                      hid_t tapl_id, hid_t dxpl_id, void **req)
 {
     return H5VL_pass_through_datatype_open(obj, loc_params, name, tapl_id, dxpl_id, req);
 }
@@ -826,7 +845,8 @@ mt_pass_through_wrapper_datatype_get(void *dt, H5VL_datatype_get_args_t *args, h
  *-------------------------------------------------------------------------
  */
 static herr_t
-mt_pass_through_wrapper_datatype_specific(void *obj, H5VL_datatype_specific_args_t *args, hid_t dxpl_id, void **req)
+mt_pass_through_wrapper_datatype_specific(void *obj, H5VL_datatype_specific_args_t *args, hid_t dxpl_id,
+                                          void **req)
 {
     return H5VL_pass_through_datatype_specific(obj, args, dxpl_id, req);
 }
@@ -874,8 +894,8 @@ mt_pass_through_wrapper_datatype_close(void *dt, hid_t dxpl_id, void **req)
  *-------------------------------------------------------------------------
  */
 static void *
-mt_pass_through_wrapper_file_create(const char *name, unsigned flags, hid_t fcpl_id, hid_t fapl_id, hid_t dxpl_id,
-                              void **req)
+mt_pass_through_wrapper_file_create(const char *name, unsigned flags, hid_t fcpl_id, hid_t fapl_id,
+                                    hid_t dxpl_id, void **req)
 {
     return H5VL_pass_through_file_create(name, flags, fcpl_id, fapl_id, dxpl_id, req);
 }
@@ -972,7 +992,7 @@ mt_pass_through_wrapper_file_close(void *file, hid_t dxpl_id, void **req)
  */
 static void *
 mt_pass_through_wrapper_group_create(void *obj, const H5VL_loc_params_t *loc_params, const char *name,
-                               hid_t lcpl_id, hid_t gcpl_id, hid_t gapl_id, hid_t dxpl_id, void **req)
+                                     hid_t lcpl_id, hid_t gcpl_id, hid_t gapl_id, hid_t dxpl_id, void **req)
 {
     return H5VL_pass_through_group_create(obj, loc_params, name, lcpl_id, gcpl_id, gapl_id, dxpl_id, req);
 }
@@ -988,8 +1008,8 @@ mt_pass_through_wrapper_group_create(void *obj, const H5VL_loc_params_t *loc_par
  *-------------------------------------------------------------------------
  */
 static void *
-mt_pass_through_wrapper_group_open(void *obj, const H5VL_loc_params_t *loc_params, const char *name, hid_t gapl_id,
-                             hid_t dxpl_id, void **req)
+mt_pass_through_wrapper_group_open(void *obj, const H5VL_loc_params_t *loc_params, const char *name,
+                                   hid_t gapl_id, hid_t dxpl_id, void **req)
 {
     return H5VL_pass_through_group_open(obj, loc_params, name, gapl_id, dxpl_id, req);
 }
@@ -1069,8 +1089,9 @@ mt_pass_through_wrapper_group_close(void *grp, hid_t dxpl_id, void **req)
  *-------------------------------------------------------------------------
  */
 static herr_t
-mt_pass_through_wrapper_link_create(H5VL_link_create_args_t *args, void *obj, const H5VL_loc_params_t *loc_params,
-                              hid_t lcpl_id, hid_t lapl_id, hid_t dxpl_id, void **req)
+mt_pass_through_wrapper_link_create(H5VL_link_create_args_t *args, void *obj,
+                                    const H5VL_loc_params_t *loc_params, hid_t lcpl_id, hid_t lapl_id,
+                                    hid_t dxpl_id, void **req)
 {
     return H5VL_pass_through_link_create(args, obj, loc_params, lcpl_id, lapl_id, dxpl_id, req);
 }
@@ -1092,10 +1113,11 @@ mt_pass_through_wrapper_link_create(H5VL_link_create_args_t *args, void *obj, co
  */
 static herr_t
 mt_pass_through_wrapper_link_copy(void *src_obj, const H5VL_loc_params_t *loc_params1, void *dst_obj,
-                            const H5VL_loc_params_t *loc_params2, hid_t lcpl_id, hid_t lapl_id, hid_t dxpl_id,
-                            void **req)
+                                  const H5VL_loc_params_t *loc_params2, hid_t lcpl_id, hid_t lapl_id,
+                                  hid_t dxpl_id, void **req)
 {
-    return H5VL_pass_through_link_copy(src_obj, loc_params1, dst_obj, loc_params2, lcpl_id, lapl_id, dxpl_id, req);
+    return H5VL_pass_through_link_copy(src_obj, loc_params1, dst_obj, loc_params2, lcpl_id, lapl_id, dxpl_id,
+                                       req);
 }
 
 /*-------------------------------------------------------------------------
@@ -1115,10 +1137,11 @@ mt_pass_through_wrapper_link_copy(void *src_obj, const H5VL_loc_params_t *loc_pa
  */
 static herr_t
 mt_pass_through_wrapper_link_move(void *src_obj, const H5VL_loc_params_t *loc_params1, void *dst_obj,
-                            const H5VL_loc_params_t *loc_params2, hid_t lcpl_id, hid_t lapl_id, hid_t dxpl_id,
-                            void **req)
+                                  const H5VL_loc_params_t *loc_params2, hid_t lcpl_id, hid_t lapl_id,
+                                  hid_t dxpl_id, void **req)
 {
-    return H5VL_pass_through_link_move(src_obj, loc_params1, dst_obj, loc_params2, lcpl_id, lapl_id, dxpl_id, req);
+    return H5VL_pass_through_link_move(src_obj, loc_params1, dst_obj, loc_params2, lcpl_id, lapl_id, dxpl_id,
+                                       req);
 }
 
 /*-------------------------------------------------------------------------
@@ -1133,7 +1156,7 @@ mt_pass_through_wrapper_link_move(void *src_obj, const H5VL_loc_params_t *loc_pa
  */
 static herr_t
 mt_pass_through_wrapper_link_get(void *obj, const H5VL_loc_params_t *loc_params, H5VL_link_get_args_t *args,
-                           hid_t dxpl_id, void **req)
+                                 hid_t dxpl_id, void **req)
 {
     return H5VL_pass_through_link_get(obj, loc_params, args, dxpl_id, req);
 }
@@ -1150,7 +1173,7 @@ mt_pass_through_wrapper_link_get(void *obj, const H5VL_loc_params_t *loc_params,
  */
 static herr_t
 mt_pass_through_wrapper_link_specific(void *obj, const H5VL_loc_params_t *loc_params,
-                                H5VL_link_specific_args_t *args, hid_t dxpl_id, void **req)
+                                      H5VL_link_specific_args_t *args, hid_t dxpl_id, void **req)
 {
     return H5VL_pass_through_link_specific(obj, loc_params, args, dxpl_id, req);
 }
@@ -1166,8 +1189,8 @@ mt_pass_through_wrapper_link_specific(void *obj, const H5VL_loc_params_t *loc_pa
  *-------------------------------------------------------------------------
  */
 static herr_t
-mt_pass_through_wrapper_link_optional(void *obj, const H5VL_loc_params_t *loc_params, H5VL_optional_args_t *args,
-                                hid_t dxpl_id, void **req)
+mt_pass_through_wrapper_link_optional(void *obj, const H5VL_loc_params_t *loc_params,
+                                      H5VL_optional_args_t *args, hid_t dxpl_id, void **req)
 {
     return H5VL_pass_through_link_optional(obj, loc_params, args, dxpl_id, req);
 }
@@ -1184,7 +1207,7 @@ mt_pass_through_wrapper_link_optional(void *obj, const H5VL_loc_params_t *loc_pa
  */
 static void *
 mt_pass_through_wrapper_object_open(void *obj, const H5VL_loc_params_t *loc_params, H5I_type_t *opened_type,
-                              hid_t dxpl_id, void **req)
+                                    hid_t dxpl_id, void **req)
 {
     return H5VL_pass_through_object_open(obj, loc_params, opened_type, dxpl_id, req);
 }
@@ -1200,12 +1223,13 @@ mt_pass_through_wrapper_object_open(void *obj, const H5VL_loc_params_t *loc_para
  *-------------------------------------------------------------------------
  */
 static herr_t
-mt_pass_through_wrapper_object_copy(void *src_obj, const H5VL_loc_params_t *src_loc_params, const char *src_name,
-                              void *dst_obj, const H5VL_loc_params_t *dst_loc_params, const char *dst_name,
-                              hid_t ocpypl_id, hid_t lcpl_id, hid_t dxpl_id, void **req)
+mt_pass_through_wrapper_object_copy(void *src_obj, const H5VL_loc_params_t *src_loc_params,
+                                    const char *src_name, void *dst_obj,
+                                    const H5VL_loc_params_t *dst_loc_params, const char *dst_name,
+                                    hid_t ocpypl_id, hid_t lcpl_id, hid_t dxpl_id, void **req)
 {
     return H5VL_pass_through_object_copy(src_obj, src_loc_params, src_name, dst_obj, dst_loc_params, dst_name,
-                                     ocpypl_id, lcpl_id, dxpl_id, req);
+                                         ocpypl_id, lcpl_id, dxpl_id, req);
 }
 
 /*-------------------------------------------------------------------------
@@ -1219,8 +1243,8 @@ mt_pass_through_wrapper_object_copy(void *src_obj, const H5VL_loc_params_t *src_
  *-------------------------------------------------------------------------
  */
 static herr_t
-mt_pass_through_wrapper_object_get(void *obj, const H5VL_loc_params_t *loc_params, H5VL_object_get_args_t *args,
-                             hid_t dxpl_id, void **req)
+mt_pass_through_wrapper_object_get(void *obj, const H5VL_loc_params_t *loc_params,
+                                   H5VL_object_get_args_t *args, hid_t dxpl_id, void **req)
 {
     return H5VL_pass_through_object_get(obj, loc_params, args, dxpl_id, req);
 }
@@ -1237,7 +1261,7 @@ mt_pass_through_wrapper_object_get(void *obj, const H5VL_loc_params_t *loc_param
  */
 static herr_t
 mt_pass_through_wrapper_object_specific(void *obj, const H5VL_loc_params_t *loc_params,
-                                  H5VL_object_specific_args_t *args, hid_t dxpl_id, void **req)
+                                        H5VL_object_specific_args_t *args, hid_t dxpl_id, void **req)
 {
     return H5VL_pass_through_object_specific(obj, loc_params, args, dxpl_id, req);
 }
@@ -1253,8 +1277,8 @@ mt_pass_through_wrapper_object_specific(void *obj, const H5VL_loc_params_t *loc_
  *-------------------------------------------------------------------------
  */
 static herr_t
-mt_pass_through_wrapper_object_optional(void *obj, const H5VL_loc_params_t *loc_params, H5VL_optional_args_t *args,
-                                  hid_t dxpl_id, void **req)
+mt_pass_through_wrapper_object_optional(void *obj, const H5VL_loc_params_t *loc_params,
+                                        H5VL_optional_args_t *args, hid_t dxpl_id, void **req)
 {
     return H5VL_pass_through_object_optional(obj, loc_params, args, dxpl_id, req);
 }
@@ -1269,7 +1293,8 @@ mt_pass_through_wrapper_object_optional(void *obj, const H5VL_loc_params_t *loc_
  *-------------------------------------------------------------------------
  */
 herr_t
-mt_pass_through_wrapper_introspect_get_conn_cls(void *obj, H5VL_get_conn_lvl_t lvl, const H5VL_class_t **conn_cls)
+mt_pass_through_wrapper_introspect_get_conn_cls(void *obj, H5VL_get_conn_lvl_t lvl,
+                                                const H5VL_class_t **conn_cls)
 {
     return H5VL_pass_through_introspect_get_conn_cls(obj, lvl, conn_cls);
 }
@@ -1482,7 +1507,8 @@ mt_pass_through_wrapper_blob_optional(void *obj, void *blob_id, H5VL_optional_ar
  *---------------------------------------------------------------------------
  */
 static herr_t
-mt_pass_through_wrapper_token_cmp(void *obj, const H5O_token_t *token1, const H5O_token_t *token2, int *cmp_value)
+mt_pass_through_wrapper_token_cmp(void *obj, const H5O_token_t *token1, const H5O_token_t *token2,
+                                  int *cmp_value)
 {
     return H5VL_pass_through_token_cmp(obj, token1, token2, cmp_value);
 }
@@ -1498,7 +1524,8 @@ mt_pass_through_wrapper_token_cmp(void *obj, const H5O_token_t *token1, const H5
  *---------------------------------------------------------------------------
  */
 static herr_t
-mt_pass_through_wrapper_token_to_str(void *obj, H5I_type_t obj_type, const H5O_token_t *token, char **token_str)
+mt_pass_through_wrapper_token_to_str(void *obj, H5I_type_t obj_type, const H5O_token_t *token,
+                                     char **token_str)
 {
     return H5VL_pass_through_token_to_str(obj, obj_type, token, token_str);
 }
@@ -1514,7 +1541,8 @@ mt_pass_through_wrapper_token_to_str(void *obj, H5I_type_t obj_type, const H5O_t
  *---------------------------------------------------------------------------
  */
 static herr_t
-mt_pass_through_wrapper_token_from_str(void *obj, H5I_type_t obj_type, const char *token_str, H5O_token_t *token)
+mt_pass_through_wrapper_token_from_str(void *obj, H5I_type_t obj_type, const char *token_str,
+                                       H5O_token_t *token)
 {
     return H5VL_pass_through_token_from_str(obj, obj_type, token_str, token);
 }
@@ -1538,5 +1566,13 @@ mt_pass_through_wrapper_optional(void *obj, H5VL_optional_args_t *args, hid_t dx
  * the HDF5 library.
  */
 
-H5PL_type_t H5PLget_plugin_type(void) { return H5PL_TYPE_VOL; }
-const void *H5PLget_plugin_info(void) { return &mt_pass_through_wrapper_g; }
+H5PL_type_t
+H5PLget_plugin_type(void)
+{
+    return H5PL_TYPE_VOL;
+}
+const void *
+H5PLget_plugin_info(void)
+{
+    return &mt_pass_through_wrapper_g;
+}

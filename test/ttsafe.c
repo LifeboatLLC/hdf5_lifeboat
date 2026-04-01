@@ -119,7 +119,8 @@ main(int argc, char *argv[])
     AddTest("cancel", tts_cancel, NULL, cleanup_cancel, NULL, 0, 0, "thread cancellation safety test");
 #endif /* H5_HAVE_PTHREAD_H */
     AddTest("acreate", tts_acreate, NULL, cleanup_acreate, NULL, 0, 0, "multi-attribute creation");
-    AddTest("attr_vlen", tts_attr_vlen, NULL, cleanup_attr_vlen, NULL, 0, 0, "multi-file-attribute-vlen read");
+    AddTest("attr_vlen", tts_attr_vlen, NULL, cleanup_attr_vlen, NULL, 0, 0,
+            "multi-file-attribute-vlen read");
 
 #else /* H5_HAVE_THREADSAFE */
 

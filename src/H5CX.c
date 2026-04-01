@@ -717,11 +717,11 @@ static H5CX_node_t **
 H5CX__get_context(void)
 {
     H5TS_tl_value_t *tl_value = NULL;
-    H5CX_node_t **ctx = NULL;
+    H5CX_node_t    **ctx      = NULL;
 
     FUNC_ENTER_PACKAGE_NOERR
 
-    tl_value = (H5TS_tl_value_t*)H5TS_get_thread_local_value(H5TS_apictx_key_g);
+    tl_value = (H5TS_tl_value_t *)H5TS_get_thread_local_value(H5TS_apictx_key_g);
 
     if (!tl_value) {
         /* No associated value with current thread - create one */
@@ -743,14 +743,15 @@ H5CX__get_context(void)
         tl_value = malloc(sizeof(H5TS_tl_value_t));
         assert(tl_value);
 
-        tl_value->type = H5TS_CTX;
+        tl_value->type  = H5TS_CTX;
         tl_value->value = ctx;
         /* (It's not necessary to release this in this API, it is
          *      released by the "key destructor" set up in the H5TS
          *      routines.  See calls to pthread_key_create() in H5TS.c -QAK)
          */
-        H5TS_set_thread_local_value(H5TS_apictx_key_g, (void *) tl_value);
-    } else {
+        H5TS_set_thread_local_value(H5TS_apictx_key_g, (void *)tl_value);
+    }
+    else {
         ctx = (H5CX_node_t **)tl_value->value;
         assert(ctx);
     }
@@ -951,7 +952,7 @@ H5CX_retrieve_state(H5CX_state_t **api_state)
             HGOTO_ERROR(H5E_CONTEXT, H5E_CANTINC, FAIL, "incrementing VOL connector ID failed");
 
         (*api_state)->vol_connector_prop.connector_id = ctx_conn_prop->connector_id;
-    
+
         /* Copy connector info, if it exists */
         if (ctx_conn_prop->connector_info) {
             H5VL_class_t *connector;                 /* Pointer to connector */
@@ -964,18 +965,14 @@ H5CX_retrieve_state(H5CX_state_t **api_state)
                 HGOTO_ERROR(H5E_CONTEXT, H5E_BADTYPE, FAIL, "not a VOL connector ID");
 
             /* Allocate and copy connector info */
-            if (H5VL_copy_connector_info(connector, 
-                                         &new_connector_info,
-                                         ctx_conn_prop->connector_info) < 0)
+            if (H5VL_copy_connector_info(connector, &new_connector_info, ctx_conn_prop->connector_info) < 0)
                 HGOTO_ERROR(H5E_CONTEXT, H5E_CANTCOPY, FAIL, "connector info copy failed");
-            
-            
 
             /* Copy succeeded, safely publish connector info to the state object */
             (*api_state)->vol_connector_prop.connector_info = new_connector_info;
         } /* end if */
 
-    }     /* end if */
+    } /* end if */
 
 #ifdef H5_HAVE_PARALLEL
     /* Save parallel I/O settings */

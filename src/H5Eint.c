@@ -603,19 +603,18 @@ H5E__set_auto(H5E_t *estack, const H5E_auto_op_t *op, void *client_data)
 
 #ifdef H5_HAVE_MULTITHREAD
 
-    /* review of the code indicates that this function call only be 
+    /* review of the code indicates that this function call only be
      * called when the global lock is held in the multithread case.
      * Verify this.
      */
     {
         bool have_global_mutex;
 
-        assert( 0 >= H5TS_have_mutex(&H5_g.init_lock, &have_global_mutex) );
+        assert(0 >= H5TS_have_mutex(&H5_g.init_lock, &have_global_mutex));
         assert(have_global_mutex);
     }
 
 #endif /* H5_HAVE_MULTITHREAD */
-    
 
     /* Set the automatic error reporting info */
     estack->auto_op   = *op;
@@ -813,7 +812,7 @@ H5E__clear_entries(H5E_t *estack, size_t nentries)
         /* (In reverse order that they were incremented, so that reference counts work well) */
         if (H5I_dec_ref(error->min_num) < 0)
             HGOTO_ERROR(H5E_ERROR, H5E_CANTDEC, FAIL, "unable to decrement ref count on error message");
-        
+
         if (H5I_dec_ref(error->maj_num) < 0)
             HGOTO_ERROR(H5E_ERROR, H5E_CANTDEC, FAIL, "unable to decrement ref count on error message");
 
@@ -841,7 +840,6 @@ H5E__clear_entries(H5E_t *estack, size_t nentries)
             error->desc = (const char *)H5MM_xfree_const(error->desc);
 
 #endif /* H5_HAVE_MULTITHREAD */
-
     }
 
     /* Decrement number of errors on stack */
@@ -873,8 +871,8 @@ H5E_clear_stack(H5E_t *estack)
      * local error stack.
      *
      * However, if estack is not NULL, the target stack is in the H5I_ERROR_STACK
-     * index, and thus accessible to all threads.  Since a failure of mutual 
-     * exclusion is possible here, verify that we hold the global mutex in 
+     * index, and thus accessible to all threads.  Since a failure of mutual
+     * exclusion is possible here, verify that we hold the global mutex in
      * this case.
      */
 
@@ -885,21 +883,20 @@ H5E_clear_stack(H5E_t *estack)
         if (NULL == (estack = H5E__get_my_stack())) /*lint !e506 !e774 Make lint 'constant value Boolean' in
                                                        non-threaded case */
             HGOTO_ERROR(H5E_ERROR, H5E_CANTGET, FAIL, "can't get current error stack");
-
-    } else {
+    }
+    else {
         bool have_global_mutex;
-        
+
         /* Verify that we have the global lock. */
-        if ( H5TS_have_mutex(&H5_g.init_lock, &have_global_mutex) < 0 )
+        if (H5TS_have_mutex(&H5_g.init_lock, &have_global_mutex) < 0)
 
             HGOTO_ERROR(H5E_LIB, H5E_CANTGET, FAIL, "Can't determine whether we have the global mutex");
 
         assert(have_global_mutex);
 
-        if ( ! have_global_mutex )
+        if (!have_global_mutex)
 
             HGOTO_ERROR(H5E_LIB, H5E_SYSTEM, FAIL, "Don't have global mutex on entry.");
-
     }
 
 #else /* H5_HAVE_MULTITHREAD */

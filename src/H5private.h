@@ -1545,10 +1545,10 @@ H5_DLL herr_t H5CX_pop(hbool_t update_dxpl_props);
     H5_API_UNSET_CANCEL                                                                                      \
     H5_API_LOCK
 
-/* Version of FUNC_ENTER_API_THREADSAFE that does not grab the API lock.  This 
+/* Version of FUNC_ENTER_API_THREADSAFE that does not grab the API lock.  This
  * is needed to push the global mutex below packages that are multi-thread safe.
  *
- * Note that while we don't acquire the mutext, we still do initialization and 
+ * Note that while we don't acquire the mutext, we still do initialization and
  * block thread cancelations while in the HDF5 library.
  */
 #define FUNC_ENTER_API_THREADSAFE_NO_MUTEX                                                                   \
@@ -1578,7 +1578,7 @@ H5_DLL herr_t H5CX_pop(hbool_t update_dxpl_props);
 
 #else /* new version of FUNC_ENTER_API_COMMON */
 
-/* As part of pushing the global mutex down into the HDF5 library, it is necessary 
+/* As part of pushing the global mutex down into the HDF5 library, it is necessary
  * to remove FUNC_ENTER_API_THREADSAFE from FUNC_ENTER_API_COMMON.
  */
 #define FUNC_ENTER_API_COMMON                                                                                \
@@ -1632,16 +1632,16 @@ H5_DLL herr_t H5CX_pop(hbool_t update_dxpl_props);
             {
 #endif /* new version */
 
-/* version of the FUNC_ENTER_API macro that does not attempt to gain the global mutex.  This 
+/* version of the FUNC_ENTER_API macro that does not attempt to gain the global mutex.  This
  * version is used on API calls into packages that have been modified to support multi-thread.
- * Note that in the multi-thread case, the mutex must be obtained before calling into sections 
+ * Note that in the multi-thread case, the mutex must be obtained before calling into sections
  * of the HDF5 library that are not thread safe.
  *
  * Note that some of the code called after FUNC_ENTER_API_THREADSAFE_NO_MUTEX and the end of
- * the macro are not thread safe -- thus we have to grab the mutex briefly for now.  This 
+ * the macro are not thread safe -- thus we have to grab the mutex briefly for now.  This
  * should be temporary, as this code is on the to-do list to make multi-thread safe.
  *
- * Other NO_MUTEX versions of FUNC_ENTER_API may be necessary in the future, but just this 
+ * Other NO_MUTEX versions of FUNC_ENTER_API may be necessary in the future, but just this
  * single version is sufficient for now.
  *
  *                                                            JRM -- 11/10/23
@@ -1667,7 +1667,7 @@ H5_DLL herr_t H5CX_pop(hbool_t update_dxpl_props);
 
 /* In non multi-thread builds, FUNC_ENTER_API_NO_MUTEX must be the same as FUNC_ENTER_API */
 
-#define FUNC_ENTER_API_NO_MUTEX(err)    FUNC_ENTER_API(err)
+#define FUNC_ENTER_API_NO_MUTEX(err) FUNC_ENTER_API(err)
 
 #endif /* defined(H5_HAVE_MULTITHREAD) */
 
@@ -1724,7 +1724,7 @@ H5_DLL herr_t H5CX_pop(hbool_t update_dxpl_props);
                 {
 #endif /* modified version */
 
-/* version of the FUNC_ENTER_API_NOINIT macro that does not attempt to gain the global mutex.  This 
+/* version of the FUNC_ENTER_API_NOINIT macro that does not attempt to gain the global mutex.  This
  * version is used on API calls into packages that have been modified to support multi-thread.
  */
 #define FUNC_ENTER_API_NO_MUTEX_NOINIT                                                                       \
@@ -1941,23 +1941,22 @@ H5_DLL herr_t H5CX_pop(hbool_t update_dxpl_props);
     H5_API_UNLOCK                                                                                            \
     H5_API_SET_CANCEL
 
-#if defined(H5_HAVE_MULTITHREAD) 
+#if defined(H5_HAVE_MULTITHREAD)
 
-/* Version of FUNC_LEAVE_API_THREADSAFE that does not drop the API lock.  This 
+/* Version of FUNC_LEAVE_API_THREADSAFE that does not drop the API lock.  This
  * is needed to push the global mutex below packages that are multi-thread safe.
  *
  * Note that while we don't drop the mutex, we still unblock thread cancelations
  * as we exit the HDF5 library.
  */
-#define FUNC_LEAVE_API_THREADSAFE_NO_MUTEX                                                                   \
-    H5_API_SET_CANCEL
+#define FUNC_LEAVE_API_THREADSAFE_NO_MUTEX H5_API_SET_CANCEL
 
 #else /* defined(H5_HAVE_MULTITHREAD) */
 
-/* If H5_HAVE_MULTITHREAD is not defined, FUNC_LEAVE_API_THREADSAFE_NO_MUTEX should be 
+/* If H5_HAVE_MULTITHREAD is not defined, FUNC_LEAVE_API_THREADSAFE_NO_MUTEX should be
  * identical to FUNC_LEAVE_API_THREADSAFE
  */
-#define FUNC_LEAVE_API_THREADSAFE_NO_MUTEX      FUNC_LEAVE_API_THREADSAFE
+#define FUNC_LEAVE_API_THREADSAFE_NO_MUTEX FUNC_LEAVE_API_THREADSAFE
 
 #endif /* defined(H5_HAVE_MULTITHREAD) */
 
@@ -2018,7 +2017,7 @@ H5_DLL herr_t H5CX_pop(hbool_t update_dxpl_props);
 /* Version of FUNC_LEAVE_API_THREADSAFE which neither drops the API lock nor decrements the virtual lock(s) */
 #define FUNC_LEAVE_API_THREADSAFE_NO_MUTEX_NOINIT H5_API_SET_CANCEL
 
-/* version of the FUNC_LEAVE_API_NOINIT macro that does not attempt to release the global mutex.  This 
+/* version of the FUNC_LEAVE_API_NOINIT macro that does not attempt to release the global mutex.  This
  * version is used on API calls into packages that have been modified to support multi-thread.
  */
 #define FUNC_LEAVE_API_NO_MUTEX_NOINIT(ret_value)                                                            \

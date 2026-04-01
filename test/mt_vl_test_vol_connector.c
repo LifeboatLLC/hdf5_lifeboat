@@ -23,25 +23,22 @@
 #include <pthread.h>
 #include <stdatomic.h>
 
-#ifdef H5_HAVE_MULTITHREAD 
+#ifdef H5_HAVE_MULTITHREAD
 
-void *mt_vl_test_file_open(const char *name, unsigned flags, hid_t fapl_id,
-                          hid_t dxpl_id, void **req);
+void *mt_vl_test_file_open(const char *name, unsigned flags, hid_t fapl_id, hid_t dxpl_id, void **req);
 
 herr_t mt_vl_test_file_close(void *file, hid_t dxpl_id, void **req);
 
-herr_t mt_vl_test_file_specific(void *obj, H5VL_file_specific_args_t *args,
-                               hid_t dxpl_id, void **req);
+herr_t mt_vl_test_file_specific(void *obj, H5VL_file_specific_args_t *args, hid_t dxpl_id, void **req);
 
-herr_t mt_vl_test_introspect_opt_query(void *obj, H5VL_subclass_t subcls,
-                                      int opt_type, uint64_t *flags);
+herr_t mt_vl_test_introspect_opt_query(void *obj, H5VL_subclass_t subcls, int opt_type, uint64_t *flags);
 
 /* The VOL class struct */
 static const H5VL_class_t mt_vl_test_vol_g = {
-    H5VL_VERSION,                  /* VOL class struct version */
-    MT_VL_TEST_VOL_CONNECTOR_VALUE, /* value            */
-    MT_VL_TEST_VOL_CONNECTOR_NAME,  /* name             */
-    0,                             /* connector version */
+    H5VL_VERSION,                                        /* VOL class struct version */
+    MT_VL_TEST_VOL_CONNECTOR_VALUE,                      /* value            */
+    MT_VL_TEST_VOL_CONNECTOR_NAME,                       /* name             */
+    0,                                                   /* connector version */
     H5VL_CAP_FLAG_FILE_BASIC | H5VL_CAP_FLAG_THREADSAFE, /* capability flags */
     NULL,                                                /* initialize       */
     NULL,                                                /* terminate */
@@ -95,21 +92,21 @@ static const H5VL_class_t mt_vl_test_vol_g = {
     },
     {
         /* file_cls */
-        NULL,                    /* create           */
+        NULL,                     /* create           */
         mt_vl_test_file_open,     /* open             */
-        NULL,                    /* get              */
+        NULL,                     /* get              */
         mt_vl_test_file_specific, /* specific         */
-        NULL, /* optional         */
+        NULL,                     /* optional         */
         mt_vl_test_file_close     /* close            */
     },
     {
         /* group_cls */
         NULL, /* create           */
-        NULL,                   /* open             */
-        NULL,                   /* get              */
-        NULL,                   /* specific         */
-        NULL,                   /* optional         */
-        NULL                    /* close            */
+        NULL, /* open             */
+        NULL, /* get              */
+        NULL, /* specific         */
+        NULL, /* optional         */
+        NULL  /* close            */
     },
     {
         /* link_cls */
@@ -130,8 +127,8 @@ static const H5VL_class_t mt_vl_test_vol_g = {
     },
     {
         /* introspect_cls */
-        NULL,                           /* get_conn_cls     */
-        NULL,                           /* get_cap_flags    */
+        NULL,                            /* get_conn_cls     */
+        NULL,                            /* get_cap_flags    */
         mt_vl_test_introspect_opt_query, /* opt_query        */
     },
     {
@@ -167,16 +164,17 @@ static const H5VL_class_t mt_vl_test_vol_g = {
  * Return: (void*)1
  *-------------------------------------------------------------------------
  */
-void *mt_vl_test_file_open(const char *name, unsigned flags, hid_t fapl_id,
-                          hid_t dxpl_id, void **req) {
-  /* Silence warnings */
-  (void)name;
-  (void)flags;
-  (void)fapl_id;
-  (void)dxpl_id;
-  (void)req;
+void *
+mt_vl_test_file_open(const char *name, unsigned flags, hid_t fapl_id, hid_t dxpl_id, void **req)
+{
+    /* Silence warnings */
+    (void)name;
+    (void)flags;
+    (void)fapl_id;
+    (void)dxpl_id;
+    (void)req;
 
-  return (void *)1;
+    return (void *)1;
 } /* end mt_vl_test_file_open() */
 
 /*--------------------------------------------------------------------------
@@ -187,13 +185,15 @@ void *mt_vl_test_file_open(const char *name, unsigned flags, hid_t fapl_id,
  * Return: 0 on success, -1 on failure
  *-------------------------------------------------------------------------
  */
-herr_t mt_vl_test_file_close(void *file, hid_t dxpl_id, void **req) {
-  /* Silence warnings */
-  (void)file;
-  (void)dxpl_id;
-  (void)req;
+herr_t
+mt_vl_test_file_close(void *file, hid_t dxpl_id, void **req)
+{
+    /* Silence warnings */
+    (void)file;
+    (void)dxpl_id;
+    (void)req;
 
-  return 0;
+    return 0;
 } /* end mt_vl_test_file_close() */
 
 /*--------------------------------------------------------------------------
@@ -201,52 +201,62 @@ herr_t mt_vl_test_file_close(void *file, hid_t dxpl_id, void **req) {
  *
  * Purpose: Implement H5Fis_accessible() to always indicate file is accessible,
  *          to facilitate testing file open failure.
- * 
+ *
  * Return: 0 on success, -1 on failure
  *-------------------------------------------------------------------------
  */
-herr_t mt_vl_test_file_specific(void *obj, H5VL_file_specific_args_t *args,
-                               hid_t dxpl_id, void **req) {
-  herr_t ret_value = 0;
+herr_t
+mt_vl_test_file_specific(void *obj, H5VL_file_specific_args_t *args, hid_t dxpl_id, void **req)
+{
+    herr_t ret_value = 0;
 
-  /* Silence warnings */
-  (void)obj;
-  (void)dxpl_id;
-  (void)req;
+    /* Silence warnings */
+    (void)obj;
+    (void)dxpl_id;
+    (void)req;
 
-  switch (args->op_type) {
-  case H5VL_FILE_IS_ACCESSIBLE: {
-    *args->args.is_accessible.accessible = true;
-    break;
-  }
+    switch (args->op_type) {
+        case H5VL_FILE_IS_ACCESSIBLE: {
+            *args->args.is_accessible.accessible = true;
+            break;
+        }
 
-  default:
-    ret_value = -1;
-    break;
-  }
+        default:
+            ret_value = -1;
+            break;
+    }
 
-  return ret_value;
+    return ret_value;
 } /* end mt_vl_test_file_specific() */
 
 /* Return 'success' to indicate that this VOL implements expected operations. */
-herr_t mt_vl_test_introspect_opt_query(void *obj, H5VL_subclass_t subcls,
-                                      int opt_type, uint64_t *flags) {
-  herr_t ret_value = 0;
+herr_t
+mt_vl_test_introspect_opt_query(void *obj, H5VL_subclass_t subcls, int opt_type, uint64_t *flags)
+{
+    herr_t ret_value = 0;
 
-  /* Silence warnings */
-  (void)obj;
-  (void)subcls;
-  (void)opt_type;
-  (void)flags;
+    /* Silence warnings */
+    (void)obj;
+    (void)subcls;
+    (void)opt_type;
+    (void)flags;
 
-  return ret_value;
+    return ret_value;
 } /* end mt_vl_test_introspect_opt_query() */
 
 /* These two functions are necessary to load this plugin using
  * the HDF5 library.
  */
 
-H5PL_type_t H5PLget_plugin_type(void) { return H5PL_TYPE_VOL; }
-const void *H5PLget_plugin_info(void) { return &mt_vl_test_vol_g; }
+H5PL_type_t
+H5PLget_plugin_type(void)
+{
+    return H5PL_TYPE_VOL;
+}
+const void *
+H5PLget_plugin_info(void)
+{
+    return &mt_vl_test_vol_g;
+}
 
 #endif /* H5_HAVE_MULTITHREAD */

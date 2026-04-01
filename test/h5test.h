@@ -1202,12 +1202,13 @@ H5TEST_DLL void h5_reset(void);
 /* A VOL class struct to verify registering optional operations */
 H5TEST_DLLVAR herr_t reg_opt_op_optional(void *obj, H5VL_optional_args_t *args, hid_t dxpl_id, void **req);
 H5TEST_DLLVAR herr_t reg_opt_link_optional(void *obj, const H5VL_loc_params_t *loc_params,
-                                    H5VL_optional_args_t *args, hid_t dxpl_id, void **req);
-H5TEST_DLLVAR herr_t reg_opt_datatype_get(void *obj, H5VL_datatype_get_args_t *args, hid_t dxpl_id, void **req);
+                                           H5VL_optional_args_t *args, hid_t dxpl_id, void **req);
+H5TEST_DLLVAR herr_t reg_opt_datatype_get(void *obj, H5VL_datatype_get_args_t *args, hid_t dxpl_id,
+                                          void **req);
 
 /* A fake VOL connector to verify registration of dynamic operations */
 H5TEST_DLLVAR const H5VL_class_t reg_opt_vol_g;
-H5TEST_DLLVAR int    reg_opt_curr_op_val;
+H5TEST_DLLVAR int                reg_opt_curr_op_val;
 #define REG_OPT_VOL_NAME  "reg_opt"
 #define REG_OPT_VOL_VALUE ((H5VL_class_value_t)502)
 

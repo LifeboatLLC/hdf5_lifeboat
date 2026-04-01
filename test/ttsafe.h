@@ -30,7 +30,7 @@ extern char *gen_name(int);
 herr_t tts_is_threadsafe(TestParams_t *);
 
 #if defined H5_HAVE_THREADSAFE || defined H5_HAVE_MULTITHREAD
-herr_t tts_errstk(TestParams_t *);
+herr_t                                    tts_errstk(TestParams_t *);
 #endif
 
 #ifdef H5_HAVE_THREADSAFE
