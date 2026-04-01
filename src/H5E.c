@@ -145,13 +145,13 @@ static herr_t     H5E__append_stack(H5E_t *dst_estack, const H5E_t *src_stack);
 #ifndef H5_HAVE_MULTITHREAD
 
 /* Declare a free list to manage the H5E_t struct */
-H5FL_DEFINE_STATIC(H5E_t);
+H5FL_DEFINE_STATIC_MT(H5E_t);
 
 /* Declare a free list to manage the H5E_cls_t struct */
-H5FL_DEFINE_STATIC(H5E_cls_t);
+H5FL_DEFINE_STATIC_MT(H5E_cls_t);
 
 /* Declare a free list to manage the H5E_msg_t struct */
-H5FL_DEFINE_STATIC(H5E_msg_t);
+H5FL_DEFINE_STATIC_MT(H5E_msg_t);
 
 #endif /* H5_HAVE_MULTITHREAD */
 
@@ -477,7 +477,7 @@ H5E__free_class(H5E_cls_t *cls)
     cls->cls_name = (char *)H5MM_xfree((void *)cls->cls_name);
     cls->lib_name = (char *)H5MM_xfree((void *)cls->lib_name);
     cls->lib_vers = (char *)H5MM_xfree((void *)cls->lib_vers);
-    cls           = H5FL_FREE(H5E_cls_t, cls);
+    cls           = H5FL_FREE_MT(H5E_cls_t, cls);
 #endif /* H5_HAVE_MULTITHREAD */
 
     FUNC_LEAVE_NOAPI(SUCCEED)
@@ -564,7 +564,7 @@ H5E__register_class(const char *cls_name, const char *lib_name, const char *vers
 
     /* Allocate space for new error class */
 
-    if (NULL == (cls = H5FL_CALLOC(H5E_cls_t)))
+    if (NULL == (cls = H5FL_CALLOC_MT(H5E_cls_t)))
         HGOTO_ERROR(H5E_RESOURCE, H5E_NOSPACE, NULL, "memory allocation failed");
 
     /* Duplicate string information */
@@ -919,7 +919,7 @@ H5E__close_msg(H5E_msg_t *err, void H5_ATTR_UNUSED **request)
     /* Release message */
     err->msg = (char *)H5MM_xfree((void *)err->msg);
     /* Don't free err->cls here */
-    err = H5FL_FREE(H5E_msg_t, err);
+    err = H5FL_FREE_MT(H5E_msg_t, err);
 
 #endif /* H5_HAVE_MULTITHREAD */
 
@@ -1008,7 +1008,7 @@ H5E__create_msg(H5E_cls_t *cls, H5E_type_t msg_type, const char *msg_str)
 #else /* H5_HAVE_MULTITHREAD */
 
     /* Allocate new message object */
-    if (NULL == (msg = H5FL_MALLOC(H5E_msg_t)))
+    if (NULL == (msg = H5FL_MALLOC_MT(H5E_msg_t)))
         HGOTO_ERROR(H5E_RESOURCE, H5E_NOSPACE, NULL, "memory allocation failed");
 
     /* Fill new message object */
@@ -1089,7 +1089,7 @@ H5Ecreate_stack(void)
 
 #else /* H5_HAVE_MULTITHREAD */
 
-    if (NULL == (stk = H5FL_CALLOC(H5E_t)))
+    if (NULL == (stk = H5FL_CALLOC_MT(H5E_t)))
         HGOTO_ERROR(H5E_RESOURCE, H5E_NOSPACE, H5I_INVALID_HID, "memory allocation failed");
 
 #endif /* H5_HAVE_MULTITHREAD */
@@ -1175,7 +1175,7 @@ H5E__get_current_stack(void)
 
 #else /* H5_HAVE_MULTITHREAD */
 
-    if (NULL == (estack_copy = H5FL_CALLOC(H5E_t)))
+    if (NULL == (estack_copy = H5FL_CALLOC_MT(H5E_t)))
         HGOTO_ERROR(H5E_RESOURCE, H5E_NOSPACE, NULL, "memory allocation failed");
 
 #endif /* H5_HAVE_MULTITHREAD */
@@ -1243,7 +1243,7 @@ done:
 #else /* H5_HAVE_MULTITHREAD */
 
         if (estack_copy)
-            estack_copy = H5FL_FREE(H5E_t, estack_copy);
+            estack_copy = H5FL_FREE_MT(H5E_t, estack_copy);
 
 #endif /* H5_HAVE_MULTITHREAD */
 
@@ -1428,7 +1428,7 @@ H5E__close_stack(H5E_t *estack, void H5_ATTR_UNUSED **request)
 
 #else /* H5_HAVE_MULTITHREAD */
 
-    estack = H5FL_FREE(H5E_t, estack);
+    estack = H5FL_FREE_MT(H5E_t, estack);
 
 #endif /* H5_HAVE_MULTITHREAD */
 

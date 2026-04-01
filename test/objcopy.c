@@ -14,7 +14,7 @@
  * Purpose:    Test H5Ocopy().
  */
 
-#include "testhdf5.h"
+#include "h5test.h"
 #include "H5srcdir.h"
 
 #include "H5Iprivate.h"
@@ -1507,10 +1507,12 @@ error:
 static int
 compare_groups(hid_t gid, hid_t gid2, hid_t pid, int depth, unsigned copy_flags)
 {
-    H5G_info_t ginfo;     /* Group info struct */
-    H5G_info_t ginfo2;    /* Group info struct */
-    hsize_t    idx;       /* Index over the objects in group */
-    unsigned   cpy_flags; /* Object copy flags */
+    H5G_info_t ginfo;                  /* Group info struct */
+    H5G_info_t ginfo2;                 /* Group info struct */
+    hsize_t    idx;                    /* Index over the objects in group */
+    unsigned   cpy_flags;              /* Object copy flags */
+    hid_t      oid  = H5I_INVALID_HID; /* IDs of objects within group */
+    hid_t      oid2 = H5I_INVALID_HID;
 
     /* Retrieve the object copy flags from the property list, if it's non-DEFAULT */
     if (pid != H5P_DEFAULT) {
@@ -1563,7 +1565,6 @@ compare_groups(hid_t gid, hid_t gid2, hid_t pid, int depth, unsigned copy_flags)
 
             /* Extra checks for "real" objects */
             if (linfo.type == H5L_TYPE_HARD) {
-                hid_t             oid, oid2;     /* IDs of objects within group */
                 H5O_info2_t       oinfo, oinfo2; /* Data model object info */
                 H5O_native_info_t ninfo, ninfo2; /* Native file format object info */
 
@@ -1648,8 +1649,11 @@ compare_groups(hid_t gid, hid_t gid2, hid_t pid, int depth, unsigned copy_flags)
                 /* Close objects */
                 if (H5Oclose(oid) < 0)
                     TEST_ERROR;
+                oid = H5I_INVALID_HID;
+
                 if (H5Oclose(oid2) < 0)
                     TEST_ERROR;
+                oid2 = H5I_INVALID_HID;
             } /* end if */
             else {
                 /* Check that both links are the same size */
@@ -1690,6 +1694,8 @@ compare_groups(hid_t gid, hid_t gid2, hid_t pid, int depth, unsigned copy_flags)
 error:
     H5E_BEGIN_TRY
     {
+        H5Oclose(oid);
+        H5Oclose(oid2);
     }
     H5E_END_TRY
     return FALSE;
@@ -8817,6 +8823,7 @@ error:
         H5Gclose(gid);
         H5Fclose(fid_dst);
         H5Fclose(fid_src);
+        H5Fclose(fid_ext);
     }
     H5E_END_TRY
     return 1;
@@ -10064,14 +10071,14 @@ test_copy_dataset_compact_vl_vl(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl, 
     for (i = 0; i < DIM_SIZE_1; i++) {
         buf[i].p = malloc((i + 1) * sizeof(hvl_t));
         if (buf[i].p == NULL) {
-            TestErrPrintf("Cannot allocate memory for VL data! i=%u\n", i);
+            fprintf(stderr, "Cannot allocate memory for VL data! i=%u\n", i);
             return 1;
         } /* end if */
         buf[i].len = i + 1;
         for (tvl = (hvl_t *)buf[i].p, j = 0; j < (i + 1); j++, tvl++) {
             tvl->p = malloc((j + 1) * sizeof(unsigned int));
             if (tvl->p == NULL) {
-                TestErrPrintf("Cannot allocate memory for VL data! i=%u, j=%u\n", i, j);
+                fprintf(stderr, "Cannot allocate memory for VL data! i=%u, j=%u\n", i, j);
                 return 1;
             } /* end if */
             tvl->len = j + 1;
@@ -10262,14 +10269,14 @@ test_copy_dataset_contig_vl_vl(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl, h
     for (i = 0; i < DIM_SIZE_1; i++) {
         buf[i].p = malloc((i + 1) * sizeof(hvl_t));
         if (buf[i].p == NULL) {
-            TestErrPrintf("Cannot allocate memory for VL data! i=%u\n", i);
+            fprintf(stderr, "Cannot allocate memory for VL data! i=%u\n", i);
             TEST_ERROR;
         } /* end if */
         buf[i].len = i + 1;
         for (tvl = (hvl_t *)buf[i].p, j = 0; j < (i + 1); j++, tvl++) {
             tvl->p = malloc((j + 1) * sizeof(unsigned int));
             if (tvl->p == NULL) {
-                TestErrPrintf("Cannot allocate memory for VL data! i=%u, j=%u\n", i, j);
+                fprintf(stderr, "Cannot allocate memory for VL data! i=%u, j=%u\n", i, j);
                 TEST_ERROR;
             } /* end if */
             tvl->len = j + 1;
@@ -10454,14 +10461,14 @@ test_copy_dataset_chunked_vl_vl(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl, 
     for (i = 0; i < DIM_SIZE_1; i++) {
         buf[i].p = malloc((i + 1) * sizeof(hvl_t));
         if (buf[i].p == NULL) {
-            TestErrPrintf("Cannot allocate memory for VL data! i=%u\n", i);
+            fprintf(stderr, "Cannot allocate memory for VL data! i=%u\n", i);
             TEST_ERROR;
         } /* end if */
         buf[i].len = i + 1;
         for (tvl = (hvl_t *)buf[i].p, j = 0; j < (i + 1); j++, tvl++) {
             tvl->p = malloc((j + 1) * sizeof(unsigned int));
             if (tvl->p == NULL) {
-                TestErrPrintf("Cannot allocate memory for VL data! i=%u, j=%u\n", i, j);
+                fprintf(stderr, "Cannot allocate memory for VL data! i=%u, j=%u\n", i, j);
                 TEST_ERROR;
             } /* end if */
             tvl->len = j + 1;
@@ -10695,14 +10702,14 @@ test_copy_dataset_compressed_vl_vl(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fap
     for (i = 0; i < DIM_SIZE_1; i++) {
         buf[i].p = malloc((i + 1) * sizeof(hvl_t));
         if (buf[i].p == NULL) {
-            TestErrPrintf("Cannot allocate memory for VL data! i=%u\n", i);
+            fprintf(stderr, "Cannot allocate memory for VL data! i=%u\n", i);
             TEST_ERROR;
         } /* end if */
         buf[i].len = i + 1;
         for (tvl = (hvl_t *)buf[i].p, j = 0; j < (i + 1); j++, tvl++) {
             tvl->p = malloc((j + 1) * sizeof(unsigned int));
             if (tvl->p == NULL) {
-                TestErrPrintf("Cannot allocate memory for VL data! i=%u, j=%u\n", i, j);
+                fprintf(stderr, "Cannot allocate memory for VL data! i=%u, j=%u\n", i, j);
                 TEST_ERROR;
             } /* end if */
             tvl->len = j + 1;
@@ -17097,6 +17104,8 @@ error:
     {
         H5Dclose(did);
         H5Dclose(did2);
+        H5Dclose(did3);
+        H5Dclose(did4);
         H5Sclose(sid);
         H5Gclose(gid);
         H5Gclose(gid2);
@@ -17128,9 +17137,8 @@ main(void)
     hid_t       fcpl_shared, ocpl;
     unsigned    max_compact, min_dense;
     int         configuration; /* Configuration of tests. */
-    int         ExpressMode;
-    const char *env_h5_drvr; /* File Driver value from environment */
-    hbool_t     same_file;   /* Whether to run tests that only use one file */
+    const char *env_h5_drvr;   /* File Driver value from environment */
+    hbool_t     same_file;     /* Whether to run tests that only use one file */
     hbool_t     driver_is_default_compatible;
 
     env_h5_drvr = HDgetenv(HDF5_DRIVER);
@@ -17143,10 +17151,6 @@ main(void)
 
     if (h5_driver_is_default_vfd_compatible(fapl, &driver_is_default_compatible) < 0)
         TEST_ERROR;
-
-    ExpressMode = GetTestExpress();
-    if (ExpressMode > 1)
-        printf("***Express test mode on.  Some tests may be skipped\n");
 
     /* Copy the file access property list */
     if ((fapl2 = H5Pcopy(fapl)) < 0)

@@ -40,6 +40,13 @@
 /* Local Typedefs */
 /******************/
 
+#ifdef H5_HAVE_MULTITHREAD
+
+typedef H5P_mt_list_t  H5P_genplist_t;
+typedef H5P_mt_class_t H5P_genclass_t;
+
+#endif
+
 /* Shared data structure for computing variable-length dataset's total size */
 /* (Used for both native and generic 'get vlen buf size' operation) */
 typedef struct {
@@ -133,10 +140,10 @@ H5_GCC_DIAG_ON("larger-than=")
 
 /* Dataset ID class */
 static const H5I_class_t H5I_DATASET_CLS[1] = {{
-    H5I_DATASET,              /* ID class value */
-    0,                        /* Class flags */
-    0,                        /* # of reserved IDs for class */
-    (H5I_free_t)H5D__close_cb /* Callback routine for closing objects of this class */
+    H5I_DATASET,                    /* ID class value */
+    H5I_CLASS_FREE_FUNC_TOUCHES_VL, /* Class flags */
+    0,                              /* # of reserved IDs for class */
+    (H5I_free_t)H5D__close_cb       /* Callback routine for closing objects of this class */
 }};
 
 /* Prefixes of VDS and external file from the environment variables
@@ -3649,7 +3656,7 @@ H5D_get_create_plist(const H5D_t *dset)
 
             /* Allocate a background buffer */
             bkg_size = MAX(H5T_GET_SIZE(copied_fill.type), H5T_GET_SIZE(dset->shared->type));
-            if (H5T_path_bkg(tpath) && NULL == (bkg_buf = H5FL_BLK_CALLOC(type_conv, bkg_size))) {
+            if (H5T_path_bkg(tpath) && NULL == (bkg_buf = H5FL_BLK_CALLOC_MT(type_conv, bkg_size))) {
                 H5I_dec_ref(src_id);
                 H5I_dec_ref(dst_id);
                 HGOTO_ERROR(H5E_DATASET, H5E_CANTALLOC, FAIL, "memory allocation failed");
@@ -3661,7 +3668,7 @@ H5D_get_create_plist(const H5D_t *dset)
                 H5I_dec_ref(src_id);
                 H5I_dec_ref(dst_id);
                 if (bkg_buf)
-                    bkg_buf = H5FL_BLK_FREE(type_conv, bkg_buf);
+                    bkg_buf = H5FL_BLK_FREE_MT(type_conv, bkg_buf);
                 HGOTO_ERROR(H5E_DATASET, H5E_CANTCONVERT, FAIL, "datatype conversion failed");
             } /* end if */
 
@@ -3671,7 +3678,7 @@ H5D_get_create_plist(const H5D_t *dset)
             if (H5I_dec_ref(dst_id) < 0)
                 HGOTO_ERROR(H5E_DATASET, H5E_CANTDEC, FAIL, "unable to close temporary object");
             if (bkg_buf)
-                bkg_buf = H5FL_BLK_FREE(type_conv, bkg_buf);
+                bkg_buf = H5FL_BLK_FREE_MT(type_conv, bkg_buf);
         } /* end if */
     }     /* end if */
 

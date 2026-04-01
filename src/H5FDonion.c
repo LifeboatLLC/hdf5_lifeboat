@@ -30,6 +30,10 @@
 #include "H5Iprivate.h"     /* IDs                         */
 #include "H5MMprivate.h"    /* Memory management           */
 
+#ifdef H5_HAVE_MULTITHREAD
+#include "H5CXprivate.h"
+#endif
+
 /* The driver identification number, initialized at runtime */
 static hid_t H5FD_ONION_g = 0;
 
@@ -286,7 +290,7 @@ H5Pget_fapl_onion(hid_t fapl_id, H5FD_onion_fapl_info_t *fa_out)
     if (NULL == fa_out)
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "NULL info-out pointer");
 
-    if (NULL == (plist = H5P_object_verify(fapl_id, H5P_FILE_ACCESS)))
+    if (NULL == (plist = H5P_object_verify(fapl_id, H5P_FILE_ACCESS, true)))
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "Not a valid FAPL ID");
 
     if (H5FD_ONION != H5P_peek_driver(plist))
@@ -325,7 +329,7 @@ H5Pset_fapl_onion(hid_t fapl_id, const H5FD_onion_fapl_info_t *fa)
     FUNC_ENTER_API(FAIL)
     H5TRACE2("e", "i*!", fapl_id, fa);
 
-    if (NULL == (fapl = H5P_object_verify(fapl_id, H5P_FILE_ACCESS)))
+    if (NULL == (fapl = H5P_object_verify(fapl_id, H5P_FILE_ACCESS, false)))
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "Not a valid FAPL ID");
     if (NULL == fa)
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "NULL info pointer");
@@ -337,11 +341,11 @@ H5Pset_fapl_onion(hid_t fapl_id, const H5FD_onion_fapl_info_t *fa)
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "invalid info page size");
 
     if (H5P_DEFAULT == fa->backing_fapl_id) {
-        if (NULL == (backing_fapl = H5P_object_verify(H5P_FILE_ACCESS_DEFAULT, H5P_FILE_ACCESS)))
+        if (NULL == (backing_fapl = H5P_object_verify(H5P_FILE_ACCESS_DEFAULT, H5P_FILE_ACCESS, true)))
             HGOTO_ERROR(H5E_VFL, H5E_BADVALUE, FAIL, "invalid backing fapl id");
     }
     else {
-        if (NULL == (backing_fapl = H5P_object_verify(fa->backing_fapl_id, H5P_FILE_ACCESS)))
+        if (NULL == (backing_fapl = H5P_object_verify(fa->backing_fapl_id, H5P_FILE_ACCESS, true)))
             HGOTO_ERROR(H5E_VFL, H5E_BADVALUE, FAIL, "invalid backing fapl id");
     }
 
@@ -1652,7 +1656,7 @@ done:
 } /* end H5FD__onion_ctl() */
 
 /*-------------------------------------------------------------------------
- * Function:    H5FDget_onion_revision_count
+ * Function:    H5FDonion_get_revision_count
  *
  * Purpose:     Get the number of revisions in an onion file
  *
@@ -1676,8 +1680,16 @@ H5FDonion_get_revision_count(const char *filename, hid_t fapl_id, uint64_t *revi
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "revision count can't be null");
 
     /* Make sure using the correct driver */
-    if (NULL == (plist = H5P_object_verify(fapl_id, H5P_FILE_ACCESS)))
+    if (NULL == (plist = H5P_object_verify(fapl_id, H5P_FILE_ACCESS, true)))
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "not a valid FAPL ID");
+
+#ifdef H5_HAVE_MULTITHREAD
+    /* Set the property list in the context */
+    if (H5CX_set_plist(fapl_id, H5P_TYPE_FILE_ACCESS) < 0) {
+        HGOTO_ERROR(H5E_ATTR, H5E_CANTSET, H5I_INVALID_HID, "can't set fapl in context");
+    }
+#endif
+
     if (H5FD_ONION != H5P_peek_driver(plist))
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "not a Onion VFL driver");
 

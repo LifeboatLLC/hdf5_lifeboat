@@ -45,6 +45,13 @@
 /* Local Typedefs */
 /******************/
 
+#ifdef H5_HAVE_MULTITHREAD
+
+typedef H5P_mt_list_t  H5P_genplist_t;
+typedef H5P_mt_class_t H5P_genclass_t;
+
+#endif
+
 /* User data for path traversal routine for "insertion file" routine */
 typedef struct {
     H5G_loc_t *loc; /* Pointer to the location for insertion */
@@ -105,10 +112,10 @@ H5FL_DEFINE(H5_obj_t);
 
 /* Group ID class */
 static const H5I_class_t H5I_GROUP_CLS[1] = {{
-    H5I_GROUP,                /* ID class value */
-    0,                        /* Class flags */
-    0,                        /* # of reserved IDs for class */
-    (H5I_free_t)H5G__close_cb /* Callback routine for closing objects of this class */
+    H5I_GROUP,                      /* ID class value */
+    H5I_CLASS_FREE_FUNC_TOUCHES_VL, /* Class flags */
+    0,                              /* # of reserved IDs for class */
+    (H5I_free_t)H5G__close_cb       /* Callback routine for closing objects of this class */
 }};
 
 /*-------------------------------------------------------------------------

@@ -460,8 +460,8 @@ H5_DLLVAR double H5T_NATIVE_LDOUBLE_POS_INF_g;
 H5_DLLVAR double H5T_NATIVE_LDOUBLE_NEG_INF_g;
 
 /* Declare extern the free lists for H5T_t's and H5T_shared_t's */
-H5FL_EXTERN(H5T_t);
-H5FL_EXTERN(H5T_shared_t);
+H5FL_EXTERN_MT(H5T_t);
+H5FL_EXTERN_MT(H5T_shared_t);
 
 /* Common functions */
 H5_DLL herr_t H5T__init_native(void);

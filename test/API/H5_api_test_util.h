@@ -13,14 +13,15 @@
 #ifndef H5_API_TEST_UTIL_H_
 #define H5_API_TEST_UTIL_H_
 
-#define API_TESTS_DEFAULT_NUM_THREADS 1
-
 #include "hdf5.h"
 
-hid_t generate_random_datatype(H5T_class_t parent_class, hbool_t is_compact);
-hid_t generate_random_dataspace(int rank, const hsize_t *max_dims, hsize_t *dims_out, hbool_t is_compact);
+#include "testframe.h"
 
-herr_t prefix_filename(const char *prefix, const char *filename, char **filename_out);
-herr_t remove_test_file(const char *prefix, const char *filename);
+hid_t generate_random_datatype(H5T_class_t parent_class, bool is_compact);
+hid_t generate_random_dataspace(int rank, const hsize_t *max_dims, hsize_t *dims_out, bool is_compact);
+
+herr_t prefix_test_filename(TestParams_t *test_params, const char *prefix, const char *filename,
+                            char **filename_out);
+herr_t remove_test_file(const char *filename);
 
 #endif /* H5_API_TEST_UTIL_H_ */

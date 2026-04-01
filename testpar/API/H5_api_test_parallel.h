@@ -34,116 +34,6 @@
 #define PARALLEL_TEST_FILE_NAME "H5_api_test_parallel.h5"
 extern char H5_api_test_parallel_filename[];
 
-#undef TESTING
-#undef TESTING_2
-#undef PASSED
-#undef H5_FAILED
-#undef H5_WARNING
-#undef SKIPPED
-#undef PUTS_ERROR
-#undef TEST_ERROR
-#undef STACK_ERROR
-#undef FAIL_STACK_ERROR
-#undef FAIL_PUTS_ERROR
-#undef TESTING_MULTIPART
-
-#define TESTING(WHAT)                                                                                        \
-    {                                                                                                        \
-        if (MAINPROCESS) {                                                                                   \
-            printf("Testing %-62s", WHAT);                                                                   \
-            fflush(stdout);                                                                                  \
-        }                                                                                                    \
-        n_tests_run_g++;                                                                                     \
-    }
-#define TESTING_2(WHAT)                                                                                      \
-    {                                                                                                        \
-        if (MAINPROCESS) {                                                                                   \
-            printf("  Testing %-60s", WHAT);                                                                 \
-            fflush(stdout);                                                                                  \
-        }                                                                                                    \
-        n_tests_run_g++;                                                                                     \
-    }
-#define PASSED()                                                                                             \
-    {                                                                                                        \
-        if (MAINPROCESS) {                                                                                   \
-            puts(" PASSED");                                                                                 \
-            fflush(stdout);                                                                                  \
-        }                                                                                                    \
-        n_tests_passed_g++;                                                                                  \
-    }
-#define H5_FAILED()                                                                                          \
-    {                                                                                                        \
-        if (MAINPROCESS) {                                                                                   \
-            puts("*FAILED*");                                                                                \
-            fflush(stdout);                                                                                  \
-        }                                                                                                    \
-        n_tests_failed_g++;                                                                                  \
-    }
-#define H5_WARNING()                                                                                         \
-    {                                                                                                        \
-        if (MAINPROCESS) {                                                                                   \
-            puts("*WARNING*");                                                                               \
-            fflush(stdout);                                                                                  \
-        }                                                                                                    \
-    }
-#define SKIPPED()                                                                                            \
-    {                                                                                                        \
-        if (MAINPROCESS) {                                                                                   \
-            puts(" -SKIP-");                                                                                 \
-            fflush(stdout);                                                                                  \
-        }                                                                                                    \
-        n_tests_skipped_g++;                                                                                 \
-    }
-#define PUTS_ERROR(s)                                                                                        \
-    {                                                                                                        \
-        if (MAINPROCESS) {                                                                                   \
-            puts(s);                                                                                         \
-            AT();                                                                                            \
-        }                                                                                                    \
-        goto error;                                                                                          \
-    }
-#define TEST_ERROR                                                                                           \
-    {                                                                                                        \
-        H5_FAILED();                                                                                         \
-        if (MAINPROCESS) {                                                                                   \
-            AT();                                                                                            \
-        }                                                                                                    \
-        goto error;                                                                                          \
-    }
-#define STACK_ERROR                                                                                          \
-    {                                                                                                        \
-        if (MAINPROCESS) {                                                                                   \
-            H5Eprint2(H5E_DEFAULT, stdout);                                                                  \
-        }                                                                                                    \
-        goto error;                                                                                          \
-    }
-#define FAIL_STACK_ERROR                                                                                     \
-    {                                                                                                        \
-        H5_FAILED();                                                                                         \
-        if (MAINPROCESS) {                                                                                   \
-            AT();                                                                                            \
-            H5Eprint2(H5E_DEFAULT, stdout);                                                                  \
-        }                                                                                                    \
-        goto error;                                                                                          \
-    }
-#define FAIL_PUTS_ERROR(s)                                                                                   \
-    {                                                                                                        \
-        H5_FAILED();                                                                                         \
-        if (MAINPROCESS) {                                                                                   \
-            AT();                                                                                            \
-            puts(s);                                                                                         \
-        }                                                                                                    \
-        goto error;                                                                                          \
-    }
-#define TESTING_MULTIPART(WHAT)                                                                              \
-    {                                                                                                        \
-        if (MAINPROCESS) {                                                                                   \
-            printf("Testing %-62s", WHAT);                                                                   \
-            HDputs("");                                                                                      \
-            fflush(stdout);                                                                                  \
-        }                                                                                                    \
-    }
-
 /*
  * Macros to surround an action that will be performed non-collectively. Once the
  * operation has completed, a consensus will be formed by all ranks on whether the
@@ -151,7 +41,7 @@ extern char H5_api_test_parallel_filename[];
  */
 #define BEGIN_INDEPENDENT_OP(op_name)                                                                        \
     {                                                                                                        \
-        hbool_t ind_op_failed = FALSE;                                                                       \
+        bool ind_op_failed = false;                                                                          \
                                                                                                              \
         {
 
@@ -176,10 +66,10 @@ extern char H5_api_test_parallel_filename[];
     }
 
 #define INDEPENDENT_OP_ERROR(op_name)                                                                        \
-    ind_op_failed = TRUE;                                                                                    \
+    ind_op_failed = true;                                                                                    \
     goto op_##op_name##_end;
 
-hid_t create_mpi_fapl(MPI_Comm comm, MPI_Info info, hbool_t coll_md_read);
+hid_t create_mpi_fapl(MPI_Comm comm, MPI_Info info, bool coll_md_read);
 int   generate_random_parallel_dimensions(int space_rank, hsize_t **dims_out);
 
 extern int mpi_size;

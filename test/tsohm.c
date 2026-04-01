@@ -615,8 +615,8 @@ size1_helper(hid_t file, const char *filename, hid_t fapl_id, hbool_t test_file_
     /* Closing and re-opening the file takes a long time on systems without
      * local disks.  Don't close and reopen if express testing is enabled.
      */
-    if (GetTestExpress() > 1)
-        test_file_closing = FALSE;
+    if (h5_get_testexpress() > H5_TEST_EXPRESS_FULL)
+        test_file_closing = false;
 
     /* Initialize wdata */
     memset(&wdata, 0, sizeof(wdata));
@@ -1553,7 +1553,7 @@ size2_helper(hid_t fcpl_id, int test_file_closing, size2_helper_struct *ret_size
     /* Closing and re-opening the file takes a long time on systems without
      * local disks.  Don't close and reopen if express testing is enabled.
      */
-    if (GetTestExpress() > 1)
+    if (h5_get_testexpress() > H5_TEST_EXPRESS_FULL)
         test_file_closing = 0;
 
     /* Create a file and get its size */
@@ -3707,8 +3707,8 @@ test_sohm_external_dtype(void)
 **  test_sohm(): Main Shared Object Header Message testing routine.
 **
 ****************************************************************/
-void
-test_sohm(void)
+herr_t
+test_sohm(TestParams_t H5_ATTR_UNUSED *params)
 {
     const char *env_h5_drvr;
     bool        vol_is_native;
@@ -3720,7 +3720,7 @@ test_sohm(void)
     CHECK(h5_using_native_vol(H5P_DEFAULT, H5I_INVALID_HID, &vol_is_native), FAIL, "h5_using_native_vol");
     if (!vol_is_native) {
         MESSAGE(5, (" -- SKIPPED --\n"));
-        return;
+        return SKIP;
     }
 
     /* Get the VFD to use */
@@ -3758,6 +3758,8 @@ test_sohm(void)
 
     test_sohm_extend_dset();    /* Test extending shared datasets */
     test_sohm_external_dtype(); /* Test using datatype in another file */
+
+    return SUCCEED;
 } /* test_sohm */
 
 /*-------------------------------------------------------------------------
@@ -3769,10 +3771,14 @@ test_sohm(void)
  *
  *-------------------------------------------------------------------------
  */
-void
-cleanup_sohm(void)
+herr_t
+cleanup_sohm(TestParams_t H5_ATTR_UNUSED *params)
 {
-    HDremove(FILENAME);
-    HDremove(FILENAME_SRC);
-    HDremove(FILENAME_DST);
+    if (GetTestCleanup()) {
+        HDremove(FILENAME);
+        HDremove(FILENAME_SRC);
+        HDremove(FILENAME_DST);
+    }
+
+    return SUCCEED;
 } /* cleanup_sohm */

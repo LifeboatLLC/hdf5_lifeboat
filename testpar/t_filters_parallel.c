@@ -8589,15 +8589,16 @@ test_fill_time_never(const char *parent_group, H5Z_filter_t filter_id, hid_t fap
 int
 main(int argc, char **argv)
 {
-    size_t cur_filter_idx = 0;
-    size_t num_filters    = 0;
-    hid_t  file_id        = H5I_INVALID_HID;
-    hid_t  fcpl_id        = H5I_INVALID_HID;
-    hid_t  group_id       = H5I_INVALID_HID;
-    hid_t  fapl_id        = H5I_INVALID_HID;
-    hid_t  dxpl_id        = H5I_INVALID_HID;
-    hid_t  dcpl_id        = H5I_INVALID_HID;
-    int    mpi_code;
+    unsigned seed;
+    size_t   cur_filter_idx = 0;
+    size_t   num_filters    = 0;
+    hid_t    file_id        = H5I_INVALID_HID;
+    hid_t    fcpl_id        = H5I_INVALID_HID;
+    hid_t    group_id       = H5I_INVALID_HID;
+    hid_t    fapl_id        = H5I_INVALID_HID;
+    hid_t    dxpl_id        = H5I_INVALID_HID;
+    hid_t    dcpl_id        = H5I_INVALID_HID;
+    int      mpi_code;
 
     /* Initialize MPI */
     MPI_Init(&argc, &argv);
@@ -8630,7 +8631,41 @@ main(int argc, char **argv)
     if (VERBOSE_MED)
         h5_show_hostname();
 
-    TestAlarmOn();
+    if (TestAlarmOn() < 0) {
+        if (MAINPROCESS)
+            fprintf(stderr, "couldn't enable test timer\n");
+        fflush(stderr);
+        MPI_Abort(MPI_COMM_WORLD, -1);
+    }
+
+    /*
+     * Obtain and broadcast seed value since ranks
+     * aren't guaranteed to arrive here at exactly
+     * the same time and could end up out of sync
+     * with each other in regards to random number
+     * generation
+     */
+    if (MAINPROCESS)
+        seed = (unsigned)time(NULL);
+
+    if (mpi_size > 1) {
+        if (MPI_SUCCESS != (mpi_code = MPI_Bcast(&seed, 1, MPI_UNSIGNED, 0, comm))) {
+            if (MAINPROCESS)
+                printf("MPI_Bcast failed with error code %d\n", mpi_code);
+            fflush(stdout);
+            MPI_Abort(MPI_COMM_WORLD, -1);
+        }
+    }
+
+    srand(seed);
+
+    /* Print test settings */
+    if (MAINPROCESS) {
+        printf("Test Info:\n");
+        printf("  MPI size: %d\n", mpi_size);
+        printf("  Test express level: %d\n", h5_get_testexpress());
+        printf("  Using seed: %u\n\n", seed);
+    }
 
     num_filters = ARRAY_SIZE(filterIDs);
 

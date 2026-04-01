@@ -336,6 +336,12 @@ set (H5TEST_SEPARATE_TESTS
     flush2
     vds_env
 )
+
+# Specify tests which are allowed to bypass the ctest timeout timer
+set (H5TEST_NOTIMEOUT_TESTS
+    mt_id_test
+)
+
 foreach (h5_test ${H5_TESTS})
   if (NOT h5_test IN_LIST H5TEST_SEPARATE_TESTS)
     if (HDF5_ENABLE_USING_MEMCHECKER)
@@ -368,6 +374,17 @@ foreach (h5_test ${H5_TESTS})
           FIXTURES_REQUIRED clear_H5TEST
           ENVIRONMENT "srcdir=${HDF5_TEST_BINARY_DIR}/H5TEST"
           WORKING_DIRECTORY ${HDF5_TEST_BINARY_DIR}/H5TEST
+      )
+    endif ()
+
+    # Disable ctest timeouts for specific tests, such as multi-threaded
+    # tests, so that they can be run for as long as desired when the
+    # TestExpress level is set to 0. These tests must still use some
+    # other method to control test execution time when the TestExpress
+    # level is set to a different value.
+    if (h5_test IN_LIST H5TEST_NOTIMEOUT_TESTS)
+      set_tests_properties (H5TEST-${h5_test} PROPERTIES
+          TIMEOUT 0
       )
     endif ()
   endif ()
@@ -816,7 +833,7 @@ if (BUILD_SHARED_LIBS)
 
   add_test (NAME H5PLUGIN-filter_plugin COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} $<TARGET_FILE:filter_plugin>)
   set_tests_properties (H5PLUGIN-filter_plugin PROPERTIES
-      ENVIRONMENT "HDF5_PLUGIN_PATH=${CMAKE_BINARY_DIR}/filter_plugin_dir1${CMAKE_SEP}${CMAKE_BINARY_DIR}/filter_plugin_dir2;srcdir=${HDF5_TEST_BINARY_DIR}"
+      ENVIRONMENT "HDF5_PLUGIN_PATH=${CMAKE_BINARY_DIR}/filter_plugin_dir1${CMAKE_SEP}${CMAKE_BINARY_DIR}/filter_plugin_dir2${CMAKE_SEP}$ENV{HDF5_PLUGIN_PATH};srcdir=${HDF5_TEST_BINARY_DIR}"
       WORKING_DIRECTORY ${HDF5_TEST_BINARY_DIR}
   )
 endif ()
@@ -909,7 +926,7 @@ if (BUILD_SHARED_LIBS)
 
   add_test (NAME H5PLUGIN-vol_plugin COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} $<TARGET_FILE:vol_plugin>)
   set_tests_properties (H5PLUGIN-vol_plugin PROPERTIES
-      ENVIRONMENT "HDF5_PLUGIN_PATH=${CMAKE_BINARY_DIR}/null_vol_plugin_dir;srcdir=${HDF5_TEST_BINARY_DIR}"
+      ENVIRONMENT "HDF5_PLUGIN_PATH=${CMAKE_BINARY_DIR}/null_vol_plugin_dir;srcdir=${HDF5_TEST_BINARY_DIR};HDF5_VOL_CONNECTOR="
       WORKING_DIRECTORY ${HDF5_TEST_BINARY_DIR}
   )
 endif ()

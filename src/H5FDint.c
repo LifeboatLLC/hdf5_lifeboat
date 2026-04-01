@@ -808,9 +808,9 @@ H5FD__read_selection_translate(uint32_t skip_vector_cb, H5FD_t *file, H5FD_mem_t
         assert(bufs[0] != NULL);
 
         /* Allocate sequence lists for memory and file spaces */
-        if (NULL == (file_iter = H5FL_MALLOC(H5S_sel_iter_t)))
+        if (NULL == (file_iter = H5FL_MALLOC_MT(H5S_sel_iter_t)))
             HGOTO_ERROR(H5E_VFL, H5E_CANTALLOC, FAIL, "couldn't allocate file selection iterator");
-        if (NULL == (mem_iter = H5FL_MALLOC(H5S_sel_iter_t)))
+        if (NULL == (mem_iter = H5FL_MALLOC_MT(H5S_sel_iter_t)))
             HGOTO_ERROR(H5E_VFL, H5E_CANTALLOC, FAIL, "couldn't allocate memory selection iterator");
     }
 
@@ -1015,12 +1015,12 @@ done:
     if (file_iter) {
         if (file_iter_init && H5S_SELECT_ITER_RELEASE(file_iter) < 0)
             HGOTO_ERROR(H5E_INTERNAL, H5E_CANTFREE, FAIL, "can't release file selection iterator");
-        file_iter = H5FL_FREE(H5S_sel_iter_t, file_iter);
+        file_iter = H5FL_FREE_MT(H5S_sel_iter_t, file_iter);
     }
     if (mem_iter) {
         if (mem_iter_init && H5S_SELECT_ITER_RELEASE(mem_iter) < 0)
             HGOTO_ERROR(H5E_INTERNAL, H5E_CANTFREE, FAIL, "can't release memory selection iterator");
-        mem_iter = H5FL_FREE(H5S_sel_iter_t, mem_iter);
+        mem_iter = H5FL_FREE_MT(H5S_sel_iter_t, mem_iter);
     }
 
     /* Cleanup vector arrays */
@@ -1465,9 +1465,9 @@ H5FD__write_selection_translate(uint32_t skip_vector_cb, H5FD_t *file, H5FD_mem_
         assert(bufs[0] != NULL);
 
         /* Allocate sequence lists for memory and file spaces */
-        if (NULL == (file_iter = H5FL_MALLOC(H5S_sel_iter_t)))
+        if (NULL == (file_iter = H5FL_MALLOC_MT(H5S_sel_iter_t)))
             HGOTO_ERROR(H5E_VFL, H5E_CANTALLOC, FAIL, "couldn't allocate file selection iterator");
-        if (NULL == (mem_iter = H5FL_MALLOC(H5S_sel_iter_t)))
+        if (NULL == (mem_iter = H5FL_MALLOC_MT(H5S_sel_iter_t)))
             HGOTO_ERROR(H5E_VFL, H5E_CANTALLOC, FAIL, "couldn't allocate memory selection iterator");
     }
 
@@ -1672,12 +1672,12 @@ done:
     if (file_iter) {
         if (file_iter_init && H5S_SELECT_ITER_RELEASE(file_iter) < 0)
             HGOTO_ERROR(H5E_INTERNAL, H5E_CANTFREE, FAIL, "can't release file selection iterator");
-        file_iter = H5FL_FREE(H5S_sel_iter_t, file_iter);
+        file_iter = H5FL_FREE_MT(H5S_sel_iter_t, file_iter);
     }
     if (mem_iter) {
         if (mem_iter_init && H5S_SELECT_ITER_RELEASE(mem_iter) < 0)
             HGOTO_ERROR(H5E_INTERNAL, H5E_CANTFREE, FAIL, "can't release memory selection iterator");
-        mem_iter = H5FL_FREE(H5S_sel_iter_t, mem_iter);
+        mem_iter = H5FL_FREE_MT(H5S_sel_iter_t, mem_iter);
     }
 
     /* Cleanup vector arrays */
