@@ -86,7 +86,7 @@ static int H5I__iterate_pub_cb(void *obj, hid_t id, void *udata);
  *              called with an object pointer when the object is removed from
  *              the type.
  *
- *              Updated for multi-thread.  Note that for now at least, 
+ *              Updated for multi-thread.  Note that for now at least,
  *              we make no effort to recycle type IDs.
  *
  * Return:      Success:    Type ID of the new type
@@ -97,7 +97,7 @@ static int H5I__iterate_pub_cb(void *obj, hid_t id, void *udata);
 H5I_type_t
 H5Iregister_type(size_t H5_ATTR_DEBUG_API_USED hash_size, unsigned reserved, H5I_free_t free_func)
 {
-    hbool_t      expected  = FALSE;
+    hbool_t      expected = FALSE;
     hbool_t      result;
     H5I_class_t *cls       = NULL;      /* New ID class */
     H5I_type_t   new_type  = H5I_BADID; /* New ID type value */
@@ -112,23 +112,24 @@ H5Iregister_type(size_t H5_ATTR_DEBUG_API_USED hash_size, unsigned reserved, H5I
 
     /* Increment the number of types */
     /* Allocate a new type id.  For now at least, don't attempt to recycle old id.
-     * While it is possible in MT, it adds a lot of complexity, so don't do it 
+     * While it is possible in MT, it adds a lot of complexity, so don't do it
      * unless there is a strong need.
      */
 
-    if ( ( atomic_load(&(H5I_mt_g.next_type)) < H5I_MAX_NUM_TYPES ) && 
-         ( (new_type = atomic_fetch_add(&(H5I_mt_g.next_type), 1)) < H5I_MAX_NUM_TYPES ) ) {
+    if ((atomic_load(&(H5I_mt_g.next_type)) < H5I_MAX_NUM_TYPES) &&
+        ((new_type = atomic_fetch_add(&(H5I_mt_g.next_type), 1)) < H5I_MAX_NUM_TYPES)) {
 
-        result = atomic_compare_exchange_strong(&(H5I_mt_g.type_info_allocation_table[new_type]), &expected, TRUE);
+        result =
+            atomic_compare_exchange_strong(&(H5I_mt_g.type_info_allocation_table[new_type]), &expected, TRUE);
         assert(result);
-
-    } else {
+    }
+    else {
 
         hbool_t done = FALSE;
 
         assert(H5I_BADID == new_type);
 
-        /* H5I_mt_g.next_type is now greater than or equal to H5I_MAX_NUM_TYPES.  Thus we 
+        /* H5I_mt_g.next_type is now greater than or equal to H5I_MAX_NUM_TYPES.  Thus we
          * must scan H5I_mt_g.type_info_allocation_table[] for an un-allocated id.
          */
         new_type = H5I_NTYPES;
@@ -136,23 +137,23 @@ H5Iregister_type(size_t H5_ATTR_DEBUG_API_USED hash_size, unsigned reserved, H5I
         do {
 
             expected = FALSE;
-            if ( atomic_compare_exchange_strong(&(H5I_mt_g.type_info_allocation_table[new_type]), 
-                                                &expected, TRUE) ) {
+            if (atomic_compare_exchange_strong(&(H5I_mt_g.type_info_allocation_table[new_type]), &expected,
+                                               TRUE)) {
                 done = TRUE;
-
-            } else {
+            }
+            else {
 
                 new_type++;
             }
-        } while ( ( ! done ) && ( new_type < H5I_MAX_NUM_TYPES ) );
+        } while ((!done) && (new_type < H5I_MAX_NUM_TYPES));
 
-        if ( ! done ) {
+        if (!done) {
 
             HGOTO_ERROR(H5E_ID, H5E_NOSPACE, H5I_BADID, "Maximum number of ID types exceeded");
         }
     }
 
-#if 0 /* JRM */
+#if 0  /* JRM */
     HDfprintf(stdout, "H5Iregister_type(): allocated new type = %d\n", (int)new_type);
 #endif /* JRM */
 
@@ -390,16 +391,14 @@ H5Inmembers(H5I_type_t type, hsize_t *num_members)
 
         HGOTO_ERROR(H5E_ARGS, H5E_BADRANGE, FAIL, "invalid type number");
 
-
     if (NULL == atomic_load(&(H5I_mt_g.type_info_array[type])))
 
         HGOTO_ERROR(H5E_ARGS, H5E_BADRANGE, FAIL, "supplied type does not exist");
 
-
     if (num_members) {
         int64_t members;
 
-        if ( (members = H5I_nmembers_internal(type)) < 0 )
+        if ((members = H5I_nmembers_internal(type)) < 0)
 
             HGOTO_ERROR(H5E_ID, H5E_CANTCOUNT, FAIL, "can't compute number of members");
 
@@ -408,10 +407,10 @@ H5Inmembers(H5I_type_t type, hsize_t *num_members)
          * zero.  if members == 0, check to see if H5I_type_info_array_g[type] is still
          * non-NULL.  If it isn't, flag a "supplied type does not exist" error.
          *
-         * Note that this check is subject to its own race conditions if we ever start 
+         * Note that this check is subject to its own race conditions if we ever start
          * re-using type IDs.
          */
-        if ( ( 0 == members ) && ( NULL == atomic_load(&(H5I_mt_g.type_info_array[type])) ) )
+        if ((0 == members) && (NULL == atomic_load(&(H5I_mt_g.type_info_array[type]))))
 
             HGOTO_ERROR(H5E_ARGS, H5E_BADRANGE, FAIL, "supplied type does not exist");
 
@@ -633,7 +632,7 @@ done:
 
 #endif /* H5_HAVE_MULTITHREAD */
 
-#ifdef H5_HAVE_MULTITHREAD 
+#ifdef H5_HAVE_MULTITHREAD
 
 /*-------------------------------------------------------------------------
  * Function:    H5Iregister
@@ -703,7 +702,7 @@ done:
 
 #endif /* H5_HAVE_MULTITHREAD */
 
-#ifdef H5_HAVE_MULTITHREAD 
+#ifdef H5_HAVE_MULTITHREAD
 
 /*-------------------------------------------------------------------------
  * Function:    H5Iregister_future
@@ -746,7 +745,6 @@ done:
 
 #ifdef H5I_LOCK_FREE
 
-
 /*-------------------------------------------------------------------------
  * Function:    H5Ireserve_future_id
  *
@@ -757,7 +755,7 @@ done:
  *
  *-------------------------------------------------------------------------
  */
-hid_t 
+hid_t
 H5Ireserve_future_id(H5I_type_t type, H5I_progress_func_t progress_cb)
 {
 
@@ -791,7 +789,7 @@ done:
  *
  *-------------------------------------------------------------------------
  */
-herr_t 
+herr_t
 H5Idefine_future_id(H5I_type_t type, hid_t id, void *actual_object)
 {
     herr_t ret_value = SUCCEED; /* Return value */
@@ -976,17 +974,17 @@ H5Iget_type(hid_t id)
 
 #ifdef H5I_LOCK_FREE
 
-    if ( ret_value <= H5I_BADID || (int)ret_value >= atomic_load(&(H5I_mt_g.next_type)) )
+    if (ret_value <= H5I_BADID || (int)ret_value >= atomic_load(&(H5I_mt_g.next_type)))
         HGOTO_DONE(H5I_BADID);
-    
+
     /* Validate the existance of the ID in the index, but don't require object*/
-    if ( H5I__find_id(id, FALSE) == NULL ) {
+    if (H5I__find_id(id, FALSE) == NULL) {
 
         HGOTO_DONE(H5I_BADID);
     }
 
 #else
-    if (ret_value <= H5I_BADID || (int)ret_value >= atomic_load(&(H5I_mt_g.next_type)) || 
+    if (ret_value <= H5I_BADID || (int)ret_value >= atomic_load(&(H5I_mt_g.next_type)) ||
         NULL == H5I_object_internal(id))
 
         HGOTO_DONE(H5I_BADID);
@@ -1272,7 +1270,7 @@ done:
 
 #endif /* H5_HAVE_MULTITHREAD */
 
-#ifdef H5_HAVE_MULTITHREAD 
+#ifdef H5_HAVE_MULTITHREAD
 
 /*-------------------------------------------------------------------------
  * Function:    H5Iget_ref
@@ -1344,7 +1342,7 @@ done:
 
 #endif /* H5_HAVE_MULTITHREAD */
 
-#ifdef H5_HAVE_MULTITHREAD 
+#ifdef H5_HAVE_MULTITHREAD
 
 /*-------------------------------------------------------------------------
  * Function:    H5Iinc_type_ref
@@ -1619,8 +1617,8 @@ done:
 htri_t
 H5Iis_valid(hid_t id)
 {
-    H5I_mt_id_info_t *id_info_ptr      = NULL; /* Pointer to the ID info */
-    htri_t            ret_value = TRUE;        /* Return value */
+    H5I_mt_id_info_t *id_info_ptr = NULL; /* Pointer to the ID info */
+    htri_t            ret_value   = TRUE; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX(FAIL)
     H5TRACE1("t", "i", id);
@@ -1629,19 +1627,19 @@ H5Iis_valid(hid_t id)
 
 #ifdef H5I_LOCK_FREE
     /* Find the ID */
-    if ( NULL == (id_info_ptr = H5I__find_id(id, TRUE)) ) {
-#else 
-    if ( NULL == (id_info_ptr = H5I__find_id(id)) ) {
-#endif 
+    if (NULL == (id_info_ptr = H5I__find_id(id, TRUE))) {
+#else
+    if (NULL == (id_info_ptr = H5I__find_id(id))) {
+#endif
         ret_value = FALSE;
-
-    } else {
+    }
+    else {
 
         H5I_mt_id_info_kernel_t info_k;
-        
+
         info_k = atomic_load(&(id_info_ptr->k));
 
-        if ( ! info_k.app_count ) { /* Check if the found id is an internal id */
+        if (!info_k.app_count) { /* Check if the found id is an internal id */
 
             ret_value = FALSE;
         }
@@ -1731,7 +1729,7 @@ H5I__search_cb(void *obj, hid_t id, void *_udata)
  *              arguments and return non-zero to terminate the search (zero
  *              to continue).  Public interface to H5I_search.
  *
- *              H5Isearch() calls H5I_iterate() -- thus don't modify the 
+ *              H5Isearch() calls H5I_iterate() -- thus don't modify the
  *              func enter/exit macros to avoid grabbing the global mutex
  *              in the multi-thread case.
  *
@@ -1773,7 +1771,7 @@ H5Isearch(H5I_type_t type, H5I_search_func_t func, void *key)
      */
 #ifdef H5_HAVE_MULTITHREAD
     (void)H5I_iterate_internal(type, H5I__search_cb, &udata, TRUE);
-#else /* H5_HAVE_MULTITHREAD */
+#else  /* H5_HAVE_MULTITHREAD */
     (void)H5I_iterate(type, H5I__search_cb, &udata, TRUE);
 #endif /* H5_HAVE_MULTITHREAD */
 
@@ -1841,7 +1839,7 @@ H5I__iterate_pub_cb(void H5_ATTR_UNUSED *obj, hid_t id, void *_udata)
  *              will allow iteration to continue, as long as there are
  *              other ids remaining in type.
  *
- *              H5Iiterate() calls H5I_iterate() -- thus don't modify the 
+ *              H5Iiterate() calls H5I_iterate() -- thus don't modify the
  *              func enter/exit macros to avoid grabbing the global mutex
  *              in the multi-thread case.
  *
@@ -1878,7 +1876,7 @@ H5Iiterate(H5I_type_t type, H5I_iterate_func_t op, void *op_data)
 #ifdef H5_HAVE_MULTITHREAD
     if ((ret_value = H5I_iterate_internal(type, H5I__iterate_pub_cb, &int_udata, TRUE)) < 0)
         HGOTO_ERROR(H5E_ID, H5E_BADITER, FAIL, "can't iterate over ids");
-#else /* H5_HAVE_MULTITHREAD */
+#else  /* H5_HAVE_MULTITHREAD */
     if ((ret_value = H5I_iterate(type, H5I__iterate_pub_cb, &int_udata, TRUE)) < 0)
         HGOTO_ERROR(H5E_ID, H5E_BADITER, FAIL, "can't iterate over ids");
 #endif /* H5_HAVE_MULTITHREAD */
@@ -1899,8 +1897,8 @@ done:
  * Purpose:     Obtains the file ID given an object ID.  The user has to
  *              close this ID.
  *
- *              H5Iget_file_id() calls into sections of the HDF5 library 
- *              that are not mult-thread safe.  Thus don't modify the 
+ *              H5Iget_file_id() calls into sections of the HDF5 library
+ *              that are not mult-thread safe.  Thus don't modify the
  *              func enter/exit macros to avoid grabbing the global mutex.
  *
  * Return:      Success:    The file ID associated with the object
@@ -1969,8 +1967,8 @@ done:
  *  If a zero is returned for the name's length, then there is no name
  *  associated with the ID.
  *
- *  H5Iget_name() calls into sections of the HDF5 library that are not 
- *  mult-thread safe.  Thus don't modify the func enter/exit macros to 
+ *  H5Iget_name() calls into sections of the HDF5 library that are not
+ *  mult-thread safe.  Thus don't modify the func enter/exit macros to
  *  avoid grabbing the global mutex.
  *
  *-------------------------------------------------------------------------
@@ -1996,10 +1994,10 @@ H5Iget_name(hid_t id, char *name /*out*/, size_t size)
         HGOTO_ERROR(H5E_ID, H5E_BADTYPE, (-1), "invalid identifier");
 
     /* Set location parameters */
-    loc_params.type     = H5VL_OBJECT_BY_SELF;
+    loc_params.type = H5VL_OBJECT_BY_SELF;
 #ifdef H5_HAVE_MULTITHREAD
     loc_params.obj_type = H5I_get_type_internal(id);
-#else /*  H5_HAVE_MULTITHREAD */
+#else  /*  H5_HAVE_MULTITHREAD */
     loc_params.obj_type = H5I_get_type(id);
 #endif /* H5_HAVE_MULTITHREAD */
 

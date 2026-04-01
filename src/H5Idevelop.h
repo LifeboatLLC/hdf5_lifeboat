@@ -138,7 +138,7 @@ extern "C" {
  */
 H5_DLL hid_t H5Iregister_future(H5I_type_t type, const void *object, H5I_future_realize_func_t realize_cb,
                                 H5I_future_discard_func_t discard_cb);
- 
+
 /**
  * \ingroup H5I
  * \brief Reserve a future ID of the given type
@@ -147,7 +147,7 @@ H5_DLL hid_t H5Iregister_future(H5I_type_t type, const void *object, H5I_future_
  * \param[in] progress_cb Per-ID progress function; must not be \c NULL
  *
  * \return \hid_t{future_id}
- * 
+ *
  * \details The \p type parameter is the identifier for the ID type to which
  *          this new future ID will belong. This identifier may have been created
  *          by a call to H5Iregister_type() or may be one of the HDF5 pre-defined
@@ -181,17 +181,17 @@ H5_DLL hid_t H5Ireserve_future_id(H5I_type_t type, H5I_progress_func_t progress_
  *          “future” flag. After success, the ID behaves like a normal ID
  *          of \p type. If multiple threads race to define, the operation
  *          is idempotent if the same object pointer is supplied.
- * 
+ *
  * \details The \p type parameter is the identifier for the ID type to which
  *          this new future ID will belong. This identifier may have been created
  *          by a call to H5Iregister_type() or may be one of the HDF5 pre-defined
  *          ID classes (e.g. H5I_FILE, H5I_GROUP, H5I_DATASPACE, etc).
- * 
+ *
  * \details The \p id parameter is the the identifier for the future ID which
  *          the passed in object will belong to
  *
  *          A  NULL value for \p object is allowed.
- * 
+ *
  * \details The \p actual_obj parameter is a pointer to the memory which the ID
  *          will be a reference to. This pointer will be stored by the library,
  *          but will not be returned to a call to H5Iobject_verify() until the
@@ -204,7 +204,6 @@ H5_DLL hid_t H5Ireserve_future_id(H5I_type_t type, H5I_progress_func_t progress_
  *
  */
 H5_DLL herr_t H5Idefine_future_id(H5I_type_t type, hid_t id, void *actual_obj);
-
 
 #ifdef __cplusplus
 }
