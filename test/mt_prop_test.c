@@ -5350,7 +5350,7 @@ prop_check(H5P_mt_prop_t *prop, H5P_mt_prop_t *table_prop, bool in_prop_class, b
 {
     herr_t ret_value = SUCCEED;
 
-    if (0 != H5P__mt_prop_cmp(prop, table_prop)) {
+    if (0 != H5P__prop_cmp_test(prop, table_prop)) {
         assert(atomic_load(&(prop->tag)) == 0);
 
         fprintf(stderr, "prop_check(): prop mismatch.");

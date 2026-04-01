@@ -762,7 +762,7 @@ H5Ireserve_future_id(H5I_type_t type, H5I_progress_func_t progress_cb)
     hid_t ret_value = H5I_INVALID_HID; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX(H5I_INVALID_HID)
-    H5TRACE2("i", "It*xIRID", type, progress_cb);
+    H5TRACE2("i", "ItIP", type, progress_cb);
 
     H5I__enter(TRUE);
 
@@ -795,7 +795,7 @@ H5Idefine_future_id(H5I_type_t type, hid_t id, void *actual_object)
     herr_t ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_API_NO_MUTEX(FAIL)
-    H5TRACE3("i", "It*xIRID", type, id, actual_object);
+    H5TRACE3("e", "Iti*x", type, id, actual_object);
 
     H5I__enter(TRUE);
 
