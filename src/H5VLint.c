@@ -57,9 +57,9 @@
 
 /* Object wrapping context info */
 typedef struct H5VL_wrap_ctx_t {
-    unsigned rc;           /* Ref. count for the # of times the context was set / reset */
-    H5VL_t  *connector;    /* VOL connector for "outermost" class to start wrap */
-    void    *obj_wrap_ctx; /* "wrap context" for outermost connector */
+    H5_ATOMIC(unsigned) rc; /* Ref. count for the # of times the context was set / reset */
+    H5VL_t *connector;      /* VOL connector for "outermost" class to start wrap */
+    void   *obj_wrap_ctx;   /* "wrap context" for outermost connector */
 } H5VL_wrap_ctx_t;
 
 /* Information needed for iterating over the registered VOL connector hid_t IDs.
@@ -84,12 +84,41 @@ typedef struct {
 /* Local Prototypes */
 /********************/
 static herr_t         H5VL__free_cls(H5VL_class_t *cls, void **request);
-static int            H5VL__get_connector_cb(void *obj, hid_t id, void *_op_data);
 static void          *H5VL__wrap_obj(void *obj, H5I_type_t obj_type);
 static H5VL_object_t *H5VL__new_vol_obj(H5I_type_t type, void *object, H5VL_t *vol_connector,
                                         hbool_t wrap_obj);
 static void          *H5VL__object(hid_t id, H5I_type_t obj_type);
 static herr_t         H5VL__free_vol_wrapper(H5VL_wrap_ctx_t *vol_wrap_ctx);
+static herr_t         H5VL__new_vol_wrapper(const H5VL_object_t *vol_obj, H5VL_wrap_ctx_t **new_wrap_ctx);
+
+#ifdef H5_HAVE_MULTITHREAD
+static herr_t H5VL__get_registered_connector_mt(H5VL_get_connector_ud_t *op_data, bool inc_ref, bool app_ref);
+static herr_t H5VL__init_H5VL_mt_g(void);
+static H5VL_object_t *H5VL__alloc_vol_obj(void);
+static herr_t         H5VL__clear_vol_obj_free_list(void);
+static herr_t         H5VL__discard_vol_obj(H5VL_object_t *vol_obj_ptr);
+#else
+static int    H5VL__get_connector_cb(void *obj, hid_t id, void *_op_data);
+static herr_t H5VL__get_registered_connector_st(H5VL_get_connector_ud_t *op_data, bool inc_ref, bool app_ref);
+#endif
+
+static herr_t H5VL__get_registered_connector(H5VL_get_connector_ud_t *op_data, bool inc_ref, bool app_ref);
+
+#define H5I_DEC_REF(id, app_ref)                                                                             \
+    {                                                                                                        \
+                                                                                                             \
+        int dec_ref_ret = 0;                                                                                 \
+                                                                                                             \
+        if (app_ref) {                                                                                       \
+            dec_ref_ret = H5I_dec_app_ref(id);                                                               \
+        }                                                                                                    \
+        else {                                                                                               \
+            dec_ref_ret = H5I_dec_ref(id);                                                                   \
+        }                                                                                                    \
+                                                                                                             \
+        if (dec_ref_ret < 0)                                                                                 \
+            HGOTO_ERROR(H5E_VOL, H5E_CANTDEC, FAIL, "can't decrement ID ref count");                         \
+    }
 
 /*********************/
 /* Package Variables */
@@ -98,6 +127,13 @@ static herr_t         H5VL__free_vol_wrapper(H5VL_wrap_ctx_t *vol_wrap_ctx);
 /*****************************/
 /* Library Private Variables */
 /*****************************/
+
+/* Declared extern in H5VLpkg.h and documented there */
+#ifdef H5_HAVE_MULTITHREAD
+
+H5VL_mt_t H5VL_mt_g;
+
+#endif /* H5_HAVE_MULTITHREAD */
 
 /*******************/
 /* Local Variables */
@@ -112,16 +148,16 @@ static const H5I_class_t H5I_VOL_CLS[1] = {{
 }};
 
 /* Declare a free list to manage the H5VL_class_t struct */
-H5FL_DEFINE_STATIC(H5VL_class_t);
+H5FL_DEFINE_STATIC_MT(H5VL_class_t);
 
 /* Declare a free list to manage the H5VL_t struct */
-H5FL_DEFINE(H5VL_t);
+H5FL_DEFINE_MT(H5VL_t);
 
 /* Declare a free list to manage the H5VL_object_t struct */
-H5FL_DEFINE(H5VL_object_t);
+H5FL_DEFINE_MT(H5VL_object_t);
 
 /* Declare a free list to manage the H5VL_wrap_ctx_t struct */
-H5FL_DEFINE_STATIC(H5VL_wrap_ctx_t);
+H5FL_DEFINE_STATIC_MT(H5VL_wrap_ctx_t);
 
 /* Default VOL connector */
 static H5VL_connector_prop_t H5VL_def_conn_s = {-1, NULL};
@@ -150,6 +186,13 @@ H5VL_init_phase1(void)
     /* Initialize the ID group for the VL IDs */
     if (H5I_register_type(H5I_VOL_CLS) < 0)
         HGOTO_ERROR(H5E_VOL, H5E_CANTINIT, FAIL, "unable to initialize H5VL interface");
+
+#ifdef H5_HAVE_MULTITHREAD
+
+    if (H5VL__init_H5VL_mt_g() < 0)
+        HGOTO_ERROR(H5E_VOL, H5E_CANTINIT, FAIL, "unable to initialize H5VL_mt_g");
+
+#endif /* H5_HAVE_MULTITHREAD */
 
 done:
     FUNC_LEAVE_NOAPI(ret_value)
@@ -255,10 +298,44 @@ H5VL_term_package(void)
             } /* end if */
             else {
                 /* Destroy the VOL connector ID group */
+
                 n += (H5I_dec_type_ref(H5I_VOL) > 0);
+
             } /* end else */
         }     /* end else */
     }         /* end else */
+
+#ifdef H5_HAVE_MULTITHREAD
+    {
+        herr_t  result;
+        int64_t vol_objs_active;
+
+        vol_objs_active = atomic_load(&(H5VL_mt_g.vol_objs_active));
+
+        assert(vol_objs_active >= 0);
+
+        if (0 == vol_objs_active) {
+
+            /* the number of active instances of H5VL_object_t has dropped to zero.
+             * If we have not done so already we can take down the vol object free
+             * list.
+             *
+             * Note the hidden assumption that we are running single thread by
+             * the time we get to this point.
+             */
+            H5VL_mt_vol_obj_sptr_t vol_obj_fl_shead;
+
+            vol_obj_fl_shead = atomic_load(&(H5VL_mt_g.vol_obj_fl_shead));
+
+            if (vol_obj_fl_shead.ptr) { /* i.e. the free list still exists */
+
+                /* discard the contents of the vol object free list */
+                result = H5VL__clear_vol_obj_free_list();
+                assert(result >= 0);
+            }
+        }
+    }
+#endif /* H5_HAVE_MULTITHREAD */
 
     FUNC_LEAVE_NOAPI(n)
 } /* end H5VL_term_package() */
@@ -291,48 +368,11 @@ H5VL__free_cls(H5VL_class_t *cls, void H5_ATTR_UNUSED **request)
 
     /* Release the class */
     H5MM_xfree_const(cls->name);
-    H5FL_FREE(H5VL_class_t, cls);
+    H5FL_FREE_MT(H5VL_class_t, cls);
 
 done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5VL__free_cls() */
-
-/*-------------------------------------------------------------------------
- * Function:    H5VL__get_connector_cb
- *
- * Purpose:     Callback routine to search through registered VOLs
- *
- * Return:      Success:    H5_ITER_STOP if the class and op_data name
- *                          members match. H5_ITER_CONT otherwise.
- *              Failure:    Can't fail
- *
- *-------------------------------------------------------------------------
- */
-static int
-H5VL__get_connector_cb(void *obj, hid_t id, void *_op_data)
-{
-    H5VL_get_connector_ud_t *op_data   = (H5VL_get_connector_ud_t *)_op_data; /* User data for callback */
-    H5VL_class_t            *cls       = (H5VL_class_t *)obj;
-    int                      ret_value = H5_ITER_CONT; /* Callback return value */
-
-    FUNC_ENTER_PACKAGE_NOERR
-
-    if (H5VL_GET_CONNECTOR_BY_NAME == op_data->key.kind) {
-        if (0 == HDstrcmp(cls->name, op_data->key.u.name)) {
-            op_data->found_id = id;
-            ret_value         = H5_ITER_STOP;
-        } /* end if */
-    }     /* end if */
-    else {
-        assert(H5VL_GET_CONNECTOR_BY_VALUE == op_data->key.kind);
-        if (cls->value == op_data->key.u.value) {
-            op_data->found_id = id;
-            ret_value         = H5_ITER_STOP;
-        } /* end if */
-    }     /* end else */
-
-    FUNC_LEAVE_NOAPI(ret_value)
-} /* end H5VL__get_connector_cb() */
 
 /*-------------------------------------------------------------------------
  * Function:    H5VL__set_def_conn
@@ -351,13 +391,14 @@ H5VL__get_connector_cb(void *obj, hid_t id, void *_op_data)
 herr_t
 H5VL__set_def_conn(void)
 {
-    H5P_genplist_t *def_fapl;               /* Default file access property list */
-    H5P_genclass_t *def_fapclass;           /* Default file access property class */
-    const char     *env_var;                /* Environment variable for default VOL connector */
-    char           *buf          = NULL;    /* Buffer for tokenizing string */
-    hid_t           connector_id = -1;      /* VOL conntector ID */
-    void           *vol_info     = NULL;    /* VOL connector info */
-    herr_t          ret_value    = SUCCEED; /* Return value */
+    H5P_genplist_t *def_fapl;                       /* Default file access property list */
+    H5P_genclass_t *def_fapclass;                   /* Default file access property class */
+    const char     *env_var;                        /* Environment variable for default VOL connector */
+    char           *buf          = NULL;            /* Buffer for tokenizing string */
+    hid_t           connector_id = H5I_INVALID_HID; /* VOL connector ID */
+    void           *vol_info     = NULL;            /* VOL connector info */
+    herr_t          ret_value    = SUCCEED;         /* Return value */
+    int             dec_ref_ret  = 0;               /* Return value from H5I_dec_ref() */
 
     FUNC_ENTER_PACKAGE
 
@@ -429,13 +470,14 @@ H5VL__set_def_conn(void)
         H5VL_def_conn_s.connector_info = vol_info;
     } /* end if */
     else {
+        /* Increment the ref count on the default connector */
+        if (H5I_inc_ref(H5_DEFAULT_VOL, FALSE) < 0)
+            HGOTO_ERROR(H5E_VOL, H5E_CANTINC, FAIL, "can't increment VOL connector refcount");
+
         /* Set the default VOL connector */
         H5VL_def_conn_s.connector_id   = H5_DEFAULT_VOL;
         H5VL_def_conn_s.connector_info = NULL;
 
-        /* Increment the ref count on the default connector */
-        if (H5I_inc_ref(H5VL_def_conn_s.connector_id, FALSE) < 0)
-            HGOTO_ERROR(H5E_VOL, H5E_CANTINC, FAIL, "can't increment VOL connector refcount");
     } /* end else */
 
     /* Get default file access pclass */
@@ -461,10 +503,14 @@ done:
         if (vol_info)
             if (H5VL_free_connector_info(connector_id, vol_info) < 0)
                 HDONE_ERROR(H5E_VOL, H5E_CANTRELEASE, FAIL, "can't free VOL connector info");
-        if (connector_id >= 0)
+        if (connector_id != H5I_INVALID_HID) {
             /* The H5VL_class_t struct will be freed by this function */
-            if (H5I_dec_ref(connector_id) < 0)
+
+            dec_ref_ret = H5I_dec_ref(connector_id);
+
+            if (dec_ref_ret < 0)
                 HDONE_ERROR(H5E_VOL, H5E_CANTDEC, FAIL, "unable to unregister VOL connector");
+        }
     } /* end if */
 
     /* Clean up */
@@ -541,9 +587,26 @@ H5VL__new_vol_obj(H5I_type_t type, void *object, H5VL_t *vol_connector, hbool_t 
         type != H5I_GROUP && type != H5I_MAP)
         HGOTO_ERROR(H5E_VOL, H5E_BADVALUE, NULL, "invalid type number");
 
+    /* Bump the reference count on the VOL connector */
+    H5VL_conn_inc_rc(vol_connector);
+    conn_rc_incr = TRUE;
+
     /* Create the new VOL object */
-    if (NULL == (new_vol_obj = H5FL_CALLOC(H5VL_object_t)))
+#ifdef H5_HAVE_MULTITHREAD
+
+    if (NULL == (new_vol_obj = H5VL__alloc_vol_obj()))
         HGOTO_ERROR(H5E_VOL, H5E_CANTALLOC, NULL, "can't allocate memory for VOL object");
+
+    assert(H5VL__VOL_OBJ_TAG == new_vol_obj->tag);
+    assert(!atomic_load(&(new_vol_obj->on_fl)));
+
+#else /* H5_HAVE_MULTITHREAD */
+
+    if (NULL == (new_vol_obj = H5FL_CALLOC_MT(H5VL_object_t)))
+        HGOTO_ERROR(H5E_VOL, H5E_CANTALLOC, NULL, "can't allocate memory for VOL object");
+
+#endif /* H5_HAVE_MULTITHREAD */
+
     new_vol_obj->connector = vol_connector;
     if (wrap_obj) {
         if (NULL == (new_vol_obj->data = H5VL__wrap_obj(object, type)))
@@ -551,15 +614,19 @@ H5VL__new_vol_obj(H5I_type_t type, void *object, H5VL_t *vol_connector, hbool_t 
     } /* end if */
     else
         new_vol_obj->data = object;
-    new_vol_obj->rc = 1;
 
-    /* Bump the reference count on the VOL connector */
-    H5VL_conn_inc_rc(vol_connector);
-    conn_rc_incr = TRUE;
+#ifdef H5_HAVE_MULTITHREAD
+    atomic_init(&new_vol_obj->rc, 1);
+#else
+    new_vol_obj->rc = 1;
+#endif
 
     /* If this is a datatype, we have to hide the VOL object under the H5T_t pointer */
     if (H5I_DATATYPE == type) {
-        if (NULL == (ret_value = (H5VL_object_t *)H5T_construct_datatype(new_vol_obj)))
+        H5_API_LOCK
+        ret_value = (H5VL_object_t *)H5T_construct_datatype(new_vol_obj);
+        H5_API_UNLOCK
+        if (ret_value == NULL)
             HGOTO_ERROR(H5E_VOL, H5E_CANTINIT, NULL, "can't construct datatype object");
     } /* end if */
     else
@@ -570,6 +637,9 @@ done:
     if (NULL == ret_value) {
         if (conn_rc_incr && H5VL_conn_dec_rc(vol_connector) < 0)
             HDONE_ERROR(H5E_VOL, H5E_CANTDEC, NULL, "unable to decrement ref count on VOL connector");
+
+        if (new_vol_obj)
+            new_vol_obj = H5FL_FREE_MT(H5VL_object_t, new_vol_obj);
     } /* end if */
 
     FUNC_LEAVE_NOAPI(ret_value)
@@ -590,8 +660,9 @@ done:
 herr_t
 H5VL_conn_copy(H5VL_connector_prop_t *connector_prop)
 {
-    herr_t ret_value = SUCCEED; /* Return value */
-
+    herr_t ret_value    = SUCCEED; /* Return value */
+    bool   conn_id_incr = false;   /* Whether the connector has had its ref count incremented */
+    int    dec_ref_ret  = 0;       /* Return value from H5I_dec_ref() */
     FUNC_ENTER_NOAPI(FAIL)
 
     if (connector_prop) {
@@ -601,6 +672,8 @@ H5VL_conn_copy(H5VL_connector_prop_t *connector_prop)
             if (H5I_inc_ref(connector_prop->connector_id, FALSE) < 0)
                 HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL,
                             "unable to increment ref count on VOL connector ID");
+
+            conn_id_incr = true;
 
             /* Copy connector info, if it exists */
             if (connector_prop->connector_info) {
@@ -623,6 +696,14 @@ H5VL_conn_copy(H5VL_connector_prop_t *connector_prop)
     }         /* end if */
 
 done:
+    if (ret_value < 0 && conn_id_incr) {
+
+        dec_ref_ret = H5I_dec_ref(connector_prop->connector_id);
+
+        if (dec_ref_ret < 0)
+            HDONE_ERROR(H5E_PLIST, H5E_CANTDEC, FAIL, "unable to decrement ref count on VOL connector ID");
+    }
+
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5VL_conn_copy() */
 
@@ -639,7 +720,8 @@ done:
 herr_t
 H5VL_conn_free(const H5VL_connector_prop_t *connector_prop)
 {
-    herr_t ret_value = SUCCEED; /* Return value */
+    herr_t ret_value   = SUCCEED; /* Return value */
+    int    dec_ref_ret = 0;       /* Return value from H5I_dec_ref() */
 
     FUNC_ENTER_NOAPI(FAIL)
 
@@ -654,7 +736,10 @@ H5VL_conn_free(const H5VL_connector_prop_t *connector_prop)
                                 "unable to release VOL connector info object");
 
             /* Decrement reference count for connector ID */
-            if (H5I_dec_ref(connector_prop->connector_id) < 0)
+
+            dec_ref_ret = H5I_dec_ref(connector_prop->connector_id);
+
+            if (dec_ref_ret < 0)
                 HGOTO_ERROR(H5E_VOL, H5E_CANTDEC, FAIL, "can't decrement reference count for connector ID");
         }
     }
@@ -690,13 +775,16 @@ H5VL_register(H5I_type_t type, void *object, H5VL_t *vol_connector, hbool_t app_
     /* Set up VOL object for the passed-in data */
     /* (Does not wrap object, since it's from a VOL callback) */
     if (NULL == (vol_obj = H5VL__new_vol_obj(type, object, vol_connector, FALSE)))
-        HGOTO_ERROR(H5E_VOL, H5E_CANTCREATE, FAIL, "can't create VOL object");
+        HGOTO_ERROR(H5E_VOL, H5E_CANTCREATE, H5I_INVALID_HID, "can't create VOL object");
 
     /* Register VOL object as _object_ type, for future object API calls */
     if ((ret_value = H5I_register(type, vol_obj, app_ref)) < 0)
         HGOTO_ERROR(H5E_VOL, H5E_CANTREGISTER, H5I_INVALID_HID, "unable to register handle");
 
 done:
+    if (ret_value < 0 && vol_obj)
+        vol_obj = H5FL_FREE_MT(H5VL_object_t, vol_obj);
+
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5VL_register() */
 
@@ -741,6 +829,9 @@ H5VL_register_using_existing_id(H5I_type_t type, void *object, H5VL_t *vol_conne
         HGOTO_ERROR(H5E_VOL, H5E_CANTREGISTER, FAIL, "can't register object under existing ID");
 
 done:
+    if (ret_value < 0 && new_vol_obj)
+        new_vol_obj = H5FL_FREE_MT(H5VL_object_t, new_vol_obj);
+
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5VL_register_using_existing_id() */
 
@@ -761,21 +852,30 @@ H5VL_new_connector(hid_t connector_id)
     H5VL_t       *connector    = NULL;  /* New VOL connector struct */
     hbool_t       conn_id_incr = FALSE; /* Whether the VOL connector ID has been incremented */
     H5VL_t       *ret_value    = NULL;  /* Return value */
+    int           dec_ref_ret  = 0;     /* Return value from H5I_dec_ref() */
 
     FUNC_ENTER_NOAPI(NULL)
+
+    if (H5I_inc_ref(connector_id, FALSE) < 0)
+        HGOTO_ERROR(H5E_VOL, H5E_CANTINC, NULL, "unable to increment ref count on VOL connector");
+
+    conn_id_incr = TRUE;
 
     /* Get the VOL class object from the connector's ID */
     if (NULL == (cls = (H5VL_class_t *)H5I_object_verify(connector_id, H5I_VOL)))
         HGOTO_ERROR(H5E_VOL, H5E_BADTYPE, NULL, "not a VOL connector ID");
 
     /* Setup VOL info struct */
-    if (NULL == (connector = H5FL_CALLOC(H5VL_t)))
+    if (NULL == (connector = H5FL_CALLOC_MT(H5VL_t)))
         HGOTO_ERROR(H5E_VOL, H5E_CANTALLOC, NULL, "can't allocate VOL connector struct");
     connector->cls = cls;
     connector->id  = connector_id;
-    if (H5I_inc_ref(connector->id, FALSE) < 0)
-        HGOTO_ERROR(H5E_VOL, H5E_CANTINC, NULL, "unable to increment ref count on VOL connector");
-    conn_id_incr = TRUE;
+
+#ifdef H5_HAVE_MULTITHREAD
+    /* TODO: See hdf5#4635 for a discussion on how the RC should be handled during initialization.
+     * For now, keep behavior the same. */
+    atomic_init(&connector->nrefs, 0);
+#endif
 
     /* Set return value */
     ret_value = connector;
@@ -784,12 +884,17 @@ done:
     /* Clean up on error */
     if (NULL == ret_value) {
         /* Decrement VOL connector ID ref count on error */
-        if (conn_id_incr && H5I_dec_ref(connector_id) < 0)
-            HDONE_ERROR(H5E_VOL, H5E_CANTDEC, NULL, "unable to decrement ref count on VOL connector");
+        if (conn_id_incr) {
+
+            dec_ref_ret = H5I_dec_ref(connector_id);
+
+            if (dec_ref_ret < 0)
+                HDONE_ERROR(H5E_VOL, H5E_CANTDEC, NULL, "unable to decrement ref count on VOL connector");
+        }
 
         /* Free VOL connector struct */
         if (NULL != connector)
-            connector = H5FL_FREE(H5VL_t, connector);
+            connector = H5FL_FREE_MT(H5VL_t, connector);
     } /* end if */
 
     FUNC_LEAVE_NOAPI(ret_value)
@@ -861,14 +966,32 @@ H5VL_create_object(void *object, H5VL_t *vol_connector)
 
     /* Set up VOL object for the passed-in data */
     /* (Does not wrap object, since it's from a VOL callback) */
-    if (NULL == (ret_value = H5FL_CALLOC(H5VL_object_t)))
+
+#ifdef H5_HAVE_MULTITHREAD
+
+    if (NULL == (ret_value = H5VL__alloc_vol_obj()))
         HGOTO_ERROR(H5E_VOL, H5E_CANTALLOC, NULL, "can't allocate memory for VOL object");
-    ret_value->connector = vol_connector;
-    ret_value->data      = object;
-    ret_value->rc        = 1;
+
+    assert(H5VL__VOL_OBJ_TAG == ret_value->tag);
+    assert(!atomic_load(&(ret_value->on_fl)));
+
+#else /* H5_HAVE_MULTITHREAD */
+
+    if (NULL == (ret_value = H5FL_CALLOC_MT(H5VL_object_t)))
+        HGOTO_ERROR(H5E_VOL, H5E_CANTALLOC, NULL, "can't allocate memory for VOL object");
+
+#endif /* H5_HAVE_MULTITHREAD */
 
     /* Bump the reference count on the VOL connector */
     H5VL_conn_inc_rc(vol_connector);
+
+    ret_value->connector = vol_connector;
+    ret_value->data      = object;
+#ifdef H5_HAVE_MULTITHREAD
+    atomic_store(&ret_value->rc, 1);
+#else
+    ret_value->rc = 1;
+#endif
 
 done:
     FUNC_LEAVE_NOAPI(ret_value)
@@ -893,21 +1016,30 @@ H5VL_create_object_using_vol_id(H5I_type_t type, void *obj, hid_t connector_id)
     H5VL_t        *connector    = NULL;  /* VOL connector struct */
     hbool_t        conn_id_incr = FALSE; /* Whether the VOL connector ID has been incremented */
     H5VL_object_t *ret_value    = NULL;  /* Return value */
+    int            dec_ref_ret  = 0;     /* Return value from H5I_dec_ref() */
 
     FUNC_ENTER_NOAPI(NULL)
+
+    if (H5I_inc_ref(connector_id, FALSE) < 0)
+        HGOTO_ERROR(H5E_VOL, H5E_CANTINC, NULL, "unable to increment ref count on VOL connector");
+
+    conn_id_incr = TRUE;
 
     /* Get the VOL class object from the connector's ID */
     if (NULL == (cls = (H5VL_class_t *)H5I_object_verify(connector_id, H5I_VOL)))
         HGOTO_ERROR(H5E_VOL, H5E_BADTYPE, NULL, "not a VOL connector ID");
 
     /* Setup VOL info struct */
-    if (NULL == (connector = H5FL_CALLOC(H5VL_t)))
+    if (NULL == (connector = H5FL_CALLOC_MT(H5VL_t)))
         HGOTO_ERROR(H5E_VOL, H5E_CANTALLOC, NULL, "can't allocate VOL info struct");
     connector->cls = cls;
     connector->id  = connector_id;
-    if (H5I_inc_ref(connector->id, FALSE) < 0)
-        HGOTO_ERROR(H5E_VOL, H5E_CANTINC, NULL, "unable to increment ref count on VOL connector");
-    conn_id_incr = TRUE;
+
+#ifdef H5_HAVE_MULTITHREAD
+    /* TODO: See hdf5#4635 for a discussion on how the RC should be handled during initialization.
+     * For now, keep behavior the same. */
+    atomic_init(&connector->nrefs, 0);
+#endif
 
     /* Set up VOL object for the passed-in data */
     /* (Wraps object, since it's a library object) */
@@ -918,12 +1050,17 @@ done:
     /* Clean up on error */
     if (!ret_value) {
         /* Decrement VOL connector ID ref count on error */
-        if (conn_id_incr && H5I_dec_ref(connector_id) < 0)
-            HDONE_ERROR(H5E_VOL, H5E_CANTDEC, NULL, "unable to decrement ref count on VOL connector");
+        if (conn_id_incr) {
+
+            dec_ref_ret = H5I_dec_ref(connector_id);
+
+            if (dec_ref_ret < 0)
+                HDONE_ERROR(H5E_VOL, H5E_CANTDEC, NULL, "unable to decrement ref count on VOL connector");
+        }
 
         /* Free VOL connector struct */
         if (NULL != connector)
-            connector = H5FL_FREE(H5VL_t, connector);
+            connector = H5FL_FREE_MT(H5VL_t, connector);
     } /* end if */
 
     FUNC_LEAVE_NOAPI(ret_value)
@@ -949,9 +1086,13 @@ H5VL_conn_inc_rc(H5VL_t *connector)
     assert(connector);
 
     /* Increment refcount for connector */
+#ifdef H5_HAVE_MULTITHREAD
+    atomic_fetch_add(&connector->nrefs, 1);
+    ret_value = atomic_load(&connector->nrefs);
+#else
     connector->nrefs++;
-
     ret_value = connector->nrefs;
+#endif
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5VL_conn_inc_rc() */
@@ -968,7 +1109,8 @@ H5VL_conn_inc_rc(H5VL_t *connector)
 int64_t
 H5VL_conn_dec_rc(H5VL_t *connector)
 {
-    int64_t ret_value = -1; /* Return value */
+    int64_t ret_value   = -1; /* Return value */
+    int     dec_ref_ret = 0;  /* Return value from H5I_dec_ref() */
 
     FUNC_ENTER_NOAPI(-1)
 
@@ -976,20 +1118,49 @@ H5VL_conn_dec_rc(H5VL_t *connector)
     assert(connector);
 
     /* Decrement refcount for connector */
+#ifdef H5_HAVE_MULTITHREAD
+    /* It is in principle possible for another thread to increment the ref count after it drops to zero here,
+     * which would result in another thread holding a pointer to invalid memory after these free operations.
+     * However, any thread that can decrement the ref count should hold a reference itself, so it
+     * should be impossible for that to happen. */
+    atomic_fetch_sub(&connector->nrefs, 1);
+#else
     connector->nrefs--;
+#endif
 
     /* Check for last reference */
-    if (0 == connector->nrefs) {
-        if (H5I_dec_ref(connector->id) < 0)
+
+#ifdef H5_HAVE_MULTITHREAD
+    if (0 == atomic_load(&connector->nrefs))
+#else
+    if (0 == connector->nrefs)
+#endif
+    {
+        dec_ref_ret = H5I_dec_ref(connector->id);
+
+        if (dec_ref_ret < 0)
             HGOTO_ERROR(H5E_VOL, H5E_CANTDEC, FAIL, "unable to decrement ref count on VOL connector");
-        H5FL_FREE(H5VL_t, connector);
+
+            /* Sanity check */
+#ifdef H5_HAVE_MULTITHREAD
+        assert(atomic_load(&connector->nrefs) == 0);
+#else
+        assert(connector->nrefs == 0);
+#endif
+
+        H5FL_FREE_MT(H5VL_t, connector);
 
         /* Set return value */
         ret_value = 0;
     } /* end if */
     else
-        /* Set return value */
+    /* Set return value */
+
+#ifdef H5_HAVE_MULTITHREAD
+        ret_value = atomic_load(&connector->nrefs);
+#else
         ret_value = connector->nrefs;
+#endif
 
 done:
     FUNC_LEAVE_NOAPI(ret_value)
@@ -1007,13 +1178,30 @@ done:
 hsize_t
 H5VL_object_inc_rc(H5VL_object_t *vol_obj)
 {
+    size_t new_rc  = 0;
+    size_t prev_rc = 0;
+
     FUNC_ENTER_NOAPI_NOERR
+
+        /* Silence compiler warnings */
+        (void)
+    prev_rc;
 
     /* Check arguments */
     assert(vol_obj);
 
     /* Increment refcount for object and return */
-    FUNC_LEAVE_NOAPI(++vol_obj->rc)
+#ifdef H5_HAVE_MULTITHREAD
+    prev_rc = atomic_fetch_add(&vol_obj->rc, 1);
+    assert(prev_rc > 0);
+    /* Detect any concurrent modifications to rc */
+    new_rc = atomic_load(&vol_obj->rc);
+#else
+    new_rc = ++vol_obj->rc;
+#endif
+
+    FUNC_LEAVE_NOAPI(new_rc)
+
 } /* end H5VL_object_inc_rc() */
 
 /*-------------------------------------------------------------------------
@@ -1030,19 +1218,57 @@ herr_t
 H5VL_free_object(H5VL_object_t *vol_obj)
 {
     herr_t ret_value = SUCCEED; /* Return value */
+    size_t prev_rc   = 0;
 
     FUNC_ENTER_NOAPI(FAIL)
+
+    /* Silence compiler warnings */
+    (void)prev_rc;
 
     /* Check arguments */
     assert(vol_obj);
 
-    if (--vol_obj->rc == 0) {
+#ifdef H5_HAVE_MULTITHREAD
+    /* It is in principle possible for another thread to increment the ref count after it drops to zero here,
+     * which would result in another thread holding a pointer to invalid memory after these free operations.
+     * However, any thread that can decrement the ref count should hold a reference itself, so it
+     * should be impossible for that to happen. */
+    prev_rc = atomic_fetch_sub(&vol_obj->rc, 1);
+
+    assert(prev_rc > 0);
+
+    if (prev_rc == 1) {
         /* Decrement refcount on connector */
         if (H5VL_conn_dec_rc(vol_obj->connector) < 0)
             HGOTO_ERROR(H5E_VOL, H5E_CANTDEC, FAIL, "unable to decrement ref count on VOL connector");
 
-        vol_obj = H5FL_FREE(H5VL_object_t, vol_obj);
+        /* Sanity Check */
+        assert(atomic_load(&vol_obj->rc) == 0);
+#if 1 /* JRM */
+        if (H5VL__discard_vol_obj(vol_obj) < 0)
+            HGOTO_ERROR(H5E_VOL, H5E_SYSTEM, FAIL, "unable to release vol object to the mt free list");
+#else  /* JRM */
+        vol_obj = H5FL_FREE_MT(H5VL_object_t, vol_obj);
+#endif /* JRM */
+    }
+
+#else
+    assert(vol_obj->rc > 0);
+
+    --vol_obj->rc;
+
+    if (vol_obj->rc == 0) {
+        /* Decrement refcount on connector */
+        if (H5VL_conn_dec_rc(vol_obj->connector) < 0)
+            HGOTO_ERROR(H5E_VOL, H5E_CANTDEC, FAIL, "unable to decrement ref count on VOL connector");
+
+        /* Sanity Check */
+        assert(vol_obj->rc == 0);
+
+        vol_obj = H5FL_FREE_MT(H5VL_object_t, vol_obj);
     } /* end if */
+
+#endif
 
 done:
     FUNC_LEAVE_NOAPI(ret_value)
@@ -1179,7 +1405,7 @@ H5VL__register_connector(const void *_cls, hbool_t app_ref, hid_t vipl_id)
     assert(cls);
 
     /* Copy the class structure so the caller can reuse or free it */
-    if (NULL == (saved = H5FL_MALLOC(H5VL_class_t)))
+    if (NULL == (saved = H5FL_MALLOC_MT(H5VL_class_t)))
         HGOTO_ERROR(H5E_VOL, H5E_CANTALLOC, H5I_INVALID_HID,
                     "memory allocation failed for VOL connector class struct");
     H5MM_memcpy(saved, cls, sizeof(H5VL_class_t));
@@ -1200,11 +1426,268 @@ done:
         if (saved->name)
             H5MM_xfree_const(saved->name);
 
-        H5FL_FREE(H5VL_class_t, saved);
+        H5FL_FREE_MT(H5VL_class_t, saved);
     } /* end if */
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5VL__register_connector() */
+
+#ifdef H5_HAVE_MULTITHREAD
+/*-------------------------------------------------------------------------
+ * Function:    H5VL__get_registered_connector_mt
+ *
+ * Purpose:     Retrieves a VOL connector by name or value, if it is
+ *              already registered. This function should only be invoked
+ *              through H5VL__get_registered_connector().
+ *
+ * Parameters:  H5VL_get_connector_ud_t *op_data: IN/OUT: Pointer to the
+ *              operation data for the search. Controls whether search is by
+ *              name/value, holds the key to search for, and the return
+ *              pointer op_data->found_id.
+ *
+ *              bool inc_ref: IN: Whether to increment the ref count of the
+ *              returned connector ID, if any.
+ *
+ *              bool app_ref: IN: Whether to increment the application ref count of the
+ *              returned connector ID, if any. Has no effect if inc_ref is false.
+ *
+ *              This is the multi-threaded implementation of H5VL__get_registered_connector().
+ *
+ * Return:      Success:    Non-negative
+ *              Failure:    Negative
+ *
+ *-------------------------------------------------------------------------
+ */
+static herr_t
+H5VL__get_registered_connector_mt(H5VL_get_connector_ud_t *op_data, bool inc_ref, bool app_ref)
+{
+    herr_t        ret_value = SUCCEED;
+    hid_t         vol_id_1 = H5I_INVALID_HID, vol_id_2 = H5I_INVALID_HID;
+    H5VL_class_t *vol_class_1 = NULL, *vol_class_2 = NULL;
+    size_t        retry_limit = 100;   /* Maximum number of retries */
+    size_t        retry_count = 0;     /* Number of retries */
+    bool          retry       = false; /* Whether to restart the search */
+    herr_t        id_iter_ret = 0;
+
+    FUNC_ENTER_PACKAGE
+
+    /* If another thread frees an ID between its retrieval and ref count modification, this
+     * routine must restart the search from the beginning, since it has no way of knowing
+     * whether the released ID was the target or not.
+     *
+     * The alternative, throwing an error on inc/dec ref error, would prematurely end a search.
+     *
+     * Similarly, the alternative of ignoring inc/dec failures and continuing with the iteration is
+     * potentially impossible, since the ID that H5I_get_next() would need has been freed. */
+    do {
+        retry = false;
+        retry_count++;
+
+        if (retry_count > retry_limit)
+            HGOTO_ERROR(H5E_VOL, H5E_BADITER, H5I_INVALID_HID, "maximum number of retries on search reached");
+
+        /* Check if connector is already registered */
+
+        id_iter_ret = H5I_get_first(H5I_VOL, &vol_id_1, (void **)&vol_class_1, false);
+
+        if (id_iter_ret < 0)
+            HGOTO_ERROR(H5E_VOL, H5E_BADITER, H5I_INVALID_HID, "can't retrieve first VOL ID for iteration");
+
+        /* Don't search if no connectors are registered */
+        if (vol_class_1 == NULL || vol_id_1 == 0) {
+            op_data->found_id = H5I_INVALID_HID;
+            HGOTO_DONE(SUCCEED);
+        }
+
+        if (H5I_inc_ref(vol_id_1, app_ref) < 0) {
+            retry = true;
+            continue;
+        }
+
+        /* If the first ID is the target, return */
+        if (((op_data->key.kind == H5VL_GET_CONNECTOR_BY_NAME) &&
+             (HDstrcmp(vol_class_1->name, op_data->key.u.name) == 0)) ||
+            ((op_data->key.kind == H5VL_GET_CONNECTOR_BY_VALUE) &&
+             (vol_class_1->value == op_data->key.u.value))) {
+
+            if (!inc_ref) {
+                /* Return the ID ref count to its original value for caller */
+                H5I_DEC_REF(vol_id_1, app_ref);
+            }
+            op_data->found_id = vol_id_1;
+            HGOTO_DONE(SUCCEED);
+        }
+
+        /* Iterate through connector IDs */
+        while (true) {
+            /* Get next ID and release current ID */
+
+            id_iter_ret = H5I_get_next(H5I_VOL, vol_id_1, &vol_id_2, (void **)&vol_class_2, false);
+
+            if (id_iter_ret < 0) {
+                H5I_DEC_REF(vol_id_1, app_ref);
+                HGOTO_ERROR(H5E_VOL, H5E_BADITER, H5I_INVALID_HID,
+                            "can't retrieve next VOL ID for iteration");
+            }
+
+            /* Return the ID ref count to its original value, since we no longer need to guarantee existence
+             */
+            H5I_DEC_REF(vol_id_1, app_ref);
+
+            /* Check if we've reached the end of the list */
+            if (vol_class_2 == NULL || vol_id_2 == 0) {
+                op_data->found_id = H5I_INVALID_HID;
+                HGOTO_DONE(SUCCEED);
+            }
+
+            if (H5I_inc_ref(vol_id_2, app_ref) < 0) {
+                retry = true;
+                break;
+            }
+
+            /* Check if current ID is the target */
+            if ((op_data->key.kind == H5VL_GET_CONNECTOR_BY_NAME &&
+                 HDstrcmp(vol_class_2->name, op_data->key.u.name) == 0) ||
+                (op_data->key.kind == H5VL_GET_CONNECTOR_BY_VALUE &&
+                 vol_class_2->value == op_data->key.u.value)) {
+
+                if (!inc_ref) {
+                    /* Return the ID ref count to its original value for caller */
+                    H5I_DEC_REF(vol_id_2, app_ref);
+                }
+
+                op_data->found_id = vol_id_2;
+                HGOTO_DONE(SUCCEED);
+            }
+
+            /* Move to next entry */
+            vol_id_1    = vol_id_2;
+            vol_class_1 = vol_class_2;
+        }
+    } while (retry);
+
+done:
+    FUNC_LEAVE_NOAPI(ret_value);
+} /* end H5VL__get_registered_connector_mt */
+#else
+/*-------------------------------------------------------------------------
+ * Function:    H5VL__get_connector_cb
+ *
+ * Purpose:     Callback routine to search through registered VOLs.
+ *              If a connector is found, its reference count is incremented.
+ *
+ * Return:      Success:    H5_ITER_STOP if the class and op_data name
+ *                          members match. H5_ITER_CONT otherwise.
+ *              Failure:    Can't fail
+ *
+ *-------------------------------------------------------------------------
+ */
+static int
+H5VL__get_connector_cb(void *obj, hid_t id, void *_op_data)
+{
+    H5VL_get_connector_ud_t *op_data   = (H5VL_get_connector_ud_t *)_op_data; /* User data for callback */
+    H5VL_class_t            *cls       = (H5VL_class_t *)obj;
+    int                      ret_value = H5_ITER_CONT; /* Callback return value */
+
+    FUNC_ENTER_PACKAGE_NOERR
+
+    if (H5VL_GET_CONNECTOR_BY_NAME == op_data->key.kind) {
+        if (0 == HDstrcmp(cls->name, op_data->key.u.name)) {
+            op_data->found_id = id;
+            ret_value         = H5_ITER_STOP;
+        } /* end if */
+    }     /* end if */
+    else {
+        assert(H5VL_GET_CONNECTOR_BY_VALUE == op_data->key.kind);
+        if (cls->value == op_data->key.u.value) {
+            op_data->found_id = id;
+            ret_value         = H5_ITER_STOP;
+        } /* end if */
+    }     /* end else */
+
+    FUNC_LEAVE_NOAPI(ret_value)
+} /* end H5VL__get_connector_cb() */
+
+/*-------------------------------------------------------------------------
+ * Function:    H5VL__get_registered_connector_st
+ *
+ * Purpose:     Retrieves a VOL connector by name or value, if it is
+ *              already registered. This function should only be invoked
+ *              through H5VL__get_registered_connector().
+ *
+ * Parameters:  H5VL_get_connector_ud_t *op_data: IN/OUT: Pointer to the
+ *              operation data for the search. Controls whether search is by
+ *              name/value, holds the key to search for, and the return
+ *              pointer op_data->found_id.
+ *
+ *              bool inc_ref: IN: Whether to increment the ref count of the
+ *              returned connector ID, if any.
+ *
+ *              bool app_ref: IN: Whether to increment the application ref count of the
+ *              returned connector ID, if any. Has no effect if inc_ref is false.
+ *
+ *              This function is the non-multi-threaded implementation of H5VL__get_registered_connector().
+ *
+ * Return:      Success:    Non-negative
+ *              Failure:    Negative
+ *
+ *-------------------------------------------------------------------------
+ */
+static herr_t
+H5VL__get_registered_connector_st(H5VL_get_connector_ud_t *op_data, bool inc_ref, bool app_ref)
+{
+    herr_t ret_value = SUCCEED;
+
+    FUNC_ENTER_PACKAGE
+
+    /* Check if connector is already registered */
+    if (H5I_iterate(H5I_VOL, H5VL__get_connector_cb, op_data, app_ref) < 0)
+        HGOTO_ERROR(H5E_VOL, H5E_BADITER, H5I_INVALID_HID, "can't iterate over VOL IDs");
+
+    /* Increment the ref count on the existing VOL connector ID, if any */
+    if ((op_data->found_id != H5I_INVALID_HID) && inc_ref) {
+        if (H5I_inc_ref(op_data->found_id, app_ref) < 0)
+            HGOTO_ERROR(H5E_VOL, H5E_CANTINC, H5I_INVALID_HID,
+                        "unable to increment ref count on VOL connector");
+    }
+
+done:
+    FUNC_LEAVE_NOAPI(ret_value);
+}
+
+#endif
+
+/*-------------------------------------------------------------------------
+ * Function:    H5VL__get_registered_connector
+ *
+ * Purpose:     Retrieves a VOL connector by name or value, if it is
+ *              already registered.
+ *
+ * Parameters:  H5VL_get_connector_ud_t *op_data: IN/OUT: Pointer to the
+ *              operation data for the search. Controls whether search is by
+ *              name/value, holds the key to search for, and the return
+ *              pointer op_data->found_id.
+ *
+ *              bool inc_ref: IN: Whether to increment the ref count of the
+ *              returned connector ID, if any.
+ *
+ *              bool app_ref: IN: Whether to increment the application ref count of the
+ *              returned connector ID, if any. Has no effect if inc_ref is false.
+ *
+ * Return:      Success:    Non-negative
+ *              Failure:    Negative
+ *
+ *-------------------------------------------------------------------------
+ */
+static herr_t
+H5VL__get_registered_connector(H5VL_get_connector_ud_t *op_data, bool inc_ref, bool app_ref)
+{
+#ifdef H5_HAVE_MULTITHREAD
+    return H5VL__get_registered_connector_mt(op_data, inc_ref, app_ref);
+#else
+    return H5VL__get_registered_connector_st(op_data, inc_ref, app_ref);
+#endif
+}
 
 /*-------------------------------------------------------------------------
  * Function:    H5VL__register_connector_by_class
@@ -1254,22 +1737,17 @@ H5VL__register_connector_by_class(const H5VL_class_t *cls, hbool_t app_ref, hid_
     op_data.key.u.name = cls->name;
     op_data.found_id   = H5I_INVALID_HID;
 
-    /* Check if connector is already registered */
-    if (H5I_iterate(H5I_VOL, H5VL__get_connector_cb, &op_data, TRUE) < 0)
-        HGOTO_ERROR(H5E_VOL, H5E_BADITER, H5I_INVALID_HID, "can't iterate over VOL IDs");
+    if (H5VL__get_registered_connector(&op_data, true, app_ref) < 0)
+        HGOTO_ERROR(H5E_VOL, H5E_BADITER, H5I_INVALID_HID, "can't search for registered VOL ID");
 
-    /* Increment the ref count on the existing VOL connector ID, if it's already registered */
-    if (op_data.found_id != H5I_INVALID_HID) {
-        if (H5I_inc_ref(op_data.found_id, app_ref) < 0)
-            HGOTO_ERROR(H5E_VOL, H5E_CANTINC, H5I_INVALID_HID,
-                        "unable to increment ref count on VOL connector");
-        ret_value = op_data.found_id;
-    } /* end if */
-    else {
-        /* Create a new class ID */
+    if (op_data.found_id == H5I_INVALID_HID) {
+        /* No existing ID, create a new class ID */
         if ((ret_value = H5VL__register_connector(cls, app_ref, vipl_id)) < 0)
             HGOTO_ERROR(H5E_VOL, H5E_CANTREGISTER, H5I_INVALID_HID, "unable to register VOL connector");
-    } /* end else */
+    }
+    else {
+        ret_value = op_data.found_id;
+    }
 
 done:
     FUNC_LEAVE_NOAPI(ret_value)
@@ -1303,14 +1781,11 @@ H5VL__register_connector_by_name(const char *name, hbool_t app_ref, hid_t vipl_i
     op_data.found_id   = H5I_INVALID_HID;
 
     /* Check if connector is already registered */
-    if (H5I_iterate(H5I_VOL, H5VL__get_connector_cb, &op_data, app_ref) < 0)
-        HGOTO_ERROR(H5E_VOL, H5E_BADITER, H5I_INVALID_HID, "can't iterate over VOL ids");
+    if (H5VL__get_registered_connector(&op_data, true, app_ref) < 0)
+        HGOTO_ERROR(H5E_VOL, H5E_BADITER, H5I_INVALID_HID, "can't check if VOL is registered");
 
     /* If connector already registered, increment ref count on ID and return ID */
     if (op_data.found_id != H5I_INVALID_HID) {
-        if (H5I_inc_ref(op_data.found_id, app_ref) < 0)
-            HGOTO_ERROR(H5E_VOL, H5E_CANTINC, H5I_INVALID_HID,
-                        "unable to increment ref count on VOL connector");
         ret_value = op_data.found_id;
     } /* end if */
     else {
@@ -1320,7 +1795,12 @@ H5VL__register_connector_by_name(const char *name, hbool_t app_ref, hid_t vipl_i
         /* Try loading the connector */
         key.vol.kind   = H5VL_GET_CONNECTOR_BY_NAME;
         key.vol.u.name = name;
-        if (NULL == (cls = (const H5VL_class_t *)H5PL_load(H5PL_TYPE_VOL, &key)))
+
+        H5_API_LOCK
+        cls = (const H5VL_class_t *)H5PL_load(H5PL_TYPE_VOL, &key);
+        H5_API_UNLOCK
+
+        if (NULL == cls)
             HGOTO_ERROR(H5E_VOL, H5E_CANTINIT, H5I_INVALID_HID, "unable to load VOL connector");
 
         /* Register the connector we loaded */
@@ -1360,16 +1840,24 @@ H5VL__register_connector_by_value(H5VL_class_value_t value, hbool_t app_ref, hid
     op_data.found_id    = H5I_INVALID_HID;
 
     /* Check if connector is already registered */
-    if (H5I_iterate(H5I_VOL, H5VL__get_connector_cb, &op_data, app_ref) < 0)
-        HGOTO_ERROR(H5E_VOL, H5E_BADITER, H5I_INVALID_HID, "can't iterate over VOL ids");
+    if (H5VL__get_registered_connector(&op_data, true, app_ref) < 0)
+        HGOTO_ERROR(H5E_VOL, H5E_BADITER, H5I_INVALID_HID, "can't check if VOL is registered");
 
     /* If connector already registered, increment ref count on ID and return ID */
     if (op_data.found_id != H5I_INVALID_HID) {
-        if (H5I_inc_ref(op_data.found_id, app_ref) < 0)
-            HGOTO_ERROR(H5E_VOL, H5E_CANTINC, H5I_INVALID_HID,
-                        "unable to increment ref count on VOL connector");
         ret_value = op_data.found_id;
     } /* end if */
+    /* Check if the connector is one of the included library connectors */
+    else if (value == H5VL_NATIVE_VALUE) {
+        ret_value = H5VL_NATIVE;
+        if (H5I_inc_ref(ret_value, FALSE) < 0)
+            HGOTO_ERROR(H5E_VOL, H5E_CANTINC, FAIL, "can't increment VOL connector refcount");
+    }
+    else if (value == H5VL_PASSTHRU_VALUE) {
+        ret_value = H5VL_PASSTHRU;
+        if (H5I_inc_ref(ret_value, FALSE) < 0)
+            HGOTO_ERROR(H5E_VOL, H5E_CANTINC, FAIL, "can't increment VOL connector refcount");
+    }
     else {
         H5PL_key_t          key;
         const H5VL_class_t *cls;
@@ -1377,7 +1865,12 @@ H5VL__register_connector_by_value(H5VL_class_value_t value, hbool_t app_ref, hid
         /* Try loading the connector */
         key.vol.kind    = H5VL_GET_CONNECTOR_BY_VALUE;
         key.vol.u.value = value;
-        if (NULL == (cls = (const H5VL_class_t *)H5PL_load(H5PL_TYPE_VOL, &key)))
+
+        H5_API_LOCK
+        cls = (const H5VL_class_t *)H5PL_load(H5PL_TYPE_VOL, &key);
+        H5_API_UNLOCK
+
+        if (NULL == cls)
             HGOTO_ERROR(H5E_VOL, H5E_CANTINIT, H5I_INVALID_HID, "unable to load VOL connector");
 
         /* Register the connector we loaded */
@@ -1414,10 +1907,10 @@ H5VL__is_connector_registered_by_name(const char *name)
     op_data.found_id   = H5I_INVALID_HID;
 
     /* Find connector with name */
-    if (H5I_iterate(H5I_VOL, H5VL__get_connector_cb, &op_data, TRUE) < 0)
-        HGOTO_ERROR(H5E_VOL, H5E_BADITER, FAIL, "can't iterate over VOL connectors");
+    if (H5VL__get_registered_connector(&op_data, false, true) < 0)
+        HGOTO_ERROR(H5E_VOL, H5E_BADITER, FAIL, "can't check if VOL is registered");
 
-    /* Found a connector with that name */
+    /* Set return value */
     if (op_data.found_id != H5I_INVALID_HID)
         ret_value = TRUE;
 
@@ -1451,10 +1944,10 @@ H5VL__is_connector_registered_by_value(H5VL_class_value_t value)
     op_data.found_id    = H5I_INVALID_HID;
 
     /* Find connector with value */
-    if (H5I_iterate(H5I_VOL, H5VL__get_connector_cb, &op_data, TRUE) < 0)
-        HGOTO_ERROR(H5E_VOL, H5E_BADITER, FAIL, "can't iterate over VOL connectors");
+    if (H5VL__get_registered_connector(&op_data, false, true) < 0)
+        HGOTO_ERROR(H5E_VOL, H5E_BADITER, FAIL, "can't check if VOL is registered");
 
-    /* Found a connector with that name */
+    /* Set return value */
     if (op_data.found_id != H5I_INVALID_HID)
         ret_value = TRUE;
 
@@ -1506,17 +1999,22 @@ done:
 hid_t
 H5VL__get_connector_id_by_name(const char *name, hbool_t is_api)
 {
-    hid_t ret_value = H5I_INVALID_HID; /* Return value */
+    hid_t                   ret_value = H5I_INVALID_HID; /* Return value */
+    H5VL_get_connector_ud_t op_data;                     /* Callback info for connector search */
 
     FUNC_ENTER_PACKAGE
 
-    /* Find connector with name */
-    if ((ret_value = H5VL__peek_connector_id_by_name(name)) < 0)
-        HGOTO_ERROR(H5E_VOL, H5E_BADITER, H5I_INVALID_HID, "can't find VOL connector");
+    /* Set up op data for iteration */
+    op_data.key.kind   = H5VL_GET_CONNECTOR_BY_NAME;
+    op_data.key.u.name = name;
+    op_data.found_id   = H5I_INVALID_HID;
 
-    /* Found a connector with that name */
-    if (H5I_inc_ref(ret_value, is_api) < 0)
-        HGOTO_ERROR(H5E_FILE, H5E_CANTINC, H5I_INVALID_HID, "unable to increment ref count on VOL connector");
+    /* Find connector with name */
+    if (H5VL__get_registered_connector(&op_data, true, is_api) < 0)
+        HGOTO_ERROR(H5E_VOL, H5E_BADITER, FAIL, "can't iterate over VOL connectors");
+
+    /* Set return value */
+    ret_value = op_data.found_id;
 
 done:
     FUNC_LEAVE_NOAPI(ret_value)
@@ -1536,17 +2034,22 @@ done:
 hid_t
 H5VL__get_connector_id_by_value(H5VL_class_value_t value, hbool_t is_api)
 {
-    hid_t ret_value = H5I_INVALID_HID; /* Return value */
+    hid_t                   ret_value = H5I_INVALID_HID; /* Return value */
+    H5VL_get_connector_ud_t op_data;                     /* Callback info for connector search */
 
     FUNC_ENTER_PACKAGE
 
-    /* Find connector with value */
-    if ((ret_value = H5VL__peek_connector_id_by_value(value)) < 0)
-        HGOTO_ERROR(H5E_VOL, H5E_BADITER, H5I_INVALID_HID, "can't find VOL connector");
+    /* Set up op data for iteration */
+    op_data.key.kind    = H5VL_GET_CONNECTOR_BY_VALUE;
+    op_data.key.u.value = value;
+    op_data.found_id    = H5I_INVALID_HID;
 
-    /* Found a connector with that value */
-    if (H5I_inc_ref(ret_value, is_api) < 0)
-        HGOTO_ERROR(H5E_FILE, H5E_CANTINC, H5I_INVALID_HID, "unable to increment ref count on VOL connector");
+    /* Find connector by value */
+    if (H5VL__get_registered_connector(&op_data, true, is_api) < 0)
+        HGOTO_ERROR(H5E_VOL, H5E_BADITER, FAIL, "can't iterate over VOL connectors");
+
+    /* Set return value */
+    ret_value = op_data.found_id;
 
 done:
     FUNC_LEAVE_NOAPI(ret_value)
@@ -1578,7 +2081,7 @@ H5VL__peek_connector_id_by_name(const char *name)
     op_data.found_id   = H5I_INVALID_HID;
 
     /* Find connector with name */
-    if (H5I_iterate(H5I_VOL, H5VL__get_connector_cb, &op_data, TRUE) < 0)
+    if (H5VL__get_registered_connector(&op_data, false, true) < 0)
         HGOTO_ERROR(H5E_VOL, H5E_BADITER, H5I_INVALID_HID, "can't iterate over VOL connectors");
 
     /* Set return value */
@@ -1614,7 +2117,7 @@ H5VL__peek_connector_id_by_value(H5VL_class_value_t value)
     op_data.found_id    = H5I_INVALID_HID;
 
     /* Find connector with value */
-    if (H5I_iterate(H5I_VOL, H5VL__get_connector_cb, &op_data, TRUE) < 0)
+    if (H5VL__get_registered_connector(&op_data, false, true) < 0)
         HGOTO_ERROR(H5E_VOL, H5E_BADITER, H5I_INVALID_HID, "can't iterate over VOL connectors");
 
     /* Set return value */
@@ -1734,9 +2237,13 @@ H5VL_vol_object(hid_t id)
             HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, NULL, "invalid identifier");
 
         /* If this is a datatype, get the VOL object attached to the H5T_t struct */
-        if (H5I_DATATYPE == obj_type)
-            if (NULL == (obj = H5T_get_named_type((H5T_t *)obj)))
+        if (H5I_DATATYPE == obj_type) {
+            H5_API_LOCK
+            obj = H5T_get_named_type((H5T_t *)obj);
+            H5_API_UNLOCK
+            if (NULL == obj)
                 HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, NULL, "not a named datatype");
+        }
     } /* end if */
     else
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, NULL, "invalid identifier type to function");
@@ -1746,6 +2253,149 @@ H5VL_vol_object(hid_t id)
 done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5VL_vol_object() */
+
+#if 1 /* JRM */
+
+/*-------------------------------------------------------------------------
+ * Function:    H5VL_object_data
+ *
+ * Purpose:     Correctly retrieve the 'data' field for a VOL object (H5VL_object),
+ *              even for nested / stacked VOL connectors.
+ *
+ * Return:      Success:        object pointer
+ *              Failure:        NULL
+ *
+ *-------------------------------------------------------------------------
+ */
+void *
+H5VL_object_data(const H5VL_object_t *vol_obj)
+{
+    bool done = FALSE;
+#ifdef H5_HAVE_MULTITHREAD
+    bool            decrement_ref_count = FALSE;
+    _Atomic size_t *rc_ptr;
+#endif /* H5_HAVE_MULTITHREAD */
+    void *ret_value = NULL;
+
+    FUNC_ENTER_NOAPI_NOINIT_NOERR
+
+    /* added code to validate the supplied *vol_obj.
+     *
+     * Prior to these updated, this function was causing seg faults when
+     * the vol_obj field pointed to an instance of H5VL_object_t that
+     * had been deallocated.
+     *
+     * Repaired this in two ways:
+     *
+     * First set up a multi-thread safe free list to avoid referencing
+     * deallocated instance of H5VL_object_t in this function.
+     *
+     * Second, we check the ref count on the supplied instance of
+     * H5VL_object_t.  If it has dropped to zero, the instance of
+     * H5VL_object_t has been discarded.  According to comments
+     * elsewhere which I have not validated, this is a one way
+     * process -- so in this case, we simply return NULL.
+     */
+    if (NULL == vol_obj) {
+
+        done = TRUE;
+
+#ifdef H5_HAVE_MULTITHREAD
+    }
+    else if (atomic_load(&(vol_obj->rc)) <= 0) {
+
+        assert(H5VL__VOL_OBJ_TAG == vol_obj->tag);
+
+#else  /* H5_HAVE_MULTITHREAD */
+    }
+    else if (vol_obj->rc <= 0) {
+#endif /* H5_HAVE_MULTITHREAD */
+
+        done = TRUE;
+    }
+    else {
+
+#ifdef H5_HAVE_MULTITHREAD
+
+        /* *vol_obj has (or had) a positive ref count.
+         * To avoid the possibility of the entry being
+         * deleted out from under us, increment the
+         * ref count if this is a multi-thread build,
+         * and decrement it again before returning.
+         *
+         * This is only possible in the multi-thread
+         * build, so only compile this code in that case.
+         *
+         * Since vol_obj is constant, we must cast
+         * away the constant qualifier in this operation.
+         * Epicycles are to keep clang happy.
+         */
+        size_t old_rc;
+
+        H5_GCC_CLANG_DIAG_OFF("cast-qual")
+        rc_ptr = (_Atomic size_t *)(&(vol_obj->rc));
+        H5_GCC_CLANG_DIAG_ON("cast-qual")
+
+        H5_GCC_CLANG_DIAG_OFF("cast-qual")
+        old_rc = atomic_fetch_add(rc_ptr, 1);
+        H5_GCC_CLANG_DIAG_ON("cast-qual")
+
+        if (old_rc <= 0) {
+
+            /* the reference count was decremented out from under us.
+             *
+             * Increment the ref count and set done to TRUE.
+             */
+            H5_GCC_CLANG_DIAG_OFF("cast-qual")
+            atomic_fetch_sub(rc_ptr, 1);
+            H5_GCC_CLANG_DIAG_ON("cast_qual")
+
+            done = TRUE;
+        }
+        else {
+
+            decrement_ref_count = TRUE;
+        }
+
+#endif /* H5_HAVE_MULTITHREAD */
+    }
+
+    if (done) {
+
+        /* error detected above -- set ret_value to NULL */
+        ret_value = NULL;
+    }
+    else
+        /* Check for 'get_object' callback in connector with checks for NULL
+         * pointers along the way.  If found, return NULL -- otherwise
+         * proceed as before.
+         */
+        if ((NULL == vol_obj) || (NULL == vol_obj->connector) || (NULL == vol_obj->connector->cls)) {
+
+            ret_value = NULL;
+        }
+        else if (vol_obj->connector->cls->wrap_cls.get_object) {
+
+            ret_value = (vol_obj->connector->cls->wrap_cls.get_object)(vol_obj->data);
+        }
+        else {
+
+            ret_value = vol_obj->data;
+        }
+
+#ifdef H5_HAVE_MULTITHREAD
+    if (decrement_ref_count) {
+
+        H5_GCC_CLANG_DIAG_OFF("cast-qual")
+        atomic_fetch_sub(rc_ptr, 1);
+        H5_GCC_CLANG_DIAG_ON("cast-qual")
+    }
+#endif /* H5_HAVE_MULTITHREAD */
+
+    FUNC_LEAVE_NOAPI(ret_value)
+} /* end H5VL_object_data() */
+
+#else /* JRM */
 
 /*-------------------------------------------------------------------------
  * Function:    H5VL_object_data
@@ -1773,6 +2423,8 @@ H5VL_object_data(const H5VL_object_t *vol_obj)
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5VL_object_data() */
+
+#endif /* JRM */
 
 /*-------------------------------------------------------------------------
  * Function:    H5VL_object_unwrap
@@ -1838,7 +2490,10 @@ H5VL__object(hid_t id, H5I_type_t obj_type)
                 HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, NULL, "invalid identifier");
 
             /* Get the actual datatype object that should be the vol_obj */
-            if (NULL == (vol_obj = H5T_get_named_type(dt)))
+            H5_API_LOCK
+            vol_obj = H5T_get_named_type(dt);
+            H5_API_UNLOCK
+            if (NULL == vol_obj)
                 HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, NULL, "not a named datatype");
             break;
         }
@@ -2148,7 +2803,11 @@ H5VL_free_lib_state(void *state)
     assert(state);
 
     /* Free the API context state */
-    if (H5CX_free_state((H5CX_state_t *)state) < 0)
+    H5_API_LOCK
+    ret_value = H5CX_free_state((H5CX_state_t *)state);
+    H5_API_UNLOCK
+
+    if (ret_value < 0)
         HGOTO_ERROR(H5E_VOL, H5E_CANTRELEASE, FAIL, "can't free API context state");
 
 done:
@@ -2173,9 +2832,14 @@ H5VL__free_vol_wrapper(H5VL_wrap_ctx_t *vol_wrap_ctx)
 
     /* Sanity check */
     assert(vol_wrap_ctx);
-    assert(0 == vol_wrap_ctx->rc);
     assert(vol_wrap_ctx->connector);
     assert(vol_wrap_ctx->connector->cls);
+
+#ifdef H5_HAVE_MULTITHREAD
+    assert(0 == atomic_load(&vol_wrap_ctx->rc));
+#else
+    assert(0 == vol_wrap_ctx->rc);
+#endif
 
     /* If there is a VOL connector object wrapping context, release it */
     if (vol_wrap_ctx->obj_wrap_ctx)
@@ -2189,7 +2853,7 @@ H5VL__free_vol_wrapper(H5VL_wrap_ctx_t *vol_wrap_ctx)
         HGOTO_ERROR(H5E_VOL, H5E_CANTDEC, FAIL, "unable to decrement ref count on VOL connector");
 
     /* Release object wrapping context */
-    H5FL_FREE(H5VL_wrap_ctx_t, vol_wrap_ctx);
+    H5FL_FREE_MT(H5VL_wrap_ctx_t, vol_wrap_ctx);
 
 done:
     FUNC_LEAVE_NOAPI(ret_value)
@@ -2221,38 +2885,16 @@ H5VL_set_vol_wrapper(const H5VL_object_t *vol_obj)
 
     /* Check for existing wrapping context */
     if (NULL == vol_wrap_ctx) {
-        void *obj_wrap_ctx = NULL; /* VOL connector's wrapping context */
-
-        /* Sanity checks */
-        assert(vol_obj->data);
-        assert(vol_obj->connector);
-
-        /* Check if the connector can create a wrap context */
-        if (vol_obj->connector->cls->wrap_cls.get_wrap_ctx) {
-            /* Sanity check */
-            assert(vol_obj->connector->cls->wrap_cls.free_wrap_ctx);
-
-            /* Get the wrap context from the connector */
-            if ((vol_obj->connector->cls->wrap_cls.get_wrap_ctx)(vol_obj->data, &obj_wrap_ctx) < 0)
-                HGOTO_ERROR(H5E_VOL, H5E_CANTGET, FAIL, "can't retrieve VOL connector's object wrap context");
-        } /* end if */
-
-        /* Allocate VOL object wrapper context */
-        if (NULL == (vol_wrap_ctx = H5FL_MALLOC(H5VL_wrap_ctx_t)))
-            HGOTO_ERROR(H5E_VOL, H5E_CANTALLOC, FAIL, "can't allocate VOL wrap context");
-
-        /* Increment the outstanding objects that are using the connector */
-        H5VL_conn_inc_rc(vol_obj->connector);
-
-        /* Set up VOL object wrapper context */
-        vol_wrap_ctx->rc           = 1;
-        vol_wrap_ctx->connector    = vol_obj->connector;
-        vol_wrap_ctx->obj_wrap_ctx = obj_wrap_ctx;
+        if (H5VL__new_vol_wrapper(vol_obj, &vol_wrap_ctx) < 0)
+            HGOTO_ERROR(H5E_VOL, H5E_CANTSET, FAIL, "can't create VOL object wrap context");
     } /* end if */
     else
-        /* Incremeent ref count on existing wrapper context */
+    /* Increment ref count on existing wrapper context */
+#ifdef H5_HAVE_MULTITHREAD
+        atomic_fetch_add(&vol_wrap_ctx->rc, 1);
+#else
         vol_wrap_ctx->rc++;
-
+#endif
     /* Save the wrapper context */
     if (H5CX_set_vol_wrap_ctx(vol_wrap_ctx) < 0)
         HGOTO_ERROR(H5E_VOL, H5E_CANTSET, FAIL, "can't set VOL object wrap context");
@@ -2260,10 +2902,75 @@ H5VL_set_vol_wrapper(const H5VL_object_t *vol_obj)
 done:
     if (ret_value < 0 && vol_wrap_ctx)
         /* Release object wrapping context */
-        H5FL_FREE(H5VL_wrap_ctx_t, vol_wrap_ctx);
+        H5FL_FREE_MT(H5VL_wrap_ctx_t, vol_wrap_ctx);
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5VL_set_vol_wrapper() */
+
+/*-------------------------------------------------------------------------
+ * Function:    H5VL__new_vol_wrapper
+ *
+ * Purpose:     Create a new VOL wrapping context for a VOL connector
+ *
+ * Return:      SUCCEED / FAIL
+ *
+ *-------------------------------------------------------------------------
+ */
+static herr_t
+H5VL__new_vol_wrapper(const H5VL_object_t *vol_obj, H5VL_wrap_ctx_t **wrap_ctx_out)
+{
+    H5VL_wrap_ctx_t *new_wrap_ctx = NULL;
+    void            *obj_wrap_ctx = NULL;
+    herr_t           ret_value    = SUCCEED;
+    bool             conn_incr_rc = false;
+
+    FUNC_ENTER_PACKAGE
+
+    /* Sanity checks */
+    assert(vol_obj->data);
+    assert(vol_obj->connector);
+
+    /* Check if the connector can create a wrap context */
+    if (vol_obj->connector->cls->wrap_cls.get_wrap_ctx) {
+        /* Sanity check */
+        assert(vol_obj->connector->cls->wrap_cls.free_wrap_ctx);
+
+        /* Get the wrap context from the connector */
+        if ((vol_obj->connector->cls->wrap_cls.get_wrap_ctx)(vol_obj->data, &obj_wrap_ctx) < 0)
+            HGOTO_ERROR(H5E_VOL, H5E_CANTGET, FAIL, "can't retrieve VOL connector's object wrap context");
+    } /* end if */
+
+    /* Allocate VOL object wrapper context */
+    if (NULL == (new_wrap_ctx = H5FL_MALLOC_MT(H5VL_wrap_ctx_t)))
+        HGOTO_ERROR(H5E_VOL, H5E_CANTALLOC, FAIL, "can't allocate VOL wrap context");
+
+    /* Increment the outstanding objects that are using the connector */
+    H5VL_conn_inc_rc(vol_obj->connector);
+    conn_incr_rc = true;
+
+    /* Set up VOL object wrapper context */
+    new_wrap_ctx->connector    = vol_obj->connector;
+    new_wrap_ctx->obj_wrap_ctx = obj_wrap_ctx;
+#ifdef H5_HAVE_MULTITHREAD
+    atomic_init(&new_wrap_ctx->rc, 1);
+#else
+    new_wrap_ctx->rc = 1;
+#endif
+
+    *wrap_ctx_out = new_wrap_ctx;
+
+done:
+    if (ret_value < 0 && new_wrap_ctx)
+        /* Release object wrapping context */
+        H5FL_FREE_MT(H5VL_wrap_ctx_t, new_wrap_ctx);
+
+    if (ret_value < 0 && conn_incr_rc)
+        /* Undo ref count increment on connector */
+        if (H5VL_conn_dec_rc(vol_obj->connector) < 0)
+            HDONE_ERROR(H5E_VOL, H5E_CANTDEC, FAIL, "unable to decrement ref count on VOL connector");
+
+    FUNC_LEAVE_NOAPI(ret_value)
+}
 
 /*-------------------------------------------------------------------------
  * Function:    H5VL_inc_vol_wrapper
@@ -2285,11 +2992,20 @@ H5VL_inc_vol_wrapper(void *_vol_wrap_ctx)
     /* Check for valid, active VOL object wrap context */
     if (NULL == vol_wrap_ctx)
         HGOTO_ERROR(H5E_VOL, H5E_BADVALUE, FAIL, "no VOL object wrap context?");
+
+#ifdef H5_HAVE_MULTITHREAD
+    if (0 == atomic_load(&vol_wrap_ctx->rc))
+        HGOTO_ERROR(H5E_VOL, H5E_BADVALUE, FAIL, "bad VOL object wrap context refcount?");
+
+    /* Increment ref count on wrapping context */
+    atomic_fetch_add(&vol_wrap_ctx->rc, 1);
+#else
     if (0 == vol_wrap_ctx->rc)
         HGOTO_ERROR(H5E_VOL, H5E_BADVALUE, FAIL, "bad VOL object wrap context refcount?");
 
     /* Increment ref count on wrapping context */
     vol_wrap_ctx->rc++;
+#endif
 
 done:
     FUNC_LEAVE_NOAPI(ret_value)
@@ -2316,6 +3032,19 @@ H5VL_dec_vol_wrapper(void *_vol_wrap_ctx)
     /* Check for valid, active VOL object wrap context */
     if (NULL == vol_wrap_ctx)
         HGOTO_ERROR(H5E_VOL, H5E_BADVALUE, FAIL, "no VOL object wrap context?");
+
+#ifdef H5_HAVE_MULTITHREAD
+    if (0 == atomic_load(&vol_wrap_ctx->rc))
+        HGOTO_ERROR(H5E_VOL, H5E_BADVALUE, FAIL, "bad VOL object wrap context refcount?");
+
+    /* Decrement ref count on wrapping context */
+    atomic_fetch_sub(&vol_wrap_ctx->rc, 1);
+
+    /* Release context if the ref count drops to zero */
+    if (0 == atomic_load(&vol_wrap_ctx->rc))
+        if (H5VL__free_vol_wrapper(vol_wrap_ctx) < 0)
+            HGOTO_ERROR(H5E_VOL, H5E_CANTRELEASE, FAIL, "unable to release VOL object wrapping context");
+#else
     if (0 == vol_wrap_ctx->rc)
         HGOTO_ERROR(H5E_VOL, H5E_BADVALUE, FAIL, "bad VOL object wrap context refcount?");
 
@@ -2326,6 +3055,7 @@ H5VL_dec_vol_wrapper(void *_vol_wrap_ctx)
     if (0 == vol_wrap_ctx->rc)
         if (H5VL__free_vol_wrapper(vol_wrap_ctx) < 0)
             HGOTO_ERROR(H5E_VOL, H5E_CANTRELEASE, FAIL, "unable to release VOL object wrapping context");
+#endif
 
 done:
     FUNC_LEAVE_NOAPI(ret_value)
@@ -2356,11 +3086,20 @@ H5VL_reset_vol_wrapper(void)
     if (NULL == vol_wrap_ctx)
         HGOTO_ERROR(H5E_VOL, H5E_BADVALUE, FAIL, "no VOL object wrap context?");
 
+#ifdef H5_HAVE_MULTITHREAD
+    /* Decrement ref count on wrapping context */
+    atomic_fetch_sub(&vol_wrap_ctx->rc, 1);
+
+    /* Release context if the ref count drops to zero */
+    if (0 == atomic_load(&vol_wrap_ctx->rc))
+#else
     /* Decrement ref count on wrapping context */
     vol_wrap_ctx->rc--;
 
     /* Release context if the ref count drops to zero */
-    if (0 == vol_wrap_ctx->rc) {
+    if (0 == vol_wrap_ctx->rc)
+#endif
+    {
         /* Release object wrapping context */
         if (H5VL__free_vol_wrapper(vol_wrap_ctx) < 0)
             HGOTO_ERROR(H5E_VOL, H5E_CANTRELEASE, FAIL, "unable to release VOL object wrapping context");
@@ -2390,9 +3129,10 @@ done:
 hid_t
 H5VL_wrap_register(H5I_type_t type, void *obj, hbool_t app_ref)
 {
-    H5VL_wrap_ctx_t *vol_wrap_ctx = NULL;         /* Object wrapping context */
-    void            *new_obj;                     /* Newly wrapped object */
-    hid_t            ret_value = H5I_INVALID_HID; /* Return value */
+    H5VL_wrap_ctx_t *vol_wrap_ctx = NULL;                     /* Object wrapping context */
+    void            *new_obj;                                 /* Newly wrapped object */
+    hid_t            ret_value             = H5I_INVALID_HID; /* Return value */
+    bool             dtype_already_managed = false; /* Whether target dtype (if any) is already VOL-managed */
 
     FUNC_ENTER_NOAPI(H5I_INVALID_HID)
 
@@ -2410,9 +3150,14 @@ H5VL_wrap_register(H5I_type_t type, void *obj, hbool_t app_ref)
      * field will get clobbered later, so disallow this.
      */
     if (type == H5I_DATATYPE)
-        if (vol_wrap_ctx->connector->id == H5VL_NATIVE)
-            if (TRUE == H5T_already_vol_managed((const H5T_t *)obj))
-                HGOTO_ERROR(H5E_VOL, H5E_BADTYPE, H5I_INVALID_HID, "can't wrap an uncommitted datatype");
+        if (vol_wrap_ctx->connector->id == H5VL_NATIVE) {
+            H5_API_LOCK
+            dtype_already_managed = H5T_already_vol_managed((const H5T_t *)obj);
+            H5_API_UNLOCK
+            if (dtype_already_managed)
+                HGOTO_ERROR(H5E_VOL, H5E_BADTYPE, H5I_INVALID_HID,
+                            "can't wrap an already VOL-managed datatype");
+        }
 
     /* Wrap the object with VOL connector info */
     if (NULL == (new_obj = H5VL__wrap_obj(obj, type)))
@@ -2528,7 +3273,11 @@ H5VL_setup_args(hid_t loc_id, H5I_type_t id_type, H5VL_object_t **vol_obj)
         HGOTO_ERROR(H5E_VOL, H5E_BADTYPE, FAIL, "not the correct type of ID");
 
     /* Set up collective metadata (if appropriate) */
-    if (H5CX_set_loc(loc_id) < 0)
+    H5_API_LOCK
+    ret_value = H5CX_set_loc(loc_id);
+    H5_API_UNLOCK
+
+    if (ret_value < 0)
         HGOTO_ERROR(H5E_VOL, H5E_CANTSET, FAIL, "can't set collective metadata read");
 
 done:
@@ -2560,7 +3309,11 @@ H5VL_setup_loc_args(hid_t loc_id, H5VL_object_t **vol_obj, H5VL_loc_params_t *lo
         HGOTO_ERROR(H5E_VOL, H5E_BADTYPE, FAIL, "not the correct type of ID");
 
     /* Set up collective metadata (if appropriate */
-    if (H5CX_set_loc(loc_id) < 0)
+    H5_API_LOCK
+    ret_value = H5CX_set_loc(loc_id);
+    H5_API_UNLOCK
+
+    if (ret_value < 0)
         HGOTO_ERROR(H5E_VOL, H5E_CANTSET, FAIL, "can't set collective metadata read");
 
     /* Set location parameters */
@@ -2595,7 +3348,11 @@ H5VL_setup_acc_args(hid_t loc_id, const H5P_libclass_t *libclass, hbool_t is_col
     assert(loc_params);
 
     /* Verify access property list and set up collective metadata if appropriate */
-    if (H5CX_set_apl(acspl_id, libclass, loc_id, is_collective) < 0)
+    H5_API_LOCK
+    ret_value = H5CX_set_apl(acspl_id, libclass, loc_id, is_collective);
+    H5_API_UNLOCK
+
+    if (ret_value < 0)
         HGOTO_ERROR(H5E_VOL, H5E_CANTSET, FAIL, "can't set access property list info");
 
     /* Get the location object */
@@ -2670,7 +3427,11 @@ H5VL_setup_name_args(hid_t loc_id, const char *name, hbool_t is_collective, hid_
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "name parameter cannot be an empty string");
 
     /* Verify access property list and set up collective metadata if appropriate */
-    if (H5CX_set_apl(&lapl_id, H5P_CLS_LACC, loc_id, is_collective) < 0)
+    H5_API_LOCK
+    ret_value = H5CX_set_apl(&lapl_id, H5P_CLS_LACC, loc_id, is_collective);
+    H5_API_UNLOCK
+
+    if (ret_value < 0)
         HGOTO_ERROR(H5E_VOL, H5E_CANTSET, FAIL, "can't set access property list info");
 
     /* Get the location object */
@@ -2720,7 +3481,11 @@ H5VL_setup_idx_args(hid_t loc_id, const char *name, H5_index_t idx_type, H5_iter
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "invalid iteration order specified");
 
     /* Verify access property list and set up collective metadata if appropriate */
-    if (H5CX_set_apl(&lapl_id, H5P_CLS_LACC, loc_id, is_collective) < 0)
+    H5_API_LOCK
+    ret_value = H5CX_set_apl(&lapl_id, H5P_CLS_LACC, loc_id, is_collective);
+    H5_API_UNLOCK
+
+    if (ret_value < 0)
         HGOTO_ERROR(H5E_VOL, H5E_CANTSET, FAIL, "can't set access property list info");
 
     /* Get the location object */
@@ -2815,3 +3580,651 @@ H5VL_get_cap_flags(const H5VL_connector_prop_t *connector_prop, uint64_t *cap_fl
 done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5VL_get_cap_flags() */
+
+#ifdef H5_HAVE_MULTITHREAD
+
+/*-------------------------------------------------------------------------
+ * Function:    H5VL__init_H5VL_mt_g()
+ *
+ * Purpose:     Initialize the various fields of H5VL_mt_g.
+ *
+ *              In particular, set up the free list.
+ *
+ * Return:      Success:        Non-negative
+ *              Failure:        Negative
+ *
+ *-------------------------------------------------------------------------
+ */
+static herr_t
+H5VL__init_H5VL_mt_g(void)
+{
+    H5VL_object_t         *vol_obj_ptr       = NULL;
+    H5VL_mt_vol_obj_sptr_t init_vol_obj_sptr = {NULL, 0ULL};
+    herr_t                 ret_value         = SUCCEED; /* Return value */
+
+    FUNC_ENTER_NOAPI(FAIL)
+
+    /* initialize the id info free list */
+
+    atomic_init(&(H5VL_mt_g.vol_obj_fl_shead), init_vol_obj_sptr);
+    atomic_init(&(H5VL_mt_g.vol_obj_fl_stail), init_vol_obj_sptr);
+    atomic_init(&(H5VL_mt_g.vol_obj_fl_len), 0ULL);
+    atomic_init(&(H5VL_mt_g.max_desired_vol_obj_fl_len), H5VL__MAX_DESIRED_OBJECT_FL_LEN);
+    atomic_init(&(H5VL_mt_g.vol_obj_next_sn), 1ULL);
+    atomic_init(&(H5VL_mt_g.vol_obj_max_realloc_sn), 0ULL);
+
+    /* allocate the initial entry in the vol object free list and initialize the vol object free list */
+    vol_obj_ptr = H5VL__alloc_vol_obj();
+    if (NULL == vol_obj_ptr)
+        HGOTO_ERROR(H5E_VOL, H5E_CANTINIT, FAIL, "Can't initialize vol object free list -- 1");
+
+    assert(H5VL__VOL_OBJ_TAG == vol_obj_ptr->tag);
+
+    atomic_store(&(vol_obj_ptr->serial_num), 1);
+
+    atomic_store(&(vol_obj_ptr->on_fl), TRUE);
+    atomic_store(&(vol_obj_ptr->serial_num), 1ULL);
+
+    init_vol_obj_sptr.ptr = vol_obj_ptr;
+    init_vol_obj_sptr.sn  = 1ULL;
+
+    atomic_store(&(H5VL_mt_g.vol_obj_fl_shead), init_vol_obj_sptr);
+    atomic_store(&(H5VL_mt_g.vol_obj_fl_stail), init_vol_obj_sptr);
+    atomic_store(&(H5VL_mt_g.vol_obj_fl_len), 1ULL);
+    atomic_store(&(H5VL_mt_g.vol_obj_next_sn), 2ULL);
+    atomic_init(&(H5VL_mt_g.vol_objs_active), 0LL);
+
+    /* initialize stats */
+    atomic_init(&(H5VL_mt_g.max_vol_obj_fl_len), 0ULL);
+    atomic_init(&(H5VL_mt_g.num_vol_obj_structs_alloced_from_heap), 0ULL);
+    atomic_init(&(H5VL_mt_g.num_vol_obj_structs_alloced_from_fl), 0ULL);
+    atomic_init(&(H5VL_mt_g.num_vol_obj_structs_freed), 0ULL);
+    atomic_init(&(H5VL_mt_g.num_vol_obj_structs_added_to_fl), 0ULL);
+    atomic_init(&(H5VL_mt_g.num_vol_obj_fl_tail_update_cols), 0ULL);
+    atomic_init(&(H5VL_mt_g.num_vol_obj_fl_head_update_cols), 0ULL);
+    atomic_init(&(H5VL_mt_g.num_vol_obj_fl_append_cols), 0ULL);
+    atomic_init(&(H5VL_mt_g.num_vol_obj_fl_alloc_req_denied_due_to_empty), 0ULL);
+    atomic_init(&(H5VL_mt_g.num_vol_obj_fl_head_sn_is_zero), 0ULL);
+    atomic_init(&(H5VL_mt_g.num_vol_obj_sn_assigned), 0ULL);
+    atomic_init(&(H5VL_mt_g.num_vol_obj_serial_num_resets), 0ULL);
+    atomic_init(&(H5VL_mt_g.num_vol_obj_structs_alloced_from_heap), 0ULL);
+    atomic_init(&(H5VL_mt_g.num_vol_obj_fl_alloc_req_denied_due_to_no_reallocable_entries), 0ULL);
+    atomic_init(&(H5VL_mt_g.num_vol_obj_fl_alloc_req_denied_due_to_empty), 0ULL);
+    atomic_init(&(H5VL_mt_g.num_vol_obj_fl_frees_skipped_due_to_empty), 0ULL);
+    atomic_init(&(H5VL_mt_g.num_vol_obj_fl_frees_skipped_due_to_fl_too_small), 0ULL);
+    atomic_init(&(H5VL_mt_g.num_vol_obj_fl_frees_skipped_due_to_no_reallocable_entries), 0ULL);
+    atomic_init(&(H5VL_mt_g.H5VL__alloc_vol_obj__num_calls), 0ULL);
+    atomic_init(&(H5VL_mt_g.H5VL__clear_vol_obj_free_list__num_calls), 0ULL);
+    atomic_init(&(H5VL_mt_g.H5VL__discard_vol_obj__num_calls), 0ULL);
+
+done:
+
+    FUNC_LEAVE_NOAPI(ret_value)
+
+} /* H5VLL__init_H5VL_mt_g() */
+
+/************************************************************************
+ *
+ * H5VL__alloc_vol_obj
+ *
+ *     Test to see if an instance of H5VL_mt_id_info_t is available on the
+ *     vol object free list.  If there is, remove it from the free list,
+ *     re-initialize it, and return a pointer to it.
+ *
+ *     Otherwise, allocate and initialize an instance of struct
+ *     H5VL_object_t and return a pointer to the instance of
+ *     H5VL_object_t to the caller.
+ *
+ *     Return a pointer to the new instance on success, and NULL on
+ *     failure.
+ *
+ *                                          JRM -- 6/14/25
+ *
+ ************************************************************************/
+
+static H5VL_object_t *
+H5VL__alloc_vol_obj(void)
+{
+    hbool_t fl_search_done = FALSE;
+    ;
+    hbool_t                result;
+    H5VL_object_t         *vol_obj_ptr = NULL;
+    H5VL_mt_vol_obj_sptr_t fl_shead;
+    H5VL_mt_vol_obj_sptr_t new_fl_shead;
+    H5VL_mt_vol_obj_sptr_t test_fl_shead;
+    H5VL_mt_vol_obj_sptr_t fl_stail;
+    H5VL_mt_vol_obj_sptr_t new_fl_stail;
+    H5VL_mt_vol_obj_sptr_t snext;
+    H5VL_mt_vol_obj_sptr_t new_snext;
+    H5VL_object_t         *ret_value = NULL; /* Return value */
+
+    FUNC_ENTER_NOAPI(NULL)
+
+    atomic_fetch_add(&(H5VL_mt_g.H5VL__alloc_vol_obj__num_calls), 1ULL);
+
+    fl_shead = atomic_load(&(H5VL_mt_g.vol_obj_fl_shead));
+
+    /* test to see if the free list has been initialized */
+
+    if (NULL == fl_shead.ptr) {
+
+        /* free list is not yet initialized */
+        fl_search_done = TRUE;
+    }
+
+    while (!fl_search_done) {
+
+        fl_shead = atomic_load(&(H5VL_mt_g.vol_obj_fl_shead));
+        fl_stail = atomic_load(&(H5VL_mt_g.vol_obj_fl_stail));
+
+        assert(fl_shead.ptr);
+        assert(fl_stail.ptr);
+
+        snext = atomic_load(&(fl_shead.ptr->fl_snext));
+
+        test_fl_shead = atomic_load(&(H5VL_mt_g.vol_obj_fl_shead));
+
+        if ((test_fl_shead.ptr == fl_shead.ptr) && (test_fl_shead.sn == fl_shead.sn)) {
+
+            uint64_t serial_num;
+
+            if (fl_shead.ptr == fl_stail.ptr) {
+
+                if (NULL == snext.ptr) {
+
+                    /* the free list is empty */
+                    atomic_fetch_add(&(H5VL_mt_g.num_vol_obj_fl_alloc_req_denied_due_to_empty), 1);
+                    fl_search_done = TRUE;
+                    break;
+                }
+
+                /* attempt to set H5VL_mt_g.vol_obj_fl_stail to snext.  It doesn't
+                 * matter whether we succeed or fail, as if we fail, it
+                 * just means that some other thread beat us to it.
+                 *
+                 * that said, it doesn't hurt to collect stats
+                 */
+                new_fl_stail.ptr = snext.ptr;
+                new_fl_stail.sn  = fl_stail.sn + 1;
+                if (!atomic_compare_exchange_strong(&(H5VL_mt_g.vol_obj_fl_stail), &fl_stail, new_fl_stail)) {
+
+                    atomic_fetch_add(&(H5VL_mt_g.num_vol_obj_fl_tail_update_cols), 1ULL);
+                }
+            }
+            else if ((0 < (serial_num = atomic_load(&(fl_shead.ptr->serial_num)))) &&
+                     (serial_num >= atomic_load(&(H5VL_mt_g.vol_obj_max_realloc_sn)))) {
+
+                /* if serial_num is zero, it should have already been removed from the free
+                 * list by another thread -- if so, the following attempt to remove if from
+                 * the free list will fail.  If this is not the case, we will catch the error
+                 * after we successfully remove the entry.
+                 */
+
+                /* No reallocable entries available -- just update stats and quit */
+                atomic_fetch_add(&(H5VL_mt_g.num_vol_obj_fl_alloc_req_denied_due_to_no_reallocable_entries),
+                                 1ULL);
+                fl_search_done = TRUE;
+            }
+            else {
+
+                /* set up new_fl_shead now in case we need it later.  */
+                new_fl_shead.ptr = snext.ptr;
+                new_fl_shead.sn  = fl_shead.sn + 1;
+
+                if (!atomic_compare_exchange_strong(&(H5VL_mt_g.vol_obj_fl_shead), &fl_shead, new_fl_shead)) {
+
+                    /* the attempt to remove the first item from the free list
+                     * failed.  Update stats and try again.
+                     */
+                    atomic_fetch_add(&(H5VL_mt_g.num_vol_obj_fl_head_update_cols), 1ULL);
+                }
+                else {
+
+                    /* first has been removed from the free list.  Set fl_node_ptr to first,
+                     * update stats, and exit the loop by setting fl_search_done to true.
+                     */
+                    vol_obj_ptr = fl_shead.ptr;
+
+                    assert(H5VL__VOL_OBJ_TAG == vol_obj_ptr->tag);
+
+                    assert(atomic_load(&(vol_obj_ptr->on_fl)));
+                    atomic_store(&(vol_obj_ptr->on_fl), FALSE);
+
+                    assert(0 < atomic_load(&(vol_obj_ptr->serial_num)));
+
+                    /* the above assert only exists in production builds.  If vol_obj_ptr->serial_num
+                     * is zero and we get this far, increment H5VL_mt_g.num_vol_obj_fl_head_sn_is_zero.
+                     */
+                    if (0 == atomic_load(&(vol_obj_ptr->serial_num))) {
+
+                        atomic_fetch_add(&(H5VL_mt_g.num_vol_obj_fl_head_sn_is_zero), 1ULL);
+
+                        /* should we throw an error here? */
+                    }
+                    atomic_store(&(vol_obj_ptr->serial_num), 0ULL);
+
+                    new_snext.ptr = NULL;
+                    new_snext.sn  = snext.sn + 1;
+
+                    result = atomic_compare_exchange_strong(&(vol_obj_ptr->fl_snext), &snext, new_snext);
+                    assert(result);
+
+                    /* instance of H5VL_object_t removed from the free list -- update stats */
+                    atomic_fetch_add(&(H5VL_mt_g.num_vol_obj_structs_alloced_from_fl), 1ULL);
+
+                    /* the following assignements should be safe, as only one thread
+                     * (this one) should be able to access *vol_obj_ptr at this time.
+                     *
+                     * That said, don't be surprised if thread sanitizers whine at this point.
+                     */
+                    vol_obj_ptr->data      = NULL;
+                    vol_obj_ptr->connector = NULL;
+                    assert(0 == atomic_load(&(vol_obj_ptr->rc)));
+
+                    fl_search_done = true;
+                }
+            }
+        }
+    } /* while ( ! fl_search_done ) */
+
+    if (NULL == vol_obj_ptr) {
+
+        H5VL_mt_vol_obj_sptr_t init_object_sptr = {NULL, 0ULL};
+
+        vol_obj_ptr = (H5VL_object_t *)malloc(sizeof(H5VL_object_t));
+
+        if (NULL == vol_obj_ptr)
+            HGOTO_ERROR(H5E_ID, H5E_CANTALLOC, NULL, "ID info allocation failed");
+
+        vol_obj_ptr->tag = H5VL__VOL_OBJ_TAG;
+        atomic_init(&(vol_obj_ptr->on_fl), FALSE);
+        atomic_init(&(vol_obj_ptr->fl_snext), init_object_sptr);
+        atomic_init(&(vol_obj_ptr->serial_num), 0ULL);
+        vol_obj_ptr->data      = NULL;
+        vol_obj_ptr->connector = NULL;
+        atomic_init(&vol_obj_ptr->rc, 0);
+
+        /* instance of H5VL_object_t allocated -- update stats */
+        atomic_fetch_add(&(H5VL_mt_g.num_vol_obj_structs_alloced_from_heap), 1ULL);
+    }
+
+    assert(vol_obj_ptr);
+
+    /* Set return value */
+    ret_value = vol_obj_ptr;
+
+    if (ret_value) {
+
+        int64_t old_vol_objs_active;
+
+        old_vol_objs_active = atomic_fetch_add(&(H5VL_mt_g.vol_objs_active), 1LL);
+
+        assert(0 <= old_vol_objs_active);
+    }
+
+done:
+
+    FUNC_LEAVE_NOAPI(ret_value)
+
+} /* H5VL__alloc_vol_obj() */
+
+/************************************************************************
+ *
+ * H5VL__clear_vol_obj_free_list
+ *
+ *     Discard all entries on the vol object free list in preparation for
+ *     shutdown.
+ *
+ *     Note that this function assumes that no other threads are active
+ *     in H5VL, and that it is therefore safe to ignore
+ *     H5VL_mt_g.id_max_realloc_sn and H5VL_mt_g.type_max_realloc_sn.
+ *
+ *                                          JRM -- 6/15/25
+ *
+ ************************************************************************/
+
+static herr_t
+H5VL__clear_vol_obj_free_list(void)
+{
+    uint64_t               test_val;
+    H5VL_mt_vol_obj_sptr_t fl_head;
+    H5VL_mt_vol_obj_sptr_t null_snext = {NULL, 0ULL};
+    H5VL_object_t         *fl_head_ptr;
+    H5VL_object_t         *vol_obj_ptr;
+    ;
+    herr_t ret_value = SUCCEED; /* Return value */
+
+    FUNC_ENTER_NOAPI(FAIL)
+
+    atomic_fetch_add(&(H5VL_mt_g.H5VL__clear_vol_obj_free_list__num_calls), 1ULL);
+
+    fl_head     = atomic_load(&(H5VL_mt_g.vol_obj_fl_shead));
+    fl_head_ptr = fl_head.ptr;
+
+    if ((!fl_head_ptr) || (0ULL == atomic_load(&(H5VL_mt_g.vol_obj_fl_len))))
+
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL,
+                    "H5VL_mt_g.vol_obj_fl_shead.ptr == NULL -- H5VL_mt_g not initialized?");
+
+    while (fl_head_ptr) {
+
+        vol_obj_ptr = fl_head_ptr;
+
+        assert(H5VL__VOL_OBJ_TAG == vol_obj_ptr->tag);
+        assert(atomic_load(&(vol_obj_ptr->on_fl)));
+
+        fl_head     = atomic_load(&(vol_obj_ptr->fl_snext));
+        fl_head_ptr = fl_head.ptr;
+
+        /* prepare *vol_obj_ptr for discard */
+        vol_obj_ptr->tag = H5VL__INVALID_VOL_OBJ_TAG;
+        atomic_store(&(vol_obj_ptr->fl_snext), null_snext);
+
+        free(vol_obj_ptr);
+
+        atomic_fetch_add(&(H5VL_mt_g.num_vol_obj_structs_freed), 1ULL);
+        test_val = atomic_fetch_sub(&(H5VL_mt_g.vol_obj_fl_len), 1ULL);
+        assert(test_val > 0ULL);
+    }
+
+    atomic_store(&(H5VL_mt_g.vol_obj_fl_shead), null_snext);
+    atomic_store(&(H5VL_mt_g.vol_obj_fl_stail), null_snext);
+
+    assert(0 == atomic_load(&(H5VL_mt_g.vol_obj_fl_len)));
+    assert(0 == atomic_load(&(H5VL_mt_g.vol_obj_fl_len)));
+
+done:
+
+    FUNC_LEAVE_NOAPI(ret_value)
+
+} /* H5VL__clear_vol_obj_free_list() */
+
+/************************************************************************
+ *
+ * H5VL__discard_vol_obj
+ *
+ *     Append the supplied instance of H5VL_object_t to the vol object
+ *     free list and increment H5VL_mt_g.vol_obj_fl_len.
+ *
+ *     If the free list length exceeds H5VL_mt_g.max_desired_vol_obj_fl_len,
+ *     attempt the remove the entry at the head of the vol object free
+ *     list from the free list, and discard it and decrement
+ *     H5VL_mt_g.vol_obj_fl_len if successful.
+ *
+ *                                          JRM -- 6/15/25
+ *
+ ************************************************************************/
+
+static herr_t
+H5VL__discard_vol_obj(H5VL_object_t *vol_obj_ptr)
+{
+    hbool_t                done                 = FALSE;
+    hbool_t                on_fl                = FALSE;
+    hbool_t                try_to_free_an_entry = FALSE;
+    hbool_t                result;
+    int64_t                old_vol_objs_active;
+    uint64_t               fl_len;
+    uint64_t               max_fl_len;
+    uint64_t               test_val;
+    H5VL_mt_vol_obj_sptr_t snext = {NULL, 0ULL};
+    H5VL_mt_vol_obj_sptr_t new_snext;
+    H5VL_mt_vol_obj_sptr_t fl_shead;
+    H5VL_mt_vol_obj_sptr_t fl_stail;
+    H5VL_mt_vol_obj_sptr_t fl_snext;
+    H5VL_mt_vol_obj_sptr_t new_fl_snext;
+    H5VL_mt_vol_obj_sptr_t new_fl_shead;
+    H5VL_mt_vol_obj_sptr_t new_fl_stail;
+    H5VL_mt_vol_obj_sptr_t test_fl_shead;
+    H5VL_mt_vol_obj_sptr_t test_fl_stail;
+    herr_t                 ret_value = SUCCEED; /* Return value */
+
+    FUNC_ENTER_NOAPI_NOERR
+
+    atomic_fetch_add(&(H5VL_mt_g.H5VL__discard_vol_obj__num_calls), 1ULL);
+
+    assert(vol_obj_ptr);
+    assert(H5VL__VOL_OBJ_TAG == vol_obj_ptr->tag);
+    assert(0 == atomic_load(&(vol_obj_ptr->rc)));
+
+    assert(!atomic_load(&(vol_obj_ptr->on_fl)));
+    assert(0 == atomic_load(&(vol_obj_ptr->serial_num)));
+
+    snext         = atomic_load(&(vol_obj_ptr->fl_snext));
+    new_snext.ptr = NULL;
+    new_snext.sn  = snext.sn + 1;
+
+    atomic_store(&(vol_obj_ptr->fl_snext), new_snext);
+
+    result = atomic_compare_exchange_strong(&(vol_obj_ptr->on_fl), &on_fl, TRUE);
+    assert(result);
+
+    atomic_store(&(vol_obj_ptr->serial_num), atomic_fetch_add(&(H5VL_mt_g.vol_obj_next_sn), 1ULL));
+
+    /* update stats */
+    atomic_fetch_add(&(H5VL_mt_g.num_vol_obj_sn_assigned), 1ULL);
+
+    while (!done) {
+
+        fl_stail = atomic_load(&(H5VL_mt_g.vol_obj_fl_stail));
+
+        assert(fl_stail.ptr);
+
+        fl_snext = atomic_load(&(fl_stail.ptr->fl_snext));
+
+        test_fl_stail = atomic_load(&(H5VL_mt_g.vol_obj_fl_stail));
+
+        if ((test_fl_stail.ptr == fl_stail.ptr) && (test_fl_stail.sn == fl_stail.sn)) {
+
+            if (NULL == fl_snext.ptr) {
+
+                /* attempt to append vol_obj_ptr by setting fl_tail->fl_snext.ptr to vol_obj_ptr.
+                 * If this succeeds, update stats and attempt to set H5VL_mt_g.vol_obj_fl_stail.ptr
+                 * to vol_obj_ptr as well.  This may or may not succeed, but in either
+                 * case we are done.
+                 */
+                new_fl_snext.ptr = vol_obj_ptr;
+                new_fl_snext.sn  = fl_snext.sn + 1;
+                if (atomic_compare_exchange_strong(&(fl_stail.ptr->fl_snext), &fl_snext, new_fl_snext)) {
+
+                    atomic_fetch_add(&(H5VL_mt_g.vol_obj_fl_len), 1);
+                    atomic_fetch_add(&(H5VL_mt_g.num_vol_obj_structs_added_to_fl), 1);
+
+                    new_fl_stail.ptr = vol_obj_ptr;
+                    new_fl_stail.sn  = fl_stail.sn + 1;
+                    if (!atomic_compare_exchange_strong(&(H5VL_mt_g.vol_obj_fl_stail), &fl_stail,
+                                                        new_fl_stail)) {
+
+                        atomic_fetch_add(&(H5VL_mt_g.num_vol_obj_fl_tail_update_cols), 1);
+                    }
+
+                    /* if appropriate, attempt to update H5VL_mt_g.max_vol_obj_fl_len.  In the
+                     * event of a collision, just ignore it and go on, as I don't see any
+                     * reasonable way to recover.
+                     */
+                    if ((fl_len = atomic_load(&(H5VL_mt_g.vol_obj_fl_len))) >
+                        (max_fl_len = atomic_load(&(H5VL_mt_g.max_vol_obj_fl_len)))) {
+
+                        atomic_compare_exchange_strong(&(H5VL_mt_g.max_vol_obj_fl_len), &max_fl_len, fl_len);
+                    }
+
+                    done = true;
+                }
+                else {
+
+                    /* append failed -- update stats and try again */
+                    atomic_fetch_add(&(H5VL_mt_g.num_vol_obj_fl_append_cols), 1);
+                }
+            }
+            else {
+
+                /* attempt to set lfht_ptr->fl_stail to fl_next.  It doesn't
+                 * matter whether we succeed or fail, as if we fail, it
+                 * just means that some other thread beat us to it.
+                 *
+                 * that said, it doesn't hurt to collect stats
+                 */
+                new_fl_stail.ptr = fl_snext.ptr;
+                new_fl_stail.sn  = fl_stail.sn + 1;
+                if (!atomic_compare_exchange_strong(&(H5VL_mt_g.vol_obj_fl_stail), &fl_stail, new_fl_stail)) {
+
+                    atomic_fetch_add(&(H5VL_mt_g.num_vol_obj_fl_tail_update_cols), 1);
+                }
+            }
+        }
+    }
+
+    /* update the number of active instances of H5VL_object_t */
+
+    old_vol_objs_active = atomic_fetch_sub(&(H5VL_mt_g.vol_objs_active), 1LL);
+
+    assert(1 <= old_vol_objs_active);
+
+    /* Test to see if H5VL_mt_g.vol_obj_fl_len is greater than H5VL_mt_g.max_desired_vol_obj_fl_len.
+     *
+     * Note that this doesn't mean that there is a entry available for discard -- we will check this
+     * later.
+     */
+
+    /* must rework this assert for the possibility that these fields will wrap around */
+    assert(atomic_load(&(H5VL_mt_g.vol_obj_max_realloc_sn)) <= atomic_load(&(H5VL_mt_g.vol_obj_next_sn)));
+
+    if (atomic_load(&(H5VL_mt_g.vol_obj_fl_len)) > atomic_load(&(H5VL_mt_g.max_desired_vol_obj_fl_len))) {
+
+        try_to_free_an_entry = TRUE;
+    }
+    else {
+
+        atomic_fetch_add(&(H5VL_mt_g.num_vol_obj_fl_frees_skipped_due_to_fl_too_small), 1ULL);
+    }
+
+    if (try_to_free_an_entry) {
+
+        uint64_t serial_num;
+
+        done = FALSE;
+
+        while (!done) {
+
+            fl_shead = atomic_load(&(H5VL_mt_g.vol_obj_fl_shead));
+            fl_stail = atomic_load(&(H5VL_mt_g.vol_obj_fl_stail));
+
+            assert(fl_shead.ptr);
+            assert(fl_stail.ptr);
+
+            fl_snext = atomic_load(&(fl_shead.ptr->fl_snext));
+
+            test_fl_shead = atomic_load(&(H5VL_mt_g.vol_obj_fl_shead));
+
+            if ((test_fl_shead.ptr == fl_shead.ptr) && (test_fl_shead.sn == fl_shead.sn)) {
+
+                if (fl_shead.ptr == fl_stail.ptr) {
+
+                    if (NULL == fl_snext.ptr) {
+
+                        /* the free list is empty */
+                        atomic_fetch_add(&(H5VL_mt_g.num_vol_obj_fl_frees_skipped_due_to_empty), 1);
+                        done = TRUE;
+                        break;
+                    }
+
+                    /* attempt to set H5VL_mt_g.vol_obj_fl_stail to fl_snext.  It doesn't
+                     * matter whether we succeed or fail, as if we fail, it
+                     * just means that some other thread beat us to it.
+                     *
+                     * that said, it doesn't hurt to collect stats
+                     */
+                    assert(fl_snext.ptr);
+                    new_fl_stail.ptr = fl_snext.ptr;
+                    new_fl_stail.sn  = fl_stail.sn + 1;
+                    if (!atomic_compare_exchange_strong(&(H5VL_mt_g.vol_obj_fl_stail), &fl_stail,
+                                                        new_fl_stail)) {
+
+                        atomic_fetch_add(&(H5VL_mt_g.num_vol_obj_fl_tail_update_cols), 1ULL);
+                    }
+                }
+                else if ((0 < (serial_num = atomic_load(&(fl_shead.ptr->serial_num)))) &&
+                         (serial_num >= atomic_load(&(H5VL_mt_g.vol_obj_max_realloc_sn)))) {
+
+                    /* if serial_num is zero, it should have already been removed from the free
+                     * list by another thread -- if so, the following attempt to remove if from
+                     * the free list will fail.  If this is not the case, we will catch the error
+                     * after we successfully remove the entry.
+                     */
+
+                    /* No reallocable entries available -- just update stats and quit */
+                    atomic_fetch_add(&(H5VL_mt_g.num_vol_obj_fl_frees_skipped_due_to_no_reallocable_entries),
+                                     1ULL);
+                    done = TRUE;
+                }
+                else {
+
+                    /* set up new_fl_shead */
+                    assert(fl_snext.ptr);
+                    new_fl_shead.ptr = fl_snext.ptr;
+                    new_fl_shead.sn  = fl_shead.sn + 1;
+
+                    if (!atomic_compare_exchange_strong(&(H5VL_mt_g.vol_obj_fl_shead), &fl_shead,
+                                                        new_fl_shead)) {
+
+                        /* the attempt to remove the first item from the free list
+                         * failed.  Update stats and try again.
+                         */
+                        atomic_fetch_add(&(H5VL_mt_g.num_vol_obj_fl_head_update_cols), 1ULL);
+                    }
+                    else {
+
+                        H5VL_mt_vol_obj_sptr_t null_snext = {NULL, 0ULL};
+
+                        /* first has been removed from the free list.  Set vol_obj_ptr to fl_shead.ptr,
+                         * discard *vol_obj_ptr, update stats, and exit the loop by setting done to true.
+                         */
+                        vol_obj_ptr = fl_shead.ptr;
+
+                        assert(H5VL__VOL_OBJ_TAG == vol_obj_ptr->tag);
+                        assert(atomic_load(&(vol_obj_ptr->on_fl)));
+                        assert(0 < atomic_load(&(vol_obj_ptr->serial_num)));
+
+                        /* the above assert only exists in production builds.  If vol_obj_ptr->serial_num
+                         * is zero and we get this far, increment H5VL_mt_g.num_vol_obj_fl_head_sn_is_zero.
+                         */
+                        if (0 == atomic_load(&(vol_obj_ptr->serial_num))) {
+
+                            atomic_fetch_add(&(H5VL_mt_g.num_vol_obj_fl_head_sn_is_zero), 1ULL);
+
+                            /* should we throw an error here? */
+                        }
+
+                        /* Note that we don't check to see if vol_obj_ptr->serial_num <
+                         * H5VL_mt_g.id_max_realloc_sn.  This was already checked above.
+                         * Further, the algorithm for maintaining H5VL_mt_g.id_max_realloc_sn
+                         * allows its value to bounce around a bit -- making it possible that
+                         * we would get a false assertion failure.
+                         */
+
+                        atomic_store(&(vol_obj_ptr->serial_num), 0ULL);
+                        atomic_fetch_add(&(H5VL_mt_g.num_vol_obj_serial_num_resets), 1ULL);
+
+                        /* prepare *if_info_ptr for discard */
+                        vol_obj_ptr->tag = H5VL__INVALID_VOL_OBJ_TAG;
+                        atomic_store(&(vol_obj_ptr->fl_snext), null_snext);
+
+                        free(vol_obj_ptr);
+
+                        /* update stats */
+                        atomic_fetch_add(&(H5VL_mt_g.num_vol_obj_structs_freed), 1ULL);
+
+                        test_val = atomic_fetch_sub(&(H5VL_mt_g.vol_obj_fl_len), 1ULL);
+                        assert(test_val > 0ULL);
+
+                        done = true;
+                    }
+                }
+            }
+        } /* while ( ! done ) */
+    }     /* if ( try_to_free_entry ) */
+
+    FUNC_LEAVE_NOAPI(ret_value)
+
+} /* H5VL__discard_vol_obj() */
+
+#endif /* H5_HAVE_MULTITHREAD */

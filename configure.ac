@@ -2064,6 +2064,9 @@ esac
 if test "X$MULTITHREAD" = "Xyes"; then
     AC_DEFINE([HAVE_MULTITHREAD], [1], [Define if we have multithread support])
 
+    absolute_srcdir=`cd $srcdir && pwd`
+    AC_DEFINE_UNQUOTED([MT_TEST_VOL_DIR], ["$absolute_srcdir/test/.libs/"], [The directory containing the multi-threaded wrapper VOL connectors])
+
     ## ----------------------------------------------------------------------
     ## Is the Pthreads library present?  It has a header file `pthread.h' and
     ## a library `-lpthread' and their locations might be specified with the
@@ -2175,6 +2178,8 @@ if test "X$MULTITHREAD" = "Xyes"; then
         fi
         ;;
     esac
+else
+    AC_DEFINE([MT_TEST_VOL_DIR], [""], [The directory containing the multi-threaded wrapper VOL connectors])
 fi
 
 ## ----------------------------------------------------------------------
@@ -4157,7 +4162,6 @@ AM_CONDITIONAL([BUILD_TOOLS_CONDITIONAL], [test "X$HDF5_TOOLS" = "Xyes"])
 AM_CONDITIONAL([BUILD_TOOLS_HL_GIF_CONDITIONAL], [test "X$HDF5_HL_GIF_TOOLS" = "Xyes"])
 AM_CONDITIONAL([BUILD_DOXYGEN_CONDITIONAL], [test "X$HDF5_DOXYGEN" = "Xyes"])
 AM_CONDITIONAL([BUILD_API_TESTS], [test "x$enable_api_tests" = "xyes"])
-
 ## ----------------------------------------------------------------------
 ## Build the Makefiles.
 ##
@@ -4279,6 +4283,8 @@ AC_CONFIG_FILES([Makefile
                  test/test_use_cases.sh
                  test/test_vds_env.sh
                  test/test_vds_swmr.sh
+                 test/threads/Makefile
+                 test/threads/unit/Makefile
                  test/API/Makefile
                  test/API/H5_api_test_config.h:test/API/H5_api_test_config_at.h.in
                  testpar/Makefile

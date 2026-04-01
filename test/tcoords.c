@@ -677,8 +677,8 @@ test_multiple_ends(hid_t file, hbool_t is_chunked)
 **  test_coords(): Main testing routine.
 **
 ****************************************************************/
-void
-test_coords(void)
+herr_t
+test_coords(TestParams_t H5_ATTR_UNUSED *params)
 {
     hid_t   fid;
     hbool_t is_chunk[2] = {TRUE, FALSE};
@@ -701,6 +701,8 @@ test_coords(void)
 
     ret = H5Fclose(fid);
     CHECK(ret, FAIL, "H5Fclose");
+
+    return SUCCEED;
 }
 
 /*-------------------------------------------------------------------------
@@ -712,12 +714,16 @@ test_coords(void)
  *
  *-------------------------------------------------------------------------
  */
-void
-cleanup_coords(void)
+herr_t
+cleanup_coords(TestParams_t H5_ATTR_UNUSED *params)
 {
-    H5E_BEGIN_TRY
-    {
-        H5Fdelete(FILENAME, H5P_DEFAULT);
+    if (GetTestCleanup()) {
+        H5E_BEGIN_TRY
+        {
+            H5Fdelete(FILENAME, H5P_DEFAULT);
+        }
+        H5E_END_TRY
     }
-    H5E_END_TRY
+
+    return SUCCEED;
 }

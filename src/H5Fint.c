@@ -33,6 +33,7 @@
 #include "H5MFprivate.h" /* File memory management                   */
 #include "H5MMprivate.h" /* Memory management                        */
 #include "H5Pprivate.h"  /* Property lists                           */
+#include "H5Ppkg_mt.h"
 #include "H5SMprivate.h" /* Shared Object Header Messages            */
 #include "H5Tprivate.h"  /* Datatypes                                */
 #include "H5VLprivate.h" /* Virtual Object Layer                     */
@@ -62,6 +63,13 @@ typedef struct H5F_olist_t {
     size_t list_index; /* Current index in open ID array */
     size_t max_nobjs;  /* Maximum # of IDs to put into array */
 } H5F_olist_t;
+
+#ifdef H5_HAVE_MULTITHREAD
+
+typedef H5P_mt_list_t  H5P_genplist_t;
+typedef H5P_mt_class_t H5P_genclass_t;
+
+#endif
 
 /********************/
 /* Package Typedefs */
@@ -112,10 +120,10 @@ H5FL_DEFINE(H5F_shared_t);
 
 /* File ID class */
 static const H5I_class_t H5I_FILE_CLS[1] = {{
-    H5I_FILE,                 /* ID class value */
-    0,                        /* Class flags */
-    0,                        /* # of reserved IDs for class */
-    (H5I_free_t)H5F__close_cb /* Callback routine for closing objects of this class */
+    H5I_FILE,                       /* ID class value */
+    H5I_CLASS_FREE_FUNC_TOUCHES_VL, /* Class flags */
+    0,                              /* # of reserved IDs for class */
+    (H5I_free_t)H5F__close_cb       /* Callback routine for closing objects of this class */
 }};
 
 /*-------------------------------------------------------------------------
@@ -2692,6 +2700,12 @@ H5F__build_actual_name(const H5F_t *f, const H5P_genplist_t *fapl, const char *n
                        char **actual_name /*out*/)
 {
     hid_t new_fapl_id = H5I_INVALID_HID; /* ID for duplicated FAPL */
+#ifdef H5_HAVE_MULTITHREAD
+    H5P_genplist_t *_fapl = malloc(sizeof(H5P_genplist_t));
+
+    memcpy(_fapl, fapl, sizeof(*fapl));
+    assert(_fapl);
+#endif
 #ifdef H5_HAVE_SYMLINK
     /* This has to be declared here to avoid unfreed resources on errors */
     char *realname = NULL;      /* Fully resolved path name of file */
@@ -2733,16 +2747,21 @@ H5F__build_actual_name(const H5F_t *f, const H5P_genplist_t *fapl, const char *n
             if (NULL == (realname = (char *)H5MM_calloc((size_t)PATH_MAX * sizeof(char))))
                 HGOTO_ERROR(H5E_RESOURCE, H5E_NOSPACE, FAIL, "memory allocation failed");
 
-            /* Perform a sanity check that the file or link wasn't switched
-             * between when we opened it and when we called lstat().  This is
-             * according to the security best practices for lstat() documented
-             * here:
-             * https://www.securecoding.cert.org/confluence/display/seccode/POS35-C.+Avoid+race+conditions+while+checking+for+the+existence+of+a+symbolic+link
-             */
+                /* Perform a sanity check that the file or link wasn't switched
+                 * between when we opened it and when we called lstat().  This is
+                 * according to the security best practices for lstat() documented
+                 * here:
+                 * https://www.securecoding.cert.org/confluence/display/seccode/POS35-C.+Avoid+race+conditions+while+checking+for+the+existence+of+a+symbolic+link
+                 */
 
-            /* Copy the FAPL object to modify */
+                /* Copy the FAPL object to modify */
+#if H5_HAVE_MULTITHREAD
+            if ((new_fapl_id = H5P_copy_plist(_fapl, FALSE)) < 0)
+                HGOTO_ERROR(H5E_FILE, H5E_CANTCOPY, FAIL, "unable to copy file access property list");
+#else
             if ((new_fapl_id = H5P_copy_plist(fapl, FALSE)) < 0)
                 HGOTO_ERROR(H5E_FILE, H5E_CANTCOPY, FAIL, "unable to copy file access property list");
+#endif
             if (NULL == (new_fapl = (H5P_genplist_t *)H5I_object(new_fapl_id)))
                 HGOTO_ERROR(H5E_FILE, H5E_CANTCREATE, FAIL, "can't get property list");
 

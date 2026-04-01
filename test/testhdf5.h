@@ -17,17 +17,20 @@
 #ifndef TESTHDF5_H
 #define TESTHDF5_H
 
-/* Include generic testing header also */
+/* Include generic testing header */
 #include "h5test.h"
+
+/* Include testing framework functionality */
+#include "testframe.h"
 
 /* Use %ld to print the value because long should cover most cases. */
 /* Used to make certain a return value _is_not_ a value */
 #define CHECK(ret, val, where)                                                                               \
     do {                                                                                                     \
         if (VERBOSE_HI) {                                                                                    \
-            print_func("   Call to routine: %15s at line %4d "                                               \
-                       "in %s returned %ld \n",                                                              \
-                       where, (int)__LINE__, __FILE__, (long)(ret));                                         \
+            printf("   Call to routine: %15s at line %4d "                                                   \
+                   "in %s returned %ld \n",                                                                  \
+                   where, (int)__LINE__, __FILE__, (long)(ret));                                             \
         }                                                                                                    \
         if ((ret) == (val)) {                                                                                \
             TestErrPrintf("*** UNEXPECTED RETURN from %s is %ld at line %4d "                                \
@@ -40,8 +43,8 @@
 #define CHECK_I(ret, where)                                                                                  \
     do {                                                                                                     \
         if (VERBOSE_HI) {                                                                                    \
-            print_func("   Call to routine: %15s at line %4d in %s returned %ld\n", (where), (int)__LINE__,  \
-                       __FILE__, (long)(ret));                                                               \
+            printf("   Call to routine: %15s at line %4d in %s returned %ld\n", (where), (int)__LINE__,      \
+                   __FILE__, (long)(ret));                                                                   \
         }                                                                                                    \
         if ((ret) < 0) {                                                                                     \
             TestErrPrintf("*** UNEXPECTED RETURN from %s is %ld line %4d in %s\n", (where), (long)(ret),     \
@@ -54,8 +57,8 @@
 #define CHECK_PTR(ret, where)                                                                                \
     do {                                                                                                     \
         if (VERBOSE_HI) {                                                                                    \
-            print_func("   Call to routine: %15s at line %4d in %s returned %p\n", (where), (int)__LINE__,   \
-                       __FILE__, ((const void *)ret));                                                       \
+            printf("   Call to routine: %15s at line %4d in %s returned %p\n", (where), (int)__LINE__,       \
+                   __FILE__, ((const void *)ret));                                                           \
         }                                                                                                    \
         if (!(ret)) {                                                                                        \
             TestErrPrintf("*** UNEXPECTED RETURN from %s is NULL line %4d in %s\n", (where), (int)__LINE__,  \
@@ -68,8 +71,8 @@
 #define CHECK_PTR_NULL(ret, where)                                                                           \
     do {                                                                                                     \
         if (VERBOSE_HI) {                                                                                    \
-            print_func("   Call to routine: %15s at line %4d in %s returned %p\n", (where), (int)__LINE__,   \
-                       __FILE__, ((const void *)ret));                                                       \
+            printf("   Call to routine: %15s at line %4d in %s returned %p\n", (where), (int)__LINE__,       \
+                   __FILE__, ((const void *)ret));                                                           \
         }                                                                                                    \
         if (ret) {                                                                                           \
             TestErrPrintf("*** UNEXPECTED RETURN from %s is not NULL line %4d in %s\n", (where),             \
@@ -82,8 +85,8 @@
 #define CHECK_PTR_EQ(ret, val, where)                                                                        \
     do {                                                                                                     \
         if (VERBOSE_HI) {                                                                                    \
-            print_func("   Call to routine: %15s at line %4d in %s returned %p\n", (where), (int)__LINE__,   \
-                       __FILE__, (const void *)(ret));                                                       \
+            printf("   Call to routine: %15s at line %4d in %s returned %p\n", (where), (int)__LINE__,       \
+                   __FILE__, (const void *)(ret));                                                           \
         }                                                                                                    \
         if (ret != val) {                                                                                    \
             TestErrPrintf(                                                                                   \
@@ -98,9 +101,9 @@
     do {                                                                                                     \
         long __x = (long)_x, __val = (long)_val;                                                             \
         if (VERBOSE_HI) {                                                                                    \
-            print_func("   Call to routine: %15s at line %4d in %s had value "                               \
-                       "%ld \n",                                                                             \
-                       (where), (int)__LINE__, __FILE__, __x);                                               \
+            printf("   Call to routine: %15s at line %4d in %s had value "                                   \
+                   "%ld \n",                                                                                 \
+                   (where), (int)__LINE__, __FILE__, __x);                                                   \
         }                                                                                                    \
         if ((__x) != (__val)) {                                                                              \
             TestErrPrintf("*** UNEXPECTED VALUE from %s should be %ld, but is %ld at line %4d "              \
@@ -115,8 +118,8 @@
     do {                                                                                                     \
         _type __x = (_type)_x, __val = (_type)_val;                                                          \
         if (VERBOSE_HI) {                                                                                    \
-            print_func("   Call to routine: %15s at line %4d in %s had value " _format " \n", (where),       \
-                       (int)__LINE__, __FILE__, __x);                                                        \
+            printf("   Call to routine: %15s at line %4d in %s had value " _format " \n", (where),           \
+                   (int)__LINE__, __FILE__, __x);                                                            \
         }                                                                                                    \
         if ((__x) != (__val)) {                                                                              \
             TestErrPrintf("*** UNEXPECTED VALUE from %s should be " _format ", but is " _format              \
@@ -131,9 +134,9 @@
 #define VERIFY_STR(x, val, where)                                                                            \
     do {                                                                                                     \
         if (VERBOSE_HI) {                                                                                    \
-            print_func("   Call to routine: %15s at line %4d in %s had value "                               \
-                       "%s \n",                                                                              \
-                       (where), (int)__LINE__, __FILE__, x);                                                 \
+            printf("   Call to routine: %15s at line %4d in %s had value "                                   \
+                   "%s \n",                                                                                  \
+                   (where), (int)__LINE__, __FILE__, x);                                                     \
         }                                                                                                    \
         if (HDstrcmp(x, val) != 0) {                                                                         \
             TestErrPrintf("*** UNEXPECTED VALUE from %s should be %s, but is %s at line %4d "                \
@@ -147,9 +150,9 @@
 #define RESULT(ret, func)                                                                                    \
     do {                                                                                                     \
         if (VERBOSE_MED) {                                                                                   \
-            print_func("   Call to routine: %15s at line %4d in %s returned "                                \
-                       "%ld\n",                                                                              \
-                       func, (int)__LINE__, __FILE__, (long)(ret));                                          \
+            printf("   Call to routine: %15s at line %4d in %s returned "                                    \
+                   "%ld\n",                                                                                  \
+                   func, (int)__LINE__, __FILE__, (long)(ret));                                              \
         }                                                                                                    \
         if (VERBOSE_HI)                                                                                      \
             H5Eprint2(H5E_DEFAULT, stdout);                                                                  \
@@ -161,94 +164,70 @@
         }                                                                                                    \
     } while (0)
 
-/* Used to document process through a test */
-#if defined(H5_HAVE_PARALLEL) && defined(H5_PARALLEL_TEST)
-#define MESSAGE(V, A)                                                                                        \
-    do {                                                                                                     \
-        int mpi_rank;                                                                                        \
-                                                                                                             \
-        MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);                                                            \
-        if (mpi_rank == 0 && HDGetTestVerbosity() > (V))                                                     \
-            print_func A;                                                                                    \
-    } while (0)
-#else /* H5_HAVE_PARALLEL */
-#define MESSAGE(V, A)                                                                                        \
-    do {                                                                                                     \
-        if (HDGetTestVerbosity() > (V))                                                                      \
-            print_func A;                                                                                    \
-    } while (0)
-#endif /* H5_HAVE_PARALLEL */
-
 /* Used to indicate an error that is complex to check for */
 #define ERROR(where)                                                                                         \
     do {                                                                                                     \
         if (VERBOSE_HI)                                                                                      \
-            print_func("   Call to routine: %15s at line %4d in %s returned "                                \
-                       "invalid result\n",                                                                   \
-                       where, (int)__LINE__, __FILE__);                                                      \
+            printf("   Call to routine: %15s at line %4d in %s returned "                                    \
+                   "invalid result\n",                                                                       \
+                   where, (int)__LINE__, __FILE__);                                                          \
         TestErrPrintf("*** UNEXPECTED RESULT from %s at line %4d in %s\n", where, (int)__LINE__, __FILE__);  \
     } while (0)
-
-/* definitions for command strings */
-#define VERBOSITY_STR "Verbosity"
-#define SKIP_STR      "Skip"
-#define TEST_STR      "Test"
-#define CLEAN_STR     "Cleanup"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /* Prototypes for the test routines */
-void test_metadata(void);
-void test_checksum(void);
-void test_refstr(void);
-void test_file(void);
-void test_h5o(void);
-void test_h5t(void);
-void test_h5s(void);
-void test_coords(void);
-void test_h5d(void);
-void test_attr(void);
-void test_select(void);
-void test_time(void);
-void test_reference(void);
-void test_reference_deprec(void);
-void test_vltypes(void);
-void test_vlstrings(void);
-void test_iterate(void);
-void test_array(void);
-void test_genprop(void);
-void test_configure(void);
-void test_h5_system(void);
-void test_misc(void);
-void test_ids(void);
-void test_skiplist(void);
-void test_sohm(void);
-void test_unicode(void);
+herr_t test_metadata(TestParams_t *params);
+herr_t test_checksum(TestParams_t *params);
+herr_t test_refstr(TestParams_t *params);
+herr_t test_file(TestParams_t *params);
+herr_t test_h5o(TestParams_t *params);
+herr_t test_h5t(TestParams_t *params);
+herr_t test_h5s(TestParams_t *params);
+herr_t test_coords(TestParams_t *params);
+herr_t test_h5d(TestParams_t *params);
+herr_t test_attr(TestParams_t *params);
+herr_t test_select(TestParams_t *params);
+herr_t test_time(TestParams_t *params);
+herr_t test_reference(TestParams_t *params);
+herr_t test_reference_deprec(TestParams_t *params);
+herr_t test_vltypes(TestParams_t *params);
+herr_t test_vlstrings(TestParams_t *params);
+herr_t test_iterate(TestParams_t *params);
+herr_t test_array(TestParams_t *params);
+herr_t test_genprop(TestParams_t *params);
+herr_t test_configure(TestParams_t *params);
+herr_t test_h5_system(TestParams_t *params);
+herr_t test_misc(TestParams_t *params);
+herr_t test_ids(TestParams_t *params);
+herr_t test_skiplist(TestParams_t *params);
+herr_t test_sohm(TestParams_t *params);
+herr_t test_unicode(TestParams_t *params);
 
 /* Prototypes for the cleanup routines */
-void cleanup_metadata(void);
-void cleanup_checksum(void);
-void cleanup_file(void);
-void cleanup_h5o(void);
-void cleanup_h5s(void);
-void cleanup_coords(void);
-void cleanup_attr(void);
-void cleanup_select(void);
-void cleanup_time(void);
-void cleanup_reference(void);
-void cleanup_reference_deprec(void);
-void cleanup_vltypes(void);
-void cleanup_vlstrings(void);
-void cleanup_iterate(void);
-void cleanup_array(void);
-void cleanup_genprop(void);
-void cleanup_configure(void);
-void cleanup_h5_system(void);
-void cleanup_sohm(void);
-void cleanup_misc(void);
-void cleanup_unicode(void);
+herr_t cleanup_metadata(TestParams_t *params);
+herr_t cleanup_checksum(TestParams_t *params);
+herr_t cleanup_file(TestParams_t *params);
+herr_t cleanup_h5o(TestParams_t *params);
+herr_t cleanup_h5s(TestParams_t *params);
+herr_t cleanup_coords(TestParams_t *params);
+herr_t cleanup_attr(TestParams_t *params);
+herr_t cleanup_select(TestParams_t *params);
+herr_t cleanup_time(TestParams_t *params);
+herr_t cleanup_reference(TestParams_t *params);
+herr_t cleanup_reference_deprec(TestParams_t *params);
+herr_t cleanup_vltypes(TestParams_t *params);
+herr_t cleanup_vlstrings(TestParams_t *params);
+herr_t cleanup_iterate(TestParams_t *params);
+herr_t cleanup_array(TestParams_t *params);
+herr_t cleanup_genprop(TestParams_t *params);
+herr_t cleanup_configure(TestParams_t *params);
+herr_t cleanup_h5_system(TestParams_t *params);
+herr_t cleanup_sohm(TestParams_t *params);
+herr_t cleanup_misc(TestParams_t *params);
+herr_t cleanup_unicode(TestParams_t *params);
 
 #ifdef __cplusplus
 }

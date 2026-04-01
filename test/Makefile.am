@@ -70,7 +70,7 @@ TEST_PROG= testhdf5 \
            enc_dec_plist_cross_platform getname vfd ros3 s3comms hdfs ntypes \
            dangle dtransform reserved cross_read freespace mf vds file_image \
            unregister cache_logging cork swmr thread_id vol timer event_set \
-           onion mt_id_test
+           onion mt_id_test mt_prop_test
 
 # List programs to be built when testing here
 #
@@ -126,7 +126,7 @@ if HAVE_SHARED_CONDITIONAL
   # The libh5test library provides common support code for the tests.
   # The filter_plugin* libraries are for use in filter_plugin.c.
   # Build them as shared libraries if that option was enabled in configure.
-  noinst_LTLIBRARIES=libh5test.la libfilter_plugin1_dsets.la libfilter_plugin2_dsets.la libfilter_plugin3_dsets.la libfilter_plugin4_groups.la libnull_vfd_plugin.la libnull_vol_connector.la
+  noinst_LTLIBRARIES=libh5test.la libfilter_plugin1_dsets.la libfilter_plugin2_dsets.la libfilter_plugin3_dsets.la libfilter_plugin4_groups.la libnull_vfd_plugin.la libnull_vol_connector.la libmt_vl_test_vol_connector.la libmt_native_wrapper_vol_connector.la libmt_passthru_wrapper_vol_connector.la
   libfilter_plugin1_dsets_la_SOURCES=filter_plugin1_dsets.c
   libfilter_plugin2_dsets_la_SOURCES=filter_plugin2_dsets.c
   libfilter_plugin3_dsets_la_SOURCES=filter_plugin3_dsets.c
@@ -149,7 +149,14 @@ if HAVE_SHARED_CONDITIONAL
   # null_vol_connector is used for testing basic VOL plugin functionality.
   libnull_vol_connector_la_SOURCES=null_vol_connector.c
   libnull_vol_connector_la_LDFLAGS=$(AM_LDFLAGS) -avoid-version -module -shared -export-dynamic -rpath /nowhere
-
+  # mt_vl_test_vol_connector is used for testing the H5VL module's internals
+  libmt_vl_test_vol_connector_la_SOURCES=mt_vl_test_vol_connector.c
+  libmt_vl_test_vol_connector_la_LDFLAGS=$(AM_LDFLAGS) -avoid-version -module -shared -export-dynamic -rpath /nowhere
+  # mt_native_wrapper_vol_connector and mt_passthru_wrapper_connector are used for testing the H5VL module with real operations
+  libmt_native_wrapper_vol_connector_la_SOURCES=mt_native_wrapper_vol_connector.c
+  libmt_native_wrapper_vol_connector_la_LDFLAGS=$(AM_LDFLAGS) -avoid-version -module -shared -export-dynamic -rpath /nowhere
+  libmt_passthru_wrapper_vol_connector_la_SOURCES=mt_passthru_wrapper_vol_connector.c ../src/H5VLpassthru.c
+  libmt_passthru_wrapper_vol_connector_la_LDFLAGS=$(AM_LDFLAGS) -avoid-version -module -shared -export-dynamic -rpath /nowhere
 else
   # The libh5test library provides common support code for the tests.
   noinst_LTLIBRARIES=libh5test.la
@@ -157,7 +164,7 @@ endif
 
 libh5test_la_SOURCES=h5test.c testframe.c cache_common.c swmr_common.c external_common.c
 
-# Use libhd5test.la to compile all of the tests
+# Use libh5test.la to compile all of the tests
 LDADD=libh5test.la $(LIBHDF5)
 
 # List the source files for tests that have more than one
@@ -232,7 +239,7 @@ CHECK_CLEANFILES+=accum.h5 cmpd_dset.h5 mdset.h5 compact_dataset.h5 dataset.h5 d
 testhdf5_SOURCES=testhdf5.c tarray.c tattr.c tchecksum.c tconfig.c tfile.c \
     tgenprop.c th5o.c th5s.c th5_system.c tcoords.c tid.c titerate.c tmeta.c tmisc.c \
     trefer.c trefer_deprec.c trefstr.c tselect.c tskiplist.c tsohm.c ttime.c tunicode.c \
-    tvlstr.c tvltypes.c
+    tvlstr.c tvltypes.c 
 
 # Sources for Use Cases
 use_append_chunk_SOURCES=use_append_chunk.c use_common.c
@@ -248,9 +255,14 @@ if MIRROR_VFD_CONDITIONAL
   DISTCLEANFILES+= test_mirror.sh
 endif
 
+# Set up SUBDIRS, working around the fact that it must be defined all at once
 if BUILD_API_TESTS
-  SUBDIRS= . API
+  API_TESTS_DIR = API
 endif
+
+THREADS_TESTS_DIR = threads
+
+SUBDIRS = . $(THREADS_TESTS_DIR) $(API_TESTS_DIR)
 
 include $(top_srcdir)/config/conclude.am
 

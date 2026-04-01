@@ -96,8 +96,9 @@ H5Lmove(hid_t src_loc_id, const char *src_name, hid_t dst_loc_id, const char *ds
     H5VL_loc_params_t loc_params2;
     H5VL_object_t     tmp_vol_obj;         /* Temporary object */
     herr_t            ret_value = SUCCEED; /* Return value */
+    htri_t            ret       = FALSE;
 
-    FUNC_ENTER_API(FAIL)
+    FUNC_ENTER_API_NO_MUTEX(FAIL)
     H5TRACE6("e", "i*si*sii", src_loc_id, src_name, dst_loc_id, dst_name, lcpl_id, lapl_id);
 
     /* Check arguments */
@@ -107,19 +108,31 @@ H5Lmove(hid_t src_loc_id, const char *src_name, hid_t dst_loc_id, const char *ds
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "no current name specified");
     if (!dst_name || !*dst_name)
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "no destination name specified");
-    if (lcpl_id != H5P_DEFAULT && (TRUE != H5P_isa_class(lcpl_id, H5P_LINK_CREATE)))
-        HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a link creation property list");
+    if (lcpl_id != H5P_DEFAULT) {
+        H5_API_LOCK
+        ret = H5P_isa_class(lcpl_id, H5P_LINK_CREATE);
+        H5_API_UNLOCK
+
+        if (TRUE != ret)
+            HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a link creation property list");
+    }
 
     /* Check the link create property list */
     if (H5P_DEFAULT == lcpl_id)
         lcpl_id = H5P_LINK_CREATE_DEFAULT;
 
     /* Set the LCPL for the API context */
+    H5_API_LOCK
     H5CX_set_lcpl(lcpl_id);
+    H5_API_UNLOCK
 
     /* Verify access property list and set up collective metadata if appropriate */
-    if (H5CX_set_apl(&lapl_id, H5P_CLS_LACC, ((src_loc_id != H5L_SAME_LOC) ? src_loc_id : dst_loc_id), TRUE) <
-        0)
+    H5_API_LOCK
+    ret_value =
+        H5CX_set_apl(&lapl_id, H5P_CLS_LACC, ((src_loc_id != H5L_SAME_LOC) ? src_loc_id : dst_loc_id), TRUE);
+    H5_API_UNLOCK
+
+    if (ret_value < 0)
         HGOTO_ERROR(H5E_LINK, H5E_CANTSET, FAIL, "can't set access property list info");
 
     /* Set location parameter for source object */
@@ -174,7 +187,7 @@ H5Lmove(hid_t src_loc_id, const char *src_name, hid_t dst_loc_id, const char *ds
         HGOTO_ERROR(H5E_LINK, H5E_CANTMOVE, FAIL, "unable to move link");
 
 done:
-    FUNC_LEAVE_API(ret_value)
+    FUNC_LEAVE_API_NO_MUTEX(ret_value)
 } /* end H5Lmove() */
 
 /*-------------------------------------------------------------------------
@@ -198,8 +211,9 @@ H5Lcopy(hid_t src_loc_id, const char *src_name, hid_t dst_loc_id, const char *ds
     H5VL_loc_params_t loc_params2;
     H5VL_object_t     tmp_vol_obj;         /* Temporary object */
     herr_t            ret_value = SUCCEED; /* Return value */
+    htri_t            ret       = FALSE;
 
-    FUNC_ENTER_API(FAIL)
+    FUNC_ENTER_API_NO_MUTEX(FAIL)
     H5TRACE6("e", "i*si*sii", src_loc_id, src_name, dst_loc_id, dst_name, lcpl_id, lapl_id);
 
     /* Check arguments */
@@ -209,19 +223,31 @@ H5Lcopy(hid_t src_loc_id, const char *src_name, hid_t dst_loc_id, const char *ds
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "no current name specified");
     if (!dst_name || !*dst_name)
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "no destination name specified");
-    if (lcpl_id != H5P_DEFAULT && (TRUE != H5P_isa_class(lcpl_id, H5P_LINK_CREATE)))
-        HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a link creation property list");
+    if (lcpl_id != H5P_DEFAULT) {
+        H5_API_LOCK
+        ret = H5P_isa_class(lcpl_id, H5P_LINK_CREATE);
+        H5_API_UNLOCK
+
+        if (TRUE != ret)
+            HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a link creation property list");
+    }
 
     /* Check the link create property list */
     if (H5P_DEFAULT == lcpl_id)
         lcpl_id = H5P_LINK_CREATE_DEFAULT;
 
     /* Set the LCPL for the API context */
+    H5_API_LOCK
     H5CX_set_lcpl(lcpl_id);
+    H5_API_UNLOCK
 
     /* Verify access property list and set up collective metadata if appropriate */
-    if (H5CX_set_apl(&lapl_id, H5P_CLS_LACC, ((src_loc_id != H5L_SAME_LOC) ? src_loc_id : dst_loc_id), TRUE) <
-        0)
+    H5_API_LOCK
+    ret_value =
+        H5CX_set_apl(&lapl_id, H5P_CLS_LACC, ((src_loc_id != H5L_SAME_LOC) ? src_loc_id : dst_loc_id), TRUE);
+    H5_API_UNLOCK
+
+    if (ret_value < 0)
         HGOTO_ERROR(H5E_LINK, H5E_CANTSET, FAIL, "can't set access property list info");
 
     /* Set location parameter for source object */
@@ -276,7 +302,7 @@ H5Lcopy(hid_t src_loc_id, const char *src_name, hid_t dst_loc_id, const char *ds
         HGOTO_ERROR(H5E_LINK, H5E_CANTMOVE, FAIL, "unable to copy link");
 
 done:
-    FUNC_LEAVE_API(ret_value)
+    FUNC_LEAVE_API_NO_MUTEX(ret_value)
 } /* end H5Lcopy() */
 
 /*-------------------------------------------------------------------------
@@ -298,6 +324,7 @@ H5L__create_soft_api_common(const char *link_target, hid_t link_loc_id, const ch
     H5VL_link_create_args_t vol_cb_args;              /* Arguments to VOL callback */
     H5VL_loc_params_t       loc_params;               /* Location parameters for object access */
     herr_t                  ret_value = SUCCEED;      /* Return value */
+    htri_t                  ret       = FALSE;
 
     FUNC_ENTER_PACKAGE
 
@@ -308,8 +335,15 @@ H5L__create_soft_api_common(const char *link_target, hid_t link_loc_id, const ch
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "link_target parameter cannot be NULL");
     if (!*link_target)
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "link_target parameter cannot be an empty string");
-    if (lcpl_id != H5P_DEFAULT && (TRUE != H5P_isa_class(lcpl_id, H5P_LINK_CREATE)))
-        HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a link creation property list");
+    if (lcpl_id != H5P_DEFAULT) {
+        H5_API_LOCK
+        ret = H5P_isa_class(lcpl_id, H5P_LINK_CREATE);
+        H5_API_UNLOCK
+
+        if (TRUE != ret)
+            HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a link creation property list");
+    }
+
     /* link_name is verified in H5VL_setup_name_args() */
 
     /* Get the link creation property list */
@@ -317,11 +351,25 @@ H5L__create_soft_api_common(const char *link_target, hid_t link_loc_id, const ch
         lcpl_id = H5P_LINK_CREATE_DEFAULT;
 
     /* Set the LCPL for the API context */
+    H5_API_LOCK
     H5CX_set_lcpl(lcpl_id);
+    H5_API_UNLOCK
 
+/**
+ * This call to H5CX_set_apl() is redundant because the function immediately below,
+ * H5VL_setup_name_args() makes the same call to H5CX_set_apl() with the same
+ * parameters. Thus, for the multithread version this call is removed for tracking,
+ * debugging, and efficiency.
+ */
+#ifndef H5_HAVE_MULTITHREAD
     /* Verify access property list and set up collective metadata if appropriate */
-    if (H5CX_set_apl(&lapl_id, H5P_CLS_LACC, link_loc_id, TRUE) < 0)
+    H5_API_LOCK
+    ret_value = H5CX_set_apl(&lapl_id, H5P_CLS_LACC, link_loc_id, TRUE);
+    H5_API_UNLOCK
+
+    if (ret_value < 0)
         HGOTO_ERROR(H5E_LINK, H5E_CANTSET, FAIL, "can't set access property list info");
+#endif
 
     /* Set up object access arguments */
     if (H5VL_setup_name_args(link_loc_id, link_name, TRUE, lapl_id, vol_obj_ptr, &loc_params) < 0)
@@ -361,7 +409,7 @@ H5Lcreate_soft(const char *link_target, hid_t link_loc_id, const char *link_name
 {
     herr_t ret_value = SUCCEED; /* Return value */
 
-    FUNC_ENTER_API(FAIL)
+    FUNC_ENTER_API_NO_MUTEX(FAIL)
     H5TRACE5("e", "*si*sii", link_target, link_loc_id, link_name, lcpl_id, lapl_id);
 
     /* Creates a soft link synchronously */
@@ -369,7 +417,7 @@ H5Lcreate_soft(const char *link_target, hid_t link_loc_id, const char *link_name
         HGOTO_ERROR(H5E_LINK, H5E_CANTCREATE, FAIL, "unable to synchronously create soft link");
 
 done:
-    FUNC_LEAVE_API(ret_value)
+    FUNC_LEAVE_API_NO_MUTEX(ret_value)
 } /* end H5Lcreate_soft() */
 
 /*-------------------------------------------------------------------------
@@ -390,7 +438,7 @@ H5Lcreate_soft_async(const char *app_file, const char *app_func, unsigned app_li
     void         **token_ptr = H5_REQUEST_NULL; /* Pointer to request token for async operation        */
     herr_t         ret_value = SUCCEED;         /* Return value */
 
-    FUNC_ENTER_API(FAIL)
+    FUNC_ENTER_API_NO_MUTEX(FAIL)
     H5TRACE9("e", "*s*sIu*si*siii", app_file, app_func, app_line, link_target, link_loc_id, link_name,
              lcpl_id, lapl_id, es_id);
 
@@ -412,7 +460,7 @@ H5Lcreate_soft_async(const char *app_file, const char *app_func, unsigned app_li
             HGOTO_ERROR(H5E_LINK, H5E_CANTINSERT, FAIL, "can't insert token into event set");
 
 done:
-    FUNC_LEAVE_API(ret_value)
+    FUNC_LEAVE_API_NO_MUTEX(ret_value)
 } /* H5Lcreate_soft_async() */
 
 /*-------------------------------------------------------------------------
@@ -437,6 +485,7 @@ H5L__create_hard_api_common(hid_t cur_loc_id, const char *cur_name, hid_t link_l
     H5VL_link_create_args_t vol_cb_args;                  /* Arguments to VOL callback */
     H5VL_loc_params_t       link_loc_params;     /* Location parameters for link_loc_id object access */
     herr_t                  ret_value = SUCCEED; /* Return value */
+    htri_t                  ret       = FALSE;
 
     FUNC_ENTER_PACKAGE
 
@@ -451,18 +500,30 @@ H5L__create_hard_api_common(hid_t cur_loc_id, const char *cur_name, hid_t link_l
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "new_name parameter cannot be NULL");
     if (!*link_name)
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "new_name parameter cannot be an empty string");
-    if (lcpl_id != H5P_DEFAULT && (TRUE != H5P_isa_class(lcpl_id, H5P_LINK_CREATE)))
-        HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a link creation property list");
+    if (lcpl_id != H5P_DEFAULT) {
+        H5_API_LOCK
+        ret = H5P_isa_class(lcpl_id, H5P_LINK_CREATE);
+        H5_API_UNLOCK
+
+        if (TRUE != ret)
+            HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a link creation property list");
+    }
 
     /* Check the link create property list */
     if (H5P_DEFAULT == lcpl_id)
         lcpl_id = H5P_LINK_CREATE_DEFAULT;
 
     /* Set the LCPL for the API context */
+    H5_API_LOCK
     H5CX_set_lcpl(lcpl_id);
+    H5_API_UNLOCK
 
     /* Verify access property list and set up collective metadata if appropriate */
-    if (H5CX_set_apl(&lapl_id, H5P_CLS_LACC, cur_loc_id, TRUE) < 0)
+    H5_API_LOCK
+    ret_value = H5CX_set_apl(&lapl_id, H5P_CLS_LACC, cur_loc_id, TRUE);
+    H5_API_UNLOCK
+
+    if (ret_value < 0)
         HGOTO_ERROR(H5E_LINK, H5E_CANTSET, FAIL, "can't set access property list info");
 
     /* Set up new location struct */
@@ -544,7 +605,7 @@ H5Lcreate_hard(hid_t cur_loc_id, const char *cur_name, hid_t new_loc_id, const c
 {
     herr_t ret_value = SUCCEED; /* Return value */
 
-    FUNC_ENTER_API(FAIL)
+    FUNC_ENTER_API_NO_MUTEX(FAIL)
     H5TRACE6("e", "i*si*sii", cur_loc_id, cur_name, new_loc_id, new_name, lcpl_id, lapl_id);
 
     /* Creates a hard link synchronously */
@@ -553,7 +614,7 @@ H5Lcreate_hard(hid_t cur_loc_id, const char *cur_name, hid_t new_loc_id, const c
         HGOTO_ERROR(H5E_LINK, H5E_CANTCREATE, FAIL, "unable to synchronously create hard link");
 
 done:
-    FUNC_LEAVE_API(ret_value)
+    FUNC_LEAVE_API_NO_MUTEX(ret_value)
 } /* end H5Lcreate_hard() */
 
 /*-------------------------------------------------------------------------
@@ -581,7 +642,7 @@ H5Lcreate_hard_async(const char *app_file, const char *app_func, unsigned app_li
     void         **token_ptr   = H5_REQUEST_NULL; /* Pointer to request token for async operation        */
     herr_t         ret_value   = SUCCEED;         /* Return value */
 
-    FUNC_ENTER_API(FAIL)
+    FUNC_ENTER_API_NO_MUTEX(FAIL)
     H5TRACE10("e", "*s*sIui*si*siii", app_file, app_func, app_line, cur_loc_id, cur_name, new_loc_id,
               new_name, lcpl_id, lapl_id, es_id);
 
@@ -603,7 +664,7 @@ H5Lcreate_hard_async(const char *app_file, const char *app_func, unsigned app_li
             HGOTO_ERROR(H5E_LINK, H5E_CANTINSERT, FAIL, "can't insert token into event set");
 
 done:
-    FUNC_LEAVE_API(ret_value)
+    FUNC_LEAVE_API_NO_MUTEX(ret_value)
 } /* H5Lcreate_hard_async() */
 
 /*-------------------------------------------------------------------------
@@ -638,7 +699,7 @@ H5Lcreate_external(const char *file_name, const char *obj_name, hid_t link_loc_i
     uint8_t                *p;                    /* Pointer into external link buffer */
     herr_t                  ret_value = SUCCEED;  /* Return value */
 
-    FUNC_ENTER_API(FAIL)
+    FUNC_ENTER_API_NO_MUTEX(FAIL)
     H5TRACE6("e", "*s*si*sii", file_name, obj_name, link_loc_id, link_name, lcpl_id, lapl_id);
 
     /* Check arguments */
@@ -654,10 +715,16 @@ H5Lcreate_external(const char *file_name, const char *obj_name, hid_t link_loc_i
         lcpl_id = H5P_LINK_CREATE_DEFAULT;
 
     /* Set the LCPL for the API context */
+    H5_API_LOCK
     H5CX_set_lcpl(lcpl_id);
+    H5_API_UNLOCK
 
     /* Verify access property list and set up collective metadata if appropriate */
-    if (H5CX_set_apl(&lapl_id, H5P_CLS_LACC, link_loc_id, TRUE) < 0)
+    H5_API_LOCK
+    ret_value = H5CX_set_apl(&lapl_id, H5P_CLS_LACC, link_loc_id, TRUE);
+    H5_API_UNLOCK
+
+    if (ret_value < 0)
         HGOTO_ERROR(H5E_LINK, H5E_CANTSET, FAIL, "can't set access property list info");
 
     /* Get normalized copy of the link target */
@@ -702,7 +769,7 @@ done:
     H5MM_xfree(ext_link_buf);
     H5MM_xfree(norm_obj_name);
 
-    FUNC_LEAVE_API(ret_value)
+    FUNC_LEAVE_API_NO_MUTEX(ret_value)
 } /* end H5Lcreate_external() */
 
 /*-------------------------------------------------------------------------
@@ -735,7 +802,7 @@ H5Lcreate_ud(hid_t link_loc_id, const char *link_name, H5L_type_t link_type, con
     H5VL_loc_params_t       loc_params;          /* Location parameters for object access */
     herr_t                  ret_value = SUCCEED; /* Return value */
 
-    FUNC_ENTER_API(FAIL)
+    FUNC_ENTER_API_NO_MUTEX(FAIL)
     H5TRACE7("e", "i*sLl*xzii", link_loc_id, link_name, link_type, udata, udata_size, lcpl_id, lapl_id);
 
     /* Check arguments */
@@ -751,10 +818,16 @@ H5Lcreate_ud(hid_t link_loc_id, const char *link_name, H5L_type_t link_type, con
         lcpl_id = H5P_LINK_CREATE_DEFAULT;
 
     /* Set the LCPL for the API context */
+    H5_API_LOCK
     H5CX_set_lcpl(lcpl_id);
+    H5_API_UNLOCK
 
     /* Verify access property list and set up collective metadata if appropriate */
-    if (H5CX_set_apl(&lapl_id, H5P_CLS_LACC, link_loc_id, TRUE) < 0)
+    H5_API_LOCK
+    ret_value = H5CX_set_apl(&lapl_id, H5P_CLS_LACC, link_loc_id, TRUE);
+    H5_API_UNLOCK
+
+    if (ret_value < 0)
         HGOTO_ERROR(H5E_LINK, H5E_CANTSET, FAIL, "can't set access property list info");
 
     loc_params.type                         = H5VL_OBJECT_BY_NAME;
@@ -778,7 +851,7 @@ H5Lcreate_ud(hid_t link_loc_id, const char *link_name, H5L_type_t link_type, con
         HGOTO_ERROR(H5E_LINK, H5E_CANTINIT, FAIL, "unable to create link");
 
 done:
-    FUNC_LEAVE_API(ret_value)
+    FUNC_LEAVE_API_NO_MUTEX(ret_value)
 } /* end H5Lcreate_ud() */
 
 /*-------------------------------------------------------------------------
@@ -840,7 +913,7 @@ H5Ldelete(hid_t loc_id, const char *name, hid_t lapl_id)
 {
     herr_t ret_value = SUCCEED; /* Return value */
 
-    FUNC_ENTER_API(FAIL)
+    FUNC_ENTER_API_NO_MUTEX(FAIL)
     H5TRACE3("e", "i*si", loc_id, name, lapl_id);
 
     /* Delete a link synchronously */
@@ -848,7 +921,7 @@ H5Ldelete(hid_t loc_id, const char *name, hid_t lapl_id)
         HGOTO_ERROR(H5E_LINK, H5E_CANTDELETE, FAIL, "unable to synchronously delete link");
 
 done:
-    FUNC_LEAVE_API(ret_value)
+    FUNC_LEAVE_API_NO_MUTEX(ret_value)
 } /* end H5Ldelete() */
 
 /*-------------------------------------------------------------------------
@@ -869,7 +942,7 @@ H5Ldelete_async(const char *app_file, const char *app_func, unsigned app_line, h
     void         **token_ptr = H5_REQUEST_NULL; /* Pointer to request token for async operation        */
     herr_t         ret_value = SUCCEED;         /* Return value */
 
-    FUNC_ENTER_API(FAIL)
+    FUNC_ENTER_API_NO_MUTEX(FAIL)
     H5TRACE7("e", "*s*sIui*sii", app_file, app_func, app_line, loc_id, name, lapl_id, es_id);
 
     /* Set up request token pointer for asynchronous operation */
@@ -889,7 +962,7 @@ H5Ldelete_async(const char *app_file, const char *app_func, unsigned app_line, h
             HGOTO_ERROR(H5E_LINK, H5E_CANTINSERT, FAIL, "can't insert token into event set");
 
 done:
-    FUNC_LEAVE_API(ret_value)
+    FUNC_LEAVE_API_NO_MUTEX(ret_value)
 } /* H5Ldelete_async() */
 
 /*-------------------------------------------------------------------------
@@ -962,7 +1035,7 @@ H5Ldelete_by_idx(hid_t loc_id, const char *group_name, H5_index_t idx_type, H5_i
 {
     herr_t ret_value = SUCCEED; /* Return value */
 
-    FUNC_ENTER_API(FAIL)
+    FUNC_ENTER_API_NO_MUTEX(FAIL)
     H5TRACE6("e", "i*sIiIohi", loc_id, group_name, idx_type, order, n, lapl_id);
 
     /* Delete a link synchronously */
@@ -970,7 +1043,7 @@ H5Ldelete_by_idx(hid_t loc_id, const char *group_name, H5_index_t idx_type, H5_i
         HGOTO_ERROR(H5E_LINK, H5E_CANTDELETE, FAIL, "unable to synchronously delete link");
 
 done:
-    FUNC_LEAVE_API(ret_value)
+    FUNC_LEAVE_API_NO_MUTEX(ret_value)
 } /* end H5Ldelete_by_idx() */
 
 /*-------------------------------------------------------------------------
@@ -992,7 +1065,7 @@ H5Ldelete_by_idx_async(const char *app_file, const char *app_func, unsigned app_
     void         **token_ptr = H5_REQUEST_NULL; /* Pointer to request token for async operation        */
     herr_t         ret_value = SUCCEED;         /* Return value */
 
-    FUNC_ENTER_API(FAIL)
+    FUNC_ENTER_API_NO_MUTEX(FAIL)
     H5TRACE10("e", "*s*sIui*sIiIohii", app_file, app_func, app_line, loc_id, group_name, idx_type, order, n,
               lapl_id, es_id);
 
@@ -1014,7 +1087,7 @@ H5Ldelete_by_idx_async(const char *app_file, const char *app_func, unsigned app_
             HGOTO_ERROR(H5E_LINK, H5E_CANTINSERT, FAIL, "can't insert token into event set");
 
 done:
-    FUNC_LEAVE_API(ret_value)
+    FUNC_LEAVE_API_NO_MUTEX(ret_value)
 } /* H5Ldelete_by_idx_async() */
 
 /*-------------------------------------------------------------------------
@@ -1041,7 +1114,7 @@ H5Lget_val(hid_t loc_id, const char *name, void *buf /*out*/, size_t size, hid_t
     H5VL_loc_params_t    loc_params;          /* Location parameters for object access */
     herr_t               ret_value = SUCCEED; /* Return value */
 
-    FUNC_ENTER_API(FAIL)
+    FUNC_ENTER_API_NO_MUTEX(FAIL)
     H5TRACE5("e", "i*sxzi", loc_id, name, buf, size, lapl_id);
 
     /* Check arguments */
@@ -1049,7 +1122,11 @@ H5Lget_val(hid_t loc_id, const char *name, void *buf /*out*/, size_t size, hid_t
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "no name specified");
 
     /* Verify access property list and set up collective metadata if appropriate */
-    if (H5CX_set_apl(&lapl_id, H5P_CLS_LACC, loc_id, FALSE) < 0)
+    H5_API_LOCK
+    ret_value = H5CX_set_apl(&lapl_id, H5P_CLS_LACC, loc_id, FALSE);
+    H5_API_UNLOCK
+
+    if (ret_value < 0)
         HGOTO_ERROR(H5E_LINK, H5E_CANTSET, FAIL, "can't set access property list info");
 
     /* Set up location struct */
@@ -1072,7 +1149,7 @@ H5Lget_val(hid_t loc_id, const char *name, void *buf /*out*/, size_t size, hid_t
         HGOTO_ERROR(H5E_LINK, H5E_CANTGET, FAIL, "unable to get link value for '%s'", name);
 
 done:
-    FUNC_LEAVE_API(ret_value)
+    FUNC_LEAVE_API_NO_MUTEX(ret_value)
 } /* end H5Lget_val() */
 
 /*-------------------------------------------------------------------------
@@ -1099,7 +1176,7 @@ H5Lget_val_by_idx(hid_t loc_id, const char *group_name, H5_index_t idx_type, H5_
     H5VL_loc_params_t    loc_params;          /* Location parameters for object access */
     herr_t               ret_value = SUCCEED; /* Return value */
 
-    FUNC_ENTER_API(FAIL)
+    FUNC_ENTER_API_NO_MUTEX(FAIL)
     H5TRACE8("e", "i*sIiIohxzi", loc_id, group_name, idx_type, order, n, buf, size, lapl_id);
 
     /* Check arguments */
@@ -1111,7 +1188,11 @@ H5Lget_val_by_idx(hid_t loc_id, const char *group_name, H5_index_t idx_type, H5_
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "invalid iteration order specified");
 
     /* Verify access property list and set up collective metadata if appropriate */
-    if (H5CX_set_apl(&lapl_id, H5P_CLS_LACC, loc_id, FALSE) < 0)
+    H5_API_LOCK
+    ret_value = H5CX_set_apl(&lapl_id, H5P_CLS_LACC, loc_id, FALSE);
+    H5_API_UNLOCK
+
+    if (ret_value < 0)
         HGOTO_ERROR(H5E_LINK, H5E_CANTSET, FAIL, "can't set access property list info");
 
     /* Set up location struct */
@@ -1137,7 +1218,7 @@ H5Lget_val_by_idx(hid_t loc_id, const char *group_name, H5_index_t idx_type, H5_
         HGOTO_ERROR(H5E_LINK, H5E_CANTGET, FAIL, "unable to get link value");
 
 done:
-    FUNC_LEAVE_API(ret_value)
+    FUNC_LEAVE_API_NO_MUTEX(ret_value)
 } /* end H5Lget_val_by_idx() */
 
 /*--------------------------------------------------------------------------
@@ -1198,7 +1279,7 @@ H5Lexists(hid_t loc_id, const char *name, hid_t lapl_id)
     hbool_t exists;           /* Flag to indicate if link exists */
     htri_t  ret_value = FAIL; /* Return value */
 
-    FUNC_ENTER_API(FAIL)
+    FUNC_ENTER_API_NO_MUTEX(FAIL)
     H5TRACE3("t", "i*si", loc_id, name, lapl_id);
 
     /* Synchronously check if a link exists */
@@ -1210,7 +1291,7 @@ H5Lexists(hid_t loc_id, const char *name, hid_t lapl_id)
     ret_value = (htri_t)exists;
 
 done:
-    FUNC_LEAVE_API(ret_value)
+    FUNC_LEAVE_API_NO_MUTEX(ret_value)
 } /* end H5Lexists() */
 
 /*--------------------------------------------------------------------------
@@ -1230,7 +1311,7 @@ H5Lexists_async(const char *app_file, const char *app_func, unsigned app_line, h
     void         **token_ptr = H5_REQUEST_NULL; /* Pointer to request token for async operation        */
     herr_t         ret_value = SUCCEED;         /* Return value */
 
-    FUNC_ENTER_API(FAIL)
+    FUNC_ENTER_API_NO_MUTEX(FAIL)
     H5TRACE8("e", "*s*sIui*s*bii", app_file, app_func, app_line, loc_id, name, exists, lapl_id, es_id);
 
     /* Set up request token pointer for asynchronous operation */
@@ -1250,7 +1331,7 @@ H5Lexists_async(const char *app_file, const char *app_func, unsigned app_line, h
             HGOTO_ERROR(H5E_LINK, H5E_CANTINSERT, FAIL, "can't insert token into event set");
 
 done:
-    FUNC_LEAVE_API(ret_value)
+    FUNC_LEAVE_API_NO_MUTEX(ret_value)
 } /* H5Lexists_async() */
 
 /*-------------------------------------------------------------------------
@@ -1271,7 +1352,7 @@ H5Lget_info2(hid_t loc_id, const char *name, H5L_info2_t *linfo /*out*/, hid_t l
     H5VL_loc_params_t    loc_params;          /* Location parameters for object access */
     herr_t               ret_value = SUCCEED; /* Return value */
 
-    FUNC_ENTER_API(FAIL)
+    FUNC_ENTER_API_NO_MUTEX(FAIL)
     H5TRACE4("e", "i*sxi", loc_id, name, linfo, lapl_id);
 
     /* Check arguments */
@@ -1279,7 +1360,11 @@ H5Lget_info2(hid_t loc_id, const char *name, H5L_info2_t *linfo /*out*/, hid_t l
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "no name specified");
 
     /* Verify access property list and set up collective metadata if appropriate */
-    if (H5CX_set_apl(&lapl_id, H5P_CLS_LACC, loc_id, TRUE) < 0)
+    H5_API_LOCK
+    ret_value = H5CX_set_apl(&lapl_id, H5P_CLS_LACC, loc_id, TRUE);
+    H5_API_UNLOCK
+
+    if (ret_value < 0)
         HGOTO_ERROR(H5E_LINK, H5E_CANTSET, FAIL, "can't set access property list info");
 
     /* Set up location struct */
@@ -1301,7 +1386,7 @@ H5Lget_info2(hid_t loc_id, const char *name, H5L_info2_t *linfo /*out*/, hid_t l
         HGOTO_ERROR(H5E_LINK, H5E_CANTGET, FAIL, "unable to get link info");
 
 done:
-    FUNC_LEAVE_API(ret_value)
+    FUNC_LEAVE_API_NO_MUTEX(ret_value)
 } /* end H5Lget_info2() */
 
 /*-------------------------------------------------------------------------
@@ -1324,7 +1409,7 @@ H5Lget_info_by_idx2(hid_t loc_id, const char *group_name, H5_index_t idx_type, H
     H5VL_loc_params_t    loc_params;          /* Location parameters for object access */
     herr_t               ret_value = SUCCEED; /* Return value */
 
-    FUNC_ENTER_API(FAIL)
+    FUNC_ENTER_API_NO_MUTEX(FAIL)
     H5TRACE7("e", "i*sIiIohxi", loc_id, group_name, idx_type, order, n, linfo, lapl_id);
 
     /* Check arguments */
@@ -1336,7 +1421,11 @@ H5Lget_info_by_idx2(hid_t loc_id, const char *group_name, H5_index_t idx_type, H
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "invalid iteration order specified");
 
     /* Verify access property list and set up collective metadata if appropriate */
-    if (H5CX_set_apl(&lapl_id, H5P_CLS_LACC, loc_id, FALSE) < 0)
+    H5_API_LOCK
+    ret_value = H5CX_set_apl(&lapl_id, H5P_CLS_LACC, loc_id, FALSE);
+    H5_API_UNLOCK
+
+    if (ret_value < 0)
         HGOTO_ERROR(H5E_LINK, H5E_CANTSET, FAIL, "can't set access property list info");
 
     /* Set up location struct */
@@ -1361,7 +1450,7 @@ H5Lget_info_by_idx2(hid_t loc_id, const char *group_name, H5_index_t idx_type, H
         HGOTO_ERROR(H5E_LINK, H5E_CANTGET, FAIL, "unable to get link info");
 
 done:
-    FUNC_LEAVE_API(ret_value)
+    FUNC_LEAVE_API_NO_MUTEX(ret_value)
 } /* end H5Lget_info_by_idx2() */
 
 /*-------------------------------------------------------------------------
@@ -1514,7 +1603,7 @@ H5Lget_name_by_idx(hid_t loc_id, const char *group_name, H5_index_t idx_type, H5
     size_t               link_name_len = 0;  /* Length of the link name string */
     ssize_t              ret_value     = -1; /* Return value */
 
-    FUNC_ENTER_API((-1))
+    FUNC_ENTER_API_NO_MUTEX(-1)
     H5TRACE8("Zs", "i*sIiIohxzi", loc_id, group_name, idx_type, order, n, name, size, lapl_id);
 
     /* Check arguments */
@@ -1526,7 +1615,11 @@ H5Lget_name_by_idx(hid_t loc_id, const char *group_name, H5_index_t idx_type, H5
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, (-1), "invalid iteration order specified");
 
     /* Verify access property list and set up collective metadata if appropriate */
-    if (H5CX_set_apl(&lapl_id, H5P_CLS_LACC, loc_id, TRUE) < 0)
+    H5_API_LOCK
+    ret_value = H5CX_set_apl(&lapl_id, H5P_CLS_LACC, loc_id, TRUE);
+    H5_API_UNLOCK
+
+    if (ret_value < 0)
         HGOTO_ERROR(H5E_LINK, H5E_CANTSET, (-1), "can't set access property list info");
 
     /* Set up location struct */
@@ -1556,7 +1649,7 @@ H5Lget_name_by_idx(hid_t loc_id, const char *group_name, H5_index_t idx_type, H5
     ret_value = (ssize_t)link_name_len;
 
 done:
-    FUNC_LEAVE_API(ret_value)
+    FUNC_LEAVE_API_NO_MUTEX(ret_value)
 } /* end H5Lget_name_by_idx() */
 
 /*-------------------------------------------------------------------------
@@ -1639,7 +1732,7 @@ H5Literate2(hid_t group_id, H5_index_t idx_type, H5_iter_order_t order, hsize_t 
 {
     herr_t ret_value; /* Return value */
 
-    FUNC_ENTER_API(FAIL)
+    FUNC_ENTER_API_NO_MUTEX(FAIL)
     H5TRACE6("e", "iIiIo*hLI*x", group_id, idx_type, order, idx_p, op, op_data);
 
     /* Iterate over links synchronously */
@@ -1647,7 +1740,7 @@ H5Literate2(hid_t group_id, H5_index_t idx_type, H5_iter_order_t order, hsize_t 
         HGOTO_ERROR(H5E_LINK, H5E_BADITER, FAIL, "synchronous link iteration failed");
 
 done:
-    FUNC_LEAVE_API(ret_value)
+    FUNC_LEAVE_API_NO_MUTEX(ret_value)
 } /* end H5Literate2() */
 
 /*-------------------------------------------------------------------------
@@ -1676,7 +1769,7 @@ H5Literate_async(const char *app_file, const char *app_func, unsigned app_line, 
     void         **token_ptr = H5_REQUEST_NULL; /* Pointer to request token for async operation        */
     herr_t         ret_value;                   /* Return value */
 
-    FUNC_ENTER_API(FAIL)
+    FUNC_ENTER_API_NO_MUTEX(FAIL)
     H5TRACE10("e", "*s*sIuiIiIo*hLI*xi", app_file, app_func, app_line, group_id, idx_type, order, idx_p, op,
               op_data, es_id);
 
@@ -1698,7 +1791,7 @@ H5Literate_async(const char *app_file, const char *app_func, unsigned app_line, 
             HGOTO_ERROR(H5E_LINK, H5E_CANTINSERT, FAIL, "can't insert token into event set");
 
 done:
-    FUNC_LEAVE_API(ret_value)
+    FUNC_LEAVE_API_NO_MUTEX(ret_value)
 } /* H5Literate_async() */
 
 /*-------------------------------------------------------------------------
@@ -1729,7 +1822,7 @@ H5Literate_by_name2(hid_t loc_id, const char *group_name, H5_index_t idx_type, H
     H5VL_loc_params_t         loc_params;     /* Location parameters for object access */
     herr_t                    ret_value;      /* Return value */
 
-    FUNC_ENTER_API(FAIL)
+    FUNC_ENTER_API_NO_MUTEX(FAIL)
     H5TRACE8("e", "i*sIiIo*hLI*xi", loc_id, group_name, idx_type, order, idx_p, op, op_data, lapl_id);
 
     /* Check arguments */
@@ -1745,7 +1838,11 @@ H5Literate_by_name2(hid_t loc_id, const char *group_name, H5_index_t idx_type, H
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "no operator specified");
 
     /* Verify access property list and set up collective metadata if appropriate */
-    if (H5CX_set_apl(&lapl_id, H5P_CLS_LACC, loc_id, FALSE) < 0)
+    H5_API_LOCK
+    ret_value = H5CX_set_apl(&lapl_id, H5P_CLS_LACC, loc_id, FALSE);
+    H5_API_UNLOCK
+
+    if (ret_value < 0)
         HGOTO_ERROR(H5E_LINK, H5E_CANTSET, FAIL, "can't set access property list info");
 
     /* Get the location object */
@@ -1773,7 +1870,7 @@ H5Literate_by_name2(hid_t loc_id, const char *group_name, H5_index_t idx_type, H
         HGOTO_ERROR(H5E_LINK, H5E_BADITER, FAIL, "link iteration failed");
 
 done:
-    FUNC_LEAVE_API(ret_value)
+    FUNC_LEAVE_API_NO_MUTEX(ret_value)
 } /* end H5Literate_by_name() */
 
 /*-------------------------------------------------------------------------
@@ -1810,7 +1907,7 @@ H5Lvisit2(hid_t group_id, H5_index_t idx_type, H5_iter_order_t order, H5L_iterat
     H5I_type_t                id_type;        /* Type of ID */
     herr_t                    ret_value;      /* Return value */
 
-    FUNC_ENTER_API(FAIL)
+    FUNC_ENTER_API_NO_MUTEX(FAIL)
     H5TRACE5("e", "iIiIoLI*x", group_id, idx_type, order, op, op_data);
 
     /* Check args */
@@ -1847,7 +1944,7 @@ H5Lvisit2(hid_t group_id, H5_index_t idx_type, H5_iter_order_t order, H5L_iterat
         HGOTO_ERROR(H5E_LINK, H5E_BADITER, FAIL, "link visitation failed");
 
 done:
-    FUNC_LEAVE_API(ret_value)
+    FUNC_LEAVE_API_NO_MUTEX(ret_value)
 } /* end H5Lvisit2() */
 
 /*-------------------------------------------------------------------------
@@ -1884,7 +1981,7 @@ H5Lvisit_by_name2(hid_t loc_id, const char *group_name, H5_index_t idx_type, H5_
     H5VL_loc_params_t         loc_params;     /* Location parameters for object access */
     herr_t                    ret_value;      /* Return value */
 
-    FUNC_ENTER_API(FAIL)
+    FUNC_ENTER_API_NO_MUTEX(FAIL)
     H5TRACE7("e", "i*sIiIoLI*xi", loc_id, group_name, idx_type, order, op, op_data, lapl_id);
 
     /* Check args */
@@ -1900,7 +1997,11 @@ H5Lvisit_by_name2(hid_t loc_id, const char *group_name, H5_index_t idx_type, H5_
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "no callback operator specified");
 
     /* Verify access property list and set up collective metadata if appropriate */
-    if (H5CX_set_apl(&lapl_id, H5P_CLS_LACC, loc_id, FALSE) < 0)
+    H5_API_LOCK
+    ret_value = H5CX_set_apl(&lapl_id, H5P_CLS_LACC, loc_id, FALSE);
+    H5_API_UNLOCK
+
+    if (ret_value < 0)
         HGOTO_ERROR(H5E_LINK, H5E_CANTSET, FAIL, "can't set access property list info");
 
     /* get the location object */
@@ -1928,7 +2029,7 @@ H5Lvisit_by_name2(hid_t loc_id, const char *group_name, H5_index_t idx_type, H5_
         HGOTO_ERROR(H5E_LINK, H5E_BADITER, FAIL, "link visitation failed");
 
 done:
-    FUNC_LEAVE_API(ret_value)
+    FUNC_LEAVE_API_NO_MUTEX(ret_value)
 } /* end H5Lvisit_by_name2() */
 
 /*-------------------------------------------------------------------------

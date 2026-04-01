@@ -197,8 +197,8 @@ test_time_io(void)
 **  test_time(): Main time datatype testing routine.
 **
 ****************************************************************/
-void
-test_time(void)
+herr_t
+test_time(TestParams_t H5_ATTR_UNUSED *params)
 {
     /* Output message about test being performed */
     MESSAGE(5, ("Testing Time Datatypes\n"));
@@ -208,6 +208,7 @@ test_time(void)
     test_time_io(); /* Test writing time data to a dataset */
 #endif              /* NOT_YET */
 
+    return SUCCEED;
 } /* test_time() */
 
 /*-------------------------------------------------------------------------
@@ -219,12 +220,16 @@ test_time(void)
  *
  *-------------------------------------------------------------------------
  */
-void
-cleanup_time(void)
+herr_t
+cleanup_time(TestParams_t H5_ATTR_UNUSED *params)
 {
-    H5E_BEGIN_TRY
-    {
-        H5Fdelete(DATAFILE, H5P_DEFAULT);
+    if (GetTestCleanup()) {
+        H5E_BEGIN_TRY
+        {
+            H5Fdelete(DATAFILE, H5P_DEFAULT);
+        }
+        H5E_END_TRY
     }
-    H5E_END_TRY
+
+    return SUCCEED;
 }
