@@ -175,7 +175,6 @@ hid_t H5P_CLS_REFERENCE_ACCESS_ID_g = H5I_INVALID_HID;
 hid_t H5P_CLS_STRING_CREATE_ID_g    = H5I_INVALID_HID;
 hid_t H5P_CLS_VOL_INITIALIZE_ID_g   = H5I_INVALID_HID;
 
-
 H5P_genclass_t *H5P_CLS_ROOT_g = NULL;
 
 H5P_genclass_t *H5P_CLS_ATTRIBUTE_ACCESS_g = NULL;
@@ -199,7 +198,6 @@ H5P_genclass_t *H5P_CLS_OBJECT_CREATE_g    = NULL;
 H5P_genclass_t *H5P_CLS_REFERENCE_ACCESS_g = NULL;
 H5P_genclass_t *H5P_CLS_STRING_CREATE_g    = NULL;
 H5P_genclass_t *H5P_CLS_VOL_INITIALIZE_g   = NULL;
-
 
 /*
  * Predefined property lists for each predefined class. These are initialized
@@ -253,7 +251,6 @@ _Atomic uint64_t H5P_RAPL_VER_g   = 0;
 _Atomic uint64_t H5P_VIPL_VER_g   = 0;
 
 #endif
-
 
 /* Root property list class library initialization object */
 const H5P_libclass_t H5P_CLS_ROOT[1] = {{
@@ -401,7 +398,6 @@ const H5P_libclass_t H5P_CLS_RACC[1] = {{
     NULL, /* Class close callback                 */
     NULL  /* Class close callback info            */
 }};
-
 
 /* Library property list classes defined in other code modules */
 /* (And not present in src/H5Pprivate.h) */
@@ -2711,13 +2707,12 @@ H5P__init_lkup_tbl(H5P_mt_class_t *parent, uint64_t version, H5P_mt_list_t *new_
                         HGOTO_ERROR(H5E_PLIST, H5E_CANTINIT, FAIL,
                                     "Failed creating property for property list.");
 
-                    /* Call the create callback */
+                        /* Call the create callback */
 #if 1
-                    if ( H5P__global_lock_prop_cb__create(new_prop, new_prop->name, 
-                                                        valid_prop_value.size, valid_prop_value.ptr) < 0 )
-                    {
+                    if (H5P__global_lock_prop_cb__create(new_prop, new_prop->name, valid_prop_value.size,
+                                                         valid_prop_value.ptr) < 0) {
                         assert(H5P_MT_ASSERT_FAIL);
-                        HGOTO_ERROR(H5E_PLIST, H5E_CANTCOPY, FAIL, "Create property callback failed"); 
+                        HGOTO_ERROR(H5E_PLIST, H5E_CANTCOPY, FAIL, "Create property callback failed");
                     }
 #else
                     if ((new_prop->create)(new_prop->name, valid_prop_value.size, valid_prop_value.ptr) < 0) {
@@ -2924,9 +2919,8 @@ H5P__init_lkup_tbl_copy(H5P_mt_list_t *old_list, uint64_t version, H5P_mt_list_t
                 /* If the new_prop has the copy callback, call it */
                 if (new_prop->copy) {
 #if 1
-                    if ( H5P__global_lock_prop_cb__copy(new_prop, new_prop->name, old_prop_value.size, 
-                                                                                    old_prop_value.ptr) < 0 )
-                    {
+                    if (H5P__global_lock_prop_cb__copy(new_prop, new_prop->name, old_prop_value.size,
+                                                       old_prop_value.ptr) < 0) {
                         assert(H5P_MT_ASSERT_FAIL);
                         HGOTO_ERROR(H5E_PLIST, H5E_CANTCOPY, FAIL, "Can't copy property");
                     }
@@ -3588,9 +3582,8 @@ H5P__mt_copy_lfsll(void *param, H5P_mt_prop_t *old_prop, uint64_t version)
                     /* If the prop has a copy callback, call it */
                     if (new_prop->copy) {
 #if 1
-                        if ( H5P__global_lock_prop_cb__copy(new_prop, new_prop->name, value.size, 
-                                                                                        value.ptr) < 0 )
-                        {
+                        if (H5P__global_lock_prop_cb__copy(new_prop, new_prop->name, value.size, value.ptr) <
+                            0) {
                             assert(H5P_MT_ASSERT_FAIL);
                             HGOTO_ERROR(H5E_PLIST, H5E_CANTCOPY, FAIL, "Can't copy property");
                         }
@@ -3953,11 +3946,11 @@ H5P__mt_ins_or_mod_prop__class(H5P_mt_class_t *class, const char *name, void *va
                                H5P_prp_delete_func_t prp_del, H5P_prp_copy_func_t prp_copy,
                                H5P_prp_compare_func_t prp_cmp, H5P_prp_close_func_t prp_close)
 {
-    H5P_mt_prop_t     *new_prop = NULL; /* New prop to be created and inserted */
-    H5P_mt_prop_t     *pl_head;         /* Head of the LFSLL of the class */
-    //H5P_mt_prop_t     *next_prop;       /* Next prop in LFSLL after the new prop */
-    //H5P_mt_prop_aptr_t next;            /* New prop's next struct field */
-    //uint64_t           delete_version = 0;
+    H5P_mt_prop_t *new_prop = NULL; /* New prop to be created and inserted */
+    H5P_mt_prop_t *pl_head;         /* Head of the LFSLL of the class */
+    // H5P_mt_prop_t     *next_prop;       /* Next prop in LFSLL after the new prop */
+    // H5P_mt_prop_aptr_t next;            /* New prop's next struct field */
+    // uint64_t           delete_version = 0;
     uint32_t deletes     = 0; /* Tracks number of deletes */
     uint32_t visited     = 0; /* Tracks number of nodes visited */
     uint32_t thrd_cols   = 0; /* Tracks number of thread collisions */
@@ -4275,9 +4268,8 @@ H5P__mt_ins_or_mod_prop__list(H5P_mt_list_t *list, const char *name, void *value
     if (copy) {
         if (new_prop->copy) {
 #if 1
-            if ( H5P__global_lock_prop_cb__copy(new_prop, new_prop->name, prop_value.size, 
-                                                                            prop_value.ptr) < 0 )
-            {
+            if (H5P__global_lock_prop_cb__copy(new_prop, new_prop->name, prop_value.size, prop_value.ptr) <
+                0) {
                 prop_cleanup = TRUE;
                 assert(H5P_MT_ASSERT_FAIL);
                 HGOTO_ERROR(H5E_PLIST, H5E_CANTCOPY, FAIL, "Copy property callback failed");
@@ -4295,12 +4287,11 @@ H5P__mt_ins_or_mod_prop__list(H5P_mt_list_t *list, const char *name, void *value
     else if (create) {
         if (new_prop->create) {
 #if 1
-            if ( H5P__global_lock_prop_cb__create(new_prop, new_prop->name, 
-                                                prop_value.size, prop_value.ptr) < 0 )
-            {
+            if (H5P__global_lock_prop_cb__create(new_prop, new_prop->name, prop_value.size, prop_value.ptr) <
+                0) {
                 prop_cleanup = TRUE;
                 assert(H5P_MT_ASSERT_FAIL);
-                HGOTO_ERROR(H5E_PLIST, H5E_CANTCOPY, FAIL, "Create property callback failed"); 
+                HGOTO_ERROR(H5E_PLIST, H5E_CANTCOPY, FAIL, "Create property callback failed");
             }
 #else
             if ((new_prop->create)(new_prop->name, prop_value.size, prop_value.ptr)) {
@@ -4864,9 +4855,9 @@ H5P_remove(H5P_mt_list_t *list, const char *name)
         HGOTO_ERROR(H5E_PLIST, H5E_CANTDELETE, FAIL, "Can't delete property");
     }
 #else
-    pl_head   = list->pl_head;
+    pl_head = list->pl_head;
     prev_prop = NULL;
-    prop      = NULL;
+    prop = NULL;
 
     entry = H5P__mt_search_lkup_tbl(list->lkup_tbl, 0, (list->nprops_inherited - 1), chksum, name);
 
@@ -4988,7 +4979,7 @@ H5P_remove(H5P_mt_list_t *list, const char *name)
         }
 
         avg_visited = atomic_load(&(list->set_delete__avg_nodes_visited));
-        num_calls   = atomic_load(&(list->num_deletes_from_lfsll));
+        num_calls = atomic_load(&(list->num_deletes_from_lfsll));
 
         avg_visited = H5P__calc_avg_visited(avg_visited, num_calls, visited);
 
@@ -5194,9 +5185,7 @@ H5P__mt_delete_prop__list(H5P_mt_list_t *list, int64_t chksum, const char *name,
     if (prop->del) {
         value = atomic_load(&(prop->value));
 #if 1
-        if ( H5P__global_lock_prop_cb__del(prop, list->plist_id, prop->name, 
-                                                            value.size, value.ptr) < 0 )
-        {
+        if (H5P__global_lock_prop_cb__del(prop, list->plist_id, prop->name, value.size, value.ptr) < 0) {
             HGOTO_ERROR(H5E_PLIST, H5E_CANTFREE, FAIL, "can't release property value");
         }
 #else
@@ -6542,9 +6531,8 @@ H5P_set(H5P_mt_list_t *list, const char *name, const void *value)
         H5MM_memcpy(tmp_value.ptr, value, prop_value.size);
 
 #if 1
-        if ( H5P__global_lock_prop_cb__set(prop, atomic_load(&(list->plist_id)), name, 
-                                                            prop_value.size, tmp_value.ptr) < 0 )
-        {
+        if (H5P__global_lock_prop_cb__set(prop, atomic_load(&(list->plist_id)), name, prop_value.size,
+                                          tmp_value.ptr) < 0) {
             HGOTO_ERROR(H5E_PLIST, H5E_CANTINIT, FAIL, "can't set property value");
         }
 #else
@@ -6563,9 +6551,7 @@ H5P_set(H5P_mt_list_t *list, const char *name, const void *value)
     if (prop->del) {
         /* Call the user's 'delete' callback */
 #if 1
-        if ( H5P__global_lock_prop_cb__del(prop, list->plist_id, name, 
-                                                    prop_value.size, prop_value.ptr) < 0 )
-        {
+        if (H5P__global_lock_prop_cb__del(prop, list->plist_id, name, prop_value.size, prop_value.ptr) < 0) {
             HGOTO_ERROR(H5E_PLIST, H5E_CANTFREE, FAIL, "can't release property value");
         }
 #else
@@ -7968,8 +7954,7 @@ H5P__mt_prop_cmp(H5P_mt_prop_t *prop1, H5P_mt_prop_t *prop2)
     if (value1.ptr) {
         /* Call the compare callback */
 #if 1
-        if ((cmp_value = H5P__global_lock_prop_cb__cmp(prop1, value1.ptr, 
-                                                        value2.ptr, value1.size)) != 0 )
+        if ((cmp_value = H5P__global_lock_prop_cb__cmp(prop1, value1.ptr, value2.ptr, value1.size)) != 0)
             HGOTO_DONE(cmp_value);
 #else
         if ((cmp_value = prop1->cmp(value1.ptr, value2.ptr, value1.size)) != 0)
@@ -7989,12 +7974,12 @@ done:
  *              New function for the multithread H5P
  *
  * Purpose:     Checks if the two properties are the same or are different properties
- * 
+ *
  *              NOTE: This function is the exact same as the above function
  *              H5P__mt_prop_cmp(), with the exception that of not grabbing the global
  *              mutex prior to calling the property cmp callback.
- * 
- *              This function exists for testing purposes, to quickly compare many 
+ *
+ *              This function exists for testing purposes, to quickly compare many
  *              properties without the overhead of grabbing the global mutex when it
  *              isn't needed for the specific test.
  *
@@ -8750,9 +8735,8 @@ H5P_get(H5P_mt_list_t *plist, const char *name, void *value)
 
         H5MM_memcpy(tmp_value, prop_value.ptr, prop_value.size);
 #if 1
-        if ( H5P__global_lock_prop_cb__get(prop, atomic_load(&(plist->plist_id)), name,
-                                                                prop_value.size, tmp_value) < 0 )
-        {
+        if (H5P__global_lock_prop_cb__get(prop, atomic_load(&(plist->plist_id)), name, prop_value.size,
+                                          tmp_value) < 0) {
             HGOTO_ERROR(H5E_PLIST, H5E_CANTINIT, FAIL, "Property's get callback failed");
         }
 #else
@@ -9400,8 +9384,8 @@ H5P_close(H5P_genplist_t *list)
             if (valid_prop->close) {
                 prop_value = atomic_load(&(valid_prop->value));
 #if 1
-                H5P__global_lock_prop_cb__close(valid_prop, valid_prop->name,
-                                                    prop_value.size, prop_value.ptr);
+                H5P__global_lock_prop_cb__close(valid_prop, valid_prop->name, prop_value.size,
+                                                prop_value.ptr);
 #else
                 (valid_prop->close)(valid_prop->name, prop_value.size, prop_value.ptr);
 #endif
@@ -9440,8 +9424,8 @@ H5P_close(H5P_genplist_t *list)
 
                         /* property close callback */
 #if 1
-                        H5P__global_lock_prop_cb__close(base_prop, base_prop->name,
-                                                            prop_value.size, prop_value.ptr);
+                        H5P__global_lock_prop_cb__close(base_prop, base_prop->name, prop_value.size,
+                                                        prop_value.ptr);
 #else
                         (base_prop->close)(base_prop->name, prop_value.size, prop_value.ptr);
 #endif
@@ -11833,7 +11817,7 @@ H5P_get_class(H5P_genplist_t *plist)
 /****************************************************************************************
  * Function:    H5P__grab_global_mutex
  *
- * Purpose:     
+ * Purpose:
  *
  * Return:      SUCCEED/FAIL
  *
@@ -11842,7 +11826,7 @@ H5P_get_class(H5P_genplist_t *plist)
 herr_t
 H5P__grab_global_mutex(bool *have_global_mutex, bool *mutex_acquired)
 {
-    bool   done = FALSE;
+    bool done = FALSE;
 
     herr_t ret_value = SUCCEED;
 
@@ -11850,11 +11834,9 @@ H5P__grab_global_mutex(bool *have_global_mutex, bool *mutex_acquired)
 
     atomic_fetch_add(&(H5P_mt_g.H5P__grab_global_mutex__num_calls), 1);
 
-    do
-    {
+    do {
         /* Check if we already have the global mutex */
-        if ( H5TS_have_mutex(&H5_g.init_lock, have_global_mutex) < 0 )
-        {
+        if (H5TS_have_mutex(&H5_g.init_lock, have_global_mutex) < 0) {
             HGOTO_ERROR(H5E_LIB, H5E_CANTGET, FAIL, "Can't determine whether we have the global mutex");
         }
 
@@ -11864,23 +11846,19 @@ H5P__grab_global_mutex(bool *have_global_mutex, bool *mutex_acquired)
             done = TRUE;
         }
         /* Else, attempt to acquire the global mutex */
-        else
-        {
-            
-            if (H5TS_mutex_acquire(&H5_g.init_lock, 1, mutex_acquired) < 0)
-            {
+        else {
+
+            if (H5TS_mutex_acquire(&H5_g.init_lock, 1, mutex_acquired) < 0) {
                 HGOTO_ERROR(H5E_INTERNAL, H5E_SYSERRSTR, FAIL, "H5TS_mutex_acquire reported failure");
             }
-            else
-            {
+            else {
                 /**
                  * Failed to acquire the global mutex, probably because another thread has it.
                  * Sleep and try again.
-                 * 
+                 *
                  * TODO: may need to add code to handle the case if this a deadlock.
                  */
-                if ( (*mutex_acquired) == FALSE )
-                {
+                if ((*mutex_acquired) == FALSE) {
                     atomic_fetch_add(&(H5P_mt_g.global_mutex_acquire_failures), 1);
 
                     sleep(1);
@@ -11888,15 +11866,14 @@ H5P__grab_global_mutex(bool *have_global_mutex, bool *mutex_acquired)
                     continue;
                 }
                 /* Acquired global mutex, update stats and set done */
-                else
-                {
+                else {
                     atomic_fetch_add(&(H5P_mt_g.global_mutex_acquire_success), 1);
                     done = TRUE;
                 }
             }
         }
 
-    } while ( ! done );
+    } while (!done);
 
 done:
 
@@ -11907,7 +11884,7 @@ done:
 /****************************************************************************************
  * Function:    H5P__global_lock_prop_cb__create
  *
- * Purpose:     
+ * Purpose:
  *
  * Return:      SUCCEED/FAIL
  *
@@ -11916,10 +11893,10 @@ done:
 herr_t
 H5P__global_lock_prop_cb__create(H5P_mt_prop_t *prop, const char *name, size_t size, void *value)
 {
-    bool   have_global_mutex = FALSE; 
-    bool   mutex_acquired    = FALSE; 
-    //bool   done              = FALSE;
-    //bool   cb_error          = FALSE;
+    bool have_global_mutex = FALSE;
+    bool mutex_acquired    = FALSE;
+    // bool   done              = FALSE;
+    // bool   cb_error          = FALSE;
 
     herr_t ret_value = SUCCEED;
 
@@ -11934,17 +11911,15 @@ H5P__global_lock_prop_cb__create(H5P_mt_prop_t *prop, const char *name, size_t s
     atomic_fetch_add(&(H5P_mt_g.H5P__global_lock_prop_cb__create__num_calls), 1);
 
     /**
-     * Check if we already have the global mutex, 
+     * Check if we already have the global mutex,
      * and if we don't grab it.
      */
-    if ( H5P__grab_global_mutex(&have_global_mutex, &mutex_acquired) < 0 )
-    {
+    if (H5P__grab_global_mutex(&have_global_mutex, &mutex_acquired) < 0) {
         HGOTO_ERROR(H5E_INTERNAL, H5E_CANTGET, FAIL, "Failed checking or grabbing mutex");
     }
 
     /* update stats */
-    if ( have_global_mutex )
-    {
+    if (have_global_mutex) {
         atomic_fetch_add(&(H5P_mt_g.num_already_have_mutex__create_cb), 1);
     }
 
@@ -11959,8 +11934,7 @@ done:
      * If the global mutex was grabbed in this function,
      * it must be released.
      */
-    if ( mutex_acquired )
-    {
+    if (mutex_acquired) {
         H5_API_UNLOCK
         atomic_fetch_add(&(H5P_mt_g.global_mutex_unlocks), 1);
     }
@@ -11972,7 +11946,7 @@ done:
 /****************************************************************************************
  * Function:    H5P__global_lock_prop_cb__set
  *
- * Purpose:     
+ * Purpose:
  *
  * Return:      SUCCEED/FAIL
  *
@@ -11981,10 +11955,10 @@ done:
 herr_t
 H5P__global_lock_prop_cb__set(H5P_mt_prop_t *prop, hid_t plist_id, const char *name, size_t size, void *value)
 {
-    bool   have_global_mutex = TRUE; /* trivially so in single thread builds */
-    bool   mutex_acquired    = FALSE; /* flag for if we have acquired the global mutex */
-    //bool   done              = FALSE;
-    //bool   cb_error          = FALSE;
+    bool have_global_mutex = TRUE;  /* trivially so in single thread builds */
+    bool mutex_acquired    = FALSE; /* flag for if we have acquired the global mutex */
+    // bool   done              = FALSE;
+    // bool   cb_error          = FALSE;
 
     herr_t ret_value = SUCCEED;
 
@@ -12000,23 +11974,20 @@ H5P__global_lock_prop_cb__set(H5P_mt_prop_t *prop, hid_t plist_id, const char *n
     atomic_fetch_add(&(H5P_mt_g.H5P__global_lock_prop_cb__set__num_calls), 1);
 
     /**
-     * Check if we already have the global mutex, 
+     * Check if we already have the global mutex,
      * and if we don't grab it.
      */
-    if ( H5P__grab_global_mutex(&have_global_mutex, &mutex_acquired) < 0 )
-    {
+    if (H5P__grab_global_mutex(&have_global_mutex, &mutex_acquired) < 0) {
         HGOTO_ERROR(H5E_INTERNAL, H5E_CANTGET, FAIL, "Failed checking or grabbing mutex");
     }
 
     /* update stats */
-    if ( have_global_mutex )
-    {
+    if (have_global_mutex) {
         atomic_fetch_add(&(H5P_mt_g.num_already_have_mutex__set_cb), 1);
     }
 
     /* Call the user's callback */
-    if ((*(prop->set))(plist_id, name, size, value) < 0) 
-    {
+    if ((*(prop->set))(plist_id, name, size, value) < 0) {
         HGOTO_ERROR(H5E_PLIST, H5E_CANTINIT, FAIL, "property set callback failed");
     }
 
@@ -12026,8 +11997,7 @@ done:
      * If the global mutex was grabbed in this function,
      * it must be released.
      */
-    if ( mutex_acquired )
-    {
+    if (mutex_acquired) {
         H5_API_UNLOCK
         atomic_fetch_add(&(H5P_mt_g.global_mutex_unlocks), 1);
     }
@@ -12039,20 +12009,19 @@ done:
 /****************************************************************************************
  * Function:    H5P__global_lock_prop_cb__get
  *
- * Purpose:     
+ * Purpose:
  *
  * Return:      SUCCEED/FAIL
  *
  ****************************************************************************************
  */
 herr_t
-H5P__global_lock_prop_cb__get(H5P_mt_prop_t *prop, hid_t plist_id, 
-                                const char *name, size_t size, void *value)
+H5P__global_lock_prop_cb__get(H5P_mt_prop_t *prop, hid_t plist_id, const char *name, size_t size, void *value)
 {
-    bool   have_global_mutex = TRUE; /* trivially so in single thread builds */
-    bool   mutex_acquired    = FALSE; /* flag for if we have acquired the global mutex */
-    //bool   done              = FALSE;
-    //bool   cb_error          = FALSE;
+    bool have_global_mutex = TRUE;  /* trivially so in single thread builds */
+    bool mutex_acquired    = FALSE; /* flag for if we have acquired the global mutex */
+    // bool   done              = FALSE;
+    // bool   cb_error          = FALSE;
 
     herr_t ret_value = SUCCEED;
 
@@ -12068,24 +12037,21 @@ H5P__global_lock_prop_cb__get(H5P_mt_prop_t *prop, hid_t plist_id,
     atomic_fetch_add(&(H5P_mt_g.H5P__global_lock_prop_cb__get__num_calls), 1);
 
     /**
-     * Check if we already have the global mutex, 
+     * Check if we already have the global mutex,
      * and if we don't grab it.
      */
-    if ( H5P__grab_global_mutex(&have_global_mutex, &mutex_acquired) < 0 )
-    {
+    if (H5P__grab_global_mutex(&have_global_mutex, &mutex_acquired) < 0) {
         HGOTO_ERROR(H5E_INTERNAL, H5E_CANTGET, FAIL, "Failed checking or grabbing mutex");
     }
 
     /* update stats */
-    if ( have_global_mutex )
-    {
+    if (have_global_mutex) {
         atomic_fetch_add(&(H5P_mt_g.num_already_have_mutex__get_cb), 1);
     }
 
     /* Call the user's callback */
-    if ((*(prop->get))(plist_id, name, size, value) < 0) 
-    {
-        HGOTO_ERROR(H5E_PLIST, H5E_CANTGET, FAIL, "property get callback failed");  
+    if ((*(prop->get))(plist_id, name, size, value) < 0) {
+        HGOTO_ERROR(H5E_PLIST, H5E_CANTGET, FAIL, "property get callback failed");
     }
 
 done:
@@ -12094,8 +12060,7 @@ done:
      * If the global mutex was grabbed in this function,
      * it must be released.
      */
-    if ( mutex_acquired )
-    {
+    if (mutex_acquired) {
         H5_API_UNLOCK
         atomic_fetch_add(&(H5P_mt_g.global_mutex_unlocks), 1);
     }
@@ -12107,7 +12072,7 @@ done:
 /****************************************************************************************
  * Function:    H5P__global_lock_prop_cb__encode
  *
- * Purpose:     
+ * Purpose:
  *
  * Return:      SUCCEED/FAIL
  *
@@ -12116,10 +12081,10 @@ done:
 herr_t
 H5P__global_lock_prop_cb__encode(H5P_mt_prop_t *prop, void *value, void **pp, size_t *value_len)
 {
-    bool   have_global_mutex = TRUE; /* trivially so in single thread builds */
-    bool   mutex_acquired    = FALSE; /* flag for if we have acquired the global mutex */
-    //bool   done              = FALSE;
-    //bool   cb_error          = FALSE;
+    bool have_global_mutex = TRUE;  /* trivially so in single thread builds */
+    bool mutex_acquired    = FALSE; /* flag for if we have acquired the global mutex */
+    // bool   done              = FALSE;
+    // bool   cb_error          = FALSE;
 
     herr_t ret_value = SUCCEED;
 
@@ -12129,30 +12094,27 @@ H5P__global_lock_prop_cb__encode(H5P_mt_prop_t *prop, void *value, void **pp, si
     assert(atomic_load(&(prop->tag)) == H5P_MT_PROP_TAG);
     assert(value);
     assert(pp);
-    //assert(*pp);
+    // assert(*pp);
     assert(value_len);
 
     atomic_fetch_add(&(H5P_mt_g.H5P__global_lock_prop_cb__encode__num_calls), 1);
 
     /**
-     * Check if we already have the global mutex, 
+     * Check if we already have the global mutex,
      * and if we don't grab it.
      */
-    if ( H5P__grab_global_mutex(&have_global_mutex, &mutex_acquired) < 0 )
-    {
+    if (H5P__grab_global_mutex(&have_global_mutex, &mutex_acquired) < 0) {
         HGOTO_ERROR(H5E_INTERNAL, H5E_CANTGET, FAIL, "Failed checking or grabbing mutex");
     }
 
     /* update stats */
-    if ( have_global_mutex )
-    {
+    if (have_global_mutex) {
         atomic_fetch_add(&(H5P_mt_g.num_already_have_mutex__encode_cb), 1);
     }
 
     /* Call the user's callback */
-    if ((*(prop->encode))(value, pp, value_len) < 0) 
-    {
-        HGOTO_ERROR(H5E_PLIST, H5E_CANTENCODE, FAIL, "property encode callback failed");   
+    if ((*(prop->encode))(value, pp, value_len) < 0) {
+        HGOTO_ERROR(H5E_PLIST, H5E_CANTENCODE, FAIL, "property encode callback failed");
     }
 
 done:
@@ -12161,8 +12123,7 @@ done:
      * If the global mutex was grabbed in this function,
      * it must be released.
      */
-    if ( mutex_acquired )
-    {
+    if (mutex_acquired) {
         H5_API_UNLOCK
         atomic_fetch_add(&(H5P_mt_g.global_mutex_unlocks), 1);
     }
@@ -12174,7 +12135,7 @@ done:
 /****************************************************************************************
  * Function:    H5P__global_lock_prop_cb__decode
  *
- * Purpose:     
+ * Purpose:
  *
  * Return:      SUCCEED/FAIL
  *
@@ -12183,10 +12144,10 @@ done:
 herr_t
 H5P__global_lock_prop_cb__decode(H5P_mt_prop_t *prop, const void **pp, void *value_buf)
 {
-    bool   have_global_mutex = TRUE; /* trivially so in single thread builds */
-    bool   mutex_acquired    = FALSE; /* flag for if we have acquired the global mutex */
-    //bool   done              = FALSE;
-    //bool   cb_error          = FALSE;
+    bool have_global_mutex = TRUE;  /* trivially so in single thread builds */
+    bool mutex_acquired    = FALSE; /* flag for if we have acquired the global mutex */
+    // bool   done              = FALSE;
+    // bool   cb_error          = FALSE;
 
     herr_t ret_value = SUCCEED;
 
@@ -12201,23 +12162,20 @@ H5P__global_lock_prop_cb__decode(H5P_mt_prop_t *prop, const void **pp, void *val
     atomic_fetch_add(&(H5P_mt_g.H5P__global_lock_prop_cb__decode__num_calls), 1);
 
     /**
-     * Check if we already have the global mutex, 
+     * Check if we already have the global mutex,
      * and if we don't grab it.
      */
-    if ( H5P__grab_global_mutex(&have_global_mutex, &mutex_acquired) < 0 )
-    {
+    if (H5P__grab_global_mutex(&have_global_mutex, &mutex_acquired) < 0) {
         HGOTO_ERROR(H5E_INTERNAL, H5E_CANTGET, FAIL, "Failed checking or grabbing mutex");
     }
 
     /* update stats */
-    if ( have_global_mutex )
-    {
+    if (have_global_mutex) {
         atomic_fetch_add(&(H5P_mt_g.num_already_have_mutex__decode_cb), 1);
     }
 
     /* Call the user's callback */
-    if ((*(prop->decode))(pp, value_buf) < 0) 
-    {
+    if ((*(prop->decode))(pp, value_buf) < 0) {
         HGOTO_ERROR(H5E_PLIST, H5E_CANTDECODE, FAIL, "property decode callback failed");
     }
 
@@ -12227,8 +12185,7 @@ done:
      * If the global mutex was grabbed in this function,
      * it must be released.
      */
-    if ( mutex_acquired )
-    {
+    if (mutex_acquired) {
         H5_API_UNLOCK
         atomic_fetch_add(&(H5P_mt_g.global_mutex_unlocks), 1);
     }
@@ -12240,20 +12197,19 @@ done:
 /****************************************************************************************
  * Function:    H5P__global_lock_prop_cb__del
  *
- * Purpose:     
+ * Purpose:
  *
  * Return:      SUCCEED/FAIL
  *
  ****************************************************************************************
  */
 herr_t
-H5P__global_lock_prop_cb__del(H5P_mt_prop_t *prop, hid_t plist_id, const char *name, 
-                                                                    size_t size, void *value)
+H5P__global_lock_prop_cb__del(H5P_mt_prop_t *prop, hid_t plist_id, const char *name, size_t size, void *value)
 {
-    bool   have_global_mutex = TRUE; /* trivially so in single thread builds */
-    bool   mutex_acquired    = FALSE; /* flag for if we have acquired the global mutex */
-    //bool   done              = FALSE;
-    //bool   cb_error          = FALSE;
+    bool have_global_mutex = TRUE;  /* trivially so in single thread builds */
+    bool mutex_acquired    = FALSE; /* flag for if we have acquired the global mutex */
+    // bool   done              = FALSE;
+    // bool   cb_error          = FALSE;
 
     herr_t ret_value = SUCCEED;
 
@@ -12269,23 +12225,20 @@ H5P__global_lock_prop_cb__del(H5P_mt_prop_t *prop, hid_t plist_id, const char *n
     atomic_fetch_add(&(H5P_mt_g.H5P__global_lock_prop_cb__del__num_calls), 1);
 
     /**
-     * Check if we already have the global mutex, 
+     * Check if we already have the global mutex,
      * and if we don't grab it.
      */
-    if ( H5P__grab_global_mutex(&have_global_mutex, &mutex_acquired) < 0 )
-    {
+    if (H5P__grab_global_mutex(&have_global_mutex, &mutex_acquired) < 0) {
         HGOTO_ERROR(H5E_INTERNAL, H5E_CANTGET, FAIL, "Failed checking or grabbing mutex");
     }
 
     /* update stats */
-    if ( have_global_mutex )
-    {
+    if (have_global_mutex) {
         atomic_fetch_add(&(H5P_mt_g.num_already_have_mutex__del_cb), 1);
     }
 
     /* Call the user's callback */
-    if ((*(prop->del))(plist_id, name, size, value) < 0) 
-    {
+    if ((*(prop->del))(plist_id, name, size, value) < 0) {
         HGOTO_ERROR(H5E_PLIST, H5E_CANTFREE, FAIL, "property del callback failed");
     }
 
@@ -12295,8 +12248,7 @@ done:
      * If the global mutex was grabbed in this function,
      * it must be released.
      */
-    if ( mutex_acquired )
-    {
+    if (mutex_acquired) {
         H5_API_UNLOCK
         atomic_fetch_add(&(H5P_mt_g.global_mutex_unlocks), 1);
     }
@@ -12308,7 +12260,7 @@ done:
 /****************************************************************************************
  * Function:    H5P__global_lock_prop_cb__copy
  *
- * Purpose:     
+ * Purpose:
  *
  * Return:      SUCCEED/FAIL
  *
@@ -12317,10 +12269,10 @@ done:
 herr_t
 H5P__global_lock_prop_cb__copy(H5P_mt_prop_t *prop, const char *name, size_t size, void *value)
 {
-    bool   have_global_mutex = TRUE; /* trivially so in single thread builds */
-    bool   mutex_acquired    = FALSE; /* flag for if we have acquired the global mutex */
-    //bool   done              = FALSE;
-    //bool   cb_error          = FALSE;
+    bool have_global_mutex = TRUE;  /* trivially so in single thread builds */
+    bool mutex_acquired    = FALSE; /* flag for if we have acquired the global mutex */
+    // bool   done              = FALSE;
+    // bool   cb_error          = FALSE;
 
     herr_t ret_value = SUCCEED;
 
@@ -12335,24 +12287,22 @@ H5P__global_lock_prop_cb__copy(H5P_mt_prop_t *prop, const char *name, size_t siz
     atomic_fetch_add(&(H5P_mt_g.H5P__global_lock_prop_cb__copy__num_calls), 1);
 
     /**
-     * Check if we already have the global mutex, 
+     * Check if we already have the global mutex,
      * and if we don't grab it.
      */
-    if ( H5P__grab_global_mutex(&have_global_mutex, &mutex_acquired) < 0 )
-    {
+    if (H5P__grab_global_mutex(&have_global_mutex, &mutex_acquired) < 0) {
         HGOTO_ERROR(H5E_INTERNAL, H5E_CANTGET, FAIL, "Failed checking or grabbing mutex");
     }
 
     /* update stats */
-    if ( have_global_mutex )
-    {
+    if (have_global_mutex) {
         atomic_fetch_add(&(H5P_mt_g.num_already_have_mutex__copy_cb), 1);
     }
 
     /* Call the user's callback */
-    if ((*(prop->copy))(name, size, value) < 0) 
-    {
-        HDONE_ERROR(H5E_PLIST, H5E_CANTCOPY, FAIL, "property copy callback failed");;    
+    if ((*(prop->copy))(name, size, value) < 0) {
+        HDONE_ERROR(H5E_PLIST, H5E_CANTCOPY, FAIL, "property copy callback failed");
+        ;
     }
 
 done:
@@ -12361,8 +12311,7 @@ done:
      * If the global mutex was grabbed in this function,
      * it must be released.
      */
-    if ( mutex_acquired )
-    {
+    if (mutex_acquired) {
         H5_API_UNLOCK
         atomic_fetch_add(&(H5P_mt_g.global_mutex_unlocks), 1);
     }
@@ -12374,7 +12323,7 @@ done:
 /****************************************************************************************
  * Function:    H5P__global_lock_prop_cb__cmp
  *
- * Purpose:     
+ * Purpose:
  *
  * Return:      SUCCEED/FAIL
  *
@@ -12383,10 +12332,10 @@ done:
 herr_t
 H5P__global_lock_prop_cb__cmp(H5P_mt_prop_t *prop, void *value1, void *value2, size_t size)
 {
-    bool   have_global_mutex = TRUE; /* trivially so in single thread builds */
-    bool   mutex_acquired    = FALSE; /* flag for if we have acquired the global mutex */
-    //bool   done              = FALSE;
-    int    cmp_value         = 0;
+    bool have_global_mutex = TRUE;  /* trivially so in single thread builds */
+    bool mutex_acquired    = FALSE; /* flag for if we have acquired the global mutex */
+    // bool   done              = FALSE;
+    int cmp_value = 0;
 
     herr_t ret_value = SUCCEED;
 
@@ -12402,24 +12351,21 @@ H5P__global_lock_prop_cb__cmp(H5P_mt_prop_t *prop, void *value1, void *value2, s
     atomic_fetch_add(&(H5P_mt_g.H5P__global_lock_prop_cb__cmp__num_calls), 1);
 
     /**
-     * Check if we already have the global mutex, 
+     * Check if we already have the global mutex,
      * and if we don't grab it.
      */
-    if ( H5P__grab_global_mutex(&have_global_mutex, &mutex_acquired) < 0 )
-    {
+    if (H5P__grab_global_mutex(&have_global_mutex, &mutex_acquired) < 0) {
         HGOTO_ERROR(H5E_INTERNAL, H5E_CANTGET, FAIL, "Failed checking or grabbing mutex");
     }
 
     /* update stats */
-    if ( have_global_mutex )
-    {
+    if (have_global_mutex) {
         atomic_fetch_add(&(H5P_mt_g.num_already_have_mutex__cmp_cb), 1);
     }
 
     /* Call the user's callback */
-    if ((cmp_value = prop->cmp(value1, value2, size)) != 0) 
-    {
-        ret_value = FAIL;    
+    if ((cmp_value = prop->cmp(value1, value2, size)) != 0) {
+        ret_value = FAIL;
     }
 
 done:
@@ -12428,8 +12374,7 @@ done:
      * If the global mutex was grabbed in this function,
      * it must be released.
      */
-    if ( mutex_acquired )
-    {
+    if (mutex_acquired) {
         H5_API_UNLOCK
         atomic_fetch_add(&(H5P_mt_g.global_mutex_unlocks), 1);
     }
@@ -12441,7 +12386,7 @@ done:
 /****************************************************************************************
  * Function:    H5P__global_lock_prop_cb__close
  *
- * Purpose:     
+ * Purpose:
  *
  * Return:      SUCCEED/FAIL
  *
@@ -12450,10 +12395,10 @@ done:
 herr_t
 H5P__global_lock_prop_cb__close(H5P_mt_prop_t *prop, const char *name, size_t size, void *value)
 {
-    bool   have_global_mutex = TRUE; /* trivially so in single thread builds */
-    bool   mutex_acquired    = FALSE; /* flag for if we have acquired the global mutex */
-    //bool   done              = FALSE;
-    //bool   cb_error          = FALSE;
+    bool have_global_mutex = TRUE;  /* trivially so in single thread builds */
+    bool mutex_acquired    = FALSE; /* flag for if we have acquired the global mutex */
+    // bool   done              = FALSE;
+    // bool   cb_error          = FALSE;
 
     herr_t ret_value = SUCCEED;
 
@@ -12468,23 +12413,21 @@ H5P__global_lock_prop_cb__close(H5P_mt_prop_t *prop, const char *name, size_t si
     atomic_fetch_add(&(H5P_mt_g.H5P__global_lock_prop_cb__close__num_calls), 1);
 
     /**
-     * Check if we already have the global mutex, 
+     * Check if we already have the global mutex,
      * and if we don't grab it.
      */
-    if ( H5P__grab_global_mutex(&have_global_mutex, &mutex_acquired) < 0 )
-    {
+    if (H5P__grab_global_mutex(&have_global_mutex, &mutex_acquired) < 0) {
         HGOTO_ERROR(H5E_INTERNAL, H5E_CANTGET, FAIL, "Failed checking or grabbing mutex");
     }
 
     /* update stats */
-    if ( have_global_mutex )
-    {
+    if (have_global_mutex) {
         atomic_fetch_add(&(H5P_mt_g.num_already_have_mutex__close_cb), 1);
     }
 
-    /** 
-     * Call the close callback and ignore the return value, 
-     * there's nothing we can do about it 
+    /**
+     * Call the close callback and ignore the return value,
+     * there's nothing we can do about it
      */
     (*(prop->close))(name, size, value);
 
@@ -12494,8 +12437,7 @@ done:
      * If the global mutex was grabbed in this function,
      * it must be released.
      */
-    if ( mutex_acquired )
-    {
+    if (mutex_acquired) {
         H5_API_UNLOCK
         atomic_fetch_add(&(H5P_mt_g.global_mutex_unlocks), 1);
     }
@@ -13400,7 +13342,7 @@ H5P__dump_stats_global(FILE *file_ptr)
     fprintf(file_ptr, "H5P_mt_g.global_mutex_unlocks                        = %lld\n",
             (unsigned long long)(atomic_load(&(H5P_mt_g.global_mutex_unlocks))));
 
-   /* Global Mutex stats */
+    /* Global Mutex stats */
     fprintf(file_ptr, "H5P_mt_g.H5P__global_lock_prop_cb__create__num_calls = %lld\n",
             (unsigned long long)(atomic_load(&(H5P_mt_g.H5P__global_lock_prop_cb__create__num_calls))));
     fprintf(file_ptr, "H5P_mt_g.num_already_have_mutex__create_cb           = %lld\n",

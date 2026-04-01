@@ -2922,14 +2922,14 @@ uint64_t H5P__calc_avg_visited(uint64_t avg_visited, uint64_t num_calls, uint64_
 /* Callback functions */
 herr_t H5P__grab_global_mutex(bool *have_global_mutex, bool *mutex_acquired);
 herr_t H5P__global_lock_prop_cb__create(H5P_mt_prop_t *prop, const char *name, size_t size, void *value);
-herr_t H5P__global_lock_prop_cb__set(H5P_mt_prop_t *prop, hid_t plist_id, const char *name, 
-                                        size_t size, void *value);
-herr_t H5P__global_lock_prop_cb__get(H5P_mt_prop_t *prop, hid_t plist_id, 
-                                        const char *name, size_t size, void *value);
+herr_t H5P__global_lock_prop_cb__set(H5P_mt_prop_t *prop, hid_t plist_id, const char *name, size_t size,
+                                     void *value);
+herr_t H5P__global_lock_prop_cb__get(H5P_mt_prop_t *prop, hid_t plist_id, const char *name, size_t size,
+                                     void *value);
 herr_t H5P__global_lock_prop_cb__encode(H5P_mt_prop_t *prop, void *value, void **pp, size_t *value_len);
 herr_t H5P__global_lock_prop_cb__decode(H5P_mt_prop_t *prop, const void **pp, void *value_buf);
-herr_t H5P__global_lock_prop_cb__del(H5P_mt_prop_t *prop, hid_t plist_id, const char *name, 
-                                        size_t size, void *value);
+herr_t H5P__global_lock_prop_cb__del(H5P_mt_prop_t *prop, hid_t plist_id, const char *name, size_t size,
+                                     void *value);
 herr_t H5P__global_lock_prop_cb__copy(H5P_mt_prop_t *prop, const char *name, size_t size, void *value);
 herr_t H5P__global_lock_prop_cb__cmp(H5P_mt_prop_t *prop, void *value1, void *value2, size_t size);
 herr_t H5P__global_lock_prop_cb__close(H5P_mt_prop_t *prop, const char *name, size_t size, void *value);
