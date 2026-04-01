@@ -54,8 +54,9 @@
 #define H5_API_TEST_EXECUTION_CONCURRENT (GetTestMaxNumThreads() > 1)
 
 /* Macro for pointer to filename of file used by API tests */
-#define H5_API_TEST_FILENAME(TestParamsPtr) \
-    (H5_API_TEST_EXECUTION_THREADED ? H5_api_test_filenames_g[(TestParamsPtr)->MtTestParams.ThreadID] : H5_api_test_filenames_g[0])
+#define H5_API_TEST_FILENAME(TestParamsPtr)                                                                  \
+    (H5_API_TEST_EXECUTION_THREADED ? H5_api_test_filenames_g[(TestParamsPtr)->MtTestParams.ThreadID]        \
+                                    : H5_api_test_filenames_g[0])
 
 #define H5_API_TEST_FILENAME_MAX_LENGTH 1024
 

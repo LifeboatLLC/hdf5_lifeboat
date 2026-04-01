@@ -204,8 +204,8 @@ test_object_creation_by_absolute_path(TestParams_t *params)
     SUBTEST_BEGIN(params, "creation of dataset using absolute pathname")
     {
         /* Try to create a dataset nested at the end of this group chain by using an absolute pathname */
-        if ((fspace_id = generate_random_dataspace(OBJECT_CREATE_BY_ABSOLUTE_PATH_TEST_DSET_SPACE_RANK,
-                                                   NULL, NULL, false)) < 0) {
+        if ((fspace_id = generate_random_dataspace(OBJECT_CREATE_BY_ABSOLUTE_PATH_TEST_DSET_SPACE_RANK, NULL,
+                                                   NULL, false)) < 0) {
             printf("    failed to generate dataspace\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -516,8 +516,7 @@ test_absolute_vs_relative_path(TestParams_t *params)
         /* Create a dataset by relative path in the form "./dataset" starting from the container group */
         if ((dset_id6 = H5Dcreate2(group_id, "./" ABSOLUTE_VS_RELATIVE_PATH_TEST_DSET6_NAME, dset_dtype6,
                                    fspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) {
-            printf(
-                "    couldn't create dataset by relative path from container group with leading '.'\n");
+            printf("    couldn't create dataset by relative path from container group with leading '.'\n");
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -884,10 +883,10 @@ H5_api_misc_test_add(void)
             0, testframe_flags, "object creation by absolute path");
     AddTest("test_absolute_vs_relative_path", test_absolute_vs_relative_path, NULL, NULL, NULL, 0,
             testframe_flags, "absolute vs. relative pathnames");
-    AddTest("test_dot_for_object_name", test_dot_for_object_name, NULL, NULL, NULL, 0,
-            testframe_flags, "creating objects with \".\" as the name");
+    AddTest("test_dot_for_object_name", test_dot_for_object_name, NULL, NULL, NULL, 0, testframe_flags,
+            "creating objects with \".\" as the name");
     AddTest("test_symbols_in_compound_field_name", test_symbols_in_compound_field_name, NULL, NULL, NULL, 0,
             testframe_flags, "usage of '{', '}' and '\\\"' symbols in compound field name");
-    AddTest("test_double_init_term", test_double_init_term, NULL, NULL, NULL, 0,
-            testframe_flags, "double init/term correctness");
+    AddTest("test_double_init_term", test_double_init_term, NULL, NULL, NULL, 0, testframe_flags,
+            "double init/term correctness");
 }

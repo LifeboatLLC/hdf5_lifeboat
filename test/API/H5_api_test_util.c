@@ -655,8 +655,7 @@ error:
  * being run in a multi-threaded manner.
  */
 herr_t
-prefix_test_filename(TestParams_t *test_params, const char *prefix, const char *filename,
-                     char **filename_out)
+prefix_test_filename(TestParams_t *test_params, const char *prefix, const char *filename, char **filename_out)
 {
     char  *out_buf       = NULL;
     int    chars_written = 0;
@@ -691,13 +690,11 @@ prefix_test_filename(TestParams_t *test_params, const char *prefix, const char *
 
     if (test_params->IsMtTest) {
         /* Generate thread-local filename */
-        chars_written = HDsnprintf(out_buf, H5_API_TEST_FILENAME_MAX_LENGTH,
-                                   "%s%d%s", prefix, test_params->MtTestParams.ThreadID,
-                                   filename);
+        chars_written = HDsnprintf(out_buf, H5_API_TEST_FILENAME_MAX_LENGTH, "%s%d%s", prefix,
+                                   test_params->MtTestParams.ThreadID, filename);
     }
     else {
-        chars_written = HDsnprintf(out_buf, H5_API_TEST_FILENAME_MAX_LENGTH,
-                                   "%s%s", prefix, filename);
+        chars_written = HDsnprintf(out_buf, H5_API_TEST_FILENAME_MAX_LENGTH, "%s%s", prefix, filename);
     }
 
     if (chars_written < 0) {

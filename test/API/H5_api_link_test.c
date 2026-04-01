@@ -577,8 +577,8 @@ test_create_hard_link_invalid_params(TestParams_t *params)
     htri_t link_exists;
     hid_t  file_id         = H5I_INVALID_HID;
     hid_t  container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
-    char   *ext_link_filename = NULL;
-    hid_t  ext_file_id                                        = H5I_INVALID_HID;
+    char  *ext_link_filename = NULL;
+    hid_t  ext_file_id       = H5I_INVALID_HID;
 
     /* Make sure the connector supports the API functions being tested */
     if (!(vol_cap_flags_g & H5VL_CAP_FLAG_FILE_BASIC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_GROUP_BASIC) ||
@@ -604,7 +604,8 @@ test_create_hard_link_invalid_params(TestParams_t *params)
         goto error;
     }
 
-    if (prefix_test_filename(params, test_path_prefix, EXTERNAL_LINK_TEST_FILE_NAME, &ext_link_filename) < 0) {
+    if (prefix_test_filename(params, test_path_prefix, EXTERNAL_LINK_TEST_FILE_NAME, &ext_link_filename) <
+        0) {
         printf("    couldn't create external link test file name\n");
         goto error;
     }
@@ -618,8 +619,8 @@ test_create_hard_link_invalid_params(TestParams_t *params)
     {
         H5E_BEGIN_TRY
         {
-            err_ret = H5Lcreate_hard(H5I_INVALID_HID, "/", group_id,
-                                     HARD_LINK_INVALID_PARAMS_TEST_LINK_NAME, H5P_DEFAULT, H5P_DEFAULT);
+            err_ret = H5Lcreate_hard(H5I_INVALID_HID, "/", group_id, HARD_LINK_INVALID_PARAMS_TEST_LINK_NAME,
+                                     H5P_DEFAULT, H5P_DEFAULT);
         }
         H5E_END_TRY
 
@@ -662,8 +663,8 @@ test_create_hard_link_invalid_params(TestParams_t *params)
     {
         H5E_BEGIN_TRY
         {
-            err_ret = H5Lcreate_hard(file_id, "/", H5I_INVALID_HID,
-                                     HARD_LINK_INVALID_PARAMS_TEST_LINK_NAME, H5P_DEFAULT, H5P_DEFAULT);
+            err_ret = H5Lcreate_hard(file_id, "/", H5I_INVALID_HID, HARD_LINK_INVALID_PARAMS_TEST_LINK_NAME,
+                                     H5P_DEFAULT, H5P_DEFAULT);
         }
         H5E_END_TRY
 
@@ -736,8 +737,8 @@ test_create_hard_link_invalid_params(TestParams_t *params)
     {
         H5E_BEGIN_TRY
         {
-            err_ret = H5Lcreate_hard(H5L_SAME_LOC, "/", H5L_SAME_LOC,
-                                     HARD_LINK_INVALID_PARAMS_TEST_LINK_NAME, H5P_DEFAULT, H5P_DEFAULT);
+            err_ret = H5Lcreate_hard(H5L_SAME_LOC, "/", H5L_SAME_LOC, HARD_LINK_INVALID_PARAMS_TEST_LINK_NAME,
+                                     H5P_DEFAULT, H5P_DEFAULT);
         }
         H5E_END_TRY
 
@@ -779,10 +780,8 @@ test_create_hard_link_invalid_params(TestParams_t *params)
     SUBTEST_BEGIN(params, "invalid link existence after previous invalid H5Lcreate_hard calls")
     {
         /* Verify the link hasn't been created */
-        if ((link_exists = H5Lexists(group_id, HARD_LINK_INVALID_PARAMS_TEST_LINK_NAME, H5P_DEFAULT)) <
-                0) {
-            printf("    couldn't determine if link '%s' exists\n",
-                   HARD_LINK_INVALID_PARAMS_TEST_LINK_NAME);
+        if ((link_exists = H5Lexists(group_id, HARD_LINK_INVALID_PARAMS_TEST_LINK_NAME, H5P_DEFAULT)) < 0) {
+            printf("    couldn't determine if link '%s' exists\n", HARD_LINK_INVALID_PARAMS_TEST_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -1615,8 +1614,8 @@ test_create_soft_link_invalid_params(TestParams_t *params)
     {
         H5E_BEGIN_TRY
         {
-            err_ret = H5Lcreate_soft("/", group_id, SOFT_LINK_INVALID_PARAMS_TEST_LINK_NAME,
-                                     H5I_INVALID_HID, H5P_DEFAULT);
+            err_ret = H5Lcreate_soft("/", group_id, SOFT_LINK_INVALID_PARAMS_TEST_LINK_NAME, H5I_INVALID_HID,
+                                     H5P_DEFAULT);
         }
         H5E_END_TRY
 
@@ -1648,10 +1647,8 @@ test_create_soft_link_invalid_params(TestParams_t *params)
     SUBTEST_BEGIN(params, "invalid link existence after previous invalid H5Lcreate_soft calls")
     {
         /* Verify the link hasn't been created */
-        if ((link_exists = H5Lexists(group_id, SOFT_LINK_INVALID_PARAMS_TEST_LINK_NAME, H5P_DEFAULT)) <
-                0) {
-            printf("    couldn't determine if link '%s' exists\n",
-                   SOFT_LINK_INVALID_PARAMS_TEST_LINK_NAME);
+        if ((link_exists = H5Lexists(group_id, SOFT_LINK_INVALID_PARAMS_TEST_LINK_NAME, H5P_DEFAULT)) < 0) {
+            printf("    couldn't determine if link '%s' exists\n", SOFT_LINK_INVALID_PARAMS_TEST_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -1693,8 +1690,8 @@ test_create_external_link(TestParams_t *params)
     htri_t link_exists;
     hid_t  file_id         = H5I_INVALID_HID;
     hid_t  container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
-    hid_t  root_id = H5I_INVALID_HID;
-    char   *ext_link_filename = NULL;
+    hid_t  root_id           = H5I_INVALID_HID;
+    char  *ext_link_filename = NULL;
 
     /* Make sure the connector supports the API functions being tested */
     if (!(vol_cap_flags_g & H5VL_CAP_FLAG_FILE_BASIC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_GROUP_BASIC) ||
@@ -1704,7 +1701,8 @@ test_create_external_link(TestParams_t *params)
         return SKIP;
     }
 
-    if (prefix_test_filename(params, test_path_prefix, EXTERNAL_LINK_TEST_FILE_NAME, &ext_link_filename) < 0) {
+    if (prefix_test_filename(params, test_path_prefix, EXTERNAL_LINK_TEST_FILE_NAME, &ext_link_filename) <
+        0) {
         printf("    couldn't create external link filename\n");
         goto error;
     }
@@ -1796,8 +1794,8 @@ test_create_external_link_dangling(TestParams_t *params)
     htri_t link_exists;
     hid_t  file_id = H5I_INVALID_HID, ext_file_id = H5I_INVALID_HID;
     hid_t  container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
-    hid_t  object_id = H5I_INVALID_HID;
-    char   *ext_link_filename = NULL;
+    hid_t  object_id         = H5I_INVALID_HID;
+    char  *ext_link_filename = NULL;
 
     /* Make sure the connector supports the API functions being tested */
     if (!(vol_cap_flags_g & H5VL_CAP_FLAG_FILE_BASIC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_GROUP_BASIC) ||
@@ -1807,7 +1805,8 @@ test_create_external_link_dangling(TestParams_t *params)
         return SKIP;
     }
 
-    if (prefix_test_filename(params, test_path_prefix, EXTERNAL_LINK_TEST_FILE_NAME, &ext_link_filename) < 0) {
+    if (prefix_test_filename(params, test_path_prefix, EXTERNAL_LINK_TEST_FILE_NAME, &ext_link_filename) <
+        0) {
         printf("    couldn't create external link filename\n");
         goto error;
     }
@@ -1921,10 +1920,10 @@ test_create_external_link_multi(TestParams_t *params)
     hid_t file_id         = H5I_INVALID_HID;
     hid_t container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
     hid_t group_id2 = H5I_INVALID_HID, group_id3 = H5I_INVALID_HID;
-    hid_t root_id = H5I_INVALID_HID;
-    char  *ext_link_filename1 = NULL;
-    char  *ext_link_filename2 = NULL;
-    char  *ext_link_filename3 = NULL;
+    hid_t root_id            = H5I_INVALID_HID;
+    char *ext_link_filename1 = NULL;
+    char *ext_link_filename2 = NULL;
+    char *ext_link_filename3 = NULL;
     char  objname[EXTERNAL_LINK_TEST_MULTI_NAME_BUF_SIZE];
 
     /* Make sure the connector supports the API functions being tested */
@@ -2017,8 +2016,7 @@ test_create_external_link_multi(TestParams_t *params)
         }
 
         /* Create external link to object in first file */
-        if (H5Lcreate_external(ext_link_filename1, "/A/B/C", group_id, "F", H5P_DEFAULT, H5P_DEFAULT) <
-                0) {
+        if (H5Lcreate_external(ext_link_filename1, "/A/B/C", group_id, "F", H5P_DEFAULT, H5P_DEFAULT) < 0) {
             printf("    couldn't create external link 'F'\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -2066,8 +2064,7 @@ test_create_external_link_multi(TestParams_t *params)
         }
 
         /* Create external link to object in second file */
-        if (H5Lcreate_external(ext_link_filename2, "/D/E/F", group_id, "I", H5P_DEFAULT, H5P_DEFAULT) <
-                0) {
+        if (H5Lcreate_external(ext_link_filename2, "/D/E/F", group_id, "I", H5P_DEFAULT, H5P_DEFAULT) < 0) {
             printf("    couldn't create external link 'I'\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -2097,14 +2094,14 @@ test_create_external_link_multi(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((group_id = H5Gcreate2(container_group, EXTERNAL_LINK_TEST_MULTI_NAME, H5P_DEFAULT,
-                                   H5P_DEFAULT, H5P_DEFAULT)) < 0) {
+        if ((group_id = H5Gcreate2(container_group, EXTERNAL_LINK_TEST_MULTI_NAME, H5P_DEFAULT, H5P_DEFAULT,
+                                   H5P_DEFAULT)) < 0) {
             printf("    couldn't create container subgroup '%s'\n", EXTERNAL_LINK_TEST_MULTI_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if (H5Lcreate_external(ext_link_filename3, "/G/H/I", group_id, "ext_link", H5P_DEFAULT,
-                               H5P_DEFAULT) < 0) {
+        if (H5Lcreate_external(ext_link_filename3, "/G/H/I", group_id, "ext_link", H5P_DEFAULT, H5P_DEFAULT) <
+            0) {
             printf("    couldn't create external link 'ext_link'\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -2116,13 +2113,12 @@ test_create_external_link_multi(TestParams_t *params)
 
         /* Check name */
         if (H5Iget_name(group_id2, objname, (size_t)EXTERNAL_LINK_TEST_MULTI_NAME_BUF_SIZE) < 0) {
-            printf("    couldn't get the name of the object '%s'\n",
-                   HARD_LINK_TEST_GROUP_MANY_FINAL_NAME);
+            printf("    couldn't get the name of the object '%s'\n", HARD_LINK_TEST_GROUP_MANY_FINAL_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (strcmp(objname, "/A/B/C") && strcmp(objname, "/D/E/F") && strcmp(objname, "/G/H/I") &&
-                strcmp(objname, "/" LINK_TEST_GROUP_NAME "/" EXTERNAL_LINK_TEST_MULTI_NAME "/ext_link")) {
+            strcmp(objname, "/" LINK_TEST_GROUP_NAME "/" EXTERNAL_LINK_TEST_MULTI_NAME "/ext_link")) {
             printf("    H5Iget_name failed to retrieve a valid name for the object '%s'\n", "/A/B/C");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -2179,9 +2175,9 @@ test_create_external_link_multi(TestParams_t *params)
         }
 
         if (strcmp(objname, "/A/B/C/new_group") && strcmp(objname, "/D/E/F/new_group") &&
-                strcmp(objname, "/G/H/I/new_group") &&
-                strcmp(objname,
-                       "/" LINK_TEST_GROUP_NAME "/" EXTERNAL_LINK_TEST_MULTI_NAME "/ext_link/new_group")) {
+            strcmp(objname, "/G/H/I/new_group") &&
+            strcmp(objname,
+                   "/" LINK_TEST_GROUP_NAME "/" EXTERNAL_LINK_TEST_MULTI_NAME "/ext_link/new_group")) {
             printf("    H5Iget_name was unable to retrieve a valid name for the object '%s'\n",
                    "/A/B/C/new_group");
             TESTFRAME_TEST_ERROR(params);
@@ -2285,19 +2281,19 @@ test_create_external_link_ping_pong(TestParams_t *params)
 
         /* Create external links for chain */
         if (H5Lcreate_external(ext_link_filename2, "/link2", file_id, "link1", H5P_DEFAULT, H5P_DEFAULT) <
-                0) {
+            0) {
             printf("    couldn't create external link\n");
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (H5Lcreate_external(ext_link_filename2, "/link4", file_id, "link3", H5P_DEFAULT, H5P_DEFAULT) <
-                0) {
+            0) {
             printf("    couldn't create external link\n");
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (H5Lcreate_external(ext_link_filename2, "/link6", file_id, "link5", H5P_DEFAULT, H5P_DEFAULT) <
-                0) {
+            0) {
             printf("    couldn't create external link\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -2331,19 +2327,19 @@ test_create_external_link_ping_pong(TestParams_t *params)
 
         /* Create external links for chain */
         if (H5Lcreate_external(ext_link_filename1, "/link3", file_id, "link2", H5P_DEFAULT, H5P_DEFAULT) <
-                0) {
+            0) {
             printf("    couldn't create external link\n");
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (H5Lcreate_external(ext_link_filename1, "/link5", file_id, "link4", H5P_DEFAULT, H5P_DEFAULT) <
-                0) {
+            0) {
             printf("    couldn't create external link\n");
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (H5Lcreate_external(ext_link_filename1, "/final", file_id, "link6", H5P_DEFAULT, H5P_DEFAULT) <
-                0) {
+            0) {
             printf("    couldn't create external link\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -2436,8 +2432,7 @@ test_create_external_link_ping_pong(TestParams_t *params)
         for (size_t i = 1; i < EXTERNAL_LINK_TEST_PING_PONG_NUM_LINKS + 1 && !valid_name_matched; i++) {
             char name_possibility[H5_API_TEST_FILENAME_MAX_LENGTH];
 
-            snprintf(name_possibility, H5_API_TEST_FILENAME_MAX_LENGTH, "%s%zu%s", "/link", i,
-                     "/new_group");
+            snprintf(name_possibility, H5_API_TEST_FILENAME_MAX_LENGTH, "%s%zu%s", "/link", i, "/new_group");
 
             valid_name_matched |= !strcmp(objname, name_possibility);
         }
@@ -2574,8 +2569,8 @@ test_create_external_link_invalid_params(TestParams_t *params)
         H5E_BEGIN_TRY
         {
             err_ret =
-                    H5Lcreate_external(ext_link_filename, NULL, group_id,
-                                       EXTERNAL_LINK_INVALID_PARAMS_TEST_LINK_NAME, H5P_DEFAULT, H5P_DEFAULT);
+                H5Lcreate_external(ext_link_filename, NULL, group_id,
+                                   EXTERNAL_LINK_INVALID_PARAMS_TEST_LINK_NAME, H5P_DEFAULT, H5P_DEFAULT);
         }
         H5E_END_TRY
 
@@ -2588,8 +2583,8 @@ test_create_external_link_invalid_params(TestParams_t *params)
         H5E_BEGIN_TRY
         {
             err_ret =
-                    H5Lcreate_external(ext_link_filename, "", group_id,
-                                       EXTERNAL_LINK_INVALID_PARAMS_TEST_LINK_NAME, H5P_DEFAULT, H5P_DEFAULT);
+                H5Lcreate_external(ext_link_filename, "", group_id,
+                                   EXTERNAL_LINK_INVALID_PARAMS_TEST_LINK_NAME, H5P_DEFAULT, H5P_DEFAULT);
         }
         H5E_END_TRY
 
@@ -2606,8 +2601,8 @@ test_create_external_link_invalid_params(TestParams_t *params)
         H5E_BEGIN_TRY
         {
             err_ret =
-                    H5Lcreate_external(ext_link_filename, "/", H5I_INVALID_HID,
-                                       EXTERNAL_LINK_INVALID_PARAMS_TEST_LINK_NAME, H5P_DEFAULT, H5P_DEFAULT);
+                H5Lcreate_external(ext_link_filename, "/", H5I_INVALID_HID,
+                                   EXTERNAL_LINK_INVALID_PARAMS_TEST_LINK_NAME, H5P_DEFAULT, H5P_DEFAULT);
         }
         H5E_END_TRY
 
@@ -2623,8 +2618,7 @@ test_create_external_link_invalid_params(TestParams_t *params)
     {
         H5E_BEGIN_TRY
         {
-            err_ret =
-                    H5Lcreate_external(ext_link_filename, "/", group_id, NULL, H5P_DEFAULT, H5P_DEFAULT);
+            err_ret = H5Lcreate_external(ext_link_filename, "/", group_id, NULL, H5P_DEFAULT, H5P_DEFAULT);
         }
         H5E_END_TRY
 
@@ -2652,9 +2646,9 @@ test_create_external_link_invalid_params(TestParams_t *params)
     {
         H5E_BEGIN_TRY
         {
-            err_ret = H5Lcreate_external(ext_link_filename, "/", group_id,
-                                         EXTERNAL_LINK_INVALID_PARAMS_TEST_LINK_NAME, H5I_INVALID_HID,
-                                         H5P_DEFAULT);
+            err_ret =
+                H5Lcreate_external(ext_link_filename, "/", group_id,
+                                   EXTERNAL_LINK_INVALID_PARAMS_TEST_LINK_NAME, H5I_INVALID_HID, H5P_DEFAULT);
         }
         H5E_END_TRY
 
@@ -2670,9 +2664,9 @@ test_create_external_link_invalid_params(TestParams_t *params)
     {
         H5E_BEGIN_TRY
         {
-            err_ret = H5Lcreate_external(ext_link_filename, "/", group_id,
-                                         EXTERNAL_LINK_INVALID_PARAMS_TEST_LINK_NAME, H5P_DEFAULT,
-                                         H5I_INVALID_HID);
+            err_ret =
+                H5Lcreate_external(ext_link_filename, "/", group_id,
+                                   EXTERNAL_LINK_INVALID_PARAMS_TEST_LINK_NAME, H5P_DEFAULT, H5I_INVALID_HID);
         }
         H5E_END_TRY
 
@@ -2687,8 +2681,8 @@ test_create_external_link_invalid_params(TestParams_t *params)
     SUBTEST_BEGIN(params, "invalid link existence after previous invalid H5Lcreate_external calls")
     {
         /* Verify the link hasn't been created */
-        if ((link_exists =
-                H5Lexists(group_id, EXTERNAL_LINK_INVALID_PARAMS_TEST_LINK_NAME, H5P_DEFAULT)) < 0) {
+        if ((link_exists = H5Lexists(group_id, EXTERNAL_LINK_INVALID_PARAMS_TEST_LINK_NAME, H5P_DEFAULT)) <
+            0) {
             printf("    couldn't determine if link '%s' exists\n",
                    EXTERNAL_LINK_INVALID_PARAMS_TEST_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
@@ -2850,9 +2844,8 @@ test_create_user_defined_link_invalid_params(TestParams_t *params)
     {
         H5E_BEGIN_TRY
         {
-            err_ret =
-                H5Lcreate_ud(H5I_INVALID_HID, UD_LINK_INVALID_PARAMS_TEST_LINK_NAME, H5L_TYPE_EXTERNAL,
-                             udata, (size_t)udata_size, H5P_DEFAULT, H5P_DEFAULT);
+            err_ret = H5Lcreate_ud(H5I_INVALID_HID, UD_LINK_INVALID_PARAMS_TEST_LINK_NAME, H5L_TYPE_EXTERNAL,
+                                   udata, (size_t)udata_size, H5P_DEFAULT, H5P_DEFAULT);
         }
         H5E_END_TRY
 
@@ -2868,8 +2861,8 @@ test_create_user_defined_link_invalid_params(TestParams_t *params)
     {
         H5E_BEGIN_TRY
         {
-            err_ret = H5Lcreate_ud(group_id, NULL, H5L_TYPE_EXTERNAL, udata, (size_t)udata_size,
-                                   H5P_DEFAULT, H5P_DEFAULT);
+            err_ret = H5Lcreate_ud(group_id, NULL, H5L_TYPE_EXTERNAL, udata, (size_t)udata_size, H5P_DEFAULT,
+                                   H5P_DEFAULT);
         }
         H5E_END_TRY
 
@@ -2881,8 +2874,8 @@ test_create_user_defined_link_invalid_params(TestParams_t *params)
 
         H5E_BEGIN_TRY
         {
-            err_ret = H5Lcreate_ud(group_id, "", H5L_TYPE_EXTERNAL, udata, (size_t)udata_size,
-                                   H5P_DEFAULT, H5P_DEFAULT);
+            err_ret = H5Lcreate_ud(group_id, "", H5L_TYPE_EXTERNAL, udata, (size_t)udata_size, H5P_DEFAULT,
+                                   H5P_DEFAULT);
         }
         H5E_END_TRY
 
@@ -2915,8 +2908,8 @@ test_create_user_defined_link_invalid_params(TestParams_t *params)
     {
         H5E_BEGIN_TRY
         {
-            err_ret = H5Lcreate_ud(group_id, UD_LINK_INVALID_PARAMS_TEST_LINK_NAME, H5L_TYPE_EXTERNAL,
-                                   NULL, (size_t)udata_size, H5P_DEFAULT, H5P_DEFAULT);
+            err_ret = H5Lcreate_ud(group_id, UD_LINK_INVALID_PARAMS_TEST_LINK_NAME, H5L_TYPE_EXTERNAL, NULL,
+                                   (size_t)udata_size, H5P_DEFAULT, H5P_DEFAULT);
         }
         H5E_END_TRY
 
@@ -2932,8 +2925,8 @@ test_create_user_defined_link_invalid_params(TestParams_t *params)
     {
         H5E_BEGIN_TRY
         {
-            err_ret = H5Lcreate_ud(group_id, UD_LINK_INVALID_PARAMS_TEST_LINK_NAME, H5L_TYPE_EXTERNAL,
-                                   udata, (size_t)udata_size, H5I_INVALID_HID, H5P_DEFAULT);
+            err_ret = H5Lcreate_ud(group_id, UD_LINK_INVALID_PARAMS_TEST_LINK_NAME, H5L_TYPE_EXTERNAL, udata,
+                                   (size_t)udata_size, H5I_INVALID_HID, H5P_DEFAULT);
         }
         H5E_END_TRY
 
@@ -2949,8 +2942,8 @@ test_create_user_defined_link_invalid_params(TestParams_t *params)
     {
         H5E_BEGIN_TRY
         {
-            err_ret = H5Lcreate_ud(group_id, UD_LINK_INVALID_PARAMS_TEST_LINK_NAME, H5L_TYPE_EXTERNAL,
-                                   udata, (size_t)udata_size, H5P_DEFAULT, H5I_INVALID_HID);
+            err_ret = H5Lcreate_ud(group_id, UD_LINK_INVALID_PARAMS_TEST_LINK_NAME, H5L_TYPE_EXTERNAL, udata,
+                                   (size_t)udata_size, H5P_DEFAULT, H5I_INVALID_HID);
         }
         H5E_END_TRY
 
@@ -3008,10 +3001,10 @@ test_delete_link(TestParams_t *params)
     htri_t link_exists;
     hid_t  file_id = H5I_INVALID_HID, ext_file_id = H5I_INVALID_HID;
     hid_t  container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
-    hid_t  subgroup_id   = H5I_INVALID_HID;
-    hid_t  nested_grp_id = H5I_INVALID_HID;
-    hid_t  gcpl_id       = H5I_INVALID_HID;
-    char   *ext_link_filename = NULL;
+    hid_t  subgroup_id       = H5I_INVALID_HID;
+    hid_t  nested_grp_id     = H5I_INVALID_HID;
+    hid_t  gcpl_id           = H5I_INVALID_HID;
+    char  *ext_link_filename = NULL;
 
     /* Make sure the connector supports the API functions being tested */
     if (!(vol_cap_flags_g & H5VL_CAP_FLAG_FILE_BASIC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_GROUP_BASIC) ||
@@ -3051,7 +3044,8 @@ test_delete_link(TestParams_t *params)
         goto error;
     }
 
-    if (prefix_test_filename(params, test_path_prefix, EXTERNAL_LINK_TEST_FILE_NAME, &ext_link_filename) < 0) {
+    if (prefix_test_filename(params, test_path_prefix, EXTERNAL_LINK_TEST_FILE_NAME, &ext_link_filename) <
+        0) {
         printf("    couldn't create external link filename\n");
         goto error;
     }
@@ -3088,8 +3082,7 @@ test_delete_link(TestParams_t *params)
         }
 
         if (H5Ldelete(subgroup_id, LINK_DELETE_TEST_HARD_LINK_NAME, H5P_DEFAULT) < 0) {
-            printf("    couldn't delete hard link '%s' using H5Ldelete\n",
-                   LINK_DELETE_TEST_HARD_LINK_NAME);
+            printf("    couldn't delete hard link '%s' using H5Ldelete\n", LINK_DELETE_TEST_HARD_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -3120,20 +3113,20 @@ test_delete_link(TestParams_t *params)
 
     SUBTEST_BEGIN(params, "H5Ldelete on nested hard link")
     {
-        if ((subgroup_id = H5Gcreate2(group_id, LINK_DELETE_TEST_NESTED_SUBGROUP_NAME1, H5P_DEFAULT,
-                                      gcpl_id, H5P_DEFAULT)) < 0) {
+        if ((subgroup_id = H5Gcreate2(group_id, LINK_DELETE_TEST_NESTED_SUBGROUP_NAME1, H5P_DEFAULT, gcpl_id,
+                                      H5P_DEFAULT)) < 0) {
             printf("    couldn't create subgroup '%s'\n", LINK_DELETE_TEST_NESTED_SUBGROUP_NAME1);
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((nested_grp_id = H5Gcreate2(subgroup_id, LINK_DELETE_TEST_NESTED_GRP_NAME, H5P_DEFAULT,
-                                        gcpl_id, H5P_DEFAULT)) < 0) {
+        if ((nested_grp_id = H5Gcreate2(subgroup_id, LINK_DELETE_TEST_NESTED_GRP_NAME, H5P_DEFAULT, gcpl_id,
+                                        H5P_DEFAULT)) < 0) {
             printf("    couldn't create subgroup '%s'\n", LINK_DELETE_TEST_NESTED_GRP_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if (H5Lcreate_hard(nested_grp_id, ".", nested_grp_id, LINK_DELETE_TEST_HARD_LINK_NAME,
-                           H5P_DEFAULT, H5P_DEFAULT) < 0) {
+        if (H5Lcreate_hard(nested_grp_id, ".", nested_grp_id, LINK_DELETE_TEST_HARD_LINK_NAME, H5P_DEFAULT,
+                           H5P_DEFAULT) < 0) {
             printf("    couldn't create first hard link '%s'\n", LINK_DELETE_TEST_HARD_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
@@ -3214,8 +3207,7 @@ test_delete_link(TestParams_t *params)
         }
 
         if (H5Ldelete(subgroup_id, LINK_DELETE_TEST_SOFT_LINK_NAME, H5P_DEFAULT) < 0) {
-            printf("    couldn't delete soft link '%s' using H5Ldelete\n",
-                   LINK_DELETE_TEST_SOFT_LINK_NAME);
+            printf("    couldn't delete soft link '%s' using H5Ldelete\n", LINK_DELETE_TEST_SOFT_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -3258,8 +3250,7 @@ test_delete_link(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if first external link '%s' exists\n",
                    LINK_DELETE_TEST_EXTERNAL_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
@@ -3276,8 +3267,7 @@ test_delete_link(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if first external link '%s' exists\n",
                    LINK_DELETE_TEST_EXTERNAL_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
@@ -3371,8 +3361,7 @@ test_delete_link(TestParams_t *params)
         }
 
         if (!link_exists) {
-            printf("    hard link '%s' did not exist before deletion\n",
-                   LINK_DELETE_TEST_HARD_LINK_NAME2);
+            printf("    hard link '%s' did not exist before deletion\n", LINK_DELETE_TEST_HARD_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -3382,8 +3371,7 @@ test_delete_link(TestParams_t *params)
         }
 
         if (!link_exists) {
-            printf("    hard link '%s' did not exist before deletion\n",
-                   LINK_DELETE_TEST_HARD_LINK_NAME3);
+            printf("    hard link '%s' did not exist before deletion\n", LINK_DELETE_TEST_HARD_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -3572,8 +3560,7 @@ test_delete_link(TestParams_t *params)
         }
 
         if (!link_exists) {
-            printf("    hard link '%s' did not exist before deletion\n",
-                   LINK_DELETE_TEST_HARD_LINK_NAME2);
+            printf("    hard link '%s' did not exist before deletion\n", LINK_DELETE_TEST_HARD_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -3583,8 +3570,7 @@ test_delete_link(TestParams_t *params)
         }
 
         if (!link_exists) {
-            printf("    hard link '%s' did not exist before deletion\n",
-                   LINK_DELETE_TEST_HARD_LINK_NAME3);
+            printf("    hard link '%s' did not exist before deletion\n", LINK_DELETE_TEST_HARD_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -3768,8 +3754,7 @@ test_delete_link(TestParams_t *params)
         }
 
         if (!link_exists) {
-            printf("    hard link '%s' did not exist before deletion\n",
-                   LINK_DELETE_TEST_HARD_LINK_NAME2);
+            printf("    hard link '%s' did not exist before deletion\n", LINK_DELETE_TEST_HARD_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -3779,8 +3764,7 @@ test_delete_link(TestParams_t *params)
         }
 
         if (!link_exists) {
-            printf("    hard link '%s' did not exist before deletion\n",
-                   LINK_DELETE_TEST_HARD_LINK_NAME3);
+            printf("    hard link '%s' did not exist before deletion\n", LINK_DELETE_TEST_HARD_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -3964,8 +3948,7 @@ test_delete_link(TestParams_t *params)
         }
 
         if (!link_exists) {
-            printf("    hard link '%s' did not exist before deletion\n",
-                   LINK_DELETE_TEST_HARD_LINK_NAME2);
+            printf("    hard link '%s' did not exist before deletion\n", LINK_DELETE_TEST_HARD_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -3975,8 +3958,7 @@ test_delete_link(TestParams_t *params)
         }
 
         if (!link_exists) {
-            printf("    hard link '%s' did not exist before deletion\n",
-                   LINK_DELETE_TEST_HARD_LINK_NAME3);
+            printf("    hard link '%s' did not exist before deletion\n", LINK_DELETE_TEST_HARD_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -4168,8 +4150,7 @@ test_delete_link(TestParams_t *params)
         }
 
         if (!link_exists) {
-            printf("    soft link '%s' did not exist before deletion\n",
-                   LINK_DELETE_TEST_SOFT_LINK_NAME2);
+            printf("    soft link '%s' did not exist before deletion\n", LINK_DELETE_TEST_SOFT_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -4179,8 +4160,7 @@ test_delete_link(TestParams_t *params)
         }
 
         if (!link_exists) {
-            printf("    soft link '%s' did not exist before deletion\n",
-                   LINK_DELETE_TEST_SOFT_LINK_NAME3);
+            printf("    soft link '%s' did not exist before deletion\n", LINK_DELETE_TEST_SOFT_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -4372,8 +4352,7 @@ test_delete_link(TestParams_t *params)
         }
 
         if (!link_exists) {
-            printf("    soft link '%s' did not exist before deletion\n",
-                   LINK_DELETE_TEST_SOFT_LINK_NAME2);
+            printf("    soft link '%s' did not exist before deletion\n", LINK_DELETE_TEST_SOFT_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -4383,8 +4362,7 @@ test_delete_link(TestParams_t *params)
         }
 
         if (!link_exists) {
-            printf("    soft link '%s' did not exist before deletion\n",
-                   LINK_DELETE_TEST_SOFT_LINK_NAME3);
+            printf("    soft link '%s' did not exist before deletion\n", LINK_DELETE_TEST_SOFT_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -4571,8 +4549,7 @@ test_delete_link(TestParams_t *params)
         }
 
         if (!link_exists) {
-            printf("    soft link '%s' did not exist before deletion\n",
-                   LINK_DELETE_TEST_SOFT_LINK_NAME2);
+            printf("    soft link '%s' did not exist before deletion\n", LINK_DELETE_TEST_SOFT_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -4582,8 +4559,7 @@ test_delete_link(TestParams_t *params)
         }
 
         if (!link_exists) {
-            printf("    soft link '%s' did not exist before deletion\n",
-                   LINK_DELETE_TEST_SOFT_LINK_NAME3);
+            printf("    soft link '%s' did not exist before deletion\n", LINK_DELETE_TEST_SOFT_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -4770,8 +4746,7 @@ test_delete_link(TestParams_t *params)
         }
 
         if (!link_exists) {
-            printf("    soft link '%s' did not exist before deletion\n",
-                   LINK_DELETE_TEST_SOFT_LINK_NAME2);
+            printf("    soft link '%s' did not exist before deletion\n", LINK_DELETE_TEST_SOFT_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -4781,8 +4756,7 @@ test_delete_link(TestParams_t *params)
         }
 
         if (!link_exists) {
-            printf("    soft link '%s' did not exist before deletion\n",
-                   LINK_DELETE_TEST_SOFT_LINK_NAME3);
+            printf("    soft link '%s' did not exist before deletion\n", LINK_DELETE_TEST_SOFT_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -4955,8 +4929,7 @@ test_delete_link(TestParams_t *params)
         }
 
         /* Verify the links have been created */
-        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    LINK_DELETE_TEST_EXTERNAL_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
@@ -4968,8 +4941,7 @@ test_delete_link(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME2, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME2, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    LINK_DELETE_TEST_EXTERNAL_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
@@ -4981,8 +4953,7 @@ test_delete_link(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME3, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME3, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    LINK_DELETE_TEST_EXTERNAL_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
@@ -5003,21 +4974,18 @@ test_delete_link(TestParams_t *params)
         }
 
         /* Ensure that the link is gone and others remain */
-        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    LINK_DELETE_TEST_EXTERNAL_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (link_exists) {
-            printf("    external link '%s' exists after deletion!\n",
-                   LINK_DELETE_TEST_EXTERNAL_LINK_NAME);
+            printf("    external link '%s' exists after deletion!\n", LINK_DELETE_TEST_EXTERNAL_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME2, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME2, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    LINK_DELETE_TEST_EXTERNAL_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
@@ -5029,8 +4997,7 @@ test_delete_link(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME3, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME3, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    LINK_DELETE_TEST_EXTERNAL_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
@@ -5050,34 +5017,29 @@ test_delete_link(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    LINK_DELETE_TEST_EXTERNAL_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (link_exists) {
-            printf("    external link '%s' exists after deletion!\n",
-                   LINK_DELETE_TEST_EXTERNAL_LINK_NAME);
+            printf("    external link '%s' exists after deletion!\n", LINK_DELETE_TEST_EXTERNAL_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME2, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME2, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    LINK_DELETE_TEST_EXTERNAL_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (link_exists) {
-            printf("    external link '%s' exists after deletion!\n",
-                   LINK_DELETE_TEST_EXTERNAL_LINK_NAME2);
+            printf("    external link '%s' exists after deletion!\n", LINK_DELETE_TEST_EXTERNAL_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME3, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME3, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    LINK_DELETE_TEST_EXTERNAL_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
@@ -5096,42 +5058,36 @@ test_delete_link(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    LINK_DELETE_TEST_EXTERNAL_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (link_exists) {
-            printf("    external link '%s' exists after deletion!\n",
-                   LINK_DELETE_TEST_EXTERNAL_LINK_NAME);
+            printf("    external link '%s' exists after deletion!\n", LINK_DELETE_TEST_EXTERNAL_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME2, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME2, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    LINK_DELETE_TEST_EXTERNAL_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (link_exists) {
-            printf("    external link '%s' exists after deletion!\n",
-                   LINK_DELETE_TEST_EXTERNAL_LINK_NAME2);
+            printf("    external link '%s' exists after deletion!\n", LINK_DELETE_TEST_EXTERNAL_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME3, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME3, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    LINK_DELETE_TEST_EXTERNAL_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (link_exists) {
-            printf("    external link '%s' exists after deletion!\n",
-                   LINK_DELETE_TEST_EXTERNAL_LINK_NAME3);
+            printf("    external link '%s' exists after deletion!\n", LINK_DELETE_TEST_EXTERNAL_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -5187,8 +5143,7 @@ test_delete_link(TestParams_t *params)
         }
 
         /* Verify the links have been created */
-        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    LINK_DELETE_TEST_EXTERNAL_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
@@ -5200,8 +5155,7 @@ test_delete_link(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME2, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME2, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    LINK_DELETE_TEST_EXTERNAL_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
@@ -5213,8 +5167,7 @@ test_delete_link(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME3, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME3, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    LINK_DELETE_TEST_EXTERNAL_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
@@ -5235,21 +5188,18 @@ test_delete_link(TestParams_t *params)
         }
 
         /* Ensure that the link is gone and others remain */
-        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    LINK_DELETE_TEST_EXTERNAL_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (link_exists) {
-            printf("    external link '%s' exists after deletion!\n",
-                   LINK_DELETE_TEST_EXTERNAL_LINK_NAME);
+            printf("    external link '%s' exists after deletion!\n", LINK_DELETE_TEST_EXTERNAL_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME2, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME2, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    LINK_DELETE_TEST_EXTERNAL_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
@@ -5261,8 +5211,7 @@ test_delete_link(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME3, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME3, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    LINK_DELETE_TEST_EXTERNAL_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
@@ -5282,34 +5231,29 @@ test_delete_link(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    LINK_DELETE_TEST_EXTERNAL_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (link_exists) {
-            printf("    external link '%s' exists after deletion!\n",
-                   LINK_DELETE_TEST_EXTERNAL_LINK_NAME);
+            printf("    external link '%s' exists after deletion!\n", LINK_DELETE_TEST_EXTERNAL_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME2, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME2, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    LINK_DELETE_TEST_EXTERNAL_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (link_exists) {
-            printf("    external link '%s' exists after deletion!\n",
-                   LINK_DELETE_TEST_EXTERNAL_LINK_NAME2);
+            printf("    external link '%s' exists after deletion!\n", LINK_DELETE_TEST_EXTERNAL_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME3, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME3, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    LINK_DELETE_TEST_EXTERNAL_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
@@ -5328,42 +5272,36 @@ test_delete_link(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    LINK_DELETE_TEST_EXTERNAL_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (link_exists) {
-            printf("    external link '%s' exists after deletion!\n",
-                   LINK_DELETE_TEST_EXTERNAL_LINK_NAME);
+            printf("    external link '%s' exists after deletion!\n", LINK_DELETE_TEST_EXTERNAL_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME2, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME2, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    LINK_DELETE_TEST_EXTERNAL_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (link_exists) {
-            printf("    external link '%s' exists after deletion!\n",
-                   LINK_DELETE_TEST_EXTERNAL_LINK_NAME2);
+            printf("    external link '%s' exists after deletion!\n", LINK_DELETE_TEST_EXTERNAL_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME3, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME3, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    LINK_DELETE_TEST_EXTERNAL_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (link_exists) {
-            printf("    external link '%s' exists after deletion!\n",
-                   LINK_DELETE_TEST_EXTERNAL_LINK_NAME3);
+            printf("    external link '%s' exists after deletion!\n", LINK_DELETE_TEST_EXTERNAL_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -5414,8 +5352,7 @@ test_delete_link(TestParams_t *params)
         }
 
         /* Verify the links have been created */
-        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    LINK_DELETE_TEST_EXTERNAL_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
@@ -5427,8 +5364,7 @@ test_delete_link(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME2, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME2, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    LINK_DELETE_TEST_EXTERNAL_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
@@ -5440,8 +5376,7 @@ test_delete_link(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME3, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME3, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    LINK_DELETE_TEST_EXTERNAL_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
@@ -5462,21 +5397,18 @@ test_delete_link(TestParams_t *params)
         }
 
         /* Ensure that the link is gone and others remain */
-        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    LINK_DELETE_TEST_EXTERNAL_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (link_exists) {
-            printf("    external link '%s' exists after deletion!\n",
-                   LINK_DELETE_TEST_EXTERNAL_LINK_NAME);
+            printf("    external link '%s' exists after deletion!\n", LINK_DELETE_TEST_EXTERNAL_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME2, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME2, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    LINK_DELETE_TEST_EXTERNAL_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
@@ -5488,8 +5420,7 @@ test_delete_link(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME3, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME3, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    LINK_DELETE_TEST_EXTERNAL_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
@@ -5509,34 +5440,29 @@ test_delete_link(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    LINK_DELETE_TEST_EXTERNAL_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (link_exists) {
-            printf("    external link '%s' exists after deletion!\n",
-                   LINK_DELETE_TEST_EXTERNAL_LINK_NAME);
+            printf("    external link '%s' exists after deletion!\n", LINK_DELETE_TEST_EXTERNAL_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME2, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME2, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    LINK_DELETE_TEST_EXTERNAL_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (link_exists) {
-            printf("    external link '%s' exists after deletion!\n",
-                   LINK_DELETE_TEST_EXTERNAL_LINK_NAME2);
+            printf("    external link '%s' exists after deletion!\n", LINK_DELETE_TEST_EXTERNAL_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME3, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME3, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    LINK_DELETE_TEST_EXTERNAL_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
@@ -5555,42 +5481,36 @@ test_delete_link(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    LINK_DELETE_TEST_EXTERNAL_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (link_exists) {
-            printf("    external link '%s' exists after deletion!\n",
-                   LINK_DELETE_TEST_EXTERNAL_LINK_NAME);
+            printf("    external link '%s' exists after deletion!\n", LINK_DELETE_TEST_EXTERNAL_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME2, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME2, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    LINK_DELETE_TEST_EXTERNAL_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (link_exists) {
-            printf("    external link '%s' exists after deletion!\n",
-                   LINK_DELETE_TEST_EXTERNAL_LINK_NAME2);
+            printf("    external link '%s' exists after deletion!\n", LINK_DELETE_TEST_EXTERNAL_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME3, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME3, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    LINK_DELETE_TEST_EXTERNAL_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (link_exists) {
-            printf("    external link '%s' exists after deletion!\n",
-                   LINK_DELETE_TEST_EXTERNAL_LINK_NAME3);
+            printf("    external link '%s' exists after deletion!\n", LINK_DELETE_TEST_EXTERNAL_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -5641,8 +5561,7 @@ test_delete_link(TestParams_t *params)
         }
 
         /* Verify the links have been created */
-        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    LINK_DELETE_TEST_EXTERNAL_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
@@ -5654,8 +5573,7 @@ test_delete_link(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME2, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME2, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    LINK_DELETE_TEST_EXTERNAL_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
@@ -5667,8 +5585,7 @@ test_delete_link(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME3, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME3, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    LINK_DELETE_TEST_EXTERNAL_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
@@ -5689,21 +5606,18 @@ test_delete_link(TestParams_t *params)
         }
 
         /* Ensure that the link is gone and others remain */
-        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    LINK_DELETE_TEST_EXTERNAL_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (link_exists) {
-            printf("    external link '%s' exists after deletion!\n",
-                   LINK_DELETE_TEST_EXTERNAL_LINK_NAME);
+            printf("    external link '%s' exists after deletion!\n", LINK_DELETE_TEST_EXTERNAL_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME2, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME2, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    LINK_DELETE_TEST_EXTERNAL_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
@@ -5715,8 +5629,7 @@ test_delete_link(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME3, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME3, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    LINK_DELETE_TEST_EXTERNAL_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
@@ -5736,34 +5649,29 @@ test_delete_link(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    LINK_DELETE_TEST_EXTERNAL_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (link_exists) {
-            printf("    external link '%s' exists after deletion!\n",
-                   LINK_DELETE_TEST_EXTERNAL_LINK_NAME);
+            printf("    external link '%s' exists after deletion!\n", LINK_DELETE_TEST_EXTERNAL_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME2, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME2, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    LINK_DELETE_TEST_EXTERNAL_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (link_exists) {
-            printf("    external link '%s' exists after deletion!\n",
-                   LINK_DELETE_TEST_EXTERNAL_LINK_NAME2);
+            printf("    external link '%s' exists after deletion!\n", LINK_DELETE_TEST_EXTERNAL_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME3, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME3, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    LINK_DELETE_TEST_EXTERNAL_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
@@ -5782,42 +5690,36 @@ test_delete_link(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    LINK_DELETE_TEST_EXTERNAL_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (link_exists) {
-            printf("    external link '%s' exists after deletion!\n",
-                   LINK_DELETE_TEST_EXTERNAL_LINK_NAME);
+            printf("    external link '%s' exists after deletion!\n", LINK_DELETE_TEST_EXTERNAL_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME2, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME2, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    LINK_DELETE_TEST_EXTERNAL_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (link_exists) {
-            printf("    external link '%s' exists after deletion!\n",
-                   LINK_DELETE_TEST_EXTERNAL_LINK_NAME2);
+            printf("    external link '%s' exists after deletion!\n", LINK_DELETE_TEST_EXTERNAL_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME3, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, LINK_DELETE_TEST_EXTERNAL_LINK_NAME3, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    LINK_DELETE_TEST_EXTERNAL_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (link_exists) {
-            printf("    external link '%s' exists after deletion!\n",
-                   LINK_DELETE_TEST_EXTERNAL_LINK_NAME3);
+            printf("    external link '%s' exists after deletion!\n", LINK_DELETE_TEST_EXTERNAL_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -6198,8 +6100,7 @@ test_delete_link_invalid_params(TestParams_t *params)
     {
         H5E_BEGIN_TRY
         {
-            err_ret =
-                H5Ldelete(H5I_INVALID_HID, LINK_DELETE_INVALID_PARAMS_TEST_HARD_LINK_NAME, H5P_DEFAULT);
+            err_ret = H5Ldelete(H5I_INVALID_HID, LINK_DELETE_INVALID_PARAMS_TEST_HARD_LINK_NAME, H5P_DEFAULT);
         }
         H5E_END_TRY
 
@@ -6240,8 +6141,7 @@ test_delete_link_invalid_params(TestParams_t *params)
     {
         H5E_BEGIN_TRY
         {
-            err_ret =
-                H5Ldelete(group_id, LINK_DELETE_INVALID_PARAMS_TEST_HARD_LINK_NAME, H5I_INVALID_HID);
+            err_ret = H5Ldelete(group_id, LINK_DELETE_INVALID_PARAMS_TEST_HARD_LINK_NAME, H5I_INVALID_HID);
         }
         H5E_END_TRY
 
@@ -6363,8 +6263,8 @@ test_delete_link_invalid_params(TestParams_t *params)
     SUBTEST_BEGIN(params, "valid link existence after previous invalid H5Ldelete(_by_idx) calls")
     {
         /* Verify that the link hasn't been deleted */
-        if ((link_exists =
-                 H5Lexists(group_id, LINK_DELETE_INVALID_PARAMS_TEST_HARD_LINK_NAME, H5P_DEFAULT)) < 0) {
+        if ((link_exists = H5Lexists(group_id, LINK_DELETE_INVALID_PARAMS_TEST_HARD_LINK_NAME, H5P_DEFAULT)) <
+            0) {
             printf("    couldn't determine if hard link '%s' exists\n",
                    LINK_DELETE_INVALID_PARAMS_TEST_HARD_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
@@ -6408,7 +6308,7 @@ test_copy_link(TestParams_t *params)
     hid_t  file_id = H5I_INVALID_HID, ext_file_id = H5I_INVALID_HID;
     hid_t  container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
     hid_t  src_grp_id = H5I_INVALID_HID, dst_grp_id = H5I_INVALID_HID;
-    char   *ext_link_filename = NULL;
+    char  *ext_link_filename = NULL;
 
     /* Make sure the connector supports the API functions being tested */
     if (!(vol_cap_flags_g & H5VL_CAP_FLAG_FILE_BASIC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_GROUP_BASIC) ||
@@ -6448,7 +6348,8 @@ test_copy_link(TestParams_t *params)
         goto error;
     }
 
-    if (prefix_test_filename(params, test_path_prefix, EXTERNAL_LINK_TEST_FILE_NAME, &ext_link_filename) < 0) {
+    if (prefix_test_filename(params, test_path_prefix, EXTERNAL_LINK_TEST_FILE_NAME, &ext_link_filename) <
+        0) {
         printf("    couldn't create external link test file name\n");
         goto error;
     }
@@ -6490,8 +6391,8 @@ test_copy_link(TestParams_t *params)
         }
 
         /* Copy the link */
-        if (H5Lcopy(src_grp_id, COPY_LINK_TEST_HARD_LINK_NAME, dst_grp_id,
-                    COPY_LINK_TEST_HARD_LINK_COPY_NAME, H5P_DEFAULT, H5P_DEFAULT) < 0) {
+        if (H5Lcopy(src_grp_id, COPY_LINK_TEST_HARD_LINK_NAME, dst_grp_id, COPY_LINK_TEST_HARD_LINK_COPY_NAME,
+                    H5P_DEFAULT, H5P_DEFAULT) < 0) {
             printf("    failed to copy hard link '%s'\n", COPY_LINK_TEST_HARD_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
@@ -6619,8 +6520,7 @@ test_copy_link(TestParams_t *params)
                 TESTFRAME_TEST_ERROR(params);
             }
 
-            if (new_info.corder_valid && orig_info.corder_valid &&
-                (new_info.corder != orig_info.corder)) {
+            if (new_info.corder_valid && orig_info.corder_valid && (new_info.corder != orig_info.corder)) {
                 printf("    copied link's creation order value %" PRId64
                        " doesn't match original link's creation order value %" PRId64 "\n",
                        new_info.corder, orig_info.corder);
@@ -6656,8 +6556,7 @@ test_copy_link(TestParams_t *params)
         }
 
         /* Verify the links don't currently exist in the target group */
-        if ((link_exists = H5Lexists(src_grp_id, COPY_LINK_TEST_HARD_LINK_SAME_LOC_NAME, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(src_grp_id, COPY_LINK_TEST_HARD_LINK_SAME_LOC_NAME, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if hard link '%s' exists\n",
                    COPY_LINK_TEST_HARD_LINK_SAME_LOC_NAME);
             TESTFRAME_TEST_ERROR(params);
@@ -6668,8 +6567,7 @@ test_copy_link(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists = H5Lexists(src_grp_id, COPY_LINK_TEST_HARD_LINK_SAME_LOC_NAME2, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(src_grp_id, COPY_LINK_TEST_HARD_LINK_SAME_LOC_NAME2, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if hard link '%s' exists\n",
                    COPY_LINK_TEST_HARD_LINK_SAME_LOC_NAME2);
             TESTFRAME_TEST_ERROR(params);
@@ -6697,8 +6595,7 @@ test_copy_link(TestParams_t *params)
         }
 
         /* Verify the links have been copied and the original still exist in the source group */
-        if ((link_exists = H5Lexists(src_grp_id, COPY_LINK_TEST_HARD_LINK_SAME_LOC_NAME, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(src_grp_id, COPY_LINK_TEST_HARD_LINK_SAME_LOC_NAME, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if hard link copy '%s' exists\n",
                    COPY_LINK_TEST_HARD_LINK_SAME_LOC_NAME);
             TESTFRAME_TEST_ERROR(params);
@@ -6709,8 +6606,7 @@ test_copy_link(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists = H5Lexists(src_grp_id, COPY_LINK_TEST_HARD_LINK_SAME_LOC_NAME2, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(src_grp_id, COPY_LINK_TEST_HARD_LINK_SAME_LOC_NAME2, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if hard link copy '%s' exists\n",
                    COPY_LINK_TEST_HARD_LINK_SAME_LOC_NAME2);
             TESTFRAME_TEST_ERROR(params);
@@ -6737,8 +6633,8 @@ test_copy_link(TestParams_t *params)
     SUBTEST_BEGIN(params, "H5Lcopy on soft link (copied link's properties not checked)")
     {
         /* Try to copy a soft link */
-        if (H5Lcreate_soft(COPY_LINK_TEST_SOFT_LINK_TARGET_PATH, src_grp_id,
-                           COPY_LINK_TEST_SOFT_LINK_NAME, H5P_DEFAULT, H5P_DEFAULT) < 0) {
+        if (H5Lcreate_soft(COPY_LINK_TEST_SOFT_LINK_TARGET_PATH, src_grp_id, COPY_LINK_TEST_SOFT_LINK_NAME,
+                           H5P_DEFAULT, H5P_DEFAULT) < 0) {
             printf("    couldn't create soft link '%s'\n", COPY_LINK_TEST_SOFT_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
@@ -6766,8 +6662,8 @@ test_copy_link(TestParams_t *params)
         }
 
         /* Copy the link */
-        if (H5Lcopy(src_grp_id, COPY_LINK_TEST_SOFT_LINK_NAME, dst_grp_id,
-                    COPY_LINK_TEST_SOFT_LINK_COPY_NAME, H5P_DEFAULT, H5P_DEFAULT) < 0) {
+        if (H5Lcopy(src_grp_id, COPY_LINK_TEST_SOFT_LINK_NAME, dst_grp_id, COPY_LINK_TEST_SOFT_LINK_COPY_NAME,
+                    H5P_DEFAULT, H5P_DEFAULT) < 0) {
             printf("    failed to copy soft link '%s'\n", COPY_LINK_TEST_SOFT_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
@@ -6804,8 +6700,8 @@ test_copy_link(TestParams_t *params)
         char        new_link_val[COPY_LINK_TEST_LINK_VAL_BUF_SIZE];
 
         /* Try to copy a soft link */
-        if (H5Lcreate_soft(COPY_LINK_TEST_SOFT_LINK_TARGET_PATH, src_grp_id,
-                           COPY_LINK_TEST_SOFT_LINK_NAME2, H5P_DEFAULT, H5P_DEFAULT) < 0) {
+        if (H5Lcreate_soft(COPY_LINK_TEST_SOFT_LINK_TARGET_PATH, src_grp_id, COPY_LINK_TEST_SOFT_LINK_NAME2,
+                           H5P_DEFAULT, H5P_DEFAULT) < 0) {
             printf("    couldn't create soft link '%s'\n", COPY_LINK_TEST_SOFT_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
@@ -6900,8 +6796,7 @@ test_copy_link(TestParams_t *params)
                 TESTFRAME_TEST_ERROR(params);
             }
 
-            if (new_info.corder_valid && orig_info.corder_valid &&
-                (new_info.corder != orig_info.corder)) {
+            if (new_info.corder_valid && orig_info.corder_valid && (new_info.corder != orig_info.corder)) {
                 printf("    copied link's creation order value %" PRId64
                        " doesn't match original link's creation order value %" PRId64 "\n",
                        new_info.corder, orig_info.corder);
@@ -6917,8 +6812,7 @@ test_copy_link(TestParams_t *params)
         /* Check the soft link's value */
         if (H5Lget_val(dst_grp_id, COPY_LINK_TEST_SOFT_LINK_COPY_NAME2, new_link_val,
                        COPY_LINK_TEST_LINK_VAL_BUF_SIZE, H5P_DEFAULT) < 0) {
-            printf("    couldn't retrieve value for soft link '%s'\n",
-                   COPY_LINK_TEST_SOFT_LINK_COPY_NAME2);
+            printf("    couldn't retrieve value for soft link '%s'\n", COPY_LINK_TEST_SOFT_LINK_COPY_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -6933,8 +6827,8 @@ test_copy_link(TestParams_t *params)
     SUBTEST_BEGIN(params, "H5Lcopy on soft link using H5L_SAME_LOC")
     {
         /* Try to copy a soft link */
-        if (H5Lcreate_soft(COPY_LINK_TEST_SOFT_LINK_TARGET_PATH, src_grp_id,
-                           COPY_LINK_TEST_SOFT_LINK_NAME3, H5P_DEFAULT, H5P_DEFAULT) < 0) {
+        if (H5Lcreate_soft(COPY_LINK_TEST_SOFT_LINK_TARGET_PATH, src_grp_id, COPY_LINK_TEST_SOFT_LINK_NAME3,
+                           H5P_DEFAULT, H5P_DEFAULT) < 0) {
             printf("    couldn't create soft link '%s'\n", COPY_LINK_TEST_SOFT_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
@@ -6951,8 +6845,7 @@ test_copy_link(TestParams_t *params)
         }
 
         /* Verify the links don't currently exist in the target group */
-        if ((link_exists = H5Lexists(src_grp_id, COPY_LINK_TEST_SOFT_LINK_SAME_LOC_NAME, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(src_grp_id, COPY_LINK_TEST_SOFT_LINK_SAME_LOC_NAME, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if soft link '%s' exists\n",
                    COPY_LINK_TEST_SOFT_LINK_SAME_LOC_NAME);
             TESTFRAME_TEST_ERROR(params);
@@ -6963,8 +6856,7 @@ test_copy_link(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists = H5Lexists(src_grp_id, COPY_LINK_TEST_SOFT_LINK_SAME_LOC_NAME2, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(src_grp_id, COPY_LINK_TEST_SOFT_LINK_SAME_LOC_NAME2, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if soft link '%s' exists\n",
                    COPY_LINK_TEST_SOFT_LINK_SAME_LOC_NAME2);
             TESTFRAME_TEST_ERROR(params);
@@ -6992,8 +6884,7 @@ test_copy_link(TestParams_t *params)
         }
 
         /* Verify the links have been copied and the original still exists in the source group */
-        if ((link_exists = H5Lexists(src_grp_id, COPY_LINK_TEST_SOFT_LINK_SAME_LOC_NAME, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(src_grp_id, COPY_LINK_TEST_SOFT_LINK_SAME_LOC_NAME, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if soft link '%s' copy exists\n",
                    COPY_LINK_TEST_SOFT_LINK_SAME_LOC_NAME);
             TESTFRAME_TEST_ERROR(params);
@@ -7004,8 +6895,7 @@ test_copy_link(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists = H5Lexists(src_grp_id, COPY_LINK_TEST_SOFT_LINK_SAME_LOC_NAME2, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(src_grp_id, COPY_LINK_TEST_SOFT_LINK_SAME_LOC_NAME2, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if soft link '%s' copy exists\n",
                    COPY_LINK_TEST_SOFT_LINK_SAME_LOC_NAME2);
             TESTFRAME_TEST_ERROR(params);
@@ -7070,8 +6960,7 @@ test_copy_link(TestParams_t *params)
         }
 
         /* Verify the link has been copied and still exists in the source group */
-        if ((link_exists = H5Lexists(dst_grp_id, COPY_LINK_TEST_EXTERNAL_LINK_COPY_NAME, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(dst_grp_id, COPY_LINK_TEST_EXTERNAL_LINK_COPY_NAME, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link copy '%s' exists\n",
                    COPY_LINK_TEST_EXTERNAL_LINK_COPY_NAME);
             TESTFRAME_TEST_ERROR(params);
@@ -7163,8 +7052,7 @@ test_copy_link(TestParams_t *params)
         }
 
         /* Verify the link has been copied and still exists in the source group */
-        if ((link_exists = H5Lexists(dst_grp_id, COPY_LINK_TEST_EXTERNAL_LINK_COPY_NAME2, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(dst_grp_id, COPY_LINK_TEST_EXTERNAL_LINK_COPY_NAME2, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link copy '%s' exists\n",
                    COPY_LINK_TEST_EXTERNAL_LINK_COPY_NAME2);
             TESTFRAME_TEST_ERROR(params);
@@ -7187,8 +7075,7 @@ test_copy_link(TestParams_t *params)
         }
 
         /* Retrieve the new link's info */
-        if (H5Lget_info2(dst_grp_id, COPY_LINK_TEST_EXTERNAL_LINK_COPY_NAME2, &new_info, H5P_DEFAULT) <
-            0) {
+        if (H5Lget_info2(dst_grp_id, COPY_LINK_TEST_EXTERNAL_LINK_COPY_NAME2, &new_info, H5P_DEFAULT) < 0) {
             printf("    couldn't retrieve info for link '%s'\n", COPY_LINK_TEST_EXTERNAL_LINK_COPY_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
@@ -7212,8 +7099,7 @@ test_copy_link(TestParams_t *params)
                 TESTFRAME_TEST_ERROR(params);
             }
 
-            if (new_info.corder_valid && orig_info.corder_valid &&
-                (new_info.corder != orig_info.corder)) {
+            if (new_info.corder_valid && orig_info.corder_valid && (new_info.corder != orig_info.corder)) {
                 printf("    copied link's creation order value %" PRId64
                        " doesn't match original link's creation "
                        "order value %" PRId64 "\n",
@@ -7279,8 +7165,8 @@ test_copy_link(TestParams_t *params)
         }
 
         /* Verify the links don't currently exist in the target group */
-        if ((link_exists =
-                 H5Lexists(src_grp_id, COPY_LINK_TEST_EXTERNAL_LINK_SAME_LOC_NAME, H5P_DEFAULT)) < 0) {
+        if ((link_exists = H5Lexists(src_grp_id, COPY_LINK_TEST_EXTERNAL_LINK_SAME_LOC_NAME, H5P_DEFAULT)) <
+            0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    COPY_LINK_TEST_EXTERNAL_LINK_SAME_LOC_NAME);
             TESTFRAME_TEST_ERROR(params);
@@ -7291,8 +7177,8 @@ test_copy_link(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists =
-                 H5Lexists(src_grp_id, COPY_LINK_TEST_EXTERNAL_LINK_SAME_LOC_NAME2, H5P_DEFAULT)) < 0) {
+        if ((link_exists = H5Lexists(src_grp_id, COPY_LINK_TEST_EXTERNAL_LINK_SAME_LOC_NAME2, H5P_DEFAULT)) <
+            0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    COPY_LINK_TEST_EXTERNAL_LINK_SAME_LOC_NAME2);
             TESTFRAME_TEST_ERROR(params);
@@ -7322,8 +7208,8 @@ test_copy_link(TestParams_t *params)
         }
 
         /* Verify the links have been copied and the original still exists in the source group */
-        if ((link_exists =
-                 H5Lexists(src_grp_id, COPY_LINK_TEST_EXTERNAL_LINK_SAME_LOC_NAME, H5P_DEFAULT)) < 0) {
+        if ((link_exists = H5Lexists(src_grp_id, COPY_LINK_TEST_EXTERNAL_LINK_SAME_LOC_NAME, H5P_DEFAULT)) <
+            0) {
             printf("    couldn't determine if external link copy '%s' exists\n",
                    COPY_LINK_TEST_EXTERNAL_LINK_SAME_LOC_NAME);
             TESTFRAME_TEST_ERROR(params);
@@ -7334,8 +7220,8 @@ test_copy_link(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists =
-                 H5Lexists(src_grp_id, COPY_LINK_TEST_EXTERNAL_LINK_SAME_LOC_NAME2, H5P_DEFAULT)) < 0) {
+        if ((link_exists = H5Lexists(src_grp_id, COPY_LINK_TEST_EXTERNAL_LINK_SAME_LOC_NAME2, H5P_DEFAULT)) <
+            0) {
             printf("    couldn't determine if external link copy '%s' exists\n",
                    COPY_LINK_TEST_EXTERNAL_LINK_SAME_LOC_NAME2);
             TESTFRAME_TEST_ERROR(params);
@@ -7463,7 +7349,7 @@ test_copy_link_invalid_params(TestParams_t *params)
     hid_t  container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
     hid_t  src_grp_id = H5I_INVALID_HID, dst_grp_id = H5I_INVALID_HID;
     char  *ext_link_filename = NULL;
-    hid_t  ext_file_id        = H5I_INVALID_HID;
+    hid_t  ext_file_id       = H5I_INVALID_HID;
 
     /* Make sure the connector supports the API functions being tested */
     if (!(vol_cap_flags_g & H5VL_CAP_FLAG_FILE_BASIC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_GROUP_BASIC) ||
@@ -7521,7 +7407,8 @@ test_copy_link_invalid_params(TestParams_t *params)
         goto error;
     }
 
-    if (prefix_test_filename(params, test_path_prefix, EXTERNAL_LINK_TEST_FILE_NAME, &ext_link_filename) < 0) {
+    if (prefix_test_filename(params, test_path_prefix, EXTERNAL_LINK_TEST_FILE_NAME, &ext_link_filename) <
+        0) {
         printf("    couldn't create external link filename\n");
         goto error;
     }
@@ -7535,9 +7422,8 @@ test_copy_link_invalid_params(TestParams_t *params)
     {
         H5E_BEGIN_TRY
         {
-            err_ret =
-                H5Lcopy(H5I_INVALID_HID, COPY_LINK_INVALID_PARAMS_TEST_HARD_LINK_NAME, dst_grp_id,
-                        COPY_LINK_INVALID_PARAMS_TEST_HARD_LINK_COPY_NAME, H5P_DEFAULT, H5P_DEFAULT);
+            err_ret = H5Lcopy(H5I_INVALID_HID, COPY_LINK_INVALID_PARAMS_TEST_HARD_LINK_NAME, dst_grp_id,
+                              COPY_LINK_INVALID_PARAMS_TEST_HARD_LINK_COPY_NAME, H5P_DEFAULT, H5P_DEFAULT);
         }
         H5E_END_TRY
 
@@ -7552,9 +7438,8 @@ test_copy_link_invalid_params(TestParams_t *params)
     {
         H5E_BEGIN_TRY
         {
-            err_ret =
-                H5Lcopy(src_grp_id, NULL, dst_grp_id, COPY_LINK_INVALID_PARAMS_TEST_HARD_LINK_COPY_NAME,
-                        H5P_DEFAULT, H5P_DEFAULT);
+            err_ret = H5Lcopy(src_grp_id, NULL, dst_grp_id, COPY_LINK_INVALID_PARAMS_TEST_HARD_LINK_COPY_NAME,
+                              H5P_DEFAULT, H5P_DEFAULT);
         }
         H5E_END_TRY
 
@@ -7565,9 +7450,8 @@ test_copy_link_invalid_params(TestParams_t *params)
 
         H5E_BEGIN_TRY
         {
-            err_ret =
-                H5Lcopy(src_grp_id, "", dst_grp_id, COPY_LINK_INVALID_PARAMS_TEST_HARD_LINK_COPY_NAME,
-                        H5P_DEFAULT, H5P_DEFAULT);
+            err_ret = H5Lcopy(src_grp_id, "", dst_grp_id, COPY_LINK_INVALID_PARAMS_TEST_HARD_LINK_COPY_NAME,
+                              H5P_DEFAULT, H5P_DEFAULT);
         }
         H5E_END_TRY
 
@@ -7582,9 +7466,8 @@ test_copy_link_invalid_params(TestParams_t *params)
     {
         H5E_BEGIN_TRY
         {
-            err_ret =
-                H5Lcopy(src_grp_id, COPY_LINK_INVALID_PARAMS_TEST_HARD_LINK_NAME, H5I_INVALID_HID,
-                        COPY_LINK_INVALID_PARAMS_TEST_HARD_LINK_COPY_NAME, H5P_DEFAULT, H5P_DEFAULT);
+            err_ret = H5Lcopy(src_grp_id, COPY_LINK_INVALID_PARAMS_TEST_HARD_LINK_NAME, H5I_INVALID_HID,
+                              COPY_LINK_INVALID_PARAMS_TEST_HARD_LINK_COPY_NAME, H5P_DEFAULT, H5P_DEFAULT);
         }
         H5E_END_TRY
 
@@ -7661,9 +7544,8 @@ test_copy_link_invalid_params(TestParams_t *params)
     {
         H5E_BEGIN_TRY
         {
-            err_ret =
-                H5Lcopy(H5L_SAME_LOC, COPY_LINK_INVALID_PARAMS_TEST_HARD_LINK_NAME, H5L_SAME_LOC,
-                        COPY_LINK_INVALID_PARAMS_TEST_HARD_LINK_COPY_NAME, H5P_DEFAULT, H5P_DEFAULT);
+            err_ret = H5Lcopy(H5L_SAME_LOC, COPY_LINK_INVALID_PARAMS_TEST_HARD_LINK_NAME, H5L_SAME_LOC,
+                              COPY_LINK_INVALID_PARAMS_TEST_HARD_LINK_COPY_NAME, H5P_DEFAULT, H5P_DEFAULT);
         }
         H5E_END_TRY
 
@@ -7678,9 +7560,8 @@ test_copy_link_invalid_params(TestParams_t *params)
     {
         H5E_BEGIN_TRY
         {
-            err_ret =
-                H5Lcopy(src_grp_id, COPY_LINK_INVALID_PARAMS_TEST_HARD_LINK_NAME, ext_file_id,
-                        COPY_LINK_INVALID_PARAMS_TEST_HARD_LINK_COPY_NAME, H5P_DEFAULT, H5P_DEFAULT);
+            err_ret = H5Lcopy(src_grp_id, COPY_LINK_INVALID_PARAMS_TEST_HARD_LINK_NAME, ext_file_id,
+                              COPY_LINK_INVALID_PARAMS_TEST_HARD_LINK_COPY_NAME, H5P_DEFAULT, H5P_DEFAULT);
         }
         H5E_END_TRY
 
@@ -7737,7 +7618,7 @@ test_move_link(TestParams_t *params)
     hid_t  container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
     hid_t  src_grp_id = H5I_INVALID_HID, dst_grp_id = H5I_INVALID_HID;
     char  *ext_link_filename = NULL;
-    hid_t  ext_file_id        = H5I_INVALID_HID;
+    hid_t  ext_file_id       = H5I_INVALID_HID;
 
     /* Make sure the connector supports the API functions being tested */
     if (!(vol_cap_flags_g & H5VL_CAP_FLAG_FILE_BASIC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_GROUP_BASIC) ||
@@ -7777,7 +7658,8 @@ test_move_link(TestParams_t *params)
         goto error;
     }
 
-    if (prefix_test_filename(params, test_path_prefix, EXTERNAL_LINK_TEST_FILE_NAME, &ext_link_filename) < 0) {
+    if (prefix_test_filename(params, test_path_prefix, EXTERNAL_LINK_TEST_FILE_NAME, &ext_link_filename) <
+        0) {
         printf("    couldn't create external link filename\n");
         goto error;
     }
@@ -7838,8 +7720,7 @@ test_move_link(TestParams_t *params)
 
         /* Verify the old link is gone */
         if ((link_exists = H5Lexists(src_grp_id, MOVE_LINK_TEST_HARD_LINK_NAME, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if old hard link '%s' exists\n",
-                   MOVE_LINK_TEST_HARD_LINK_NAME);
+            printf("    couldn't determine if old hard link '%s' exists\n", MOVE_LINK_TEST_HARD_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -7891,8 +7772,8 @@ test_move_link(TestParams_t *params)
         }
 
         /* Move the link */
-        if (H5Lmove(src_grp_id, MOVE_LINK_TEST_HARD_LINK_NAME2, dst_grp_id,
-                    MOVE_LINK_TEST_HARD_LINK_NAME2, H5P_DEFAULT, H5P_DEFAULT) < 0) {
+        if (H5Lmove(src_grp_id, MOVE_LINK_TEST_HARD_LINK_NAME2, dst_grp_id, MOVE_LINK_TEST_HARD_LINK_NAME2,
+                    H5P_DEFAULT, H5P_DEFAULT) < 0) {
             printf("    failed to move link '%s'\n", MOVE_LINK_TEST_HARD_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
@@ -7910,8 +7791,7 @@ test_move_link(TestParams_t *params)
 
         /* Verify the old link is gone */
         if ((link_exists = H5Lexists(src_grp_id, MOVE_LINK_TEST_HARD_LINK_NAME2, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if old hard link '%s' exists\n",
-                   MOVE_LINK_TEST_HARD_LINK_NAME2);
+            printf("    couldn't determine if old hard link '%s' exists\n", MOVE_LINK_TEST_HARD_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -7943,14 +7823,12 @@ test_move_link(TestParams_t *params)
 
         if (vol_cap_flags_g & H5VL_CAP_FLAG_CREATION_ORDER) {
             if (new_info.corder_valid != orig_info.corder_valid) {
-                printf(
-                    "    moved link's 'corder_valid' field doesn't match original link's 'corder_valid' "
-                    "field\n");
+                printf("    moved link's 'corder_valid' field doesn't match original link's 'corder_valid' "
+                       "field\n");
                 TESTFRAME_TEST_ERROR(params);
             }
 
-            if (new_info.corder_valid && orig_info.corder_valid &&
-                (new_info.corder != orig_info.corder)) {
+            if (new_info.corder_valid && orig_info.corder_valid && (new_info.corder != orig_info.corder)) {
                 printf("    moved link's creation order value %" PRId64
                        " doesn't match original link's creation order value %" PRId64 "\n",
                        new_info.corder, orig_info.corder);
@@ -7986,8 +7864,7 @@ test_move_link(TestParams_t *params)
         }
 
         /* Verify the link doesn't currently exist in the target group */
-        if ((link_exists = H5Lexists(src_grp_id, MOVE_LINK_TEST_HARD_LINK_SAME_LOC_NAME, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(src_grp_id, MOVE_LINK_TEST_HARD_LINK_SAME_LOC_NAME, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if hard link '%s' exists\n",
                    MOVE_LINK_TEST_HARD_LINK_SAME_LOC_NAME);
             TESTFRAME_TEST_ERROR(params);
@@ -8017,8 +7894,7 @@ test_move_link(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists = H5Lexists(src_grp_id, MOVE_LINK_TEST_HARD_LINK_SAME_LOC_NAME, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(src_grp_id, MOVE_LINK_TEST_HARD_LINK_SAME_LOC_NAME, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if hard link '%s' exists\n",
                    MOVE_LINK_TEST_HARD_LINK_SAME_LOC_NAME);
             TESTFRAME_TEST_ERROR(params);
@@ -8048,8 +7924,7 @@ test_move_link(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists = H5Lexists(src_grp_id, MOVE_LINK_TEST_HARD_LINK_SAME_LOC_NAME, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(src_grp_id, MOVE_LINK_TEST_HARD_LINK_SAME_LOC_NAME, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if old hard link '%s' exists\n",
                    MOVE_LINK_TEST_HARD_LINK_SAME_LOC_NAME);
             TESTFRAME_TEST_ERROR(params);
@@ -8095,8 +7970,8 @@ test_move_link(TestParams_t *params)
         }
 
         /* Rename the link */
-        if (H5Lmove(src_grp_id, MOVE_LINK_TEST_HARD_LINK_NAME4, src_grp_id,
-                    MOVE_LINK_TEST_HARD_LINK_NEW_NAME, H5P_DEFAULT, H5P_DEFAULT) < 0) {
+        if (H5Lmove(src_grp_id, MOVE_LINK_TEST_HARD_LINK_NAME4, src_grp_id, MOVE_LINK_TEST_HARD_LINK_NEW_NAME,
+                    H5P_DEFAULT, H5P_DEFAULT) < 0) {
             printf("    failed to rename link '%s'\n", MOVE_LINK_TEST_HARD_LINK_NAME4);
             TESTFRAME_TEST_ERROR(params);
         }
@@ -8115,8 +7990,7 @@ test_move_link(TestParams_t *params)
 
         /* Verify the old link is gone */
         if ((link_exists = H5Lexists(src_grp_id, MOVE_LINK_TEST_HARD_LINK_NAME4, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if old hard link '%s' exists\n",
-                   MOVE_LINK_TEST_HARD_LINK_NAME4);
+            printf("    couldn't determine if old hard link '%s' exists\n", MOVE_LINK_TEST_HARD_LINK_NAME4);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -8130,8 +8004,8 @@ test_move_link(TestParams_t *params)
     SUBTEST_BEGIN(params, "H5Lmove on soft link (moved link's properties not checked)")
     {
         /* Try to move a soft link */
-        if (H5Lcreate_soft(MOVE_LINK_TEST_SOFT_LINK_TARGET_PATH, src_grp_id,
-                           MOVE_LINK_TEST_SOFT_LINK_NAME, H5P_DEFAULT, H5P_DEFAULT) < 0) {
+        if (H5Lcreate_soft(MOVE_LINK_TEST_SOFT_LINK_TARGET_PATH, src_grp_id, MOVE_LINK_TEST_SOFT_LINK_NAME,
+                           H5P_DEFAULT, H5P_DEFAULT) < 0) {
             printf("    couldn't create soft link '%s'\n", MOVE_LINK_TEST_SOFT_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
@@ -8178,8 +8052,7 @@ test_move_link(TestParams_t *params)
 
         /* Verify the old link is gone */
         if ((link_exists = H5Lexists(src_grp_id, MOVE_LINK_TEST_SOFT_LINK_NAME, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if old soft link '%s' exists\n",
-                   MOVE_LINK_TEST_SOFT_LINK_NAME);
+            printf("    couldn't determine if old soft link '%s' exists\n", MOVE_LINK_TEST_SOFT_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -8197,8 +8070,8 @@ test_move_link(TestParams_t *params)
         char        new_link_val[MOVE_LINK_TEST_LINK_VAL_BUF_SIZE];
 
         /* Try to move a soft link */
-        if (H5Lcreate_soft(MOVE_LINK_TEST_SOFT_LINK_TARGET_PATH, src_grp_id,
-                           MOVE_LINK_TEST_SOFT_LINK_NAME2, H5P_DEFAULT, H5P_DEFAULT) < 0) {
+        if (H5Lcreate_soft(MOVE_LINK_TEST_SOFT_LINK_TARGET_PATH, src_grp_id, MOVE_LINK_TEST_SOFT_LINK_NAME2,
+                           H5P_DEFAULT, H5P_DEFAULT) < 0) {
             printf("    couldn't create soft link '%s'\n", MOVE_LINK_TEST_SOFT_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
@@ -8239,8 +8112,8 @@ test_move_link(TestParams_t *params)
         }
 
         /* Move the link */
-        if (H5Lmove(src_grp_id, MOVE_LINK_TEST_SOFT_LINK_NAME2, dst_grp_id,
-                    MOVE_LINK_TEST_SOFT_LINK_NAME2, H5P_DEFAULT, H5P_DEFAULT) < 0) {
+        if (H5Lmove(src_grp_id, MOVE_LINK_TEST_SOFT_LINK_NAME2, dst_grp_id, MOVE_LINK_TEST_SOFT_LINK_NAME2,
+                    H5P_DEFAULT, H5P_DEFAULT) < 0) {
             printf("    failed to move link '%s'\n", MOVE_LINK_TEST_SOFT_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
@@ -8258,8 +8131,7 @@ test_move_link(TestParams_t *params)
 
         /* Verify the old link is gone */
         if ((link_exists = H5Lexists(src_grp_id, MOVE_LINK_TEST_SOFT_LINK_NAME2, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if old soft link '%s' exists\n",
-                   MOVE_LINK_TEST_SOFT_LINK_NAME2);
+            printf("    couldn't determine if old soft link '%s' exists\n", MOVE_LINK_TEST_SOFT_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -8288,14 +8160,12 @@ test_move_link(TestParams_t *params)
 
         if (vol_cap_flags_g & H5VL_CAP_FLAG_CREATION_ORDER) {
             if (new_info.corder_valid != orig_info.corder_valid) {
-                printf(
-                    "    moved link's 'corder_valid' field doesn't match original link's 'corder_valid' "
-                    "field\n");
+                printf("    moved link's 'corder_valid' field doesn't match original link's 'corder_valid' "
+                       "field\n");
                 TESTFRAME_TEST_ERROR(params);
             }
 
-            if (new_info.corder_valid && orig_info.corder_valid &&
-                (new_info.corder != orig_info.corder)) {
+            if (new_info.corder_valid && orig_info.corder_valid && (new_info.corder != orig_info.corder)) {
                 printf("    moved link's creation order value %" PRId64
                        " doesn't match original link's creation order value %" PRId64 "\n",
                        new_info.corder, orig_info.corder);
@@ -8326,8 +8196,8 @@ test_move_link(TestParams_t *params)
     SUBTEST_BEGIN(params, "H5Lmove on soft link using H5L_SAME_LOC")
     {
         /* Try to move a soft link */
-        if (H5Lcreate_soft(MOVE_LINK_TEST_SOFT_LINK_TARGET_PATH, src_grp_id,
-                           MOVE_LINK_TEST_SOFT_LINK_NAME3, H5P_DEFAULT, H5P_DEFAULT) < 0) {
+        if (H5Lcreate_soft(MOVE_LINK_TEST_SOFT_LINK_TARGET_PATH, src_grp_id, MOVE_LINK_TEST_SOFT_LINK_NAME3,
+                           H5P_DEFAULT, H5P_DEFAULT) < 0) {
             printf("    couldn't create soft link '%s'\n", MOVE_LINK_TEST_SOFT_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
@@ -8344,8 +8214,7 @@ test_move_link(TestParams_t *params)
         }
 
         /* Verify the link doesn't currently exist in the target group */
-        if ((link_exists = H5Lexists(src_grp_id, MOVE_LINK_TEST_SOFT_LINK_SAME_LOC_NAME, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(src_grp_id, MOVE_LINK_TEST_SOFT_LINK_SAME_LOC_NAME, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if soft link '%s' exists\n",
                    MOVE_LINK_TEST_SOFT_LINK_SAME_LOC_NAME);
             TESTFRAME_TEST_ERROR(params);
@@ -8375,8 +8244,7 @@ test_move_link(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists = H5Lexists(src_grp_id, MOVE_LINK_TEST_SOFT_LINK_SAME_LOC_NAME, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(src_grp_id, MOVE_LINK_TEST_SOFT_LINK_SAME_LOC_NAME, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if soft link '%s' exists\n",
                    MOVE_LINK_TEST_SOFT_LINK_SAME_LOC_NAME);
             TESTFRAME_TEST_ERROR(params);
@@ -8406,8 +8274,7 @@ test_move_link(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists = H5Lexists(src_grp_id, MOVE_LINK_TEST_SOFT_LINK_SAME_LOC_NAME, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(src_grp_id, MOVE_LINK_TEST_SOFT_LINK_SAME_LOC_NAME, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if old soft link '%s' exists\n",
                    MOVE_LINK_TEST_SOFT_LINK_SAME_LOC_NAME);
             TESTFRAME_TEST_ERROR(params);
@@ -8423,8 +8290,8 @@ test_move_link(TestParams_t *params)
     SUBTEST_BEGIN(params, "H5Lmove to rename soft link without moving it")
     {
         /* Try to rename a soft link */
-        if (H5Lcreate_soft(MOVE_LINK_TEST_SOFT_LINK_TARGET_PATH, src_grp_id,
-                           MOVE_LINK_TEST_SOFT_LINK_NAME4, H5P_DEFAULT, H5P_DEFAULT) < 0) {
+        if (H5Lcreate_soft(MOVE_LINK_TEST_SOFT_LINK_TARGET_PATH, src_grp_id, MOVE_LINK_TEST_SOFT_LINK_NAME4,
+                           H5P_DEFAULT, H5P_DEFAULT) < 0) {
             printf("    couldn't create soft link '%s'\n", MOVE_LINK_TEST_SOFT_LINK_NAME4);
             TESTFRAME_TEST_ERROR(params);
         }
@@ -8453,8 +8320,8 @@ test_move_link(TestParams_t *params)
         }
 
         /* Rename the link */
-        if (H5Lmove(src_grp_id, MOVE_LINK_TEST_SOFT_LINK_NAME4, src_grp_id,
-                    MOVE_LINK_TEST_SOFT_LINK_NEW_NAME, H5P_DEFAULT, H5P_DEFAULT) < 0) {
+        if (H5Lmove(src_grp_id, MOVE_LINK_TEST_SOFT_LINK_NAME4, src_grp_id, MOVE_LINK_TEST_SOFT_LINK_NEW_NAME,
+                    H5P_DEFAULT, H5P_DEFAULT) < 0) {
             printf("    failed to rename link '%s'\n", MOVE_LINK_TEST_SOFT_LINK_NAME4);
             TESTFRAME_TEST_ERROR(params);
         }
@@ -8473,8 +8340,7 @@ test_move_link(TestParams_t *params)
 
         /* Verify the old link is gone */
         if ((link_exists = H5Lexists(src_grp_id, MOVE_LINK_TEST_SOFT_LINK_NAME4, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if old soft link '%s' exists\n",
-                   MOVE_LINK_TEST_SOFT_LINK_NAME4);
+            printf("    couldn't determine if old soft link '%s' exists\n", MOVE_LINK_TEST_SOFT_LINK_NAME4);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -8496,8 +8362,7 @@ test_move_link(TestParams_t *params)
 
         /* Verify the link has been created */
         if ((link_exists = H5Lexists(src_grp_id, MOVE_LINK_TEST_EXTERN_LINK_NAME, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if external link '%s' exists\n",
-                   MOVE_LINK_TEST_EXTERN_LINK_NAME);
+            printf("    couldn't determine if external link '%s' exists\n", MOVE_LINK_TEST_EXTERN_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -8508,8 +8373,7 @@ test_move_link(TestParams_t *params)
 
         /* Verify the link doesn't currently exist in the target group */
         if ((link_exists = H5Lexists(dst_grp_id, MOVE_LINK_TEST_EXTERN_LINK_NAME, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if external link '%s' exists\n",
-                   MOVE_LINK_TEST_EXTERN_LINK_NAME);
+            printf("    couldn't determine if external link '%s' exists\n", MOVE_LINK_TEST_EXTERN_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -8519,16 +8383,15 @@ test_move_link(TestParams_t *params)
         }
 
         /* Move the link */
-        if (H5Lmove(src_grp_id, MOVE_LINK_TEST_EXTERN_LINK_NAME, dst_grp_id,
-                    MOVE_LINK_TEST_EXTERN_LINK_NAME, H5P_DEFAULT, H5P_DEFAULT) < 0) {
+        if (H5Lmove(src_grp_id, MOVE_LINK_TEST_EXTERN_LINK_NAME, dst_grp_id, MOVE_LINK_TEST_EXTERN_LINK_NAME,
+                    H5P_DEFAULT, H5P_DEFAULT) < 0) {
             printf("    failed to move link '%s'\n", MOVE_LINK_TEST_EXTERN_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
         /* Verify the link has been moved */
         if ((link_exists = H5Lexists(dst_grp_id, MOVE_LINK_TEST_EXTERN_LINK_NAME, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if external link '%s' exists\n",
-                   MOVE_LINK_TEST_EXTERN_LINK_NAME);
+            printf("    couldn't determine if external link '%s' exists\n", MOVE_LINK_TEST_EXTERN_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -8569,8 +8432,7 @@ test_move_link(TestParams_t *params)
 
         /* Verify the link has been created */
         if ((link_exists = H5Lexists(src_grp_id, MOVE_LINK_TEST_EXTERN_LINK_NAME2, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if external link '%s' exists\n",
-                   MOVE_LINK_TEST_EXTERN_LINK_NAME2);
+            printf("    couldn't determine if external link '%s' exists\n", MOVE_LINK_TEST_EXTERN_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -8588,8 +8450,7 @@ test_move_link(TestParams_t *params)
         /* Retrieve the link's value */
         if (H5Lget_val(src_grp_id, MOVE_LINK_TEST_EXTERN_LINK_NAME2, orig_link_val,
                        MOVE_LINK_TEST_LINK_VAL_BUF_SIZE, H5P_DEFAULT) < 0) {
-            printf("    couldn't retrieve value for external link '%s'\n",
-                   MOVE_LINK_TEST_EXTERN_LINK_NAME2);
+            printf("    couldn't retrieve value for external link '%s'\n", MOVE_LINK_TEST_EXTERN_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -8601,8 +8462,7 @@ test_move_link(TestParams_t *params)
 
         /* Verify the link doesn't currently exist in the target group */
         if ((link_exists = H5Lexists(dst_grp_id, MOVE_LINK_TEST_EXTERN_LINK_NAME2, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if external link '%s' exists\n",
-                   MOVE_LINK_TEST_EXTERN_LINK_NAME2);
+            printf("    couldn't determine if external link '%s' exists\n", MOVE_LINK_TEST_EXTERN_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -8620,8 +8480,7 @@ test_move_link(TestParams_t *params)
 
         /* Verify the link has been moved */
         if ((link_exists = H5Lexists(dst_grp_id, MOVE_LINK_TEST_EXTERN_LINK_NAME2, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if external link '%s' exists\n",
-                   MOVE_LINK_TEST_EXTERN_LINK_NAME2);
+            printf("    couldn't determine if external link '%s' exists\n", MOVE_LINK_TEST_EXTERN_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -8662,14 +8521,12 @@ test_move_link(TestParams_t *params)
 
         if (vol_cap_flags_g & H5VL_CAP_FLAG_CREATION_ORDER) {
             if (new_info.corder_valid != orig_info.corder_valid) {
-                printf(
-                    "    moved link's 'corder_valid' field doesn't match original link's 'corder_valid' "
-                    "field\n");
+                printf("    moved link's 'corder_valid' field doesn't match original link's 'corder_valid' "
+                       "field\n");
                 TESTFRAME_TEST_ERROR(params);
             }
 
-            if (new_info.corder_valid && orig_info.corder_valid &&
-                (new_info.corder != orig_info.corder)) {
+            if (new_info.corder_valid && orig_info.corder_valid && (new_info.corder != orig_info.corder)) {
                 printf("    moved link's creation order value %" PRId64
                        " doesn't match original link's creation "
                        "order value %" PRId64 "\n",
@@ -8686,8 +8543,7 @@ test_move_link(TestParams_t *params)
         /* Check the external link's value */
         if (H5Lget_val(dst_grp_id, MOVE_LINK_TEST_EXTERN_LINK_NAME2, new_link_val,
                        MOVE_LINK_TEST_LINK_VAL_BUF_SIZE, H5P_DEFAULT) < 0) {
-            printf("    couldn't retrieve value for external link '%s'\n",
-                   MOVE_LINK_TEST_EXTERN_LINK_NAME2);
+            printf("    couldn't retrieve value for external link '%s'\n", MOVE_LINK_TEST_EXTERN_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -8724,8 +8580,7 @@ test_move_link(TestParams_t *params)
 
         /* Verify the link has been created */
         if ((link_exists = H5Lexists(src_grp_id, MOVE_LINK_TEST_EXTERN_LINK_NAME3, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if external link '%s' exists\n",
-                   MOVE_LINK_TEST_EXTERN_LINK_NAME3);
+            printf("    couldn't determine if external link '%s' exists\n", MOVE_LINK_TEST_EXTERN_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -8756,8 +8611,7 @@ test_move_link(TestParams_t *params)
 
         /* Ensure the link has been renamed */
         if ((link_exists = H5Lexists(src_grp_id, MOVE_LINK_TEST_EXTERN_LINK_NAME3, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if external link '%s' exists\n",
-                   MOVE_LINK_TEST_EXTERN_LINK_NAME3);
+            printf("    couldn't determine if external link '%s' exists\n", MOVE_LINK_TEST_EXTERN_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -8787,8 +8641,7 @@ test_move_link(TestParams_t *params)
 
         /* Verify the link has been renamed back */
         if ((link_exists = H5Lexists(src_grp_id, MOVE_LINK_TEST_EXTERN_LINK_NAME3, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if external link '%s' exists\n",
-                   MOVE_LINK_TEST_EXTERN_LINK_NAME3);
+            printf("    couldn't determine if external link '%s' exists\n", MOVE_LINK_TEST_EXTERN_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -8822,8 +8675,7 @@ test_move_link(TestParams_t *params)
 
         /* Verify the link has been created */
         if ((link_exists = H5Lexists(src_grp_id, MOVE_LINK_TEST_EXTERN_LINK_NAME4, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if external link '%s' exists\n",
-                   MOVE_LINK_TEST_EXTERN_LINK_NAME4);
+            printf("    couldn't determine if external link '%s' exists\n", MOVE_LINK_TEST_EXTERN_LINK_NAME4);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -9302,8 +9154,8 @@ test_move_link_invalid_params(TestParams_t *params)
     hid_t  file_id         = H5I_INVALID_HID;
     hid_t  container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
     hid_t  src_grp_id = H5I_INVALID_HID, dst_grp_id = H5I_INVALID_HID;
-    char  *ext_link_filename  = NULL;
-    hid_t  ext_file_id        = H5I_INVALID_HID;
+    char  *ext_link_filename = NULL;
+    hid_t  ext_file_id       = H5I_INVALID_HID;
 
     /* Make sure the connector supports the API functions being tested */
     if (!(vol_cap_flags_g & H5VL_CAP_FLAG_FILE_BASIC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_GROUP_BASIC) ||
@@ -9373,7 +9225,8 @@ test_move_link_invalid_params(TestParams_t *params)
         goto error;
     }
 
-    if (prefix_test_filename(params, test_path_prefix, EXTERNAL_LINK_TEST_FILE_NAME, &ext_link_filename) < 0) {
+    if (prefix_test_filename(params, test_path_prefix, EXTERNAL_LINK_TEST_FILE_NAME, &ext_link_filename) <
+        0) {
         printf("    failed to generate external link filename\n");
         goto error;
     }
@@ -9506,8 +9359,8 @@ test_move_link_invalid_params(TestParams_t *params)
     SUBTEST_BEGIN(params, "valid link existence in original group after previous invalid H5Lmove calls")
     {
         /* Verify the link hasn't been moved */
-        if ((link_exists =
-                 H5Lexists(src_grp_id, MOVE_LINK_INVALID_PARAMS_TEST_HARD_LINK_NAME, H5P_DEFAULT)) < 0) {
+        if ((link_exists = H5Lexists(src_grp_id, MOVE_LINK_INVALID_PARAMS_TEST_HARD_LINK_NAME, H5P_DEFAULT)) <
+            0) {
             printf("    couldn't determine if hard link '%s' exists\n",
                    MOVE_LINK_INVALID_PARAMS_TEST_HARD_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
@@ -9518,8 +9371,8 @@ test_move_link_invalid_params(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists =
-                 H5Lexists(dst_grp_id, MOVE_LINK_INVALID_PARAMS_TEST_HARD_LINK_NAME, H5P_DEFAULT)) < 0) {
+        if ((link_exists = H5Lexists(dst_grp_id, MOVE_LINK_INVALID_PARAMS_TEST_HARD_LINK_NAME, H5P_DEFAULT)) <
+            0) {
             printf("    couldn't determine if hard link '%s' exists\n",
                    MOVE_LINK_INVALID_PARAMS_TEST_HARD_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
@@ -9566,8 +9419,8 @@ test_move_link_invalid_params(TestParams_t *params)
         }
 
         /* Ensure that original link still exists */
-        if ((link_exists =
-                 H5Lexists(src_grp_id, MOVE_LINK_INVALID_PARAMS_TEST_HARD_LINK_NAME, H5P_DEFAULT)) < 0) {
+        if ((link_exists = H5Lexists(src_grp_id, MOVE_LINK_INVALID_PARAMS_TEST_HARD_LINK_NAME, H5P_DEFAULT)) <
+            0) {
             printf("    couldn't determine if original link '%s' exists after invalid link move\n",
                    MOVE_LINK_INVALID_PARAMS_TEST_HARD_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
@@ -9632,8 +9485,8 @@ test_get_link_val(TestParams_t *params)
     char        link_val_buf[GET_LINK_VAL_TEST_LINK_VAL_BUF_SIZE];
     hid_t       file_id = H5I_INVALID_HID, ext_file_id = H5I_INVALID_HID;
     hid_t       container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
-    hid_t       subgroup_id = H5I_INVALID_HID;
-    hid_t       gcpl_id     = H5I_INVALID_HID;
+    hid_t       subgroup_id       = H5I_INVALID_HID;
+    hid_t       gcpl_id           = H5I_INVALID_HID;
     char       *ext_link_filename = NULL;
 
     /* Make sure the connector supports the API functions being tested */
@@ -9673,7 +9526,8 @@ test_get_link_val(TestParams_t *params)
         goto error;
     }
 
-    if (prefix_test_filename(params, test_path_prefix, EXTERNAL_LINK_TEST_FILE_NAME, &ext_link_filename) < 0) {
+    if (prefix_test_filename(params, test_path_prefix, EXTERNAL_LINK_TEST_FILE_NAME, &ext_link_filename) <
+        0) {
         printf("    couldn't create external link filename\n");
         goto error;
     }
@@ -9760,15 +9614,14 @@ test_get_link_val(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if (H5Lcreate_external(ext_link_filename, ext_obj_name, subgroup_id,
-                               GET_LINK_VAL_TEST_EXT_LINK_NAME, H5P_DEFAULT, H5P_DEFAULT) < 0) {
+        if (H5Lcreate_external(ext_link_filename, ext_obj_name, subgroup_id, GET_LINK_VAL_TEST_EXT_LINK_NAME,
+                               H5P_DEFAULT, H5P_DEFAULT) < 0) {
             printf("    couldn't create external link '%s'\n", GET_LINK_VAL_TEST_EXT_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if ((link_exists = H5Lexists(subgroup_id, GET_LINK_VAL_TEST_EXT_LINK_NAME, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if external link '%s' exists\n",
-                   GET_LINK_VAL_TEST_EXT_LINK_NAME);
+            printf("    couldn't determine if external link '%s' exists\n", GET_LINK_VAL_TEST_EXT_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -9808,8 +9661,7 @@ test_get_link_val(TestParams_t *params)
         }
 
         if (strncmp(ext_link_val, ext_obj_name, strlen(ext_obj_name) + 1)) {
-            printf("    external link value '%s' did not match expected '%s'\n", ext_link_val,
-                   ext_obj_name);
+            printf("    external link value '%s' did not match expected '%s'\n", ext_link_val, ext_obj_name);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -10241,8 +10093,8 @@ test_get_link_val(TestParams_t *params)
 
         /* Retrieve the info and value of each link in turn */
         memset(&link_info, 0, sizeof(link_info));
-        if (H5Lget_info_by_idx2(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_INC, 0, &link_info,
-                                H5P_DEFAULT) < 0) {
+        if (H5Lget_info_by_idx2(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_INC, 0, &link_info, H5P_DEFAULT) <
+            0) {
             printf("    failed to retrieve soft link's info at index %d\n", 0);
             TESTFRAME_TEST_ERROR(params);
         }
@@ -10268,8 +10120,8 @@ test_get_link_val(TestParams_t *params)
         }
 
         memset(&link_info, 0, sizeof(link_info));
-        if (H5Lget_info_by_idx2(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_INC, 1, &link_info,
-                                H5P_DEFAULT) < 0) {
+        if (H5Lget_info_by_idx2(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_INC, 1, &link_info, H5P_DEFAULT) <
+            0) {
             printf("    failed to retrieve soft link's info at index %d\n", 1);
             TESTFRAME_TEST_ERROR(params);
         }
@@ -10295,8 +10147,8 @@ test_get_link_val(TestParams_t *params)
         }
 
         memset(&link_info, 0, sizeof(link_info));
-        if (H5Lget_info_by_idx2(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_INC, 2, &link_info,
-                                H5P_DEFAULT) < 0) {
+        if (H5Lget_info_by_idx2(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_INC, 2, &link_info, H5P_DEFAULT) <
+            0) {
             printf("    failed to retrieve soft link's info at index %d\n", 2);
             TESTFRAME_TEST_ERROR(params);
         }
@@ -10402,8 +10254,8 @@ test_get_link_val(TestParams_t *params)
 
         /* Retrieve the info and value of each link in turn */
         memset(&link_info, 0, sizeof(link_info));
-        if (H5Lget_info_by_idx2(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_DEC, 2, &link_info,
-                                H5P_DEFAULT) < 0) {
+        if (H5Lget_info_by_idx2(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_DEC, 2, &link_info, H5P_DEFAULT) <
+            0) {
             printf("    failed to retrieve soft link's info at index %d\n", 2);
             TESTFRAME_TEST_ERROR(params);
         }
@@ -10429,8 +10281,8 @@ test_get_link_val(TestParams_t *params)
         }
 
         memset(&link_info, 0, sizeof(link_info));
-        if (H5Lget_info_by_idx2(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_DEC, 1, &link_info,
-                                H5P_DEFAULT) < 0) {
+        if (H5Lget_info_by_idx2(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_DEC, 1, &link_info, H5P_DEFAULT) <
+            0) {
             printf("    failed to retrieve soft link's info at index %d\n", 1);
             TESTFRAME_TEST_ERROR(params);
         }
@@ -10456,8 +10308,8 @@ test_get_link_val(TestParams_t *params)
         }
 
         memset(&link_info, 0, sizeof(link_info));
-        if (H5Lget_info_by_idx2(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_DEC, 0, &link_info,
-                                H5P_DEFAULT) < 0) {
+        if (H5Lget_info_by_idx2(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_DEC, 0, &link_info, H5P_DEFAULT) <
+            0) {
             printf("    failed to retrieve soft link's info at index %d\n", 0);
             TESTFRAME_TEST_ERROR(params);
         }
@@ -10958,8 +10810,8 @@ test_get_link_val(TestParams_t *params)
 
         /* Retrieve the info and value of each link in turn */
         memset(&link_info, 0, sizeof(link_info));
-        if (H5Lget_info_by_idx2(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_INC, 0, &link_info,
-                                H5P_DEFAULT) < 0) {
+        if (H5Lget_info_by_idx2(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_INC, 0, &link_info, H5P_DEFAULT) <
+            0) {
             printf("    failed to retrieve external link's info at index %d\n", 0);
             TESTFRAME_TEST_ERROR(params);
         }
@@ -10997,8 +10849,8 @@ test_get_link_val(TestParams_t *params)
         }
 
         memset(&link_info, 0, sizeof(link_info));
-        if (H5Lget_info_by_idx2(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_INC, 1, &link_info,
-                                H5P_DEFAULT) < 0) {
+        if (H5Lget_info_by_idx2(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_INC, 1, &link_info, H5P_DEFAULT) <
+            0) {
             printf("    failed to retrieve external link's info at index %d\n", 1);
             TESTFRAME_TEST_ERROR(params);
         }
@@ -11036,8 +10888,8 @@ test_get_link_val(TestParams_t *params)
         }
 
         memset(&link_info, 0, sizeof(link_info));
-        if (H5Lget_info_by_idx2(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_INC, 2, &link_info,
-                                H5P_DEFAULT) < 0) {
+        if (H5Lget_info_by_idx2(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_INC, 2, &link_info, H5P_DEFAULT) <
+            0) {
             printf("    failed to retrieve external link's info at index %d\n", 2);
             TESTFRAME_TEST_ERROR(params);
         }
@@ -11152,8 +11004,8 @@ test_get_link_val(TestParams_t *params)
 
         /* Retrieve the info and value of each link in turn */
         memset(&link_info, 0, sizeof(link_info));
-        if (H5Lget_info_by_idx2(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_DEC, 2, &link_info,
-                                H5P_DEFAULT) < 0) {
+        if (H5Lget_info_by_idx2(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_DEC, 2, &link_info, H5P_DEFAULT) <
+            0) {
             printf("    failed to retrieve external link's info at index %d\n", 2);
             TESTFRAME_TEST_ERROR(params);
         }
@@ -11191,8 +11043,8 @@ test_get_link_val(TestParams_t *params)
         }
 
         memset(&link_info, 0, sizeof(link_info));
-        if (H5Lget_info_by_idx2(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_DEC, 1, &link_info,
-                                H5P_DEFAULT) < 0) {
+        if (H5Lget_info_by_idx2(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_DEC, 1, &link_info, H5P_DEFAULT) <
+            0) {
             printf("    failed to retrieve external link's info at index %d\n", 1);
             TESTFRAME_TEST_ERROR(params);
         }
@@ -11230,8 +11082,8 @@ test_get_link_val(TestParams_t *params)
         }
 
         memset(&link_info, 0, sizeof(link_info));
-        if (H5Lget_info_by_idx2(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_DEC, 0, &link_info,
-                                H5P_DEFAULT) < 0) {
+        if (H5Lget_info_by_idx2(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_DEC, 0, &link_info, H5P_DEFAULT) <
+            0) {
             printf("    failed to retrieve external link's info at index %d\n", 0);
             TESTFRAME_TEST_ERROR(params);
         }
@@ -11544,7 +11396,7 @@ test_get_link_val_invalid_params(TestParams_t *params)
     }
     SUBTEST_END(params);
 
-    SUBTEST_BEGIN(params,"H5Lget_val_by_idx with an invalid index type" )
+    SUBTEST_BEGIN(params, "H5Lget_val_by_idx with an invalid index type")
     {
         H5E_BEGIN_TRY
         {
@@ -11660,9 +11512,9 @@ test_get_link_info(TestParams_t *params)
     size_t      link_val_size;
     hid_t       file_id = H5I_INVALID_HID, ext_file_id = H5I_INVALID_HID;
     hid_t       container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
-    hid_t       subgroup_id        = H5I_INVALID_HID;
-    hid_t       gcpl_id            = H5I_INVALID_HID;
-    char        *ext_link_filename = NULL;
+    hid_t       subgroup_id       = H5I_INVALID_HID;
+    hid_t       gcpl_id           = H5I_INVALID_HID;
+    char       *ext_link_filename = NULL;
 
     /* Make sure the connector supports the API functions being tested */
     if (!(vol_cap_flags_g & H5VL_CAP_FLAG_FILE_BASIC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_GROUP_BASIC) ||
@@ -11702,7 +11554,8 @@ test_get_link_info(TestParams_t *params)
         goto error;
     }
 
-    if (prefix_test_filename(params, test_path_prefix, EXTERNAL_LINK_TEST_FILE_NAME, &ext_link_filename) < 0) {
+    if (prefix_test_filename(params, test_path_prefix, EXTERNAL_LINK_TEST_FILE_NAME, &ext_link_filename) <
+        0) {
         printf("    couldn't create external link target filename\n");
         goto error;
     }
@@ -11729,8 +11582,7 @@ test_get_link_info(TestParams_t *params)
         }
 
         if ((link_exists = H5Lexists(subgroup_id, GET_LINK_INFO_TEST_HARD_LINK_NAME, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if hard link '%s' exists\n",
-                   GET_LINK_INFO_TEST_HARD_LINK_NAME);
+            printf("    couldn't determine if hard link '%s' exists\n", GET_LINK_INFO_TEST_HARD_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -11783,15 +11635,13 @@ test_get_link_info(TestParams_t *params)
 
         if (H5Lcreate_soft("/" LINK_TEST_GROUP_NAME "/" GET_LINK_INFO_TEST_GROUP_NAME
                            "/" GET_LINK_INFO_TEST_SUBGROUP2_NAME,
-                           subgroup_id, GET_LINK_INFO_TEST_SOFT_LINK_NAME, H5P_DEFAULT,
-                           H5P_DEFAULT) < 0) {
+                           subgroup_id, GET_LINK_INFO_TEST_SOFT_LINK_NAME, H5P_DEFAULT, H5P_DEFAULT) < 0) {
             printf("    couldn't create soft link '%s'\n", GET_LINK_INFO_TEST_SOFT_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if ((link_exists = H5Lexists(subgroup_id, GET_LINK_INFO_TEST_SOFT_LINK_NAME, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if soft link '%s' exists\n",
-                   GET_LINK_INFO_TEST_SOFT_LINK_NAME);
+            printf("    couldn't determine if soft link '%s' exists\n", GET_LINK_INFO_TEST_SOFT_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -11814,8 +11664,8 @@ test_get_link_info(TestParams_t *params)
                                "/" GET_LINK_INFO_TEST_SUBGROUP2_NAME) +
                         1;
         if (link_info.u.val_size != link_val_size) {
-            printf("    link's value size '%zu' did not match expected value '%zu'\n",
-                   link_info.u.val_size, link_val_size);
+            printf("    link's value size '%zu' did not match expected value '%zu'\n", link_info.u.val_size,
+                   link_val_size);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -11851,15 +11701,14 @@ test_get_link_info(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if (H5Lcreate_external(ext_link_filename, ext_objname, subgroup_id,
-                               GET_LINK_INFO_TEST_EXT_LINK_NAME, H5P_DEFAULT, H5P_DEFAULT) < 0) {
+        if (H5Lcreate_external(ext_link_filename, ext_objname, subgroup_id, GET_LINK_INFO_TEST_EXT_LINK_NAME,
+                               H5P_DEFAULT, H5P_DEFAULT) < 0) {
             printf("    couldn't create external link '%s'\n", GET_LINK_INFO_TEST_EXT_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if ((link_exists = H5Lexists(subgroup_id, GET_LINK_INFO_TEST_EXT_LINK_NAME, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if external link '%s' exists\n",
-                   GET_LINK_INFO_TEST_EXT_LINK_NAME);
+            printf("    couldn't determine if external link '%s' exists\n", GET_LINK_INFO_TEST_EXT_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -11958,38 +11807,32 @@ test_get_link_info(TestParams_t *params)
 
         /* Verify the links have been created */
         if ((link_exists = H5Lexists(subgroup_id, GET_LINK_INFO_TEST_HARD_LINK_NAME, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if hard link '%s' exists\n",
-                   GET_LINK_INFO_TEST_HARD_LINK_NAME);
+            printf("    couldn't determine if hard link '%s' exists\n", GET_LINK_INFO_TEST_HARD_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (!link_exists) {
-            printf("    hard link '%s' did not exist before deletion\n",
-                   GET_LINK_INFO_TEST_HARD_LINK_NAME);
+            printf("    hard link '%s' did not exist before deletion\n", GET_LINK_INFO_TEST_HARD_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if ((link_exists = H5Lexists(subgroup_id, GET_LINK_INFO_TEST_HARD_LINK_NAME2, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if hard link '%s' exists\n",
-                   GET_LINK_INFO_TEST_HARD_LINK_NAME2);
+            printf("    couldn't determine if hard link '%s' exists\n", GET_LINK_INFO_TEST_HARD_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (!link_exists) {
-            printf("    hard link '%s' did not exist before deletion\n",
-                   GET_LINK_INFO_TEST_HARD_LINK_NAME2);
+            printf("    hard link '%s' did not exist before deletion\n", GET_LINK_INFO_TEST_HARD_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if ((link_exists = H5Lexists(subgroup_id, GET_LINK_INFO_TEST_HARD_LINK_NAME3, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if hard link '%s' exists\n",
-                   GET_LINK_INFO_TEST_HARD_LINK_NAME3);
+            printf("    couldn't determine if hard link '%s' exists\n", GET_LINK_INFO_TEST_HARD_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (!link_exists) {
-            printf("    hard link '%s' did not exist before deletion\n",
-                   GET_LINK_INFO_TEST_HARD_LINK_NAME3);
+            printf("    hard link '%s' did not exist before deletion\n", GET_LINK_INFO_TEST_HARD_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -12096,38 +11939,32 @@ test_get_link_info(TestParams_t *params)
 
         /* Verify the links have been created */
         if ((link_exists = H5Lexists(subgroup_id, GET_LINK_INFO_TEST_HARD_LINK_NAME, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if hard link '%s' exists\n",
-                   GET_LINK_INFO_TEST_HARD_LINK_NAME);
+            printf("    couldn't determine if hard link '%s' exists\n", GET_LINK_INFO_TEST_HARD_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (!link_exists) {
-            printf("    hard link '%s' did not exist before deletion\n",
-                   GET_LINK_INFO_TEST_HARD_LINK_NAME);
+            printf("    hard link '%s' did not exist before deletion\n", GET_LINK_INFO_TEST_HARD_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if ((link_exists = H5Lexists(subgroup_id, GET_LINK_INFO_TEST_HARD_LINK_NAME2, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if hard link '%s' exists\n",
-                   GET_LINK_INFO_TEST_HARD_LINK_NAME2);
+            printf("    couldn't determine if hard link '%s' exists\n", GET_LINK_INFO_TEST_HARD_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (!link_exists) {
-            printf("    hard link '%s' did not exist before deletion\n",
-                   GET_LINK_INFO_TEST_HARD_LINK_NAME2);
+            printf("    hard link '%s' did not exist before deletion\n", GET_LINK_INFO_TEST_HARD_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if ((link_exists = H5Lexists(subgroup_id, GET_LINK_INFO_TEST_HARD_LINK_NAME3, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if hard link '%s' exists\n",
-                   GET_LINK_INFO_TEST_HARD_LINK_NAME3);
+            printf("    couldn't determine if hard link '%s' exists\n", GET_LINK_INFO_TEST_HARD_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (!link_exists) {
-            printf("    hard link '%s' did not exist before deletion\n",
-                   GET_LINK_INFO_TEST_HARD_LINK_NAME3);
+            printf("    hard link '%s' did not exist before deletion\n", GET_LINK_INFO_TEST_HARD_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -12229,45 +12066,39 @@ test_get_link_info(TestParams_t *params)
 
         /* Verify the links have been created */
         if ((link_exists = H5Lexists(subgroup_id, GET_LINK_INFO_TEST_HARD_LINK_NAME, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if hard link '%s' exists\n",
-                   GET_LINK_INFO_TEST_HARD_LINK_NAME);
+            printf("    couldn't determine if hard link '%s' exists\n", GET_LINK_INFO_TEST_HARD_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (!link_exists) {
-            printf("    hard link '%s' did not exist before deletion\n",
-                   GET_LINK_INFO_TEST_HARD_LINK_NAME);
+            printf("    hard link '%s' did not exist before deletion\n", GET_LINK_INFO_TEST_HARD_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if ((link_exists = H5Lexists(subgroup_id, GET_LINK_INFO_TEST_HARD_LINK_NAME2, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if hard link '%s' exists\n",
-                   GET_LINK_INFO_TEST_HARD_LINK_NAME2);
+            printf("    couldn't determine if hard link '%s' exists\n", GET_LINK_INFO_TEST_HARD_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (!link_exists) {
-            printf("    hard link '%s' did not exist before deletion\n",
-                   GET_LINK_INFO_TEST_HARD_LINK_NAME2);
+            printf("    hard link '%s' did not exist before deletion\n", GET_LINK_INFO_TEST_HARD_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if ((link_exists = H5Lexists(subgroup_id, GET_LINK_INFO_TEST_HARD_LINK_NAME3, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if hard link '%s' exists\n",
-                   GET_LINK_INFO_TEST_HARD_LINK_NAME3);
+            printf("    couldn't determine if hard link '%s' exists\n", GET_LINK_INFO_TEST_HARD_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (!link_exists) {
-            printf("    hard link '%s' did not exist before deletion\n",
-                   GET_LINK_INFO_TEST_HARD_LINK_NAME3);
+            printf("    hard link '%s' did not exist before deletion\n", GET_LINK_INFO_TEST_HARD_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
         /* Retrieve info of links in turn */
         memset(&link_info, 0, sizeof(link_info));
-        if (H5Lget_info_by_idx2(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_INC, 0, &link_info,
-                                H5P_DEFAULT) < 0) {
+        if (H5Lget_info_by_idx2(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_INC, 0, &link_info, H5P_DEFAULT) <
+            0) {
             printf("    couldn't get hard link info for index %d\n", 0);
             TESTFRAME_TEST_ERROR(params);
         }
@@ -12286,8 +12117,8 @@ test_get_link_info(TestParams_t *params)
         }
 
         memset(&link_info, 0, sizeof(link_info));
-        if (H5Lget_info_by_idx2(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_INC, 1, &link_info,
-                                H5P_DEFAULT) < 0) {
+        if (H5Lget_info_by_idx2(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_INC, 1, &link_info, H5P_DEFAULT) <
+            0) {
             printf("    couldn't get hard link info for index %d\n", 1);
             TESTFRAME_TEST_ERROR(params);
         }
@@ -12306,8 +12137,8 @@ test_get_link_info(TestParams_t *params)
         }
 
         memset(&link_info, 0, sizeof(link_info));
-        if (H5Lget_info_by_idx2(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_INC, 2, &link_info,
-                                H5P_DEFAULT) < 0) {
+        if (H5Lget_info_by_idx2(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_INC, 2, &link_info, H5P_DEFAULT) <
+            0) {
             printf("    couldn't get hard link info for index %d\n", 2);
             TESTFRAME_TEST_ERROR(params);
         }
@@ -12368,45 +12199,39 @@ test_get_link_info(TestParams_t *params)
 
         /* Verify the links have been created */
         if ((link_exists = H5Lexists(subgroup_id, GET_LINK_INFO_TEST_HARD_LINK_NAME, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if hard link '%s' exists\n",
-                   GET_LINK_INFO_TEST_HARD_LINK_NAME);
+            printf("    couldn't determine if hard link '%s' exists\n", GET_LINK_INFO_TEST_HARD_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (!link_exists) {
-            printf("    hard link '%s' did not exist before deletion\n",
-                   GET_LINK_INFO_TEST_HARD_LINK_NAME);
+            printf("    hard link '%s' did not exist before deletion\n", GET_LINK_INFO_TEST_HARD_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if ((link_exists = H5Lexists(subgroup_id, GET_LINK_INFO_TEST_HARD_LINK_NAME2, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if hard link '%s' exists\n",
-                   GET_LINK_INFO_TEST_HARD_LINK_NAME2);
+            printf("    couldn't determine if hard link '%s' exists\n", GET_LINK_INFO_TEST_HARD_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (!link_exists) {
-            printf("    hard link '%s' did not exist before deletion\n",
-                   GET_LINK_INFO_TEST_HARD_LINK_NAME2);
+            printf("    hard link '%s' did not exist before deletion\n", GET_LINK_INFO_TEST_HARD_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if ((link_exists = H5Lexists(subgroup_id, GET_LINK_INFO_TEST_HARD_LINK_NAME3, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if hard link '%s' exists\n",
-                   GET_LINK_INFO_TEST_HARD_LINK_NAME3);
+            printf("    couldn't determine if hard link '%s' exists\n", GET_LINK_INFO_TEST_HARD_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (!link_exists) {
-            printf("    hard link '%s' did not exist before deletion\n",
-                   GET_LINK_INFO_TEST_HARD_LINK_NAME3);
+            printf("    hard link '%s' did not exist before deletion\n", GET_LINK_INFO_TEST_HARD_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
         /* Retrieve info of links in turn */
         memset(&link_info, 0, sizeof(link_info));
-        if (H5Lget_info_by_idx2(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_DEC, 2, &link_info,
-                                H5P_DEFAULT) < 0) {
+        if (H5Lget_info_by_idx2(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_DEC, 2, &link_info, H5P_DEFAULT) <
+            0) {
             printf("    couldn't get hard link info for index %d\n", 2);
             TESTFRAME_TEST_ERROR(params);
         }
@@ -12425,8 +12250,8 @@ test_get_link_info(TestParams_t *params)
         }
 
         memset(&link_info, 0, sizeof(link_info));
-        if (H5Lget_info_by_idx2(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_DEC, 1, &link_info,
-                                H5P_DEFAULT) < 0) {
+        if (H5Lget_info_by_idx2(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_DEC, 1, &link_info, H5P_DEFAULT) <
+            0) {
             printf("    couldn't get hard link info for index %d\n", 1);
             TESTFRAME_TEST_ERROR(params);
         }
@@ -12445,8 +12270,8 @@ test_get_link_info(TestParams_t *params)
         }
 
         memset(&link_info, 0, sizeof(link_info));
-        if (H5Lget_info_by_idx2(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_DEC, 0, &link_info,
-                                H5P_DEFAULT) < 0) {
+        if (H5Lget_info_by_idx2(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_DEC, 0, &link_info, H5P_DEFAULT) <
+            0) {
             printf("    couldn't get hard link info for index %d\n", 0);
             TESTFRAME_TEST_ERROR(params);
         }
@@ -12494,62 +12319,53 @@ test_get_link_info(TestParams_t *params)
         /* Create several soft links */
         if (H5Lcreate_soft("/" LINK_TEST_GROUP_NAME "/" GET_LINK_INFO_TEST_GROUP_NAME
                            "/" GET_LINK_INFO_TEST_SUBGROUP9_NAME,
-                           subgroup_id, GET_LINK_INFO_TEST_SOFT_LINK_NAME, H5P_DEFAULT,
-                           H5P_DEFAULT) < 0) {
+                           subgroup_id, GET_LINK_INFO_TEST_SOFT_LINK_NAME, H5P_DEFAULT, H5P_DEFAULT) < 0) {
             printf("    couldn't create soft link '%s'\n", GET_LINK_INFO_TEST_SOFT_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (H5Lcreate_soft("/" LINK_TEST_GROUP_NAME "/" GET_LINK_INFO_TEST_GROUP_NAME
                            "/" GET_LINK_INFO_TEST_SUBGROUP9_NAME,
-                           subgroup_id, GET_LINK_INFO_TEST_SOFT_LINK_NAME2, H5P_DEFAULT,
-                           H5P_DEFAULT) < 0) {
+                           subgroup_id, GET_LINK_INFO_TEST_SOFT_LINK_NAME2, H5P_DEFAULT, H5P_DEFAULT) < 0) {
             printf("    couldn't create soft link '%s'\n", GET_LINK_INFO_TEST_SOFT_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (H5Lcreate_soft("/" LINK_TEST_GROUP_NAME "/" GET_LINK_INFO_TEST_GROUP_NAME
                            "/" GET_LINK_INFO_TEST_SUBGROUP9_NAME,
-                           subgroup_id, GET_LINK_INFO_TEST_SOFT_LINK_NAME3, H5P_DEFAULT,
-                           H5P_DEFAULT) < 0) {
+                           subgroup_id, GET_LINK_INFO_TEST_SOFT_LINK_NAME3, H5P_DEFAULT, H5P_DEFAULT) < 0) {
             printf("    couldn't create soft link '%s'\n", GET_LINK_INFO_TEST_SOFT_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
         /* Verify the links have been created */
         if ((link_exists = H5Lexists(subgroup_id, GET_LINK_INFO_TEST_SOFT_LINK_NAME, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if soft link '%s' exists\n",
-                   GET_LINK_INFO_TEST_SOFT_LINK_NAME);
+            printf("    couldn't determine if soft link '%s' exists\n", GET_LINK_INFO_TEST_SOFT_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (!link_exists) {
-            printf("    soft link '%s' did not exist before deletion\n",
-                   GET_LINK_INFO_TEST_SOFT_LINK_NAME);
+            printf("    soft link '%s' did not exist before deletion\n", GET_LINK_INFO_TEST_SOFT_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if ((link_exists = H5Lexists(subgroup_id, GET_LINK_INFO_TEST_SOFT_LINK_NAME2, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if soft link '%s' exists\n",
-                   GET_LINK_INFO_TEST_SOFT_LINK_NAME2);
+            printf("    couldn't determine if soft link '%s' exists\n", GET_LINK_INFO_TEST_SOFT_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (!link_exists) {
-            printf("    soft link '%s' did not exist before deletion\n",
-                   GET_LINK_INFO_TEST_SOFT_LINK_NAME2);
+            printf("    soft link '%s' did not exist before deletion\n", GET_LINK_INFO_TEST_SOFT_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if ((link_exists = H5Lexists(subgroup_id, GET_LINK_INFO_TEST_SOFT_LINK_NAME3, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if soft link '%s' exists\n",
-                   GET_LINK_INFO_TEST_SOFT_LINK_NAME3);
+            printf("    couldn't determine if soft link '%s' exists\n", GET_LINK_INFO_TEST_SOFT_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (!link_exists) {
-            printf("    soft link '%s' did not exist before deletion\n",
-                   GET_LINK_INFO_TEST_SOFT_LINK_NAME3);
+            printf("    soft link '%s' did not exist before deletion\n", GET_LINK_INFO_TEST_SOFT_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -12570,8 +12386,8 @@ test_get_link_info(TestParams_t *params)
                                "/" GET_LINK_INFO_TEST_SUBGROUP9_NAME) +
                         1;
         if (link_info.u.val_size != link_val_size) {
-            printf("    link's value size '%zu' did not match expected value '%zu'\n",
-                   link_info.u.val_size, link_val_size);
+            printf("    link's value size '%zu' did not match expected value '%zu'\n", link_info.u.val_size,
+                   link_val_size);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -12597,8 +12413,8 @@ test_get_link_info(TestParams_t *params)
                                "/" GET_LINK_INFO_TEST_SUBGROUP9_NAME) +
                         1;
         if (link_info.u.val_size != link_val_size) {
-            printf("    link's value size '%zu' did not match expected value '%zu'\n",
-                   link_info.u.val_size, link_val_size);
+            printf("    link's value size '%zu' did not match expected value '%zu'\n", link_info.u.val_size,
+                   link_val_size);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -12624,8 +12440,8 @@ test_get_link_info(TestParams_t *params)
                                "/" GET_LINK_INFO_TEST_SUBGROUP9_NAME) +
                         1;
         if (link_info.u.val_size != link_val_size) {
-            printf("    link's value size '%zu' did not match expected value '%zu'\n",
-                   link_info.u.val_size, link_val_size);
+            printf("    link's value size '%zu' did not match expected value '%zu'\n", link_info.u.val_size,
+                   link_val_size);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -12665,62 +12481,53 @@ test_get_link_info(TestParams_t *params)
         /* Create several soft links */
         if (H5Lcreate_soft("/" LINK_TEST_GROUP_NAME "/" GET_LINK_INFO_TEST_GROUP_NAME
                            "/" GET_LINK_INFO_TEST_SUBGROUP10_NAME,
-                           subgroup_id, GET_LINK_INFO_TEST_SOFT_LINK_NAME, H5P_DEFAULT,
-                           H5P_DEFAULT) < 0) {
+                           subgroup_id, GET_LINK_INFO_TEST_SOFT_LINK_NAME, H5P_DEFAULT, H5P_DEFAULT) < 0) {
             printf("    couldn't create soft link '%s'\n", GET_LINK_INFO_TEST_SOFT_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (H5Lcreate_soft("/" LINK_TEST_GROUP_NAME "/" GET_LINK_INFO_TEST_GROUP_NAME
                            "/" GET_LINK_INFO_TEST_SUBGROUP10_NAME,
-                           subgroup_id, GET_LINK_INFO_TEST_SOFT_LINK_NAME2, H5P_DEFAULT,
-                           H5P_DEFAULT) < 0) {
+                           subgroup_id, GET_LINK_INFO_TEST_SOFT_LINK_NAME2, H5P_DEFAULT, H5P_DEFAULT) < 0) {
             printf("    couldn't create soft link '%s'\n", GET_LINK_INFO_TEST_SOFT_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (H5Lcreate_soft("/" LINK_TEST_GROUP_NAME "/" GET_LINK_INFO_TEST_GROUP_NAME
                            "/" GET_LINK_INFO_TEST_SUBGROUP10_NAME,
-                           subgroup_id, GET_LINK_INFO_TEST_SOFT_LINK_NAME3, H5P_DEFAULT,
-                           H5P_DEFAULT) < 0) {
+                           subgroup_id, GET_LINK_INFO_TEST_SOFT_LINK_NAME3, H5P_DEFAULT, H5P_DEFAULT) < 0) {
             printf("    couldn't create soft link '%s'\n", GET_LINK_INFO_TEST_SOFT_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
         /* Verify the links have been created */
         if ((link_exists = H5Lexists(subgroup_id, GET_LINK_INFO_TEST_SOFT_LINK_NAME, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if soft link '%s' exists\n",
-                   GET_LINK_INFO_TEST_SOFT_LINK_NAME);
+            printf("    couldn't determine if soft link '%s' exists\n", GET_LINK_INFO_TEST_SOFT_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (!link_exists) {
-            printf("    soft link '%s' did not exist before deletion\n",
-                   GET_LINK_INFO_TEST_SOFT_LINK_NAME);
+            printf("    soft link '%s' did not exist before deletion\n", GET_LINK_INFO_TEST_SOFT_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if ((link_exists = H5Lexists(subgroup_id, GET_LINK_INFO_TEST_SOFT_LINK_NAME2, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if soft link '%s' exists\n",
-                   GET_LINK_INFO_TEST_SOFT_LINK_NAME2);
+            printf("    couldn't determine if soft link '%s' exists\n", GET_LINK_INFO_TEST_SOFT_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (!link_exists) {
-            printf("    soft link '%s' did not exist before deletion\n",
-                   GET_LINK_INFO_TEST_SOFT_LINK_NAME2);
+            printf("    soft link '%s' did not exist before deletion\n", GET_LINK_INFO_TEST_SOFT_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if ((link_exists = H5Lexists(subgroup_id, GET_LINK_INFO_TEST_SOFT_LINK_NAME3, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if soft link '%s' exists\n",
-                   GET_LINK_INFO_TEST_SOFT_LINK_NAME3);
+            printf("    couldn't determine if soft link '%s' exists\n", GET_LINK_INFO_TEST_SOFT_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (!link_exists) {
-            printf("    soft link '%s' did not exist before deletion\n",
-                   GET_LINK_INFO_TEST_SOFT_LINK_NAME3);
+            printf("    soft link '%s' did not exist before deletion\n", GET_LINK_INFO_TEST_SOFT_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -12741,8 +12548,8 @@ test_get_link_info(TestParams_t *params)
                                "/" GET_LINK_INFO_TEST_SUBGROUP10_NAME) +
                         1;
         if (link_info.u.val_size != link_val_size) {
-            printf("    link's value size '%zu' did not match expected value '%zu'\n",
-                   link_info.u.val_size, link_val_size);
+            printf("    link's value size '%zu' did not match expected value '%zu'\n", link_info.u.val_size,
+                   link_val_size);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -12768,8 +12575,8 @@ test_get_link_info(TestParams_t *params)
                                "/" GET_LINK_INFO_TEST_SUBGROUP10_NAME) +
                         1;
         if (link_info.u.val_size != link_val_size) {
-            printf("    link's value size '%zu' did not match expected value '%zu'\n",
-                   link_info.u.val_size, link_val_size);
+            printf("    link's value size '%zu' did not match expected value '%zu'\n", link_info.u.val_size,
+                   link_val_size);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -12795,8 +12602,8 @@ test_get_link_info(TestParams_t *params)
                                "/" GET_LINK_INFO_TEST_SUBGROUP10_NAME) +
                         1;
         if (link_info.u.val_size != link_val_size) {
-            printf("    link's value size '%zu' did not match expected value '%zu'\n",
-                   link_info.u.val_size, link_val_size);
+            printf("    link's value size '%zu' did not match expected value '%zu'\n", link_info.u.val_size,
+                   link_val_size);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -12831,69 +12638,60 @@ test_get_link_info(TestParams_t *params)
         /* Create several soft links */
         if (H5Lcreate_soft("/" LINK_TEST_GROUP_NAME "/" GET_LINK_INFO_TEST_GROUP_NAME
                            "/" GET_LINK_INFO_TEST_SUBGROUP11_NAME,
-                           subgroup_id, GET_LINK_INFO_TEST_SOFT_LINK_NAME, H5P_DEFAULT,
-                           H5P_DEFAULT) < 0) {
+                           subgroup_id, GET_LINK_INFO_TEST_SOFT_LINK_NAME, H5P_DEFAULT, H5P_DEFAULT) < 0) {
             printf("    couldn't create soft link '%s'\n", GET_LINK_INFO_TEST_SOFT_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (H5Lcreate_soft("/" LINK_TEST_GROUP_NAME "/" GET_LINK_INFO_TEST_GROUP_NAME
                            "/" GET_LINK_INFO_TEST_SUBGROUP11_NAME,
-                           subgroup_id, GET_LINK_INFO_TEST_SOFT_LINK_NAME2, H5P_DEFAULT,
-                           H5P_DEFAULT) < 0) {
+                           subgroup_id, GET_LINK_INFO_TEST_SOFT_LINK_NAME2, H5P_DEFAULT, H5P_DEFAULT) < 0) {
             printf("    couldn't create soft link '%s'\n", GET_LINK_INFO_TEST_SOFT_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (H5Lcreate_soft("/" LINK_TEST_GROUP_NAME "/" GET_LINK_INFO_TEST_GROUP_NAME
                            "/" GET_LINK_INFO_TEST_SUBGROUP11_NAME,
-                           subgroup_id, GET_LINK_INFO_TEST_SOFT_LINK_NAME3, H5P_DEFAULT,
-                           H5P_DEFAULT) < 0) {
+                           subgroup_id, GET_LINK_INFO_TEST_SOFT_LINK_NAME3, H5P_DEFAULT, H5P_DEFAULT) < 0) {
             printf("    couldn't create soft link '%s'\n", GET_LINK_INFO_TEST_SOFT_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
         /* Verify the links have been created */
         if ((link_exists = H5Lexists(subgroup_id, GET_LINK_INFO_TEST_SOFT_LINK_NAME, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if soft link '%s' exists\n",
-                   GET_LINK_INFO_TEST_SOFT_LINK_NAME);
+            printf("    couldn't determine if soft link '%s' exists\n", GET_LINK_INFO_TEST_SOFT_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (!link_exists) {
-            printf("    soft link '%s' did not exist before deletion\n",
-                   GET_LINK_INFO_TEST_SOFT_LINK_NAME);
+            printf("    soft link '%s' did not exist before deletion\n", GET_LINK_INFO_TEST_SOFT_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if ((link_exists = H5Lexists(subgroup_id, GET_LINK_INFO_TEST_SOFT_LINK_NAME2, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if soft link '%s' exists\n",
-                   GET_LINK_INFO_TEST_SOFT_LINK_NAME2);
+            printf("    couldn't determine if soft link '%s' exists\n", GET_LINK_INFO_TEST_SOFT_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (!link_exists) {
-            printf("    soft link '%s' did not exist before deletion\n",
-                   GET_LINK_INFO_TEST_SOFT_LINK_NAME2);
+            printf("    soft link '%s' did not exist before deletion\n", GET_LINK_INFO_TEST_SOFT_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if ((link_exists = H5Lexists(subgroup_id, GET_LINK_INFO_TEST_SOFT_LINK_NAME3, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if soft link '%s' exists\n",
-                   GET_LINK_INFO_TEST_SOFT_LINK_NAME3);
+            printf("    couldn't determine if soft link '%s' exists\n", GET_LINK_INFO_TEST_SOFT_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (!link_exists) {
-            printf("    soft link '%s' did not exist before deletion\n",
-                   GET_LINK_INFO_TEST_SOFT_LINK_NAME3);
+            printf("    soft link '%s' did not exist before deletion\n", GET_LINK_INFO_TEST_SOFT_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
         /* Retrieve info of links in turn */
         memset(&link_info, 0, sizeof(link_info));
-        if (H5Lget_info_by_idx2(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_INC, 0, &link_info,
-                                H5P_DEFAULT) < 0) {
+        if (H5Lget_info_by_idx2(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_INC, 0, &link_info, H5P_DEFAULT) <
+            0) {
             printf("    couldn't get soft link info for index %d\n", 0);
             TESTFRAME_TEST_ERROR(params);
         }
@@ -12907,8 +12705,8 @@ test_get_link_info(TestParams_t *params)
                                "/" GET_LINK_INFO_TEST_SUBGROUP11_NAME) +
                         1;
         if (link_info.u.val_size != link_val_size) {
-            printf("    link's value size '%zu' did not match expected value '%zu'\n",
-                   link_info.u.val_size, link_val_size);
+            printf("    link's value size '%zu' did not match expected value '%zu'\n", link_info.u.val_size,
+                   link_val_size);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -12921,8 +12719,8 @@ test_get_link_info(TestParams_t *params)
         }
 
         memset(&link_info, 0, sizeof(link_info));
-        if (H5Lget_info_by_idx2(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_INC, 1, &link_info,
-                                H5P_DEFAULT) < 0) {
+        if (H5Lget_info_by_idx2(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_INC, 1, &link_info, H5P_DEFAULT) <
+            0) {
             printf("    couldn't get soft link info for index %d\n", 1);
             TESTFRAME_TEST_ERROR(params);
         }
@@ -12936,8 +12734,8 @@ test_get_link_info(TestParams_t *params)
                                "/" GET_LINK_INFO_TEST_SUBGROUP11_NAME) +
                         1;
         if (link_info.u.val_size != link_val_size) {
-            printf("    link's value size '%zu' did not match expected value '%zu'\n",
-                   link_info.u.val_size, link_val_size);
+            printf("    link's value size '%zu' did not match expected value '%zu'\n", link_info.u.val_size,
+                   link_val_size);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -12950,8 +12748,8 @@ test_get_link_info(TestParams_t *params)
         }
 
         memset(&link_info, 0, sizeof(link_info));
-        if (H5Lget_info_by_idx2(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_INC, 2, &link_info,
-                                H5P_DEFAULT) < 0) {
+        if (H5Lget_info_by_idx2(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_INC, 2, &link_info, H5P_DEFAULT) <
+            0) {
             printf("    couldn't get soft link info for index %d\n", 2);
             TESTFRAME_TEST_ERROR(params);
         }
@@ -12965,8 +12763,8 @@ test_get_link_info(TestParams_t *params)
                                "/" GET_LINK_INFO_TEST_SUBGROUP11_NAME) +
                         1;
         if (link_info.u.val_size != link_val_size) {
-            printf("    link's value size '%zu' did not match expected value '%zu'\n",
-                   link_info.u.val_size, link_val_size);
+            printf("    link's value size '%zu' did not match expected value '%zu'\n", link_info.u.val_size,
+                   link_val_size);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -13003,69 +12801,60 @@ test_get_link_info(TestParams_t *params)
         /* Create several soft links */
         if (H5Lcreate_soft("/" LINK_TEST_GROUP_NAME "/" GET_LINK_INFO_TEST_GROUP_NAME
                            "/" GET_LINK_INFO_TEST_SUBGROUP12_NAME,
-                           subgroup_id, GET_LINK_INFO_TEST_SOFT_LINK_NAME, H5P_DEFAULT,
-                           H5P_DEFAULT) < 0) {
+                           subgroup_id, GET_LINK_INFO_TEST_SOFT_LINK_NAME, H5P_DEFAULT, H5P_DEFAULT) < 0) {
             printf("    couldn't create soft link '%s'\n", GET_LINK_INFO_TEST_SOFT_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (H5Lcreate_soft("/" LINK_TEST_GROUP_NAME "/" GET_LINK_INFO_TEST_GROUP_NAME
                            "/" GET_LINK_INFO_TEST_SUBGROUP12_NAME,
-                           subgroup_id, GET_LINK_INFO_TEST_SOFT_LINK_NAME2, H5P_DEFAULT,
-                           H5P_DEFAULT) < 0) {
+                           subgroup_id, GET_LINK_INFO_TEST_SOFT_LINK_NAME2, H5P_DEFAULT, H5P_DEFAULT) < 0) {
             printf("    couldn't create soft link '%s'\n", GET_LINK_INFO_TEST_SOFT_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (H5Lcreate_soft("/" LINK_TEST_GROUP_NAME "/" GET_LINK_INFO_TEST_GROUP_NAME
                            "/" GET_LINK_INFO_TEST_SUBGROUP12_NAME,
-                           subgroup_id, GET_LINK_INFO_TEST_SOFT_LINK_NAME3, H5P_DEFAULT,
-                           H5P_DEFAULT) < 0) {
+                           subgroup_id, GET_LINK_INFO_TEST_SOFT_LINK_NAME3, H5P_DEFAULT, H5P_DEFAULT) < 0) {
             printf("    couldn't create soft link '%s'\n", GET_LINK_INFO_TEST_SOFT_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
         /* Verify the links have been created */
         if ((link_exists = H5Lexists(subgroup_id, GET_LINK_INFO_TEST_SOFT_LINK_NAME, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if soft link '%s' exists\n",
-                   GET_LINK_INFO_TEST_SOFT_LINK_NAME);
+            printf("    couldn't determine if soft link '%s' exists\n", GET_LINK_INFO_TEST_SOFT_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (!link_exists) {
-            printf("    soft link '%s' did not exist before deletion\n",
-                   GET_LINK_INFO_TEST_SOFT_LINK_NAME);
+            printf("    soft link '%s' did not exist before deletion\n", GET_LINK_INFO_TEST_SOFT_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if ((link_exists = H5Lexists(subgroup_id, GET_LINK_INFO_TEST_SOFT_LINK_NAME2, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if soft link '%s' exists\n",
-                   GET_LINK_INFO_TEST_SOFT_LINK_NAME2);
+            printf("    couldn't determine if soft link '%s' exists\n", GET_LINK_INFO_TEST_SOFT_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (!link_exists) {
-            printf("    soft link '%s' did not exist before deletion\n",
-                   GET_LINK_INFO_TEST_SOFT_LINK_NAME2);
+            printf("    soft link '%s' did not exist before deletion\n", GET_LINK_INFO_TEST_SOFT_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if ((link_exists = H5Lexists(subgroup_id, GET_LINK_INFO_TEST_SOFT_LINK_NAME3, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if soft link '%s' exists\n",
-                   GET_LINK_INFO_TEST_SOFT_LINK_NAME3);
+            printf("    couldn't determine if soft link '%s' exists\n", GET_LINK_INFO_TEST_SOFT_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
         if (!link_exists) {
-            printf("    soft link '%s' did not exist before deletion\n",
-                   GET_LINK_INFO_TEST_SOFT_LINK_NAME3);
+            printf("    soft link '%s' did not exist before deletion\n", GET_LINK_INFO_TEST_SOFT_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
         /* Retrieve info of links in turn */
         memset(&link_info, 0, sizeof(link_info));
-        if (H5Lget_info_by_idx2(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_DEC, 2, &link_info,
-                                H5P_DEFAULT) < 0) {
+        if (H5Lget_info_by_idx2(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_DEC, 2, &link_info, H5P_DEFAULT) <
+            0) {
             printf("    couldn't get soft link info for index %d\n", 2);
             TESTFRAME_TEST_ERROR(params);
         }
@@ -13093,8 +12882,8 @@ test_get_link_info(TestParams_t *params)
         }
 
         memset(&link_info, 0, sizeof(link_info));
-        if (H5Lget_info_by_idx2(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_DEC, 1, &link_info,
-                                H5P_DEFAULT) < 0) {
+        if (H5Lget_info_by_idx2(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_DEC, 1, &link_info, H5P_DEFAULT) <
+            0) {
             printf("    couldn't get soft link info for index %d\n", 1);
             TESTFRAME_TEST_ERROR(params);
         }
@@ -13122,8 +12911,8 @@ test_get_link_info(TestParams_t *params)
         }
 
         memset(&link_info, 0, sizeof(link_info));
-        if (H5Lget_info_by_idx2(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_DEC, 0, &link_info,
-                                H5P_DEFAULT) < 0) {
+        if (H5Lget_info_by_idx2(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_DEC, 0, &link_info, H5P_DEFAULT) <
+            0) {
             printf("    couldn't get soft link info for index %d\n", 0);
             TESTFRAME_TEST_ERROR(params);
         }
@@ -13178,28 +12967,27 @@ test_get_link_info(TestParams_t *params)
         }
 
         /* Create several external links */
-        if (H5Lcreate_external(ext_link_filename, ext_objname, subgroup_id,
-                               GET_LINK_INFO_TEST_EXT_LINK_NAME, H5P_DEFAULT, H5P_DEFAULT) < 0) {
+        if (H5Lcreate_external(ext_link_filename, ext_objname, subgroup_id, GET_LINK_INFO_TEST_EXT_LINK_NAME,
+                               H5P_DEFAULT, H5P_DEFAULT) < 0) {
             printf("    couldn't create external link '%s'\n", GET_LINK_INFO_TEST_EXT_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if (H5Lcreate_external(ext_link_filename, ext_objname, subgroup_id,
-                               GET_LINK_INFO_TEST_EXT_LINK_NAME2, H5P_DEFAULT, H5P_DEFAULT) < 0) {
+        if (H5Lcreate_external(ext_link_filename, ext_objname, subgroup_id, GET_LINK_INFO_TEST_EXT_LINK_NAME2,
+                               H5P_DEFAULT, H5P_DEFAULT) < 0) {
             printf("    couldn't create external link '%s'\n", GET_LINK_INFO_TEST_EXT_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if (H5Lcreate_external(ext_link_filename, ext_objname, subgroup_id,
-                               GET_LINK_INFO_TEST_EXT_LINK_NAME3, H5P_DEFAULT, H5P_DEFAULT) < 0) {
+        if (H5Lcreate_external(ext_link_filename, ext_objname, subgroup_id, GET_LINK_INFO_TEST_EXT_LINK_NAME3,
+                               H5P_DEFAULT, H5P_DEFAULT) < 0) {
             printf("    couldn't create external link '%s'\n", GET_LINK_INFO_TEST_EXT_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
         /* Verify the links have been created */
         if ((link_exists = H5Lexists(subgroup_id, GET_LINK_INFO_TEST_EXT_LINK_NAME, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if external link '%s' exists\n",
-                   GET_LINK_INFO_TEST_EXT_LINK_NAME);
+            printf("    couldn't determine if external link '%s' exists\n", GET_LINK_INFO_TEST_EXT_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -13339,28 +13127,27 @@ test_get_link_info(TestParams_t *params)
         }
 
         /* Create several external links */
-        if (H5Lcreate_external(ext_link_filename, ext_objname, subgroup_id,
-                               GET_LINK_INFO_TEST_EXT_LINK_NAME, H5P_DEFAULT, H5P_DEFAULT) < 0) {
+        if (H5Lcreate_external(ext_link_filename, ext_objname, subgroup_id, GET_LINK_INFO_TEST_EXT_LINK_NAME,
+                               H5P_DEFAULT, H5P_DEFAULT) < 0) {
             printf("    couldn't create external link '%s'\n", GET_LINK_INFO_TEST_EXT_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if (H5Lcreate_external(ext_link_filename, ext_objname, subgroup_id,
-                               GET_LINK_INFO_TEST_EXT_LINK_NAME2, H5P_DEFAULT, H5P_DEFAULT) < 0) {
+        if (H5Lcreate_external(ext_link_filename, ext_objname, subgroup_id, GET_LINK_INFO_TEST_EXT_LINK_NAME2,
+                               H5P_DEFAULT, H5P_DEFAULT) < 0) {
             printf("    couldn't create external link '%s'\n", GET_LINK_INFO_TEST_EXT_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if (H5Lcreate_external(ext_link_filename, ext_objname, subgroup_id,
-                               GET_LINK_INFO_TEST_EXT_LINK_NAME3, H5P_DEFAULT, H5P_DEFAULT) < 0) {
+        if (H5Lcreate_external(ext_link_filename, ext_objname, subgroup_id, GET_LINK_INFO_TEST_EXT_LINK_NAME3,
+                               H5P_DEFAULT, H5P_DEFAULT) < 0) {
             printf("    couldn't create external link '%s'\n", GET_LINK_INFO_TEST_EXT_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
         /* Verify the links have been created */
         if ((link_exists = H5Lexists(subgroup_id, GET_LINK_INFO_TEST_EXT_LINK_NAME, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if external link '%s' exists\n",
-                   GET_LINK_INFO_TEST_EXT_LINK_NAME);
+            printf("    couldn't determine if external link '%s' exists\n", GET_LINK_INFO_TEST_EXT_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -13495,28 +13282,27 @@ test_get_link_info(TestParams_t *params)
         }
 
         /* Create several external links */
-        if (H5Lcreate_external(ext_link_filename, ext_objname, subgroup_id,
-                               GET_LINK_INFO_TEST_EXT_LINK_NAME, H5P_DEFAULT, H5P_DEFAULT) < 0) {
+        if (H5Lcreate_external(ext_link_filename, ext_objname, subgroup_id, GET_LINK_INFO_TEST_EXT_LINK_NAME,
+                               H5P_DEFAULT, H5P_DEFAULT) < 0) {
             printf("    couldn't create external link '%s'\n", GET_LINK_INFO_TEST_EXT_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if (H5Lcreate_external(ext_link_filename, ext_objname, subgroup_id,
-                               GET_LINK_INFO_TEST_EXT_LINK_NAME2, H5P_DEFAULT, H5P_DEFAULT) < 0) {
+        if (H5Lcreate_external(ext_link_filename, ext_objname, subgroup_id, GET_LINK_INFO_TEST_EXT_LINK_NAME2,
+                               H5P_DEFAULT, H5P_DEFAULT) < 0) {
             printf("    couldn't create external link '%s'\n", GET_LINK_INFO_TEST_EXT_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if (H5Lcreate_external(ext_link_filename, ext_objname, subgroup_id,
-                               GET_LINK_INFO_TEST_EXT_LINK_NAME3, H5P_DEFAULT, H5P_DEFAULT) < 0) {
+        if (H5Lcreate_external(ext_link_filename, ext_objname, subgroup_id, GET_LINK_INFO_TEST_EXT_LINK_NAME3,
+                               H5P_DEFAULT, H5P_DEFAULT) < 0) {
             printf("    couldn't create external link '%s'\n", GET_LINK_INFO_TEST_EXT_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
         /* Verify the links have been created */
         if ((link_exists = H5Lexists(subgroup_id, GET_LINK_INFO_TEST_EXT_LINK_NAME, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if external link '%s' exists\n",
-                   GET_LINK_INFO_TEST_EXT_LINK_NAME);
+            printf("    couldn't determine if external link '%s' exists\n", GET_LINK_INFO_TEST_EXT_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -13552,8 +13338,8 @@ test_get_link_info(TestParams_t *params)
 
         /* Retrieve info of links in turn */
         memset(&link_info, 0, sizeof(link_info));
-        if (H5Lget_info_by_idx2(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_INC, 0, &link_info,
-                                H5P_DEFAULT) < 0) {
+        if (H5Lget_info_by_idx2(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_INC, 0, &link_info, H5P_DEFAULT) <
+            0) {
             printf("    couldn't get external link info for index %d\n", 0);
             TESTFRAME_TEST_ERROR(params);
         }
@@ -13579,8 +13365,8 @@ test_get_link_info(TestParams_t *params)
         }
 
         memset(&link_info, 0, sizeof(link_info));
-        if (H5Lget_info_by_idx2(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_INC, 1, &link_info,
-                                H5P_DEFAULT) < 0) {
+        if (H5Lget_info_by_idx2(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_INC, 1, &link_info, H5P_DEFAULT) <
+            0) {
             printf("    couldn't get external link info for index %d\n", 1);
             TESTFRAME_TEST_ERROR(params);
         }
@@ -13606,8 +13392,8 @@ test_get_link_info(TestParams_t *params)
         }
 
         memset(&link_info, 0, sizeof(link_info));
-        if (H5Lget_info_by_idx2(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_INC, 2, &link_info,
-                                H5P_DEFAULT) < 0) {
+        if (H5Lget_info_by_idx2(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_INC, 2, &link_info, H5P_DEFAULT) <
+            0) {
             printf("    couldn't get external link info for index %d\n", 2);
             TESTFRAME_TEST_ERROR(params);
         }
@@ -13657,28 +13443,27 @@ test_get_link_info(TestParams_t *params)
         }
 
         /* Create several external links */
-        if (H5Lcreate_external(ext_link_filename, ext_objname, subgroup_id,
-                               GET_LINK_INFO_TEST_EXT_LINK_NAME, H5P_DEFAULT, H5P_DEFAULT) < 0) {
+        if (H5Lcreate_external(ext_link_filename, ext_objname, subgroup_id, GET_LINK_INFO_TEST_EXT_LINK_NAME,
+                               H5P_DEFAULT, H5P_DEFAULT) < 0) {
             printf("    couldn't create external link '%s'\n", GET_LINK_INFO_TEST_EXT_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if (H5Lcreate_external(ext_link_filename, ext_objname, subgroup_id,
-                               GET_LINK_INFO_TEST_EXT_LINK_NAME2, H5P_DEFAULT, H5P_DEFAULT) < 0) {
+        if (H5Lcreate_external(ext_link_filename, ext_objname, subgroup_id, GET_LINK_INFO_TEST_EXT_LINK_NAME2,
+                               H5P_DEFAULT, H5P_DEFAULT) < 0) {
             printf("    couldn't create external link '%s'\n", GET_LINK_INFO_TEST_EXT_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if (H5Lcreate_external(ext_link_filename, ext_objname, subgroup_id,
-                               GET_LINK_INFO_TEST_EXT_LINK_NAME3, H5P_DEFAULT, H5P_DEFAULT) < 0) {
+        if (H5Lcreate_external(ext_link_filename, ext_objname, subgroup_id, GET_LINK_INFO_TEST_EXT_LINK_NAME3,
+                               H5P_DEFAULT, H5P_DEFAULT) < 0) {
             printf("    couldn't create external link '%s'\n", GET_LINK_INFO_TEST_EXT_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
         /* Verify the links have been created */
         if ((link_exists = H5Lexists(subgroup_id, GET_LINK_INFO_TEST_EXT_LINK_NAME, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if external link '%s' exists\n",
-                   GET_LINK_INFO_TEST_EXT_LINK_NAME);
+            printf("    couldn't determine if external link '%s' exists\n", GET_LINK_INFO_TEST_EXT_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -13714,8 +13499,8 @@ test_get_link_info(TestParams_t *params)
 
         /* Retrieve info of links in turn */
         memset(&link_info, 0, sizeof(link_info));
-        if (H5Lget_info_by_idx2(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_DEC, 2, &link_info,
-                                H5P_DEFAULT) < 0) {
+        if (H5Lget_info_by_idx2(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_DEC, 2, &link_info, H5P_DEFAULT) <
+            0) {
             printf("    couldn't get external link info for index %d\n", 2);
             TESTFRAME_TEST_ERROR(params);
         }
@@ -13741,8 +13526,8 @@ test_get_link_info(TestParams_t *params)
         }
 
         memset(&link_info, 0, sizeof(link_info));
-        if (H5Lget_info_by_idx2(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_DEC, 1, &link_info,
-                                H5P_DEFAULT) < 0) {
+        if (H5Lget_info_by_idx2(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_DEC, 1, &link_info, H5P_DEFAULT) <
+            0) {
             printf("    couldn't get external link info for index %d\n", 1);
             TESTFRAME_TEST_ERROR(params);
         }
@@ -13768,8 +13553,8 @@ test_get_link_info(TestParams_t *params)
         }
 
         memset(&link_info, 0, sizeof(link_info));
-        if (H5Lget_info_by_idx2(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_DEC, 0, &link_info,
-                                H5P_DEFAULT) < 0) {
+        if (H5Lget_info_by_idx2(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_DEC, 0, &link_info, H5P_DEFAULT) <
+            0) {
             printf("    couldn't get external link info for index %d\n", 0);
             TESTFRAME_TEST_ERROR(params);
         }
@@ -13836,7 +13621,8 @@ test_get_link_info(TestParams_t *params)
     }
     H5E_END_TRY
 
-    SUBTEST_BEGIN(params, "H5Lget_info_by_idx2 on user-defined link by alphabetical order in increasing order")
+    SUBTEST_BEGIN(params,
+                  "H5Lget_info_by_idx2 on user-defined link by alphabetical order in increasing order")
     {
         TESTFRAME_SKIPPED(params);
     }
@@ -13849,7 +13635,8 @@ test_get_link_info(TestParams_t *params)
     }
     H5E_END_TRY
 
-    SUBTEST_BEGIN(params, "H5Lget_info_by_idx2 on user-defined link by alphabetical order in decreasing order")
+    SUBTEST_BEGIN(params,
+                  "H5Lget_info_by_idx2 on user-defined link by alphabetical order in decreasing order")
     {
         TESTFRAME_SKIPPED(params);
     }
@@ -14038,8 +13825,8 @@ test_get_link_info_invalid_params(TestParams_t *params)
     {
         H5E_BEGIN_TRY
         {
-            err_ret = H5Lget_info_by_idx2(group_id, NULL, H5_INDEX_NAME, H5_ITER_INC, 0, &link_info,
-                                          H5P_DEFAULT);
+            err_ret =
+                H5Lget_info_by_idx2(group_id, NULL, H5_INDEX_NAME, H5_ITER_INC, 0, &link_info, H5P_DEFAULT);
         }
         H5E_END_TRY
 
@@ -14066,8 +13853,8 @@ test_get_link_info_invalid_params(TestParams_t *params)
     {
         H5E_BEGIN_TRY
         {
-            err_ret = H5Lget_info_by_idx2(group_id, ".", H5_INDEX_UNKNOWN, H5_ITER_INC, 0, &link_info,
-                                          H5P_DEFAULT);
+            err_ret =
+                H5Lget_info_by_idx2(group_id, ".", H5_INDEX_UNKNOWN, H5_ITER_INC, 0, &link_info, H5P_DEFAULT);
         }
         H5E_END_TRY
 
@@ -14078,8 +13865,7 @@ test_get_link_info_invalid_params(TestParams_t *params)
 
         H5E_BEGIN_TRY
         {
-            err_ret =
-                H5Lget_info_by_idx2(group_id, ".", H5_INDEX_N, H5_ITER_INC, 0, &link_info, H5P_DEFAULT);
+            err_ret = H5Lget_info_by_idx2(group_id, ".", H5_INDEX_N, H5_ITER_INC, 0, &link_info, H5P_DEFAULT);
         }
         H5E_END_TRY
 
@@ -14100,8 +13886,7 @@ test_get_link_info_invalid_params(TestParams_t *params)
         H5E_END_TRY
 
         if (err_ret >= 0) {
-            printf(
-                "    H5Lget_info_by_idx2 succeeded with invalid iteration ordering H5_ITER_UNKNOWN!\n");
+            printf("    H5Lget_info_by_idx2 succeeded with invalid iteration ordering H5_ITER_UNKNOWN!\n");
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -14213,7 +13998,8 @@ test_get_link_name(TestParams_t *params)
         goto error;
     }
 
-    if (prefix_test_filename(params, test_path_prefix, EXTERNAL_LINK_TEST_FILE_NAME, &ext_link_filename) < 0) {
+    if (prefix_test_filename(params, test_path_prefix, EXTERNAL_LINK_TEST_FILE_NAME, &ext_link_filename) <
+        0) {
         printf("    couldn't create external link filename\n");
         goto error;
     }
@@ -14237,10 +14023,9 @@ test_get_link_name(TestParams_t *params)
         }
 
         /* Create group to hold some links */
-        if ((subgroup_id = H5Gcreate2(group_id, GET_LINK_NAME_TEST_HARD_SUBGROUP_NAME, H5P_DEFAULT,
-                                      gcpl_id, H5P_DEFAULT)) < 0) {
-            printf("    couldn't create container subgroup '%s'\n",
-                   GET_LINK_NAME_TEST_HARD_SUBGROUP_NAME);
+        if ((subgroup_id = H5Gcreate2(group_id, GET_LINK_NAME_TEST_HARD_SUBGROUP_NAME, H5P_DEFAULT, gcpl_id,
+                                      H5P_DEFAULT)) < 0) {
+            printf("    couldn't create container subgroup '%s'\n", GET_LINK_NAME_TEST_HARD_SUBGROUP_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -14265,8 +14050,7 @@ test_get_link_name(TestParams_t *params)
 
         /* Verify the links have been created */
         if ((link_exists = H5Lexists(subgroup_id, GET_LINK_NAME_TEST_HARD_LINK_NAME, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if hard link '%s' exists\n",
-                   GET_LINK_NAME_TEST_HARD_LINK_NAME);
+            printf("    couldn't determine if hard link '%s' exists\n", GET_LINK_NAME_TEST_HARD_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -14277,8 +14061,7 @@ test_get_link_name(TestParams_t *params)
         }
 
         if ((link_exists = H5Lexists(subgroup_id, GET_LINK_NAME_TEST_HARD_LINK_NAME2, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if hard link '%s' exists\n",
-                   GET_LINK_NAME_TEST_HARD_LINK_NAME2);
+            printf("    couldn't determine if hard link '%s' exists\n", GET_LINK_NAME_TEST_HARD_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -14289,8 +14072,7 @@ test_get_link_name(TestParams_t *params)
         }
 
         if ((link_exists = H5Lexists(subgroup_id, GET_LINK_NAME_TEST_HARD_LINK_NAME3, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if hard link '%s' exists\n",
-                   GET_LINK_NAME_TEST_HARD_LINK_NAME3);
+            printf("    couldn't determine if hard link '%s' exists\n", GET_LINK_NAME_TEST_HARD_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -14380,10 +14162,9 @@ test_get_link_name(TestParams_t *params)
         }
 
         /* Create group to hold some links */
-        if ((subgroup_id = H5Gcreate2(group_id, GET_LINK_NAME_TEST_HARD_SUBGROUP_NAME2, H5P_DEFAULT,
-                                      gcpl_id, H5P_DEFAULT)) < 0) {
-            printf("    couldn't create container subgroup '%s'\n",
-                   GET_LINK_NAME_TEST_HARD_SUBGROUP_NAME2);
+        if ((subgroup_id = H5Gcreate2(group_id, GET_LINK_NAME_TEST_HARD_SUBGROUP_NAME2, H5P_DEFAULT, gcpl_id,
+                                      H5P_DEFAULT)) < 0) {
+            printf("    couldn't create container subgroup '%s'\n", GET_LINK_NAME_TEST_HARD_SUBGROUP_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -14408,8 +14189,7 @@ test_get_link_name(TestParams_t *params)
 
         /* Verify the links have been created */
         if ((link_exists = H5Lexists(subgroup_id, GET_LINK_NAME_TEST_HARD_LINK_NAME, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if hard link '%s' exists\n",
-                   GET_LINK_NAME_TEST_HARD_LINK_NAME);
+            printf("    couldn't determine if hard link '%s' exists\n", GET_LINK_NAME_TEST_HARD_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -14420,8 +14200,7 @@ test_get_link_name(TestParams_t *params)
         }
 
         if ((link_exists = H5Lexists(subgroup_id, GET_LINK_NAME_TEST_HARD_LINK_NAME2, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if hard link '%s' exists\n",
-                   GET_LINK_NAME_TEST_HARD_LINK_NAME2);
+            printf("    couldn't determine if hard link '%s' exists\n", GET_LINK_NAME_TEST_HARD_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -14432,8 +14211,7 @@ test_get_link_name(TestParams_t *params)
         }
 
         if ((link_exists = H5Lexists(subgroup_id, GET_LINK_NAME_TEST_HARD_LINK_NAME3, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if hard link '%s' exists\n",
-                   GET_LINK_NAME_TEST_HARD_LINK_NAME3);
+            printf("    couldn't determine if hard link '%s' exists\n", GET_LINK_NAME_TEST_HARD_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -14518,10 +14296,9 @@ test_get_link_name(TestParams_t *params)
     SUBTEST_BEGIN(params, "H5Lget_name_by_idx on hard link by alphabetical order in increasing order")
     {
         /* Create group to hold some links */
-        if ((subgroup_id = H5Gcreate2(group_id, GET_LINK_NAME_TEST_HARD_SUBGROUP_NAME3, H5P_DEFAULT,
-                                      gcpl_id, H5P_DEFAULT)) < 0) {
-            printf("    couldn't create container subgroup '%s'\n",
-                   GET_LINK_NAME_TEST_HARD_SUBGROUP_NAME3);
+        if ((subgroup_id = H5Gcreate2(group_id, GET_LINK_NAME_TEST_HARD_SUBGROUP_NAME3, H5P_DEFAULT, gcpl_id,
+                                      H5P_DEFAULT)) < 0) {
+            printf("    couldn't create container subgroup '%s'\n", GET_LINK_NAME_TEST_HARD_SUBGROUP_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -14546,8 +14323,7 @@ test_get_link_name(TestParams_t *params)
 
         /* Verify the links have been created */
         if ((link_exists = H5Lexists(subgroup_id, GET_LINK_NAME_TEST_HARD_LINK_NAME, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if hard link '%s' exists\n",
-                   GET_LINK_NAME_TEST_HARD_LINK_NAME);
+            printf("    couldn't determine if hard link '%s' exists\n", GET_LINK_NAME_TEST_HARD_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -14558,8 +14334,7 @@ test_get_link_name(TestParams_t *params)
         }
 
         if ((link_exists = H5Lexists(subgroup_id, GET_LINK_NAME_TEST_HARD_LINK_NAME2, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if hard link '%s' exists\n",
-                   GET_LINK_NAME_TEST_HARD_LINK_NAME2);
+            printf("    couldn't determine if hard link '%s' exists\n", GET_LINK_NAME_TEST_HARD_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -14570,8 +14345,7 @@ test_get_link_name(TestParams_t *params)
         }
 
         if ((link_exists = H5Lexists(subgroup_id, GET_LINK_NAME_TEST_HARD_LINK_NAME3, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if hard link '%s' exists\n",
-                   GET_LINK_NAME_TEST_HARD_LINK_NAME3);
+            printf("    couldn't determine if hard link '%s' exists\n", GET_LINK_NAME_TEST_HARD_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -14582,8 +14356,8 @@ test_get_link_name(TestParams_t *params)
         }
 
         /* Retrieve link names */
-        if ((link_name_buf_size = H5Lget_name_by_idx(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_INC, 0,
-                                                     NULL, 0, H5P_DEFAULT)) < 0) {
+        if ((link_name_buf_size = H5Lget_name_by_idx(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_INC, 0, NULL, 0,
+                                                     H5P_DEFAULT)) < 0) {
             printf("    failed to retrieve link name size\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -14601,8 +14375,8 @@ test_get_link_name(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_name_buf_size = H5Lget_name_by_idx(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_INC, 1,
-                                                     NULL, 0, H5P_DEFAULT)) < 0) {
+        if ((link_name_buf_size = H5Lget_name_by_idx(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_INC, 1, NULL, 0,
+                                                     H5P_DEFAULT)) < 0) {
             printf("    failed to retrieve link name size\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -14620,8 +14394,8 @@ test_get_link_name(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_name_buf_size = H5Lget_name_by_idx(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_INC, 2,
-                                                     NULL, 0, H5P_DEFAULT)) < 0) {
+        if ((link_name_buf_size = H5Lget_name_by_idx(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_INC, 2, NULL, 0,
+                                                     H5P_DEFAULT)) < 0) {
             printf("    failed to retrieve link name size\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -14656,10 +14430,9 @@ test_get_link_name(TestParams_t *params)
     SUBTEST_BEGIN(params, "H5Lget_name_by_idx on hard link by alphabetical order in decreasing order")
     {
         /* Create group to hold some links */
-        if ((subgroup_id = H5Gcreate2(group_id, GET_LINK_NAME_TEST_HARD_SUBGROUP_NAME4, H5P_DEFAULT,
-                                      gcpl_id, H5P_DEFAULT)) < 0) {
-            printf("    couldn't create container subgroup '%s'\n",
-                   GET_LINK_NAME_TEST_HARD_SUBGROUP_NAME4);
+        if ((subgroup_id = H5Gcreate2(group_id, GET_LINK_NAME_TEST_HARD_SUBGROUP_NAME4, H5P_DEFAULT, gcpl_id,
+                                      H5P_DEFAULT)) < 0) {
+            printf("    couldn't create container subgroup '%s'\n", GET_LINK_NAME_TEST_HARD_SUBGROUP_NAME4);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -14684,8 +14457,7 @@ test_get_link_name(TestParams_t *params)
 
         /* Verify the links have been created */
         if ((link_exists = H5Lexists(subgroup_id, GET_LINK_NAME_TEST_HARD_LINK_NAME, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if hard link '%s' exists\n",
-                   GET_LINK_NAME_TEST_HARD_LINK_NAME);
+            printf("    couldn't determine if hard link '%s' exists\n", GET_LINK_NAME_TEST_HARD_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -14696,8 +14468,7 @@ test_get_link_name(TestParams_t *params)
         }
 
         if ((link_exists = H5Lexists(subgroup_id, GET_LINK_NAME_TEST_HARD_LINK_NAME2, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if hard link '%s' exists\n",
-                   GET_LINK_NAME_TEST_HARD_LINK_NAME2);
+            printf("    couldn't determine if hard link '%s' exists\n", GET_LINK_NAME_TEST_HARD_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -14708,8 +14479,7 @@ test_get_link_name(TestParams_t *params)
         }
 
         if ((link_exists = H5Lexists(subgroup_id, GET_LINK_NAME_TEST_HARD_LINK_NAME3, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if hard link '%s' exists\n",
-                   GET_LINK_NAME_TEST_HARD_LINK_NAME3);
+            printf("    couldn't determine if hard link '%s' exists\n", GET_LINK_NAME_TEST_HARD_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -14720,8 +14490,8 @@ test_get_link_name(TestParams_t *params)
         }
 
         /* Retrieve link names */
-        if ((link_name_buf_size = H5Lget_name_by_idx(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_DEC, 0,
-                                                     NULL, 0, H5P_DEFAULT)) < 0) {
+        if ((link_name_buf_size = H5Lget_name_by_idx(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_DEC, 0, NULL, 0,
+                                                     H5P_DEFAULT)) < 0) {
             printf("    failed to retrieve link name size\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -14739,8 +14509,8 @@ test_get_link_name(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_name_buf_size = H5Lget_name_by_idx(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_DEC, 1,
-                                                     NULL, 0, H5P_DEFAULT)) < 0) {
+        if ((link_name_buf_size = H5Lget_name_by_idx(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_DEC, 1, NULL, 0,
+                                                     H5P_DEFAULT)) < 0) {
             printf("    failed to retrieve link name size\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -14758,8 +14528,8 @@ test_get_link_name(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_name_buf_size = H5Lget_name_by_idx(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_DEC, 2,
-                                                     NULL, 0, H5P_DEFAULT)) < 0) {
+        if ((link_name_buf_size = H5Lget_name_by_idx(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_DEC, 2, NULL, 0,
+                                                     H5P_DEFAULT)) < 0) {
             printf("    failed to retrieve link name size\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -14799,10 +14569,9 @@ test_get_link_name(TestParams_t *params)
         }
 
         /* Create group to hold some links */
-        if ((subgroup_id = H5Gcreate2(group_id, GET_LINK_NAME_TEST_SOFT_SUBGROUP_NAME, H5P_DEFAULT,
-                                      gcpl_id, H5P_DEFAULT)) < 0) {
-            printf("    couldn't create container subgroup '%s'\n",
-                   GET_LINK_NAME_TEST_SOFT_SUBGROUP_NAME);
+        if ((subgroup_id = H5Gcreate2(group_id, GET_LINK_NAME_TEST_SOFT_SUBGROUP_NAME, H5P_DEFAULT, gcpl_id,
+                                      H5P_DEFAULT)) < 0) {
+            printf("    couldn't create container subgroup '%s'\n", GET_LINK_NAME_TEST_SOFT_SUBGROUP_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -14827,8 +14596,7 @@ test_get_link_name(TestParams_t *params)
 
         /* Verify the links have been created */
         if ((link_exists = H5Lexists(subgroup_id, GET_LINK_NAME_TEST_SOFT_LINK_NAME, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if soft link '%s' exists\n",
-                   GET_LINK_NAME_TEST_SOFT_LINK_NAME);
+            printf("    couldn't determine if soft link '%s' exists\n", GET_LINK_NAME_TEST_SOFT_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -14839,8 +14607,7 @@ test_get_link_name(TestParams_t *params)
         }
 
         if ((link_exists = H5Lexists(subgroup_id, GET_LINK_NAME_TEST_SOFT_LINK_NAME2, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if soft link '%s' exists\n",
-                   GET_LINK_NAME_TEST_SOFT_LINK_NAME2);
+            printf("    couldn't determine if soft link '%s' exists\n", GET_LINK_NAME_TEST_SOFT_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -14851,8 +14618,7 @@ test_get_link_name(TestParams_t *params)
         }
 
         if ((link_exists = H5Lexists(subgroup_id, GET_LINK_NAME_TEST_SOFT_LINK_NAME3, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if soft link '%s' exists\n",
-                   GET_LINK_NAME_TEST_SOFT_LINK_NAME3);
+            printf("    couldn't determine if soft link '%s' exists\n", GET_LINK_NAME_TEST_SOFT_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -14942,10 +14708,9 @@ test_get_link_name(TestParams_t *params)
         }
 
         /* Create group to hold some links */
-        if ((subgroup_id = H5Gcreate2(group_id, GET_LINK_NAME_TEST_SOFT_SUBGROUP_NAME2, H5P_DEFAULT,
-                                      gcpl_id, H5P_DEFAULT)) < 0) {
-            printf("    couldn't create container subgroup '%s'\n",
-                   GET_LINK_NAME_TEST_SOFT_SUBGROUP_NAME2);
+        if ((subgroup_id = H5Gcreate2(group_id, GET_LINK_NAME_TEST_SOFT_SUBGROUP_NAME2, H5P_DEFAULT, gcpl_id,
+                                      H5P_DEFAULT)) < 0) {
+            printf("    couldn't create container subgroup '%s'\n", GET_LINK_NAME_TEST_SOFT_SUBGROUP_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -14970,8 +14735,7 @@ test_get_link_name(TestParams_t *params)
 
         /* Verify the links have been created */
         if ((link_exists = H5Lexists(subgroup_id, GET_LINK_NAME_TEST_SOFT_LINK_NAME, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if soft link '%s' exists\n",
-                   GET_LINK_NAME_TEST_SOFT_LINK_NAME);
+            printf("    couldn't determine if soft link '%s' exists\n", GET_LINK_NAME_TEST_SOFT_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -14982,8 +14746,7 @@ test_get_link_name(TestParams_t *params)
         }
 
         if ((link_exists = H5Lexists(subgroup_id, GET_LINK_NAME_TEST_SOFT_LINK_NAME2, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if soft link '%s' exists\n",
-                   GET_LINK_NAME_TEST_SOFT_LINK_NAME2);
+            printf("    couldn't determine if soft link '%s' exists\n", GET_LINK_NAME_TEST_SOFT_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -14994,8 +14757,7 @@ test_get_link_name(TestParams_t *params)
         }
 
         if ((link_exists = H5Lexists(subgroup_id, GET_LINK_NAME_TEST_SOFT_LINK_NAME3, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if soft link '%s' exists\n",
-                   GET_LINK_NAME_TEST_SOFT_LINK_NAME3);
+            printf("    couldn't determine if soft link '%s' exists\n", GET_LINK_NAME_TEST_SOFT_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -15080,10 +14842,9 @@ test_get_link_name(TestParams_t *params)
     SUBTEST_BEGIN(params, "H5Lget_name_by_idx on soft link by alphabetical order in increasing order")
     {
         /* Create group to hold some links */
-        if ((subgroup_id = H5Gcreate2(group_id, GET_LINK_NAME_TEST_SOFT_SUBGROUP_NAME3, H5P_DEFAULT,
-                                      gcpl_id, H5P_DEFAULT)) < 0) {
-            printf("    couldn't create container subgroup '%s'\n",
-                   GET_LINK_NAME_TEST_SOFT_SUBGROUP_NAME3);
+        if ((subgroup_id = H5Gcreate2(group_id, GET_LINK_NAME_TEST_SOFT_SUBGROUP_NAME3, H5P_DEFAULT, gcpl_id,
+                                      H5P_DEFAULT)) < 0) {
+            printf("    couldn't create container subgroup '%s'\n", GET_LINK_NAME_TEST_SOFT_SUBGROUP_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -15108,8 +14869,7 @@ test_get_link_name(TestParams_t *params)
 
         /* Verify the links have been created */
         if ((link_exists = H5Lexists(subgroup_id, GET_LINK_NAME_TEST_SOFT_LINK_NAME, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if soft link '%s' exists\n",
-                   GET_LINK_NAME_TEST_SOFT_LINK_NAME);
+            printf("    couldn't determine if soft link '%s' exists\n", GET_LINK_NAME_TEST_SOFT_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -15120,8 +14880,7 @@ test_get_link_name(TestParams_t *params)
         }
 
         if ((link_exists = H5Lexists(subgroup_id, GET_LINK_NAME_TEST_SOFT_LINK_NAME2, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if soft link '%s' exists\n",
-                   GET_LINK_NAME_TEST_SOFT_LINK_NAME2);
+            printf("    couldn't determine if soft link '%s' exists\n", GET_LINK_NAME_TEST_SOFT_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -15132,8 +14891,7 @@ test_get_link_name(TestParams_t *params)
         }
 
         if ((link_exists = H5Lexists(subgroup_id, GET_LINK_NAME_TEST_SOFT_LINK_NAME3, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if soft link '%s' exists\n",
-                   GET_LINK_NAME_TEST_SOFT_LINK_NAME3);
+            printf("    couldn't determine if soft link '%s' exists\n", GET_LINK_NAME_TEST_SOFT_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -15144,8 +14902,8 @@ test_get_link_name(TestParams_t *params)
         }
 
         /* Retrieve link names */
-        if ((link_name_buf_size = H5Lget_name_by_idx(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_INC, 0,
-                                                     NULL, 0, H5P_DEFAULT)) < 0) {
+        if ((link_name_buf_size = H5Lget_name_by_idx(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_INC, 0, NULL, 0,
+                                                     H5P_DEFAULT)) < 0) {
             printf("    failed to retrieve link name size\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -15163,8 +14921,8 @@ test_get_link_name(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_name_buf_size = H5Lget_name_by_idx(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_INC, 1,
-                                                     NULL, 0, H5P_DEFAULT)) < 0) {
+        if ((link_name_buf_size = H5Lget_name_by_idx(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_INC, 1, NULL, 0,
+                                                     H5P_DEFAULT)) < 0) {
             printf("    failed to retrieve link name size\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -15182,8 +14940,8 @@ test_get_link_name(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_name_buf_size = H5Lget_name_by_idx(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_INC, 2,
-                                                     NULL, 0, H5P_DEFAULT)) < 0) {
+        if ((link_name_buf_size = H5Lget_name_by_idx(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_INC, 2, NULL, 0,
+                                                     H5P_DEFAULT)) < 0) {
             printf("    failed to retrieve link name size\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -15218,10 +14976,9 @@ test_get_link_name(TestParams_t *params)
     SUBTEST_BEGIN(params, "H5Lget_name_by_idx on soft link by alphabetical order in decreasing order")
     {
         /* Create group to hold some links */
-        if ((subgroup_id = H5Gcreate2(group_id, GET_LINK_NAME_TEST_SOFT_SUBGROUP_NAME4, H5P_DEFAULT,
-                                      gcpl_id, H5P_DEFAULT)) < 0) {
-            printf("    couldn't create container subgroup '%s'\n",
-                   GET_LINK_NAME_TEST_SOFT_SUBGROUP_NAME4);
+        if ((subgroup_id = H5Gcreate2(group_id, GET_LINK_NAME_TEST_SOFT_SUBGROUP_NAME4, H5P_DEFAULT, gcpl_id,
+                                      H5P_DEFAULT)) < 0) {
+            printf("    couldn't create container subgroup '%s'\n", GET_LINK_NAME_TEST_SOFT_SUBGROUP_NAME4);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -15246,8 +15003,7 @@ test_get_link_name(TestParams_t *params)
 
         /* Verify the links have been created */
         if ((link_exists = H5Lexists(subgroup_id, GET_LINK_NAME_TEST_SOFT_LINK_NAME, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if soft link '%s' exists\n",
-                   GET_LINK_NAME_TEST_SOFT_LINK_NAME);
+            printf("    couldn't determine if soft link '%s' exists\n", GET_LINK_NAME_TEST_SOFT_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -15258,8 +15014,7 @@ test_get_link_name(TestParams_t *params)
         }
 
         if ((link_exists = H5Lexists(subgroup_id, GET_LINK_NAME_TEST_SOFT_LINK_NAME2, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if soft link '%s' exists\n",
-                   GET_LINK_NAME_TEST_SOFT_LINK_NAME2);
+            printf("    couldn't determine if soft link '%s' exists\n", GET_LINK_NAME_TEST_SOFT_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -15270,8 +15025,7 @@ test_get_link_name(TestParams_t *params)
         }
 
         if ((link_exists = H5Lexists(subgroup_id, GET_LINK_NAME_TEST_SOFT_LINK_NAME3, H5P_DEFAULT)) < 0) {
-            printf("    couldn't determine if soft link '%s' exists\n",
-                   GET_LINK_NAME_TEST_SOFT_LINK_NAME3);
+            printf("    couldn't determine if soft link '%s' exists\n", GET_LINK_NAME_TEST_SOFT_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -15282,8 +15036,8 @@ test_get_link_name(TestParams_t *params)
         }
 
         /* Retrieve link names */
-        if ((link_name_buf_size = H5Lget_name_by_idx(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_DEC, 0,
-                                                     NULL, 0, H5P_DEFAULT)) < 0) {
+        if ((link_name_buf_size = H5Lget_name_by_idx(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_DEC, 0, NULL, 0,
+                                                     H5P_DEFAULT)) < 0) {
             printf("    failed to retrieve link name size\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -15301,8 +15055,8 @@ test_get_link_name(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_name_buf_size = H5Lget_name_by_idx(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_DEC, 1,
-                                                     NULL, 0, H5P_DEFAULT)) < 0) {
+        if ((link_name_buf_size = H5Lget_name_by_idx(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_DEC, 1, NULL, 0,
+                                                     H5P_DEFAULT)) < 0) {
             printf("    failed to retrieve link name size\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -15320,8 +15074,8 @@ test_get_link_name(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_name_buf_size = H5Lget_name_by_idx(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_DEC, 2,
-                                                     NULL, 0, H5P_DEFAULT)) < 0) {
+        if ((link_name_buf_size = H5Lget_name_by_idx(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_DEC, 2, NULL, 0,
+                                                     H5P_DEFAULT)) < 0) {
             printf("    failed to retrieve link name size\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -15369,14 +15123,14 @@ test_get_link_name(TestParams_t *params)
         }
 
         /* Create several external links in reverse order to test creation order */
-        if (H5Lcreate_external(ext_link_filename, "/", subgroup_id,
-                               GET_LINK_NAME_TEST_EXTERNAL_LINK_NAME3, H5P_DEFAULT, H5P_DEFAULT) < 0) {
+        if (H5Lcreate_external(ext_link_filename, "/", subgroup_id, GET_LINK_NAME_TEST_EXTERNAL_LINK_NAME3,
+                               H5P_DEFAULT, H5P_DEFAULT) < 0) {
             printf("    failed to create external link '%s'\n", GET_LINK_NAME_TEST_EXTERNAL_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if (H5Lcreate_external(ext_link_filename, "/", subgroup_id,
-                               GET_LINK_NAME_TEST_EXTERNAL_LINK_NAME2, H5P_DEFAULT, H5P_DEFAULT) < 0) {
+        if (H5Lcreate_external(ext_link_filename, "/", subgroup_id, GET_LINK_NAME_TEST_EXTERNAL_LINK_NAME2,
+                               H5P_DEFAULT, H5P_DEFAULT) < 0) {
             printf("    failed to create external link '%s'\n", GET_LINK_NAME_TEST_EXTERNAL_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
@@ -15388,8 +15142,7 @@ test_get_link_name(TestParams_t *params)
         }
 
         /* Verify the links have been created */
-        if ((link_exists = H5Lexists(subgroup_id, GET_LINK_NAME_TEST_EXTERNAL_LINK_NAME, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, GET_LINK_NAME_TEST_EXTERNAL_LINK_NAME, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    GET_LINK_NAME_TEST_EXTERNAL_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
@@ -15401,8 +15154,7 @@ test_get_link_name(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists = H5Lexists(subgroup_id, GET_LINK_NAME_TEST_EXTERNAL_LINK_NAME2, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, GET_LINK_NAME_TEST_EXTERNAL_LINK_NAME2, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    GET_LINK_NAME_TEST_EXTERNAL_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
@@ -15414,8 +15166,7 @@ test_get_link_name(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists = H5Lexists(subgroup_id, GET_LINK_NAME_TEST_EXTERNAL_LINK_NAME3, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, GET_LINK_NAME_TEST_EXTERNAL_LINK_NAME3, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    GET_LINK_NAME_TEST_EXTERNAL_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
@@ -15515,14 +15266,14 @@ test_get_link_name(TestParams_t *params)
         }
 
         /* Create several external links in reverse order to test creation order */
-        if (H5Lcreate_external(ext_link_filename, "/", subgroup_id,
-                               GET_LINK_NAME_TEST_EXTERNAL_LINK_NAME3, H5P_DEFAULT, H5P_DEFAULT) < 0) {
+        if (H5Lcreate_external(ext_link_filename, "/", subgroup_id, GET_LINK_NAME_TEST_EXTERNAL_LINK_NAME3,
+                               H5P_DEFAULT, H5P_DEFAULT) < 0) {
             printf("    failed to create external link '%s'\n", GET_LINK_NAME_TEST_EXTERNAL_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if (H5Lcreate_external(ext_link_filename, "/", subgroup_id,
-                               GET_LINK_NAME_TEST_EXTERNAL_LINK_NAME2, H5P_DEFAULT, H5P_DEFAULT) < 0) {
+        if (H5Lcreate_external(ext_link_filename, "/", subgroup_id, GET_LINK_NAME_TEST_EXTERNAL_LINK_NAME2,
+                               H5P_DEFAULT, H5P_DEFAULT) < 0) {
             printf("    failed to create external link '%s'\n", GET_LINK_NAME_TEST_EXTERNAL_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
@@ -15534,8 +15285,7 @@ test_get_link_name(TestParams_t *params)
         }
 
         /* Verify the links have been created */
-        if ((link_exists = H5Lexists(subgroup_id, GET_LINK_NAME_TEST_EXTERNAL_LINK_NAME, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, GET_LINK_NAME_TEST_EXTERNAL_LINK_NAME, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    GET_LINK_NAME_TEST_EXTERNAL_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
@@ -15547,8 +15297,7 @@ test_get_link_name(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists = H5Lexists(subgroup_id, GET_LINK_NAME_TEST_EXTERNAL_LINK_NAME2, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, GET_LINK_NAME_TEST_EXTERNAL_LINK_NAME2, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    GET_LINK_NAME_TEST_EXTERNAL_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
@@ -15560,8 +15309,7 @@ test_get_link_name(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists = H5Lexists(subgroup_id, GET_LINK_NAME_TEST_EXTERNAL_LINK_NAME3, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, GET_LINK_NAME_TEST_EXTERNAL_LINK_NAME3, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    GET_LINK_NAME_TEST_EXTERNAL_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
@@ -15662,21 +15410,20 @@ test_get_link_name(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if (H5Lcreate_external(ext_link_filename, "/", subgroup_id,
-                               GET_LINK_NAME_TEST_EXTERNAL_LINK_NAME2, H5P_DEFAULT, H5P_DEFAULT) < 0) {
+        if (H5Lcreate_external(ext_link_filename, "/", subgroup_id, GET_LINK_NAME_TEST_EXTERNAL_LINK_NAME2,
+                               H5P_DEFAULT, H5P_DEFAULT) < 0) {
             printf("    failed to create external link '%s'\n", GET_LINK_NAME_TEST_EXTERNAL_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if (H5Lcreate_external(ext_link_filename, "/", subgroup_id,
-                               GET_LINK_NAME_TEST_EXTERNAL_LINK_NAME3, H5P_DEFAULT, H5P_DEFAULT) < 0) {
+        if (H5Lcreate_external(ext_link_filename, "/", subgroup_id, GET_LINK_NAME_TEST_EXTERNAL_LINK_NAME3,
+                               H5P_DEFAULT, H5P_DEFAULT) < 0) {
             printf("    failed to create external link '%s'\n", GET_LINK_NAME_TEST_EXTERNAL_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
         /* Verify the links have been created */
-        if ((link_exists = H5Lexists(subgroup_id, GET_LINK_NAME_TEST_EXTERNAL_LINK_NAME, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, GET_LINK_NAME_TEST_EXTERNAL_LINK_NAME, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    GET_LINK_NAME_TEST_EXTERNAL_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
@@ -15688,8 +15435,7 @@ test_get_link_name(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists = H5Lexists(subgroup_id, GET_LINK_NAME_TEST_EXTERNAL_LINK_NAME2, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, GET_LINK_NAME_TEST_EXTERNAL_LINK_NAME2, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    GET_LINK_NAME_TEST_EXTERNAL_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
@@ -15701,8 +15447,7 @@ test_get_link_name(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists = H5Lexists(subgroup_id, GET_LINK_NAME_TEST_EXTERNAL_LINK_NAME3, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, GET_LINK_NAME_TEST_EXTERNAL_LINK_NAME3, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    GET_LINK_NAME_TEST_EXTERNAL_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
@@ -15715,8 +15460,8 @@ test_get_link_name(TestParams_t *params)
         }
 
         /* Retrieve link names */
-        if ((link_name_buf_size = H5Lget_name_by_idx(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_INC, 0,
-                                                     NULL, 0, H5P_DEFAULT)) < 0) {
+        if ((link_name_buf_size = H5Lget_name_by_idx(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_INC, 0, NULL, 0,
+                                                     H5P_DEFAULT)) < 0) {
             printf("    failed to retrieve link name size\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -15734,8 +15479,8 @@ test_get_link_name(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_name_buf_size = H5Lget_name_by_idx(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_INC, 1,
-                                                     NULL, 0, H5P_DEFAULT)) < 0) {
+        if ((link_name_buf_size = H5Lget_name_by_idx(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_INC, 1, NULL, 0,
+                                                     H5P_DEFAULT)) < 0) {
             printf("    failed to retrieve link name size\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -15753,8 +15498,8 @@ test_get_link_name(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_name_buf_size = H5Lget_name_by_idx(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_INC, 2,
-                                                     NULL, 0, H5P_DEFAULT)) < 0) {
+        if ((link_name_buf_size = H5Lget_name_by_idx(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_INC, 2, NULL, 0,
+                                                     H5P_DEFAULT)) < 0) {
             printf("    failed to retrieve link name size\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -15803,21 +15548,20 @@ test_get_link_name(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if (H5Lcreate_external(ext_link_filename, "/", subgroup_id,
-                               GET_LINK_NAME_TEST_EXTERNAL_LINK_NAME2, H5P_DEFAULT, H5P_DEFAULT) < 0) {
+        if (H5Lcreate_external(ext_link_filename, "/", subgroup_id, GET_LINK_NAME_TEST_EXTERNAL_LINK_NAME2,
+                               H5P_DEFAULT, H5P_DEFAULT) < 0) {
             printf("    failed to create external link '%s'\n", GET_LINK_NAME_TEST_EXTERNAL_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if (H5Lcreate_external(ext_link_filename, "/", subgroup_id,
-                               GET_LINK_NAME_TEST_EXTERNAL_LINK_NAME3, H5P_DEFAULT, H5P_DEFAULT) < 0) {
+        if (H5Lcreate_external(ext_link_filename, "/", subgroup_id, GET_LINK_NAME_TEST_EXTERNAL_LINK_NAME3,
+                               H5P_DEFAULT, H5P_DEFAULT) < 0) {
             printf("    failed to create external link '%s'\n", GET_LINK_NAME_TEST_EXTERNAL_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
         }
 
         /* Verify the links have been created */
-        if ((link_exists = H5Lexists(subgroup_id, GET_LINK_NAME_TEST_EXTERNAL_LINK_NAME, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, GET_LINK_NAME_TEST_EXTERNAL_LINK_NAME, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    GET_LINK_NAME_TEST_EXTERNAL_LINK_NAME);
             TESTFRAME_TEST_ERROR(params);
@@ -15829,8 +15573,7 @@ test_get_link_name(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists = H5Lexists(subgroup_id, GET_LINK_NAME_TEST_EXTERNAL_LINK_NAME2, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, GET_LINK_NAME_TEST_EXTERNAL_LINK_NAME2, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    GET_LINK_NAME_TEST_EXTERNAL_LINK_NAME2);
             TESTFRAME_TEST_ERROR(params);
@@ -15842,8 +15585,7 @@ test_get_link_name(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_exists = H5Lexists(subgroup_id, GET_LINK_NAME_TEST_EXTERNAL_LINK_NAME3, H5P_DEFAULT)) <
-            0) {
+        if ((link_exists = H5Lexists(subgroup_id, GET_LINK_NAME_TEST_EXTERNAL_LINK_NAME3, H5P_DEFAULT)) < 0) {
             printf("    couldn't determine if external link '%s' exists\n",
                    GET_LINK_NAME_TEST_EXTERNAL_LINK_NAME3);
             TESTFRAME_TEST_ERROR(params);
@@ -15856,8 +15598,8 @@ test_get_link_name(TestParams_t *params)
         }
 
         /* Retrieve link names */
-        if ((link_name_buf_size = H5Lget_name_by_idx(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_DEC, 0,
-                                                     NULL, 0, H5P_DEFAULT)) < 0) {
+        if ((link_name_buf_size = H5Lget_name_by_idx(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_DEC, 0, NULL, 0,
+                                                     H5P_DEFAULT)) < 0) {
             printf("    failed to retrieve link name size\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -15875,8 +15617,8 @@ test_get_link_name(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_name_buf_size = H5Lget_name_by_idx(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_DEC, 1,
-                                                     NULL, 0, H5P_DEFAULT)) < 0) {
+        if ((link_name_buf_size = H5Lget_name_by_idx(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_DEC, 1, NULL, 0,
+                                                     H5P_DEFAULT)) < 0) {
             printf("    failed to retrieve link name size\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -15894,8 +15636,8 @@ test_get_link_name(TestParams_t *params)
             TESTFRAME_TEST_ERROR(params);
         }
 
-        if ((link_name_buf_size = H5Lget_name_by_idx(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_DEC, 2,
-                                                     NULL, 0, H5P_DEFAULT)) < 0) {
+        if ((link_name_buf_size = H5Lget_name_by_idx(subgroup_id, ".", H5_INDEX_NAME, H5_ITER_DEC, 2, NULL, 0,
+                                                     H5P_DEFAULT)) < 0) {
             printf("    failed to retrieve link name size\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -16382,8 +16124,7 @@ test_link_iterate_hard_links(TestParams_t *params)
         /* Reset the counter to the appropriate value for the next test */
         i = 2 * LINK_ITER_HARD_LINKS_TEST_NUM_LINKS;
 
-        if (H5Literate2(group_id, H5_INDEX_CRT_ORDER, H5_ITER_INC, NULL, link_iter_hard_links_cb, &i) <
-            0) {
+        if (H5Literate2(group_id, H5_INDEX_CRT_ORDER, H5_ITER_INC, NULL, link_iter_hard_links_cb, &i) < 0) {
             printf("    H5Literate2 by index type creation order in increasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -16405,8 +16146,7 @@ test_link_iterate_hard_links(TestParams_t *params)
         /* Reset the counter to the appropriate value for the next test */
         i = 3 * LINK_ITER_HARD_LINKS_TEST_NUM_LINKS;
 
-        if (H5Literate2(group_id, H5_INDEX_CRT_ORDER, H5_ITER_DEC, NULL, link_iter_hard_links_cb, &i) <
-            0) {
+        if (H5Literate2(group_id, H5_INDEX_CRT_ORDER, H5_ITER_DEC, NULL, link_iter_hard_links_cb, &i) < 0) {
             printf("    H5Literate2 by index type creation order in decreasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -16423,9 +16163,9 @@ test_link_iterate_hard_links(TestParams_t *params)
         /* Reset the counter to the appropriate value for the next test */
         i = 0;
 
-        if (H5Literate_by_name2(
-                file_id, "/" LINK_TEST_GROUP_NAME "/" LINK_ITER_HARD_LINKS_TEST_SUBGROUP_NAME,
-                H5_INDEX_NAME, H5_ITER_INC, NULL, link_iter_hard_links_cb, &i, H5P_DEFAULT) < 0) {
+        if (H5Literate_by_name2(file_id, "/" LINK_TEST_GROUP_NAME "/" LINK_ITER_HARD_LINKS_TEST_SUBGROUP_NAME,
+                                H5_INDEX_NAME, H5_ITER_INC, NULL, link_iter_hard_links_cb, &i,
+                                H5P_DEFAULT) < 0) {
             printf("    H5Literate_by_name2 by index type name in increasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -16442,9 +16182,9 @@ test_link_iterate_hard_links(TestParams_t *params)
         /* Reset the counter to the appropriate value for the next test */
         i = LINK_ITER_HARD_LINKS_TEST_NUM_LINKS;
 
-        if (H5Literate_by_name2(
-                file_id, "/" LINK_TEST_GROUP_NAME "/" LINK_ITER_HARD_LINKS_TEST_SUBGROUP_NAME,
-                H5_INDEX_NAME, H5_ITER_DEC, NULL, link_iter_hard_links_cb, &i, H5P_DEFAULT) < 0) {
+        if (H5Literate_by_name2(file_id, "/" LINK_TEST_GROUP_NAME "/" LINK_ITER_HARD_LINKS_TEST_SUBGROUP_NAME,
+                                H5_INDEX_NAME, H5_ITER_DEC, NULL, link_iter_hard_links_cb, &i,
+                                H5P_DEFAULT) < 0) {
             printf("    H5Literate_by_name2 by index type name in decreasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -16466,9 +16206,9 @@ test_link_iterate_hard_links(TestParams_t *params)
         /* Reset the counter to the appropriate value for the next test */
         i = 2 * LINK_ITER_HARD_LINKS_TEST_NUM_LINKS;
 
-        if (H5Literate_by_name2(
-                file_id, "/" LINK_TEST_GROUP_NAME "/" LINK_ITER_HARD_LINKS_TEST_SUBGROUP_NAME,
-                H5_INDEX_CRT_ORDER, H5_ITER_INC, NULL, link_iter_hard_links_cb, &i, H5P_DEFAULT) < 0) {
+        if (H5Literate_by_name2(file_id, "/" LINK_TEST_GROUP_NAME "/" LINK_ITER_HARD_LINKS_TEST_SUBGROUP_NAME,
+                                H5_INDEX_CRT_ORDER, H5_ITER_INC, NULL, link_iter_hard_links_cb, &i,
+                                H5P_DEFAULT) < 0) {
             printf("    H5Literate_by_name2 by index type creation order in increasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -16490,9 +16230,9 @@ test_link_iterate_hard_links(TestParams_t *params)
         /* Reset the counter to the appropriate value for the next test */
         i = 3 * LINK_ITER_HARD_LINKS_TEST_NUM_LINKS;
 
-        if (H5Literate_by_name2(
-                file_id, "/" LINK_TEST_GROUP_NAME "/" LINK_ITER_HARD_LINKS_TEST_SUBGROUP_NAME,
-                H5_INDEX_CRT_ORDER, H5_ITER_DEC, NULL, link_iter_hard_links_cb, &i, H5P_DEFAULT) < 0) {
+        if (H5Literate_by_name2(file_id, "/" LINK_TEST_GROUP_NAME "/" LINK_ITER_HARD_LINKS_TEST_SUBGROUP_NAME,
+                                H5_INDEX_CRT_ORDER, H5_ITER_DEC, NULL, link_iter_hard_links_cb, &i,
+                                H5P_DEFAULT) < 0) {
             printf("    H5Literate_by_name2 by index type creation order in decreasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -16667,8 +16407,7 @@ test_link_iterate_soft_links(TestParams_t *params)
         /* Reset the counter to the appropriate value for the next test */
         i = 2 * LINK_ITER_SOFT_LINKS_TEST_NUM_LINKS;
 
-        if (H5Literate2(group_id, H5_INDEX_CRT_ORDER, H5_ITER_INC, NULL, link_iter_soft_links_cb, &i) <
-            0) {
+        if (H5Literate2(group_id, H5_INDEX_CRT_ORDER, H5_ITER_INC, NULL, link_iter_soft_links_cb, &i) < 0) {
             printf("    H5Literate2 by index type creation order in increasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -16690,8 +16429,7 @@ test_link_iterate_soft_links(TestParams_t *params)
         /* Reset the counter to the appropriate value for the next test */
         i = 3 * LINK_ITER_SOFT_LINKS_TEST_NUM_LINKS;
 
-        if (H5Literate2(group_id, H5_INDEX_CRT_ORDER, H5_ITER_DEC, NULL, link_iter_soft_links_cb, &i) <
-            0) {
+        if (H5Literate2(group_id, H5_INDEX_CRT_ORDER, H5_ITER_DEC, NULL, link_iter_soft_links_cb, &i) < 0) {
             printf("    H5Literate2 by index type creation order in decreasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -16708,9 +16446,9 @@ test_link_iterate_soft_links(TestParams_t *params)
         /* Reset the counter to the appropriate value for the next test */
         i = 0;
 
-        if (H5Literate_by_name2(
-                file_id, "/" LINK_TEST_GROUP_NAME "/" LINK_ITER_SOFT_LINKS_TEST_SUBGROUP_NAME,
-                H5_INDEX_NAME, H5_ITER_INC, NULL, link_iter_soft_links_cb, &i, H5P_DEFAULT) < 0) {
+        if (H5Literate_by_name2(file_id, "/" LINK_TEST_GROUP_NAME "/" LINK_ITER_SOFT_LINKS_TEST_SUBGROUP_NAME,
+                                H5_INDEX_NAME, H5_ITER_INC, NULL, link_iter_soft_links_cb, &i,
+                                H5P_DEFAULT) < 0) {
             printf("    H5Literate_by_name2 by index type name in increasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -16727,9 +16465,9 @@ test_link_iterate_soft_links(TestParams_t *params)
         /* Reset the counter to the appropriate value for the next test */
         i = LINK_ITER_SOFT_LINKS_TEST_NUM_LINKS;
 
-        if (H5Literate_by_name2(
-                file_id, "/" LINK_TEST_GROUP_NAME "/" LINK_ITER_SOFT_LINKS_TEST_SUBGROUP_NAME,
-                H5_INDEX_NAME, H5_ITER_DEC, NULL, link_iter_soft_links_cb, &i, H5P_DEFAULT) < 0) {
+        if (H5Literate_by_name2(file_id, "/" LINK_TEST_GROUP_NAME "/" LINK_ITER_SOFT_LINKS_TEST_SUBGROUP_NAME,
+                                H5_INDEX_NAME, H5_ITER_DEC, NULL, link_iter_soft_links_cb, &i,
+                                H5P_DEFAULT) < 0) {
             printf("    H5Literate_by_name2 by index type name in decreasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -16751,9 +16489,9 @@ test_link_iterate_soft_links(TestParams_t *params)
         /* Reset the counter to the appropriate value for the next test */
         i = 2 * LINK_ITER_SOFT_LINKS_TEST_NUM_LINKS;
 
-        if (H5Literate_by_name2(
-                file_id, "/" LINK_TEST_GROUP_NAME "/" LINK_ITER_SOFT_LINKS_TEST_SUBGROUP_NAME,
-                H5_INDEX_CRT_ORDER, H5_ITER_INC, NULL, link_iter_soft_links_cb, &i, H5P_DEFAULT) < 0) {
+        if (H5Literate_by_name2(file_id, "/" LINK_TEST_GROUP_NAME "/" LINK_ITER_SOFT_LINKS_TEST_SUBGROUP_NAME,
+                                H5_INDEX_CRT_ORDER, H5_ITER_INC, NULL, link_iter_soft_links_cb, &i,
+                                H5P_DEFAULT) < 0) {
             printf("    H5Literate_by_name2 by index type creation order in increasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -16775,9 +16513,9 @@ test_link_iterate_soft_links(TestParams_t *params)
         /* Reset the counter to the appropriate value for the next test */
         i = 3 * LINK_ITER_SOFT_LINKS_TEST_NUM_LINKS;
 
-        if (H5Literate_by_name2(
-                file_id, "/" LINK_TEST_GROUP_NAME "/" LINK_ITER_SOFT_LINKS_TEST_SUBGROUP_NAME,
-                H5_INDEX_CRT_ORDER, H5_ITER_DEC, NULL, link_iter_soft_links_cb, &i, H5P_DEFAULT) < 0) {
+        if (H5Literate_by_name2(file_id, "/" LINK_TEST_GROUP_NAME "/" LINK_ITER_SOFT_LINKS_TEST_SUBGROUP_NAME,
+                                H5_INDEX_CRT_ORDER, H5_ITER_DEC, NULL, link_iter_soft_links_cb, &i,
+                                H5P_DEFAULT) < 0) {
             printf("    H5Literate_by_name2 by index type creation order in decreasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -16827,8 +16565,8 @@ test_link_iterate_external_links(TestParams_t *params)
     htri_t link_exists;
     hid_t  file_id         = H5I_INVALID_HID;
     hid_t  container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
-    hid_t  gcpl_id            = H5I_INVALID_HID;
-    char   *ext_link_filename = NULL;
+    hid_t  gcpl_id           = H5I_INVALID_HID;
+    char  *ext_link_filename = NULL;
 
     /* Make sure the connector supports the API functions being tested */
     if (!(vol_cap_flags_g & H5VL_CAP_FLAG_FILE_BASIC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_GROUP_BASIC) ||
@@ -16839,7 +16577,8 @@ test_link_iterate_external_links(TestParams_t *params)
         return SKIP;
     }
 
-    if (prefix_test_filename(params, test_path_prefix, EXTERNAL_LINK_TEST_FILE_NAME, &ext_link_filename) < 0) {
+    if (prefix_test_filename(params, test_path_prefix, EXTERNAL_LINK_TEST_FILE_NAME, &ext_link_filename) <
+        0) {
         printf("    couldn't create external link filename\n");
         goto error;
     }
@@ -16921,8 +16660,7 @@ test_link_iterate_external_links(TestParams_t *params)
         i = 0;
 
         /* Test basic link iteration capability using both index types and both index orders */
-        if (H5Literate2(group_id, H5_INDEX_NAME, H5_ITER_INC, NULL, link_iter_external_links_cb, &i) <
-            0) {
+        if (H5Literate2(group_id, H5_INDEX_NAME, H5_ITER_INC, NULL, link_iter_external_links_cb, &i) < 0) {
             printf("    H5Literate2 by index type name in increasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -16944,8 +16682,7 @@ test_link_iterate_external_links(TestParams_t *params)
         /* Reset the counter to the appropriate value for the next test */
         i = LINK_ITER_EXT_LINKS_TEST_NUM_LINKS;
 
-        if (H5Literate2(group_id, H5_INDEX_NAME, H5_ITER_DEC, NULL, link_iter_external_links_cb, &i) <
-            0) {
+        if (H5Literate2(group_id, H5_INDEX_NAME, H5_ITER_DEC, NULL, link_iter_external_links_cb, &i) < 0) {
             printf("    H5Literate2 by index type name in decreasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -16969,8 +16706,8 @@ test_link_iterate_external_links(TestParams_t *params)
         /* Reset the counter to the appropriate value for the next test */
         i = 2 * LINK_ITER_EXT_LINKS_TEST_NUM_LINKS;
 
-        if (H5Literate2(group_id, H5_INDEX_CRT_ORDER, H5_ITER_INC, NULL, link_iter_external_links_cb,
-                        &i) < 0) {
+        if (H5Literate2(group_id, H5_INDEX_CRT_ORDER, H5_ITER_INC, NULL, link_iter_external_links_cb, &i) <
+            0) {
             printf("    H5Literate2 by index type creation order in increasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -16994,8 +16731,8 @@ test_link_iterate_external_links(TestParams_t *params)
         /* Reset the counter to the appropriate value for the next test */
         i = 3 * LINK_ITER_EXT_LINKS_TEST_NUM_LINKS;
 
-        if (H5Literate2(group_id, H5_INDEX_CRT_ORDER, H5_ITER_DEC, NULL, link_iter_external_links_cb,
-                        &i) < 0) {
+        if (H5Literate2(group_id, H5_INDEX_CRT_ORDER, H5_ITER_DEC, NULL, link_iter_external_links_cb, &i) <
+            0) {
             printf("    H5Literate2 by index type creation order in decreasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -17017,9 +16754,9 @@ test_link_iterate_external_links(TestParams_t *params)
         /* Reset the counter to the appropriate value for the next test */
         i = 0;
 
-        if (H5Literate_by_name2(
-                file_id, "/" LINK_TEST_GROUP_NAME "/" LINK_ITER_EXT_LINKS_TEST_SUBGROUP_NAME,
-                H5_INDEX_NAME, H5_ITER_INC, NULL, link_iter_external_links_cb, &i, H5P_DEFAULT) < 0) {
+        if (H5Literate_by_name2(file_id, "/" LINK_TEST_GROUP_NAME "/" LINK_ITER_EXT_LINKS_TEST_SUBGROUP_NAME,
+                                H5_INDEX_NAME, H5_ITER_INC, NULL, link_iter_external_links_cb, &i,
+                                H5P_DEFAULT) < 0) {
             printf("    H5Literate_by_name2 by index type name in increasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -17042,9 +16779,9 @@ test_link_iterate_external_links(TestParams_t *params)
         /* Reset the counter to the appropriate value for the next test */
         i = LINK_ITER_EXT_LINKS_TEST_NUM_LINKS;
 
-        if (H5Literate_by_name2(
-                file_id, "/" LINK_TEST_GROUP_NAME "/" LINK_ITER_EXT_LINKS_TEST_SUBGROUP_NAME,
-                H5_INDEX_NAME, H5_ITER_DEC, NULL, link_iter_external_links_cb, &i, H5P_DEFAULT) < 0) {
+        if (H5Literate_by_name2(file_id, "/" LINK_TEST_GROUP_NAME "/" LINK_ITER_EXT_LINKS_TEST_SUBGROUP_NAME,
+                                H5_INDEX_NAME, H5_ITER_DEC, NULL, link_iter_external_links_cb, &i,
+                                H5P_DEFAULT) < 0) {
             printf("    H5Literate_by_name2 by index type name in decreasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -17068,8 +16805,7 @@ test_link_iterate_external_links(TestParams_t *params)
         /* Reset the counter to the appropriate value for the next test */
         i = 2 * LINK_ITER_EXT_LINKS_TEST_NUM_LINKS;
 
-        if (H5Literate_by_name2(file_id,
-                                "/" LINK_TEST_GROUP_NAME "/" LINK_ITER_EXT_LINKS_TEST_SUBGROUP_NAME,
+        if (H5Literate_by_name2(file_id, "/" LINK_TEST_GROUP_NAME "/" LINK_ITER_EXT_LINKS_TEST_SUBGROUP_NAME,
                                 H5_INDEX_CRT_ORDER, H5_ITER_INC, NULL, link_iter_external_links_cb, &i,
                                 H5P_DEFAULT) < 0) {
             printf("    H5Literate_by_name2 by index type creation order in increasing order failed\n");
@@ -17095,8 +16831,7 @@ test_link_iterate_external_links(TestParams_t *params)
         /* Reset the counter to the appropriate value for the next test */
         i = 3 * LINK_ITER_EXT_LINKS_TEST_NUM_LINKS;
 
-        if (H5Literate_by_name2(file_id,
-                                "/" LINK_TEST_GROUP_NAME "/" LINK_ITER_EXT_LINKS_TEST_SUBGROUP_NAME,
+        if (H5Literate_by_name2(file_id, "/" LINK_TEST_GROUP_NAME "/" LINK_ITER_EXT_LINKS_TEST_SUBGROUP_NAME,
                                 H5_INDEX_CRT_ORDER, H5_ITER_DEC, NULL, link_iter_external_links_cb, &i,
                                 H5P_DEFAULT) < 0) {
             printf("    H5Literate_by_name2 by index type creation order in decreasing order failed\n");
@@ -17193,7 +16928,8 @@ test_link_iterate_mixed_links(TestParams_t *params)
         return SKIP;
     }
 
-    if (prefix_test_filename(params, test_path_prefix, EXTERNAL_LINK_TEST_FILE_NAME, &ext_link_filename) < 0) {
+    if (prefix_test_filename(params, test_path_prefix, EXTERNAL_LINK_TEST_FILE_NAME, &ext_link_filename) <
+        0) {
         printf("    couldn't create external link filename\n");
         goto error;
     }
@@ -17359,8 +17095,7 @@ test_link_iterate_mixed_links(TestParams_t *params)
         /* Reset the counter to the appropriate value for the next test */
         i = 2 * LINK_ITER_MIXED_LINKS_TEST_NUM_LINKS;
 
-        if (H5Literate2(group_id, H5_INDEX_CRT_ORDER, H5_ITER_INC, NULL, link_iter_mixed_links_cb, &i) <
-            0) {
+        if (H5Literate2(group_id, H5_INDEX_CRT_ORDER, H5_ITER_INC, NULL, link_iter_mixed_links_cb, &i) < 0) {
             printf("    H5Literate2 by index type creation order in increasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -17385,8 +17120,7 @@ test_link_iterate_mixed_links(TestParams_t *params)
         /* Reset the counter to the appropriate value for the next test */
         i = 3 * LINK_ITER_MIXED_LINKS_TEST_NUM_LINKS;
 
-        if (H5Literate2(group_id, H5_INDEX_CRT_ORDER, H5_ITER_DEC, NULL, link_iter_mixed_links_cb, &i) <
-            0) {
+        if (H5Literate2(group_id, H5_INDEX_CRT_ORDER, H5_ITER_DEC, NULL, link_iter_mixed_links_cb, &i) < 0) {
             printf("    H5Literate2 by index type creation order in decreasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -17409,8 +17143,8 @@ test_link_iterate_mixed_links(TestParams_t *params)
         i = 0;
 
         if (H5Literate_by_name2(
-                file_id, "/" LINK_TEST_GROUP_NAME "/" LINK_ITER_MIXED_LINKS_TEST_SUBGROUP_NAME,
-                H5_INDEX_NAME, H5_ITER_INC, NULL, link_iter_mixed_links_cb, &i, H5P_DEFAULT) < 0) {
+                file_id, "/" LINK_TEST_GROUP_NAME "/" LINK_ITER_MIXED_LINKS_TEST_SUBGROUP_NAME, H5_INDEX_NAME,
+                H5_ITER_INC, NULL, link_iter_mixed_links_cb, &i, H5P_DEFAULT) < 0) {
             printf("    H5Literate_by_name2 by index type name in increasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -17434,8 +17168,8 @@ test_link_iterate_mixed_links(TestParams_t *params)
         i = LINK_ITER_MIXED_LINKS_TEST_NUM_LINKS;
 
         if (H5Literate_by_name2(
-                file_id, "/" LINK_TEST_GROUP_NAME "/" LINK_ITER_MIXED_LINKS_TEST_SUBGROUP_NAME,
-                H5_INDEX_NAME, H5_ITER_DEC, NULL, link_iter_mixed_links_cb, &i, H5P_DEFAULT) < 0) {
+                file_id, "/" LINK_TEST_GROUP_NAME "/" LINK_ITER_MIXED_LINKS_TEST_SUBGROUP_NAME, H5_INDEX_NAME,
+                H5_ITER_DEC, NULL, link_iter_mixed_links_cb, &i, H5P_DEFAULT) < 0) {
             printf("    H5Literate_by_name2 by index type name in decreasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -17616,12 +17350,12 @@ test_link_iterate_invalid_params(TestParams_t *params)
     herr_t err_ret = -1;
     size_t i;
     htri_t link_exists;
-    hid_t  file_id         = H5I_INVALID_HID;
-    hid_t  container_group = H5I_INVALID_HID;
-    hid_t  group_id        = H5I_INVALID_HID;
-    hid_t  dset_id         = H5I_INVALID_HID;
-    hid_t  dset_dtype      = H5I_INVALID_HID;
-    hid_t  dset_dspace     = H5I_INVALID_HID;
+    hid_t  file_id           = H5I_INVALID_HID;
+    hid_t  container_group   = H5I_INVALID_HID;
+    hid_t  group_id          = H5I_INVALID_HID;
+    hid_t  dset_id           = H5I_INVALID_HID;
+    hid_t  dset_dtype        = H5I_INVALID_HID;
+    hid_t  dset_dspace       = H5I_INVALID_HID;
     char  *ext_link_filename = NULL;
 
     /* Make sure the connector supports the API functions being tested */
@@ -17634,7 +17368,8 @@ test_link_iterate_invalid_params(TestParams_t *params)
         return SKIP;
     }
 
-    if (prefix_test_filename(params, test_path_prefix, EXTERNAL_LINK_TEST_FILE_NAME, &ext_link_filename) < 0) {
+    if (prefix_test_filename(params, test_path_prefix, EXTERNAL_LINK_TEST_FILE_NAME, &ext_link_filename) <
+        0) {
         printf("    couldn't create external link filename\n");
         goto error;
     }
@@ -17740,8 +17475,8 @@ test_link_iterate_invalid_params(TestParams_t *params)
     {
         H5E_BEGIN_TRY
         {
-            err_ret = H5Literate2(group_id, H5_INDEX_UNKNOWN, H5_ITER_INC, NULL,
-                                  link_iter_invalid_params_cb, NULL);
+            err_ret =
+                H5Literate2(group_id, H5_INDEX_UNKNOWN, H5_ITER_INC, NULL, link_iter_invalid_params_cb, NULL);
         }
         H5E_END_TRY
 
@@ -17752,8 +17487,7 @@ test_link_iterate_invalid_params(TestParams_t *params)
 
         H5E_BEGIN_TRY
         {
-            err_ret =
-                H5Literate2(group_id, H5_INDEX_N, H5_ITER_INC, NULL, link_iter_invalid_params_cb, NULL);
+            err_ret = H5Literate2(group_id, H5_INDEX_N, H5_ITER_INC, NULL, link_iter_invalid_params_cb, NULL);
         }
         H5E_END_TRY
 
@@ -17768,8 +17502,8 @@ test_link_iterate_invalid_params(TestParams_t *params)
     {
         H5E_BEGIN_TRY
         {
-            err_ret = H5Literate2(group_id, H5_INDEX_NAME, H5_ITER_UNKNOWN, NULL,
-                                  link_iter_invalid_params_cb, NULL);
+            err_ret = H5Literate2(group_id, H5_INDEX_NAME, H5_ITER_UNKNOWN, NULL, link_iter_invalid_params_cb,
+                                  NULL);
         }
         H5E_END_TRY
 
@@ -17855,8 +17589,8 @@ test_link_iterate_invalid_params(TestParams_t *params)
         H5E_BEGIN_TRY
         {
             err_ret = H5Literate_by_name2(
-                file_id, "/" LINK_TEST_GROUP_NAME "/" LINK_ITER_INVALID_PARAMS_TEST_SUBGROUP_NAME,
-                H5_INDEX_N, H5_ITER_INC, NULL, link_iter_invalid_params_cb, NULL, H5P_DEFAULT);
+                file_id, "/" LINK_TEST_GROUP_NAME "/" LINK_ITER_INVALID_PARAMS_TEST_SUBGROUP_NAME, H5_INDEX_N,
+                H5_ITER_INC, NULL, link_iter_invalid_params_cb, NULL, H5P_DEFAULT);
         }
         H5E_END_TRY
 
@@ -17878,8 +17612,7 @@ test_link_iterate_invalid_params(TestParams_t *params)
         H5E_END_TRY
 
         if (err_ret >= 0) {
-            printf(
-                "    H5Literate_by_name2 succeeded with invalid iteration ordering H5_ITER_UNKNOWN!\n");
+            printf("    H5Literate_by_name2 succeeded with invalid iteration ordering H5_ITER_UNKNOWN!\n");
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -18023,8 +17756,7 @@ test_link_iterate_0_links(TestParams_t *params)
             printf("    creation order tracking isn't supported with this VOL connector\n");
         }
 
-        if (H5Literate2(group_id, H5_INDEX_CRT_ORDER, H5_ITER_INC, NULL, link_iter_0_links_cb, NULL) <
-            0) {
+        if (H5Literate2(group_id, H5_INDEX_CRT_ORDER, H5_ITER_INC, NULL, link_iter_0_links_cb, NULL) < 0) {
             printf("    H5Literate2 by index type creation order in increasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -18038,8 +17770,7 @@ test_link_iterate_0_links(TestParams_t *params)
             printf("    creation order tracking isn't supported with this VOL connector\n");
         }
 
-        if (H5Literate2(group_id, H5_INDEX_CRT_ORDER, H5_ITER_DEC, NULL, link_iter_0_links_cb, NULL) <
-            0) {
+        if (H5Literate2(group_id, H5_INDEX_CRT_ORDER, H5_ITER_DEC, NULL, link_iter_0_links_cb, NULL) < 0) {
             printf("    H5Literate2 by index type creation order in decreasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -18048,9 +17779,9 @@ test_link_iterate_0_links(TestParams_t *params)
 
     SUBTEST_BEGIN(params, "H5Literate_by_name2 by link name in increasing order")
     {
-        if (H5Literate_by_name2(
-                file_id, "/" LINK_TEST_GROUP_NAME "/" LINK_ITER_0_LINKS_TEST_SUBGROUP_NAME, H5_INDEX_NAME,
-                H5_ITER_INC, NULL, link_iter_0_links_cb, NULL, H5P_DEFAULT) < 0) {
+        if (H5Literate_by_name2(file_id, "/" LINK_TEST_GROUP_NAME "/" LINK_ITER_0_LINKS_TEST_SUBGROUP_NAME,
+                                H5_INDEX_NAME, H5_ITER_INC, NULL, link_iter_0_links_cb, NULL,
+                                H5P_DEFAULT) < 0) {
             printf("    H5Literate_by_name2 by index type name in increasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -18059,9 +17790,9 @@ test_link_iterate_0_links(TestParams_t *params)
 
     SUBTEST_BEGIN(params, "H5Literate_by_name2 by link name in decreasing order")
     {
-        if (H5Literate_by_name2(
-                file_id, "/" LINK_TEST_GROUP_NAME "/" LINK_ITER_0_LINKS_TEST_SUBGROUP_NAME, H5_INDEX_NAME,
-                H5_ITER_DEC, NULL, link_iter_0_links_cb, NULL, H5P_DEFAULT) < 0) {
+        if (H5Literate_by_name2(file_id, "/" LINK_TEST_GROUP_NAME "/" LINK_ITER_0_LINKS_TEST_SUBGROUP_NAME,
+                                H5_INDEX_NAME, H5_ITER_DEC, NULL, link_iter_0_links_cb, NULL,
+                                H5P_DEFAULT) < 0) {
             printf("    H5Literate_by_name2 by index type name in decreasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -18075,9 +17806,9 @@ test_link_iterate_0_links(TestParams_t *params)
             printf("    creation order tracking isn't supported with this VOL connector\n");
         }
 
-        if (H5Literate_by_name2(
-                file_id, "/" LINK_TEST_GROUP_NAME "/" LINK_ITER_0_LINKS_TEST_SUBGROUP_NAME,
-                H5_INDEX_CRT_ORDER, H5_ITER_INC, NULL, link_iter_0_links_cb, NULL, H5P_DEFAULT) < 0) {
+        if (H5Literate_by_name2(file_id, "/" LINK_TEST_GROUP_NAME "/" LINK_ITER_0_LINKS_TEST_SUBGROUP_NAME,
+                                H5_INDEX_CRT_ORDER, H5_ITER_INC, NULL, link_iter_0_links_cb, NULL,
+                                H5P_DEFAULT) < 0) {
             printf("    H5Literate_by_name2 by index type creation order in increasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -18091,9 +17822,9 @@ test_link_iterate_0_links(TestParams_t *params)
             printf("    creation order tracking isn't supported with this VOL connector\n");
         }
 
-        if (H5Literate_by_name2(
-                file_id, "/" LINK_TEST_GROUP_NAME "/" LINK_ITER_0_LINKS_TEST_SUBGROUP_NAME,
-                H5_INDEX_CRT_ORDER, H5_ITER_DEC, NULL, link_iter_0_links_cb, NULL, H5P_DEFAULT) < 0) {
+        if (H5Literate_by_name2(file_id, "/" LINK_TEST_GROUP_NAME "/" LINK_ITER_0_LINKS_TEST_SUBGROUP_NAME,
+                                H5_INDEX_CRT_ORDER, H5_ITER_DEC, NULL, link_iter_0_links_cb, NULL,
+                                H5P_DEFAULT) < 0) {
             printf("    H5Literate_by_name2 by index type creation order in decreasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -18376,8 +18107,7 @@ test_link_visit_hard_links_no_cycles(TestParams_t *params)
 
         if (H5Lvisit_by_name2(
                 file_id, "/" LINK_TEST_GROUP_NAME "/" LINK_VISIT_HARD_LINKS_NO_CYCLE_TEST_SUBGROUP_NAME,
-                H5_INDEX_CRT_ORDER, H5_ITER_INC, link_visit_hard_links_no_cycles_cb, &i,
-                H5P_DEFAULT) < 0) {
+                H5_INDEX_CRT_ORDER, H5_ITER_INC, link_visit_hard_links_no_cycles_cb, &i, H5P_DEFAULT) < 0) {
             printf("    H5Lvisit_by_name2 by index type creation order in increasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -18401,8 +18131,7 @@ test_link_visit_hard_links_no_cycles(TestParams_t *params)
 
         if (H5Lvisit_by_name2(
                 file_id, "/" LINK_TEST_GROUP_NAME "/" LINK_VISIT_HARD_LINKS_NO_CYCLE_TEST_SUBGROUP_NAME,
-                H5_INDEX_CRT_ORDER, H5_ITER_DEC, link_visit_hard_links_no_cycles_cb, &i,
-                H5P_DEFAULT) < 0) {
+                H5_INDEX_CRT_ORDER, H5_ITER_DEC, link_visit_hard_links_no_cycles_cb, &i, H5P_DEFAULT) < 0) {
             printf("    H5Lvisit_by_name2 by index type creation order in decreasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -18686,8 +18415,7 @@ test_link_visit_soft_links_no_cycles(TestParams_t *params)
 
         if (H5Lvisit_by_name2(
                 file_id, "/" LINK_TEST_GROUP_NAME "/" LINK_VISIT_SOFT_LINKS_NO_CYCLE_TEST_SUBGROUP_NAME,
-                H5_INDEX_CRT_ORDER, H5_ITER_INC, link_visit_soft_links_no_cycles_cb, &i,
-                H5P_DEFAULT) < 0) {
+                H5_INDEX_CRT_ORDER, H5_ITER_INC, link_visit_soft_links_no_cycles_cb, &i, H5P_DEFAULT) < 0) {
             printf("    H5Lvisit_by_name2 by index type creation order in increasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -18711,8 +18439,7 @@ test_link_visit_soft_links_no_cycles(TestParams_t *params)
 
         if (H5Lvisit_by_name2(
                 file_id, "/" LINK_TEST_GROUP_NAME "/" LINK_VISIT_SOFT_LINKS_NO_CYCLE_TEST_SUBGROUP_NAME,
-                H5_INDEX_CRT_ORDER, H5_ITER_DEC, link_visit_soft_links_no_cycles_cb, &i,
-                H5P_DEFAULT) < 0) {
+                H5_INDEX_CRT_ORDER, H5_ITER_DEC, link_visit_soft_links_no_cycles_cb, &i, H5P_DEFAULT) < 0) {
             printf("    H5Lvisit_by_name2 by index type creation order in decreasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -18764,8 +18491,8 @@ test_link_visit_external_links_no_cycles(TestParams_t *params)
     htri_t link_exists;
     hid_t  file_id         = H5I_INVALID_HID;
     hid_t  container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
-    hid_t  subgroup_id = H5I_INVALID_HID;
-    hid_t  gcpl_id     = H5I_INVALID_HID;
+    hid_t  subgroup_id       = H5I_INVALID_HID;
+    hid_t  gcpl_id           = H5I_INVALID_HID;
     char  *ext_link_filename = NULL;
 
     /* Make sure the connector supports the API functions being tested */
@@ -18777,7 +18504,8 @@ test_link_visit_external_links_no_cycles(TestParams_t *params)
         return SKIP;
     }
 
-    if (prefix_test_filename(params, test_path_prefix, EXTERNAL_LINK_TEST_FILE_NAME, &ext_link_filename) < 0) {
+    if (prefix_test_filename(params, test_path_prefix, EXTERNAL_LINK_TEST_FILE_NAME, &ext_link_filename) <
+        0) {
         printf("    couldn't create external link filename\n");
         goto error;
     }
@@ -18876,8 +18604,7 @@ test_link_visit_external_links_no_cycles(TestParams_t *params)
     {
         i = 0;
 
-        if (H5Lvisit2(group_id, H5_INDEX_NAME, H5_ITER_INC, link_visit_external_links_no_cycles_cb, &i) <
-            0) {
+        if (H5Lvisit2(group_id, H5_INDEX_NAME, H5_ITER_INC, link_visit_external_links_no_cycles_cb, &i) < 0) {
             printf("    H5Lvisit2 by index type name in increasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -18894,8 +18621,7 @@ test_link_visit_external_links_no_cycles(TestParams_t *params)
         /* Reset the counter to the appropriate value for the next test */
         i = LINK_VISIT_EXT_LINKS_NO_CYCLE_TEST_NUM_LINKS_PER_TEST;
 
-        if (H5Lvisit2(group_id, H5_INDEX_NAME, H5_ITER_DEC, link_visit_external_links_no_cycles_cb, &i) <
-            0) {
+        if (H5Lvisit2(group_id, H5_INDEX_NAME, H5_ITER_DEC, link_visit_external_links_no_cycles_cb, &i) < 0) {
             printf("    H5Lvisit2 by index type name in decreasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -18917,8 +18643,8 @@ test_link_visit_external_links_no_cycles(TestParams_t *params)
         /* Reset the counter to the appropriate value for the next test */
         i = 2 * LINK_VISIT_EXT_LINKS_NO_CYCLE_TEST_NUM_LINKS_PER_TEST;
 
-        if (H5Lvisit2(group_id, H5_INDEX_CRT_ORDER, H5_ITER_INC, link_visit_external_links_no_cycles_cb,
-                      &i) < 0) {
+        if (H5Lvisit2(group_id, H5_INDEX_CRT_ORDER, H5_ITER_INC, link_visit_external_links_no_cycles_cb, &i) <
+            0) {
             printf("    H5Lvisit2 by index type creation order in increasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -18940,8 +18666,8 @@ test_link_visit_external_links_no_cycles(TestParams_t *params)
         /* Reset the counter to the appropriate value for the next test */
         i = 3 * LINK_VISIT_EXT_LINKS_NO_CYCLE_TEST_NUM_LINKS_PER_TEST;
 
-        if (H5Lvisit2(group_id, H5_INDEX_CRT_ORDER, H5_ITER_DEC, link_visit_external_links_no_cycles_cb,
-                      &i) < 0) {
+        if (H5Lvisit2(group_id, H5_INDEX_CRT_ORDER, H5_ITER_DEC, link_visit_external_links_no_cycles_cb, &i) <
+            0) {
             printf("    H5Lvisit2 by index type creation order in decreasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -18960,8 +18686,7 @@ test_link_visit_external_links_no_cycles(TestParams_t *params)
 
         if (H5Lvisit_by_name2(
                 file_id, "/" LINK_TEST_GROUP_NAME "/" LINK_VISIT_EXT_LINKS_NO_CYCLE_TEST_SUBGROUP_NAME,
-                H5_INDEX_NAME, H5_ITER_INC, link_visit_external_links_no_cycles_cb, &i,
-                H5P_DEFAULT) < 0) {
+                H5_INDEX_NAME, H5_ITER_INC, link_visit_external_links_no_cycles_cb, &i, H5P_DEFAULT) < 0) {
             printf("    H5Lvisit_by_name2 by index type name in increasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -18980,8 +18705,7 @@ test_link_visit_external_links_no_cycles(TestParams_t *params)
 
         if (H5Lvisit_by_name2(
                 file_id, "/" LINK_TEST_GROUP_NAME "/" LINK_VISIT_EXT_LINKS_NO_CYCLE_TEST_SUBGROUP_NAME,
-                H5_INDEX_NAME, H5_ITER_DEC, link_visit_external_links_no_cycles_cb, &i,
-                H5P_DEFAULT) < 0) {
+                H5_INDEX_NAME, H5_ITER_DEC, link_visit_external_links_no_cycles_cb, &i, H5P_DEFAULT) < 0) {
             printf("    H5Lvisit_by_name2 by index type name in decreasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -19003,10 +18727,10 @@ test_link_visit_external_links_no_cycles(TestParams_t *params)
         /* Reset the counter to the appropriate value for the next test */
         i = 2 * LINK_VISIT_EXT_LINKS_NO_CYCLE_TEST_NUM_LINKS_PER_TEST;
 
-        if (H5Lvisit_by_name2(
-                file_id, "/" LINK_TEST_GROUP_NAME "/" LINK_VISIT_EXT_LINKS_NO_CYCLE_TEST_SUBGROUP_NAME,
-                H5_INDEX_CRT_ORDER, H5_ITER_INC, link_visit_external_links_no_cycles_cb, &i,
-                H5P_DEFAULT) < 0) {
+        if (H5Lvisit_by_name2(file_id,
+                              "/" LINK_TEST_GROUP_NAME "/" LINK_VISIT_EXT_LINKS_NO_CYCLE_TEST_SUBGROUP_NAME,
+                              H5_INDEX_CRT_ORDER, H5_ITER_INC, link_visit_external_links_no_cycles_cb, &i,
+                              H5P_DEFAULT) < 0) {
             printf("    H5Lvisit_by_name2 by index type creation order in increasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -19028,10 +18752,10 @@ test_link_visit_external_links_no_cycles(TestParams_t *params)
         /* Reset the counter to the appropriate value for the next test */
         i = 3 * LINK_VISIT_EXT_LINKS_NO_CYCLE_TEST_NUM_LINKS_PER_TEST;
 
-        if (H5Lvisit_by_name2(
-                file_id, "/" LINK_TEST_GROUP_NAME "/" LINK_VISIT_EXT_LINKS_NO_CYCLE_TEST_SUBGROUP_NAME,
-                H5_INDEX_CRT_ORDER, H5_ITER_DEC, link_visit_external_links_no_cycles_cb, &i,
-                H5P_DEFAULT) < 0) {
+        if (H5Lvisit_by_name2(file_id,
+                              "/" LINK_TEST_GROUP_NAME "/" LINK_VISIT_EXT_LINKS_NO_CYCLE_TEST_SUBGROUP_NAME,
+                              H5_INDEX_CRT_ORDER, H5_ITER_DEC, link_visit_external_links_no_cycles_cb, &i,
+                              H5P_DEFAULT) < 0) {
             printf("    H5Lvisit_by_name2 by index type creation order in decreasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -19113,10 +18837,10 @@ test_link_visit_mixed_links_no_cycles(TestParams_t *params)
     hid_t  file_id         = H5I_INVALID_HID;
     hid_t  container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
     hid_t  subgroup1 = H5I_INVALID_HID, subgroup2 = H5I_INVALID_HID;
-    hid_t  gcpl_id    = H5I_INVALID_HID;
-    hid_t  dset_id    = H5I_INVALID_HID;
-    hid_t  dset_dtype = H5I_INVALID_HID;
-    hid_t  fspace_id  = H5I_INVALID_HID;
+    hid_t  gcpl_id           = H5I_INVALID_HID;
+    hid_t  dset_id           = H5I_INVALID_HID;
+    hid_t  dset_dtype        = H5I_INVALID_HID;
+    hid_t  fspace_id         = H5I_INVALID_HID;
     char  *ext_link_filename = NULL;
 
     /* Make sure the connector supports the API functions being tested */
@@ -19131,7 +18855,8 @@ test_link_visit_mixed_links_no_cycles(TestParams_t *params)
         return SKIP;
     }
 
-    if (prefix_test_filename(params, test_path_prefix, EXTERNAL_LINK_TEST_FILE_NAME, &ext_link_filename) < 0) {
+    if (prefix_test_filename(params, test_path_prefix, EXTERNAL_LINK_TEST_FILE_NAME, &ext_link_filename) <
+        0) {
         printf("    couldn't create external link filename\n");
         goto error;
     }
@@ -19295,8 +19020,7 @@ test_link_visit_mixed_links_no_cycles(TestParams_t *params)
     {
         i = 0;
 
-        if (H5Lvisit2(group_id, H5_INDEX_NAME, H5_ITER_INC, link_visit_mixed_links_no_cycles_cb, &i) <
-            0) {
+        if (H5Lvisit2(group_id, H5_INDEX_NAME, H5_ITER_INC, link_visit_mixed_links_no_cycles_cb, &i) < 0) {
             printf("    H5Lvisit2 by index type name in increasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -19313,8 +19037,7 @@ test_link_visit_mixed_links_no_cycles(TestParams_t *params)
         /* Reset the counter to the appropriate value for the next test */
         i = LINK_VISIT_MIXED_LINKS_NO_CYCLE_TEST_NUM_LINKS;
 
-        if (H5Lvisit2(group_id, H5_INDEX_NAME, H5_ITER_DEC, link_visit_mixed_links_no_cycles_cb, &i) <
-            0) {
+        if (H5Lvisit2(group_id, H5_INDEX_NAME, H5_ITER_DEC, link_visit_mixed_links_no_cycles_cb, &i) < 0) {
             printf("    H5Lvisit2 by index type name in decreasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -19336,8 +19059,8 @@ test_link_visit_mixed_links_no_cycles(TestParams_t *params)
         /* Reset the counter to the appropriate value for the next test */
         i = 2 * LINK_VISIT_MIXED_LINKS_NO_CYCLE_TEST_NUM_LINKS;
 
-        if (H5Lvisit2(group_id, H5_INDEX_CRT_ORDER, H5_ITER_INC, link_visit_mixed_links_no_cycles_cb,
-                      &i) < 0) {
+        if (H5Lvisit2(group_id, H5_INDEX_CRT_ORDER, H5_ITER_INC, link_visit_mixed_links_no_cycles_cb, &i) <
+            0) {
             printf("    H5Lvisit2 by index type creation order in increasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -19359,8 +19082,8 @@ test_link_visit_mixed_links_no_cycles(TestParams_t *params)
         /* Reset the counter to the appropriate value for the next test */
         i = 3 * LINK_VISIT_MIXED_LINKS_NO_CYCLE_TEST_NUM_LINKS;
 
-        if (H5Lvisit2(group_id, H5_INDEX_CRT_ORDER, H5_ITER_DEC, link_visit_mixed_links_no_cycles_cb,
-                      &i) < 0) {
+        if (H5Lvisit2(group_id, H5_INDEX_CRT_ORDER, H5_ITER_DEC, link_visit_mixed_links_no_cycles_cb, &i) <
+            0) {
             printf("    H5Lvisit2 by index type creation order in decreasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -19421,8 +19144,7 @@ test_link_visit_mixed_links_no_cycles(TestParams_t *params)
 
         if (H5Lvisit_by_name2(
                 file_id, "/" LINK_TEST_GROUP_NAME "/" LINK_VISIT_MIXED_LINKS_NO_CYCLE_TEST_SUBGROUP_NAME,
-                H5_INDEX_CRT_ORDER, H5_ITER_INC, link_visit_mixed_links_no_cycles_cb, &i,
-                H5P_DEFAULT) < 0) {
+                H5_INDEX_CRT_ORDER, H5_ITER_INC, link_visit_mixed_links_no_cycles_cb, &i, H5P_DEFAULT) < 0) {
             printf("    H5Lvisit_by_name2 by index type creation order in increasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -19446,8 +19168,7 @@ test_link_visit_mixed_links_no_cycles(TestParams_t *params)
 
         if (H5Lvisit_by_name2(
                 file_id, "/" LINK_TEST_GROUP_NAME "/" LINK_VISIT_MIXED_LINKS_NO_CYCLE_TEST_SUBGROUP_NAME,
-                H5_INDEX_CRT_ORDER, H5_ITER_DEC, link_visit_mixed_links_no_cycles_cb, &i,
-                H5P_DEFAULT) < 0) {
+                H5_INDEX_CRT_ORDER, H5_ITER_DEC, link_visit_mixed_links_no_cycles_cb, &i, H5P_DEFAULT) < 0) {
             printf("    H5Lvisit_by_name2 by index type creation order in decreasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -19651,8 +19372,7 @@ test_link_visit_hard_links_cycles(TestParams_t *params)
         /* Reset the counter to the appropriate value for the next test */
         i = 2 * LINK_VISIT_HARD_LINKS_CYCLE_TEST_NUM_LINKS_PER_TEST;
 
-        if (H5Lvisit2(group_id, H5_INDEX_CRT_ORDER, H5_ITER_INC, link_visit_hard_links_cycles_cb, &i) <
-            0) {
+        if (H5Lvisit2(group_id, H5_INDEX_CRT_ORDER, H5_ITER_INC, link_visit_hard_links_cycles_cb, &i) < 0) {
             printf("    H5Lvisit2 by index type creation order in increasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -19674,8 +19394,7 @@ test_link_visit_hard_links_cycles(TestParams_t *params)
         /* Reset the counter to the appropriate value for the next test */
         i = 3 * LINK_VISIT_HARD_LINKS_CYCLE_TEST_NUM_LINKS_PER_TEST;
 
-        if (H5Lvisit2(group_id, H5_INDEX_CRT_ORDER, H5_ITER_DEC, link_visit_hard_links_cycles_cb, &i) <
-            0) {
+        if (H5Lvisit2(group_id, H5_INDEX_CRT_ORDER, H5_ITER_DEC, link_visit_hard_links_cycles_cb, &i) < 0) {
             printf("    H5Lvisit2 by index type creation order in decreasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -19952,8 +19671,7 @@ test_link_visit_soft_links_cycles(TestParams_t *params)
         /* Reset the counter to the appropriate value for the next test */
         i = 2 * LINK_VISIT_SOFT_LINKS_CYCLE_TEST_NUM_LINKS_PER_TEST;
 
-        if (H5Lvisit2(group_id, H5_INDEX_CRT_ORDER, H5_ITER_INC, link_visit_soft_links_cycles_cb, &i) <
-            0) {
+        if (H5Lvisit2(group_id, H5_INDEX_CRT_ORDER, H5_ITER_INC, link_visit_soft_links_cycles_cb, &i) < 0) {
             printf("    H5Lvisit2 by index type creation order in increasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -19975,8 +19693,7 @@ test_link_visit_soft_links_cycles(TestParams_t *params)
         /* Reset the counter to the appropriate value for the next test */
         i = 3 * LINK_VISIT_SOFT_LINKS_CYCLE_TEST_NUM_LINKS_PER_TEST;
 
-        if (H5Lvisit2(group_id, H5_INDEX_CRT_ORDER, H5_ITER_DEC, link_visit_soft_links_cycles_cb, &i) <
-            0) {
+        if (H5Lvisit2(group_id, H5_INDEX_CRT_ORDER, H5_ITER_DEC, link_visit_soft_links_cycles_cb, &i) < 0) {
             printf("    H5Lvisit2 by index type creation order in decreasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -20182,8 +19899,8 @@ test_link_visit_external_links_cycles(TestParams_t *params)
                      "/" LINK_TEST_GROUP_NAME "/" LINK_VISIT_EXT_LINKS_CYCLE_TEST_SUBGROUP_NAME "/%s",
                      grp_name);
 
-            if (H5Lcreate_external(H5_API_TEST_FILENAME(params), link_target_obj, subgroup_id, link_name, H5P_DEFAULT,
-                                   H5P_DEFAULT) < 0) {
+            if (H5Lcreate_external(H5_API_TEST_FILENAME(params), link_target_obj, subgroup_id, link_name,
+                                   H5P_DEFAULT, H5P_DEFAULT) < 0) {
                 printf("    couldn't create external link '%s'\n", link_name);
                 goto error;
             }
@@ -20217,8 +19934,7 @@ test_link_visit_external_links_cycles(TestParams_t *params)
     {
         i = 0;
 
-        if (H5Lvisit2(group_id, H5_INDEX_NAME, H5_ITER_INC, link_visit_external_links_cycles_cb, &i) <
-            0) {
+        if (H5Lvisit2(group_id, H5_INDEX_NAME, H5_ITER_INC, link_visit_external_links_cycles_cb, &i) < 0) {
             printf("    H5Lvisit2 by index type name in increasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -20235,8 +19951,7 @@ test_link_visit_external_links_cycles(TestParams_t *params)
         /* Reset the counter to the appropriate value for the next test */
         i = LINK_VISIT_EXT_LINKS_CYCLE_TEST_NUM_LINKS_PER_TEST;
 
-        if (H5Lvisit2(group_id, H5_INDEX_NAME, H5_ITER_DEC, link_visit_external_links_cycles_cb, &i) <
-            0) {
+        if (H5Lvisit2(group_id, H5_INDEX_NAME, H5_ITER_DEC, link_visit_external_links_cycles_cb, &i) < 0) {
             printf("    H5Lvisit2 by index type name in decreasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -20258,8 +19973,8 @@ test_link_visit_external_links_cycles(TestParams_t *params)
         /* Reset the counter to the appropriate value for the next test */
         i = 2 * LINK_VISIT_EXT_LINKS_CYCLE_TEST_NUM_LINKS_PER_TEST;
 
-        if (H5Lvisit2(group_id, H5_INDEX_CRT_ORDER, H5_ITER_INC, link_visit_external_links_cycles_cb,
-                      &i) < 0) {
+        if (H5Lvisit2(group_id, H5_INDEX_CRT_ORDER, H5_ITER_INC, link_visit_external_links_cycles_cb, &i) <
+            0) {
             printf("    H5Lvisit2 by index type creation order in increasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -20281,8 +19996,8 @@ test_link_visit_external_links_cycles(TestParams_t *params)
         /* Reset the counter to the appropriate value for the next test */
         i = 3 * LINK_VISIT_EXT_LINKS_CYCLE_TEST_NUM_LINKS_PER_TEST;
 
-        if (H5Lvisit2(group_id, H5_INDEX_CRT_ORDER, H5_ITER_DEC, link_visit_external_links_cycles_cb,
-                      &i) < 0) {
+        if (H5Lvisit2(group_id, H5_INDEX_CRT_ORDER, H5_ITER_DEC, link_visit_external_links_cycles_cb, &i) <
+            0) {
             printf("    H5Lvisit2 by index type creation order in decreasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -20342,10 +20057,9 @@ test_link_visit_external_links_cycles(TestParams_t *params)
         /* Reset the counter to the appropriate value for the next test */
         i = 2 * LINK_VISIT_EXT_LINKS_CYCLE_TEST_NUM_LINKS_PER_TEST;
 
-        if (H5Lvisit_by_name2(file_id,
-                              "/" LINK_TEST_GROUP_NAME "/" LINK_VISIT_EXT_LINKS_CYCLE_TEST_SUBGROUP_NAME,
-                              H5_INDEX_CRT_ORDER, H5_ITER_INC, link_visit_external_links_cycles_cb, &i,
-                              H5P_DEFAULT) < 0) {
+        if (H5Lvisit_by_name2(
+                file_id, "/" LINK_TEST_GROUP_NAME "/" LINK_VISIT_EXT_LINKS_CYCLE_TEST_SUBGROUP_NAME,
+                H5_INDEX_CRT_ORDER, H5_ITER_INC, link_visit_external_links_cycles_cb, &i, H5P_DEFAULT) < 0) {
             printf("    H5Lvisit_by_name2 by index type creation order in increasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -20367,10 +20081,9 @@ test_link_visit_external_links_cycles(TestParams_t *params)
         /* Reset the counter to the appropriate value for the next test */
         i = 3 * LINK_VISIT_EXT_LINKS_CYCLE_TEST_NUM_LINKS_PER_TEST;
 
-        if (H5Lvisit_by_name2(file_id,
-                              "/" LINK_TEST_GROUP_NAME "/" LINK_VISIT_EXT_LINKS_CYCLE_TEST_SUBGROUP_NAME,
-                              H5_INDEX_CRT_ORDER, H5_ITER_DEC, link_visit_external_links_cycles_cb, &i,
-                              H5P_DEFAULT) < 0) {
+        if (H5Lvisit_by_name2(
+                file_id, "/" LINK_TEST_GROUP_NAME "/" LINK_VISIT_EXT_LINKS_CYCLE_TEST_SUBGROUP_NAME,
+                H5_INDEX_CRT_ORDER, H5_ITER_DEC, link_visit_external_links_cycles_cb, &i, H5P_DEFAULT) < 0) {
             printf("    H5Lvisit_by_name2 by index type creation order in decreasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -20442,7 +20155,7 @@ test_link_visit_mixed_links_cycles(TestParams_t *params)
     hid_t  file_id         = H5I_INVALID_HID;
     hid_t  container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
     hid_t  subgroup1 = H5I_INVALID_HID, subgroup2 = H5I_INVALID_HID;
-    hid_t  gcpl_id = H5I_INVALID_HID;
+    hid_t  gcpl_id           = H5I_INVALID_HID;
     char  *ext_link_filename = NULL;
 
     /* Make sure the connector supports the API functions being tested */
@@ -20455,7 +20168,8 @@ test_link_visit_mixed_links_cycles(TestParams_t *params)
         return SKIP;
     }
 
-    if (prefix_test_filename(params, test_path_prefix, EXTERNAL_LINK_TEST_FILE_NAME, &ext_link_filename) < 0) {
+    if (prefix_test_filename(params, test_path_prefix, EXTERNAL_LINK_TEST_FILE_NAME, &ext_link_filename) <
+        0) {
         printf("    couldn't create external link filename\n");
         goto error;
     }
@@ -20631,8 +20345,7 @@ test_link_visit_mixed_links_cycles(TestParams_t *params)
         /* Reset the counter to the appropriate value for the next test */
         i = 2 * LINK_VISIT_MIXED_LINKS_CYCLE_TEST_NUM_LINKS;
 
-        if (H5Lvisit2(group_id, H5_INDEX_CRT_ORDER, H5_ITER_INC, link_visit_mixed_links_cycles_cb, &i) <
-            0) {
+        if (H5Lvisit2(group_id, H5_INDEX_CRT_ORDER, H5_ITER_INC, link_visit_mixed_links_cycles_cb, &i) < 0) {
             printf("    H5Lvisit2 by index type creation order in increasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -20654,8 +20367,7 @@ test_link_visit_mixed_links_cycles(TestParams_t *params)
         /* Reset the counter to the appropriate value for the next test */
         i = 3 * LINK_VISIT_MIXED_LINKS_CYCLE_TEST_NUM_LINKS;
 
-        if (H5Lvisit2(group_id, H5_INDEX_CRT_ORDER, H5_ITER_DEC, link_visit_mixed_links_cycles_cb, &i) <
-            0) {
+        if (H5Lvisit2(group_id, H5_INDEX_CRT_ORDER, H5_ITER_DEC, link_visit_mixed_links_cycles_cb, &i) < 0) {
             printf("    H5Lvisit2 by index type creation order in decreasing order failed\n");
             TESTFRAME_TEST_ERROR(params);
         }
@@ -20799,9 +20511,9 @@ test_link_visit_invalid_params(TestParams_t *params)
     hid_t  file_id         = H5I_INVALID_HID;
     hid_t  container_group = H5I_INVALID_HID, group_id = H5I_INVALID_HID;
     hid_t  subgroup1 = H5I_INVALID_HID, subgroup2 = H5I_INVALID_HID;
-    hid_t  dset_id    = H5I_INVALID_HID;
-    hid_t  dset_dtype = H5I_INVALID_HID;
-    hid_t  fspace_id  = H5I_INVALID_HID;
+    hid_t  dset_id           = H5I_INVALID_HID;
+    hid_t  dset_dtype        = H5I_INVALID_HID;
+    hid_t  fspace_id         = H5I_INVALID_HID;
     char  *ext_link_filename = NULL;
 
     /* Make sure the connector supports the API functions being tested */
@@ -20813,7 +20525,8 @@ test_link_visit_invalid_params(TestParams_t *params)
         return SKIP;
     }
 
-    if (prefix_test_filename(params, test_path_prefix, EXTERNAL_LINK_TEST_FILE_NAME, &ext_link_filename) < 0) {
+    if (prefix_test_filename(params, test_path_prefix, EXTERNAL_LINK_TEST_FILE_NAME, &ext_link_filename) <
+        0) {
         printf("    couldn't create external link filename\n");
         goto error;
     }
@@ -20948,8 +20661,8 @@ test_link_visit_invalid_params(TestParams_t *params)
     {
         H5E_BEGIN_TRY
         {
-            err_ret = H5Lvisit2(H5I_INVALID_HID, H5_INDEX_NAME, H5_ITER_INC, link_visit_invalid_params_cb,
-                                NULL);
+            err_ret =
+                H5Lvisit2(H5I_INVALID_HID, H5_INDEX_NAME, H5_ITER_INC, link_visit_invalid_params_cb, NULL);
         }
         H5E_END_TRY
 
@@ -20964,8 +20677,7 @@ test_link_visit_invalid_params(TestParams_t *params)
     {
         H5E_BEGIN_TRY
         {
-            err_ret =
-                H5Lvisit2(group_id, H5_INDEX_UNKNOWN, H5_ITER_INC, link_visit_invalid_params_cb, NULL);
+            err_ret = H5Lvisit2(group_id, H5_INDEX_UNKNOWN, H5_ITER_INC, link_visit_invalid_params_cb, NULL);
         }
         H5E_END_TRY
 
@@ -20991,8 +20703,7 @@ test_link_visit_invalid_params(TestParams_t *params)
     {
         H5E_BEGIN_TRY
         {
-            err_ret =
-                H5Lvisit2(group_id, H5_INDEX_NAME, H5_ITER_UNKNOWN, link_visit_invalid_params_cb, NULL);
+            err_ret = H5Lvisit2(group_id, H5_INDEX_NAME, H5_ITER_UNKNOWN, link_visit_invalid_params_cb, NULL);
         }
         H5E_END_TRY
 
@@ -21019,9 +20730,8 @@ test_link_visit_invalid_params(TestParams_t *params)
         H5E_BEGIN_TRY
         {
             err_ret = H5Lvisit_by_name2(
-                H5I_INVALID_HID,
-                "/" LINK_TEST_GROUP_NAME "/" LINK_VISIT_INVALID_PARAMS_TEST_SUBGROUP_NAME, H5_INDEX_NAME,
-                H5_ITER_INC, link_visit_invalid_params_cb, NULL, H5P_DEFAULT);
+                H5I_INVALID_HID, "/" LINK_TEST_GROUP_NAME "/" LINK_VISIT_INVALID_PARAMS_TEST_SUBGROUP_NAME,
+                H5_INDEX_NAME, H5_ITER_INC, link_visit_invalid_params_cb, NULL, H5P_DEFAULT);
         }
         H5E_END_TRY
 
@@ -21048,8 +20758,8 @@ test_link_visit_invalid_params(TestParams_t *params)
 
         H5E_BEGIN_TRY
         {
-            err_ret = H5Lvisit_by_name2(file_id, "", H5_INDEX_NAME, H5_ITER_INC,
-                                        link_visit_invalid_params_cb, NULL, H5P_DEFAULT);
+            err_ret = H5Lvisit_by_name2(file_id, "", H5_INDEX_NAME, H5_ITER_INC, link_visit_invalid_params_cb,
+                                        NULL, H5P_DEFAULT);
         }
         H5E_END_TRY
 
@@ -22652,16 +22362,16 @@ H5_api_link_test_add(void)
 {
     uint64_t testframe_flags = ALLOW_MULTITHREAD;
 
-    AddTest("test_create_hard_link", test_create_hard_link, NULL, NULL, NULL, 0,
-            testframe_flags, "hard link creation");
+    AddTest("test_create_hard_link", test_create_hard_link, NULL, NULL, NULL, 0, testframe_flags,
+            "hard link creation");
 
     /* Add a header to the first link test to distinguish different test interfaces */
     AddTestHeaderFunc("test_create_hard_link", print_link_test_header);
 
     AddTest("test_create_hard_link_long_name", test_create_hard_link_long_name, NULL, NULL, NULL, 0,
             testframe_flags, "hard link creation with a long name");
-    AddTest("test_create_hard_link_many", test_create_hard_link_many, NULL, NULL, NULL, 0,
-            testframe_flags, "hard link creation of many links");
+    AddTest("test_create_hard_link_many", test_create_hard_link_many, NULL, NULL, NULL, 0, testframe_flags,
+            "hard link creation of many links");
     AddTest("test_create_hard_link_same_loc", test_create_hard_link_same_loc, NULL, NULL, NULL, 0,
             testframe_flags, "hard link creation with H5L_SAME_LOC");
     AddTest("test_create_hard_link_invalid_params", test_create_hard_link_invalid_params, NULL, NULL, NULL, 0,
@@ -22676,12 +22386,12 @@ H5_api_link_test_add(void)
             NULL, 0, testframe_flags, "dangling soft link creation to object by absolute path");
     AddTest("test_create_soft_link_long_name", test_create_soft_link_long_name, NULL, NULL, NULL, 0,
             testframe_flags, "soft link creation with a long name");
-    AddTest("test_create_soft_link_many", test_create_soft_link_many, NULL, NULL, NULL, 0,
-            testframe_flags, "soft link creation of many links");
+    AddTest("test_create_soft_link_many", test_create_soft_link_many, NULL, NULL, NULL, 0, testframe_flags,
+            "soft link creation of many links");
     AddTest("test_create_soft_link_invalid_params", test_create_soft_link_invalid_params, NULL, NULL, NULL, 0,
             testframe_flags, "soft link creation with invalid parameters");
-    AddTest("test_create_external_link", test_create_external_link, NULL, NULL, NULL, 0,
-            testframe_flags, "external link creation to existing object");
+    AddTest("test_create_external_link", test_create_external_link, NULL, NULL, NULL, 0, testframe_flags,
+            "external link creation to existing object");
     AddTest("test_create_external_link_dangling", test_create_external_link_dangling, NULL, NULL, NULL, 0,
             testframe_flags, "dangling external link creation");
     AddTest("test_create_external_link_multi", test_create_external_link_multi, NULL, NULL, NULL, 0,
@@ -22694,42 +22404,39 @@ H5_api_link_test_add(void)
             testframe_flags, "user-defined link creation");
     AddTest("test_create_user_defined_link_invalid_params", test_create_user_defined_link_invalid_params,
             NULL, NULL, NULL, 0, testframe_flags, "H5Lcreate_ud with invalid parameters");
-    AddTest("test_delete_link", test_delete_link, NULL, NULL, NULL, 0,
-            testframe_flags, "link deletion");
+    AddTest("test_delete_link", test_delete_link, NULL, NULL, NULL, 0, testframe_flags, "link deletion");
     AddTest("test_delete_link_reset_grp_max_crt_order", test_delete_link_reset_grp_max_crt_order, NULL, NULL,
             NULL, 0, testframe_flags,
             "H5Ldelete of all links in group resets group's maximum link creation order value");
     AddTest("test_delete_link_invalid_params", test_delete_link_invalid_params, NULL, NULL, NULL, 0,
             testframe_flags, "H5Ldelete with invalid parameters");
-    AddTest("test_copy_link", test_copy_link, NULL, NULL, NULL, 0,
-            testframe_flags, "link copying");
+    AddTest("test_copy_link", test_copy_link, NULL, NULL, NULL, 0, testframe_flags, "link copying");
     AddTest("test_copy_links_into_group_with_links", test_copy_links_into_group_with_links, NULL, NULL, NULL,
             0, testframe_flags, "H5Lcopy adjusting creation order values for copied links");
-    AddTest("test_copy_link_across_files", test_copy_link_across_files, NULL, NULL, NULL, 0,
-            testframe_flags, "link copying across files");
+    AddTest("test_copy_link_across_files", test_copy_link_across_files, NULL, NULL, NULL, 0, testframe_flags,
+            "link copying across files");
     AddTest("test_copy_link_invalid_params", test_copy_link_invalid_params, NULL, NULL, NULL, 0,
             testframe_flags, "H5Lcopy with invalid parameters");
-    AddTest("test_move_link", test_move_link, NULL, NULL, NULL, 0,
-            testframe_flags, "link moving");
+    AddTest("test_move_link", test_move_link, NULL, NULL, NULL, 0, testframe_flags, "link moving");
     AddTest("test_move_links_into_group_with_links", test_move_links_into_group_with_links, NULL, NULL, NULL,
             0, testframe_flags, "H5Lmove adjusting creation order values for moved links");
-    AddTest("test_move_link_across_files", test_move_link_across_files, NULL, NULL, NULL, 0,
-            testframe_flags, "link moving across files");
+    AddTest("test_move_link_across_files", test_move_link_across_files, NULL, NULL, NULL, 0, testframe_flags,
+            "link moving across files");
     AddTest("test_move_link_reset_grp_max_crt_order", test_move_link_reset_grp_max_crt_order, NULL, NULL,
             NULL, 0, testframe_flags,
             "H5Lmove of all links out of group resets group's maximum link creation order value");
     AddTest("test_move_link_invalid_params", test_move_link_invalid_params, NULL, NULL, NULL, 0,
             testframe_flags, "H5Lmove with invalid parameters");
-    AddTest("test_get_link_val", test_get_link_val, NULL, NULL, NULL, 0,
-            testframe_flags, "link value retrieval");
+    AddTest("test_get_link_val", test_get_link_val, NULL, NULL, NULL, 0, testframe_flags,
+            "link value retrieval");
     AddTest("test_get_link_val_invalid_params", test_get_link_val_invalid_params, NULL, NULL, NULL, 0,
             testframe_flags, "link value retrieval with invalid parameters");
-    AddTest("test_get_link_info", test_get_link_info, NULL, NULL, NULL, 0,
-            testframe_flags, "link info retrieval");
+    AddTest("test_get_link_info", test_get_link_info, NULL, NULL, NULL, 0, testframe_flags,
+            "link info retrieval");
     AddTest("test_get_link_info_invalid_params", test_get_link_info_invalid_params, NULL, NULL, NULL, 0,
             testframe_flags, "link info retrieval with invalid parameters");
-    AddTest("test_get_link_name", test_get_link_name, NULL, NULL, NULL, 0,
-            testframe_flags, "link name retrieval");
+    AddTest("test_get_link_name", test_get_link_name, NULL, NULL, NULL, 0, testframe_flags,
+            "link name retrieval");
     AddTest("test_get_link_name_invalid_params", test_get_link_name_invalid_params, NULL, NULL, NULL, 0,
             testframe_flags, "link name retrieval with invalid parameters");
     AddTest("test_link_iterate_hard_links", test_link_iterate_hard_links, NULL, NULL, NULL, 0,
@@ -22738,14 +22445,14 @@ H5_api_link_test_add(void)
             testframe_flags, "link iteration (only soft links)");
     AddTest("test_link_iterate_external_links", test_link_iterate_external_links, NULL, NULL, NULL, 0,
             testframe_flags, "link iteration (only external links)");
-    AddTest("test_link_iterate_ud_links", test_link_iterate_ud_links, NULL, NULL, NULL, 0,
-            testframe_flags, "link iteration (only user-defined links)");
+    AddTest("test_link_iterate_ud_links", test_link_iterate_ud_links, NULL, NULL, NULL, 0, testframe_flags,
+            "link iteration (only user-defined links)");
     AddTest("test_link_iterate_mixed_links", test_link_iterate_mixed_links, NULL, NULL, NULL, 0,
             testframe_flags, "link iteration (mixed link types)");
     AddTest("test_link_iterate_invalid_params", test_link_iterate_invalid_params, NULL, NULL, NULL, 0,
             testframe_flags, "link iteration with invalid parameters");
-    AddTest("test_link_iterate_0_links", test_link_iterate_0_links, NULL, NULL, NULL, 0,
-            testframe_flags, "link iteration on group with 0 links");
+    AddTest("test_link_iterate_0_links", test_link_iterate_0_links, NULL, NULL, NULL, 0, testframe_flags,
+            "link iteration on group with 0 links");
     AddTest("test_link_visit_hard_links_no_cycles", test_link_visit_hard_links_no_cycles, NULL, NULL, NULL, 0,
             testframe_flags, "link visiting without cycles (only hard links)");
     AddTest("test_link_visit_soft_links_no_cycles", test_link_visit_soft_links_no_cycles, NULL, NULL, NULL, 0,
@@ -22768,6 +22475,6 @@ H5_api_link_test_add(void)
             testframe_flags, "link visiting with cycles (mixed link types)");
     AddTest("test_link_visit_invalid_params", test_link_visit_invalid_params, NULL, NULL, NULL, 0,
             testframe_flags, "link visiting with invalid parameters");
-    AddTest("test_link_visit_0_links", test_link_visit_0_links, NULL, NULL, NULL, 0,
-            testframe_flags, "link visiting on group with subgroups containing 0 links");
+    AddTest("test_link_visit_0_links", test_link_visit_0_links, NULL, NULL, NULL, 0, testframe_flags,
+            "link visiting on group with subgroups containing 0 links");
 }
