@@ -3948,12 +3948,12 @@ H5P__mt_ins_or_mod_prop__class(H5P_mt_class_t *class, const char *name, void *va
 {
     H5P_mt_prop_t *new_prop = NULL; /* New prop to be created and inserted */
     H5P_mt_prop_t *pl_head;         /* Head of the LFSLL of the class */
-    uint32_t deletes     = 0; /* Tracks number of deletes */
-    uint32_t visited     = 0; /* Tracks number of nodes visited */
-    uint32_t thrd_cols   = 0; /* Tracks number of thread collisions */
-    uint64_t avg_visited = 0; /* Stats variable */
-    uint64_t num_calls   = 0; /* Stats variable */
-    bool     chksum_cols = FALSE;
+    uint32_t       deletes     = 0; /* Tracks number of deletes */
+    uint32_t       visited     = 0; /* Tracks number of nodes visited */
+    uint32_t       thrd_cols   = 0; /* Tracks number of thread collisions */
+    uint64_t       avg_visited = 0; /* Stats variable */
+    uint64_t       num_calls   = 0; /* Stats variable */
+    bool           chksum_cols = FALSE;
 
     herr_t ret_value = SUCCEED;
 
@@ -12316,7 +12316,7 @@ H5P__global_lock_prop_cb__cmp(H5P_mt_prop_t *prop, void *value1, void *value2, s
 {
     bool have_global_mutex = TRUE;  /* trivially so in single thread builds */
     bool mutex_acquired    = FALSE; /* flag for if we have acquired the global mutex */
-    int cmp_value = 0;
+    int  cmp_value         = 0;
 
     herr_t ret_value = SUCCEED;
 
