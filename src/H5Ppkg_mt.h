@@ -2766,6 +2766,33 @@ typedef struct H5P_mt_t {
     _Atomic uint64_t max_class_version_number;
     _Atomic uint64_t max_list_version_number;
 
+    /* Global Mutex stats */
+    _Atomic uint64_t H5P__grab_global_mutex__num_calls;
+    _Atomic uint64_t num_already_have_global_mutex;
+    _Atomic uint64_t global_mutex_acquire_failures;
+    _Atomic uint64_t global_mutex_acquire_success;
+    _Atomic uint64_t global_mutex_unlocks;
+
+    /* Property callback stats */
+    _Atomic uint64_t H5P__global_lock_prop_cb__create__num_calls;
+    _Atomic uint64_t num_already_have_mutex__create_cb;
+    _Atomic uint64_t H5P__global_lock_prop_cb__set__num_calls;
+    _Atomic uint64_t num_already_have_mutex__set_cb;
+    _Atomic uint64_t H5P__global_lock_prop_cb__get__num_calls;
+    _Atomic uint64_t num_already_have_mutex__get_cb;
+    _Atomic uint64_t H5P__global_lock_prop_cb__encode__num_calls;
+    _Atomic uint64_t num_already_have_mutex__encode_cb;
+    _Atomic uint64_t H5P__global_lock_prop_cb__decode__num_calls;
+    _Atomic uint64_t num_already_have_mutex__decode_cb;
+    _Atomic uint64_t H5P__global_lock_prop_cb__del__num_calls;
+    _Atomic uint64_t num_already_have_mutex__del_cb;
+    _Atomic uint64_t H5P__global_lock_prop_cb__copy__num_calls;
+    _Atomic uint64_t num_already_have_mutex__copy_cb;
+    _Atomic uint64_t H5P__global_lock_prop_cb__cmp__num_calls;
+    _Atomic uint64_t num_already_have_mutex__cmp_cb;
+    _Atomic uint64_t H5P__global_lock_prop_cb__close__num_calls;
+    _Atomic uint64_t num_already_have_mutex__close_cb;
+
 } H5P_mt_t;
 
 /*****************************/
@@ -2865,6 +2892,7 @@ herr_t H5P__count_nprops_pclass(H5P_mt_class_t *class, size_t *_nprops, uint64_t
 herr_t H5P__count_nprops_plist(H5P_mt_list_t *list, size_t *_nprops, uint64_t version);
 
 int32_t H5P__mt_prop_cmp(H5P_mt_prop_t *prop1, H5P_mt_prop_t *prop2);
+int32_t H5P__prop_cmp_test(H5P_mt_prop_t *prop1, H5P_mt_prop_t *prop2);
 int32_t H5P__mt_cmp_class(H5P_mt_class_t *class1, uint64_t version1, H5P_mt_class_t *class2,
                           uint64_t version2);
 int32_t H5P__mt_cmp_list(H5P_mt_list_t *list1, uint64_t version1, H5P_mt_list_t *list2, uint64_t version2);
@@ -2890,6 +2918,21 @@ herr_t          H5P__mt_encode(H5P_mt_list_t *list, uint64_t version, void *buf,
 herr_t          H5P__mt_encode_prop(H5P_mt_prop_t *prop, bool encode, size_t *encode_size, uint8_t **p);
 #endif
 uint64_t H5P__calc_avg_visited(uint64_t avg_visited, uint64_t num_calls, uint64_t visited);
+
+/* Callback functions */
+herr_t H5P__grab_global_mutex(bool *have_global_mutex, bool *mutex_acquired);
+herr_t H5P__global_lock_prop_cb__create(H5P_mt_prop_t *prop, const char *name, size_t size, void *value);
+herr_t H5P__global_lock_prop_cb__set(H5P_mt_prop_t *prop, hid_t plist_id, const char *name, 
+                                        size_t size, void *value);
+herr_t H5P__global_lock_prop_cb__get(H5P_mt_prop_t *prop, hid_t plist_id, 
+                                        const char *name, size_t size, void *value);
+herr_t H5P__global_lock_prop_cb__encode(H5P_mt_prop_t *prop, void *value, void **pp, size_t *value_len);
+herr_t H5P__global_lock_prop_cb__decode(H5P_mt_prop_t *prop, const void **pp, void *value_buf);
+herr_t H5P__global_lock_prop_cb__del(H5P_mt_prop_t *prop, hid_t plist_id, const char *name, 
+                                        size_t size, void *value);
+herr_t H5P__global_lock_prop_cb__copy(H5P_mt_prop_t *prop, const char *name, size_t size, void *value);
+herr_t H5P__global_lock_prop_cb__cmp(H5P_mt_prop_t *prop, void *value1, void *value2, size_t size);
+herr_t H5P__global_lock_prop_cb__close(H5P_mt_prop_t *prop, const char *name, size_t size, void *value);
 
 /* Stats functions */
 herr_t H5P__init_stats_global(void);

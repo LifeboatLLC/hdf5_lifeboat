@@ -29,6 +29,13 @@
 /* Public Typedefs */
 /*******************/
 
+/*
+ * The type of progress_cb callback for H5I__reserve_future
+ */
+//! <!-- [H5I_progress_func_t_snip] -->
+typedef herr_t (*H5I_progress_func_t)(hid_t id);
+//! <!-- [H5I_progress_func_t_snip] -->
+
 /**
  * The type of the realize_cb callback for H5Iregister_future
  */
@@ -131,6 +138,73 @@ extern "C" {
  */
 H5_DLL hid_t H5Iregister_future(H5I_type_t type, const void *object, H5I_future_realize_func_t realize_cb,
                                 H5I_future_discard_func_t discard_cb);
+ 
+/**
+ * \ingroup H5I
+ * \brief Reserve a future ID of the given type
+ *
+ * \param[in] type        The ID type (user-defined or library type)
+ * \param[in] progress_cb Per-ID progress function; must not be \c NULL
+ *
+ * \return \hid_t{future_id}
+ * 
+ * \details The \p type parameter is the identifier for the ID type to which
+ *          this new future ID will belong. This identifier may have been created
+ *          by a call to H5Iregister_type() or may be one of the HDF5 pre-defined
+ *          ID classes (e.g. H5I_FILE, H5I_GROUP, H5I_DATASPACE, etc).
+ *
+ * \details Creates an ID-table entry marked “future” (object == NULL)
+ *          with library and application refcounts set to 1. The ID value
+ *          is returned immediately; the underlying object is realized
+ *          later by the per-ID \p progress_cb when the ID is first
+ *          dereferenced by the type’s API.
+ *
+ * \note    The \p progress_cb is stored with the ID and will be invoked
+ *          by internal verify paths. If a “wait-only” mode is desired,
+ *          a NULL callback would be permitted and consumers would wait
+ *          on a per-type condition variable;
+ *
+ */
+H5_DLL hid_t H5Ireserve_future_id(H5I_type_t type, H5I_progress_func_t progress_cb);
+
+/**
+ * \ingroup H5I
+ * \brief Define (realize) a previously reserved future ID
+ *
+ * \param[in] type  The ID type of \p id
+ * \param[in] id    The reserved future ID
+ * \param[in] actual_obj Pointer to the realized object (must not be \c NULL)
+ *
+ * \return \herr_t
+ *
+ * \details Atomically publishes \p actual_obj for \p id and clears its
+ *          “future” flag. After success, the ID behaves like a normal ID
+ *          of \p type. If multiple threads race to define, the operation
+ *          is idempotent if the same object pointer is supplied.
+ * 
+ * \details The \p type parameter is the identifier for the ID type to which
+ *          this new future ID will belong. This identifier may have been created
+ *          by a call to H5Iregister_type() or may be one of the HDF5 pre-defined
+ *          ID classes (e.g. H5I_FILE, H5I_GROUP, H5I_DATASPACE, etc).
+ * 
+ * \details The \p id parameter is the the identifier for the future ID which
+ *          the passed in object will belong to
+ *
+ *          A  NULL value for \p object is allowed.
+ * 
+ * \details The \p actual_obj parameter is a pointer to the memory which the ID
+ *          will be a reference to. This pointer will be stored by the library,
+ *          but will not be returned to a call to H5Iobject_verify() until the
+ *          \p realize_cb callback has returned the actual pointer for the object.
+ *
+ *          A  NULL value for \p object is allowed.
+ *
+ * \details The caller must ensure that, on success, the future ID becomes the sole
+ *          owner of \p actual_obj. When realizing via a temporary HDF5 ID, use:
+ *
+ */
+H5_DLL herr_t H5Idefine_future_id(H5I_type_t type, hid_t id, void *actual_obj);
+
 
 #ifdef __cplusplus
 }

@@ -97,7 +97,7 @@ H5D__create_api_common(hid_t loc_id, const char *name, hid_t type_id, hid_t spac
         (_vol_obj_ptr ? _vol_obj_ptr : &tmp_vol_obj); /* Ptr to object ptr for loc_id */
     H5VL_loc_params_t loc_params;                     /* Location parameters for object access */
     hid_t             ret_value = H5I_INVALID_HID;    /* Return value */
-    htri_t            ret       = FALSE;              /* Return from H5P comparison */
+    htri_t            ret = FALSE;                    /* Return from H5P comparison */
 
     FUNC_ENTER_PACKAGE
 
@@ -120,8 +120,7 @@ H5D__create_api_common(hid_t loc_id, const char *name, hid_t type_id, hid_t spac
         H5_API_UNLOCK
 
         if (ret != TRUE)
-            HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5I_INVALID_HID,
-                        "lcpl_id is not a link creation property list");
+            HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5I_INVALID_HID, "lcpl_id is not a link creation property list");    
     }
 
     /* Get dataset creation property list */
@@ -134,7 +133,7 @@ H5D__create_api_common(hid_t loc_id, const char *name, hid_t type_id, hid_t spac
 
         if (TRUE != ret)
             HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5I_INVALID_HID,
-                        "dcpl_id is not a dataset create property list");
+                "dcpl_id is not a dataset create property list");    
     }
 
     /* Set the DCPL for the API context */
@@ -222,11 +221,11 @@ hid_t
 H5Dcreate_async(const char *app_file, const char *app_func, unsigned app_line, hid_t loc_id, const char *name,
                 hid_t type_id, hid_t space_id, hid_t lcpl_id, hid_t dcpl_id, hid_t dapl_id, hid_t es_id)
 {
-    H5VL_object_t *vol_obj     = NULL;            /* Object for loc_id */
-    void          *token       = NULL;            /* Request token for async operation        */
-    void         **token_ptr   = H5_REQUEST_NULL; /* Pointer to request token for async operation        */
-    hid_t          ret_value   = H5I_INVALID_HID; /* Return value */
-    int            dec_ref_ret = 0;               /* Ref count decrement return value */
+    H5VL_object_t *vol_obj   = NULL;            /* Object for loc_id */
+    void          *token     = NULL;            /* Request token for async operation        */
+    void         **token_ptr = H5_REQUEST_NULL; /* Pointer to request token for async operation        */
+    hid_t          ret_value = H5I_INVALID_HID; /* Return value */
+    int            dec_ref_ret = 0;             /* Ref count decrement return value */
 
     FUNC_ENTER_API_NO_MUTEX(H5I_INVALID_HID)
     H5TRACE11("i", "*s*sIui*siiiiii", app_file, app_func, app_line, loc_id, name, type_id, space_id, lcpl_id,
@@ -299,7 +298,7 @@ H5Dcreate_anon(hid_t loc_id, hid_t type_id, hid_t space_id, hid_t dcpl_id, hid_t
     H5VL_object_t    *vol_obj = NULL;              /* Object for loc_id */
     H5VL_loc_params_t loc_params;                  /* Location parameters for object access */
     hid_t             ret_value = H5I_INVALID_HID; /* Return value */
-    htri_t            ret       = FALSE;           /* Return value from H5P comparisons */
+    htri_t            ret = FALSE;                 /* Return value from H5P comparisons */
 
     FUNC_ENTER_API_NO_MUTEX(H5I_INVALID_HID)
     H5TRACE5("i", "iiiii", loc_id, type_id, space_id, dcpl_id, dapl_id);
@@ -462,11 +461,11 @@ hid_t
 H5Dopen_async(const char *app_file, const char *app_func, unsigned app_line, hid_t loc_id, const char *name,
               hid_t dapl_id, hid_t es_id)
 {
-    H5VL_object_t *vol_obj     = NULL;            /* Object for loc_id */
-    void          *token       = NULL;            /* Request token for async operation        */
-    void         **token_ptr   = H5_REQUEST_NULL; /* Pointer to request token for async operation        */
-    hid_t          ret_value   = H5I_INVALID_HID; /* Return value */
-    int            dec_ref_ret = 0;               /* Ref count decrement return value */
+    H5VL_object_t *vol_obj   = NULL;            /* Object for loc_id */
+    void          *token     = NULL;            /* Request token for async operation        */
+    void         **token_ptr = H5_REQUEST_NULL; /* Pointer to request token for async operation        */
+    hid_t          ret_value = H5I_INVALID_HID; /* Return value */
+    int            dec_ref_ret = 0;             /* Ref count decrement return value */
 
     FUNC_ENTER_API_NO_MUTEX(H5I_INVALID_HID)
     H5TRACE7("i", "*s*sIui*sii", app_file, app_func, app_line, loc_id, name, dapl_id, es_id);
@@ -1266,7 +1265,7 @@ H5Dread_chunk(hid_t dset_id, hid_t dxpl_id, const hsize_t *offset, uint32_t *fil
     H5VL_optional_args_t                vol_cb_args;         /* Arguments to VOL callback */
     H5VL_native_dataset_optional_args_t dset_opt_args;       /* Arguments for optional operation */
     herr_t                              ret_value = SUCCEED; /* Return value */
-    htri_t                              ret       = FALSE;   /* Return value from H5P comparisons */
+    htri_t                              ret = FALSE;         /* Return value from H5P comparisons */
 
     FUNC_ENTER_API_NO_MUTEX(FAIL)
     H5TRACE5("e", "ii*h*Iux", dset_id, dxpl_id, offset, filters, buf);
@@ -1592,7 +1591,7 @@ H5Dwrite_chunk(hid_t dset_id, hid_t dxpl_id, uint32_t filters, const hsize_t *of
     H5VL_native_dataset_optional_args_t dset_opt_args; /* Arguments for optional operation */
     uint32_t                            data_size_32;  /* Chunk data size (limited to 32-bits currently) */
     herr_t                              ret_value = SUCCEED; /* Return value */
-    htri_t                              ret       = FALSE;   /* Return value from H5P comparisons */
+    htri_t                              ret = FALSE;         /* Return value from H5P comparisons */
 
     FUNC_ENTER_API_NO_MUTEX(FAIL)
     H5TRACE6("e", "iiIu*hz*x", dset_id, dxpl_id, filters, offset, data_size, buf);
@@ -2573,7 +2572,7 @@ H5Dchunk_iter(hid_t dset_id, hid_t dxpl_id, H5D_chunk_iter_op_t op, void *op_dat
     H5VL_optional_args_t                vol_cb_args;    /* Arguments to VOL callback */
     H5VL_native_dataset_optional_args_t dset_opt_args;  /* Arguments for optional operation */
     herr_t                              ret_value = SUCCEED;
-    htri_t                              ret       = FALSE; /* Return value from H5P comparisons */
+    htri_t                              ret      = FALSE; /* Return value from H5P comparisons */
 
     FUNC_ENTER_API(FAIL)
     H5TRACE4("e", "iix*x", dset_id, dxpl_id, op, op_data);

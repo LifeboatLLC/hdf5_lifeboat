@@ -112,10 +112,10 @@ H5FL_DEFINE(H5_obj_t);
 
 /* Group ID class */
 static const H5I_class_t H5I_GROUP_CLS[1] = {{
-    H5I_GROUP,                /* ID class value */
-    0,                        /* Class flags */
-    0,                        /* # of reserved IDs for class */
-    (H5I_free_t)H5G__close_cb /* Callback routine for closing objects of this class */
+    H5I_GROUP,                      /* ID class value */
+    H5I_CLASS_FREE_FUNC_TOUCHES_VL, /* Class flags */
+    0,                              /* # of reserved IDs for class */
+    (H5I_free_t)H5G__close_cb       /* Callback routine for closing objects of this class */
 }};
 
 /*-------------------------------------------------------------------------

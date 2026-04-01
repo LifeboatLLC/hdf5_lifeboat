@@ -1852,6 +1852,15 @@ H5_trace_args(H5RS_str_t *rs, const char *type, va_list ap)
                         }     /* end block */
                         break;
 
+                        case 'P': /* H5I_progress_func_t */
+                        {
+                            H5I_progress_func_t ifreal =
+                                (H5I_progress_func_t)va_arg(ap, H5I_progress_func_t);
+
+                            H5RS_asprintf_cat(rs, "%p", (void *)(uintptr_t)ifreal);
+                        } /* end block */
+                        break;
+
                         case 'R': /* H5I_future_realize_func_t */
                         {
                             H5I_future_realize_func_t ifreal =

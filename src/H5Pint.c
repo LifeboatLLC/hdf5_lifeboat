@@ -175,33 +175,7 @@ hid_t H5P_CLS_REFERENCE_ACCESS_ID_g = H5I_INVALID_HID;
 hid_t H5P_CLS_STRING_CREATE_ID_g    = H5I_INVALID_HID;
 hid_t H5P_CLS_VOL_INITIALIZE_ID_g   = H5I_INVALID_HID;
 
-#ifdef H5_HAVE_MULTITHREAD
 
-H5P_mt_class_t *H5P_MT_CLS_ROOT_g = NULL;
-
-H5P_mt_class_t *H5P_MT_CLS_ATTRIBUTE_ACCESS_g = NULL;
-H5P_mt_class_t *H5P_MT_CLS_ATTRIBUTE_CREATE_g = NULL;
-H5P_mt_class_t *H5P_MT_CLS_DATASET_ACCESS_g   = NULL;
-H5P_mt_class_t *H5P_MT_CLS_DATASET_CREATE_g   = NULL;
-H5P_mt_class_t *H5P_MT_CLS_DATASET_XFER_g     = NULL;
-H5P_mt_class_t *H5P_MT_CLS_DATATYPE_ACCESS_g  = NULL;
-H5P_mt_class_t *H5P_MT_CLS_DATATYPE_CREATE_g  = NULL;
-H5P_mt_class_t *H5P_MT_CLS_FILE_ACCESS_g      = NULL;
-H5P_mt_class_t *H5P_MT_CLS_FILE_CREATE_g      = NULL;
-H5P_mt_class_t *H5P_MT_CLS_FILE_MOUNT_g       = NULL;
-H5P_mt_class_t *H5P_MT_CLS_GROUP_ACCESS_g     = NULL;
-H5P_mt_class_t *H5P_MT_CLS_GROUP_CREATE_g     = NULL;
-H5P_mt_class_t *H5P_MT_CLS_LINK_ACCESS_g      = NULL;
-H5P_mt_class_t *H5P_MT_CLS_LINK_CREATE_g      = NULL;
-H5P_mt_class_t *H5P_MT_CLS_MAP_ACCESS_g       = NULL;
-H5P_mt_class_t *H5P_MT_CLS_MAP_CREATE_g       = NULL;
-H5P_mt_class_t *H5P_MT_CLS_OBJECT_COPY_g      = NULL;
-H5P_mt_class_t *H5P_MT_CLS_OBJECT_CREATE_g    = NULL;
-H5P_mt_class_t *H5P_MT_CLS_REFERENCE_ACCESS_g = NULL;
-H5P_mt_class_t *H5P_MT_CLS_STRING_CREATE_g    = NULL;
-H5P_mt_class_t *H5P_MT_CLS_VOL_INITIALIZE_g   = NULL;
-
-#else
 H5P_genclass_t *H5P_CLS_ROOT_g = NULL;
 
 H5P_genclass_t *H5P_CLS_ATTRIBUTE_ACCESS_g = NULL;
@@ -225,7 +199,7 @@ H5P_genclass_t *H5P_CLS_OBJECT_CREATE_g    = NULL;
 H5P_genclass_t *H5P_CLS_REFERENCE_ACCESS_g = NULL;
 H5P_genclass_t *H5P_CLS_STRING_CREATE_g    = NULL;
 H5P_genclass_t *H5P_CLS_VOL_INITIALIZE_g   = NULL;
-#endif
+
 
 /*
  * Predefined property lists for each predefined class. These are initialized
@@ -280,156 +254,6 @@ _Atomic uint64_t H5P_VIPL_VER_g   = 0;
 
 #endif
 
-#ifdef H5_HAVE_MULTITHREAD
-
-/* Root property list class library initialization object */
-const H5P_libclass_t H5P_CLS_ROOT[1] = {{
-    "root",        /* Class name for debugging     */
-    H5P_TYPE_ROOT, /* Class type                   */
-
-    NULL, /* Parent class                 */
-
-    &H5P_MT_CLS_ROOT_g, /* Point to MT class*/
-
-    &H5P_CLS_ROOT_ID_g, /* Pointer to class ID          */
-    NULL,               /* Pointer to default property list ID */
-    NULL,               /* Default property registration routine */
-
-    NULL, /* Class creation callback      */
-    NULL, /* Class creation callback info */
-    NULL, /* Class copy callback          */
-    NULL, /* Class copy callback info     */
-    NULL, /* Class close callback         */
-    NULL  /* Class close callback info    */
-}};
-
-/* Attribute access property list class library initialization object */
-/* (move to proper source code file when used for real) */
-const H5P_libclass_t H5P_CLS_AACC[1] = {{
-    "attribute access",        /* Class name for debugging     */
-    H5P_TYPE_ATTRIBUTE_ACCESS, /* Class type                   */
-
-    &H5P_MT_CLS_LINK_ACCESS_g,      /* Parent MT class */
-    &H5P_MT_CLS_ATTRIBUTE_ACCESS_g, /* Pointer to MT class */
-
-    &H5P_CLS_ATTRIBUTE_ACCESS_ID_g, /* Pointer to class ID          */
-    &H5P_LST_ATTRIBUTE_ACCESS_ID_g, /* Pointer to default property list ID */
-    NULL,                           /* Default property registration routine */
-
-    NULL, /* Class creation callback      */
-    NULL, /* Class creation callback info */
-    NULL, /* Class copy callback          */
-    NULL, /* Class copy callback info     */
-    NULL, /* Class close callback         */
-    NULL  /* Class close callback info    */
-}};
-
-/* Group access property list class library initialization object */
-/* (move to proper source code file when used for real) */
-const H5P_libclass_t H5P_CLS_GACC[1] = {{
-    "group access",        /* Class name for debugging     */
-    H5P_TYPE_GROUP_ACCESS, /* Class type                   */
-
-    &H5P_MT_CLS_LINK_ACCESS_g,  /* Parent MT class */
-    &H5P_MT_CLS_GROUP_ACCESS_g, /* Pointer to MT class */
-
-    &H5P_CLS_GROUP_ACCESS_ID_g, /* Pointer to class ID          */
-    &H5P_LST_GROUP_ACCESS_ID_g, /* Pointer to default property list ID */
-    NULL,                       /* Default property registration routine */
-
-    NULL, /* Class creation callback      */
-    NULL, /* Class creation callback info */
-    NULL, /* Class copy callback          */
-    NULL, /* Class copy callback info     */
-    NULL, /* Class close callback         */
-    NULL  /* Class close callback info    */
-}};
-
-/* Datatype creation property list class library initialization object */
-/* (move to proper source code file when used for real) */
-const H5P_libclass_t H5P_CLS_TCRT[1] = {{
-    "datatype create",        /* Class name for debugging     */
-    H5P_TYPE_DATATYPE_CREATE, /* Class type                   */
-
-    &H5P_MT_CLS_OBJECT_CREATE_g,   /* Parent MT class */
-    &H5P_MT_CLS_DATATYPE_CREATE_g, /* Pointer to MT class */
-
-    &H5P_CLS_DATATYPE_CREATE_ID_g, /* Pointer to class ID          */
-    &H5P_LST_DATATYPE_CREATE_ID_g, /* Pointer to default property list ID */
-    NULL,                          /* Default property registration routine */
-
-    NULL, /* Class creation callback      */
-    NULL, /* Class creation callback info */
-    NULL, /* Class copy callback          */
-    NULL, /* Class copy callback info     */
-    NULL, /* Class close callback         */
-    NULL  /* Class close callback info    */
-}};
-
-/* Datatype access property list class library initialization object */
-/* (move to proper source code file when used for real) */
-const H5P_libclass_t H5P_CLS_TACC[1] = {{
-    "datatype access",        /* Class name for debugging     */
-    H5P_TYPE_DATATYPE_ACCESS, /* Class type                   */
-
-    &H5P_MT_CLS_LINK_ACCESS_g,     /* Parent MT class */
-    &H5P_MT_CLS_DATATYPE_ACCESS_g, /* Pointer to MT class */
-
-    &H5P_CLS_DATATYPE_ACCESS_ID_g, /* Pointer to class ID          */
-    &H5P_LST_DATATYPE_ACCESS_ID_g, /* Pointer to default property list ID */
-    NULL,                          /* Default property registration routine */
-
-    NULL, /* Class creation callback      */
-    NULL, /* Class creation callback info */
-    NULL, /* Class copy callback          */
-    NULL, /* Class copy callback info     */
-    NULL, /* Class close callback         */
-    NULL  /* Class close callback info    */
-}};
-
-/* VOL initialization property list class library initialization object */
-/* (move to proper source code file when used for real) */
-const H5P_libclass_t H5P_CLS_VINI[1] = {{
-    "VOL initialization",    /* Class name for debugging     */
-    H5P_TYPE_VOL_INITIALIZE, /* Class type                   */
-
-    &H5P_MT_CLS_ROOT_g,           /* Parent MT class */
-    &H5P_MT_CLS_VOL_INITIALIZE_g, /* Pointer to MT class */
-
-    &H5P_CLS_VOL_INITIALIZE_ID_g, /* Pointer to class ID          */
-    &H5P_LST_VOL_INITIALIZE_ID_g, /* Pointer to default property list ID */
-    NULL,                         /* Default property registration routine */
-
-    NULL, /* Class creation callback      */
-    NULL, /* Class creation callback info */
-    NULL, /* Class copy callback          */
-    NULL, /* Class copy callback info     */
-    NULL, /* Class close callback         */
-    NULL  /* Class close callback info    */
-}};
-
-/* Reference access property list class library initialization object */
-/* (move to proper source code file when used for real) */
-const H5P_libclass_t H5P_CLS_RACC[1] = {{
-    "reference access",        /* Class name for debugging     */
-    H5P_TYPE_REFERENCE_ACCESS, /* Class type                   */
-
-    &H5P_MT_CLS_FILE_ACCESS_g,      /* Parent MT class */
-    &H5P_MT_CLS_REFERENCE_ACCESS_g, /* Pointer to MT class */
-
-    &H5P_CLS_REFERENCE_ACCESS_ID_g, /* Pointer to class ID                  */
-    &H5P_LST_REFERENCE_ACCESS_ID_g, /* Pointer to default property list ID  */
-    NULL,                           /* Default property registration routine*/
-
-    NULL, /* Class creation callback              */
-    NULL, /* Class creation callback info         */
-    NULL, /* Class copy callback                  */
-    NULL, /* Class copy callback info             */
-    NULL, /* Class close callback                 */
-    NULL  /* Class close callback info            */
-}};
-
-#else
 
 /* Root property list class library initialization object */
 const H5P_libclass_t H5P_CLS_ROOT[1] = {{
@@ -578,7 +402,6 @@ const H5P_libclass_t H5P_CLS_RACC[1] = {{
     NULL  /* Class close callback info            */
 }};
 
-#endif
 
 /* Library property list classes defined in other code modules */
 /* (And not present in src/H5Pprivate.h) */
@@ -2889,10 +2712,19 @@ H5P__init_lkup_tbl(H5P_mt_class_t *parent, uint64_t version, H5P_mt_list_t *new_
                                     "Failed creating property for property list.");
 
                     /* Call the create callback */
+#if 1
+                    if ( H5P__global_lock_prop_cb__create(new_prop, new_prop->name, 
+                                                        valid_prop_value.size, valid_prop_value.ptr) < 0 )
+                    {
+                        assert(H5P_MT_ASSERT_FAIL);
+                        HGOTO_ERROR(H5E_PLIST, H5E_CANTCOPY, FAIL, "Create property callback failed"); 
+                    }
+#else
                     if ((new_prop->create)(new_prop->name, valid_prop_value.size, valid_prop_value.ptr) < 0) {
                         assert(H5P_MT_ASSERT_FAIL);
                         HGOTO_ERROR(H5E_PLIST, H5E_CANTCREATE, FAIL, "Can't create property");
                     }
+#endif
 
                     /* Set the property's in_lkup_tbl flag */
                     new_prop->in_lkup_tbl = TRUE;
@@ -3091,10 +2923,19 @@ H5P__init_lkup_tbl_copy(H5P_mt_list_t *old_list, uint64_t version, H5P_mt_list_t
 
                 /* If the new_prop has the copy callback, call it */
                 if (new_prop->copy) {
+#if 1
+                    if ( H5P__global_lock_prop_cb__copy(new_prop, new_prop->name, old_prop_value.size, 
+                                                                                    old_prop_value.ptr) < 0 )
+                    {
+                        assert(H5P_MT_ASSERT_FAIL);
+                        HGOTO_ERROR(H5E_PLIST, H5E_CANTCOPY, FAIL, "Can't copy property");
+                    }
+#else
                     if ((new_prop->copy)(new_prop->name, old_prop_value.size, old_prop_value.ptr) < 0) {
                         assert(H5P_MT_ASSERT_FAIL);
                         HGOTO_ERROR(H5E_PLIST, H5E_CANTCOPY, FAIL, "Can't copy property");
                     }
+#endif
                 }
 
                 /* Set the property's in_lkup_tbl flag */
@@ -3516,12 +3357,6 @@ H5P__create_prop(const char *name, const void *value_ptr, size_t value_size, boo
     new_prop->del    = prp_del;
     new_prop->copy   = prp_copy;
 
-    if (prp_create == NULL && prp_set == NULL && prp_get == NULL && prp_encode == NULL &&
-        prp_decode == NULL && prp_del == NULL && prp_copy == NULL) {
-        /* update stats */
-        atomic_fetch_add(&(H5P_mt_g.num_props_created_wo_cbs), 1);
-    }
-
     /* Use custom comparison routine if available, otherwise default to memcmp() */
     if (prp_cmp) {
         new_prop->cmp = prp_cmp;
@@ -3531,6 +3366,12 @@ H5P__create_prop(const char *name, const void *value_ptr, size_t value_size, boo
     }
 
     new_prop->close = prp_close;
+
+    if (prp_create == NULL && prp_set == NULL && prp_get == NULL && prp_encode == NULL &&
+        prp_decode == NULL && prp_del == NULL && prp_copy == NULL) {
+        /* update stats */
+        atomic_fetch_add(&(H5P_mt_g.num_props_created_wo_cbs), 1);
+    }
 
     ret_value = new_prop;
 
@@ -3746,10 +3587,19 @@ H5P__mt_copy_lfsll(void *param, H5P_mt_prop_t *old_prop, uint64_t version)
                 if (new_list) {
                     /* If the prop has a copy callback, call it */
                     if (new_prop->copy) {
+#if 1
+                        if ( H5P__global_lock_prop_cb__copy(new_prop, new_prop->name, value.size, 
+                                                                                        value.ptr) < 0 )
+                        {
+                            assert(H5P_MT_ASSERT_FAIL);
+                            HGOTO_ERROR(H5E_PLIST, H5E_CANTCOPY, FAIL, "Can't copy property");
+                        }
+#else
                         if ((new_prop->copy)(new_prop->name, value.size, value.ptr) < 0) {
                             assert(H5P_MT_ASSERT_FAIL);
                             HGOTO_ERROR(H5E_PLIST, H5E_CANTCOPY, FAIL, "Can't copy property");
                         }
+#endif
                     }
                 }
 
@@ -4105,9 +3955,9 @@ H5P__mt_ins_or_mod_prop__class(H5P_mt_class_t *class, const char *name, void *va
 {
     H5P_mt_prop_t     *new_prop = NULL; /* New prop to be created and inserted */
     H5P_mt_prop_t     *pl_head;         /* Head of the LFSLL of the class */
-    H5P_mt_prop_t     *next_prop;       /* Next prop in LFSLL after the new prop */
-    H5P_mt_prop_aptr_t next;            /* New prop's next struct field */
-    // uint64_t           delete_version = 0;
+    //H5P_mt_prop_t     *next_prop;       /* Next prop in LFSLL after the new prop */
+    //H5P_mt_prop_aptr_t next;            /* New prop's next struct field */
+    //uint64_t           delete_version = 0;
     uint32_t deletes     = 0; /* Tracks number of deletes */
     uint32_t visited     = 0; /* Tracks number of nodes visited */
     uint32_t thrd_cols   = 0; /* Tracks number of thread collisions */
@@ -4145,37 +3995,11 @@ H5P__mt_ins_or_mod_prop__class(H5P_mt_class_t *class, const char *name, void *va
 
     /* Insert the property into the LFSLL */
     H5P__mt_ins_or_mod_prop__lfsll_ins(pl_head, new_prop, &deletes, &visited, &thrd_cols, &chksum_cols);
-#if 0
-    next      = atomic_load(&(new_prop->next));
-    next_prop = next.ptr;
 
-    assert(atomic_load(&(next_prop->tag)) == H5P_MT_PROP_TAG);
-
-    /**
-     * If the next prop in the lfsll has the same chksum then don't increment logical
-     * length, because this is a 'modification' to an existing prop and not an entirely
-     * property. With the exception of if the next prop is deleted. The logical length
-     * was decremented upon it's deletion so must increment it now.
-     */
-    if (new_prop->chksum == next_prop->chksum) {
-        delete_version = atomic_load(&(next_prop->delete_version));
-
-        if (delete_version > 0 && delete_version < prop_version) {
-            atomic_fetch_add(&(class->log_pl_len), 1);
-            atomic_fetch_add(&(class->nprops_added), 1);
-        }
-    }
-    else {
-
-        atomic_fetch_add(&(class->log_pl_len), 1);
-        atomic_fetch_add(&(class->nprops_added), 1);
-    }
-#else
     if (is_new) {
         atomic_fetch_add(&(class->log_pl_len), 1);
         atomic_fetch_add(&(class->nprops_added), 1);
     }
-#endif
 
     /* Increment physical length of the lfsll */
     atomic_fetch_add(&(class->phys_pl_len), 1);
@@ -4450,21 +4274,41 @@ H5P__mt_ins_or_mod_prop__list(H5P_mt_list_t *list, const char *name, void *value
     /* If copy is TRUE and the copy callback exists call it */
     if (copy) {
         if (new_prop->copy) {
+#if 1
+            if ( H5P__global_lock_prop_cb__copy(new_prop, new_prop->name, prop_value.size, 
+                                                                            prop_value.ptr) < 0 )
+            {
+                prop_cleanup = TRUE;
+                assert(H5P_MT_ASSERT_FAIL);
+                HGOTO_ERROR(H5E_PLIST, H5E_CANTCOPY, FAIL, "Copy property callback failed");
+            }
+#else
             if ((new_prop->copy)(new_prop->name, prop_value.size, prop_value.ptr)) {
                 prop_cleanup = TRUE;
                 assert(H5P_MT_ASSERT_FAIL);
                 HGOTO_ERROR(H5E_PLIST, H5E_CANTCOPY, FAIL, "Copy property callback failed");
             }
+#endif
         }
     }
     /* If create is TRUE and the create callback exists call it */
     else if (create) {
         if (new_prop->create) {
+#if 1
+            if ( H5P__global_lock_prop_cb__create(new_prop, new_prop->name, 
+                                                prop_value.size, prop_value.ptr) < 0 )
+            {
+                prop_cleanup = TRUE;
+                assert(H5P_MT_ASSERT_FAIL);
+                HGOTO_ERROR(H5E_PLIST, H5E_CANTCOPY, FAIL, "Create property callback failed"); 
+            }
+#else
             if ((new_prop->create)(new_prop->name, prop_value.size, prop_value.ptr)) {
                 prop_cleanup = TRUE;
                 assert(H5P_MT_ASSERT_FAIL);
                 HGOTO_ERROR(H5E_PLIST, H5E_CANTCOPY, FAIL, "Create property callback failed");
             }
+#endif
         }
     }
 
@@ -4549,29 +4393,6 @@ H5P__mt_ins_or_mod_prop__list(H5P_mt_list_t *list, const char *name, void *value
 
     assert(atomic_load(&(new_prop->tag)) == H5P_MT_PROP_TAG);
 
-#if 0
-    /**
-     * Check if the next prop in the LFSLL has the same chksum. If it does, and
-     * if that version isn't deleted, don't increment logical length, because
-     * this is a new version of a prop already being counted by log_pl_len.
-     */
-
-    next      = atomic_load(&(new_prop->next));
-    next_prop = next.ptr;
-
-    /* If in_lkup_tbl flag is FALSE */
-    if (!new_prop->in_lkup_tbl) {
-        /* And there isn't a previous valid version */
-        if (new_prop->chksum != next_prop->chksum ||
-            (new_prop->chksum == next_prop->chksum && 
-                0 != H5P__is_valid(next_prop, prop_version))) {
-            /* Update counts */
-            atomic_fetch_add(&(list->nprops), 1);
-            atomic_fetch_add(&(list->nprops_added), 1);
-            atomic_fetch_add(&(list->log_pl_len), 1);
-        }
-    }
-#else
     /* If this is a new property update counts */
     if (!new_prop->in_lkup_tbl && is_new) {
         /* Update counts */
@@ -4579,7 +4400,6 @@ H5P__mt_ins_or_mod_prop__list(H5P_mt_list_t *list, const char *name, void *value
         atomic_fetch_add(&(list->nprops_added), 1);
         atomic_fetch_add(&(list->log_pl_len), 1);
     }
-#endif
 
     /* Increment physical length of the lfsll */
     atomic_fetch_add(&(list->phys_pl_len), 1);
@@ -5373,10 +5193,17 @@ H5P__mt_delete_prop__list(H5P_mt_list_t *list, int64_t chksum, const char *name,
     /* If the prop has a del callback, call it */
     if (prop->del) {
         value = atomic_load(&(prop->value));
-
+#if 1
+        if ( H5P__global_lock_prop_cb__del(prop, list->plist_id, prop->name, 
+                                                            value.size, value.ptr) < 0 )
+        {
+            HGOTO_ERROR(H5E_PLIST, H5E_CANTFREE, FAIL, "can't release property value");
+        }
+#else
         if ((*(prop->del))(list->plist_id, prop->name, value.size, value.ptr) < 0) {
             HGOTO_ERROR(H5E_PLIST, H5E_CANTFREE, FAIL, "can't release property value");
         }
+#endif
     }
 
     /* update stats */
@@ -6714,10 +6541,18 @@ H5P_set(H5P_mt_list_t *list, const char *name, const void *value)
 
         H5MM_memcpy(tmp_value.ptr, value, prop_value.size);
 
+#if 1
+        if ( H5P__global_lock_prop_cb__set(prop, atomic_load(&(list->plist_id)), name, 
+                                                            prop_value.size, tmp_value.ptr) < 0 )
+        {
+            HGOTO_ERROR(H5E_PLIST, H5E_CANTINIT, FAIL, "can't set property value");
+        }
+#else
         /* Call the user's callback */
         if ((*(prop->set))(atomic_load(&(list->plist_id)), name, prop_value.size, tmp_value.ptr) < 0) {
             HGOTO_ERROR(H5E_PLIST, H5E_CANTINIT, FAIL, "can't set property value");
         }
+#endif
 
         prp_value = tmp_value.ptr;
     }
@@ -6727,9 +6562,17 @@ H5P_set(H5P_mt_list_t *list, const char *name, const void *value)
     /* Free any previous value for the property */
     if (prop->del) {
         /* Call the user's 'delete' callback */
+#if 1
+        if ( H5P__global_lock_prop_cb__del(prop, list->plist_id, name, 
+                                                    prop_value.size, prop_value.ptr) < 0 )
+        {
+            HGOTO_ERROR(H5E_PLIST, H5E_CANTFREE, FAIL, "can't release property value");
+        }
+#else
         if ((*(prop->del))(list->plist_id, name, prop_value.size, prop_value.ptr) < 0) {
             HGOTO_ERROR(H5E_PLIST, H5E_CANTFREE, FAIL, "can't release property value");
         }
+#endif
     }
 
     /* memcpy into new buffer to atomically set */
@@ -8010,7 +7853,7 @@ done:
  *
  *              New function for the multithread H5P
  *
- * Purpose:     Checks if the two properties are the same or different property
+ * Purpose:     Checks if the two properties are the same or are different properties
  *
  *
  * Return:      Success:  0 the props are the same,
@@ -8124,6 +7967,149 @@ H5P__mt_prop_cmp(H5P_mt_prop_t *prop1, H5P_mt_prop_t *prop2)
         HGOTO_DONE(1);
     if (value1.ptr) {
         /* Call the compare callback */
+#if 1
+        if ((cmp_value = H5P__global_lock_prop_cb__cmp(prop1, value1.ptr, 
+                                                        value2.ptr, value1.size)) != 0 )
+            HGOTO_DONE(cmp_value);
+#else
+        if ((cmp_value = prop1->cmp(value1.ptr, value2.ptr, value1.size)) != 0)
+            HGOTO_DONE(cmp_value);
+#endif
+    }
+
+done:
+
+    FUNC_LEAVE_NOAPI(ret_value)
+
+} /* H5P__mt_prop_cmp() */
+
+/****************************************************************************************
+ * Function:    H5P__prop_cmp_test()
+ *
+ *              New function for the multithread H5P
+ *
+ * Purpose:     Checks if the two properties are the same or are different properties
+ * 
+ *              NOTE: This function is the exact same as the above function
+ *              H5P__mt_prop_cmp(), with the exception that of not grabbing the global
+ *              mutex prior to calling the property cmp callback.
+ * 
+ *              This function exists for testing purposes, to quickly compare many 
+ *              properties without the overhead of grabbing the global mutex when it
+ *              isn't needed for the specific test.
+ *
+ *
+ * Return:      Success:  0 the props are the same,
+ *                        1 the props are different
+ *
+ *              Failure: -1
+ ****************************************************************************************
+ */
+int32_t
+H5P__prop_cmp_test(H5P_mt_prop_t *prop1, H5P_mt_prop_t *prop2)
+{
+    H5P_mt_prop_value_t value1; /* prop1's value */
+    H5P_mt_prop_value_t value2; /* prop2's value */
+    int                 cmp_value;
+
+    int32_t ret_value = 0;
+
+    FUNC_ENTER_PACKAGE
+
+    assert(prop1);
+    assert((atomic_load(&(prop1->tag)) == H5P_MT_PROP_TAG) ||
+           (atomic_load(&(prop1->tag)) == H5P_MT_PROP_VALID_ONFL_TAG));
+
+    assert(prop2);
+    assert((atomic_load(&(prop2->tag)) == H5P_MT_PROP_TAG) ||
+           (atomic_load(&(prop2->tag)) == H5P_MT_PROP_VALID_ONFL_TAG));
+
+    if (prop1->chksum != prop2->chksum) {
+        HGOTO_DONE(1);
+    }
+
+    if (0 != strcmp(prop1->name, prop2->name)) {
+        assert(H5P_MT_ASSERT_FAIL);
+        HGOTO_ERROR(H5E_PLIST, H5E_BADVALUE, (int32_t)(-1),
+                    "Two different properties have the same checksum.");
+    }
+
+    /* Comparing the two props' callbacks */
+    if (prop1->create == NULL && prop2->create != NULL)
+        HGOTO_DONE(1);
+    if (prop1->create != NULL && prop2->create == NULL)
+        HGOTO_DONE(1);
+    if (prop1->create != prop2->create)
+        HGOTO_DONE(1);
+
+    if (prop1->set == NULL && prop2->set != NULL)
+        HGOTO_DONE(1);
+    if (prop1->set != NULL && prop2->set == NULL)
+        HGOTO_DONE(1);
+    if (prop1->set != prop2->set)
+        HGOTO_DONE(1);
+
+    if (prop1->get == NULL && prop2->get != NULL)
+        HGOTO_DONE(1);
+    if (prop1->get != NULL && prop2->get == NULL)
+        HGOTO_DONE(1);
+    if (prop1->get != prop2->get)
+        HGOTO_DONE(1);
+
+    if (prop1->encode == NULL && prop2->encode != NULL)
+        HGOTO_DONE(1);
+    if (prop1->encode != NULL && prop2->encode == NULL)
+        HGOTO_DONE(1);
+    if (prop1->encode != prop2->encode)
+        HGOTO_DONE(1);
+
+    if (prop1->decode == NULL && prop2->decode != NULL)
+        HGOTO_DONE(1);
+    if (prop1->decode != NULL && prop2->decode == NULL)
+        HGOTO_DONE(1);
+    if (prop1->decode != prop2->decode)
+        HGOTO_DONE(1);
+
+    if (prop1->del == NULL && prop2->del != NULL)
+        HGOTO_DONE(1);
+    if (prop1->del != NULL && prop2->del == NULL)
+        HGOTO_DONE(1);
+    if (prop1->del != prop2->del)
+        HGOTO_DONE(1);
+
+    if (prop1->copy == NULL && prop2->copy != NULL)
+        HGOTO_DONE(1);
+    if (prop1->copy != NULL && prop2->copy == NULL)
+        HGOTO_DONE(1);
+    if (prop1->copy != prop2->copy)
+        HGOTO_DONE(1);
+
+    if (prop1->cmp == NULL && prop2->cmp != NULL)
+        HGOTO_DONE(1);
+    if (prop1->cmp != NULL && prop2->cmp == NULL)
+        HGOTO_DONE(1);
+    if (prop1->cmp != prop2->cmp)
+        HGOTO_DONE(1);
+
+    if (prop1->close == NULL && prop2->close != NULL)
+        HGOTO_DONE(1);
+    if (prop1->close != NULL && prop2->close == NULL)
+        HGOTO_DONE(1);
+    if (prop1->close != prop2->close)
+        HGOTO_DONE(1);
+
+    value1 = atomic_load(&(prop1->value));
+    value2 = atomic_load(&(prop2->value));
+
+    /* Compare value size and pointer */
+    if (value1.size != value2.size)
+        HGOTO_DONE(1);
+    if (value1.ptr == NULL && value2.ptr != NULL)
+        HGOTO_DONE(1);
+    if (value1.ptr != NULL && value2.ptr == NULL)
+        HGOTO_DONE(1);
+    if (value1.ptr) {
+        /* Call the compare callback */
         if ((cmp_value = prop1->cmp(value1.ptr, value2.ptr, value1.size)) != 0)
             HGOTO_DONE(cmp_value);
     }
@@ -8132,7 +8118,7 @@ done:
 
     FUNC_LEAVE_NOAPI(ret_value)
 
-} /* H5P__mt_prop_cmp() */
+} /* H5P__prop_cmp_test() */
 
 /****************************************************************************************
  * Function:    H5P_class_isa
@@ -8763,11 +8749,18 @@ H5P_get(H5P_mt_list_t *plist, const char *name, void *value)
         }
 
         H5MM_memcpy(tmp_value, prop_value.ptr, prop_value.size);
-
+#if 1
+        if ( H5P__global_lock_prop_cb__get(prop, atomic_load(&(plist->plist_id)), name,
+                                                                prop_value.size, tmp_value) < 0 )
+        {
+            HGOTO_ERROR(H5E_PLIST, H5E_CANTINIT, FAIL, "Property's get callback failed");
+        }
+#else
         /* Call the callback */
         if ((*(prop->get))(plist->plist_id, name, prop_value.size, tmp_value) < 0) {
             HGOTO_ERROR(H5E_PLIST, H5E_CANTINIT, FAIL, "can't set property value");
         }
+#endif
 
         H5MM_memcpy(value, tmp_value, prop_value.size);
     }
@@ -9406,8 +9399,12 @@ H5P_close(H5P_genplist_t *list)
             /* If the property has a close callback call it */
             if (valid_prop->close) {
                 prop_value = atomic_load(&(valid_prop->value));
-
+#if 1
+                H5P__global_lock_prop_cb__close(valid_prop, valid_prop->name,
+                                                    prop_value.size, prop_value.ptr);
+#else
                 (valid_prop->close)(valid_prop->name, prop_value.size, prop_value.ptr);
+#endif
             }
 
             prop = valid_prop;
@@ -9442,7 +9439,12 @@ H5P_close(H5P_genplist_t *list)
                         prop_value = atomic_load(&(base_prop->value));
 
                         /* property close callback */
+#if 1
+                        H5P__global_lock_prop_cb__close(base_prop, base_prop->name,
+                                                            prop_value.size, prop_value.ptr);
+#else
                         (base_prop->close)(base_prop->name, prop_value.size, prop_value.ptr);
+#endif
                     }
                 }
             }
@@ -10992,39 +10994,7 @@ H5P__mt_close_prop(H5P_mt_prop_t *prop)
         }
 
     } while (!done);
-#if 0
-    /**
-     * If this is the first prop added to the prop free list, have the
-     * head pointer point to new tail as well.
-     */
-    fl_head = atomic_load(&(H5P_mt_g.prop_fl_head));
 
-    if (!fl_head.ptr) {
-        done = FALSE;
-
-        do {
-            fl_head = atomic_load(&(H5P_mt_g.prop_fl_head));
-
-            fl_update.ptr = prop;
-
-            if (!atomic_compare_exchange_strong(&(H5P_mt_g.prop_fl_head), &fl_head, fl_update)) {
-                /* failed, updated stats and try again */
-                atomic_fetch_add(&(H5P_mt_g.prop_fl_head_update_cols), 1);
-
-                /* assert is to not get stuck in an infinite loop while testing */
-                assert(H5P_MT_ASSERT_FAIL);
-            }
-            else {
-                /* success, update stats and continue */
-                atomic_fetch_add(&(H5P_mt_g.prop_fl_head_update), 1);
-
-                done = TRUE;
-            }
-
-        } while (!done);
-
-    } /* end if ( ! fl_head.ptr ) */
-#endif
     if (try_to_free_entry) {
         done = FALSE;
 
@@ -11861,6 +11831,680 @@ H5P_get_class(H5P_genplist_t *plist)
 } /* end H5P_get_class() MT safe version */
 
 /****************************************************************************************
+ * Function:    H5P__grab_global_mutex
+ *
+ * Purpose:     
+ *
+ * Return:      SUCCEED/FAIL
+ *
+ ****************************************************************************************
+ */
+herr_t
+H5P__grab_global_mutex(bool *have_global_mutex, bool *mutex_acquired)
+{
+    bool   done = FALSE;
+
+    herr_t ret_value = SUCCEED;
+
+    FUNC_ENTER_PACKAGE
+
+    atomic_fetch_add(&(H5P_mt_g.H5P__grab_global_mutex__num_calls), 1);
+
+    do
+    {
+        /* Check if we already have the global mutex */
+        if ( H5TS_have_mutex(&H5_g.init_lock, have_global_mutex) < 0 )
+        {
+            HGOTO_ERROR(H5E_LIB, H5E_CANTGET, FAIL, "Can't determine whether we have the global mutex");
+        }
+
+        /* If we already have the global mutex, update stats and set done */
+        if (*have_global_mutex) {
+            atomic_fetch_add(&(H5P_mt_g.num_already_have_global_mutex), 1);
+            done = TRUE;
+        }
+        /* Else, attempt to acquire the global mutex */
+        else
+        {
+            
+            if (H5TS_mutex_acquire(&H5_g.init_lock, 1, mutex_acquired) < 0)
+            {
+                HGOTO_ERROR(H5E_INTERNAL, H5E_SYSERRSTR, FAIL, "H5TS_mutex_acquire reported failure");
+            }
+            else
+            {
+                /**
+                 * Failed to acquire the global mutex, probably because another thread has it.
+                 * Sleep and try again.
+                 * 
+                 * TODO: may need to add code to handle the case if this a deadlock.
+                 */
+                if ( (*mutex_acquired) == FALSE )
+                {
+                    atomic_fetch_add(&(H5P_mt_g.global_mutex_acquire_failures), 1);
+
+                    sleep(1);
+
+                    continue;
+                }
+                /* Acquired global mutex, update stats and set done */
+                else
+                {
+                    atomic_fetch_add(&(H5P_mt_g.global_mutex_acquire_success), 1);
+                    done = TRUE;
+                }
+            }
+        }
+
+    } while ( ! done );
+
+done:
+
+    FUNC_LEAVE_NOAPI(ret_value)
+
+} /* end H5P__grab_global_mutex() */
+
+/****************************************************************************************
+ * Function:    H5P__global_lock_prop_cb__create
+ *
+ * Purpose:     
+ *
+ * Return:      SUCCEED/FAIL
+ *
+ ****************************************************************************************
+ */
+herr_t
+H5P__global_lock_prop_cb__create(H5P_mt_prop_t *prop, const char *name, size_t size, void *value)
+{
+    bool   have_global_mutex = FALSE; 
+    bool   mutex_acquired    = FALSE; 
+    //bool   done              = FALSE;
+    //bool   cb_error          = FALSE;
+
+    herr_t ret_value = SUCCEED;
+
+    FUNC_ENTER_PACKAGE
+
+    assert(prop);
+    assert(atomic_load(&(prop->tag)) == H5P_MT_PROP_TAG);
+    assert(name);
+    assert(size > 0);
+    assert(value);
+
+    atomic_fetch_add(&(H5P_mt_g.H5P__global_lock_prop_cb__create__num_calls), 1);
+
+    /**
+     * Check if we already have the global mutex, 
+     * and if we don't grab it.
+     */
+    if ( H5P__grab_global_mutex(&have_global_mutex, &mutex_acquired) < 0 )
+    {
+        HGOTO_ERROR(H5E_INTERNAL, H5E_CANTGET, FAIL, "Failed checking or grabbing mutex");
+    }
+
+    /* update stats */
+    if ( have_global_mutex )
+    {
+        atomic_fetch_add(&(H5P_mt_g.num_already_have_mutex__create_cb), 1);
+    }
+
+    /* Call the user's callback */
+    if ((prop->create)(prop->name, size, value) < 0) {
+        HGOTO_ERROR(H5E_PLIST, H5E_CANTINIT, FAIL, "property create callback failed");
+    }
+
+done:
+
+    /**
+     * If the global mutex was grabbed in this function,
+     * it must be released.
+     */
+    if ( mutex_acquired )
+    {
+        H5_API_UNLOCK
+        atomic_fetch_add(&(H5P_mt_g.global_mutex_unlocks), 1);
+    }
+
+    FUNC_LEAVE_NOAPI(ret_value)
+
+} /* end H5P__global_lock_prop_cb__create() */
+
+/****************************************************************************************
+ * Function:    H5P__global_lock_prop_cb__set
+ *
+ * Purpose:     
+ *
+ * Return:      SUCCEED/FAIL
+ *
+ ****************************************************************************************
+ */
+herr_t
+H5P__global_lock_prop_cb__set(H5P_mt_prop_t *prop, hid_t plist_id, const char *name, size_t size, void *value)
+{
+    bool   have_global_mutex = TRUE; /* trivially so in single thread builds */
+    bool   mutex_acquired    = FALSE; /* flag for if we have acquired the global mutex */
+    //bool   done              = FALSE;
+    //bool   cb_error          = FALSE;
+
+    herr_t ret_value = SUCCEED;
+
+    FUNC_ENTER_PACKAGE
+
+    assert(prop);
+    assert(atomic_load(&(prop->tag)) == H5P_MT_PROP_TAG);
+    assert(plist_id != H5I_INVALID_HID);
+    assert(name);
+    assert(size > 0);
+    assert(value);
+
+    atomic_fetch_add(&(H5P_mt_g.H5P__global_lock_prop_cb__set__num_calls), 1);
+
+    /**
+     * Check if we already have the global mutex, 
+     * and if we don't grab it.
+     */
+    if ( H5P__grab_global_mutex(&have_global_mutex, &mutex_acquired) < 0 )
+    {
+        HGOTO_ERROR(H5E_INTERNAL, H5E_CANTGET, FAIL, "Failed checking or grabbing mutex");
+    }
+
+    /* update stats */
+    if ( have_global_mutex )
+    {
+        atomic_fetch_add(&(H5P_mt_g.num_already_have_mutex__set_cb), 1);
+    }
+
+    /* Call the user's callback */
+    if ((*(prop->set))(plist_id, name, size, value) < 0) 
+    {
+        HGOTO_ERROR(H5E_PLIST, H5E_CANTINIT, FAIL, "property set callback failed");
+    }
+
+done:
+
+    /**
+     * If the global mutex was grabbed in this function,
+     * it must be released.
+     */
+    if ( mutex_acquired )
+    {
+        H5_API_UNLOCK
+        atomic_fetch_add(&(H5P_mt_g.global_mutex_unlocks), 1);
+    }
+
+    FUNC_LEAVE_NOAPI(ret_value)
+
+} /* end H5P__global_lock_prop_cb__set() */
+
+/****************************************************************************************
+ * Function:    H5P__global_lock_prop_cb__get
+ *
+ * Purpose:     
+ *
+ * Return:      SUCCEED/FAIL
+ *
+ ****************************************************************************************
+ */
+herr_t
+H5P__global_lock_prop_cb__get(H5P_mt_prop_t *prop, hid_t plist_id, 
+                                const char *name, size_t size, void *value)
+{
+    bool   have_global_mutex = TRUE; /* trivially so in single thread builds */
+    bool   mutex_acquired    = FALSE; /* flag for if we have acquired the global mutex */
+    //bool   done              = FALSE;
+    //bool   cb_error          = FALSE;
+
+    herr_t ret_value = SUCCEED;
+
+    FUNC_ENTER_PACKAGE
+
+    assert(prop);
+    assert(atomic_load(&(prop->tag)) == H5P_MT_PROP_TAG);
+    assert(plist_id != H5I_INVALID_HID);
+    assert(name);
+    assert(size > 0);
+    assert(value);
+
+    atomic_fetch_add(&(H5P_mt_g.H5P__global_lock_prop_cb__get__num_calls), 1);
+
+    /**
+     * Check if we already have the global mutex, 
+     * and if we don't grab it.
+     */
+    if ( H5P__grab_global_mutex(&have_global_mutex, &mutex_acquired) < 0 )
+    {
+        HGOTO_ERROR(H5E_INTERNAL, H5E_CANTGET, FAIL, "Failed checking or grabbing mutex");
+    }
+
+    /* update stats */
+    if ( have_global_mutex )
+    {
+        atomic_fetch_add(&(H5P_mt_g.num_already_have_mutex__get_cb), 1);
+    }
+
+    /* Call the user's callback */
+    if ((*(prop->get))(plist_id, name, size, value) < 0) 
+    {
+        HGOTO_ERROR(H5E_PLIST, H5E_CANTGET, FAIL, "property get callback failed");  
+    }
+
+done:
+
+    /**
+     * If the global mutex was grabbed in this function,
+     * it must be released.
+     */
+    if ( mutex_acquired )
+    {
+        H5_API_UNLOCK
+        atomic_fetch_add(&(H5P_mt_g.global_mutex_unlocks), 1);
+    }
+
+    FUNC_LEAVE_NOAPI(ret_value)
+
+} /* end H5P__global_lock_prop_cb__get() */
+
+/****************************************************************************************
+ * Function:    H5P__global_lock_prop_cb__encode
+ *
+ * Purpose:     
+ *
+ * Return:      SUCCEED/FAIL
+ *
+ ****************************************************************************************
+ */
+herr_t
+H5P__global_lock_prop_cb__encode(H5P_mt_prop_t *prop, void *value, void **pp, size_t *value_len)
+{
+    bool   have_global_mutex = TRUE; /* trivially so in single thread builds */
+    bool   mutex_acquired    = FALSE; /* flag for if we have acquired the global mutex */
+    //bool   done              = FALSE;
+    //bool   cb_error          = FALSE;
+
+    herr_t ret_value = SUCCEED;
+
+    FUNC_ENTER_PACKAGE
+
+    assert(prop);
+    assert(atomic_load(&(prop->tag)) == H5P_MT_PROP_TAG);
+    assert(value);
+    assert(pp);
+    //assert(*pp);
+    assert(value_len);
+
+    atomic_fetch_add(&(H5P_mt_g.H5P__global_lock_prop_cb__encode__num_calls), 1);
+
+    /**
+     * Check if we already have the global mutex, 
+     * and if we don't grab it.
+     */
+    if ( H5P__grab_global_mutex(&have_global_mutex, &mutex_acquired) < 0 )
+    {
+        HGOTO_ERROR(H5E_INTERNAL, H5E_CANTGET, FAIL, "Failed checking or grabbing mutex");
+    }
+
+    /* update stats */
+    if ( have_global_mutex )
+    {
+        atomic_fetch_add(&(H5P_mt_g.num_already_have_mutex__encode_cb), 1);
+    }
+
+    /* Call the user's callback */
+    if ((*(prop->encode))(value, pp, value_len) < 0) 
+    {
+        HGOTO_ERROR(H5E_PLIST, H5E_CANTENCODE, FAIL, "property encode callback failed");   
+    }
+
+done:
+
+    /**
+     * If the global mutex was grabbed in this function,
+     * it must be released.
+     */
+    if ( mutex_acquired )
+    {
+        H5_API_UNLOCK
+        atomic_fetch_add(&(H5P_mt_g.global_mutex_unlocks), 1);
+    }
+
+    FUNC_LEAVE_NOAPI(ret_value)
+
+} /* end H5P__global_lock_prop_cb__encode() */
+
+/****************************************************************************************
+ * Function:    H5P__global_lock_prop_cb__decode
+ *
+ * Purpose:     
+ *
+ * Return:      SUCCEED/FAIL
+ *
+ ****************************************************************************************
+ */
+herr_t
+H5P__global_lock_prop_cb__decode(H5P_mt_prop_t *prop, const void **pp, void *value_buf)
+{
+    bool   have_global_mutex = TRUE; /* trivially so in single thread builds */
+    bool   mutex_acquired    = FALSE; /* flag for if we have acquired the global mutex */
+    //bool   done              = FALSE;
+    //bool   cb_error          = FALSE;
+
+    herr_t ret_value = SUCCEED;
+
+    FUNC_ENTER_PACKAGE
+
+    assert(prop);
+    assert(atomic_load(&(prop->tag)) == H5P_MT_PROP_TAG);
+    assert(pp);
+    assert(*pp);
+    assert(value_buf);
+
+    atomic_fetch_add(&(H5P_mt_g.H5P__global_lock_prop_cb__decode__num_calls), 1);
+
+    /**
+     * Check if we already have the global mutex, 
+     * and if we don't grab it.
+     */
+    if ( H5P__grab_global_mutex(&have_global_mutex, &mutex_acquired) < 0 )
+    {
+        HGOTO_ERROR(H5E_INTERNAL, H5E_CANTGET, FAIL, "Failed checking or grabbing mutex");
+    }
+
+    /* update stats */
+    if ( have_global_mutex )
+    {
+        atomic_fetch_add(&(H5P_mt_g.num_already_have_mutex__decode_cb), 1);
+    }
+
+    /* Call the user's callback */
+    if ((*(prop->decode))(pp, value_buf) < 0) 
+    {
+        HGOTO_ERROR(H5E_PLIST, H5E_CANTDECODE, FAIL, "property decode callback failed");
+    }
+
+done:
+
+    /**
+     * If the global mutex was grabbed in this function,
+     * it must be released.
+     */
+    if ( mutex_acquired )
+    {
+        H5_API_UNLOCK
+        atomic_fetch_add(&(H5P_mt_g.global_mutex_unlocks), 1);
+    }
+
+    FUNC_LEAVE_NOAPI(ret_value)
+
+} /* end H5P__global_lock_prop_cb__decode() */
+
+/****************************************************************************************
+ * Function:    H5P__global_lock_prop_cb__del
+ *
+ * Purpose:     
+ *
+ * Return:      SUCCEED/FAIL
+ *
+ ****************************************************************************************
+ */
+herr_t
+H5P__global_lock_prop_cb__del(H5P_mt_prop_t *prop, hid_t plist_id, const char *name, 
+                                                                    size_t size, void *value)
+{
+    bool   have_global_mutex = TRUE; /* trivially so in single thread builds */
+    bool   mutex_acquired    = FALSE; /* flag for if we have acquired the global mutex */
+    //bool   done              = FALSE;
+    //bool   cb_error          = FALSE;
+
+    herr_t ret_value = SUCCEED;
+
+    FUNC_ENTER_PACKAGE
+
+    assert(prop);
+    assert(atomic_load(&(prop->tag)) == H5P_MT_PROP_TAG);
+    assert(plist_id != H5I_INVALID_HID);
+    assert(name);
+    assert(size > 0);
+    assert(value);
+
+    atomic_fetch_add(&(H5P_mt_g.H5P__global_lock_prop_cb__del__num_calls), 1);
+
+    /**
+     * Check if we already have the global mutex, 
+     * and if we don't grab it.
+     */
+    if ( H5P__grab_global_mutex(&have_global_mutex, &mutex_acquired) < 0 )
+    {
+        HGOTO_ERROR(H5E_INTERNAL, H5E_CANTGET, FAIL, "Failed checking or grabbing mutex");
+    }
+
+    /* update stats */
+    if ( have_global_mutex )
+    {
+        atomic_fetch_add(&(H5P_mt_g.num_already_have_mutex__del_cb), 1);
+    }
+
+    /* Call the user's callback */
+    if ((*(prop->del))(plist_id, name, size, value) < 0) 
+    {
+        HGOTO_ERROR(H5E_PLIST, H5E_CANTFREE, FAIL, "property del callback failed");
+    }
+
+done:
+
+    /**
+     * If the global mutex was grabbed in this function,
+     * it must be released.
+     */
+    if ( mutex_acquired )
+    {
+        H5_API_UNLOCK
+        atomic_fetch_add(&(H5P_mt_g.global_mutex_unlocks), 1);
+    }
+
+    FUNC_LEAVE_NOAPI(ret_value)
+
+} /* end H5P__global_lock_prop_cb__del() */
+
+/****************************************************************************************
+ * Function:    H5P__global_lock_prop_cb__copy
+ *
+ * Purpose:     
+ *
+ * Return:      SUCCEED/FAIL
+ *
+ ****************************************************************************************
+ */
+herr_t
+H5P__global_lock_prop_cb__copy(H5P_mt_prop_t *prop, const char *name, size_t size, void *value)
+{
+    bool   have_global_mutex = TRUE; /* trivially so in single thread builds */
+    bool   mutex_acquired    = FALSE; /* flag for if we have acquired the global mutex */
+    //bool   done              = FALSE;
+    //bool   cb_error          = FALSE;
+
+    herr_t ret_value = SUCCEED;
+
+    FUNC_ENTER_PACKAGE
+
+    assert(prop);
+    assert(atomic_load(&(prop->tag)) == H5P_MT_PROP_TAG);
+    assert(name);
+    assert(size > 0);
+    assert(value);
+
+    atomic_fetch_add(&(H5P_mt_g.H5P__global_lock_prop_cb__copy__num_calls), 1);
+
+    /**
+     * Check if we already have the global mutex, 
+     * and if we don't grab it.
+     */
+    if ( H5P__grab_global_mutex(&have_global_mutex, &mutex_acquired) < 0 )
+    {
+        HGOTO_ERROR(H5E_INTERNAL, H5E_CANTGET, FAIL, "Failed checking or grabbing mutex");
+    }
+
+    /* update stats */
+    if ( have_global_mutex )
+    {
+        atomic_fetch_add(&(H5P_mt_g.num_already_have_mutex__copy_cb), 1);
+    }
+
+    /* Call the user's callback */
+    if ((*(prop->copy))(name, size, value) < 0) 
+    {
+        HDONE_ERROR(H5E_PLIST, H5E_CANTCOPY, FAIL, "property copy callback failed");;    
+    }
+
+done:
+
+    /**
+     * If the global mutex was grabbed in this function,
+     * it must be released.
+     */
+    if ( mutex_acquired )
+    {
+        H5_API_UNLOCK
+        atomic_fetch_add(&(H5P_mt_g.global_mutex_unlocks), 1);
+    }
+
+    FUNC_LEAVE_NOAPI(ret_value)
+
+} /* end H5P__global_lock_prop_cb__copy() */
+
+/****************************************************************************************
+ * Function:    H5P__global_lock_prop_cb__cmp
+ *
+ * Purpose:     
+ *
+ * Return:      SUCCEED/FAIL
+ *
+ ****************************************************************************************
+ */
+herr_t
+H5P__global_lock_prop_cb__cmp(H5P_mt_prop_t *prop, void *value1, void *value2, size_t size)
+{
+    bool   have_global_mutex = TRUE; /* trivially so in single thread builds */
+    bool   mutex_acquired    = FALSE; /* flag for if we have acquired the global mutex */
+    //bool   done              = FALSE;
+    int    cmp_value         = 0;
+
+    herr_t ret_value = SUCCEED;
+
+    FUNC_ENTER_PACKAGE
+
+    assert(prop);
+    assert(atomic_load(&(prop->tag)) == H5P_MT_PROP_TAG ||
+           atomic_load(&(prop->tag)) == H5P_MT_PROP_VALID_ONFL_TAG);
+    assert(value1);
+    assert(value2);
+    assert(size > 0);
+
+    atomic_fetch_add(&(H5P_mt_g.H5P__global_lock_prop_cb__cmp__num_calls), 1);
+
+    /**
+     * Check if we already have the global mutex, 
+     * and if we don't grab it.
+     */
+    if ( H5P__grab_global_mutex(&have_global_mutex, &mutex_acquired) < 0 )
+    {
+        HGOTO_ERROR(H5E_INTERNAL, H5E_CANTGET, FAIL, "Failed checking or grabbing mutex");
+    }
+
+    /* update stats */
+    if ( have_global_mutex )
+    {
+        atomic_fetch_add(&(H5P_mt_g.num_already_have_mutex__cmp_cb), 1);
+    }
+
+    /* Call the user's callback */
+    if ((cmp_value = prop->cmp(value1, value2, size)) != 0) 
+    {
+        ret_value = FAIL;    
+    }
+
+done:
+
+    /**
+     * If the global mutex was grabbed in this function,
+     * it must be released.
+     */
+    if ( mutex_acquired )
+    {
+        H5_API_UNLOCK
+        atomic_fetch_add(&(H5P_mt_g.global_mutex_unlocks), 1);
+    }
+
+    FUNC_LEAVE_NOAPI(ret_value)
+
+} /* end H5P__global_lock_prop_cb__cmp() */
+
+/****************************************************************************************
+ * Function:    H5P__global_lock_prop_cb__close
+ *
+ * Purpose:     
+ *
+ * Return:      SUCCEED/FAIL
+ *
+ ****************************************************************************************
+ */
+herr_t
+H5P__global_lock_prop_cb__close(H5P_mt_prop_t *prop, const char *name, size_t size, void *value)
+{
+    bool   have_global_mutex = TRUE; /* trivially so in single thread builds */
+    bool   mutex_acquired    = FALSE; /* flag for if we have acquired the global mutex */
+    //bool   done              = FALSE;
+    //bool   cb_error          = FALSE;
+
+    herr_t ret_value = SUCCEED;
+
+    FUNC_ENTER_PACKAGE
+
+    assert(prop);
+    assert(atomic_load(&(prop->tag)) == H5P_MT_PROP_TAG);
+    assert(name);
+    assert(size > 0);
+    assert(value);
+
+    atomic_fetch_add(&(H5P_mt_g.H5P__global_lock_prop_cb__close__num_calls), 1);
+
+    /**
+     * Check if we already have the global mutex, 
+     * and if we don't grab it.
+     */
+    if ( H5P__grab_global_mutex(&have_global_mutex, &mutex_acquired) < 0 )
+    {
+        HGOTO_ERROR(H5E_INTERNAL, H5E_CANTGET, FAIL, "Failed checking or grabbing mutex");
+    }
+
+    /* update stats */
+    if ( have_global_mutex )
+    {
+        atomic_fetch_add(&(H5P_mt_g.num_already_have_mutex__close_cb), 1);
+    }
+
+    /** 
+     * Call the close callback and ignore the return value, 
+     * there's nothing we can do about it 
+     */
+    (*(prop->close))(name, size, value);
+
+done:
+
+    /**
+     * If the global mutex was grabbed in this function,
+     * it must be released.
+     */
+    if ( mutex_acquired )
+    {
+        H5_API_UNLOCK
+        atomic_fetch_add(&(H5P_mt_g.global_mutex_unlocks), 1);
+    }
+
+    FUNC_LEAVE_NOAPI(ret_value)
+
+} /* end H5P__global_lock_prop_cb__close() */
+
+/****************************************************************************************
  * Function:    H5P__init_stats_global
  *
  * Purpose:     Initializes the stats fields for the H5P_mt_g global struct
@@ -11999,6 +12643,32 @@ H5P__init_stats_global(void)
     atomic_init(&(H5P_mt_g.max_list_num_phys_props), 2ULL);
     atomic_init(&(H5P_mt_g.max_class_version_number), 0ULL);
     atomic_init(&(H5P_mt_g.max_list_version_number), 0ULL);
+
+    /* Global Mutex stats */
+    atomic_init(&(H5P_mt_g.H5P__grab_global_mutex__num_calls), 0ULL);
+    atomic_init(&(H5P_mt_g.global_mutex_acquire_failures), 0ULL);
+    atomic_init(&(H5P_mt_g.global_mutex_acquire_success), 0ULL);
+    atomic_init(&(H5P_mt_g.global_mutex_unlocks), 0ULL);
+
+    /* Property callback stats */
+    atomic_init(&(H5P_mt_g.H5P__global_lock_prop_cb__create__num_calls), 0ULL);
+    atomic_init(&(H5P_mt_g.num_already_have_mutex__create_cb), 0ULL);
+    atomic_init(&(H5P_mt_g.H5P__global_lock_prop_cb__set__num_calls), 0ULL);
+    atomic_init(&(H5P_mt_g.num_already_have_mutex__set_cb), 0ULL);
+    atomic_init(&(H5P_mt_g.H5P__global_lock_prop_cb__get__num_calls), 0ULL);
+    atomic_init(&(H5P_mt_g.num_already_have_mutex__get_cb), 0ULL);
+    atomic_init(&(H5P_mt_g.H5P__global_lock_prop_cb__encode__num_calls), 0ULL);
+    atomic_init(&(H5P_mt_g.num_already_have_mutex__encode_cb), 0ULL);
+    atomic_init(&(H5P_mt_g.H5P__global_lock_prop_cb__decode__num_calls), 0ULL);
+    atomic_init(&(H5P_mt_g.num_already_have_mutex__decode_cb), 0ULL);
+    atomic_init(&(H5P_mt_g.H5P__global_lock_prop_cb__del__num_calls), 0ULL);
+    atomic_init(&(H5P_mt_g.num_already_have_mutex__del_cb), 0ULL);
+    atomic_init(&(H5P_mt_g.H5P__global_lock_prop_cb__copy__num_calls), 0ULL);
+    atomic_init(&(H5P_mt_g.num_already_have_mutex__copy_cb), 0ULL);
+    atomic_init(&(H5P_mt_g.H5P__global_lock_prop_cb__cmp__num_calls), 0ULL);
+    atomic_init(&(H5P_mt_g.num_already_have_mutex__cmp_cb), 0ULL);
+    atomic_init(&(H5P_mt_g.H5P__global_lock_prop_cb__close__num_calls), 0ULL);
+    atomic_init(&(H5P_mt_g.num_already_have_mutex__close_cb), 0ULL);
 
     FUNC_LEAVE_NOAPI(ret_value)
 
@@ -12143,6 +12813,32 @@ H5P__reset_stats_global(void)
     atomic_store(&(H5P_mt_g.max_list_num_phys_props), 2ULL);
     atomic_store(&(H5P_mt_g.max_class_version_number), 0ULL);
     atomic_store(&(H5P_mt_g.max_list_version_number), 0ULL);
+
+    /* Global Mutex stats */
+    atomic_store(&(H5P_mt_g.H5P__grab_global_mutex__num_calls), 0ULL);
+    atomic_store(&(H5P_mt_g.global_mutex_acquire_failures), 0ULL);
+    atomic_store(&(H5P_mt_g.global_mutex_acquire_success), 0ULL);
+    atomic_store(&(H5P_mt_g.global_mutex_unlocks), 0ULL);
+
+    /* Property callback stats */
+    atomic_store(&(H5P_mt_g.H5P__global_lock_prop_cb__create__num_calls), 0ULL);
+    atomic_store(&(H5P_mt_g.num_already_have_mutex__create_cb), 0ULL);
+    atomic_store(&(H5P_mt_g.H5P__global_lock_prop_cb__set__num_calls), 0ULL);
+    atomic_store(&(H5P_mt_g.num_already_have_mutex__set_cb), 0ULL);
+    atomic_store(&(H5P_mt_g.H5P__global_lock_prop_cb__get__num_calls), 0ULL);
+    atomic_store(&(H5P_mt_g.num_already_have_mutex__get_cb), 0ULL);
+    atomic_store(&(H5P_mt_g.H5P__global_lock_prop_cb__encode__num_calls), 0ULL);
+    atomic_store(&(H5P_mt_g.num_already_have_mutex__encode_cb), 0ULL);
+    atomic_store(&(H5P_mt_g.H5P__global_lock_prop_cb__decode__num_calls), 0ULL);
+    atomic_store(&(H5P_mt_g.num_already_have_mutex__decode_cb), 0ULL);
+    atomic_store(&(H5P_mt_g.H5P__global_lock_prop_cb__del__num_calls), 0ULL);
+    atomic_store(&(H5P_mt_g.num_already_have_mutex__del_cb), 0ULL);
+    atomic_store(&(H5P_mt_g.H5P__global_lock_prop_cb__copy__num_calls), 0ULL);
+    atomic_store(&(H5P_mt_g.num_already_have_mutex__copy_cb), 0ULL);
+    atomic_store(&(H5P_mt_g.H5P__global_lock_prop_cb__cmp__num_calls), 0ULL);
+    atomic_store(&(H5P_mt_g.num_already_have_mutex__cmp_cb), 0ULL);
+    atomic_store(&(H5P_mt_g.H5P__global_lock_prop_cb__close__num_calls), 0ULL);
+    atomic_store(&(H5P_mt_g.num_already_have_mutex__close_cb), 0ULL);
 
     FUNC_LEAVE_NOAPI(ret_value)
 
@@ -12551,27 +13247,27 @@ H5P__dump_stats_global(FILE *file_ptr)
             (unsigned long long)(atomic_load(&(H5P_mt_g.list_fl_head_free_skipped_no_reallocable))));
 
     /* stats for creating or copying classes */
-    fprintf(file_ptr, "H5P_mt_g.H5P__create_class__num_calls         = %lld\n",
+    fprintf(file_ptr, "H5P_mt_g.H5P__create_class__num_calls                = %lld\n",
             (unsigned long long)(atomic_load(&(H5P_mt_g.H5P__create_class__num_calls))));
-    fprintf(file_ptr, "H5P_mt_g.H5P__copy_pclass__num_calls         = %lld\n",
+    fprintf(file_ptr, "H5P_mt_g.H5P__copy_pclass__num_calls                 = %lld\n",
             (unsigned long long)(atomic_load(&(H5P_mt_g.H5P__copy_pclass__num_calls))));
-    fprintf(file_ptr, "H5P_mt_g.H5P__mt_create_class__internal__num_calls         = %lld\n",
+    fprintf(file_ptr, "H5P_mt_g.H5P__mt_create_class__internal__num_calls   = %lld\n",
             (unsigned long long)(atomic_load(&(H5P_mt_g.H5P__mt_create_class__internal__num_calls))));
-    fprintf(file_ptr, "H5P_mt_g.num_classes_created_wo_parent         = %lld\n",
+    fprintf(file_ptr, "H5P_mt_g.num_classes_created_wo_parent               = %lld\n",
             (unsigned long long)(atomic_load(&(H5P_mt_g.num_classes_created_wo_parent))));
-    fprintf(file_ptr, "H5P_mt_g.num_class_structs_allocated_from_heap         = %lld\n",
+    fprintf(file_ptr, "H5P_mt_g.num_class_structs_allocated_from_heap       = %lld\n",
             (unsigned long long)(atomic_load(&(H5P_mt_g.num_class_structs_allocated_from_heap))));
     fprintf(file_ptr, "H5P_mt_g.num_class_structs_allocated_from_fl         = %lld\n",
             (unsigned long long)(atomic_load(&(H5P_mt_g.num_class_structs_allocated_from_fl))));
 
     /* stats for creating or copying lists */
-    fprintf(file_ptr, "H5P_mt_g.H5P_create_id__num_calls              = %lld\n",
+    fprintf(file_ptr, "H5P_mt_g.H5P_create_id__num_calls                    = %lld\n",
             (unsigned long long)(atomic_load(&(H5P_mt_g.H5P_create_id__num_calls))));
-    fprintf(file_ptr, "H5P_mt_g.H5P__create_list__num_calls              = %lld\n",
+    fprintf(file_ptr, "H5P_mt_g.H5P__create_list__num_calls                 = %lld\n",
             (unsigned long long)(atomic_load(&(H5P_mt_g.H5P__create_list__num_calls))));
-    fprintf(file_ptr, "H5P_mt_g.H5P_copy_plist__num_calls              = %lld\n",
+    fprintf(file_ptr, "H5P_mt_g.H5P_copy_plist__num_calls                   = %lld\n",
             (unsigned long long)(atomic_load(&(H5P_mt_g.H5P_copy_plist__num_calls))));
-    fprintf(file_ptr, "H5P_mt_g.H5P__mt_create_list__internal__num_calls        = %lld\n",
+    fprintf(file_ptr, "H5P_mt_g.H5P__mt_create_list__internal__num_calls    = %lld\n",
             (unsigned long long)(atomic_load(&(H5P_mt_g.H5P__mt_create_list__internal__num_calls))));
     fprintf(file_ptr, "H5P_mt_g.num_list_structs_allocated_from_heap        = %lld\n",
             (unsigned long long)(atomic_load(&(H5P_mt_g.num_list_structs_allocated_from_heap))));
@@ -12583,17 +13279,17 @@ H5P__dump_stats_global(FILE *file_ptr)
             (unsigned long long)(atomic_load(&(H5P_mt_g.H5P__init_lkup_tbl_copy__num_calls))));
 
     /* stats for creating or copying props */
-    fprintf(file_ptr, "H5P_mt_g.H5P__create_prop__num_calls              = %lld\n",
+    fprintf(file_ptr, "H5P_mt_g.H5P__create_prop__num_calls                 = %lld\n",
             (unsigned long long)(atomic_load(&(H5P_mt_g.H5P__create_prop__num_calls))));
-    fprintf(file_ptr, "H5P_mt_g.H5P__copy_prop_plist__num_calls              = %lld\n",
+    fprintf(file_ptr, "H5P_mt_g.H5P__copy_prop_plist__num_calls             = %lld\n",
             (unsigned long long)(atomic_load(&(H5P_mt_g.H5P__copy_prop_plist__num_calls))));
-    fprintf(file_ptr, "H5P_mt_g.H5P__copy_prop_pclass__num_calls              = %lld\n",
+    fprintf(file_ptr, "H5P_mt_g.H5P__copy_prop_pclass__num_calls            = %lld\n",
             (unsigned long long)(atomic_load(&(H5P_mt_g.H5P__copy_prop_pclass__num_calls))));
     fprintf(file_ptr, "H5P_mt_g.num_prop_structs_allocated_from_heap        = %lld\n",
             (unsigned long long)(atomic_load(&(H5P_mt_g.num_prop_structs_allocated_from_heap))));
     fprintf(file_ptr, "H5P_mt_g.num_prop_structs_allocated_from_fl          = %lld\n",
             (unsigned long long)(atomic_load(&(H5P_mt_g.num_prop_structs_allocated_from_fl))));
-    fprintf(file_ptr, "H5P_mt_g.num_props_created_wo_cbs              = %lld\n",
+    fprintf(file_ptr, "H5P_mt_g.num_props_created_wo_cbs                    = %lld\n",
             (unsigned long long)(atomic_load(&(H5P_mt_g.num_props_created_wo_cbs))));
 
     /* stats for property inserts */
@@ -12613,9 +13309,9 @@ H5P__dump_stats_global(FILE *file_ptr)
             (unsigned long long)(atomic_load(&(H5P_mt_g.num_props_deleted_classes_already_deleted))));
     fprintf(file_ptr, "H5P_mt_g.num_props_deleted_lists                     = %lld\n",
             (unsigned long long)(atomic_load(&(H5P_mt_g.num_props_deleted_lists))));
-    fprintf(file_ptr, "H5P_mt_g.num_props_deleted_lists_prop_not_found    = %lld\n",
+    fprintf(file_ptr, "H5P_mt_g.num_props_deleted_lists_prop_not_found      = %lld\n",
             (unsigned long long)(atomic_load(&(H5P_mt_g.num_props_deleted_lists_prop_not_found))));
-    fprintf(file_ptr, "H5P_mt_g.num_props_deleted_lists_already_deleted   = %lld\n",
+    fprintf(file_ptr, "H5P_mt_g.num_props_deleted_lists_already_deleted     = %lld\n",
             (unsigned long long)(atomic_load(&(H5P_mt_g.num_props_deleted_lists_already_deleted))));
 
     /* stats for searches */
@@ -12627,17 +13323,17 @@ H5P__dump_stats_global(FILE *file_ptr)
             (unsigned long long)(atomic_load(&(H5P_mt_g.num_searches_while_an_op_occurs_class))));
     fprintf(file_ptr, "H5P_mt_g.num_searches_lists                          = %lld\n",
             (unsigned long long)(atomic_load(&(H5P_mt_g.num_searches_lists))));
-    fprintf(file_ptr, "H5P_mt_g.num_searches_lists_prop_not_found         = %lld\n",
+    fprintf(file_ptr, "H5P_mt_g.num_searches_lists_prop_not_found           = %lld\n",
             (unsigned long long)(atomic_load(&(H5P_mt_g.num_searches_lists_prop_not_found))));
     fprintf(file_ptr, "H5P_mt_g.num_searches_while_an_op_occurs_list        = %lld\n",
             (unsigned long long)(atomic_load(&(H5P_mt_g.num_searches_while_an_op_occurs_list))));
 
     /* Default list stats */
-    fprintf(file_ptr, "H5P_mt_g.num_default_list_mods                             = %lld\n",
+    fprintf(file_ptr, "H5P_mt_g.num_default_list_mods                       = %lld\n",
             (unsigned long long)(atomic_load(&(H5P_mt_g.num_default_list_mods))));
 
     /* stats for getting list version from context */
-    fprintf(file_ptr, "H5P_mt_g.num_list_version_from_ctx                             = %lld\n",
+    fprintf(file_ptr, "H5P_mt_g.num_list_version_from_ctx                   = %lld\n",
             (unsigned long long)(atomic_load(&(H5P_mt_g.num_list_version_from_ctx))));
 
     /* Property chksum cols stats */
@@ -12647,13 +13343,13 @@ H5P__dump_stats_global(FILE *file_ptr)
     /* H5P__mt_enforce_serialization stats */
     fprintf(file_ptr, "H5P_mt_g.H5P__mt_enforce_serialization__num_calls    = %lld\n",
             (unsigned long long)(atomic_load(&(H5P_mt_g.H5P__mt_enforce_serialization__num_calls))));
-    fprintf(file_ptr, "H5P_mt_g.num_classes_loop_enforce_serial    = %lld\n",
+    fprintf(file_ptr, "H5P_mt_g.num_classes_loop_enforce_serial             = %lld\n",
             (unsigned long long)(atomic_load(&(H5P_mt_g.num_classes_loop_enforce_serial))));
-    fprintf(file_ptr, "H5P_mt_g.num_lists_loop_enforce_serial    = %lld\n",
+    fprintf(file_ptr, "H5P_mt_g.num_lists_loop_enforce_serial               = %lld\n",
             (unsigned long long)(atomic_load(&(H5P_mt_g.num_lists_loop_enforce_serial))));
 
     /* stats for marking classes deleted or unmarking classes as deleted */
-    fprintf(file_ptr, "H5P_mt_g.H5P__close_class_cb__num_calls                 = %lld\n",
+    fprintf(file_ptr, "H5P_mt_g.H5P__close_class_cb__num_calls              = %lld\n",
             (unsigned long long)(atomic_load(&(H5P_mt_g.H5P__close_class_cb__num_calls))));
     fprintf(file_ptr, "H5P_mt_g.H5P__close_class__num_calls                 = %lld\n",
             (unsigned long long)(atomic_load(&(H5P_mt_g.H5P__close_class__num_calls))));
@@ -12665,9 +13361,9 @@ H5P__dump_stats_global(FILE *file_ptr)
             (unsigned long long)(atomic_load(&(H5P_mt_g.class_un_marked_as_deleted))));
 
     /* stats for closing lists */
-    fprintf(file_ptr, "H5P_mt_g.H5P__close_list_cb__num_calls                 = %lld\n",
+    fprintf(file_ptr, "H5P_mt_g.H5P__close_list_cb__num_calls               = %lld\n",
             (unsigned long long)(atomic_load(&(H5P_mt_g.H5P__close_list_cb__num_calls))));
-    fprintf(file_ptr, "H5P_mt_g.H5P_close__num_calls                 = %lld\n",
+    fprintf(file_ptr, "H5P_mt_g.H5P_close__num_calls                        = %lld\n",
             (unsigned long long)(atomic_load(&(H5P_mt_g.H5P_close__num_calls))));
 
     /* Clear function stats */
@@ -12691,6 +13387,56 @@ H5P__dump_stats_global(FILE *file_ptr)
             (unsigned long long)(atomic_load(&(H5P_mt_g.max_class_version_number))));
     fprintf(file_ptr, "H5P_mt_g.max_list_version_number                     = %lld\n",
             (unsigned long long)(atomic_load(&(H5P_mt_g.max_list_version_number))));
+
+    /* Global Mutex stats */
+    fprintf(file_ptr, "H5P_mt_g.H5P__grab_global_mutex__num_calls           = %lld\n",
+            (unsigned long long)(atomic_load(&(H5P_mt_g.H5P__grab_global_mutex__num_calls))));
+    fprintf(file_ptr, "H5P_mt_g.num_already_have_global_mutex               = %lld\n",
+            (unsigned long long)(atomic_load(&(H5P_mt_g.num_already_have_global_mutex))));
+    fprintf(file_ptr, "H5P_mt_g.global_mutex_acquire_failures               = %lld\n",
+            (unsigned long long)(atomic_load(&(H5P_mt_g.global_mutex_acquire_failures))));
+    fprintf(file_ptr, "H5P_mt_g.global_mutex_acquire_success                = %lld\n",
+            (unsigned long long)(atomic_load(&(H5P_mt_g.global_mutex_acquire_success))));
+    fprintf(file_ptr, "H5P_mt_g.global_mutex_unlocks                        = %lld\n",
+            (unsigned long long)(atomic_load(&(H5P_mt_g.global_mutex_unlocks))));
+
+   /* Global Mutex stats */
+    fprintf(file_ptr, "H5P_mt_g.H5P__global_lock_prop_cb__create__num_calls = %lld\n",
+            (unsigned long long)(atomic_load(&(H5P_mt_g.H5P__global_lock_prop_cb__create__num_calls))));
+    fprintf(file_ptr, "H5P_mt_g.num_already_have_mutex__create_cb           = %lld\n",
+            (unsigned long long)(atomic_load(&(H5P_mt_g.num_already_have_mutex__create_cb))));
+    fprintf(file_ptr, "H5P_mt_g.H5P__global_lock_prop_cb__set__num_calls    = %lld\n",
+            (unsigned long long)(atomic_load(&(H5P_mt_g.H5P__global_lock_prop_cb__set__num_calls))));
+    fprintf(file_ptr, "H5P_mt_g.num_already_have_mutex__set_cb              = %lld\n",
+            (unsigned long long)(atomic_load(&(H5P_mt_g.num_already_have_mutex__set_cb))));
+    fprintf(file_ptr, "H5P_mt_g.H5P__global_lock_prop_cb__get__num_calls    = %lld\n",
+            (unsigned long long)(atomic_load(&(H5P_mt_g.H5P__global_lock_prop_cb__get__num_calls))));
+    fprintf(file_ptr, "H5P_mt_g.num_already_have_mutex__get_cb              = %lld\n",
+            (unsigned long long)(atomic_load(&(H5P_mt_g.num_already_have_mutex__get_cb))));
+    fprintf(file_ptr, "H5P_mt_g.H5P__global_lock_prop_cb__encode__num_calls = %lld\n",
+            (unsigned long long)(atomic_load(&(H5P_mt_g.H5P__global_lock_prop_cb__encode__num_calls))));
+    fprintf(file_ptr, "H5P_mt_g.num_already_have_mutex__encode_cb           = %lld\n",
+            (unsigned long long)(atomic_load(&(H5P_mt_g.num_already_have_mutex__encode_cb))));
+    fprintf(file_ptr, "H5P_mt_g.H5P__global_lock_prop_cb__decode__num_calls = %lld\n",
+            (unsigned long long)(atomic_load(&(H5P_mt_g.H5P__global_lock_prop_cb__decode__num_calls))));
+    fprintf(file_ptr, "H5P_mt_g.num_already_have_mutex__decode_cb           = %lld\n",
+            (unsigned long long)(atomic_load(&(H5P_mt_g.num_already_have_mutex__decode_cb))));
+    fprintf(file_ptr, "H5P_mt_g.H5P__global_lock_prop_cb__del__num_calls    = %lld\n",
+            (unsigned long long)(atomic_load(&(H5P_mt_g.H5P__global_lock_prop_cb__del__num_calls))));
+    fprintf(file_ptr, "H5P_mt_g.num_already_have_mutex__del_cb              = %lld\n",
+            (unsigned long long)(atomic_load(&(H5P_mt_g.num_already_have_mutex__del_cb))));
+    fprintf(file_ptr, "H5P_mt_g.H5P__global_lock_prop_cb__copy__num_calls   = %lld\n",
+            (unsigned long long)(atomic_load(&(H5P_mt_g.H5P__global_lock_prop_cb__copy__num_calls))));
+    fprintf(file_ptr, "H5P_mt_g.num_already_have_mutex__copy_cb             = %lld\n",
+            (unsigned long long)(atomic_load(&(H5P_mt_g.num_already_have_mutex__copy_cb))));
+    fprintf(file_ptr, "H5P_mt_g.H5P__global_lock_prop_cb__cmp__num_calls    = %lld\n",
+            (unsigned long long)(atomic_load(&(H5P_mt_g.H5P__global_lock_prop_cb__cmp__num_calls))));
+    fprintf(file_ptr, "H5P_mt_g.num_already_have_mutex__cmp_cb              = %lld\n",
+            (unsigned long long)(atomic_load(&(H5P_mt_g.num_already_have_mutex__cmp_cb))));
+    fprintf(file_ptr, "H5P_mt_g.H5P__global_lock_prop_cb__close__num_calls  = %lld\n",
+            (unsigned long long)(atomic_load(&(H5P_mt_g.H5P__global_lock_prop_cb__close__num_calls))));
+    fprintf(file_ptr, "H5P_mt_g.num_already_have_mutex__close_cb            = %lld\n",
+            (unsigned long long)(atomic_load(&(H5P_mt_g.num_already_have_mutex__close_cb))));
 
     FUNC_LEAVE_NOAPI(ret_value)
 
@@ -12724,41 +13470,41 @@ H5P__dump_stats_class(FILE *file_ptr, H5P_mt_class_t *class)
 
     fprintf(file_ptr, "\n\nH5P Multi-Thread STATS for class %s:\n\n", name);
 
-    fprintf(file_ptr, "class->H5P__register_real__num_calls  = %lld\n",
+    fprintf(file_ptr, "class->H5P__register_real__num_calls             = %lld\n",
             (unsigned long long)(atomic_load(&(class->H5P__register_real__num_calls))));
-    fprintf(file_ptr, "class->H5P__register__num_calls  = %lld\n",
+    fprintf(file_ptr, "class->H5P__register__num_calls                  = %lld\n",
             (unsigned long long)(atomic_load(&(class->H5P__register__num_calls))));
-    fprintf(file_ptr, "class->H5P__mt_ins_or_mod_prop__class__num_calls  = %lld\n",
+    fprintf(file_ptr, "class->H5P__mt_ins_or_mod_prop__class__num_calls = %lld\n",
             (unsigned long long)(atomic_load(&(class->H5P__mt_ins_or_mod_prop__class__num_calls))));
-    fprintf(file_ptr, "class->insert_max_nodes_visited           = %lld\n",
+    fprintf(file_ptr, "class->insert_max_nodes_visited                  = %lld\n",
             (unsigned long long)(atomic_load(&(class->insert_max_nodes_visited))));
-    fprintf(file_ptr, "class->insert_avg_nodes_visited           = %lld\n",
+    fprintf(file_ptr, "class->insert_avg_nodes_visited                  = %lld\n",
             (unsigned long long)(atomic_load(&(class->insert_avg_nodes_visited))));
-    fprintf(file_ptr, "class->num_insert_nodes_visited           = %lld\n",
+    fprintf(file_ptr, "class->num_insert_nodes_visited                  = %lld\n",
             (unsigned long long)(atomic_load(&(class->num_insert_nodes_visited))));
-    fprintf(file_ptr, "class->num_insert_prop__cols              = %lld\n",
+    fprintf(file_ptr, "class->num_insert_prop__cols                     = %lld\n",
             (unsigned long long)(atomic_load(&(class->num_insert_prop__cols))));
-    fprintf(file_ptr, "class->num_insert_prop__success           = %lld\n",
+    fprintf(file_ptr, "class->num_insert_prop__success                  = %lld\n",
             (unsigned long long)(atomic_load(&(class->num_insert_prop__success))));
-    fprintf(file_ptr, "class->num_insert_prop__chksum_cols       = %lld\n",
+    fprintf(file_ptr, "class->num_insert_prop__chksum_cols              = %lld\n",
             (unsigned long long)(atomic_load(&(class->num_insert_prop__chksum_cols))));
 
-    fprintf(file_ptr, "class->H5P__unregister__num_calls = %lld\n",
+    fprintf(file_ptr, "class->H5P__unregister__num_calls                = %lld\n",
             (unsigned long long)(atomic_load(&(class->H5P__unregister__num_calls))));
-    fprintf(file_ptr, "class->delete_prop__max_nodes_visited       = %lld\n",
+    fprintf(file_ptr, "class->delete_prop__max_nodes_visited            = %lld\n",
             (unsigned long long)(atomic_load(&(class->delete_prop__max_nodes_visited))));
-    fprintf(file_ptr, "class->delete_prop__avg_nodes_visited       = %lld\n",
+    fprintf(file_ptr, "class->delete_prop__avg_nodes_visited            = %lld\n",
             (unsigned long long)(atomic_load(&(class->delete_prop__avg_nodes_visited))));
-    fprintf(file_ptr, "class->num_delete_prop__nodes_visited       = %lld\n",
+    fprintf(file_ptr, "class->num_delete_prop__nodes_visited            = %lld\n",
             (unsigned long long)(atomic_load(&(class->num_delete_prop__nodes_visited))));
-    fprintf(file_ptr, "class->num_delete_prop__cols           = %lld\n",
+    fprintf(file_ptr, "class->num_delete_prop__cols                     = %lld\n",
             (unsigned long long)(atomic_load(&(class->num_delete_prop__cols))));
-    fprintf(file_ptr, "class->num_delete_prop__success        = %lld\n",
+    fprintf(file_ptr, "class->num_delete_prop__success                  = %lld\n",
             (unsigned long long)(atomic_load(&(class->num_delete_prop__success))));
-    fprintf(file_ptr, "class->num_delete_prop__chksum_cols         = %lld\n",
+    fprintf(file_ptr, "class->num_delete_prop__chksum_cols              = %lld\n",
             (unsigned long long)(atomic_load(&(class->num_delete_prop__chksum_cols))));
 
-    fprintf(file_ptr, "class->H5P__mt_search_prop__class__num_calls        = %lld\n",
+    fprintf(file_ptr, "class->H5P__mt_search_prop__class__num_calls     = %lld\n",
             (unsigned long long)(atomic_load(&(class->H5P__mt_search_prop__class__num_calls))));
     fprintf(file_ptr, "class->search_class__max_nodes_visited           = %lld\n",
             (unsigned long long)(atomic_load(&(class->search_class__max_nodes_visited))));
@@ -12768,33 +13514,33 @@ H5P__dump_stats_class(FILE *file_ptr, H5P_mt_class_t *class)
             (unsigned long long)(atomic_load(&(class->num_search_class__nodes_visited))));
     fprintf(file_ptr, "class->num_search_class__success                 = %lld\n",
             (unsigned long long)(atomic_load(&(class->num_search_class__success))));
-    fprintf(file_ptr, "class->num_search_chksum_cols                 = %lld\n",
+    fprintf(file_ptr, "class->num_search_chksum_cols                    = %lld\n",
             (unsigned long long)(atomic_load(&(class->num_search_chksum_cols))));
 
-    fprintf(file_ptr, "class->num_wait_for_curr_version_to_inc   = %lld\n",
+    fprintf(file_ptr, "class->num_wait_for_curr_version_to_inc          = %lld\n",
             (unsigned long long)(atomic_load(&(class->num_wait_for_curr_version_to_inc))));
 
-    fprintf(file_ptr, "class->num_thrd_update_cols               = %lld\n",
+    fprintf(file_ptr, "class->num_thrd_update_cols                      = %lld\n",
             (unsigned long long)(atomic_load(&(class->num_thrd_update_cols))));
-    fprintf(file_ptr, "class->num_thrd_count_update              = %lld\n",
+    fprintf(file_ptr, "class->num_thrd_count_update                     = %lld\n",
             (unsigned long long)(atomic_load(&(class->num_thrd_count_update))));
-    fprintf(file_ptr, "class->num_thrd_closing_flag_set          = %lld\n",
+    fprintf(file_ptr, "class->num_thrd_closing_flag_set                 = %lld\n",
             (unsigned long long)(atomic_load(&(class->num_thrd_closing_flag_set))));
-    fprintf(file_ptr, "class->num_thrd_opening_flag_set          = %lld\n",
+    fprintf(file_ptr, "class->num_thrd_opening_flag_set                 = %lld\n",
             (unsigned long long)(atomic_load(&(class->num_thrd_opening_flag_set))));
 
-    fprintf(file_ptr, "class->num_ref_count_cols                 = %lld\n",
+    fprintf(file_ptr, "class->num_ref_count_cols                        = %lld\n",
             (unsigned long long)(atomic_load(&(class->num_ref_count_cols))));
-    fprintf(file_ptr, "class->num_ref_count_update               = %lld\n",
+    fprintf(file_ptr, "class->num_ref_count_update                      = %lld\n",
             (unsigned long long)(atomic_load(&(class->num_ref_count_update))));
-    fprintf(file_ptr, "class->num_ref_count_inc_while_deleted    = %lld\n",
+    fprintf(file_ptr, "class->num_ref_count_inc_while_deleted           = %lld\n",
             (unsigned long long)(atomic_load(&(class->num_ref_count_inc_while_deleted))));
-    fprintf(file_ptr, "class->num_ref_count_marked_deleted       = %lld\n",
+    fprintf(file_ptr, "class->num_ref_count_marked_deleted              = %lld\n",
             (unsigned long long)(atomic_load(&(class->num_ref_count_marked_deleted))));
-    fprintf(file_ptr, "class->num_ref_count_unmarked_deleted     = %lld\n",
+    fprintf(file_ptr, "class->num_ref_count_unmarked_deleted            = %lld\n",
             (unsigned long long)(atomic_load(&(class->num_ref_count_unmarked_deleted))));
 
-    fprintf(file_ptr, "class->num_prop_ref_count_update          = %lld\n",
+    fprintf(file_ptr, "class->num_prop_ref_count_update                 = %lld\n",
             (unsigned long long)(atomic_load(&(class->num_prop_ref_count_update))));
 
 done:
@@ -12839,59 +13585,59 @@ H5P__dump_stats_list(FILE *file_ptr, H5P_mt_list_t *list)
 
     fprintf(file_ptr, "\n\nH5P Multi-Thread STATS for a list from derived class %s:\n\n", name);
 
-    fprintf(file_ptr, "list->H5P_insert__num_calls    = %lld\n",
+    fprintf(file_ptr, "list->H5P_insert__num_calls                      = %lld\n",
             (unsigned long long)(atomic_load(&(list->H5P_insert__num_calls))));
-    fprintf(file_ptr, "list->H5P__mt_ins_or_mod_prop__class__num_calls    = %lld\n",
+    fprintf(file_ptr, "list->H5P__mt_ins_or_mod_prop__class__num_calls  = %lld\n",
             (unsigned long long)(atomic_load(&(list->H5P__mt_ins_or_mod_prop__class__num_calls))));
-    fprintf(file_ptr, "list->H5P_poke__num_calls    = %lld\n",
+    fprintf(file_ptr, "list->H5P_poke__num_calls                        = %lld\n",
             (unsigned long long)(atomic_load(&(list->H5P_poke__num_calls))));
-    fprintf(file_ptr, "list->H5P_set__num_calls    = %lld\n",
+    fprintf(file_ptr, "list->H5P_set__num_calls                         = %lld\n",
             (unsigned long long)(atomic_load(&(list->H5P_set__num_calls))));
-    fprintf(file_ptr, "list->insert_max_nodes_visited             = %lld\n",
+    fprintf(file_ptr, "list->insert_max_nodes_visited                   = %lld\n",
             (unsigned long long)(atomic_load(&(list->insert_max_nodes_visited))));
-    fprintf(file_ptr, "list->insert_avg_nodes_visited        = %lld\n",
+    fprintf(file_ptr, "list->insert_avg_nodes_visited                   = %lld\n",
             (unsigned long long)(atomic_load(&(list->insert_avg_nodes_visited))));
-    fprintf(file_ptr, "list->num_insert_nodes_visited             = %lld\n",
+    fprintf(file_ptr, "list->num_insert_nodes_visited                   = %lld\n",
             (unsigned long long)(atomic_load(&(list->num_insert_nodes_visited))));
-    fprintf(file_ptr, "list->num_insert_prop_cols                 = %lld\n",
+    fprintf(file_ptr, "list->num_insert_prop_cols                       = %lld\n",
             (unsigned long long)(atomic_load(&(list->num_insert_prop_cols))));
-    fprintf(file_ptr, "list->num_insert_prop_success              = %lld\n",
+    fprintf(file_ptr, "list->num_insert_prop_success                    = %lld\n",
             (unsigned long long)(atomic_load(&(list->num_insert_prop_success))));
-    fprintf(file_ptr, "list->num_insert_update_entry_cols         = %lld\n",
+    fprintf(file_ptr, "list->num_insert_update_entry_cols               = %lld\n",
             (unsigned long long)(atomic_load(&(list->num_insert_update_entry_cols))));
-    fprintf(file_ptr, "list->num_insert_update_entry              = %lld\n",
+    fprintf(file_ptr, "list->num_insert_update_entry                    = %lld\n",
             (unsigned long long)(atomic_load(&(list->num_insert_update_entry))));
-    fprintf(file_ptr, "list->num_insert_prop__chksum_cols         = %lld\n",
+    fprintf(file_ptr, "list->num_insert_prop__chksum_cols               = %lld\n",
             (unsigned long long)(atomic_load(&(list->num_insert_prop__chksum_cols))));
 
-    fprintf(file_ptr, "list->H5P_remove__num_calls   = %lld\n",
+    fprintf(file_ptr, "list->H5P_remove__num_calls                      = %lld\n",
             (unsigned long long)(atomic_load(&(list->H5P_remove__num_calls))));
-    fprintf(file_ptr, "list->H5P__mt_delete_prop__list__num_calls   = %lld\n",
+    fprintf(file_ptr, "list->H5P__mt_delete_prop__list__num_calls       = %lld\n",
             (unsigned long long)(atomic_load(&(list->H5P__mt_delete_prop__list__num_calls))));
-    fprintf(file_ptr, "list->num_delete_props_from_lfsll              = %lld\n",
+    fprintf(file_ptr, "list->num_delete_props_from_lfsll                = %lld\n",
             (unsigned long long)(atomic_load(&(list->num_delete_props_from_lfsll))));
-    fprintf(file_ptr, "list->delete_prop__max_nodes_visited       = %lld\n",
+    fprintf(file_ptr, "list->delete_prop__max_nodes_visited             = %lld\n",
             (unsigned long long)(atomic_load(&(list->delete_prop__max_nodes_visited))));
-    fprintf(file_ptr, "list->delete_prop__avg_nodes_visited       = %lld\n",
+    fprintf(file_ptr, "list->delete_prop__avg_nodes_visited             = %lld\n",
             (unsigned long long)(atomic_load(&(list->delete_prop__avg_nodes_visited))));
-    fprintf(file_ptr, "list->num_delete_prop__nodes_visited       = %lld\n",
+    fprintf(file_ptr, "list->num_delete_prop__nodes_visited             = %lld\n",
             (unsigned long long)(atomic_load(&(list->num_delete_prop__nodes_visited))));
-    fprintf(file_ptr, "list->num_delete_prop__cols                = %lld\n",
+    fprintf(file_ptr, "list->num_delete_prop__cols                      = %lld\n",
             (unsigned long long)(atomic_load(&(list->num_delete_prop__cols))));
-    fprintf(file_ptr, "list->num_delete_prop__success             = %lld\n",
+    fprintf(file_ptr, "list->num_delete_prop__success                   = %lld\n",
             (unsigned long long)(atomic_load(&(list->num_delete_prop__success))));
-    fprintf(file_ptr, "list->num_delete_prop_chksum_cols          = %lld\n",
+    fprintf(file_ptr, "list->num_delete_prop_chksum_cols                = %lld\n",
             (unsigned long long)(atomic_load(&(list->num_delete_prop_chksum_cols))));
-    fprintf(file_ptr, "list->num_delete_prop__base_delete_version = %lld\n",
+    fprintf(file_ptr, "list->num_delete_prop__base_delete_version       = %lld\n",
             (unsigned long long)(atomic_load(&(list->num_delete_prop__base_delete_version))));
-    fprintf(file_ptr, "list->num_delete_prop__curr_entry          = %lld\n",
+    fprintf(file_ptr, "list->num_delete_prop__curr_entry                = %lld\n",
             (unsigned long long)(atomic_load(&(list->num_delete_prop__curr_entry))));
-    fprintf(file_ptr, "list->num_delete_prop__older_curr          = %lld\n",
+    fprintf(file_ptr, "list->num_delete_prop__older_curr                = %lld\n",
             (unsigned long long)(atomic_load(&(list->num_delete_prop__older_curr))));
 
-    fprintf(file_ptr, "list->H5P__find_prop_plist__num_calls          = %lld\n",
+    fprintf(file_ptr, "list->H5P__find_prop_plist__num_calls            = %lld\n",
             (unsigned long long)(atomic_load(&(list->H5P__find_prop_plist__num_calls))));
-    fprintf(file_ptr, "list->H5P__mt_search_prop__list__num_calls          = %lld\n",
+    fprintf(file_ptr, "list->H5P__mt_search_prop__list__num_calls       = %lld\n",
             (unsigned long long)(atomic_load(&(list->H5P__mt_search_prop__list__num_calls))));
     fprintf(file_ptr, "list->search_list__max_nodes_visited             = %lld\n",
             (unsigned long long)(atomic_load(&(list->search_list__max_nodes_visited))));
@@ -12901,26 +13647,26 @@ H5P__dump_stats_list(FILE *file_ptr, H5P_mt_list_t *list)
             (unsigned long long)(atomic_load(&(list->num_search_list__nodes_visited))));
     fprintf(file_ptr, "list->num_search_list__success                   = %lld\n",
             (unsigned long long)(atomic_load(&(list->num_search_list__success))));
-    fprintf(file_ptr, "list->num_search_list__found_base            = %lld\n",
+    fprintf(file_ptr, "list->num_search_list__found_base                = %lld\n",
             (unsigned long long)(atomic_load(&(list->num_search_list__found_base))));
-    fprintf(file_ptr, "list->num_search_list__found_curr            = %lld\n",
+    fprintf(file_ptr, "list->num_search_list__found_curr                = %lld\n",
             (unsigned long long)(atomic_load(&(list->num_search_list__found_curr))));
-    fprintf(file_ptr, "list->num_target_prop_found_but_deleted = %lld\n",
+    fprintf(file_ptr, "list->num_target_prop_found_but_deleted          = %lld\n",
             (unsigned long long)(atomic_load(&(list->num_target_prop_found_but_deleted))));
 
-    fprintf(file_ptr, "list->num_wait_for_curr_version_to_inc     = %lld\n",
+    fprintf(file_ptr, "list->num_wait_for_curr_version_to_inc           = %lld\n",
             (unsigned long long)(atomic_load(&(list->num_wait_for_curr_version_to_inc))));
 
-    fprintf(file_ptr, "list->num_thrd_update_cols                 = %lld\n",
+    fprintf(file_ptr, "list->num_thrd_update_cols                       = %lld\n",
             (unsigned long long)(atomic_load(&(list->num_thrd_update_cols))));
-    fprintf(file_ptr, "list->num_thrd_count_update                = %lld\n",
+    fprintf(file_ptr, "list->num_thrd_count_update                      = %lld\n",
             (unsigned long long)(atomic_load(&(list->num_thrd_count_update))));
-    fprintf(file_ptr, "list->num_thrd_closing_flag_set        = %lld\n",
+    fprintf(file_ptr, "list->num_thrd_closing_flag_set                  = %lld\n",
             (unsigned long long)(atomic_load(&(list->num_thrd_closing_flag_set))));
-    fprintf(file_ptr, "list->num_thrd_opening_flag_set            = %lld\n",
+    fprintf(file_ptr, "list->num_thrd_opening_flag_set                  = %lld\n",
             (unsigned long long)(atomic_load(&(list->num_thrd_opening_flag_set))));
 
-    fprintf(file_ptr, "list->num_inherited_with_create_cb        = %lld\n",
+    fprintf(file_ptr, "list->num_inherited_with_create_cb               = %lld\n",
             (unsigned long long)(atomic_load(&(list->num_inherited_with_create_cb))));
     fprintf(file_ptr, "list->num_lkup_tbl_copy_entries_blank            = %lld\n",
             (unsigned long long)(atomic_load(&(list->num_lkup_tbl_copy_entries_blank))));

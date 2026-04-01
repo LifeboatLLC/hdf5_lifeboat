@@ -328,8 +328,15 @@ H5P__encode_cb(H5P_genprop_t *prop, void *_udata)
 
         /* Encode (or not, if *(udata->pp) is NULL) the property value */
         prop_value_len = 0;
+#if 1
+        if ( H5P__global_lock_prop_cb__encode(prop, prop_value.ptr, udata->pp, &prop_value_len) < 0 )
+        {
+            HGOTO_ERROR(H5E_PLIST, H5E_CANTENCODE, H5_ITER_ERROR, "property encoding routine failed");
+        }
+#else
         if ((prop->encode)(prop_value.ptr, udata->pp, &prop_value_len) < 0)
             HGOTO_ERROR(H5E_PLIST, H5E_CANTENCODE, H5_ITER_ERROR, "property encoding routine failed");
+#endif
         *(udata->enc_size_ptr) += prop_value_len;
     } /* end if */
 
@@ -862,9 +869,16 @@ H5P__decode(const void *buf)
 
         /* Decode serialized value */
         if (prop->decode) {
+#if 1
+        if ( H5P__global_lock_prop_cb__decode(prop, (const void **)&p, value_buf) < 0 )
+        {
+            HGOTO_ERROR(H5E_PLIST, H5E_CANTENCODE, H5_ITER_ERROR, "property encoding routine failed");
+        }
+#else
             if ((prop->decode)((const void **)&p, value_buf) < 0)
                 HGOTO_ERROR(H5E_PLIST, H5E_CANTDECODE, FAIL,
                             "property decoding routine failed, property: '%s'", name);
+#endif
         } /* end if */
         else
             HGOTO_ERROR(H5E_PLIST, H5E_NOTFOUND, FAIL, "no decode callback for property: '%s'", name);

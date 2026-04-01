@@ -16,8 +16,7 @@
 #ifndef H5Pprivate_H
 #define H5Pprivate_H
 
-#ifdef H5_HAVE_MULTITHREAD
-#else
+#ifndef H5_HAVE_MULTITHREAD
 /* Early typedefs to avoid circular dependencies */
 typedef struct H5P_genplist_t H5P_genplist_t;
 #endif
@@ -159,57 +158,6 @@ typedef struct H5P_libclass_t {
 /* Library Private Variables */
 /*****************************/
 
-#ifdef H5_HAVE_MULTITHREAD
-
-/* Macros mapping pre-MT gobals to MT globals */
-#define H5P_CLS_ROOT_g             H5P_MT_CLS_ROOT_g
-#define H5P_CLS_OBJECT_CREATE_g    H5P_MT_CLS_OBJECT_CREATE_g
-#define H5P_CLS_FILE_CREATE_g      H5P_MT_CLS_FILE_CREATE_g
-#define H5P_CLS_FILE_ACCESS_g      H5P_MT_CLS_FILE_ACCESS_g
-#define H5P_CLS_DATASET_CREATE_g   H5P_MT_CLS_DATASET_CREATE_g
-#define H5P_CLS_DATASET_ACCESS_g   H5P_MT_CLS_DATASET_ACCESS_g
-#define H5P_CLS_DATASET_XFER_g     H5P_MT_CLS_DATASET_XFER_g
-#define H5P_CLS_FILE_MOUNT_g       H5P_MT_CLS_FILE_MOUNT_g
-#define H5P_CLS_GROUP_CREATE_g     H5P_MT_CLS_GROUP_CREATE_g
-#define H5P_CLS_GROUP_ACCESS_g     H5P_MT_CLS_GROUP_ACCESS_g
-#define H5P_CLS_DATATYPE_CREATE_g  H5P_MT_CLS_DATATYPE_CREATE_g
-#define H5P_CLS_DATATYPE_ACCESS_g  H5P_MT_CLS_DATATYPE_ACCESS_g
-#define H5P_CLS_MAP_CREATE_g       H5P_MT_CLS_MAP_CREATE_g
-#define H5P_CLS_MAP_ACCESS_g       H5P_MT_CLS_MAP_ACCESS_g
-#define H5P_CLS_ATTRIBUTE_CREATE_g H5P_MT_CLS_ATTRIBUTE_CREATE_g
-#define H5P_CLS_ATTRIBUTE_ACCESS_g H5P_MT_CLS_ATTRIBUTE_ACCESS_g
-#define H5P_CLS_OBJECT_COPY_g      H5P_MT_CLS_OBJECT_COPY_g
-#define H5P_CLS_LINK_CREATE_g      H5P_MT_CLS_LINK_CREATE_g
-#define H5P_CLS_LINK_ACCESS_g      H5P_MT_CLS_LINK_ACCESS_g
-#define H5P_CLS_STRING_CREATE_g    H5P_MT_CLS_STRING_CREATE_g
-#define H5P_CLS_REFERENCE_ACCESS_g H5P_MT_CLS_REFERENCE_ACCESS_g
-#define H5P_CLS_VOL_INITIALIZE_g   H5P_MT_CLS_VOL_INITIALIZE_g
-
-/* Predefined property list classes. */
-H5_DLLVAR H5P_mt_class_t *H5P_MT_CLS_ROOT_g;
-H5_DLLVAR H5P_mt_class_t *H5P_MT_CLS_OBJECT_CREATE_g;
-H5_DLLVAR H5P_mt_class_t *H5P_MT_CLS_FILE_CREATE_g;
-H5_DLLVAR H5P_mt_class_t *H5P_MT_CLS_FILE_ACCESS_g;
-H5_DLLVAR H5P_mt_class_t *H5P_MT_CLS_DATASET_CREATE_g;
-H5_DLLVAR H5P_mt_class_t *H5P_MT_CLS_DATASET_ACCESS_g;
-H5_DLLVAR H5P_mt_class_t *H5P_MT_CLS_DATASET_XFER_g;
-H5_DLLVAR H5P_mt_class_t *H5P_MT_CLS_FILE_MOUNT_g;
-H5_DLLVAR H5P_mt_class_t *H5P_MT_CLS_GROUP_CREATE_g;
-H5_DLLVAR H5P_mt_class_t *H5P_MT_CLS_GROUP_ACCESS_g;
-H5_DLLVAR H5P_mt_class_t *H5P_MT_CLS_DATATYPE_CREATE_g;
-H5_DLLVAR H5P_mt_class_t *H5P_MT_CLS_DATATYPE_ACCESS_g;
-H5_DLLVAR H5P_mt_class_t *H5P_MT_CLS_MAP_CREATE_g;
-H5_DLLVAR H5P_mt_class_t *H5P_MT_CLS_MAP_ACCESS_g;
-H5_DLLVAR H5P_mt_class_t *H5P_MT_CLS_ATTRIBUTE_CREATE_g;
-H5_DLLVAR H5P_mt_class_t *H5P_MT_CLS_ATTRIBUTE_ACCESS_g;
-H5_DLLVAR H5P_mt_class_t *H5P_MT_CLS_OBJECT_COPY_g;
-H5_DLLVAR H5P_mt_class_t *H5P_MT_CLS_LINK_CREATE_g;
-H5_DLLVAR H5P_mt_class_t *H5P_MT_CLS_LINK_ACCESS_g;
-H5_DLLVAR H5P_mt_class_t *H5P_MT_CLS_STRING_CREATE_g;
-H5_DLLVAR H5P_mt_class_t *H5P_MT_CLS_REFERENCE_ACCESS_g;
-H5_DLLVAR H5P_mt_class_t *H5P_MT_CLS_VOL_INITIALIZE_g;
-
-#else
 /* Predefined property list classes. */
 H5_DLLVAR H5P_genclass_t *H5P_CLS_ROOT_g;
 H5_DLLVAR H5P_genclass_t *H5P_CLS_OBJECT_CREATE_g;
@@ -234,7 +182,6 @@ H5_DLLVAR H5P_genclass_t *H5P_CLS_STRING_CREATE_g;
 H5_DLLVAR H5P_genclass_t *H5P_CLS_REFERENCE_ACCESS_g;
 H5_DLLVAR H5P_genclass_t *H5P_CLS_VOL_INITIALIZE_g;
 
-#endif
 
 /* Internal property list classes */
 H5_DLLVAR const struct H5P_libclass_t H5P_CLS_LCRT[1]; /* Link creation */
