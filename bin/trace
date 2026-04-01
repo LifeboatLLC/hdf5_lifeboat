@@ -88,6 +88,7 @@ $Source = "";
                "H5I_iterate_func_t"         => "II",
                "H5_iter_order_t"            => "Io",
                "H5FD_subfiling_ioc_select_t" => "IO",
+               "H5I_progress_func_t"        => "IP",
                "H5I_future_realize_func_t"  => "IR",
                "int"                        => "Is",
                "int32_t"                    => "Is",
@@ -545,4 +546,3 @@ if ($found_errors eq 1) {
              $total_api, (1 == $total_api ? "" : "s"),
              $total_args, (1 == $total_args ? "" : "s");
 }
-
