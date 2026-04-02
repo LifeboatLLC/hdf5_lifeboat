@@ -20127,8 +20127,6 @@ check_operations(thread_params_t *thread_params, uint64_t num_threads)
 
 } /* end check_operations */
 
-#endif /* ifdef H5_HAVE_MULTITHREAD */
-
 /****************************************************************************************
  * Function:    init_g_stats
  *
@@ -20583,6 +20581,8 @@ store_version_cb(uint64_t version)
 
 } /* end store_version_cb() */
 
+#endif /* ifdef H5_HAVE_MULTITHREAD */
+
 /****************************************************************************************
  * Function:    main
  *
@@ -20600,16 +20600,6 @@ main(int argc, char **argv)
 
     H5open();
 
-    if (0 > init_globals()) {
-        fprintf(stderr, "Failed initializing H5P testing globals.");
-        exit(EXIT_FAILURE);
-    }
-
-    if (0 > create_test_root_class()) {
-        fprintf(stderr, "Failed allocating and initializing H5P test root class.");
-        exit(EXIT_FAILURE);
-    }
-
     /* Initialize testing framework */
     if (TestInit(argv[0], NULL, NULL, NULL, NULL, 0, 0) < 0) {
         fprintf(stderr, "couldn't initialize testing framework\n");
@@ -20626,6 +20616,16 @@ main(int argc, char **argv)
     TestInfo(stdout);
 
 #ifdef H5_HAVE_MULTITHREAD
+
+    if (0 > init_globals()) {
+        fprintf(stderr, "Failed initializing H5P testing globals.");
+        exit(EXIT_FAILURE);
+    }
+
+    if (0 > create_test_root_class()) {
+        fprintf(stderr, "Failed allocating and initializing H5P test root class.");
+        exit(EXIT_FAILURE);
+    }
 
     /* Add tests */
     AddTest("test_h5p_mt_functions", st_test_1, NULL, reset_globals, NULL, 0, 0,
@@ -20657,11 +20657,11 @@ main(int argc, char **argv)
         TestSummary(stdout);
     }
 
+exit:
+
 #else
     fprintf(stderr, "Multithread isn't enabled in library configuration -- no tests to run\n");
 #endif
-
-exit:
 
     /* Retrieve number of testing errors before shutting down test infrastructure */
     num_errs = GetTestNumErrs();

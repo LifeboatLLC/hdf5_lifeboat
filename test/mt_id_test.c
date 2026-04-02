@@ -13888,11 +13888,13 @@ main(int argc, char **argv)
     /* Display test summary if requested */
     if (GetTestSummary())
         TestSummary(stdout);
+
+exit:
+
 #else
     fprintf(stderr, "Multithread isn't enabled in library configuration -- no tests to run\n");
 #endif
 
-exit:
     /* Retrieve number of testing errors before shutting down test infrastructure */
     num_errs = GetTestNumErrs();
 
