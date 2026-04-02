@@ -497,7 +497,7 @@ H5_DLLVAR hid_t H5P_LST_LINK_ACCESS_ID_g;
 H5_DLLVAR hid_t H5P_LST_VOL_INITIALIZE_ID_g;
 H5_DLLVAR hid_t H5P_LST_REFERENCE_ACCESS_ID_g;
 
-#ifdef H5_HAVE_MULTITHREAD 
+#ifdef H5_HAVE_MULTITHREAD
 
 /* Default property list versions */
 /* (Internal to library, do not use!  Use macros above) */

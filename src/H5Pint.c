@@ -11815,7 +11815,7 @@ H5P_get_class(H5P_genplist_t *plist)
  * Function:    H5P__grab_global_mutex
  *
  *              Multithread safe version only function
- * 
+ *
  * Purpose:     Attemps to grab the global mutex for H5P property callback functions
  *
  * Return:      SUCCEED/FAIL
@@ -11884,7 +11884,7 @@ done:
  * Function:    H5P__global_lock_prop_cb__create
  *
  *              Multithread safe version only function
- * 
+ *
  * Purpose:     Attemps to grab the global mutex, calls the property's create callback,
  *              and releases the global mutex if it grabbed it.
  *
@@ -11947,7 +11947,7 @@ done:
  * Function:    H5P__global_lock_prop_cb__set
  *
  *              Multithread safe version only function
- * 
+ *
  * Purpose:     Attemps to grab the global mutex, calls the property's set callback,
  *              and releases the global mutex if it grabbed it.
  *
@@ -12011,7 +12011,7 @@ done:
  * Function:    H5P__global_lock_prop_cb__get
  *
  *              Multithread safe version only function
- * 
+ *
  * Purpose:     Attemps to grab the global mutex, calls the property's get callback,
  *              and releases the global mutex if it grabbed it.
  *
@@ -12075,7 +12075,7 @@ done:
  * Function:    H5P__global_lock_prop_cb__encode
  *
  *              Multithread safe version only function
- * 
+ *
  * Purpose:     Attemps to grab the global mutex, calls the property's encode callback,
  *              and releases the global mutex if it grabbed it.
  *
@@ -12138,7 +12138,7 @@ done:
  * Function:    H5P__global_lock_prop_cb__decode
  *
  *              Multithread safe version only function
- * 
+ *
  * Purpose:     Attemps to grab the global mutex, calls the property's decode callback,
  *              and releases the global mutex if it grabbed it.
  *
@@ -12201,7 +12201,7 @@ done:
  * Function:    H5P__global_lock_prop_cb__del
  *
  *              Multithread safe version only function
- * 
+ *
  * Purpose:     Attemps to grab the global mutex, calls the property's del callback,
  *              and releases the global mutex if it grabbed it.
  *
@@ -12265,7 +12265,7 @@ done:
  * Function:    H5P__global_lock_prop_cb__copy
  *
  *              Multithread safe version only function
- * 
+ *
  * Purpose:     Attemps to grab the global mutex, calls the property's copy callback,
  *              and releases the global mutex if it grabbed it.
  *
@@ -12329,7 +12329,7 @@ done:
  * Function:    H5P__global_lock_prop_cb__cmp
  *
  *              Multithread safe version only function
- * 
+ *
  * Purpose:     Attemps to grab the global mutex, calls the property's cmp callback,
  *              and releases the global mutex if it grabbed it.
  *
@@ -12394,7 +12394,7 @@ done:
  * Function:    H5P__global_lock_prop_cb__close
  *
  *              Multithread safe version only function
- * 
+ *
  * Purpose:     Attemps to grab the global mutex, calls the property's close callback,
  *              and releases the global mutex if it grabbed it.
  *
