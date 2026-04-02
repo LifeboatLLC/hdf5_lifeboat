@@ -1591,9 +1591,13 @@ H5CX_set_lapl(hid_t lapl_id)
     FUNC_LEAVE_NOAPI_VOID
 } /* end H5CX_set_lapl() */
 
+#ifdef H5_HAVE_MULTITHREAD
 /*-------------------------------------------------------------------------
  * Function:    H5CX_set_plist
  *
+ *              Multithread function to work with the updated multithread
+ *              safe H5P
+ * 
  * Purpose:     Sets the plist_id and curr_version (and if not a default
  *              list sets a pointer to the list) for the current API call
  *              context.
@@ -2059,10 +2063,11 @@ done:
 
 } /* end H5CX_set_plist() */
 
-#ifdef H5_HAVE_MULTITHREAD
-
 /*-------------------------------------------------------------------------
  * Function:    H5CX_set_apl
+ *
+ *              Multithread safe version of H5CX_set_apl to use the 
+ *              multithread safe H5P
  *
  * Purpose:     Validaties an access property list, and sanity checking &
  *              setting up collective operations.
