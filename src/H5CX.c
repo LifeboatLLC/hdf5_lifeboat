@@ -1387,8 +1387,7 @@ H5CX_set_dxpl(hid_t dxpl_id)
 
     FUNC_ENTER_NOAPI(FAIL)
 
-    if ( dxpl_id == H5I_INVALID_HID )
-    {
+    if (dxpl_id == H5I_INVALID_HID) {
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "Invalid dxpl_id");
     }
 
@@ -1462,8 +1461,7 @@ H5CX_set_dcpl(hid_t dcpl_id)
 
     FUNC_ENTER_NOAPI(FAIL)
 
-    if ( dcpl_id == H5I_INVALID_HID )
-    {
+    if (dcpl_id == H5I_INVALID_HID) {
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "Invalid dcpl_id");
     }
 
@@ -1570,8 +1568,7 @@ H5CX_set_lcpl(hid_t lcpl_id)
 
     FUNC_ENTER_NOAPI(FAIL)
 
-    if ( lcpl_id == H5I_INVALID_HID )
-    {
+    if (lcpl_id == H5I_INVALID_HID) {
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "Invalid lcpl_id");
     }
 
@@ -1676,8 +1673,7 @@ H5CX_set_plist(hid_t plist_id, H5P_plist_type_t type)
 
     FUNC_ENTER_NOAPI(FAIL)
 
-    if ( plist_id == H5I_INVALID_HID )
-    {
+    if (plist_id == H5I_INVALID_HID) {
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "Invalid plist_id");
     }
 
