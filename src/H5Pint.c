@@ -550,10 +550,10 @@ H5P_init_phase1(void)
      * Initialize the Generic Property class & object groups.
      */
     if (H5I_register_type(H5I_GENPROPCLS_CLS) < 0) {
-        HGOTO_ERROR(H5E_ID, H5E_CANTINIT, FAIL, "unable to initialize ID group");
+        HGOTO_ERROR(H5E_PLIST, H5E_CANTINIT, FAIL, "unable to initialize ID group");
     }
     if (H5I_register_type(H5I_GENPROPLST_CLS) < 0) {
-        HGOTO_ERROR(H5E_ID, H5E_CANTINIT, FAIL, "unable to initialize ID group");
+        HGOTO_ERROR(H5E_PLIST, H5E_CANTINIT, FAIL, "unable to initialize ID group");
     }
 
     /**
@@ -6993,7 +6993,7 @@ H5P__get_size_plist(H5P_genplist_t *plist, const char *name, size_t *size)
 
     /* Get the property from the MT property list */
     if (NULL == (prop = H5P__mt_search__list(plist, name, version))) {
-        HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "MT property isn't in MT property list");
+        HGOTO_ERROR(H5E_PLIST, H5E_BADTYPE, FAIL, "MT property isn't in MT property list");
     }
 
     /* Atomically grab the value of the MT property */
@@ -11836,7 +11836,7 @@ H5P__grab_global_mutex(bool *have_global_mutex, bool *mutex_acquired)
     do {
         /* Check if we already have the global mutex */
         if (H5TS_have_mutex(&H5_g.init_lock, have_global_mutex) < 0) {
-            HGOTO_ERROR(H5E_LIB, H5E_CANTGET, FAIL, "Can't determine whether we have the global mutex");
+            HGOTO_ERROR(H5E_PLIST, H5E_CANTGET, FAIL, "Can't determine whether we have the global mutex");
         }
 
         /* If we already have the global mutex, update stats and set done */
@@ -11848,7 +11848,7 @@ H5P__grab_global_mutex(bool *have_global_mutex, bool *mutex_acquired)
         else {
 
             if (H5TS_mutex_acquire(&H5_g.init_lock, 1, mutex_acquired) < 0) {
-                HGOTO_ERROR(H5E_INTERNAL, H5E_SYSERRSTR, FAIL, "H5TS_mutex_acquire reported failure");
+                HGOTO_ERROR(H5E_PLIST, H5E_SYSERRSTR, FAIL, "H5TS_mutex_acquire reported failure");
             }
             else {
                 /**
@@ -11915,7 +11915,7 @@ H5P__global_lock_prop_cb__create(H5P_mt_prop_t *prop, const char *name, size_t s
      * and if we don't grab it.
      */
     if (H5P__grab_global_mutex(&have_global_mutex, &mutex_acquired) < 0) {
-        HGOTO_ERROR(H5E_INTERNAL, H5E_CANTGET, FAIL, "Failed checking or grabbing mutex");
+        HGOTO_ERROR(H5E_PLIST, H5E_CANTGET, FAIL, "Failed checking or grabbing mutex");
     }
 
     /* update stats */

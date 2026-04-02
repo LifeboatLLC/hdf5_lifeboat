@@ -1387,6 +1387,11 @@ H5CX_set_dxpl(hid_t dxpl_id)
 
     FUNC_ENTER_NOAPI(FAIL)
 
+    if ( dxpl_id == H5I_INVALID_HID )
+    {
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "Invalid dxpl_id");
+    }
+
     /* Sanity check */
     head = H5CX_get_my_context(); /* Get the pointer to the head of the API context, for this thread */
     assert(head && *head);
@@ -1396,7 +1401,7 @@ H5CX_set_dxpl(hid_t dxpl_id)
 
     if (dxpl_id != H5P_DATASET_XFER_DEFAULT) {
         if (0 >= H5I_inc_ref(dxpl_id, FALSE)) {
-            HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL, "unable to increment dxpl's ID ref_count in index");
+            HGOTO_ERROR(H5E_CONTEXT, H5E_CANTINC, FAIL, "unable to increment dxpl's ID ref_count in index");
         }
 
         (*head)->ctx.dxpl_inc++;
@@ -1457,6 +1462,11 @@ H5CX_set_dcpl(hid_t dcpl_id)
 
     FUNC_ENTER_NOAPI(FAIL)
 
+    if ( dcpl_id == H5I_INVALID_HID )
+    {
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "Invalid dcpl_id");
+    }
+
     /* Sanity check */
     head = H5CX_get_my_context(); /* Get the pointer to the head of the API context, for this thread */
     assert(head && *head);
@@ -1466,7 +1476,7 @@ H5CX_set_dcpl(hid_t dcpl_id)
 
     if (dcpl_id != H5P_DATASET_CREATE_DEFAULT) {
         if (0 >= H5I_inc_ref(dcpl_id, FALSE)) {
-            HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL, "unable to increment dcpl's ID ref_count in index");
+            HGOTO_ERROR(H5E_CONTEXT, H5E_CANTINC, FAIL, "unable to increment dcpl's ID ref_count in index");
         }
 
         (*head)->ctx.dcpl_inc++;
@@ -1560,6 +1570,11 @@ H5CX_set_lcpl(hid_t lcpl_id)
 
     FUNC_ENTER_NOAPI(FAIL)
 
+    if ( lcpl_id == H5I_INVALID_HID )
+    {
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "Invalid lcpl_id");
+    }
+
     /* Sanity check */
     head = H5CX_get_my_context(); /* Get the pointer to the head of the API context, for this thread */
     assert(head && *head);
@@ -1569,7 +1584,7 @@ H5CX_set_lcpl(hid_t lcpl_id)
 
     if (lcpl_id != H5P_LINK_ACCESS_DEFAULT) {
         if (0 >= H5I_inc_ref(lcpl_id, FALSE)) {
-            HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL, "unable to increment lcpl's ID ref_count in index");
+            HGOTO_ERROR(H5E_CONTEXT, H5E_CANTINC, FAIL, "unable to increment lcpl's ID ref_count in index");
         }
 
         (*head)->ctx.lcpl_inc++;
@@ -1661,6 +1676,11 @@ H5CX_set_plist(hid_t plist_id, H5P_plist_type_t type)
 
     FUNC_ENTER_NOAPI(FAIL)
 
+    if ( plist_id == H5I_INVALID_HID )
+    {
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "Invalid plist_id");
+    }
+
     /* Sanity check */
     head = H5CX_get_my_context(); /* Get the pointer to the head of the API context, for this thread */
     assert(head && *head);
@@ -1669,7 +1689,7 @@ H5CX_set_plist(hid_t plist_id, H5P_plist_type_t type)
         /* Set the API context's AAPL to a new value */
         if ((*head)->ctx.aapl_id != plist_id && plist_id != H5P_DEFAULT) {
             if (0 >= H5I_inc_ref(plist_id, FALSE)) {
-                HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL,
+                HGOTO_ERROR(H5E_CONTEXT, H5E_CANTINC, FAIL,
                             "unable to increment plist's ID ref_count in index");
             }
 
@@ -1692,7 +1712,7 @@ H5CX_set_plist(hid_t plist_id, H5P_plist_type_t type)
         /* Set the API context's ACPL to a new value */
         if ((*head)->ctx.acpl_id != plist_id && plist_id != H5P_DEFAULT) {
             if (0 >= H5I_inc_ref(plist_id, FALSE)) {
-                HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL,
+                HGOTO_ERROR(H5E_CONTEXT, H5E_CANTINC, FAIL,
                             "unable to increment plist's ID ref_count in index");
             }
 
@@ -1715,7 +1735,7 @@ H5CX_set_plist(hid_t plist_id, H5P_plist_type_t type)
         /* Set the API context's DAPL to a new value */
         if ((*head)->ctx.dapl_id != plist_id && plist_id != H5P_DEFAULT) {
             if (0 >= H5I_inc_ref(plist_id, FALSE)) {
-                HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL,
+                HGOTO_ERROR(H5E_CONTEXT, H5E_CANTINC, FAIL,
                             "unable to increment plist's ID ref_count in index");
             }
 
@@ -1738,7 +1758,7 @@ H5CX_set_plist(hid_t plist_id, H5P_plist_type_t type)
         /* Set the API context's DCPL to a new value */
         if ((*head)->ctx.dcpl_id != plist_id && plist_id != H5P_DEFAULT) {
             if (0 >= H5I_inc_ref(plist_id, FALSE)) {
-                HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL,
+                HGOTO_ERROR(H5E_CONTEXT, H5E_CANTINC, FAIL,
                             "unable to increment plist's ID ref_count in index");
             }
 
@@ -1761,7 +1781,7 @@ H5CX_set_plist(hid_t plist_id, H5P_plist_type_t type)
         /* Set the API context's DXPL to a new value */
         if ((*head)->ctx.dxpl_id != plist_id && plist_id != H5P_DEFAULT) {
             if (0 >= H5I_inc_ref(plist_id, FALSE)) {
-                HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL,
+                HGOTO_ERROR(H5E_CONTEXT, H5E_CANTINC, FAIL,
                             "unable to increment plist's ID ref_count in index");
             }
 
@@ -1784,7 +1804,7 @@ H5CX_set_plist(hid_t plist_id, H5P_plist_type_t type)
         /* Set the API context's FAPL to a new value */
         if ((*head)->ctx.fapl_id != plist_id && plist_id != H5P_DEFAULT) {
             if (0 >= H5I_inc_ref(plist_id, FALSE)) {
-                HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL,
+                HGOTO_ERROR(H5E_CONTEXT, H5E_CANTINC, FAIL,
                             "unable to increment plist's ID ref_count in index");
             }
 
@@ -1807,7 +1827,7 @@ H5CX_set_plist(hid_t plist_id, H5P_plist_type_t type)
         /* Set the API context's FCPL to a new value */
         if ((*head)->ctx.fcpl_id != plist_id && plist_id != H5P_DEFAULT) {
             if (0 >= H5I_inc_ref(plist_id, FALSE)) {
-                HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL,
+                HGOTO_ERROR(H5E_CONTEXT, H5E_CANTINC, FAIL,
                             "unable to increment plist's ID ref_count in index");
             }
 
@@ -1830,7 +1850,7 @@ H5CX_set_plist(hid_t plist_id, H5P_plist_type_t type)
         /* Set the API context's FMPL to a new value */
         if ((*head)->ctx.fmpl_id != plist_id && plist_id != H5P_DEFAULT) {
             if (0 >= H5I_inc_ref(plist_id, FALSE)) {
-                HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL,
+                HGOTO_ERROR(H5E_CONTEXT, H5E_CANTINC, FAIL,
                             "unable to increment plist's ID ref_count in index");
             }
 
@@ -1853,7 +1873,7 @@ H5CX_set_plist(hid_t plist_id, H5P_plist_type_t type)
         /* Set the API context's GAPL to a new value */
         if ((*head)->ctx.gapl_id != plist_id && plist_id != H5P_DEFAULT) {
             if (0 >= H5I_inc_ref(plist_id, FALSE)) {
-                HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL,
+                HGOTO_ERROR(H5E_CONTEXT, H5E_CANTINC, FAIL,
                             "unable to increment plist's ID ref_count in index");
             }
 
@@ -1876,7 +1896,7 @@ H5CX_set_plist(hid_t plist_id, H5P_plist_type_t type)
         /* Set the API context's GCPL to a new value */
         if ((*head)->ctx.gcpl_id != plist_id && plist_id != H5P_DEFAULT) {
             if (0 >= H5I_inc_ref(plist_id, FALSE)) {
-                HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL,
+                HGOTO_ERROR(H5E_CONTEXT, H5E_CANTINC, FAIL,
                             "unable to increment plist's ID ref_count in index");
             }
 
@@ -1899,7 +1919,7 @@ H5CX_set_plist(hid_t plist_id, H5P_plist_type_t type)
         /* Set the API context's LAPL to a new value */
         if ((*head)->ctx.lapl_id != plist_id && plist_id != H5P_DEFAULT) {
             if (0 >= H5I_inc_ref(plist_id, FALSE)) {
-                HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL,
+                HGOTO_ERROR(H5E_CONTEXT, H5E_CANTINC, FAIL,
                             "unable to increment plist's ID ref_count in index");
             }
 
@@ -1922,7 +1942,7 @@ H5CX_set_plist(hid_t plist_id, H5P_plist_type_t type)
         /* Set the API context's LCPL to a new value */
         if ((*head)->ctx.lcpl_id != plist_id && plist_id != H5P_DEFAULT) {
             if (0 >= H5I_inc_ref(plist_id, FALSE)) {
-                HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL,
+                HGOTO_ERROR(H5E_CONTEXT, H5E_CANTINC, FAIL,
                             "unable to increment plist's ID ref_count in index");
             }
 
@@ -1945,7 +1965,7 @@ H5CX_set_plist(hid_t plist_id, H5P_plist_type_t type)
         /* Set the API context's MAPL to a new value */
         if ((*head)->ctx.mapl_id != plist_id && plist_id != H5P_DEFAULT) {
             if (0 >= H5I_inc_ref(plist_id, FALSE)) {
-                HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL,
+                HGOTO_ERROR(H5E_CONTEXT, H5E_CANTINC, FAIL,
                             "unable to increment plist's ID ref_count in index");
             }
 
@@ -1968,7 +1988,7 @@ H5CX_set_plist(hid_t plist_id, H5P_plist_type_t type)
         /* Set the API context's MCPL to a new value */
         if ((*head)->ctx.mcpl_id != plist_id && plist_id != H5P_DEFAULT) {
             if (0 >= H5I_inc_ref(plist_id, FALSE)) {
-                HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL,
+                HGOTO_ERROR(H5E_CONTEXT, H5E_CANTINC, FAIL,
                             "unable to increment plist's ID ref_count in index");
             }
 
@@ -1991,7 +2011,7 @@ H5CX_set_plist(hid_t plist_id, H5P_plist_type_t type)
         /* Set the API context's OCPYPL to a new value */
         if ((*head)->ctx.ocpypl_id != plist_id && plist_id != H5P_DEFAULT) {
             if (0 >= H5I_inc_ref(plist_id, FALSE)) {
-                HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL,
+                HGOTO_ERROR(H5E_CONTEXT, H5E_CANTINC, FAIL,
                             "unable to increment plist's ID ref_count in index");
             }
 
@@ -2014,7 +2034,7 @@ H5CX_set_plist(hid_t plist_id, H5P_plist_type_t type)
         /* Set the API context's RAPL to a new value */
         if ((*head)->ctx.rapl_id != plist_id && plist_id != H5P_DEFAULT) {
             if (0 >= H5I_inc_ref(plist_id, FALSE)) {
-                HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL,
+                HGOTO_ERROR(H5E_CONTEXT, H5E_CANTINC, FAIL,
                             "unable to increment plist's ID ref_count in index");
             }
 
@@ -2037,7 +2057,7 @@ H5CX_set_plist(hid_t plist_id, H5P_plist_type_t type)
         /* Set the API context's TAPL to a new value */
         if ((*head)->ctx.tapl_id != plist_id && plist_id != H5P_DEFAULT) {
             if (0 >= H5I_inc_ref(plist_id, FALSE)) {
-                HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL,
+                HGOTO_ERROR(H5E_CONTEXT, H5E_CANTINC, FAIL,
                             "unable to increment plist's ID ref_count in index");
             }
 
@@ -2060,7 +2080,7 @@ H5CX_set_plist(hid_t plist_id, H5P_plist_type_t type)
         /* Set the API context's TCPL to a new value */
         if ((*head)->ctx.tcpl_id != plist_id && plist_id != H5P_DEFAULT) {
             if (0 >= H5I_inc_ref(plist_id, FALSE)) {
-                HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL,
+                HGOTO_ERROR(H5E_CONTEXT, H5E_CANTINC, FAIL,
                             "unable to increment plist's ID ref_count in index");
             }
 
@@ -2083,7 +2103,7 @@ H5CX_set_plist(hid_t plist_id, H5P_plist_type_t type)
         /* Set the API context's VIPL to a new value */
         if ((*head)->ctx.vipl_id != plist_id && plist_id != H5P_DEFAULT) {
             if (0 >= H5I_inc_ref(plist_id, FALSE)) {
-                HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL,
+                HGOTO_ERROR(H5E_CONTEXT, H5E_CANTINC, FAIL,
                             "unable to increment plist's ID ref_count in index");
             }
 
