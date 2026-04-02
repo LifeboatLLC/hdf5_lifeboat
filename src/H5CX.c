@@ -867,8 +867,12 @@ H5CX__get_context(void)
 } /* end H5CX__get_context() */
 #endif /* H5_HAVE_THREADSAFE or H5_HAVE_MULTITHREAD */
 
+#ifdef H5_HAVE_MULTITHREAD
 /*-------------------------------------------------------------------------
  * Function:    H5CX__push_common
+ *
+ *              Multithread version to work with the updated multithread
+ *              safe H5P
  *
  * Purpose:     Internal routine to push a context for an API call.
  *
@@ -974,6 +978,48 @@ H5CX__push_common(H5CX_node_t *cnode)
 
     FUNC_LEAVE_NOAPI_VOID
 } /* end H5CX__push_common() */
+
+#else
+
+/*-------------------------------------------------------------------------
+ * Function:    H5CX__push_common
+ *
+ * Purpose:     Internal routine to push a context for an API call.
+ *
+ * Return:      Non-negative on success / Negative on failure
+ *
+ *-------------------------------------------------------------------------
+ */
+static void
+H5CX__push_common(H5CX_node_t *cnode)
+{
+    H5CX_node_t **head = NULL; /* Pointer to head of API context list */
+
+    FUNC_ENTER_PACKAGE_NOERR
+
+    /* Sanity check */
+    assert(cnode);
+    head = H5CX_get_my_context(); /* Get the pointer to the head of the API context, for this thread */
+    assert(head);
+
+    /* Set non-zero context info */
+    cnode->ctx.dxpl_id = H5P_DATASET_XFER_DEFAULT;
+    cnode->ctx.dcpl_id = H5P_DATASET_CREATE_DEFAULT;
+    cnode->ctx.dapl_id = H5P_DATASET_ACCESS_DEFAULT;
+    cnode->ctx.lcpl_id = H5P_LINK_CREATE_DEFAULT;
+    cnode->ctx.lapl_id = H5P_LINK_ACCESS_DEFAULT;
+    cnode->ctx.fapl_id = H5P_FILE_ACCESS_DEFAULT;
+    cnode->ctx.tag     = H5AC__INVALID_TAG;
+    cnode->ctx.ring    = H5AC_RING_USER;
+
+    /* Push context node onto stack */
+    cnode->next = *head;
+    *head       = cnode;
+
+    FUNC_LEAVE_NOAPI_VOID
+} /* end H5CX__push_common() */
+
+#endif
 
 /*-------------------------------------------------------------------------
  * Function:    H5CX_push
@@ -4844,7 +4890,7 @@ H5CX__pop_common(hbool_t update_dxpl_props)
 
         assert((*head)->ctx.vipl_inc == 0);
     }
-#endif
+#endif /* H5_HAVE_MULTITHREAD */
 
     /* Pop the top context node from the stack */
     ret_value = (*head);
