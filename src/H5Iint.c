@@ -5002,7 +5002,9 @@ done:
 herr_t
 H5I_register_using_existing_id(H5I_type_t type, void *object, hbool_t app_ref, hid_t existing_id)
 {
+#ifdef H5_HAVE_MULTITHREAD
     hbool_t          result;
+#endif
     H5I_type_info_t *type_info = NULL;    /* Pointer to the type */
     H5I_id_info_t   *info      = NULL;    /* Pointer to the new ID information */
     herr_t           ret_value = SUCCEED; /* Return value */

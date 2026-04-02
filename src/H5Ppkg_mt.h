@@ -22,7 +22,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
-#include <unistd.h>
 #include <stdatomic.h>
 
 #ifndef H5Ppkg_mt_H
