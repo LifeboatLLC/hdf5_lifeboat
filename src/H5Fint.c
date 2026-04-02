@@ -2755,7 +2755,7 @@ H5F__build_actual_name(const H5F_t *f, const H5P_genplist_t *fapl, const char *n
                  */
 
                 /* Copy the FAPL object to modify */
-#if H5_HAVE_MULTITHREAD
+#ifdef H5_HAVE_MULTITHREAD
             if ((new_fapl_id = H5P_copy_plist(_fapl, FALSE)) < 0)
                 HGOTO_ERROR(H5E_FILE, H5E_CANTCOPY, FAIL, "unable to copy file access property list");
 #else
