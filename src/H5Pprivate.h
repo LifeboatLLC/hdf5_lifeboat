@@ -268,7 +268,7 @@ H5_DLL htri_t H5P_filter_in_pline(H5P_genplist_t *plist, H5Z_filter_t id);
 /* Query internal fields of the property list struct */
 H5_DLL hid_t H5P_get_plist_id(const H5P_genplist_t *plist);
 #ifdef H5_HAVE_MULTITHREAD
-H5_DLL H5P_genclass_t *H5P_get_class(H5P_mt_class_t *plist);
+H5_DLL H5P_mt_class_t *H5P_get_class(H5P_mt_list_t *plist);
 
 #else
 H5_DLL H5P_genclass_t *H5P_get_class(const H5P_genplist_t *plist);

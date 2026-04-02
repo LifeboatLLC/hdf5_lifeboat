@@ -11761,8 +11761,8 @@ done:
  *
  ****************************************************************************************
  */
-H5P_genclass_t *
-H5P_get_class(H5P_genplist_t *plist)
+H5P_mt_class_t *
+H5P_get_class(H5P_mt_list_t *plist)
 {
     H5P_mt_class_t           *pclass;
     H5P_mt_class_ref_counts_t ref_count;
@@ -11924,7 +11924,7 @@ H5P__global_lock_prop_cb__create(H5P_mt_prop_t *prop, const char *name, size_t s
     }
 
     /* Call the user's callback */
-    if ((prop->create)(prop->name, size, value) < 0) {
+    if ((prop->create)(name, size, value) < 0) {
         HGOTO_ERROR(H5E_PLIST, H5E_CANTINIT, FAIL, "property create callback failed");
     }
 
