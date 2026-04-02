@@ -2163,6 +2163,10 @@ H5CX_set_apl(hid_t *acspl_id, const H5P_libclass_t *libclass,
     head = H5CX_get_my_context(); /* Get the pointer to the head of the API context, for this thread */
     assert(head && *head);
 
+    if (*acspl_id == H5I_INVALID_HID) {
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "Invalid acspl_id");
+    }
+
     /* Set access plist to the default property list of the appropriate class if it's the generic default */
     if (H5P_DEFAULT == *acspl_id)
         *acspl_id = *libclass->def_plist_id;
