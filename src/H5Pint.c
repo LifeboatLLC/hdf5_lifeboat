@@ -11814,7 +11814,9 @@ H5P_get_class(H5P_genplist_t *plist)
 /****************************************************************************************
  * Function:    H5P__grab_global_mutex
  *
- * Purpose:
+ *              Multithread safe version only function
+ * 
+ * Purpose:     Attemps to grab the global mutex for H5P property callback functions
  *
  * Return:      SUCCEED/FAIL
  *
@@ -11881,7 +11883,10 @@ done:
 /****************************************************************************************
  * Function:    H5P__global_lock_prop_cb__create
  *
- * Purpose:
+ *              Multithread safe version only function
+ * 
+ * Purpose:     Attemps to grab the global mutex, calls the property's create callback,
+ *              and releases the global mutex if it grabbed it.
  *
  * Return:      SUCCEED/FAIL
  *
@@ -11941,7 +11946,10 @@ done:
 /****************************************************************************************
  * Function:    H5P__global_lock_prop_cb__set
  *
- * Purpose:
+ *              Multithread safe version only function
+ * 
+ * Purpose:     Attemps to grab the global mutex, calls the property's set callback,
+ *              and releases the global mutex if it grabbed it.
  *
  * Return:      SUCCEED/FAIL
  *
@@ -12002,7 +12010,10 @@ done:
 /****************************************************************************************
  * Function:    H5P__global_lock_prop_cb__get
  *
- * Purpose:
+ *              Multithread safe version only function
+ * 
+ * Purpose:     Attemps to grab the global mutex, calls the property's get callback,
+ *              and releases the global mutex if it grabbed it.
  *
  * Return:      SUCCEED/FAIL
  *
@@ -12063,7 +12074,10 @@ done:
 /****************************************************************************************
  * Function:    H5P__global_lock_prop_cb__encode
  *
- * Purpose:
+ *              Multithread safe version only function
+ * 
+ * Purpose:     Attemps to grab the global mutex, calls the property's encode callback,
+ *              and releases the global mutex if it grabbed it.
  *
  * Return:      SUCCEED/FAIL
  *
@@ -12123,7 +12137,10 @@ done:
 /****************************************************************************************
  * Function:    H5P__global_lock_prop_cb__decode
  *
- * Purpose:
+ *              Multithread safe version only function
+ * 
+ * Purpose:     Attemps to grab the global mutex, calls the property's decode callback,
+ *              and releases the global mutex if it grabbed it.
  *
  * Return:      SUCCEED/FAIL
  *
@@ -12183,7 +12200,10 @@ done:
 /****************************************************************************************
  * Function:    H5P__global_lock_prop_cb__del
  *
- * Purpose:
+ *              Multithread safe version only function
+ * 
+ * Purpose:     Attemps to grab the global mutex, calls the property's del callback,
+ *              and releases the global mutex if it grabbed it.
  *
  * Return:      SUCCEED/FAIL
  *
@@ -12244,7 +12264,10 @@ done:
 /****************************************************************************************
  * Function:    H5P__global_lock_prop_cb__copy
  *
- * Purpose:
+ *              Multithread safe version only function
+ * 
+ * Purpose:     Attemps to grab the global mutex, calls the property's copy callback,
+ *              and releases the global mutex if it grabbed it.
  *
  * Return:      SUCCEED/FAIL
  *
@@ -12305,7 +12328,10 @@ done:
 /****************************************************************************************
  * Function:    H5P__global_lock_prop_cb__cmp
  *
- * Purpose:
+ *              Multithread safe version only function
+ * 
+ * Purpose:     Attemps to grab the global mutex, calls the property's cmp callback,
+ *              and releases the global mutex if it grabbed it.
  *
  * Return:      SUCCEED/FAIL
  *
@@ -12367,7 +12393,10 @@ done:
 /****************************************************************************************
  * Function:    H5P__global_lock_prop_cb__close
  *
- * Purpose:
+ *              Multithread safe version only function
+ * 
+ * Purpose:     Attemps to grab the global mutex, calls the property's close callback,
+ *              and releases the global mutex if it grabbed it.
  *
  * Return:      SUCCEED/FAIL
  *
@@ -12430,7 +12459,7 @@ done:
  *
  * Purpose:     Initializes the stats fields for the H5P_mt_g global struct
  *
- *              NOTE: These statistics are only  maintained in the multi-thread
+ *              NOTE: These statistics are only maintained in the multi-thread
  *              implementation of H5P.
  *
  * Return:      SUCCEED/FAIL
@@ -12600,7 +12629,7 @@ H5P__init_stats_global(void)
  *
  * Purpose:     Resets the stats fields for the H5P_mt_g global struct
  *
- *              NOTE: These statistics are only  maintained in the multi-thread
+ *              NOTE: These statistics are only maintained in the multi-thread
  *              implementation of H5P.
  *
  * Return:      SUCCEED/FAIL
@@ -12770,7 +12799,7 @@ H5P__reset_stats_global(void)
  *
  * Purpose:     Initializes the stats fields for a H5P_mt_class_t
  *
- *              NOTE: These statistics are only  maintained in teh multi-thread
+ *              NOTE: These statistics are only maintained in the multi-thread
  *              implementation of H5P.
  *
  * Return:      SUCCEED/FAIL
@@ -12847,7 +12876,7 @@ H5P__init_stats_class(H5P_mt_class_t *class)
  *              when/if the class free list is used to reset the stats of a class being
  *              reallocated from the free list.
  *
- *              NOTE: These statistics are only  maintained in teh multi-thread
+ *              NOTE: These statistics are only maintained in the multi-thread
  *              implementation of H5P.
  *
  * Return:      SUCCEED/FAIL
@@ -12920,7 +12949,7 @@ H5P__reset_stats_class(H5P_mt_class_t *class)
  *
  * Purpose:     Initializes the stats fields for a H5P_mt_list_t
  *
- *              NOTE: These statistics are only  maintained in teh multi-thread
+ *              NOTE: These statistics are only maintained in the multi-thread
  *              implementation of H5P.
  *
  * Return:      SUCCEED/FAIL
@@ -13004,7 +13033,7 @@ H5P__init_stats_list(H5P_mt_list_t *list)
  *              when/if the list free list is used to reset the stats of a list being
  *              reallocated from the free list.
  *
- *              NOTE: These statistics are only  maintained in teh multi-thread
+ *              NOTE: These statistics are only maintained in the multi-thread
  *              implementation of H5P.
  *
  * Return:      SUCCEED/FAIL
@@ -13085,7 +13114,7 @@ H5P__reset_stats_list(H5P_mt_list_t *list)
  * Purpose:     Dump the stats maintained in a H5P_mt_g global structure to the specified
  *              file.
  *
- *              NOTE: These statistics are only  maintained in teh multi-thread
+ *              NOTE: These statistics are only maintained in the multi-thread
  *              implementation of H5P.
  *
  * Return:      SUCCEED/FAIL
@@ -13369,7 +13398,7 @@ H5P__dump_stats_global(FILE *file_ptr)
  * Purpose:     Dump the stats maintained in a H5P_mt_class_t structure to the specified
  *              file.
  *
- *              NOTE: These statistics are only  maintained in teh multi-thread
+ *              NOTE: These statistics are only maintained in the multi-thread
  *              implementation of H5P.
  *
  * Return:      SUCCEED/FAIL
@@ -13480,7 +13509,7 @@ done:
  * Purpose:     Dump the stats maintained in a H5P_mt_list_t structure to the specified
  *              file.
  *
- *              NOTE: These statistics are only  maintained in teh multi-thread
+ *              NOTE: These statistics are only maintained in the multi-thread
  *              implementation of H5P.
  *
  * Return:      SUCCEED/FAIL

@@ -92,6 +92,7 @@
 #define H5P_VOL_INITIALIZE_DEFAULT   (H5OPEN H5P_LST_VOL_INITIALIZE_ID_g)
 #define H5P_REFERENCE_ACCESS_DEFAULT (H5OPEN H5P_LST_REFERENCE_ACCESS_ID_g)
 
+#ifdef H5_HAVE_MULTITHREAD
 /*
  * Versions for the library's default property lists (used by the context)
  */
@@ -114,6 +115,8 @@
 #define H5P_DEFAULT_OCPYPL_VER (H5OPEN H5P_OCPYPL_VER_g)
 #define H5P_DEFAULT_RAPL_VER   (H5OPEN H5P_RAPL_VER_g)
 #define H5P_DEFAULT_VIPL_VER   (H5OPEN H5P_VIPL_VER_g)
+
+#endif /* H5_HAVE_MULTITHREAD */
 
 /* Common creation order flags (for links in groups and attributes on objects) */
 #define H5P_CRT_ORDER_TRACKED 0x0001
@@ -494,6 +497,8 @@ H5_DLLVAR hid_t H5P_LST_LINK_ACCESS_ID_g;
 H5_DLLVAR hid_t H5P_LST_VOL_INITIALIZE_ID_g;
 H5_DLLVAR hid_t H5P_LST_REFERENCE_ACCESS_ID_g;
 
+#ifdef H5_HAVE_MULTITHREAD 
+
 /* Default property list versions */
 /* (Internal to library, do not use!  Use macros above) */
 H5_DLLVAR _Atomic uint64_t H5P_AAPL_VER_g;
@@ -515,6 +520,8 @@ H5_DLLVAR _Atomic uint64_t H5P_MCPL_VER_g;
 H5_DLLVAR _Atomic uint64_t H5P_OCPYPL_VER_g;
 H5_DLLVAR _Atomic uint64_t H5P_RAPL_VER_g;
 H5_DLLVAR _Atomic uint64_t H5P_VIPL_VER_g;
+
+#endif /* H5_HAVE_MULTITHREAD */
 
 /*********************/
 /* Public Prototypes */
