@@ -31,7 +31,7 @@
 
 #ifdef H5_HAVE_MULTITHREAD
 #include "H5Ppkg_mt.h" /* MT Safe Property List structures */
-#endif
+#endif /* H5_HAVE_MULTITHREAD */
 
 /****************/
 /* Local Macros */
@@ -46,7 +46,7 @@
 typedef H5P_mt_list_t  H5P_genplist_t;
 typedef H5P_mt_class_t H5P_genclass_t;
 
-#endif
+#endif /* H5_HAVE_MULTITHREAD */
 
 /* Typedef for property iterator callback */
 typedef struct {
@@ -1894,7 +1894,7 @@ done:
     FUNC_LEAVE_API(ret_value)
 } /* H5Pclose_class() */
 
-#else
+#else /* H5_HAVE_MULTITHREAD */
 
 /*--------------------------------------------------------------------------
  NAME

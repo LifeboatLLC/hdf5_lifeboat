@@ -38,6 +38,10 @@
 #include "H5Tprivate.h"  /* Datatypes                                        */
 #include "H5VLpkg.h"     /* Virtual Object Layer                             */
 
+#ifdef H5_HAVE_MULTITHREAD
+#include "H5CXprivate.h" /* API Contexts                                     */
+#endif /* H5_HAVE_MULTITHREAD */
+
 /****************/
 /* Local Macros */
 /****************/
@@ -3719,13 +3723,30 @@ H5VLfile_create(const char *name, unsigned flags, hid_t fcpl_id, hid_t fapl_id, 
     FUNC_ENTER_API_NO_MUTEX_NOINIT
     H5TRACE6("*x", "*sIuiiix", name, flags, fcpl_id, fapl_id, dxpl_id, req);
 
+#ifdef H5_HAVE_MULTITHREAD
+    /* Set the property list in the context */
+    if (H5CX_set_plist(fcpl_id, H5P_TYPE_FILE_CREATE) < 0) {
+        HGOTO_ERROR(H5E_ATTR, H5E_CANTSET, NULL, "can't set fcpl in context");
+    }
+    /* Set the property list in the context */
+    /* Store fapl in the context and set up collective metadata if appropriate */
+    if (H5CX_set_apl(&fapl_id, H5P_CLS_FACC, H5I_INVALID_HID, FALSE) < 0) {
+        HGOTO_ERROR(H5E_FILE, H5E_CANTSET, NULL, "can't set access property list info");
+    }
+    /* Set the property list in the context */
+    if (H5CX_set_plist(dxpl_id, H5P_TYPE_DATASET_XFER) < 0) {
+        HGOTO_ERROR(H5E_ATTR, H5E_CANTSET, NULL, "can't set dxpl in context");
+    }
+#endif /* H5_HAVE_MULTITHREAD */
+
+
     /* Get the VOL info from the fapl */
     if (NULL == (plist = (H5P_genplist_t *)H5I_object(fapl_id)))
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, NULL, "not a file access property list");
 
-    H5_API_LOCK
+    //H5_API_LOCK
     ret = H5P_peek(plist, H5F_ACS_VOL_CONN_NAME, &connector_prop);
-    H5_API_UNLOCK
+    //H5_API_UNLOCK
 
     if (ret < 0)
         HGOTO_ERROR(H5E_PLIST, H5E_CANTGET, NULL, "can't get VOL connector info");
@@ -3824,9 +3845,9 @@ H5VL__file_open_find_connector_cb(H5PL_type_t plugin_type, const void *plugin_in
     /* Setup FAPL with registered VOL connector */
     if (NULL == (fapl_plist = (H5P_genplist_t *)H5I_object_verify(udata->fapl_id, H5I_GENPROP_LST)))
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5_ITER_ERROR, "not a property list");
-    H5_API_LOCK
+    //H5_API_LOCK
     fapl_id = H5P_copy_plist(fapl_plist, TRUE);
-    H5_API_UNLOCK
+    //H5_API_UNLOCK
 
     if (fapl_id < 0)
         HGOTO_ERROR(H5E_PLIST, H5E_CANTCOPY, H5_ITER_ERROR, "can't copy fapl");
@@ -4008,9 +4029,9 @@ H5VLfile_open(const char *name, unsigned flags, hid_t fapl_id, hid_t dxpl_id, vo
     if (NULL == (plist = (H5P_genplist_t *)H5I_object(fapl_id)))
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, NULL, "not a file access property list");
 
-    H5_API_LOCK
+    //H5_API_LOCK
     ret = H5P_peek(plist, H5F_ACS_VOL_CONN_NAME, &connector_prop);
-    H5_API_UNLOCK
+    //H5_API_UNLOCK
 
     if (ret < 0)
         HGOTO_ERROR(H5E_PLIST, H5E_CANTGET, NULL, "can't get VOL connector info");
@@ -4196,9 +4217,9 @@ H5VL_file_specific(const H5VL_object_t *vol_obj, H5VL_file_specific_args_t *args
         if (NULL == (plist = (H5P_genplist_t *)H5I_object(fapl_id)))
             HGOTO_ERROR(H5E_VOL, H5E_BADTYPE, FAIL, "not a file access property list");
 
-        H5_API_LOCK
+        //H5_API_LOCK
         ret_value = H5P_peek(plist, H5F_ACS_VOL_CONN_NAME, &connector_prop);
-        H5_API_UNLOCK
+        //H5_API_UNLOCK
 
         if (ret_value < 0)
             HGOTO_ERROR(H5E_VOL, H5E_CANTGET, FAIL, "can't get VOL connector info");

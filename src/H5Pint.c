@@ -427,12 +427,12 @@ H5_DLLVAR const H5P_libclass_t H5P_CLS_ACRT[1];   /* Attribute creation */
  * the version they are currently on.
  */
 
-#else
+#else /* H5_HAVE_MULTITHREAD */
 /* Track the revision count of a class, to make comparisons faster */
 static unsigned H5P_next_rev = 0;
 #define H5P_GET_NEXT_REV (H5P_next_rev++)
 
-#endif
+#endif /* H5_HAVE_MULTITHREAD */
 
 /* List of all property list classes in the library */
 /* (order here is not important, they will be initialized in the proper
@@ -6559,7 +6559,9 @@ H5P_set(H5P_mt_list_t *list, const char *name, const void *value)
     }
 
     /* memcpy into new buffer to atomically set */
-    new_value.ptr  = prop_value.ptr;
+    if (NULL == (new_value.ptr = H5MM_malloc(prop_value.size))) {
+        HGOTO_ERROR(H5E_PLIST, H5E_CANTALLOC, FAIL, "memory allocation failed temporary property value");
+    }
     new_value.size = prop_value.size;
 
     H5MM_memcpy(new_value.ptr, prp_value, prop_value.size);

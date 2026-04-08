@@ -494,9 +494,9 @@ H5Fis_accessible(const char *filename, hid_t fapl_id)
     if (H5P_DEFAULT == fapl_id)
         fapl_id = H5P_FILE_ACCESS_DEFAULT;
     else {
-        H5_API_LOCK
+        //H5_API_LOCK
         ret_value = H5P_isa_class(fapl_id, H5P_FILE_ACCESS);
-        H5_API_UNLOCK
+        //H5_API_UNLOCK
 
         if (TRUE != ret_value)
             HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not file access property list");
@@ -600,18 +600,18 @@ H5F__create_api_common(const char *filename, unsigned flags, hid_t fcpl_id, hid_
     if (H5P_DEFAULT == fcpl_id)
         fcpl_id = H5P_FILE_CREATE_DEFAULT;
     else {
-        H5_API_LOCK
+        //H5_API_LOCK
         ret_value = H5P_isa_class(fcpl_id, H5P_FILE_CREATE);
-        H5_API_UNLOCK
+        //H5_API_UNLOCK
 
         if (TRUE != ret_value)
             HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5I_INVALID_HID, "not file create property list");
     }
 
     /* Verify access property list and set up collective metadata if appropriate */
-    H5_API_LOCK
+    //H5_API_LOCK
     ret_value = H5CX_set_apl(&fapl_id, H5P_CLS_FACC, H5I_INVALID_HID, TRUE);
-    H5_API_UNLOCK
+    //H5_API_UNLOCK
 
     if (ret_value < 0)
         HGOTO_ERROR(H5E_FILE, H5E_CANTSET, H5I_INVALID_HID, "can't set access property list info");
@@ -626,9 +626,9 @@ H5F__create_api_common(const char *filename, unsigned flags, hid_t fcpl_id, hid_
     /* Get the VOL info from the fapl */
     if (NULL == (plist = (H5P_genplist_t *)H5I_object(fapl_id)))
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5I_INVALID_HID, "not a file access property list");
-    H5_API_LOCK
+    //H5_API_LOCK
     ret_value = H5P_peek(plist, H5F_ACS_VOL_CONN_NAME, &connector_prop);
-    H5_API_UNLOCK
+    //H5_API_UNLOCK
 
     if (ret_value < 0)
         HGOTO_ERROR(H5E_FILE, H5E_CANTGET, H5I_INVALID_HID, "can't get VOL connector info");
@@ -823,9 +823,9 @@ H5F__open_api_common(const char *filename, unsigned flags, hid_t fapl_id, void *
                     "SWMR read access on a file open for read-write access is not allowed");
 
     /* Verify access property list and set up collective metadata if appropriate */
-    H5_API_LOCK
+    //H5_API_LOCK
     ret_value = H5CX_set_apl(&fapl_id, H5P_CLS_FACC, H5I_INVALID_HID, TRUE);
-    H5_API_UNLOCK
+    //H5_API_UNLOCK
 
     if (ret_value < 0)
         HGOTO_ERROR(H5E_FILE, H5E_CANTSET, H5I_INVALID_HID, "can't set access property list info");
@@ -833,9 +833,9 @@ H5F__open_api_common(const char *filename, unsigned flags, hid_t fapl_id, void *
     /* Get the VOL info from the fapl */
     if (NULL == (plist = (H5P_genplist_t *)H5I_object(fapl_id)))
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5I_INVALID_HID, "not a file access property list");
-    H5_API_LOCK
+    //H5_API_LOCK
     ret_value = H5P_peek(plist, H5F_ACS_VOL_CONN_NAME, &connector_prop);
-    H5_API_UNLOCK
+    //H5_API_UNLOCK
 
     if (ret_value < 0)
         HGOTO_ERROR(H5E_FILE, H5E_CANTGET, H5I_INVALID_HID, "can't get VOL connector info");
@@ -1223,9 +1223,9 @@ H5Fdelete(const char *filename, hid_t fapl_id)
         HGOTO_ERROR(H5E_ARGS, H5E_BADRANGE, FAIL, "no file name specified");
 
     /* Verify access property list and set up collective metadata if appropriate */
-    H5_API_LOCK
+    //H5_API_LOCK
     ret_value = H5CX_set_apl(&fapl_id, H5P_CLS_FACC, H5I_INVALID_HID, TRUE);
-    H5_API_UNLOCK
+    //H5_API_UNLOCK
 
     if (ret_value < 0)
         HGOTO_ERROR(H5E_FILE, H5E_CANTSET, FAIL, "can't set access property list info");
@@ -1233,9 +1233,9 @@ H5Fdelete(const char *filename, hid_t fapl_id)
     /* Get the VOL info from the fapl */
     if (NULL == (plist = (H5P_genplist_t *)H5I_object_verify(fapl_id, H5I_GENPROP_LST)))
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a property list");
-    H5_API_LOCK
+    //H5_API_LOCK
     ret_value = H5P_peek(plist, H5F_ACS_VOL_CONN_NAME, &connector_prop);
-    H5_API_UNLOCK
+    //H5_API_UNLOCK
 
     if (ret_value < 0)
         HGOTO_ERROR(H5E_FILE, H5E_CANTGET, FAIL, "can't get VOL connector info");
@@ -1313,9 +1313,9 @@ H5Fmount(hid_t loc_id, const char *name, hid_t child_id, hid_t plist_id)
     if (H5P_DEFAULT == plist_id)
         plist_id = H5P_FILE_MOUNT_DEFAULT;
     else {
-        H5_API_LOCK
+        //H5_API_LOCK
         ret = H5P_isa_class(plist_id, H5P_FILE_MOUNT);
-        H5_API_UNLOCK
+        //H5_API_UNLOCK
 
         if (TRUE != ret)
             HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "plist_id is not a file mount property list ID");

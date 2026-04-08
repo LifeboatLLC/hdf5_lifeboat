@@ -92,13 +92,20 @@ H5VLregister_connector(const H5VL_class_t *cls, hid_t vipl_id)
     if (H5P_DEFAULT == vipl_id)
         vipl_id = H5P_VOL_INITIALIZE_DEFAULT;
     else {
-        H5_API_LOCK
+        //H5_API_LOCK
         ret = H5P_isa_class(vipl_id, H5P_VOL_INITIALIZE);
-        H5_API_UNLOCK
+        //H5_API_UNLOCK
 
         if (TRUE != ret)
             HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5I_INVALID_HID, "not a VOL initialize property list");
     }
+
+#ifdef H5_HAVE_MULTITHREAD
+    /* Set the property list in the context */
+    if (H5CX_set_plist(vipl_id, H5P_TYPE_VOL_INITIALIZE) < 0) {
+        HGOTO_ERROR(H5E_ATTR, H5E_CANTSET, H5I_INVALID_HID, "can't set vipl in context");
+    }
+#endif
 
     /* Register connector */
     if ((ret_value = H5VL__register_connector_by_class(cls, TRUE, vipl_id)) < 0)
@@ -145,9 +152,9 @@ H5VLregister_connector_by_name(const char *name, hid_t vipl_id)
     if (H5P_DEFAULT == vipl_id)
         vipl_id = H5P_VOL_INITIALIZE_DEFAULT;
     else {
-        H5_API_LOCK
+        //H5_API_LOCK
         ret = H5P_isa_class(vipl_id, H5P_VOL_INITIALIZE);
-        H5_API_UNLOCK
+        //H5_API_UNLOCK
 
         if (TRUE != ret)
             HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5I_INVALID_HID, "not a VOL initialize property list");
@@ -155,7 +162,7 @@ H5VLregister_connector_by_name(const char *name, hid_t vipl_id)
 
 #ifdef H5_HAVE_MULTITHREAD
     /* Set the property list in the context */
-    if (H5CX_set_plist(vipl_id, H5P_TYPE_REFERENCE_ACCESS) < 0) {
+    if (H5CX_set_plist(vipl_id, H5P_TYPE_VOL_INITIALIZE) < 0) {
         HGOTO_ERROR(H5E_ATTR, H5E_CANTSET, H5I_INVALID_HID, "can't set vipl in context");
     }
 #endif
@@ -203,9 +210,9 @@ H5VLregister_connector_by_value(H5VL_class_value_t value, hid_t vipl_id)
     if (H5P_DEFAULT == vipl_id)
         vipl_id = H5P_VOL_INITIALIZE_DEFAULT;
     else {
-        H5_API_LOCK
+        //H5_API_LOCK
         ret = H5P_isa_class(vipl_id, H5P_VOL_INITIALIZE);
-        H5_API_UNLOCK
+        //H5_API_UNLOCK
 
         if (TRUE != ret)
             HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5I_INVALID_HID, "not a VOL initialize property list");
@@ -213,7 +220,7 @@ H5VLregister_connector_by_value(H5VL_class_value_t value, hid_t vipl_id)
 
 #ifdef H5_HAVE_MULTITHREAD
     /* Set the property list in the context */
-    if (H5CX_set_plist(vipl_id, H5P_TYPE_REFERENCE_ACCESS) < 0) {
+    if (H5CX_set_plist(vipl_id, H5P_TYPE_VOL_INITIALIZE) < 0) {
         HGOTO_ERROR(H5E_ATTR, H5E_CANTSET, H5I_INVALID_HID, "can't set vipl in context");
     }
 #endif
