@@ -975,6 +975,7 @@ discard_future_generate_cb(void *future_obj)
     return SUCCEED;
 }
 
+#if 0 /* future IDs are tested in mt_id_test.c */
 /* Test function */
 static int
 test_future_ids(void)
@@ -1368,6 +1369,7 @@ error:
 
     return -1;
 } /* end test_future_ids() */
+#endif /* 0 future IDs are tested in mt_id_test.c */
 
 herr_t
 test_ids(TestParams_t H5_ATTR_UNUSED *params)
@@ -1387,7 +1389,7 @@ test_ids(TestParams_t H5_ATTR_UNUSED *params)
         TestErrPrintf("ID type list test failed\n");
     if (test_remove_clear_type() < 0)
         TestErrPrintf("ID remove during H5Iclear_type test failed\n");
-#if 0 /* skip future ID tests for now */
+#if 0 /* future IDs are tested in mt_id_test.c  */
     if (test_future_ids() < 0)
         TestErrPrintf("Future ID test failed\n");
 #endif

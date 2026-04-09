@@ -37,10 +37,9 @@
 #include "H5Pprivate.h"  /* Property lists                       */
 
 #ifdef H5_HAVE_MULTITHREAD
-
 #include "H5Ppkg_mt.h"
 #include <stdatomic.h>
-#endif
+#endif /* H5_HAVE_MULTITHREAD */
 
 /****************/
 /* Local Macros */
@@ -302,7 +301,7 @@ typedef struct H5CX_t {
     MPI_Datatype ftype;              /* MPI datatype for file, when using collective I/O */
     hbool_t      mpi_file_flushing;  /* Whether an MPI-opened file is being flushed */
     hbool_t      rank0_bcast;        /* Whether a dataset meets read-with-rank0-and-bcast requirements */
-#endif                               /* H5_HAVE_PARALLEL */
+#endif /* H5_HAVE_PARALLEL */
 
     /* Cached DXPL properties */
     size_t    max_temp_buf;            /* Maximum temporary buffer size */
@@ -330,7 +329,7 @@ typedef struct H5CX_t {
     hbool_t  mpio_chunk_opt_num_valid;   /* Whether collective chunk threshold is valid */
     unsigned mpio_chunk_opt_ratio;       /* Collective chunk ratio (H5D_XFER_MPIO_CHUNK_OPT_RATIO_NAME) */
     hbool_t  mpio_chunk_opt_ratio_valid; /* Whether collective chunk ratio is valid */
-#endif                                   /* H5_HAVE_PARALLEL */
+#endif /* H5_HAVE_PARALLEL */
     H5Z_EDC_t               err_detect;  /* Error detection info (H5D_XFER_EDC_NAME) */
     hbool_t                 err_detect_valid;     /* Whether error detection info is valid */
     H5Z_cb_t                filter_cb;            /* Filter callback function (H5D_XFER_FILTER_CB_NAME) */
@@ -391,8 +390,8 @@ typedef struct H5CX_t {
                                                      (H5D_XFER_COLL_CHUNK_MULTI_RATIO_IND_NAME) */
     hbool_t
         mpio_coll_rank0_bcast_set;  /* Whether instrumented "collective chunk multi ratio ind" value is set */
-#endif                              /* H5_HAVE_INSTRUMENTED_LIBRARY */
-#endif                              /* H5_HAVE_PARALLEL */
+#endif /* H5_HAVE_INSTRUMENTED_LIBRARY */
+#endif /* H5_HAVE_PARALLEL */
     uint32_t no_selection_io_cause; /* Reason for not performing selection I/O
                                           (H5D_XFER_NO_SELECTION_IO_CAUSE_NAME) */
     hbool_t no_selection_io_cause_set;   /* Whether reason for not performing selection I/O is set */
@@ -470,7 +469,7 @@ typedef struct H5CX_dxpl_cache_t {
              mpio_chunk_opt_mode;       /* Collective chunk option (H5D_XFER_MPIO_CHUNK_OPT_HARD_NAME) */
     unsigned mpio_chunk_opt_num;        /* Collective chunk threshold (H5D_XFER_MPIO_CHUNK_OPT_NUM_NAME) */
     unsigned mpio_chunk_opt_ratio;      /* Collective chunk ratio (H5D_XFER_MPIO_CHUNK_OPT_RATIO_NAME) */
-#endif                                  /* H5_HAVE_PARALLEL */
+#endif /* H5_HAVE_PARALLEL */
     H5Z_EDC_t               err_detect; /* Error detection info (H5D_XFER_EDC_NAME) */
     H5Z_cb_t                filter_cb;  /* Filter callback function (H5D_XFER_FILTER_CB_NAME) */
     H5Z_data_xform_t       *data_transform;        /* Data transform info (H5D_XFER_XFORM_NAME) */
@@ -535,7 +534,7 @@ static H5CX_node_t *H5CX__pop_common(hbool_t update_dxpl_props);
 
 #if !defined(H5_HAVE_THREADSAFE) && !defined(H5_HAVE_MULTITHREAD)
 static H5CX_node_t *H5CX_head_g = NULL; /* Pointer to head of context stack */
-#endif                                  /* H5_HAVE_THREADSAFE or H5_HAVE_MULTITHREAD */
+#endif /* H5_HAVE_THREADSAFE or H5_HAVE_MULTITHREAD */
 
 /* Define a "default" dataset transfer property list cache structure to use for default DXPLs */
 static H5CX_dxpl_cache_t H5CX_def_dxpl_cache;
@@ -764,7 +763,7 @@ H5CX_init(void)
 #ifdef H5_HAVE_MULTITHREAD
     if (H5P_set_cx_init() < 0)
         HGOTO_ERROR(H5E_CONTEXT, H5E_CANTSET, FAIL, "Can't set H5P_H5CX_INIT_g");
-#endif
+#endif /* H5_HAVE_MULTITHREAD */
 
 done:
     FUNC_LEAVE_NOAPI(ret_value)
@@ -798,7 +797,7 @@ H5CX_term_package(void)
 
 #ifdef H5_HAVE_MULTITHREAD
     H5P_unset_cx_init();
-#endif
+#endif /* H5_HAVE_MULTITHREAD */
 
 #if !defined(H5_HAVE_THREADSAFE) && !defined(H5_HAVE_MULTITHREAD)
     H5CX_head_g = NULL;
@@ -1423,7 +1422,7 @@ done:
     FUNC_LEAVE_NOAPI(ret_value)
 
 } /* end H5CX_set_dxpl() */
-#else
+#else /* H5_HAVE_MULTITHREAD */
 void
 H5CX_set_dxpl(hid_t dxpl_id)
 {
@@ -1440,7 +1439,7 @@ H5CX_set_dxpl(hid_t dxpl_id)
 
     FUNC_LEAVE_NOAPI_VOID
 } /* end H5CX_set_dxpl() */
-#endif
+#endif /* H5_HAVE_MULTITHREAD */
 
 /*-------------------------------------------------------------------------
  * Function:    H5CX_set_dcpl
@@ -1497,7 +1496,7 @@ done:
     FUNC_LEAVE_NOAPI(ret_value)
 
 } /* end H5CX_set_dcpl() */
-#else
+#else /* H5_HAVE_MULTITHREAD */
 void
 H5CX_set_dcpl(hid_t dcpl_id)
 {
@@ -1514,7 +1513,7 @@ H5CX_set_dcpl(hid_t dcpl_id)
 
     FUNC_LEAVE_NOAPI_VOID
 } /* end H5CX_set_dcpl() */
-#endif
+#endif /* H5_HAVE_MULTITHREAD */
 
 /*-------------------------------------------------------------------------
  * Function:    H5CX_set_libver_bounds
@@ -1604,7 +1603,7 @@ done:
     FUNC_LEAVE_NOAPI(ret_value)
 
 } /* end H5CX_set_lcpl() */
-#else
+#else /* H5_HAVE_MULTITHREAD */
 void
 H5CX_set_lcpl(hid_t lcpl_id)
 {
@@ -1621,7 +1620,7 @@ H5CX_set_lcpl(hid_t lcpl_id)
 
     FUNC_LEAVE_NOAPI_VOID
 } /* end H5CX_set_lcpl() */
-#endif
+#endif /* H5_HAVE_MULTITHREAD */
 
 /*-------------------------------------------------------------------------
  * Function:    H5CX_set_lapl
@@ -2326,7 +2325,7 @@ H5CX_set_apl(hid_t *acspl_id, const H5P_libclass_t *libclass,
             if (H5P_USER_TRUE == md_coll_read)
                 is_collective = TRUE;
         } /* end if */
-#endif    /* H5_HAVE_PARALLEL */
+#endif /* H5_HAVE_PARALLEL */
     }     /* end else */
 
 #ifdef H5_HAVE_PARALLEL
@@ -2351,13 +2350,13 @@ H5CX_set_apl(hid_t *acspl_id, const H5P_libclass_t *libclass,
                 MPI_Barrier(mpi_comm);
         } /* end if */
     }     /* end if */
-#endif    /* H5_HAVE_PARALLEL */
+#endif /* H5_HAVE_PARALLEL */
 
 done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5CX_set_apl() */
 
-#else
+#else /* H5_HAVE_MULTITHREAD */
 
 /*-------------------------------------------------------------------------
  * Function:    H5CX_set_apl
@@ -2481,7 +2480,7 @@ H5CX_set_apl(hid_t *acspl_id, const H5P_libclass_t *libclass,
 done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5CX_set_apl() */
-#endif
+#endif /* H5_HAVE_MULTITHREAD */
 
 /*-------------------------------------------------------------------------
  * Function:    H5CX_set_loc
@@ -2984,7 +2983,7 @@ H5CX_get_plist_version(hid_t plist_id)
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5CX_get_plist_version() */
-#endif
+#endif /* H5_HAVE_MULTITHREAD */
 
 /*-------------------------------------------------------------------------
  * Function:    H5CX_get_btree_split_ratios

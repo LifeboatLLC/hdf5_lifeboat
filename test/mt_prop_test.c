@@ -13591,7 +13591,6 @@ write_class(thread_params_t *thread_params)
 
 } /* end write_class() */
 
-#if 1
 /****************************************************************************************
  * Function:    cmp_list
  *
@@ -13857,7 +13856,6 @@ cmp_class(thread_params_t *thread_params)
     return SUCCEED;
 
 } /* end cmp_class() */
-#endif
 
 /****************************************************************************************
  * Function:    close_list
@@ -20659,9 +20657,9 @@ main(int argc, char **argv)
 
 exit:
 
-#else
+#else /* H5_HAVE_MULTITHREAD */
     fprintf(stderr, "Multithread isn't enabled in library configuration -- no tests to run\n");
-#endif
+#endif /* H5_HAVE_MULTITHREAD */
 
     /* Retrieve number of testing errors before shutting down test infrastructure */
     num_errs = GetTestNumErrs();

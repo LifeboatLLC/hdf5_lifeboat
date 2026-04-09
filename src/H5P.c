@@ -31,7 +31,7 @@
 
 #ifdef H5_HAVE_MULTITHREAD
 #include "H5Ppkg_mt.h" /* MT Safe Property List structures */
-#endif                 /* H5_HAVE_MULTITHREAD */
+#endif /* H5_HAVE_MULTITHREAD */
 
 /****************/
 /* Local Macros */
@@ -949,25 +949,6 @@ H5Pdecode(const void *buf)
 done:
     FUNC_LEAVE_API(ret_value)
 } /* H5Pdecode() */
-
-/****************************************************************************************
- * Function:    H5Pget_class
- *
- * Purpose:     Multithread version of H5Pget_class() which queries the class of a
- *              property list.
- *
- *              NOTE: The original version of this function would create a new ID in the
- *              index for the class, regardless of whether it already had one or not.
- *              In this multithread version we are trying to avoid that, and are instead
- *              simply incrementing the ref count of the ID in the index and returning
- *              the existing ID.
- *
- * Return:      Success: Returns the ID of the parent class
- *
- *              Failure: H5I_INVALID_HID (-1)
- *
- ****************************************************************************************
- */
 
 /*--------------------------------------------------------------------------
  NAME

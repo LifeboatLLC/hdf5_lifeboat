@@ -26,7 +26,7 @@
 #include "H5private.h" /* Generic Functions			*/
 #ifdef H5_HAVE_PARALLEL
 #include "H5ACprivate.h" /* Metadata cache                       */
-#endif                   /* H5_HAVE_PARALLEL */
+#endif /* H5_HAVE_PARALLEL */
 #include "H5Eprivate.h"  /* Error handling		  	*/
 #include "H5Fprivate.h"  /* File access				*/
 #include "H5FLprivate.h" /* Free lists                           */
@@ -37,9 +37,6 @@
 #ifdef H5_HAVE_MULTITHREAD
 #include "H5CXprivate.h"
 #include "H5Ppkg_mt.h"
-
-typedef H5P_mt_class_t H5P_genclass_t;
-typedef H5P_mt_list_t  H5P_genplist_t;
 #endif /* H5_HAVE_MULTITHREAD */
 
 /****************/
@@ -55,6 +52,11 @@ typedef H5P_mt_list_t  H5P_genplist_t;
 /******************/
 /* Local Typedefs */
 /******************/
+
+#ifdef H5_HAVE_MULTITHREAD
+typedef H5P_mt_class_t H5P_genclass_t;
+typedef H5P_mt_list_t  H5P_genplist_t;
+#endif /* H5_HAVE_MULTITHREAD */
 
 /* Typedef for checking for duplicate class names in parent class */
 typedef struct {
@@ -250,7 +252,7 @@ _Atomic uint64_t H5P_OCPYPL_VER_g = 0;
 _Atomic uint64_t H5P_RAPL_VER_g   = 0;
 _Atomic uint64_t H5P_VIPL_VER_g   = 0;
 
-#endif
+#endif /* H5_HAVE_MULTITHREAD */
 
 /* Root property list class library initialization object */
 const H5P_libclass_t H5P_CLS_ROOT[1] = {{
@@ -477,7 +479,7 @@ H5P_mt_t H5P_mt_g;
  */
 _Thread_local H5P_mt_cb_t H5P_mt_cb = {0};
 
-#else
+#else /* H5_HAVE_MULTITHREAD */
 /* Declare a free list to manage the H5P_genclass_t struct */
 H5FL_DEFINE_STATIC(H5P_genclass_t);
 
@@ -486,7 +488,7 @@ H5FL_DEFINE_STATIC(H5P_genprop_t);
 
 /* Declare a free list to manage the H5P_genplist_t struct */
 H5FL_DEFINE_STATIC(H5P_genplist_t);
-#endif
+#endif /* H5_HAVE_MULTITHREAD */
 
 /* Generic Property Class ID class */
 static const H5I_class_t H5I_GENPROPCLS_CLS[1] = {{
@@ -2707,19 +2709,12 @@ H5P__init_lkup_tbl(H5P_mt_class_t *parent, uint64_t version, H5P_mt_list_t *new_
                         HGOTO_ERROR(H5E_PLIST, H5E_CANTINIT, FAIL,
                                     "Failed creating property for property list.");
 
-                        /* Call the create callback */
-#if 1
+                    /* Call the create callback */
                     if (H5P__global_lock_prop_cb__create(new_prop, new_prop->name, valid_prop_value.size,
                                                          valid_prop_value.ptr) < 0) {
                         assert(H5P_MT_ASSERT_FAIL);
                         HGOTO_ERROR(H5E_PLIST, H5E_CANTCOPY, FAIL, "Create property callback failed");
                     }
-#else
-                    if ((new_prop->create)(new_prop->name, valid_prop_value.size, valid_prop_value.ptr) < 0) {
-                        assert(H5P_MT_ASSERT_FAIL);
-                        HGOTO_ERROR(H5E_PLIST, H5E_CANTCREATE, FAIL, "Can't create property");
-                    }
-#endif
 
                     /* Set the property's in_lkup_tbl flag */
                     new_prop->in_lkup_tbl = TRUE;
@@ -2918,18 +2913,11 @@ H5P__init_lkup_tbl_copy(H5P_mt_list_t *old_list, uint64_t version, H5P_mt_list_t
 
                 /* If the new_prop has the copy callback, call it */
                 if (new_prop->copy) {
-#if 1
                     if (H5P__global_lock_prop_cb__copy(new_prop, new_prop->name, old_prop_value.size,
                                                        old_prop_value.ptr) < 0) {
                         assert(H5P_MT_ASSERT_FAIL);
                         HGOTO_ERROR(H5E_PLIST, H5E_CANTCOPY, FAIL, "Can't copy property");
                     }
-#else
-                    if ((new_prop->copy)(new_prop->name, old_prop_value.size, old_prop_value.ptr) < 0) {
-                        assert(H5P_MT_ASSERT_FAIL);
-                        HGOTO_ERROR(H5E_PLIST, H5E_CANTCOPY, FAIL, "Can't copy property");
-                    }
-#endif
                 }
 
                 /* Set the property's in_lkup_tbl flag */
@@ -3581,18 +3569,11 @@ H5P__mt_copy_lfsll(void *param, H5P_mt_prop_t *old_prop, uint64_t version)
                 if (new_list) {
                     /* If the prop has a copy callback, call it */
                     if (new_prop->copy) {
-#if 1
                         if (H5P__global_lock_prop_cb__copy(new_prop, new_prop->name, value.size, value.ptr) <
                             0) {
                             assert(H5P_MT_ASSERT_FAIL);
                             HGOTO_ERROR(H5E_PLIST, H5E_CANTCOPY, FAIL, "Can't copy property");
                         }
-#else
-                        if ((new_prop->copy)(new_prop->name, value.size, value.ptr) < 0) {
-                            assert(H5P_MT_ASSERT_FAIL);
-                            HGOTO_ERROR(H5E_PLIST, H5E_CANTCOPY, FAIL, "Can't copy property");
-                        }
-#endif
                     }
                 }
 
@@ -4264,39 +4245,23 @@ H5P__mt_ins_or_mod_prop__list(H5P_mt_list_t *list, const char *name, void *value
     /* If copy is TRUE and the copy callback exists call it */
     if (copy) {
         if (new_prop->copy) {
-#if 1
             if (H5P__global_lock_prop_cb__copy(new_prop, new_prop->name, prop_value.size, prop_value.ptr) <
                 0) {
                 prop_cleanup = TRUE;
                 assert(H5P_MT_ASSERT_FAIL);
                 HGOTO_ERROR(H5E_PLIST, H5E_CANTCOPY, FAIL, "Copy property callback failed");
             }
-#else
-            if ((new_prop->copy)(new_prop->name, prop_value.size, prop_value.ptr)) {
-                prop_cleanup = TRUE;
-                assert(H5P_MT_ASSERT_FAIL);
-                HGOTO_ERROR(H5E_PLIST, H5E_CANTCOPY, FAIL, "Copy property callback failed");
-            }
-#endif
         }
     }
     /* If create is TRUE and the create callback exists call it */
     else if (create) {
         if (new_prop->create) {
-#if 1
             if (H5P__global_lock_prop_cb__create(new_prop, new_prop->name, prop_value.size, prop_value.ptr) <
                 0) {
                 prop_cleanup = TRUE;
                 assert(H5P_MT_ASSERT_FAIL);
                 HGOTO_ERROR(H5E_PLIST, H5E_CANTCOPY, FAIL, "Create property callback failed");
             }
-#else
-            if ((new_prop->create)(new_prop->name, prop_value.size, prop_value.ptr)) {
-                prop_cleanup = TRUE;
-                assert(H5P_MT_ASSERT_FAIL);
-                HGOTO_ERROR(H5E_PLIST, H5E_CANTCOPY, FAIL, "Create property callback failed");
-            }
-#endif
         }
     }
 
@@ -4847,142 +4812,9 @@ H5P_remove(H5P_mt_list_t *list, const char *name)
      * end testing function
      */
 
-#if 1
     if ((H5P__mt_delete_prop__list(list, chksum, name, curr_version, next_version)) < 0) {
         HGOTO_ERROR(H5E_PLIST, H5E_CANTDELETE, FAIL, "Can't delete property");
     }
-#else
-    pl_head = list->pl_head;
-    prev_prop = NULL;
-    prop = NULL;
-
-    entry = H5P__mt_search_lkup_tbl(list->lkup_tbl, 0, (list->nprops_inherited - 1), chksum, name);
-
-    /* If not NULL, entry contains prop to delete, but must find correct version */
-    if (entry) {
-        prop = H5P__mt_entry_find_version(entry, curr_version, &base_flag);
-
-        /* If NULL, the current version of the prop was already deleted */
-        if (NULL == prop) {
-            HGOTO_ERROR(H5E_PLIST, H5E_BADVALUE, FAIL, "Property already deleted.");
-        }
-
-        if (base_flag) {
-            assert(0 == atomic_load(&(entry->base_delete_version)));
-
-            /* Set base_delete_version */
-            atomic_store(&(entry->base_delete_version), next_version);
-
-            /* Decrement nprops */
-            atomic_fetch_sub(&(list->nprops), 1);
-
-            /* update stats */
-            atomic_fetch_add(&(list->num_set_delete__base_delete_version), 1);
-
-            done = TRUE;
-        }
-        else {
-            /* Ensure the property isn't already deleted */
-            assert(0 == atomic_load(&(prop->delete_version)));
-
-            /* Set prop's delete_version */
-            atomic_store(&(prop->delete_version), next_version);
-
-            curr = atomic_load(&(entry->curr));
-
-            /* If TRUE, the property that curr.ptr points to is the target_prop */
-            if ((atomic_load(&(prop->create_version))) == (atomic_load(&(curr.ptr->create_version)))) {
-                /* Decrement logical length and nprops */
-                atomic_fetch_sub(&(list->log_pl_len), 1);
-                atomic_fetch_sub(&(list->nprops), 1);
-
-                /* update stats */
-                atomic_fetch_add(&(list->num_set_delete__curr_entry), 1);
-            }
-            else /* target prop is not the most recent version */
-            {
-                /* update stats */
-                atomic_fetch_add(&(list->num_set_delete__older_curr), 1);
-            }
-
-            done = TRUE;
-        }
-
-    } /* end if ( entry ) */
-
-    if (!done) {
-        /**
-         * The current implementation of H5P__find_mod_point() should either succeed
-         * or trigger an assertion -- thus no need to check return value at present.
-         */
-        H5P__find_mod_point(pl_head, &prev_prop, &prop, &deletes, &visited, &thrd_cols, chksum, name,
-                            curr_version);
-
-        assert(prev_prop);
-        assert(atomic_load(&(prev_prop->tag)) == H5P_MT_PROP_TAG);
-
-        assert(prop);
-        assert(atomic_load(&(prop->tag)) == H5P_MT_PROP_TAG);
-
-        if (prop->chksum != chksum || 0 != strcmp(prop->name, name)) {
-            atomic_fetch_add(&(H5P_mt_g.num_props_deleted_lists_prop_not_found), 1);
-            HGOTO_ERROR(H5E_PLIST, H5E_NOTFOUND, FAIL, "Property doesn't exist.");
-        }
-
-        /* Ensure property isn't already marked as deleted */
-        if (0 < atomic_load(&(prop->delete_version))) {
-            atomic_fetch_add(&(H5P_mt_g.num_props_deleted_lists_already_deleted), 1);
-            HGOTO_ERROR(H5E_PLIST, H5E_BADTYPE, FAIL, "Property is already marked as deleted.");
-        }
-
-        /* Set the prop's delete_verison */
-        atomic_store(&(prop->delete_version), next_version);
-
-        /**
-         * If prev_prop has same chksum as prop, then prev_prop is
-         * a newer version and prop isn't counted in the log_pl_len.
-         */
-        if (prev_prop->chksum != prop->chksum) {
-            atomic_fetch_sub(&(list->log_pl_len), 1);
-            atomic_fetch_sub(&(list->nprops), 1);
-            atomic_fetch_sub(&(list->nprops_added), 1);
-        }
-
-        /* update stats */
-        atomic_fetch_add(&(list->num_deletes_from_lfsll), 1);
-
-        done = TRUE;
-
-    } /* end while ( ! done ) */
-
-    /* If the prop has a del callback, call it */
-    if (prop->del) {
-        value = atomic_load(&(prop->value));
-
-        if ((*(prop->del))(list->plist_id, prop->name, value.size, value.ptr) < 0) {
-            HGOTO_ERROR(H5E_PLIST, H5E_CANTFREE, FAIL, "can't release property value");
-        }
-    }
-
-    /* update stats */
-    atomic_fetch_add(&(list->num_set_delete__success), 1);
-    atomic_store(&(list->num_set_delete__nodes_visited), visited);
-    atomic_fetch_add(&(list->num_set_delete__cols), thrd_cols);
-    atomic_fetch_add(&(H5P_mt_g.num_props_deleted_lists), 1);
-
-    if (visited > 0) {
-        if (visited > atomic_load(&(list->set_delete__max_nodes_visited))) {
-            atomic_store(&(list->set_delete__max_nodes_visited), visited);
-        }
-
-        avg_visited = atomic_load(&(list->set_delete__avg_nodes_visited));
-        num_calls = atomic_load(&(list->num_deletes_from_lfsll));
-
-        avg_visited = H5P__calc_avg_visited(avg_visited, num_calls, visited);
-
-        atomic_store(&(list->set_delete__avg_nodes_visited), avg_visited);
-    }
-#endif
 
 done:
 
@@ -5181,15 +5013,9 @@ H5P__mt_delete_prop__list(H5P_mt_list_t *list, int64_t chksum, const char *name,
     /* If the prop has a del callback, call it */
     if (prop->del) {
         value = atomic_load(&(prop->value));
-#if 1
         if (H5P__global_lock_prop_cb__del(prop, list->plist_id, prop->name, value.size, value.ptr) < 0) {
             HGOTO_ERROR(H5E_PLIST, H5E_CANTFREE, FAIL, "can't release property value");
         }
-#else
-        if ((*(prop->del))(list->plist_id, prop->name, value.size, value.ptr) < 0) {
-            HGOTO_ERROR(H5E_PLIST, H5E_CANTFREE, FAIL, "can't release property value");
-        }
-#endif
     }
 
     /* update stats */
@@ -6527,17 +6353,10 @@ H5P_set(H5P_mt_list_t *list, const char *name, const void *value)
 
         H5MM_memcpy(tmp_value.ptr, value, prop_value.size);
 
-#if 1
         if (H5P__global_lock_prop_cb__set(prop, atomic_load(&(list->plist_id)), name, prop_value.size,
                                           tmp_value.ptr) < 0) {
             HGOTO_ERROR(H5E_PLIST, H5E_CANTINIT, FAIL, "can't set property value");
         }
-#else
-        /* Call the user's callback */
-        if ((*(prop->set))(atomic_load(&(list->plist_id)), name, prop_value.size, tmp_value.ptr) < 0) {
-            HGOTO_ERROR(H5E_PLIST, H5E_CANTINIT, FAIL, "can't set property value");
-        }
-#endif
 
         prp_value = tmp_value.ptr;
     }
@@ -6547,15 +6366,9 @@ H5P_set(H5P_mt_list_t *list, const char *name, const void *value)
     /* Free any previous value for the property */
     if (prop->del) {
         /* Call the user's 'delete' callback */
-#if 1
         if (H5P__global_lock_prop_cb__del(prop, list->plist_id, name, prop_value.size, prop_value.ptr) < 0) {
             HGOTO_ERROR(H5E_PLIST, H5E_CANTFREE, FAIL, "can't release property value");
         }
-#else
-        if ((*(prop->del))(list->plist_id, name, prop_value.size, prop_value.ptr) < 0) {
-            HGOTO_ERROR(H5E_PLIST, H5E_CANTFREE, FAIL, "can't release property value");
-        }
-#endif
     }
 
     /* memcpy into new buffer to atomically set */
@@ -7952,13 +7765,8 @@ H5P__mt_prop_cmp(H5P_mt_prop_t *prop1, H5P_mt_prop_t *prop2)
         HGOTO_DONE(1);
     if (value1.ptr) {
         /* Call the compare callback */
-#if 1
         if ((cmp_value = H5P__global_lock_prop_cb__cmp(prop1, value1.ptr, value2.ptr, value1.size)) != 0)
             HGOTO_DONE(cmp_value);
-#else
-        if ((cmp_value = prop1->cmp(value1.ptr, value2.ptr, value1.size)) != 0)
-            HGOTO_DONE(cmp_value);
-#endif
     }
 
 done:
@@ -8599,7 +8407,7 @@ H5P_peek(H5P_genplist_t *plist, const char *name, void *value)
 
             fprintf(H5P_plist_cx_log, "plist not in H5CX: plist_id: %ld    type: %d\n",
                     atomic_load(&(plist->plist_id)), parent->type);
-#endif
+#endif /* H5P_PLIST_CX_LOG */
 
             version = atomic_load(&(plist->curr_version));
         }
@@ -8696,7 +8504,7 @@ H5P_get(H5P_mt_list_t *plist, const char *name, void *value)
 
             fprintf(H5P_plist_cx_log, "plist not in H5CX: plist_id: %ld    type: %d\n",
                     atomic_load(&(plist->plist_id)), parent->type);
-#endif
+#endif /* H5P_PLIST_CX_LOG */
             version = atomic_load(&(plist->curr_version));
         }
         else {
@@ -8733,17 +8541,12 @@ H5P_get(H5P_mt_list_t *plist, const char *name, void *value)
         }
 
         H5MM_memcpy(tmp_value, prop_value.ptr, prop_value.size);
-#if 1
+        
+        /* Call the callback */
         if (H5P__global_lock_prop_cb__get(prop, atomic_load(&(plist->plist_id)), name, prop_value.size,
                                           tmp_value) < 0) {
             HGOTO_ERROR(H5E_PLIST, H5E_CANTINIT, FAIL, "Property's get callback failed");
         }
-#else
-        /* Call the callback */
-        if ((*(prop->get))(plist->plist_id, name, prop_value.size, tmp_value) < 0) {
-            HGOTO_ERROR(H5E_PLIST, H5E_CANTINIT, FAIL, "can't set property value");
-        }
-#endif
 
         H5MM_memcpy(value, tmp_value, prop_value.size);
     }
@@ -9382,12 +9185,13 @@ H5P_close(H5P_genplist_t *list)
             /* If the property has a close callback call it */
             if (valid_prop->close) {
                 prop_value = atomic_load(&(valid_prop->value));
-#if 1
+
+                /**
+                 * Call the close callback and ignore the return value,
+                 * there's nothing we can do about it
+                 */
                 H5P__global_lock_prop_cb__close(valid_prop, valid_prop->name, prop_value.size,
                                                 prop_value.ptr);
-#else
-                (valid_prop->close)(valid_prop->name, prop_value.size, prop_value.ptr);
-#endif
             }
 
             prop = valid_prop;
@@ -9421,13 +9225,12 @@ H5P_close(H5P_genplist_t *list)
                     if (base_prop->close) {
                         prop_value = atomic_load(&(base_prop->value));
 
-                        /* property close callback */
-#if 1
+                        /**
+                         * Call the close callback and ignore the return value,
+                         * there's nothing we can do about it
+                         */
                         H5P__global_lock_prop_cb__close(base_prop, base_prop->name, prop_value.size,
                                                         prop_value.ptr);
-#else
-                        (base_prop->close)(base_prop->name, prop_value.size, prop_value.ptr);
-#endif
                     }
                 }
             }
@@ -10861,7 +10664,7 @@ done:
     FUNC_LEAVE_NOAPI(ret_value)
 
 } /* H5P__mt_encode_prop() */
-#endif
+#endif /* Not currently used */
 
 /****************************************************************************************
  * Function:    H5P__mt_close_prop
@@ -11267,18 +11070,7 @@ H5P__inc_thrd_count(void *param)
                 atomic_fetch_add(&(list->num_thrd_opening_flag_set), 1);
             }
 
-#ifndef H5_HAVE_MULTITHREAD
-
-            /**
-             * This is for testing that this MT safety net gets trigged while running
-             * tests in single thread, to prevent an infinite loop.
-             */
-            return FAIL;
-#else
-
             sleep(1);
-
-#endif
         }
         else {
             update_thrd = thrd;
@@ -18324,15 +18116,6 @@ done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P__copy_prop_pclass() */
 
-#ifdef H5_HAVE_MULTITHREAD
-
-/**
- * NOTE: There is not a multithread safe version of this functions because
- * the purpose of this function is handled else where in the multithread
- * safe functions.
- */
-
-#else
 /*--------------------------------------------------------------------------
  NAME
     H5P__unregister
@@ -18385,7 +18168,6 @@ H5P__unregister(H5P_genclass_t *pclass, const char *name)
 done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5P__unregister() */
-#endif
 
 /*--------------------------------------------------------------------------
  NAME
