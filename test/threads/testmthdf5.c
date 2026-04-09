@@ -102,9 +102,19 @@ main(int argc, char *argv[])
             "MT usage of VOL info routines");
 
     /* These H5VL tests do their own threading internally - do not provide threading flag */
-    AddTest("mt_reg_op", mt_test_registration_operation, NULL, mt_test_registration_operation_cleanup,
-            &params, sizeof(mt_test_params), no_threaded_test_flag,
-            "MT reg/unreg of a connector and usage of its routines");
+
+    /**
+     * If ran with higher thread counts (i.e. 16 threads) this test will exceed its allotted
+     * runtime and cause a timeout error, when ran at HDF5TestExpress=2 or 3. On older, slower, 
+     * or CPUs with a low number of cores this test will likely also timeout when ran at
+     * HDF5TestExpress=1. 
+     */
+    if ( testExpress == 0 )
+    {
+        AddTest("mt_reg_op", mt_test_registration_operation, NULL, mt_test_registration_operation_cleanup,
+                &params, sizeof(mt_test_params), no_threaded_test_flag,
+                "MT reg/unreg of a connector and usage of its routines");
+    }
 
     AddTest("mt_prop_copy", mt_test_vol_property_copy, NULL, NULL, &params, sizeof(mt_test_params),
             no_threaded_test_flag, "MT VOL property copying");
