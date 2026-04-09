@@ -31,7 +31,7 @@
 
 #ifdef H5_HAVE_MULTITHREAD
 #include "H5Ppkg_mt.h" /* MT Safe Property List structures */
-#endif /* H5_HAVE_MULTITHREAD */
+#endif                 /* H5_HAVE_MULTITHREAD */
 
 /****************/
 /* Local Macros */

@@ -176,39 +176,39 @@
  */
 typedef struct H5CX_t {
     /* DXPL */
-    hid_t           dxpl_id;  /* DXPL ID for API operation */
-    H5P_genplist_t *dxpl;     /* Dataset Transfer Property List */
-    uint64_t        dxpl_ver; /* Version of the dxpl used by this context */
+    hid_t           dxpl_id;        /* DXPL ID for API operation */
+    H5P_genplist_t *dxpl;           /* Dataset Transfer Property List */
+    uint64_t        dxpl_ver;       /* Version of the dxpl used by this context */
     int32_t         dxpl_ref_count; /* Number of times the index was incremented in this instance */
 
     /* LCPL */
-    hid_t           lcpl_id;  /* LCPL ID for API operation */
-    H5P_genplist_t *lcpl;     /* Link Creation Property List */
-    uint64_t        lcpl_ver; /* Version of the lcpl used by this context */
+    hid_t           lcpl_id;        /* LCPL ID for API operation */
+    H5P_genplist_t *lcpl;           /* Link Creation Property List */
+    uint64_t        lcpl_ver;       /* Version of the lcpl used by this context */
     int32_t         lcpl_ref_count; /* Number of times the index was incremented in this instance */
 
     /* LAPL */
-    hid_t           lapl_id;  /* LAPL ID for API operation */
-    H5P_genplist_t *lapl;     /* Link Access Property List */
-    uint64_t        lapl_ver; /* Version of the lapl used by this context */
+    hid_t           lapl_id;        /* LAPL ID for API operation */
+    H5P_genplist_t *lapl;           /* Link Access Property List */
+    uint64_t        lapl_ver;       /* Version of the lapl used by this context */
     int32_t         lapl_ref_count; /* Number of times the index was incremented in this instance */
 
     /* DCPL */
-    hid_t           dcpl_id;  /* DCPL ID for API operation */
-    H5P_genplist_t *dcpl;     /* Dataset Creation Property List */
-    uint64_t        dcpl_ver; /* Version of the dcpl used by this context */
+    hid_t           dcpl_id;        /* DCPL ID for API operation */
+    H5P_genplist_t *dcpl;           /* Dataset Creation Property List */
+    uint64_t        dcpl_ver;       /* Version of the dcpl used by this context */
     int32_t         dcpl_ref_count; /* Number of times the index was incremented in this instance */
 
     /* DAPL */
-    hid_t           dapl_id;  /* DAPL ID for API operation */
-    H5P_genplist_t *dapl;     /* Dataset Access Property List */
-    uint64_t        dapl_ver; /* Version of the dapl used by this context */
+    hid_t           dapl_id;        /* DAPL ID for API operation */
+    H5P_genplist_t *dapl;           /* Dataset Access Property List */
+    uint64_t        dapl_ver;       /* Version of the dapl used by this context */
     int32_t         dapl_ref_count; /* Number of times the index was incremented in this instance */
 
     /* FAPL */
-    hid_t           fapl_id;  /* FAPL ID for API operation */
-    H5P_genplist_t *fapl;     /* File Access Property List */
-    uint64_t        fapl_ver; /* Version of the fapl used by this context */
+    hid_t           fapl_id;        /* FAPL ID for API operation */
+    H5P_genplist_t *fapl;           /* File Access Property List */
+    uint64_t        fapl_ver;       /* Version of the fapl used by this context */
     int32_t         fapl_ref_count; /* Number of times the index was incremented in this instance */
 
     /* AAPL */
@@ -893,80 +893,80 @@ H5CX__push_common(H5CX_node_t *cnode)
     assert(head);
 
     /* Set non-zero context info */
-    cnode->ctx.dxpl_id  = H5P_DATASET_XFER_DEFAULT;
-    cnode->ctx.dxpl_ver = H5P_DEFAULT_DXPL_VER;
+    cnode->ctx.dxpl_id        = H5P_DATASET_XFER_DEFAULT;
+    cnode->ctx.dxpl_ver       = H5P_DEFAULT_DXPL_VER;
     cnode->ctx.dxpl_ref_count = 0;
 
-    cnode->ctx.dcpl_id  = H5P_DATASET_CREATE_DEFAULT;
-    cnode->ctx.dcpl_ver = H5P_DEFAULT_DCPL_VER;
+    cnode->ctx.dcpl_id        = H5P_DATASET_CREATE_DEFAULT;
+    cnode->ctx.dcpl_ver       = H5P_DEFAULT_DCPL_VER;
     cnode->ctx.dcpl_ref_count = 0;
 
-    cnode->ctx.dapl_id  = H5P_DATASET_ACCESS_DEFAULT;
-    cnode->ctx.dapl_ver = H5P_DEFAULT_DAPL_VER;
+    cnode->ctx.dapl_id        = H5P_DATASET_ACCESS_DEFAULT;
+    cnode->ctx.dapl_ver       = H5P_DEFAULT_DAPL_VER;
     cnode->ctx.dapl_ref_count = 0;
 
-    cnode->ctx.lcpl_id  = H5P_LINK_CREATE_DEFAULT;
-    cnode->ctx.lcpl_ver = H5P_DEFAULT_LCPL_VER;
+    cnode->ctx.lcpl_id        = H5P_LINK_CREATE_DEFAULT;
+    cnode->ctx.lcpl_ver       = H5P_DEFAULT_LCPL_VER;
     cnode->ctx.lcpl_ref_count = 0;
 
-    cnode->ctx.lapl_id  = H5P_LINK_ACCESS_DEFAULT;
-    cnode->ctx.lapl_ver = H5P_DEFAULT_LAPL_VER;
+    cnode->ctx.lapl_id        = H5P_LINK_ACCESS_DEFAULT;
+    cnode->ctx.lapl_ver       = H5P_DEFAULT_LAPL_VER;
     cnode->ctx.lapl_ref_count = 0;
 
-    cnode->ctx.fapl_id  = H5P_FILE_ACCESS_DEFAULT;
-    cnode->ctx.fapl_ver = H5P_DEFAULT_FAPL_VER;
+    cnode->ctx.fapl_id        = H5P_FILE_ACCESS_DEFAULT;
+    cnode->ctx.fapl_ver       = H5P_DEFAULT_FAPL_VER;
     cnode->ctx.fapl_ref_count = 0;
 
-    cnode->ctx.aapl_id  = H5P_ATTRIBUTE_ACCESS_DEFAULT;
-    cnode->ctx.aapl_ver = H5P_DEFAULT_AAPL_VER;
+    cnode->ctx.aapl_id        = H5P_ATTRIBUTE_ACCESS_DEFAULT;
+    cnode->ctx.aapl_ver       = H5P_DEFAULT_AAPL_VER;
     cnode->ctx.aapl_ref_count = 0;
 
-    cnode->ctx.acpl_id  = H5P_ATTRIBUTE_CREATE_DEFAULT;
-    cnode->ctx.acpl_ver = H5P_DEFAULT_ACPL_VER;
+    cnode->ctx.acpl_id        = H5P_ATTRIBUTE_CREATE_DEFAULT;
+    cnode->ctx.acpl_ver       = H5P_DEFAULT_ACPL_VER;
     cnode->ctx.acpl_ref_count = 0;
 
-    cnode->ctx.fcpl_id  = H5P_FILE_CREATE_DEFAULT;
-    cnode->ctx.fcpl_ver = H5P_DEFAULT_FCPL_VER;
+    cnode->ctx.fcpl_id        = H5P_FILE_CREATE_DEFAULT;
+    cnode->ctx.fcpl_ver       = H5P_DEFAULT_FCPL_VER;
     cnode->ctx.fcpl_ref_count = 0;
 
-    cnode->ctx.fmpl_id  = H5P_FILE_MOUNT_DEFAULT;
-    cnode->ctx.fmpl_ver = H5P_DEFAULT_FMPL_VER;
+    cnode->ctx.fmpl_id        = H5P_FILE_MOUNT_DEFAULT;
+    cnode->ctx.fmpl_ver       = H5P_DEFAULT_FMPL_VER;
     cnode->ctx.fmpl_ref_count = 0;
 
-    cnode->ctx.gapl_id  = H5P_GROUP_ACCESS_DEFAULT;
-    cnode->ctx.gapl_ver = H5P_DEFAULT_GAPL_VER;
+    cnode->ctx.gapl_id        = H5P_GROUP_ACCESS_DEFAULT;
+    cnode->ctx.gapl_ver       = H5P_DEFAULT_GAPL_VER;
     cnode->ctx.gapl_ref_count = 0;
 
-    cnode->ctx.gcpl_id  = H5P_GROUP_CREATE_DEFAULT;
-    cnode->ctx.gcpl_ver = H5P_DEFAULT_GCPL_VER;
+    cnode->ctx.gcpl_id        = H5P_GROUP_CREATE_DEFAULT;
+    cnode->ctx.gcpl_ver       = H5P_DEFAULT_GCPL_VER;
     cnode->ctx.gcpl_ref_count = 0;
 
-    cnode->ctx.mapl_id  = H5P_MAP_ACCESS_DEFAULT;
-    cnode->ctx.mapl_ver = H5P_DEFAULT_MAPL_VER;
+    cnode->ctx.mapl_id        = H5P_MAP_ACCESS_DEFAULT;
+    cnode->ctx.mapl_ver       = H5P_DEFAULT_MAPL_VER;
     cnode->ctx.mapl_ref_count = 0;
 
-    cnode->ctx.mcpl_id  = H5P_MAP_CREATE_DEFAULT;
-    cnode->ctx.mcpl_ver = H5P_DEFAULT_MCPL_VER;
+    cnode->ctx.mcpl_id        = H5P_MAP_CREATE_DEFAULT;
+    cnode->ctx.mcpl_ver       = H5P_DEFAULT_MCPL_VER;
     cnode->ctx.mcpl_ref_count = 0;
 
-    cnode->ctx.ocpypl_id  = H5P_OBJECT_COPY_DEFAULT;
-    cnode->ctx.ocpypl_ver = H5P_DEFAULT_OCPYPL_VER;
+    cnode->ctx.ocpypl_id        = H5P_OBJECT_COPY_DEFAULT;
+    cnode->ctx.ocpypl_ver       = H5P_DEFAULT_OCPYPL_VER;
     cnode->ctx.ocpypl_ref_count = 0;
 
-    cnode->ctx.rapl_id  = H5P_REFERENCE_ACCESS_DEFAULT;
-    cnode->ctx.rapl_ver = H5P_DEFAULT_RAPL_VER;
+    cnode->ctx.rapl_id        = H5P_REFERENCE_ACCESS_DEFAULT;
+    cnode->ctx.rapl_ver       = H5P_DEFAULT_RAPL_VER;
     cnode->ctx.rapl_ref_count = 0;
 
-    cnode->ctx.tapl_id  = H5P_DATATYPE_ACCESS_DEFAULT;
-    cnode->ctx.tapl_ver = H5P_DEFAULT_TAPL_VER;
+    cnode->ctx.tapl_id        = H5P_DATATYPE_ACCESS_DEFAULT;
+    cnode->ctx.tapl_ver       = H5P_DEFAULT_TAPL_VER;
     cnode->ctx.tapl_ref_count = 0;
 
-    cnode->ctx.tcpl_id  = H5P_DATATYPE_CREATE_DEFAULT;
-    cnode->ctx.tcpl_ver = H5P_DEFAULT_TCPL_VER;
+    cnode->ctx.tcpl_id        = H5P_DATATYPE_CREATE_DEFAULT;
+    cnode->ctx.tcpl_ver       = H5P_DEFAULT_TCPL_VER;
     cnode->ctx.tcpl_ref_count = 0;
 
-    cnode->ctx.vipl_id  = H5P_VOL_INITIALIZE_DEFAULT;
-    cnode->ctx.vipl_ver = H5P_DEFAULT_VIPL_VER;
+    cnode->ctx.vipl_id        = H5P_VOL_INITIALIZE_DEFAULT;
+    cnode->ctx.vipl_ver       = H5P_DEFAULT_VIPL_VER;
     cnode->ctx.vipl_ref_count = 0;
 
     cnode->ctx.tag  = H5AC__INVALID_TAG;

@@ -3348,9 +3348,9 @@ H5VL_setup_acc_args(hid_t loc_id, const H5P_libclass_t *libclass, hbool_t is_col
     assert(loc_params);
 
     /* Verify access property list and set up collective metadata if appropriate */
-    //H5_API_LOCK
+    // H5_API_LOCK
     ret_value = H5CX_set_apl(acspl_id, libclass, loc_id, is_collective);
-    //H5_API_UNLOCK
+    // H5_API_UNLOCK
 
     if (ret_value < 0)
         HGOTO_ERROR(H5E_VOL, H5E_CANTSET, FAIL, "can't set access property list info");
@@ -3427,9 +3427,9 @@ H5VL_setup_name_args(hid_t loc_id, const char *name, hbool_t is_collective, hid_
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "name parameter cannot be an empty string");
 
     /* Verify access property list and set up collective metadata if appropriate */
-    //H5_API_LOCK
+    // H5_API_LOCK
     ret_value = H5CX_set_apl(&lapl_id, H5P_CLS_LACC, loc_id, is_collective);
-    //H5_API_UNLOCK
+    // H5_API_UNLOCK
 
     if (ret_value < 0)
         HGOTO_ERROR(H5E_VOL, H5E_CANTSET, FAIL, "can't set access property list info");
@@ -3481,9 +3481,9 @@ H5VL_setup_idx_args(hid_t loc_id, const char *name, H5_index_t idx_type, H5_iter
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "invalid iteration order specified");
 
     /* Verify access property list and set up collective metadata if appropriate */
-    //H5_API_LOCK
+    // H5_API_LOCK
     ret_value = H5CX_set_apl(&lapl_id, H5P_CLS_LACC, loc_id, is_collective);
-    //H5_API_UNLOCK
+    // H5_API_UNLOCK
 
     if (ret_value < 0)
         HGOTO_ERROR(H5E_VOL, H5E_CANTSET, FAIL, "can't set access property list info");

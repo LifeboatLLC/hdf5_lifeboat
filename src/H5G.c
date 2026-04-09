@@ -174,9 +174,9 @@ H5G__create_api_common(hid_t loc_id, const char *name, hid_t lcpl_id, hid_t gcpl
     if (H5P_DEFAULT == lcpl_id)
         lcpl_id = H5P_LINK_CREATE_DEFAULT;
     else {
-        //H5_API_LOCK
+        // H5_API_LOCK
         ret = H5P_isa_class(lcpl_id, H5P_LINK_CREATE);
-        //H5_API_UNLOCK
+        // H5_API_UNLOCK
 
         if (TRUE != ret)
             HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5I_INVALID_HID, "not a link creation property list");
@@ -186,18 +186,18 @@ H5G__create_api_common(hid_t loc_id, const char *name, hid_t lcpl_id, hid_t gcpl
     if (H5P_DEFAULT == gcpl_id)
         gcpl_id = H5P_GROUP_CREATE_DEFAULT;
     else {
-        //H5_API_LOCK
+        // H5_API_LOCK
         ret = H5P_isa_class(gcpl_id, H5P_GROUP_CREATE);
-        //H5_API_UNLOCK
+        // H5_API_UNLOCK
 
         if (TRUE != ret)
             HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5I_INVALID_HID, "not a group creation property list");
     }
 
     /* Set the LCPL for the API context */
-    //H5_API_LOCK
+    // H5_API_LOCK
     H5CX_set_lcpl(lcpl_id);
-    //H5_API_UNLOCK
+    // H5_API_UNLOCK
 
 #ifdef H5_HAVE_MULTITHREAD
     /* Set the GCPL for the API context */
@@ -362,9 +362,9 @@ H5Gcreate_anon(hid_t loc_id, hid_t gcpl_id, hid_t gapl_id)
     if (H5P_DEFAULT == gcpl_id)
         gcpl_id = H5P_GROUP_CREATE_DEFAULT;
     else {
-        //H5_API_LOCK
+        // H5_API_LOCK
         ret = H5P_isa_class(gcpl_id, H5P_GROUP_CREATE);
-        //H5_API_UNLOCK
+        // H5_API_UNLOCK
 
         if (TRUE != ret)
             HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5I_INVALID_HID, "not group create property list");
@@ -373,18 +373,18 @@ H5Gcreate_anon(hid_t loc_id, hid_t gcpl_id, hid_t gapl_id)
     if (H5P_DEFAULT == gapl_id)
         gapl_id = H5P_GROUP_ACCESS_DEFAULT;
     else {
-        //H5_API_LOCK
+        // H5_API_LOCK
         ret = H5P_isa_class(gapl_id, H5P_GROUP_ACCESS);
-        //H5_API_UNLOCK
+        // H5_API_UNLOCK
 
         if (TRUE != ret)
             HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5I_INVALID_HID, "not group access property list");
     }
 
     /* Verify access property list and set up collective metadata if appropriate */
-    //H5_API_LOCK
+    // H5_API_LOCK
     ret_value = H5CX_set_apl(&gapl_id, H5P_CLS_GACC, loc_id, TRUE);
-    //H5_API_UNLOCK
+    // H5_API_UNLOCK
 
 #ifdef H5_HAVE_MULTITHREAD
     /* Set the property list in the context */
