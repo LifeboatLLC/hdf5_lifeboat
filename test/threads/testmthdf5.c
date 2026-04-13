@@ -63,7 +63,16 @@ main(int argc, char *argv[])
         runtime = 1800; /* 30 minute timeout */
     }
     else if (testExpress == 2) {
-        runtime = 600; /* 10 minute timeout */
+        //runtime = 600; /* 10 minute timeout */
+        /**
+         * Changed to 15 min total timeout to hopefully give more time 
+         * to the longer tests to finish before they time out. 
+         * At the original 10 minute timeout, each test only gets ~55 
+         * seconds, and when the tests are being ran in GitHub this is
+         * not long enough for a couple of them. Thus, increasing this
+         * total time to 15 minutes gives each test ~82 seconds. 
+         */
+        runtime = 900; 
     }
     else {
         runtime = 60; /* 1 minute timeout */

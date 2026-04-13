@@ -866,6 +866,9 @@ error:
     return -1;
 } /* end test_remove_clear_type() */
 
+
+#if 0 /* future IDs are tested in mt_id_test.c */
+
 /* Typedef for future objects */
 typedef struct {
     H5I_type_t obj_type; /* ID type for actual object */
@@ -975,7 +978,6 @@ discard_future_generate_cb(void *future_obj)
     return SUCCEED;
 }
 
-#if 0 /* future IDs are tested in mt_id_test.c */
 /* Test function */
 static int
 test_future_ids(void)

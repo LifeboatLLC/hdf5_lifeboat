@@ -1572,6 +1572,11 @@ H5P__create_class(H5P_mt_class_t *parent, const char *name, H5P_plist_type_t typ
     assert(thrd.opening);
     assert(!thrd.closing);
 
+    /**
+     * NOTE: thrd.count should be 0 during normal operation,
+     * however, during testing sometimes it will not be in order
+     * to throughtly test all possibilies of multithread behavor.
+     */
     update_thrd.count   = thrd.count;
     update_thrd.opening = FALSE;
     update_thrd.closing = FALSE;
@@ -1803,7 +1808,6 @@ H5P__mt_create_class__internal(H5P_mt_class_t *parent, const char *name, H5P_pli
     /* If root class then there is no parent */
     if (parent != NULL) {
         new_class->parent_id = atomic_load(&(parent->id));
-        ;
     }
     else {
         new_class->parent_id = H5I_INVALID_HID;
@@ -1884,6 +1888,12 @@ done:
  * Purpose:     Gets a pointer to a valid H5P_mt_class_t struct by either reallocating
  *              one from the free list if one is reallocable, or by allocating a new one
  *              from memory.
+ * 
+ *              NOTE: In this function the newly allocated H5P_mt_class_t does not have 
+ *              its fields initialized. It simply allocates the new instance and returns
+ *              a pointer to it. 
+ *              The initialization is done in H5P__mt_create_class__internal(), which is 
+ *              the only function that calls this one.
  *
  *              NOTE: In this iteration the free list has not been tested and a new one
  *              is allocated from memory every time.
@@ -2186,7 +2196,7 @@ done:
 /****************************************************************************************
  * Function:    H5P_copy_plist
  *
- *              Multithread safe version of H5P__copy_plist.
+ *              Multithread safe version of H5P_copy_plist.
  *
  * Purpose:     Internal routine to copy a property list (H5P_mt_list_t).
  *
@@ -2474,6 +2484,12 @@ done:
  * Purpose:     Gets a pointer to a valid H5P_mt_list_t struct by either reallocating
  *              one from the free list if one is reallocable, or by allocating a new one
  *              from memory.
+ * 
+ *              NOTE: In this function the newly allocated H5P_mt_list_t does not have 
+ *              its fields initialized. It simply allocates the new instance and returns
+ *              a pointer to it. 
+ *              The initialization is done in H5P__mt_create_list__internal(), which is 
+ *              the only function that calls this one.
  *
  *              NOTE: In this iteration the free list has not been tested and a new one
  *              is allocated from memory every time.
@@ -5090,12 +5106,13 @@ H5P__mt_search__class(H5P_mt_class_t *class, const char *name, uint64_t version)
 
     assert(name);
     assert(class);
-    assert(atomic_load(&(class->tag)) == H5P_MT_CLASS_TAG ||
-           atomic_load(&(class->tag)) == H5P_MT_CLASS_INVALID_TAG);
-
-    if (atomic_load(&(class->tag)) == H5P_MT_CLASS_INVALID_TAG) {
-        HGOTO_ERROR(H5E_PLIST, H5E_BADTYPE, NULL, "Class is invalid");
+#ifndef NDEBUG
+    if (atomic_load(&(class->tag)) != H5P_MT_CLASS_TAG) {
+        fprintf(stderr, "\nList tag is NOT valid\n");
+        return NULL;
     }
+#endif
+    assert(atomic_load(&(class->tag)) == H5P_MT_CLASS_TAG);
 
     chksum = H5_checksum_metadata(name, strlen(name), 0);
 
@@ -12101,7 +12118,6 @@ H5P__global_lock_prop_cb__copy(H5P_mt_prop_t *prop, const char *name, size_t siz
     /* Call the user's callback */
     if ((*(prop->copy))(name, size, value) < 0) {
         HDONE_ERROR(H5E_PLIST, H5E_CANTCOPY, FAIL, "property copy callback failed");
-        ;
     }
 
 done:

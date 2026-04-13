@@ -13523,7 +13523,6 @@ H5I__new_mt_id_info(hid_t id, unsigned count, unsigned app_count, const void *ob
                     H5I_future_realize_func_t realize_cb, H5I_future_discard_func_t discard_cb)
 {
     hbool_t fl_search_done = FALSE;
-    ;
     hbool_t                 result;
     H5I_mt_id_info_t       *id_info_ptr = NULL;
     H5I_mt_id_info_sptr_t   fl_shead;

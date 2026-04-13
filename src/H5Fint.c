@@ -89,8 +89,13 @@ static char  *H5F__getenv_prefix_name(char **env_prefix /*in,out*/);
 static H5F_t *H5F__new(H5F_shared_t *shared, unsigned flags, hid_t fcpl_id, hid_t fapl_id, H5FD_t *lf);
 static herr_t H5F__check_if_using_file_locks(H5P_genplist_t *fapl, hbool_t *use_file_locking);
 static herr_t H5F__dest(H5F_t *f, hbool_t flush);
+#ifdef H5_HAVE_MULTITHREAD
+static herr_t H5F__build_actual_name(const H5F_t *f, H5P_mt_list_t *fapl, const char *name,
+                                     char ** /*out*/ actual_name);
+#else
 static herr_t H5F__build_actual_name(const H5F_t *f, const H5P_genplist_t *fapl, const char *name,
                                      char ** /*out*/ actual_name);
+#endif
 static herr_t H5F__flush_phase1(H5F_t *f);
 static herr_t H5F__flush_phase2(H5F_t *f, hbool_t closing);
 
@@ -2694,10 +2699,27 @@ H5F_decr_nopen_objs(H5F_t *f)
     FUNC_LEAVE_NOAPI(--f->nopen_objs)
 } /* end H5F_decr_nopen_objs() */
 
+#ifdef H5_HAVE_MULTITHREAD
+
 /*-------------------------------------------------------------------------
  * Function:    H5F__build_actual_name
  *
  * Purpose:     Retrieve the name of a file, after following symlinks, etc.
+ * 
+ *              NOTE: This is multithread safe version of 
+ *              H5F__build_actual_name() to work with the updated 
+ *              multithread version of H5P. The only change to this 
+ *              function is the parameter cont H5P_genplist_t *fapl was 
+ *              changed to H5P_mt_list_t *fapl, which the struct name 
+ *              doesn't really matter due to H5P_genplist_t being mapped to
+ *              H5P_mt_list_t if multithread is enabled, however, the const
+ *              qualifier was also removed. Removing the const qualifer is
+ *              necessary due to the multithread version of H5P tracking
+ *              the number of threads currently accessing a H5P_mt_list_t
+ *              structure, thus technically the fapl instance will always
+ *              be modified in the function H5P_copy_plist() by 
+ *              incrementing the thrd.count field upon entry and 
+ *              decrementing it just before exit.
  *
  * Note:        Currently only working for "POSIX I/O compatible" VFDs
  *
@@ -2705,16 +2727,10 @@ H5F_decr_nopen_objs(H5F_t *f)
  *-------------------------------------------------------------------------
  */
 static herr_t
-H5F__build_actual_name(const H5F_t *f, const H5P_genplist_t *fapl, const char *name,
+H5F__build_actual_name(const H5F_t *f, H5P_mt_list_t *fapl, const char *name,
                        char **actual_name /*out*/)
 {
     hid_t new_fapl_id = H5I_INVALID_HID; /* ID for duplicated FAPL */
-#ifdef H5_HAVE_MULTITHREAD
-    H5P_genplist_t *_fapl = malloc(sizeof(H5P_genplist_t));
-
-    memcpy(_fapl, fapl, sizeof(*fapl));
-    assert(_fapl);
-#endif
 #ifdef H5_HAVE_SYMLINK
     /* This has to be declared here to avoid unfreed resources on errors */
     char *realname = NULL;      /* Fully resolved path name of file */
@@ -2746,7 +2762,7 @@ H5F__build_actual_name(const H5F_t *f, const H5P_genplist_t *fapl, const char *n
 
         /* Check for symbolic link */
         if (S_IFLNK == (lst.st_mode & S_IFMT)) {
-            H5P_genplist_t *new_fapl;      /* Duplicated FAPL */
+            H5P_mt_list_t  *new_fapl;      /* Duplicated FAPL */
             int            *fd;            /* POSIX I/O file descriptor */
             h5_stat_t       st;            /* Stat info from stat() call */
             h5_stat_t       fst;           /* Stat info from fstat() call */
@@ -2764,14 +2780,10 @@ H5F__build_actual_name(const H5F_t *f, const H5P_genplist_t *fapl, const char *n
                  */
 
                 /* Copy the FAPL object to modify */
-#ifdef H5_HAVE_MULTITHREAD
-            if ((new_fapl_id = H5P_copy_plist(_fapl, FALSE)) < 0)
-                HGOTO_ERROR(H5E_FILE, H5E_CANTCOPY, FAIL, "unable to copy file access property list");
-#else
             if ((new_fapl_id = H5P_copy_plist(fapl, FALSE)) < 0)
                 HGOTO_ERROR(H5E_FILE, H5E_CANTCOPY, FAIL, "unable to copy file access property list");
-#endif
-            if (NULL == (new_fapl = (H5P_genplist_t *)H5I_object(new_fapl_id)))
+
+            if (NULL == (new_fapl = (H5P_mt_list_t *)H5I_object(new_fapl_id)))
                 HGOTO_ERROR(H5E_FILE, H5E_CANTCREATE, FAIL, "can't get property list");
 
             /*
@@ -2829,6 +2841,136 @@ done:
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* H5F__build_actual_name() */
+
+#else /* H5_HAVE_MULTITHREAD */
+
+/*-------------------------------------------------------------------------
+ * Function:    H5F__build_actual_name
+ *
+ * Purpose:     Retrieve the name of a file, after following symlinks, etc.
+ *
+ * Note:        Currently only working for "POSIX I/O compatible" VFDs
+ *
+ * Return:      SUCCEED/FAIL
+ *-------------------------------------------------------------------------
+ */
+static herr_t
+H5F__build_actual_name(const H5F_t *f, const H5P_genplist_t *fapl, const char *name,
+                       char **actual_name /*out*/)
+{
+    hid_t new_fapl_id = H5I_INVALID_HID; /* ID for duplicated FAPL */
+#ifdef H5_HAVE_SYMLINK
+    /* This has to be declared here to avoid unfreed resources on errors */
+    char *realname = NULL;      /* Fully resolved path name of file */
+#endif                          /* H5_HAVE_SYMLINK */
+    herr_t ret_value = SUCCEED; /* Return value */
+
+    FUNC_ENTER_PACKAGE
+
+    /* Sanity check */
+    assert(f);
+    assert(fapl);
+    assert(name);
+    assert(actual_name);
+
+    /* Clear actual name pointer to begin with */
+    *actual_name = NULL;
+
+/* Assume that if the OS can't create symlinks, that we don't need to worry
+ *      about resolving them either. -QAK
+ */
+#ifdef H5_HAVE_SYMLINK
+    /* Check for POSIX I/O compatible file handle */
+    if (H5F_HAS_FEATURE(f, H5FD_FEAT_POSIX_COMPAT_HANDLE)) {
+        h5_stat_t lst; /* Stat info from lstat() call */
+
+        /* Call lstat() on the file's name */
+        if (HDlstat(name, &lst) < 0)
+            HGOTO_ERROR(H5E_FILE, H5E_CANTGET, FAIL, "can't retrieve stat info for file");
+
+        /* Check for symbolic link */
+        if (S_IFLNK == (lst.st_mode & S_IFMT)) {
+            H5P_mt_list_t  *new_fapl;      /* Duplicated FAPL */
+            int            *fd;            /* POSIX I/O file descriptor */
+            h5_stat_t       st;            /* Stat info from stat() call */
+            h5_stat_t       fst;           /* Stat info from fstat() call */
+            hbool_t         want_posix_fd; /* Flag for retrieving file descriptor from VFD */
+
+            /* Allocate realname buffer */
+            if (NULL == (realname = (char *)H5MM_calloc((size_t)PATH_MAX * sizeof(char))))
+                HGOTO_ERROR(H5E_RESOURCE, H5E_NOSPACE, FAIL, "memory allocation failed");
+
+                /* Perform a sanity check that the file or link wasn't switched
+                 * between when we opened it and when we called lstat().  This is
+                 * according to the security best practices for lstat() documented
+                 * here:
+                 * https://www.securecoding.cert.org/confluence/display/seccode/POS35-C.+Avoid+race+conditions+while+checking+for+the+existence+of+a+symbolic+link
+                 */
+
+                /* Copy the FAPL object to modify */
+            if ((new_fapl_id = H5P_copy_plist(fapl, FALSE)) < 0)
+                HGOTO_ERROR(H5E_FILE, H5E_CANTCOPY, FAIL, "unable to copy file access property list");
+
+            if (NULL == (new_fapl = (H5P_mt_list_t *)H5I_object(new_fapl_id)))
+                HGOTO_ERROR(H5E_FILE, H5E_CANTCREATE, FAIL, "can't get property list");
+
+            /*
+             * Set the private property for retrieving the backing store
+             * POSIX file descriptor from the Core VFD
+             */
+            want_posix_fd = TRUE;
+            if (H5P_set(new_fapl, H5F_ACS_WANT_POSIX_FD_NAME, &want_posix_fd) < 0)
+                HGOTO_ERROR(H5E_PLIST, H5E_CANTSET, FAIL,
+                            "can't set property for retrieving file descriptor");
+
+            /* Retrieve the file handle */
+            if (H5F_get_vfd_handle(f, new_fapl_id, (void **)&fd) < 0)
+                HGOTO_ERROR(H5E_FILE, H5E_CANTGET, FAIL, "can't retrieve POSIX file descriptor");
+
+            /* Stat the filename we're resolving */
+            if (HDstat(name, &st) < 0)
+                HSYS_GOTO_ERROR(H5E_FILE, H5E_BADFILE, FAIL, "unable to stat file")
+
+            /* Stat the file we opened */
+            if (HDfstat(*fd, &fst) < 0)
+                HSYS_GOTO_ERROR(H5E_FILE, H5E_BADFILE, FAIL, "unable to fstat file")
+
+            /* Verify that the files are really the same */
+            if (st.st_mode != fst.st_mode || st.st_ino != fst.st_ino || st.st_dev != fst.st_dev)
+                HGOTO_ERROR(H5E_FILE, H5E_BADVALUE, FAIL, "files' st_ino or st_dev fields changed!");
+
+            /* Get the resolved path for the file name */
+            if (NULL == HDrealpath(name, realname))
+                HGOTO_ERROR(H5E_FILE, H5E_CANTGET, FAIL, "can't retrieve real path for file");
+
+            /* Duplicate the resolved path for the file name */
+            if (NULL == (*actual_name = (char *)H5MM_strdup(realname)))
+                HGOTO_ERROR(H5E_FILE, H5E_CANTALLOC, FAIL, "can't duplicate real path");
+        } /* end if */
+    }     /* end if */
+#endif    /* H5_HAVE_SYMLINK */
+
+    /* Check if we've resolved the file's name */
+    if (NULL == *actual_name) {
+        /* Just duplicate the name used to open the file */
+        if (NULL == (*actual_name = (char *)H5MM_strdup(name)))
+            HGOTO_ERROR(H5E_FILE, H5E_CANTALLOC, FAIL, "can't duplicate open name");
+    } /* end else */
+
+done:
+    /* Close the property list */
+    if (new_fapl_id > 0)
+        if (H5I_dec_app_ref(new_fapl_id) < 0)
+            HDONE_ERROR(H5E_FILE, H5E_CANTCLOSEOBJ, FAIL, "can't close duplicated FAPL");
+#ifdef H5_HAVE_SYMLINK
+    if (realname)
+        realname = (char *)H5MM_xfree(realname);
+#endif /* H5_HAVE_SYMLINK */
+
+    FUNC_LEAVE_NOAPI(ret_value)
+} /* H5F__build_actual_name() */
+
+#endif /* H5_HAVE_MULTITHREAD */
 
 /*-------------------------------------------------------------------------
  * Function:    H5F_addr_encode_len
