@@ -58,9 +58,13 @@ main(int argc, char *argv[])
 
     if (testExpress == 0) {
         runtime = 0; /* Run with no timeout  */
+
+        params.num_repetitions = NUM_ITERS;
     }
     else if (testExpress == 1) {
         runtime = 1800; /* 30 minute timeout */
+
+        params.num_repetitions = NUM_ITERS;
     }
     else if (testExpress == 2) {
         //runtime = 600; /* 10 minute timeout */
@@ -73,12 +77,19 @@ main(int argc, char *argv[])
          * total time to 15 minutes gives each test ~82 seconds. 
          */
         runtime = 900; 
+
+        /**
+         * To further attempt to decrease the amount of time in each test
+         * at HDF5TestExpress=2 and 3, decrease the num_repetitions from
+         * 100 down to 50.
+         */
+        params.num_repetitions = 50;
     }
     else {
         runtime = 60; /* 1 minute timeout */
     }
 
-    params.num_repetitions = NUM_ITERS;
+    
 
     if (testExpress > 0) {
         params.subtest_timeout = (runtime - MT_VL_TEST_MARGIN) / num_subtests;
