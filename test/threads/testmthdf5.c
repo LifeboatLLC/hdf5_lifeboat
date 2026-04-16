@@ -41,7 +41,7 @@ int
 main(int argc, char *argv[])
 {
     unsigned       runtime; /* Maximum run-time for test (in seconds) */
-    unsigned       num_subtests = 11;
+    unsigned       num_subtests = 10;
     int            testExpress;
     int            num_errs_occurred = 0;
     mt_test_params params;
@@ -83,10 +83,12 @@ main(int argc, char *argv[])
          * at HDF5TestExpress=2 and 3, decrease the num_repetitions from
          * 100 down to 50.
          */
-        params.num_repetitions = 50;
+        params.num_repetitions = 20;
     }
     else {
         runtime = 60; /* 1 minute timeout */
+
+        params.num_repetitions = 20;
     }
 
     

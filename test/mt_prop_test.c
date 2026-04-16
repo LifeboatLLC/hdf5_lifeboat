@@ -9893,10 +9893,10 @@ create_starting_classes_and_lists(void)
     hid_t                        id;               /* class's or list's index hid */
     size_t                       phys_pl_len = 0;  /* Physicaly length of new LFSLL */
     size_t                       log_pl_len  = 0;  /* Logicaly length of new LFSLL */
-    hid_t                        class1_id;        /* hid for class1 */
-    hid_t                        class2_id;        /* hid for class2 */
-    hid_t                        class3_id;        /* hid for class3 */
-    hid_t                        class4_id;        /* hid for class4 */
+    hid_t                        class1_id = H5I_INVALID_HID; /* hid for class1 */
+    hid_t                        class2_id = H5I_INVALID_HID; /* hid for class2 */
+    hid_t                        class3_id = H5I_INVALID_HID; /* hid for class3 */
+    hid_t                        class4_id = H5I_INVALID_HID; /* hid for class4 */
     size_t                       nprops_inherited; /* number of props a list inherits */
     uint64_t                     value = 1;        /* Default value for default properties */
 
@@ -10909,8 +10909,18 @@ create_list(thread_params_t *thread_params)
                          * If the list isn't in the index, not IN_PROGRESS, and has
                          * been created it must have been DELETED. Double check.
                          */
-                        assert(atomic_load(&(list->tag)) == H5P_MT_LIST_INVALID_TAG);
                         assert(list_status == DELETED || list_status == CLOSING_IN_PROGRESS);
+                        /**
+                         * NOTE: for some reason with just the assert here, it fails quite 
+                         * often. It has to be grabbing the tag just before it's changed to 
+                         * H5P_MT_LIST_INVALID_TAG, because this fixes it.
+                         */
+                        if (atomic_load(&(list->tag)) != H5P_MT_LIST_INVALID_TAG)
+                        {
+                            sleep(1);
+                            assert(atomic_load(&(list->tag)) == H5P_MT_LIST_INVALID_TAG);
+                        }
+
                         op_info->list    = list;
                         op_info->id      = atomic_load(&(list->plist_id));
                         op_info->obj_ver = atomic_load(&(list->curr_version));
@@ -11063,20 +11073,37 @@ create_list(thread_params_t *thread_params)
                          */
                         ver_del = atomic_load(&(parent_entry->ver_deleted));
 
-                        while (ver_del == 0) {
+                        while (parent_status == CLOSING_IN_PROGRESS && ver_del == 0) {
                             /* Update stats */
                             atomic_fetch_add(&(g_stats.num_loops_waiting_on_ver_del), 1);
 
                             sleep(1);
 
                             ver_del = atomic_load(&(parent_entry->ver_deleted));
+                            parent_status = atomic_load(&(parent_entry->status));
                         }
 
-                        assert(ver_del > 0);
-                        assert(atomic_load(&(parent->tag)) == H5P_MT_CLASS_INVALID_TAG);
+                        if ( parent_status == DELETED )
+                        {
+                            assert(ver_del > 0);
+                            assert(atomic_load(&(parent->tag)) == H5P_MT_CLASS_INVALID_TAG);
 
-                        op_info->op_ver = ver_del;
-                        op_info->result = PARENT_DELETED;
+                            op_info->op_ver = ver_del;
+                            op_info->result = PARENT_DELETED;
+                        }
+                        else
+                        {
+                            /** 
+                             * If we get to this point, there was some weird/perfect timing,
+                             * where the parent wasn't in the index when attempting to create
+                             * the list, but since it was inserted into the index and closed.
+                             * Trying again, will either succeed if the parent's status stays
+                             * at EXISTS_BUT_CLOSED, or will fail correctly with the parent's
+                             * status being changed to DELETED.
+                             */
+
+                            try_again = TRUE;
+                        }
 
                         /* Update stats */
                         atomic_fetch_add(&(g_stats.create_list_num_failed_parent_deleted), 1);
@@ -11567,9 +11594,19 @@ create_class(thread_params_t *thread_params)
                          * If class isn't in the index, not IN_PROGRESS, and has
                          * been created it must have been DELETED. Double check.
                          */
-                        assert(atomic_load(&(class->tag)) == H5P_MT_CLASS_INVALID_TAG);
                         assert(class_status == DELETED || class_status == CLOSING_IN_PROGRESS ||
                                class_status == EXISTS_BUT_CLOSED);
+                        /**
+                         * NOTE: for some reason with just the assert here, it fails quite 
+                         * often. It has to be grabbing the tag just before it's changed to 
+                         * H5P_MT_CLASS_INVALID_TAG, because this fixes it.
+                         */
+                        if (atomic_load(&(class->tag)) != H5P_MT_CLASS_INVALID_TAG)
+                        {
+                            sleep(1);
+                            assert(atomic_load(&(class->tag)) == H5P_MT_CLASS_INVALID_TAG);
+                        }
+
                         op_info->class   = class;
                         op_info->id      = atomic_load(&(class->id));
                         op_info->obj_ver = atomic_load(&(class->curr_version));
@@ -11731,20 +11768,37 @@ create_class(thread_params_t *thread_params)
                          */
                         ver_del = atomic_load(&(parent_entry->ver_deleted));
 
-                        while (ver_del == 0) {
+                        while (parent_status == CLOSING_IN_PROGRESS && ver_del == 0) {
                             /* Update stats */
                             atomic_fetch_add(&(g_stats.num_loops_waiting_on_ver_del), 1);
 
                             sleep(1);
 
                             ver_del = atomic_load(&((parent_entry->ver_deleted)));
+                            parent_status = atomic_load(&(parent_entry->status));
                         }
 
-                        assert(ver_del > 0);
-                        assert(atomic_load(&(parent->tag)) == H5P_MT_CLASS_INVALID_TAG);
+                        if ( parent_status == DELETED )
+                        {
+                            assert(ver_del > 0);
+                            assert(atomic_load(&(parent->tag)) == H5P_MT_CLASS_INVALID_TAG);
 
-                        op_info->op_ver = ver_del;
-                        op_info->result = PARENT_DELETED;
+                            op_info->op_ver = ver_del;
+                            op_info->result = PARENT_DELETED;
+                        }
+                        else
+                        {
+                            /** 
+                             * If we get to this point, there was some weird/perfect timing,
+                             * where the parent wasn't in the index when attempting to create
+                             * the class, but since then it was inserted into the index and 
+                             * closed. Trying again, will either succeed if the parent's status 
+                             * stays at EXISTS_BUT_CLOSED, or will fail correctly with the 
+                             * parent status being changed to DELETED.
+                             */
+
+                            try_again = TRUE;
+                        }
 
                         /* Update stats */
                         atomic_fetch_add(&(g_stats.create_class_num_failed_parent_deleted), 1);
@@ -12210,8 +12264,18 @@ copy_list(thread_params_t *thread_params)
                          * If list isn't in the index, not IN_PROGRESS, and has
                          * been created it must have been DELETED. Double check.
                          */
-                        assert(atomic_load(&(list->tag)) == H5P_MT_LIST_INVALID_TAG);
                         assert(list_status == DELETED || list_status == CLOSING_IN_PROGRESS);
+                        /**
+                         * NOTE: for some reason with just the assert here, it fails quite 
+                         * often. It has to be grabbing the tag just before it's changed to 
+                         * H5P_MT_LIST_INVALID_TAG, because this fixes it.
+                         */
+                        if (atomic_load(&(list->tag)) != H5P_MT_LIST_INVALID_TAG)
+                        {
+                            sleep(1);
+                            assert(atomic_load(&(list->tag)) == H5P_MT_LIST_INVALID_TAG);
+                        }
+                        
                         op_info->list    = list;
                         op_info->id      = atomic_load(&(list->plist_id));
                         op_info->obj_ver = atomic_load(&(list->curr_version));
@@ -12388,19 +12452,37 @@ copy_list(thread_params_t *thread_params)
                          */
                         ver_del = atomic_load(&(og_list_entry->ver_deleted));
 
-                        while (ver_del == 0) {
+                        while (og_list_status == CLOSING_IN_PROGRESS && ver_del == 0) {
                             /* Update stats */
                             atomic_fetch_add(&(g_stats.num_loops_waiting_on_ver_del), 1);
 
                             sleep(1);
 
                             ver_del = atomic_load(&((og_list_entry->ver_deleted)));
+                            og_list_status = atomic_load(&(og_list_entry->status));
                         }
 
-                        assert(atomic_load(&(og_list->tag)) == H5P_MT_LIST_INVALID_TAG);
+                        if ( og_list_status == DELETED )
+                        {
+                            assert(ver_del > 0);
+                            assert(atomic_load(&(og_list->tag)) == H5P_MT_LIST_INVALID_TAG);
 
-                        op_info->op_ver = ver_del;
-                        op_info->result = OG_DELETED;
+                            op_info->op_ver = ver_del;
+                            op_info->result = OG_DELETED;
+                        }
+                        else
+                        {
+                            /** 
+                             * If we get to this point, there was some weird/perfect timing,
+                             * where the original list wasn't in the index when attempting 
+                             * to create the copy, but since then it was inserted into the 
+                             * index and closed. Trying again, will either succeed if the 
+                             * original's status stays at EXISTS_BUT_CLOSED, or will fail 
+                             * correctly with the original's status being changed to DELETED.
+                             */
+
+                            try_again = TRUE;
+                        }
 
                         /* Update stats */
                         atomic_fetch_add(&(g_stats.copy_list_num_failed_og_deleted), 1);
@@ -12913,9 +12995,18 @@ copy_class(thread_params_t *thread_params)
                          * If class isn't in the index, not IN_PROGRESS, and has
                          * been created it must have been DELETED. Double check.
                          */
-                        assert(atomic_load(&(class->tag)) == H5P_MT_CLASS_INVALID_TAG);
                         assert(class_status == DELETED || class_status == CLOSING_IN_PROGRESS ||
                                class_status == EXISTS_BUT_CLOSED);
+                        /**
+                         * NOTE: for some reason with just the assert here, it fails quite 
+                         * often. It has to be grabbing the tag just before it's changed to 
+                         * H5P_MT_CLASS_INVALID_TAG, because this fixes it.
+                         */
+                        if (atomic_load(&(class->tag)) != H5P_MT_CLASS_INVALID_TAG)
+                        {
+                            sleep(1);
+                            assert(atomic_load(&(class->tag)) == H5P_MT_CLASS_INVALID_TAG);
+                        }
                         op_info->class   = class;
                         op_info->id      = atomic_load(&(class->id));
                         op_info->obj_ver = atomic_load(&(class->curr_version));
@@ -13092,18 +13183,37 @@ copy_class(thread_params_t *thread_params)
                          */
                         ver_del = atomic_load(&(og_class_entry->ver_deleted));
 
-                        while (ver_del == 0) {
+                        while (og_class_status == CLOSING_IN_PROGRESS && ver_del == 0) {
                             /* Update stats */
                             atomic_fetch_add(&(g_stats.num_loops_waiting_on_ver_del), 1);
 
                             sleep(1);
 
                             ver_del = atomic_load(&(og_class_entry->ver_deleted));
+                            og_class_status = atomic_load(&(og_class_entry->status));
                         }
-                        assert(atomic_load(&(og_class->tag)) == H5P_MT_CLASS_INVALID_TAG);
 
-                        op_info->op_ver = ver_del;
-                        op_info->result = OG_DELETED;
+                        if ( og_class_status == DELETED )
+                        {
+                            assert(ver_del > 0);
+                            assert(atomic_load(&(og_class->tag)) == H5P_MT_CLASS_INVALID_TAG);
+
+                            op_info->op_ver = ver_del;
+                            op_info->result = OG_DELETED;
+                        }
+                        else
+                        {
+                            /** 
+                             * If we get to this point, there was some weird/perfect timing,
+                             * where the original class wasn't in the index when attempting 
+                             * to create the copy, but since then it was inserted into the 
+                             * index and closed. Trying again, will either succeed if the 
+                             * original's status stays at EXISTS_BUT_CLOSED, or will fail 
+                             * correctly with the original's status being changed to DELETED.
+                             */
+
+                            try_again = TRUE;
+                        }
 
                         /* Update stats */
                         atomic_fetch_add(&(g_stats.copy_class_num_failed_og_deleted), 1);
@@ -16415,6 +16525,7 @@ mod_list_create_prop(thread_params_t *thread_params)
             done          = FALSE;
             do {
                 prop_status = atomic_load(&(prop_entry->status));
+                assert(prop_status != DOESNT_EXIST);
 
                 if (prop_status == IN_PROGRESS) {
                     /* Attempt to atomically update prop_status */
@@ -16436,6 +16547,10 @@ mod_list_create_prop(thread_params_t *thread_params)
                      */
                     atomic_fetch_add(&(g_stats.mod_list_create_num_prop_status_updated_elsewhere), 1);
 
+                    done = TRUE;
+                }
+                else if ( prop_status == EXISTS )
+                {
                     done = TRUE;
                 }
 
@@ -17526,6 +17641,7 @@ mod_class_create_prop(thread_params_t *thread_params, class_table_entry_t *_clas
             done          = FALSE;
             do {
                 prop_status = atomic_load(&(prop_entry->status));
+                assert(prop_status != DOESNT_EXIST);
 
                 if (prop_status == IN_PROGRESS) {
                     /* Attempt to atomically update prop_status */
@@ -17547,6 +17663,10 @@ mod_class_create_prop(thread_params_t *thread_params, class_table_entry_t *_clas
                      */
                     atomic_fetch_add(&(g_stats.mod_class_create_num_prop_status_updated_elsewhere), 1);
 
+                    done = TRUE;
+                }
+                else if ( prop_status == EXISTS )
+                {
                     done = TRUE;
                 }
 

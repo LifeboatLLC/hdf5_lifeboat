@@ -3686,7 +3686,6 @@ static H5VL_object_t *
 H5VL__alloc_vol_obj(void)
 {
     hbool_t fl_search_done = FALSE;
-    ;
     hbool_t                result;
     H5VL_object_t         *vol_obj_ptr = NULL;
     H5VL_mt_vol_obj_sptr_t fl_shead;
@@ -3891,7 +3890,6 @@ H5VL__clear_vol_obj_free_list(void)
     H5VL_mt_vol_obj_sptr_t null_snext = {NULL, 0ULL};
     H5VL_object_t         *fl_head_ptr;
     H5VL_object_t         *vol_obj_ptr;
-    ;
     herr_t ret_value = SUCCEED; /* Return value */
 
     FUNC_ENTER_NOAPI(FAIL)

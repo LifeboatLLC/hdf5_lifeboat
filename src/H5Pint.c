@@ -1007,8 +1007,7 @@ int
 H5P_term_package(void)
 {
     int    n = 0;
-    herr_t result;
-
+    
     FUNC_ENTER_NOAPI_NOINIT_NOERR
 
     int64_t nlist, nclass;
@@ -1119,8 +1118,7 @@ H5P_term_package(void)
      * still there.
      */
     if (n == 0) {
-        result = H5P__mt_term_free_lists();
-        assert(result >= 0);
+        H5P__mt_term_free_lists();
     }
 
     FUNC_LEAVE_NOAPI(n)
@@ -1153,8 +1151,10 @@ H5P__mt_term_free_lists(void)
     H5P_mt_prop_aptr_t           fl_prop_head;
     H5P_mt_prop_aptr_t           next_prop;
     H5P_mt_prop_aptr_t           fl_prop_tail;
-    H5P_mt_active_thread_count_t thrd;
     bool                         done = FALSE;
+#ifndef NDEBUG
+    H5P_mt_active_thread_count_t thrd;
+#endif
 
     herr_t ret_value = SUCCEED;
 
@@ -1170,12 +1170,18 @@ H5P__mt_term_free_lists(void)
             head_list = fl_list_head.ptr;
             next_list = atomic_load(&(head_list->fl_next));
 
-            /* Ensure no other threads are in this struct */
+#ifndef NDEBUG
+/**
+ * This is wrapped by this #ifndef because these asserts are the 
+ * only times the variable thrd is used, and thus in production 
+ * builds this prevents them from causing compiler warnings. 
+ */
             thrd = atomic_load(&(head_list->thrd));
 
             assert(thrd.count == 0);
             assert(thrd.opening == FALSE);
             assert(thrd.closing == TRUE);
+#endif /* NDEBUG */
 
             if (!atomic_compare_exchange_strong(&(H5P_mt_g.list_fl_head), &fl_list_head, next_list)) {
                 /* atomic update failed, update stats and try again */
@@ -1237,12 +1243,18 @@ H5P__mt_term_free_lists(void)
             head_class = fl_class_head.ptr;
             next_class = atomic_load(&(head_class->fl_next));
 
-            /* Ensure no other threads are in this struct */
+#ifndef NDEBUG
+/**
+ * This is wrapped by this #ifndef because these asserts are the 
+ * only times the variable thrd is used, and thus in production 
+ * builds this prevents them from causing compiler warnings. 
+ */
             thrd = atomic_load(&(head_class->thrd));
 
             assert(thrd.count == 0);
             assert(thrd.opening == FALSE);
             assert(thrd.closing == TRUE);
+#endif /* NDEBUG */
 
             if (!atomic_compare_exchange_strong(&(H5P_mt_g.class_fl_head), &fl_class_head, next_class)) {
                 /* atomic update failed, update stats and try again */
@@ -1493,6 +1505,8 @@ H5P__create_class(H5P_mt_class_t *parent, const char *name, H5P_plist_type_t typ
     H5P_mt_active_thread_count_t update_thrd;            /* used to atomically update thrd */
     uint64_t                     parent_version = 0;     /* Parent's version to derive */
     bool                         inc_thrd_flag  = FALSE; /* Flag to dec parent's thrd count */
+    bool                         inc_idx_flag   = FALSE;
+
 
     H5P_mt_class_t *ret_value = NULL;
 
@@ -1516,6 +1530,13 @@ H5P__create_class(H5P_mt_class_t *parent, const char *name, H5P_plist_type_t typ
         }
 
         inc_thrd_flag = TRUE;
+
+        if (0 >= H5I_inc_ref(atomic_load(&(parent->id)), FALSE)) {
+            assert(FALSE);
+            HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, NULL, "Failed to increment parent's ID index ref count");
+        }
+
+        inc_idx_flag = TRUE;
     }
     else {
         /* update stats */
@@ -1555,17 +1576,6 @@ H5P__create_class(H5P_mt_class_t *parent, const char *name, H5P_plist_type_t typ
 
     } /* end if ( parent != NULL ) */
 
-    /**
-     * If the parent isn't NULL (should only be NULL for root class),
-     * increment the ID for the parent in the index.
-     */
-    if (parent) {
-        if (0 >= H5I_inc_ref(atomic_load(&(parent->id)), FALSE)) {
-            assert(FALSE);
-            HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, NULL, "Failed to increment parent's ID index ref count");
-        }
-    }
-
     /* Set opening flag to FALSE */
     thrd = atomic_load(&(new_class->thrd));
 
@@ -1597,6 +1607,11 @@ done:
     /* Clean up if an error occurred */
     if ((ret_value == NULL) && (new_class)) {
         H5P__close_class(new_class);
+
+        if ( inc_idx_flag )
+        {
+            H5I_dec_ref(atomic_load(&(parent->id)));
+        }
     }
 
     FUNC_LEAVE_NOAPI(ret_value)
@@ -1633,6 +1648,8 @@ H5P__copy_pclass(H5P_mt_class_t *og_class)
     uint64_t                     ver_at_copy   = 0;     /* version of parent og_class is derived */
     bool                         inc_thrd_flag = FALSE; /* Flag to dec og_class's thrd count*/
     bool                         par_thrd_flag = FALSE; /* Flag to dec parent's thrd count */
+    bool                         inc_idx_flag  = FALSE;
+
 
     H5P_mt_class_t *ret_value = NULL;
 
@@ -1683,6 +1700,13 @@ H5P__copy_pclass(H5P_mt_class_t *og_class)
         }
 
         par_thrd_flag = TRUE;
+
+        if (0 >= H5I_inc_ref(atomic_load(&(parent->id)), FALSE)) {
+            assert(FALSE);
+            HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, NULL, "Faile to increment parent's ID index ref count");
+        }
+
+        inc_idx_flag = TRUE;
     }
     else {
         /* update stats */
@@ -1700,17 +1724,6 @@ H5P__copy_pclass(H5P_mt_class_t *og_class)
     /* Copy the valid properties from the original class's LFSLL */
     if (0 > H5P__mt_copy_lfsll(new_class, og_class->pl_head, ver_at_copy)) {
         HGOTO_ERROR(H5E_PLIST, H5E_CANTINIT, NULL, "Failed to copy og_class's lfsll.");
-    }
-
-    /**
-     * If the parent isn't NULL (should only occur for root class),
-     * increment the ID for the parent in the index.
-     */
-    if (parent) {
-        if (0 >= H5I_inc_ref(atomic_load(&(parent->id)), FALSE)) {
-            assert(FALSE);
-            HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, NULL, "Faile to increment parent's ID index ref count");
-        }
     }
 
     thrd = atomic_load(&(new_class->thrd));
@@ -1745,6 +1758,11 @@ done:
     /* Clean up if an error occurred */
     if ((ret_value == NULL) && (new_class)) {
         H5P__close_class(new_class);
+
+        if ( inc_idx_flag )
+        {
+            H5I_dec_ref(atomic_load(&(parent->id)));
+        }
     }
 
     FUNC_LEAVE_NOAPI(ret_value)
@@ -2094,6 +2112,7 @@ H5P__create_list(H5P_mt_class_t *pclass, hbool_t app_ref)
     hid_t                        plist_id;
     H5P_mt_class_t              *parent_walk   = NULL;
     bool                         inc_thrd_flag = FALSE; /* Flag to dec parent's thrd count */
+    bool                         inc_idx_flag  = FALSE;
     uint64_t                     version       = 0;     /* version of the original list being copied */
     H5P_mt_active_thread_count_t thrd;
 
@@ -2116,6 +2135,16 @@ H5P__create_list(H5P_mt_class_t *pclass, hbool_t app_ref)
     }
 
     version = atomic_load(&(pclass->curr_version));
+
+    if (0 >= H5I_inc_ref(atomic_load(&(pclass->id)), FALSE)) {
+        assert(FALSE);
+        HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, NULL, "unable to increment parent's ID ref_count in index");
+    }
+    else
+    {
+        inc_idx_flag = TRUE;
+    }
+    
 
     /* Create the new MT property list */
     if (NULL == (plist = H5P__mt_create_list__internal(pclass, version))) {
@@ -2162,11 +2191,6 @@ H5P__create_list(H5P_mt_class_t *pclass, hbool_t app_ref)
     /* Set the class initialization flag */
     atomic_store(&(plist->class_init), TRUE);
 
-    if (0 >= H5I_inc_ref(atomic_load(&(pclass->id)), FALSE)) {
-        assert(FALSE);
-        HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, NULL, "unable to increment parent's ID ref_count in index");
-    }
-
     /* update thrd struct of the new_list to mark opening FALSE */
     thrd.count   = 0;
     thrd.opening = FALSE;
@@ -2187,6 +2211,11 @@ done:
 
     if (NULL == ret_value && plist) {
         H5P_close(plist);
+        
+        if ( inc_idx_flag )
+        {
+            H5I_dec_ref(atomic_load(&(pclass->id)));
+        }
     }
 
     FUNC_LEAVE_NOAPI(ret_value)
@@ -2221,6 +2250,8 @@ H5P_copy_plist(H5P_mt_list_t *og_list, hbool_t app_ref)
     uint64_t                     ver_at_copy        = 0;     /* version of the original list being copied */
     bool                         inc_thrd_flag_list = FALSE; /* flag to dec og_list thrd count */
     bool                         inc_thrd_flag      = FALSE; /* Flag to dec parent's thrd count */
+    bool                         inc_idx_flag  = FALSE;
+
 
     hid_t ret_value = H5I_INVALID_HID; /* return value */
 
@@ -2279,6 +2310,16 @@ H5P_copy_plist(H5P_mt_list_t *og_list, hbool_t app_ref)
         inc_thrd_flag = TRUE;
     }
 
+    if (0 >= H5I_inc_ref(atomic_load(&(parent->id)), FALSE)) {
+        assert(FALSE);
+        HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, H5I_INVALID_HID,
+                    "Failed to increment parent's ID index ref count");
+    }
+    else
+    {
+        inc_idx_flag = TRUE;
+    }
+
     /* Allocates and initialize a new property list */
     if (NULL == (new_list = H5P__mt_create_list__internal(parent, og_list->pclass_version))) {
         HGOTO_ERROR(H5E_PLIST, H5E_CANTCREATE, H5I_INVALID_HID, "Failed to create property list.");
@@ -2334,12 +2375,6 @@ H5P_copy_plist(H5P_mt_list_t *og_list, hbool_t app_ref)
     /* Set the class initialization flag */
     atomic_store(&(new_list->class_init), TRUE);
 
-    if (0 >= H5I_inc_ref(atomic_load(&(parent->id)), FALSE)) {
-        assert(FALSE);
-        HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, H5I_INVALID_HID,
-                    "Failed to increment parent's ID index ref count");
-    }
-
     /* update thrd struct of the new_list to mark opening FALSE */
     thrd.count   = 0;
     thrd.opening = FALSE;
@@ -2368,6 +2403,11 @@ done:
     /* Clean up if an error occurred */
     if ((ret_value == H5I_INVALID_HID) && (new_list)) {
         H5P_close(new_list);
+        
+        if ( inc_idx_flag )
+        {
+            H5I_dec_ref(atomic_load(&(parent->id)));
+        }
     }
 
     FUNC_LEAVE_NOAPI(ret_value)
@@ -2862,9 +2902,10 @@ H5P__init_lkup_tbl_copy(H5P_mt_list_t *old_list, uint64_t version, H5P_mt_list_t
     H5P_mt_prop_t             *old_prop;          /* Property from the old list */
     H5P_mt_prop_t             *new_prop;          /* Property for the new list */
     H5P_mt_prop_value_t        old_prop_value;    /* Value from an old list's prop */
+    H5P_mt_prop_value_t        new_prop_value;    /* Value from the new list's prop */
     H5P_mt_class_t            *parent;            /* Parent class of the old list */
     uint64_t                   old_base_delete;   /* Old list's entry's base_delete_version */
-    uint32_t                   nprops;            /* Number of props in the new list */
+    uint32_t                   nprops        = 0; /* Number of props in the new list */
     uint32_t                   deletes       = 0; /* Tracks number of deletes */
     uint32_t                   nodes_visited = 0; /* Tracks number of nodes visited */
     uint32_t                   thrd_cols     = 0; /* Tracks number of thread cols */
@@ -2882,8 +2923,22 @@ H5P__init_lkup_tbl_copy(H5P_mt_list_t *old_list, uint64_t version, H5P_mt_list_t
 
     /* Copy values from the old_list to the new copy */
     new_list->nprops_inherited = old_list->nprops_inherited;
-    atomic_store(&(new_list->nprops_added), atomic_load(&(old_list->nprops_added)));
-    atomic_store(&(new_list->nprops), atomic_load(&(old_list->nprops)));
+
+    /* Count the number of valid props in old_list that are not in the lkup_tbl */
+    old_prop = old_list->pl_head;
+    do
+    {
+        old_prop = H5P__mt_next_prop_to_cmp(old_prop, version);
+
+        if ( old_prop )
+        {
+            nprops++;
+        }
+
+    } while ( old_prop );
+
+    atomic_store(&(new_list->nprops_added), nprops);
+    atomic_store(&(new_list->nprops), (nprops + old_list->nprops_inherited));
 
     /* Allocates the number of entries needed in the lkup_tbl */
     if (old_list->nprops_inherited > 0) {
@@ -2916,6 +2971,7 @@ H5P__init_lkup_tbl_copy(H5P_mt_list_t *old_list, uint64_t version, H5P_mt_list_t
             old_prop       = old_curr.ptr;
             old_prop_value = atomic_load(&(old_prop->value));
 
+            /* If the prop is not deleted */
             if ((0 == (atomic_load(&(old_prop->delete_version)))) ||
                 (version < (atomic_load(&(old_prop->delete_version))))) {
 
@@ -2925,12 +2981,16 @@ H5P__init_lkup_tbl_copy(H5P_mt_list_t *old_list, uint64_t version, H5P_mt_list_t
                                             old_prop->decode, old_prop->del, old_prop->copy, old_prop->cmp,
                                             old_prop->close);
                 if (NULL == new_prop)
+                {
                     HGOTO_ERROR(H5E_PLIST, H5E_CANTINIT, FAIL, "Failed creating property for property list.");
+                }
+
+                new_prop_value = atomic_load(&(new_prop->value));                
 
                 /* If the new_prop has the copy callback, call it */
                 if (new_prop->copy) {
-                    if (H5P__global_lock_prop_cb__copy(new_prop, new_prop->name, old_prop_value.size,
-                                                       old_prop_value.ptr) < 0) {
+                    if (H5P__global_lock_prop_cb__copy(new_prop, new_prop->name, new_prop_value.size,
+                                                       new_prop_value.ptr) < 0) {
                         assert(H5P_MT_ASSERT_FAIL);
                         HGOTO_ERROR(H5E_PLIST, H5E_CANTCOPY, FAIL, "Can't copy property");
                     }
@@ -2985,6 +3045,13 @@ H5P__init_lkup_tbl_copy(H5P_mt_list_t *old_list, uint64_t version, H5P_mt_list_t
                 atomic_store(&(new_entry->curr), new_curr);
                 atomic_store(&(new_entry->first_ver_of_curr), 1);
                 atomic_store(&(new_entry->base_delete_version), 1);
+                
+                /** 
+                 * nprops was set under the assumption all entries in the lkup_tbl
+                 * were valid. Since this one isn't decrement nprops.
+                 * NOTE: It is done this way to make one less iteration of the lkup_tbl.
+                 */
+                atomic_fetch_sub(&(new_list->nprops), 1);
             }
 
             /**
@@ -3512,7 +3579,8 @@ H5P__mt_copy_lfsll(void *param, H5P_mt_prop_t *old_prop, uint64_t version)
     H5P_mt_prop_t      *new_plhead;        /* head of the new list's or class's LFSLL */
     H5P_mt_prop_t      *valid_prop;        /* The next valid prop to copy over */
     H5P_mt_prop_t      *new_prop;          /* New prop to store in the new LFSLL */
-    H5P_mt_prop_value_t value;             /* Value of a property */
+    H5P_mt_prop_value_t value;             /* Value of a property being copied */
+    H5P_mt_prop_value_t new_value;         /* Value of a new copy of a property */
     uint32_t            phys_pl_len   = 0; /* Physicaly length of new LFSLL */
     uint32_t            log_pl_len    = 0; /* Logicaly length of new LFSLL */
     uint32_t            deletes       = 0; /* Tracks number of deletes */
@@ -3581,12 +3649,14 @@ H5P__mt_copy_lfsll(void *param, H5P_mt_prop_t *old_prop, uint64_t version)
                                 "Failed creating property for property list class.");
                 }
 
+                new_value = atomic_load(&(new_prop->value));
+
                 /* If working on a list's LFSLL */
                 if (new_list) {
                     /* If the prop has a copy callback, call it */
                     if (new_prop->copy) {
-                        if (H5P__global_lock_prop_cb__copy(new_prop, new_prop->name, value.size, value.ptr) <
-                            0) {
+                        if (H5P__global_lock_prop_cb__copy(new_prop, new_prop->name, 
+                                                            new_value.size, new_value.ptr) < 0) {
                             assert(H5P_MT_ASSERT_FAIL);
                             HGOTO_ERROR(H5E_PLIST, H5E_CANTCOPY, FAIL, "Can't copy property");
                         }
@@ -5106,13 +5176,11 @@ H5P__mt_search__class(H5P_mt_class_t *class, const char *name, uint64_t version)
 
     assert(name);
     assert(class);
-#ifndef NDEBUG
-    if (atomic_load(&(class->tag)) != H5P_MT_CLASS_TAG) {
-        fprintf(stderr, "\nList tag is NOT valid\n");
-        return NULL;
-    }
-#endif
     assert(atomic_load(&(class->tag)) == H5P_MT_CLASS_TAG);
+
+    if (atomic_load(&(class->tag)) != H5P_MT_CLASS_TAG) {
+        HGOTO_ERROR(H5E_PLIST, H5E_BADTYPE, NULL, "Property class's tag is not valid.");
+    }
 
     chksum = H5_checksum_metadata(name, strlen(name), 0);
 
@@ -5300,13 +5368,11 @@ H5P__mt_search__list(H5P_mt_list_t *list, const char *name, uint64_t version)
 
     assert(name);
     assert(list);
-#ifndef NDEBUG
-    if (atomic_load(&(list->tag)) != H5P_MT_LIST_TAG) {
-        fprintf(stderr, "\nList tag is NOT valid\n");
-        return NULL;
-    }
-#endif
     assert(atomic_load(&(list->tag)) == H5P_MT_LIST_TAG);
+
+    if (atomic_load(&(list->tag)) != H5P_MT_LIST_TAG) {
+        HGOTO_ERROR(H5E_PLIST, H5E_BADTYPE, NULL, "Property list's tag is not valid.");
+    }
 
     chksum = H5_checksum_metadata(name, strlen(name), 0);
 
@@ -7689,12 +7755,10 @@ H5P__mt_prop_cmp(H5P_mt_prop_t *prop1, H5P_mt_prop_t *prop2)
     FUNC_ENTER_PACKAGE
 
     assert(prop1);
-    assert((atomic_load(&(prop1->tag)) == H5P_MT_PROP_TAG) ||
-           (atomic_load(&(prop1->tag)) == H5P_MT_PROP_VALID_ONFL_TAG));
+    assert(atomic_load(&(prop1->tag)) == H5P_MT_PROP_TAG);
 
     assert(prop2);
-    assert((atomic_load(&(prop2->tag)) == H5P_MT_PROP_TAG) ||
-           (atomic_load(&(prop2->tag)) == H5P_MT_PROP_VALID_ONFL_TAG));
+    assert(atomic_load(&(prop2->tag)) == H5P_MT_PROP_TAG);
 
     if (prop1->chksum != prop2->chksum) {
         HGOTO_DONE(1);
@@ -8081,11 +8145,17 @@ done:
 /****************************************************************************************
  * Function:    H5P_object_verify
  *
- *              No changes were made for multithread H5P, other than updating to the
- *              multithread H5P structures.
+ *              Multithread safe version of H5P_object_verify().
  *
  * Purpose:     Internal routine to query whether a property list is a certain class and
  *              returns a pointer to the target property list.
+ * 
+ *              NOTE: The only change made to this function for the multithread version
+ *              is that the check to see if the property list is a default property list
+ *              and if the parameter allow_default is FALSE to throw an error is removed. 
+ *              This is due to the versioning system the multithread H5P structures use
+ *              modifying default property lists is okay and causes no problems, however,
+ *              it does mean the parameter allow_default is unused.
  *
  * Return:      Success: Pointer to the target property list
  *
@@ -8094,7 +8164,7 @@ done:
  ****************************************************************************************
  */
 H5P_mt_list_t *
-H5P_object_verify(hid_t plist_id, hid_t pclass_id, bool allow_default)
+H5P_object_verify(hid_t plist_id, hid_t pclass_id, bool H5_ATTR_UNUSED allow_default)
 {
     H5P_mt_list_t *ret_value = NULL; /* Return value */
 
@@ -8104,8 +8174,6 @@ H5P_object_verify(hid_t plist_id, hid_t pclass_id, bool allow_default)
     if (H5P_isa_class(plist_id, pclass_id) != TRUE) {
         HGOTO_ERROR(H5E_PLIST, H5E_CANTREGISTER, NULL, "property list is not a member of the class");
     }
-
-    (void)allow_default;
 
     /* Get the plist structure */
     if (NULL == (ret_value = (H5P_mt_list_t *)H5I_object(plist_id))) {
@@ -8404,6 +8472,13 @@ H5P_peek(H5P_genplist_t *plist, const char *name, void *value)
 
     FUNC_ENTER_NOAPI(FAIL)
 
+    /* Sanity check */
+    assert(plist);
+    assert(name);
+    assert(value);
+
+    assert(atomic_load(&(plist->tag)) == H5P_MT_LIST_TAG);
+
     /* Increment thread count */
     if ((H5P__inc_thrd_count(plist)) < 0) {
         HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, FAIL, "Couldn't increment thread count.");
@@ -8437,9 +8512,19 @@ H5P_peek(H5P_genplist_t *plist, const char *name, void *value)
         version = atomic_load(&(plist->curr_version));
     }
 
-    /* Search for the property */
+    /* Find the property and get the value */
     if (NULL == (prop = H5P__mt_search__list(plist, name, version))) {
+        if (H5P_mt_cb.ver_cb) {
+            (H5P_mt_cb.ver_cb)(version);
+        }
+
         HGOTO_ERROR(H5E_PLIST, H5E_CANTGET, FAIL, "MT property isn't in MT list");
+    }
+    assert(prop);
+    assert(atomic_load(&(prop->tag)) == H5P_MT_PROP_TAG);
+
+    if (H5P_mt_cb.ver_cb) {
+        (H5P_mt_cb.ver_cb)(version);
     }
 
     prop_value = atomic_load(&(prop->value));
@@ -8500,6 +8585,8 @@ H5P_get(H5P_mt_list_t *plist, const char *name, void *value)
     assert(plist);
     assert(name);
     assert(value);
+    
+    assert(atomic_load(&(plist->tag)) == H5P_MT_LIST_TAG);
 
     /* Increment thread count */
     if ((H5P__inc_thrd_count(plist)) < 0) {
@@ -9207,8 +9294,8 @@ H5P_close(H5P_genplist_t *list)
                  * Call the close callback and ignore the return value,
                  * there's nothing we can do about it
                  */
-                H5P__global_lock_prop_cb__close(valid_prop, valid_prop->name, prop_value.size,
-                                                prop_value.ptr);
+                H5P__global_lock_prop_cb__close(valid_prop, valid_prop->name, 
+                                                    prop_value.size, prop_value.ptr);
             }
 
             prop = valid_prop;
@@ -9463,7 +9550,7 @@ done:
 H5P_mt_list_t *
 H5P__clear_mt_list(H5P_mt_list_t *list)
 {
-    H5P_mt_active_thread_count_t thrd;
+    
     H5P_mt_list_prop_ref_t       prop_ref;
     H5P_mt_list_table_entry_t   *entry;
     H5P_mt_prop_t               *first_prop;
@@ -9479,11 +9566,19 @@ H5P__clear_mt_list(H5P_mt_list_t *list)
     assert(list);
     assert(atomic_load(&(list->tag)) == H5P_MT_LIST_FL_REALLOC_TAG);
 
+#ifndef NDEBUG
+/**
+ * This is wrapped by #ifdef NDEBUG because these asserts are the 
+ * only times variables thrd is used, and thus in production builds 
+ * throw compiler warnings. 
+ */
+    H5P_mt_active_thread_count_t thrd;
     thrd = atomic_load(&(list->thrd));
 
     assert(thrd.count == 0);
     assert(thrd.opening == FALSE);
     assert(thrd.closing == TRUE);
+#endif  /* NDEBUG */
 
     /* Clears the list's fields */
 
@@ -10291,10 +10386,10 @@ done:
 H5P_mt_class_t *
 H5P__clear_mt_class(H5P_mt_class_t *class)
 {
-    H5P_mt_active_thread_count_t thrd;
+
     H5P_mt_prop_t               *first_prop;
     H5P_mt_prop_aptr_t           next_ptr;
-    H5P_mt_class_ref_counts_t    ref_count;
+
     size_t                       phys_pl_len;
     size_t                       i;
 
@@ -10305,15 +10400,25 @@ H5P__clear_mt_class(H5P_mt_class_t *class)
     assert(class);
     assert(atomic_load(&(class->tag)) == H5P_MT_CLASS_FL_REALLOC_TAG);
 
+
+#ifndef NDEBUG
+/**
+ * This is wrapped by #ifdef NDEBUG because these asserts are the 
+ * only times variables thrd and ref_count are used, and thus in
+ * production builds throw compiler warnings. 
+ */
+    H5P_mt_active_thread_count_t thrd;
     thrd = atomic_load(&(class->thrd));
 
     assert(thrd.count == 0);
     assert(thrd.opening == FALSE);
     assert(thrd.closing == TRUE);
 
+    H5P_mt_class_ref_counts_t    ref_count;
     ref_count = atomic_load(&(class->ref_count));
     assert(ref_count.pl == 0);
     assert(ref_count.plc == 0);
+#endif /* NDEBUG */
 
     /* Clears the class's fields */
 
@@ -10428,9 +10533,15 @@ done:
 } /* H5P__mt_cmp_next_prop() */
 
 /**
+ * TODO:
  * H5P__mt_encode() and H5P__mt_encod_prop() were multithread functions that
  * were planned to replace the existing H5P__encode() and H5P__encode_cb(),
  * however, due to lack of time and a low priority these were not finished.
+ * The existing functions have been adapted to work with the multithread H5P
+ * code, however may not be fully multithread safe. Thus, the public api 
+ * function H5Pencode2 and H5Pdecode still use the FUNC_ENTER_API macros which
+ * grab the global mutex. In the next phase these functions will be finished
+ * to be fully multithread safe functions.
  */
 #if 0
 /****************************************************************************************
@@ -11656,31 +11767,11 @@ H5P__grab_global_mutex(bool *have_global_mutex, bool *mutex_acquired)
             done = TRUE;
         }
         /* Else, attempt to acquire the global mutex */
-        else {
+        else 
+        {
+            H5_API_LOCK
 
-            if (H5TS_mutex_acquire(&H5_g.init_lock, 1, mutex_acquired) < 0) {
-                HGOTO_ERROR(H5E_PLIST, H5E_SYSERRSTR, FAIL, "H5TS_mutex_acquire reported failure");
-            }
-            else {
-                /**
-                 * Failed to acquire the global mutex, probably because another thread has it.
-                 * Sleep and try again.
-                 *
-                 * TODO: may need to add code to handle the case if this a deadlock.
-                 */
-                if ((*mutex_acquired) == FALSE) {
-                    atomic_fetch_add(&(H5P_mt_g.global_mutex_acquire_failures), 1);
-
-                    sleep(1);
-
-                    continue;
-                }
-                /* Acquired global mutex, update stats and set done */
-                else {
-                    atomic_fetch_add(&(H5P_mt_g.global_mutex_acquire_success), 1);
-                    done = TRUE;
-                }
-            }
+            *mutex_acquired = TRUE;
         }
 
     } while (!done);
@@ -12167,17 +12258,20 @@ H5P__global_lock_prop_cb__cmp(H5P_mt_prop_t *prop, void *value1, void *value2, s
 
     atomic_fetch_add(&(H5P_mt_g.H5P__global_lock_prop_cb__cmp__num_calls), 1);
 
-    /**
-     * Check if we already have the global mutex,
-     * and if we don't grab it.
-     */
-    if (H5P__grab_global_mutex(&have_global_mutex, &mutex_acquired) < 0) {
-        HGOTO_ERROR(H5E_INTERNAL, H5E_CANTGET, FAIL, "Failed checking or grabbing mutex");
-    }
+    if ( prop->cmp != memcmp )
+    {
+        /**
+         * Check if we already have the global mutex,
+         * and if we don't grab it.
+         */
+        if (H5P__grab_global_mutex(&have_global_mutex, &mutex_acquired) < 0) {
+            HGOTO_ERROR(H5E_INTERNAL, H5E_CANTGET, FAIL, "Failed checking or grabbing mutex");
+        }
 
-    /* update stats */
-    if (have_global_mutex) {
-        atomic_fetch_add(&(H5P_mt_g.num_already_have_mutex__cmp_cb), 1);
+        /* update stats */
+        if (have_global_mutex) {
+            atomic_fetch_add(&(H5P_mt_g.num_already_have_mutex__cmp_cb), 1);
+        }
     }
 
     /* Call the user's callback */

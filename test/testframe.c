@@ -76,7 +76,7 @@ static herr_t (*TestCleanupFunc_g)(void)                     = NULL;
 static H5_ATOMIC(int) TestNumErrs_g = 0;    /* Total number of errors that occurred for whole test program */
 static bool TestEnableErrorStack    = true; /* Whether to show error stacks from the library */
 
-static int TestMaxNumThreads_g = -1; /* Max number of threads that can be spawned */
+static int TestMaxNumThreads_g = 32; /* Max number of threads that can be spawned */
 
 static bool TestDoSummary_g = false; /* Show test summary. Default is no. */
 static bool TestDoCleanUp_g = true;  /* Do cleanup or not. Default is yes. */

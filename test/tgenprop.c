@@ -1314,6 +1314,19 @@ test_genprop_list_callback(void)
     if (memcmp(prop1_cb_info.get_value, &prop1_new_value, PROP1_SIZE) != 0)
         TestErrPrintf("Property #1 value doesn't match!, line=%d\n", __LINE__);
 
+/**
+ * This test has been removed when running in multithread due to how the
+ * multithread H5P versioning system works. 
+ * See making_H5P_multi-thread_safe_sketch_design for more details, but
+ * a short summary is that when a property is deleted, it sets it's 
+ * delete_version to the property list's next version number and then
+ * the property list increments its current version to that next version.
+ * From that new version on the property is treated as being deleted, but
+ * if a thread access the list from a version prior to the property being
+ * deleted it must still have access to that property. Thus the property
+ * can not call its delete callback, freeing its value.
+ */
+#ifdef H5_HAVE_MULTITRHEAD
     /* Delete property #2 */
     ret = H5Premove(lid1, PROP2_NAME);
     CHECK_I(ret, "H5Premove");
@@ -1325,7 +1338,7 @@ test_genprop_list_callback(void)
         TestErrPrintf("Property #2 name doesn't match!, line=%d\n", __LINE__);
     if (memcmp(prop2_cb_info.del_value, PROP2_DEF_VALUE, PROP2_SIZE) != 0)
         TestErrPrintf("Property #2 value doesn't match!, line=%d\n", __LINE__);
-
+#endif /* H5_HAVE_MULTITRHEAD */
     /* Copy first list */
     lid2 = H5Pcopy(lid1);
     CHECK_I(lid2, "H5Pcopy");
