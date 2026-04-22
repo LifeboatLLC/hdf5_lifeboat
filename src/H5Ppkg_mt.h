@@ -220,6 +220,14 @@ typedef struct H5P_mt_prop_value_t {
  *      NOTE: that if there are multiple versions of the property, the
  *      older versions will still have in_lkup_tbl set to TRUE, even though they don't
  *      have a pointer to them directly from the lkup_tbl.
+ * 
+ * call_del (_Atomic bool):
+ *      Boolean flag that is set to TRUE if this property's delete callback needs to be
+ *      called when this propert is being added to the property free list. The delete 
+ *      callbacks, can't get called when setting the delete_version version, because 
+ *      another thread may still need to access this property at that version. Thus they 
+ *      must be called when we know there are not any threads that will be accessing this 
+ *      version of this property. 
  *
  *
  * Property Chksum, Name & Value:
@@ -469,7 +477,7 @@ typedef struct H5P_mt_prop_value_t {
  *
  *          If this callback returns a negative value, then an error is returned,
  *          but the target property is still deleted.
- *
+ * 
  *
  * copy:    Function to call when a property is copied.
  *
@@ -580,6 +588,7 @@ typedef struct H5P_mt_prop_t {
     bool             in_prop_class;
     _Atomic uint64_t ref_count;
     bool             in_lkup_tbl;
+    _Atomic bool     call_del;
 
     int64_t                     chksum;
     char                       *name;
@@ -1799,6 +1808,15 @@ typedef struct H5P_mt_list_table_entry_t {
  *      instance of H5P_mt_list_t becomes visible to other threads before this field can
  *      be set. That said, once it is set, it should not change for the life of the
  *      property list.
+ * 
+ * tmp_closing_id (_Atomic hid_t):
+ *      Temporary ID assigned to this property list when closing. After plist_id is 
+ *      decremented to zero in the index H5I calls H5P_close() to close the plist. 
+ *      However, a new ID is needed to call any property delete callback that needs 
+ *      called. Since the property delete callbacks can't be called when a property has
+ *      its delete_version set, they must called on list close. 
+ * 
+ *      NOTE: this is a temporary solution.
  *
  * curr_version (_Atomic uint64_t):
  *      Atomic uint64_t containing the current version of the propety list. This version
@@ -2139,6 +2157,7 @@ typedef struct H5P_mt_list_t {
 
     /* Fields related to this class */
     _Atomic hid_t    plist_id;
+    _Atomic hid_t    tmp_closing_id;
     _Atomic uint64_t curr_version;
     _Atomic uint64_t next_version;
 

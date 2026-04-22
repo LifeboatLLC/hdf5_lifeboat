@@ -40,12 +40,15 @@ hid_t CLASS4_ID_g = H5I_INVALID_HID;
  * Structure: prop_info_t
  *
  * Description:
- *
- * prop_info_t is a structure used is some global arrays to store the chksum, name, and
- * a pointer to an instance of H5P_mt_prop_t structs for each class and list created
- * during st_test_1 and mt_test_1. The H5P_mt_prop_t is used as the basis for the
- * properties created during these tests, and are used to compare the properties created
- * or modified in the test classes and lists to ensure that they are correct at each step.
+ * 
+ * This is a test structure used to store the chksum, name, and a pointer to an instance 
+ * of a H5P_mt_prop_t for testing. There is a prop_info_t for each property created 
+ * during st_test_1 and mt_test_1, where to create the properties during those tests they
+ * get their information from their correlated prop_info_t.
+ * 
+ * Also, after creating or modifying a property during st_test_1 and mt_test_1 that 
+ * property is compared to its prop field in prop_info_t to ensure the operation was
+ * performed correctly.
  *
  * Fields:
  *
@@ -307,6 +310,9 @@ typedef struct test_op_info_t {
  * op_table ( test_op_info_t * ):
  *      Pointer to an array of test_op_info_t used to track info on the operations
  *      performed, and the objects they were performed on.
+ * 
+ * err_cnt ( int ):
+ *      The number of errors the thread detected during an iteration.
  *
  ****************************************************************************************
  */
@@ -317,6 +323,8 @@ typedef struct thread_params_t {
     uint32_t ops_performed;
 
     test_op_info_t *op_table;
+
+    int err_cnt;
 
 } thread_params_t;
 
@@ -2722,7 +2730,7 @@ static herr_t
 mt_test_1(TestParams_t H5_ATTR_UNUSED *params)
 {
     int max_num_threads = GetTestMaxNumThreads();
-    // int test_express    = GetTestExpress();
+    int test_express    = GetTestExpress();
     herr_t ret;
 
     /** TODO: adjust this to work with testframe's functions to get max threads */
@@ -3166,8 +3174,6 @@ test_h5p_mt_class_1(test_params_t *test_params)
     CHECK_I(ret, "H5P__class_get");
     assert(ret == 0);
 
-    // fprintf(stderr, "prop string value: %s\n", value3);
-
     table_prop  = class_prop_table[2].prop;
     table_value = atomic_load(&(table_prop->value));
 
@@ -3505,27 +3511,27 @@ test_h5p_mt_class_1(test_params_t *test_params)
  *
  * Details:
  *
- *  1) Create class2 as a copy of class1, and register class2 in the index and update
- *     class2->id and class2's opening flag
+ *  1) Create class2 as a copy of class1, and register class2 in the index.
  *  2) Compare class1 and class2 (should be equal).
  *  3) Modify a property in class2 and compare class1 and class2 again (should not be
  *     equal).
  *  4) Modify the property in class2 back and compare class1 and class2 one last time
  *     (should be equal).
- *  5) Close class2 and ensure it was inserted into the class free list correctly.
- *  6) Change the closed class2's tag to be reallocable and derive a new class2 from
- *     class1. NOTE: step 6 is only done when testing with a single thread.
- *  7) Ensure the new class2 used the old class2 structure from the class free
- *     list and that the class free list is now empty (NOTE: the class free list will
- *     always contain two H5P_mt_class_sptr_t structs for the head and tail of that list,
- *     and if the pointers are NULL then the free list is "empty").
+ *  5) Close class2 and ensure it was removed from the index. NOTE: When testing with
+ *     only one thread, the class free is checked to ensure class2 was correctly
+ *     inserted into it, when closed.
+ *  6) Create a new class2 derived from class1. NOTE: In the single thread test, the
+ *     closed class2 in the free list has its tag changed to be reallocable to test 
+ *     reusing a structure from the free list instead of allocating a struct from heap.
+ *  7) If running the single thread test, ensure the new class2 used the old class2 
+ *     structure from the class free list and that the class free list is now empty 
+ *     (NOTE: the free lists will always contain at least one entry, and are 
+ *     considered empty when the head and tail point to the same structure).
  *     NOTE: if running in multithread the new class2 is allocated from heap and not
  *     from the previous class2 structure.
- *  8) Check the property free list and ensure all the H5P_mt_prop_t, property structs,
- *     where correctly inserted, when the class2 struct was reallocated from the class
- *     free list.
- *     NOTE: step 8 is only done when testing with a single thread.
- *
+ *  8) Check that class2 was created correctly.
+ *  9) In the single thread test only, ensure that the properties added to the property
+ *     free list when reallocating class2 were correctly inserted into the free list.
  *
  * Return:      SUCCESS/FAIL
  *
@@ -3820,13 +3826,13 @@ test_h5p_mt_class_2(test_params_t *test_params)
         fl_prop = prop_fl_head.ptr;
 
         assert(fl_prop);
-        assert(atomic_load(&(fl_prop->tag)) == H5P_MT_PROP_VALID_ONFL_TAG);
+        assert(atomic_load(&(fl_prop->tag)) == H5P_MT_PROP_INVALID_TAG);
 
         prop_next = atomic_load(&(fl_prop->next));
         fl_prop   = prop_next.ptr;
 
         assert(fl_prop);
-        assert(atomic_load(&(fl_prop->tag)) == H5P_MT_PROP_VALID_ONFL_TAG);
+        assert(atomic_load(&(fl_prop->tag)) == H5P_MT_PROP_INVALID_TAG);
 
         VERIFY(atomic_load(&(H5P_mt_g.prop_fl_len)), 7, "H5Pcreate_class");
 
@@ -4090,7 +4096,7 @@ test_h5p_mt_list_1(test_params_t *test_params)
         test_prop    = prop_fl_head.ptr;
 
         assert(test_prop);
-        assert(atomic_load(&(test_prop->tag)) == H5P_MT_PROP_VALID_ONFL_TAG);
+        assert(atomic_load(&(test_prop->tag)) == H5P_MT_PROP_INVALID_TAG);
 
         atomic_store(&(test_prop->tag), H5P_MT_PROP_FL_REALLOC_TAG);
     }
@@ -4879,7 +4885,7 @@ test_h5p_mt_list_2(test_params_t *test_params)
         fl_prop = prop_fl_head.ptr;
 
         assert(fl_prop);
-        assert(atomic_load(&(fl_prop->tag)) == H5P_MT_PROP_VALID_ONFL_TAG);
+        assert(atomic_load(&(fl_prop->tag)) == H5P_MT_PROP_INVALID_TAG);
 
         VERIFY(atomic_load(&(H5P_mt_g.prop_fl_len)), 15, "H5Pcreate");
 
@@ -5119,7 +5125,7 @@ compare_lfsll_to_table_props(H5P_mt_prop_t **test_prop, prop_info_t *prop_table,
 
     prop = *test_prop;
     assert(atomic_load(&(prop->tag)) == H5P_MT_PROP_TAG ||
-           atomic_load(&(prop->tag)) == H5P_MT_PROP_VALID_ONFL_TAG);
+           atomic_load(&(prop->tag)) == H5P_MT_PROP_INVALID_TAG);
 
     table_i = 0;
 
@@ -5144,7 +5150,7 @@ compare_lfsll_to_table_props(H5P_mt_prop_t **test_prop, prop_info_t *prop_table,
         CHECK_PTR(table_prop, where);
         assert(table_prop);
         assert(atomic_load(&(table_prop->tag)) == H5P_MT_PROP_TAG ||
-               atomic_load(&(table_prop->tag)) == H5P_MT_PROP_VALID_ONFL_TAG);
+               atomic_load(&(table_prop->tag)) == H5P_MT_PROP_INVALID_TAG);
 
         if (prop->in_lkup_tbl != table_prop->in_lkup_tbl) {
             table_next = atomic_load(&(table_prop->next));
@@ -5158,7 +5164,7 @@ compare_lfsll_to_table_props(H5P_mt_prop_t **test_prop, prop_info_t *prop_table,
         prop = next.ptr;
         assert(prop);
         assert(atomic_load(&(prop->tag)) == H5P_MT_PROP_TAG ||
-               atomic_load(&(prop->tag)) == H5P_MT_PROP_VALID_ONFL_TAG);
+               atomic_load(&(prop->tag)) == H5P_MT_PROP_INVALID_TAG);
 
     } /* end while ( ! test_prop->sentinel ) */
 
@@ -5351,22 +5357,22 @@ prop_check(H5P_mt_prop_t *prop, H5P_mt_prop_t *table_prop, bool in_prop_class, b
     herr_t ret_value = SUCCEED;
 
     if (0 != H5P__prop_cmp_test(prop, table_prop)) {
-        assert(atomic_load(&(prop->tag)) == 0);
+        assert(FALSE);
 
         fprintf(stderr, "prop_check(): prop mismatch.");
         return -1;
     }
 
     if (in_prop_class != prop->in_prop_class || in_lkup_tbl != prop->in_lkup_tbl) {
-        assert(in_prop_class == prop->in_prop_class);
-        assert(in_lkup_tbl == prop->in_lkup_tbl);
+        assert(FALSE);
+        assert(FALSE);
 
         fprintf(stderr, "prop_check(): prop class or lkup_tbl flag mismatch.");
         return -1;
     }
 
     if (TRUE == prop->sentinel) {
-        assert(prop->sentinel == FALSE);
+        assert(FALSE);
 
         fprintf(stderr, "prop_check(): prop is marked as sentinel.");
         return -1;
@@ -5510,7 +5516,7 @@ check_stats(test_params_t *test_params)
     assert(atomic_load(&(class1->H5P__class_set__num_calls)) == 3);
     assert(atomic_load(&(class1->insert_max_nodes_visited)) == 5);
     assert(atomic_load(&(class1->insert_avg_nodes_visited)) == 4);
-    assert(atomic_load(&(class1->num_insert_nodes_visited)) == 4); // > 0
+    assert(atomic_load(&(class1->num_insert_nodes_visited)) == 4); 
     assert(atomic_load(&(class1->num_insert_prop__cols)) == 0);
     assert(atomic_load(&(class1->num_insert_prop__success)) == 5);
     assert(atomic_load(&(class1->num_insert_prop__chksum_cols)) == 0);
@@ -5519,7 +5525,7 @@ check_stats(test_params_t *test_params)
     assert(atomic_load(&(class1->H5P__unregister__num_calls)) == 3);
     assert(atomic_load(&(class1->delete_prop__max_nodes_visited)) == 5);
     assert(atomic_load(&(class1->delete_prop__avg_nodes_visited)) == 4);
-    assert(atomic_load(&(class1->num_delete_prop__nodes_visited)) == 5); // > 0
+    assert(atomic_load(&(class1->num_delete_prop__nodes_visited)) == 5); 
     assert(atomic_load(&(class1->num_delete_prop__cols)) == 0);
     assert(atomic_load(&(class1->num_delete_prop__success)) == 3);
     assert(atomic_load(&(class1->num_delete_prop__chksum_cols)) == 0);
@@ -5528,7 +5534,7 @@ check_stats(test_params_t *test_params)
     assert(atomic_load(&(class1->H5P__mt_search_prop__class__num_calls)) == 22);
     assert(atomic_load(&(class1->search_class__max_nodes_visited)) == 8);
     assert(atomic_load(&(class1->search_class__avg_nodes_visited)) == 1);
-    assert(atomic_load(&(class1->num_search_class__nodes_visited)) == 6); // > 0
+    assert(atomic_load(&(class1->num_search_class__nodes_visited)) == 6); 
     assert(atomic_load(&(class1->num_search_class__success)) == 15);
     assert(atomic_load(&(class1->num_search_chksum_cols)) == 0);
 
@@ -5744,7 +5750,7 @@ check_global_stats(int _num_threads)
     if (num_threads == 1) {
         assert(atomic_load(&(H5P_mt_g.prop_fl_head_update)) == 1);
         assert(atomic_load(&(H5P_mt_g.prop_fl_tail_update)) == 16);
-        assert(atomic_load(&(H5P_mt_g.prop_fl_next_update)) == 16);
+        assert(atomic_load(&(H5P_mt_g.prop_fl_next_update)) == 30);
         assert(atomic_load(&(H5P_mt_g.num_props_added_to_fl)) == 16);
     }
     else {
@@ -5889,8 +5895,8 @@ check_global_stats(int _num_threads)
     assert(atomic_load(&(H5P_mt_g.class_un_marked_as_deleted)) == (0 * num_threads));
 
     /* stats for closing lists */
-    assert(atomic_load(&(H5P_mt_g.H5P__close_list_cb__num_calls)) == (1 * num_threads));
-    assert(atomic_load(&(H5P_mt_g.H5P_close__num_calls)) == (1 * num_threads));
+    assert(atomic_load(&(H5P_mt_g.H5P__close_list_cb__num_calls)) == (2 * num_threads));
+    assert(atomic_load(&(H5P_mt_g.H5P_close__num_calls)) == (2 * num_threads));
 
     /* stats for the clear functions */
     if (num_threads == 1) {
@@ -6027,7 +6033,7 @@ close_test_structs(test_params_t *test_params)
     /* Ensure class1 is correct */
     ret = check_class_ref_counts(class1, 0, 1, FALSE, "H5Pclose");
 
-    /* Ensure class1 isstill in the index */
+    /* Ensure class1 is still in the index */
     h5i_class_ret = (H5P_mt_class_t *)H5I_object(atomic_load(&(class1->id)));
     CHECK_PTR(h5i_class_ret, "H5I_object");
 
@@ -6195,7 +6201,7 @@ term_test_free_lists(int _num_threads)
         assert(atomic_load(&(H5P_mt_g.list_fl_len)) == 0);
         assert(atomic_load(&(H5P_mt_g.prop_fl_head_update)) == 41);
         assert(atomic_load(&(H5P_mt_g.prop_fl_tail_update)) == 41);
-        assert(atomic_load(&(H5P_mt_g.prop_fl_next_update)) == 40);
+        assert(atomic_load(&(H5P_mt_g.prop_fl_next_update)) == 74);
         assert(atomic_load(&(H5P_mt_g.num_props_added_to_fl)) == 40);
         assert(atomic_load(&(H5P_mt_g.class_fl_head_update)) == 4);
         assert(atomic_load(&(H5P_mt_g.class_fl_tail_update)) == 4);
@@ -6215,7 +6221,7 @@ term_test_free_lists(int _num_threads)
         assert(atomic_load(&(H5P_mt_g.list_fl_len)) == 0);
         assert(atomic_load(&(H5P_mt_g.prop_fl_head_update)) == (40 * num_threads + 1));
         assert(atomic_load(&(H5P_mt_g.prop_fl_tail_update)) == (40 * num_threads + 1));
-        assert(atomic_load(&(H5P_mt_g.prop_fl_next_update)) == (40 * num_threads));
+        assert(atomic_load(&(H5P_mt_g.prop_fl_next_update)) == (74 * num_threads));
         assert(atomic_load(&(H5P_mt_g.num_props_added_to_fl)) == (40 * num_threads));
         assert(atomic_load(&(H5P_mt_g.class_fl_head_update)) == (3 * num_threads + 1));
         assert(atomic_load(&(H5P_mt_g.class_fl_tail_update)) == (3 * num_threads + 1));
@@ -6264,7 +6270,12 @@ reset_globals(TestParams_t H5_ATTR_UNUSED *params)
 /****************************************************************************************
  * Function:    mt_context_test
  *
- * Purpose:
+ * Purpose:     Tests the new changes to H5CX that now stores all property lists that are
+ *              parameters for public API calls. Additionally, the H5CX now stores the
+ *              version of the plist that will be used for the entire public API call.
+ * 
+ *              NOTE: will eventually be moved to another file where testing H5CX is 
+ *              more appropriate.
  *
  * Return:      SUCCEED/FAIL
  *
@@ -6421,7 +6432,7 @@ mt_context_test(TestParams_t H5_ATTR_UNUSED *params)
         updated_ver = atomic_load(&(list->curr_version));
 
         ret = test_cx_lists_set_2(list, name, new_value, updated_ver, list_type, i);
-        CHECK_I(ret, "test_cx_lists_set_1");
+        CHECK_I(ret, "test_cx_lists_set_2");
         assert(ret == SUCCEED);
 
         /**
@@ -6456,7 +6467,7 @@ mt_context_test(TestParams_t H5_ATTR_UNUSED *params)
         assert(updated_ver == version + 1);
 
         ret = test_cx_lists_set_2(new_list, name, new_value, updated_ver, list_type, i);
-        CHECK_I(ret, "test_cx_lists_set_1");
+        CHECK_I(ret, "test_cx_lists_set_2");
         assert(ret == SUCCEED);
 
     } /* end for ( int i = 0; i < 20; i++ ) */
@@ -6467,8 +6478,14 @@ mt_context_test(TestParams_t H5_ATTR_UNUSED *params)
 
 } /* end mt_context_test() */
 
-/**
+/****************************************************************************************
+ * Function:    H5P__test_cx_get_version
  *
+ * Purpose:     Helper function to call H5CX_get_plist_version() for the context tests.
+ *
+ * Return:      SUCCEED/FAIL
+ *
+ ****************************************************************************************
  */
 uint64_t
 H5P__test_cx_get_version(hid_t list_id, uint64_t version)
@@ -6485,8 +6502,15 @@ H5P__test_cx_get_version(hid_t list_id, uint64_t version)
 
 } /* end H5P__test_cx_get_version() */
 
-/**
+/****************************************************************************************
+ * Function:    test_cx_lists_get
  *
+ * Purpose:     Helper function for mt_context_test() to perform some sanity checks and 
+ *              call H5P__test_cx_get_version().
+ *
+ * Return:      SUCCEED/FAIL
+ *
+ ****************************************************************************************
  */
 herr_t
 test_cx_lists_get(H5P_mt_list_t *list, uint64_t version)
@@ -6514,8 +6538,18 @@ done:
 
 } /* end test_cx_lists_get() */
 
-/**
+/****************************************************************************************
+ * Function:    test_cx_lists_set_1
  *
+ * Purpose:     The first set of tests for the context. First sets the target plist in
+ *              H5CX, then calls H5P_set() or H5P_insert() to test modifying the plist,
+ *              and then calling H5P__test_cx_get_version() to ensure the plist and the
+ *              version of the plist in the context are still correct.
+ *              
+ *
+ * Return:      SUCCEED/FAIL
+ *
+ ****************************************************************************************
  */
 herr_t
 test_cx_lists_set_1(H5P_mt_list_t *list, const char *name, H5P_mt_prop_value_t value, uint64_t version,
@@ -6587,8 +6621,16 @@ done:
 
 } /* end test_cx_lists_set_1() */
 
-/**
+/****************************************************************************************
+ * Function:    test_cx_lists_set_2
  *
+ * Purpose:     The second set of tests for the context. Tests setting a modified version
+ *              of default lists and then getting those plists and versions to ensure
+ *              they were set correctly.              
+ *
+ * Return:      SUCCEED/FAIL
+ *
+ ****************************************************************************************
  */
 herr_t
 test_cx_lists_set_2(H5P_mt_list_t *list, const char *name, H5P_mt_prop_value_t value, uint64_t version,
@@ -10218,7 +10260,7 @@ static herr_t
 mt_test_2(TestParams_t H5_ATTR_UNUSED *params)
 {
     int max_num_threads = GetTestMaxNumThreads();
-    // int test_express    = GetTestExpress();
+    int test_express    = GetTestExpress();
     H5P_mt_class_t           *test_root;
     H5P_mt_class_ref_counts_t ref_count;
     herr_t                    ret;
@@ -10368,6 +10410,8 @@ test_2_helper(int num_threads)
             thread_params[i].op_table[j].sorted       = FALSE;
         }
 
+        thread_params[i].err_cnt = 0;
+
     } /* end for ( i = 0; i < num_threads; i++ ) */
 
     if (num_threads == 1) {
@@ -10397,7 +10441,7 @@ test_2_helper(int num_threads)
             }
             else {
                 /* Collect error count from joined therads */
-                // err_cnt += params[i].err_cnt;
+                err_cnt += thread_params[i].err_cnt;
             }
         }
     }
@@ -10987,6 +11031,7 @@ create_list(thread_params_t *thread_params)
                 else {
                     /* No other status should be possible */
                     assert(FALSE);
+                    thread_params->err_cnt++;
                 }
             } /* end else ( ! list ) */
 
@@ -11185,6 +11230,7 @@ create_list(thread_params_t *thread_params)
                              * checked already.
                              */
                             assert(FALSE);
+                            thread_params->err_cnt++;
                         }
 
                     } while (!done);
@@ -11673,6 +11719,7 @@ create_class(thread_params_t *thread_params)
                 else {
                     /* No other status should be possible */
                     assert(FALSE);
+                    thread_params->err_cnt++;
                 }
 
             } /* end else ( ! class ) */
@@ -11879,6 +11926,7 @@ create_class(thread_params_t *thread_params)
                              * checked already.
                              */
                             assert(FALSE);
+                            thread_params->err_cnt++;
                         }
 
                     } while (!done);
@@ -12341,6 +12389,7 @@ copy_list(thread_params_t *thread_params)
                 else {
                     /* No other status should be possible */
                     assert(FALSE);
+                    thread_params->err_cnt++;
                 }
 
             } /* end else ( ! list ) */
@@ -12562,6 +12611,7 @@ copy_list(thread_params_t *thread_params)
                              * checked already.
                              */
                             assert(FALSE);
+                            thread_params->err_cnt++;
                         }
 
                     } while (!done);
@@ -13073,6 +13123,7 @@ copy_class(thread_params_t *thread_params)
                 else {
                     /* No other status should be possible */
                     assert(FALSE);
+                    thread_params->err_cnt++;
                 }
 
             } /* end else ( ! class ) */
@@ -13294,6 +13345,7 @@ copy_class(thread_params_t *thread_params)
                              * checked already.
                              */
                             assert(FALSE);
+                            thread_params->err_cnt++;
                         }
 
                     } while (!done);
@@ -14173,6 +14225,7 @@ close_list(thread_params_t *thread_params)
                  * something went wrong. Investigate.
                  */
                 assert(FALSE);
+                thread_params->err_cnt++;
             }
 
         } while (!done);
@@ -14239,6 +14292,7 @@ close_list(thread_params_t *thread_params)
                     }
                     else {
                         assert(FALSE);
+                        thread_params->err_cnt++;
                     }
 
                 } while (!done);
@@ -14626,6 +14680,7 @@ close_class(thread_params_t *thread_params)
                     }
                     else {
                         assert(FALSE);
+                        thread_params->err_cnt++;
                     }
 
                     done = TRUE;
@@ -14707,10 +14762,12 @@ close_class(thread_params_t *thread_params)
                                 }
                                 else {
                                     assert(FALSE);
+                                    thread_params->err_cnt++;
                                 }
                             }
                             else {
                                 assert(FALSE);
+                                thread_params->err_cnt++;
                             }
 
                         } while (!done);
@@ -15161,6 +15218,7 @@ search_list(thread_params_t *thread_params)
                         fprintf(stderr, "status should be IN_PROGRESS\n");
                         fprintf(stderr, "list_status: %d\n", list_status);
                         assert(FALSE);
+                        thread_params->err_cnt++;
                     }
                 }
 
@@ -15198,6 +15256,7 @@ search_list(thread_params_t *thread_params)
             }
             else {
                 assert(FALSE);
+                thread_params->err_cnt++;
             }
         }
 
@@ -15525,6 +15584,7 @@ search_list_ver(thread_params_t *thread_params)
                         fprintf(stderr, "status should be IN_PROGRESS\n");
                         fprintf(stderr, "list_status: %d\n", list_status);
                         assert(FALSE);
+                        thread_params->err_cnt++;
                     }
                 }
 
@@ -15561,6 +15621,7 @@ search_list_ver(thread_params_t *thread_params)
             }
             else {
                 assert(FALSE);
+                thread_params->err_cnt++;
             }
         }
 
@@ -15842,6 +15903,7 @@ search_class(thread_params_t *thread_params)
                     } /* end else if (prop_status == EXISTS || prop_status == DELETED) */
                     else {
                         assert(FALSE);
+                        thread_params->err_cnt++;
                     }
 
                 } /* end if ( class ) */
@@ -15889,6 +15951,7 @@ search_class(thread_params_t *thread_params)
                     }
                     else {
                         assert(FALSE);
+                        thread_params->err_cnt++;
                     }
                 }
 
@@ -16182,6 +16245,7 @@ search_class_ver(thread_params_t *thread_params)
                     } /* end else if (prop_status == EXISTS || prop_status == DELETED) */
                     else {
                         assert(FALSE);
+                        thread_params->err_cnt++;
                     }
                 }
                 else /* ( ! class ) */
@@ -16232,6 +16296,7 @@ search_class_ver(thread_params_t *thread_params)
                         fprintf(stderr, "status should be IN_PROGRESS\n");
                         fprintf(stderr, "class_status: %d\n", class_status);
                         assert(FALSE);
+                        thread_params->err_cnt++;
                     }
                 }
 
@@ -16268,6 +16333,7 @@ search_class_ver(thread_params_t *thread_params)
             }
             else {
                 assert(FALSE);
+                thread_params->err_cnt++;
             }
         }
 
@@ -16572,6 +16638,7 @@ mod_list_create_prop(thread_params_t *thread_params)
                         *(uint64_t *)value.ptr);
 
                 assert(FALSE);
+                thread_params->err_cnt++;
             }
 
             /**
@@ -16651,11 +16718,13 @@ mod_list_create_prop(thread_params_t *thread_params)
                     else {
                         /* If the prop doesn't exist, creating it should've succeed */
                         assert(FALSE);
+                        thread_params->err_cnt++;
                     }
                 }
                 else {
                     /* If the prop doesn't exist, creating it should've succeed */
                     assert(FALSE);
+                    thread_params->err_cnt++;
                 }
             }
             /* The list wasn't in the index */
@@ -16699,6 +16768,7 @@ mod_list_create_prop(thread_params_t *thread_params)
                 }
                 else {
                     assert(FALSE);
+                    thread_params->err_cnt++;
                 }
             }
         }
@@ -16898,6 +16968,7 @@ mod_list_mod_prop(thread_params_t *thread_params)
                         *(uint64_t *)value.ptr);
 
                 assert(FALSE);
+                thread_params->err_cnt++;
             }
 
             if (prop_value < op_info->op_ver) {
@@ -17037,6 +17108,7 @@ mod_list_mod_prop(thread_params_t *thread_params)
                 }
                 else {
                     assert(FALSE);
+                    thread_params->err_cnt++;
                 }
             }
 
@@ -17380,6 +17452,7 @@ mod_list_delete_prop(thread_params_t *thread_params)
                 }
                 else {
                     assert(FALSE);
+                    thread_params->err_cnt++;
                 }
             }
         }
@@ -17685,6 +17758,7 @@ mod_class_create_prop(thread_params_t *thread_params, class_table_entry_t *_clas
                         *(uint64_t *)value.ptr);
 
                 assert(FALSE);
+                thread_params->err_cnt++;
             }
 
             /**
@@ -17745,11 +17819,13 @@ mod_class_create_prop(thread_params_t *thread_params, class_table_entry_t *_clas
                     else {
                         /* If the prop doesn't exist, creating it should've succeed */
                         assert(FALSE);
+                        thread_params->err_cnt++;
                     }
                 }
                 else {
                     /* If the prop doesn't exist, creating it should've succeed */
                     assert(FALSE);
+                    thread_params->err_cnt++;
                 }
             }
             else {
@@ -17795,6 +17871,7 @@ mod_class_create_prop(thread_params_t *thread_params, class_table_entry_t *_clas
                 }
                 else {
                     assert(FALSE);
+                    thread_params->err_cnt++;
                 }
             }
         }
@@ -17998,6 +18075,7 @@ mod_class_mod_prop(thread_params_t *thread_params)
                             *(uint64_t *)value.ptr);
 
                     assert(FALSE);
+                    thread_params->err_cnt++;
                 }
 
                 if (prop_value < op_info->op_ver) {
@@ -18078,6 +18156,7 @@ mod_class_mod_prop(thread_params_t *thread_params)
                     } /* end else if (prop_status == EXISTS || prop_status == DELETED) */
                     else {
                         assert(FALSE);
+                        thread_params->err_cnt++;
                     }
                 }
                 else {
@@ -18123,6 +18202,7 @@ mod_class_mod_prop(thread_params_t *thread_params)
                     }
                     else {
                         assert(FALSE);
+                        thread_params->err_cnt++;
                     }
                 }
             }
@@ -18432,6 +18512,7 @@ mod_class_delete_prop(thread_params_t *thread_params)
                 else {
                     fprintf(stderr, "prop_status shouldn't be: %d\n", prop_status);
                     assert(FALSE);
+                    thread_params->err_cnt++;
                 }
             }
             else {
@@ -18477,6 +18558,7 @@ mod_class_delete_prop(thread_params_t *thread_params)
                 }
                 else {
                     assert(FALSE);
+                    thread_params->err_cnt++;
                 }
             }
         }
@@ -19550,7 +19632,8 @@ verify_copy_list_props_at_creation(list_table_entry_t *list_entry)
         og_lkup_entry = &og_list->lkup_tbl[i];
 
         if (atomic_load(&(og_lkup_entry->first_ver_of_curr)) > 0 &&
-            atomic_load(&(og_lkup_entry->first_ver_of_curr)) <= og_ver) {
+            atomic_load(&(og_lkup_entry->first_ver_of_curr)) <= og_ver) 
+        {
             prop_ref = atomic_load(&(og_lkup_entry->curr));
             og_prop  = prop_ref.ptr;
 
@@ -19790,28 +19873,33 @@ check_operations(thread_params_t *thread_params, uint64_t num_threads)
                         if (0 != strcmp(class->name, op_info->class_name)) {
                             TestErrPrintf("class%d name mismatch\n", i + 1);
                             assert(FALSE);
+                            thread_params->err_cnt++;
                         }
                         if (op_info->id != H5I_INVALID_HID) {
                             if (atomic_load(&(class->id)) != op_info->id) {
                                 TestErrPrintf("class%d id mismatch\n", i + 1);
                                 assert(FALSE);
+                                thread_params->err_cnt++;
                             }
                         }
                         if (atomic_load(&(class->id)) != atomic_load(&(class_entry->id))) {
                             TestErrPrintf("class%d id mismatch\n", i + 1);
                             assert(FALSE);
+                            thread_params->err_cnt++;
                         }
                         if (class->parent_id != atomic_load(&(class_entry->parent_id))) {
                             TestErrPrintf("class%d parent id mismatch\n", i + 1);
                             TestErrPrintf(" class->parent_id: %ld class_entry->parent_id: %ld\n",
                                           class->parent_id, atomic_load(&(class_entry->parent_id)));
                             assert(FALSE);
+                            thread_params->err_cnt++;
                         }
                         parent = class->parent_ptr;
                         if (0 != strcmp(parent->name, class_entry->parent_name) ||
                             0 != strcmp(parent->name, op_info->parent_name)) {
                             TestErrPrintf("class%d parent name mismatch\n", i + 1);
                             assert(FALSE);
+                            thread_params->err_cnt++;
                         }
 
                     } /* end if ( class )*/
@@ -19831,6 +19919,7 @@ check_operations(thread_params_t *thread_params, uint64_t num_threads)
             }
             else if (op_count > class_op_count) {
                 assert(FALSE);
+                thread_params->err_cnt++;
             }
 
         } /* end for ( uint64_t op = 0; op < TOTAL_OPS_PER_THREAD; op++ ) */
@@ -19909,6 +19998,7 @@ check_operations(thread_params_t *thread_params, uint64_t num_threads)
                     /* No other results should happen */
                     else {
                         assert(FALSE);
+                        thread_params->err_cnt++;
                     }
 
                 } /* end if ( ! class_entry->copy && op == CREATE ) */
@@ -19935,6 +20025,7 @@ check_operations(thread_params_t *thread_params, uint64_t num_threads)
                     /* No other results should happen */
                     else {
                         assert(FALSE);
+                        thread_params->err_cnt++;
                     }
 
                 }    /* end else if ( class_entry->copy && op == COPY ) */
@@ -19990,6 +20081,7 @@ check_operations(thread_params_t *thread_params, uint64_t num_threads)
                     }
                     else {
                         assert(FALSE);
+                        thread_params->err_cnt++;
                     }
 
                 } /* end else if ( op == DELETE ) */
@@ -20042,21 +20134,25 @@ check_operations(thread_params_t *thread_params, uint64_t num_threads)
                             if (atomic_load(&(list->plist_id)) != op_info->id) {
                                 TestErrPrintf("list%d id mismatch\n", i);
                                 assert(FALSE);
+                                thread_params->err_cnt++;
                             }
                         }
                         if (atomic_load(&(list->plist_id)) != atomic_load(&(list_entry->id))) {
                             TestErrPrintf("list%d id mismatch\n", i);
                             assert(FALSE);
+                            thread_params->err_cnt++;
                         }
                         if (list->pclass_id != atomic_load(&(list_entry->parent_id))) {
                             TestErrPrintf("list%d parent id mismatch\n", i);
                             assert(FALSE);
+                            thread_params->err_cnt++;
                         }
                         parent = list->pclass_ptr;
                         if (0 != strcmp(parent->name, list_entry->parent_name) ||
                             0 != strcmp(parent->name, op_info->parent_name)) {
                             TestErrPrintf("list%d parent name mismatch\n", i);
                             assert(FALSE);
+                            thread_params->err_cnt++;
                         }
 
                     } /* end if ( list ) */
@@ -20076,6 +20172,7 @@ check_operations(thread_params_t *thread_params, uint64_t num_threads)
             }
             else if (op_count > list_op_count) {
                 assert(FALSE);
+                thread_params->err_cnt++;
             }
 
         } /* end for ( uint64_t op_num = 0; op_num < TOTAL_OPS_PER_THREAD; op_num++ ) */
@@ -20152,6 +20249,7 @@ check_operations(thread_params_t *thread_params, uint64_t num_threads)
                     /* No other results should happen */
                     else {
                         assert(FALSE);
+                        thread_params->err_cnt++;
                     }
 
                 } /* end if ( ! list_entry->copy && op == CREATE ) */
@@ -20174,6 +20272,7 @@ check_operations(thread_params_t *thread_params, uint64_t num_threads)
                     /* No other results should happen */
                     else {
                         assert(FALSE);
+                        thread_params->err_cnt++;
                     }
 
                 }    /* end else if ( list_entry->copy && op == COPY ) */
@@ -20226,6 +20325,7 @@ check_operations(thread_params_t *thread_params, uint64_t num_threads)
                     }
                     else {
                         assert(FALSE);
+                        thread_params->err_cnt++;
                     }
 
                 } /* end else if ( op == DELETE ) */
@@ -20713,7 +20813,6 @@ store_version_cb(uint64_t version)
 int
 main(int argc, char **argv)
 {
-    // test_params_t test_params;
     int num_errs = 0;
 
     H5open();
