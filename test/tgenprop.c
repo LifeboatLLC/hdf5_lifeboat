@@ -24,6 +24,7 @@
 #define H5P_TESTING
 
 #include "testhdf5.h"
+#include "testframe.h"
 
 #include "H5Dprivate.h" /* For Dataset creation property list names */
 #include "H5Ppkg.h"     /* Generic Properties            */
@@ -1315,22 +1316,38 @@ test_genprop_list_callback(void)
         TestErrPrintf("Property #1 value doesn't match!, line=%d\n", __LINE__);
 
 /**
- * This test has been removed when running in multithread due to how the
- * multithread H5P versioning system works. 
- * See making_H5P_multi-thread_safe_sketch_design for more details, but
- * a short summary is that when a property is deleted, it sets it's 
- * delete_version to the property list's next version number and then
- * the property list increments its current version to that next version.
- * From that new version on the property is treated as being deleted, but
- * if a thread access the list from a version prior to the property being
- * deleted it must still have access to that property. Thus the property
- * can not call its delete callback, freeing its value.
+ * Testing properties delete callback has been modified for the multithread
+ * version of H5P. In the multithread version of H5P when deleting a property
+ * it has its delete_version set to the next version of the plist, then the
+ * plist increments its current version to that next version and for every
+ * version equaling or greater than the delete version that property is 
+ * treated as being deleted. However, if another thread goes to access that
+ * property prior to the delete version, the property must still have its
+ * value, thus the delete callback can not be called on it. To remedy this,
+ * when a delete callback is called in the original H5P, now a boolean flag,
+ * call_del is set to TRUE, and when the plist is closed it will call the
+ * delete callback for any property with call_det as TRUE.
+ * See making_H5P_multi-thread_safe_sketch_design document for more details.
+ * 
+ * However, for this test the property that is trying to be deleted, is 
+ * actually stored in the parent class, and since we can't call the delete 
+ * callback on the class's property until the class closes, for the 
+ * multithread version we set a 'new' value. This creates a new H5P_mt_prop_t
+ * instance in the plist for the new version of the property, then when 
+ * deleting it, it will have its call_del flag set to TRUE, and the checks
+ * for if the delete callback were called are moved to after H5Pclose is 
+ * called, since that is when the property's delete callback is also called.
  */
-#ifdef H5_HAVE_MULTITRHEAD
+#ifdef H5_HAVE_MULTITHREAD
+    ret = H5Pset(lid1, PROP2_NAME, PROP2_DEF_VALUE);
+    CHECK_I(ret, "H5Pset");
+#endif
+
     /* Delete property #2 */
     ret = H5Premove(lid1, PROP2_NAME);
     CHECK_I(ret, "H5Premove");
 
+#ifndef H5_HAVE_MULTITHREAD
     /* Verify delete callback information for properties tracked */
     VERIFY(prop2_cb_info.del_count, 1, "H5Premove");
     VERIFY(prop2_cb_info.del_plist_id, lid1, "H5Premove");
@@ -1338,7 +1355,8 @@ test_genprop_list_callback(void)
         TestErrPrintf("Property #2 name doesn't match!, line=%d\n", __LINE__);
     if (memcmp(prop2_cb_info.del_value, PROP2_DEF_VALUE, PROP2_SIZE) != 0)
         TestErrPrintf("Property #2 value doesn't match!, line=%d\n", __LINE__);
-#endif /* H5_HAVE_MULTITRHEAD */
+#endif /* H5_HAVE_MULTITHREAD */
+
     /* Copy first list */
     lid2 = H5Pcopy(lid1);
     CHECK_I(lid2, "H5Pcopy");
@@ -1372,6 +1390,16 @@ test_genprop_list_callback(void)
         TestErrPrintf("Property #1 name doesn't match!, line=%d\n", __LINE__);
     if (memcmp(prop1_cb_info.cls_value, &prop1_new_value, PROP1_SIZE) != 0)
         TestErrPrintf("Property #1 value doesn't match!, line=%d\n", __LINE__);
+
+#ifdef H5_HAVE_MULTITHREAD
+    /* Verify delete callback information for properties tracked */
+    VERIFY(prop2_cb_info.del_count, 1, "H5Premove");
+    VERIFY(prop2_cb_info.del_plist_id, lid1, "H5Premove");
+    if (HDstrcmp(prop2_cb_info.del_name, PROP2_NAME) != 0)
+        TestErrPrintf("Property #2 name doesn't match!, line=%d\n", __LINE__);
+    if (memcmp(prop2_cb_info.del_value, PROP2_DEF_VALUE, PROP2_SIZE) != 0)
+        TestErrPrintf("Property #2 value doesn't match!, line=%d\n", __LINE__);
+#endif /* H5_HAVE_MULTITHREAD */
 
     /* Close second list */
     ret = H5Pclose(lid2);

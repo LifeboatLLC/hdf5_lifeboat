@@ -403,14 +403,20 @@ test_callbacks(void)
     if (H5Premove(fapl_2, H5F_ACS_FILE_IMAGE_INFO_NAME) < 0)
         FAIL_STACK_ERROR;
 
+#ifndef H5_HAVE_MULTITHREAD
     /* Verify that the property's delete callback was called using the correct image callbacks */
     VERIFY(udata->used_callbacks == (UDATA_FREE),
            "Removing a property from a fapl with no image used incorrect callbacks");
-
+#endif
     /* Close it again */
     if (H5Pclose(fapl_2) < 0)
         FAIL_STACK_ERROR;
 
+#ifdef H5_HAVE_MULTITHREAD
+    /* Verify that the property's delete callback was called using the correct image callbacks */
+    VERIFY(udata->used_callbacks == (UDATA_FREE),
+           "Removing a property from a fapl with no image used incorrect callbacks");
+#endif
     /* Get file image */
     reset_udata(udata);
     if (H5Pget_file_image(fapl_1, (void **)&temp_file_image, &temp_size) < 0)
@@ -462,15 +468,22 @@ test_callbacks(void)
     if (H5Premove(fapl_2, H5F_ACS_FILE_IMAGE_INFO_NAME) < 0)
         FAIL_STACK_ERROR;
 
+#ifndef H5_HAVE_MULTITHREAD
     /* Verify that the property's delete callback was called using the correct image callbacks */
     VERIFY(udata->used_callbacks == (FREE | UDATA_FREE),
            "Removing a property from a fapl with an image used incorrect callbacks");
     VERIFY(udata->free_src == H5FD_FILE_IMAGE_OP_PROPERTY_LIST_CLOSE, "free callback has wrong source");
-
+#endif
     /* Close it again */
     if (H5Pclose(fapl_2) < 0)
         FAIL_STACK_ERROR;
 
+#ifdef H5_HAVE_MULTITHREAD
+    /* Verify that the property's delete callback was called using the correct image callbacks */
+    VERIFY(udata->used_callbacks == (FREE | UDATA_FREE),
+           "Removing a property from a fapl with an image used incorrect callbacks");
+    VERIFY(udata->free_src == H5FD_FILE_IMAGE_OP_PROPERTY_LIST_CLOSE, "free callback has wrong source");
+#endif
     /* Get file image */
     reset_udata(udata);
     if (H5Pget_file_image(fapl_1, (void **)&temp_file_image, &temp_size) < 0)
