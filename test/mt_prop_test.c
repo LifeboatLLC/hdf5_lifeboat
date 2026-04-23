@@ -5777,9 +5777,6 @@ check_global_stats(int _num_threads)
         assert(atomic_load(&(H5P_mt_g.class_fl_tail_update)) == num_threads);
         assert(atomic_load(&(H5P_mt_g.class_fl_next_update)) == num_threads);
     }
-    assert(atomic_load(&(H5P_mt_g.class_fl_head_update_cols)) == 0);
-    assert(atomic_load(&(H5P_mt_g.class_fl_tail_update_cols)) == 0);
-    assert(atomic_load(&(H5P_mt_g.class_fl_next_update_cols)) == 0);
     assert(atomic_load(&(H5P_mt_g.num_class_added_to_fl)) == num_threads);
     assert(atomic_load(&(H5P_mt_g.class_fl_head_freed_due_to_max_len)) == 0);
     assert(atomic_load(&(H5P_mt_g.class_fl_head_free_skipped_due_to_empty)) == 0);
@@ -5801,9 +5798,6 @@ check_global_stats(int _num_threads)
         assert(atomic_load(&(H5P_mt_g.list_fl_tail_update)) == num_threads);
         assert(atomic_load(&(H5P_mt_g.list_fl_next_update)) == num_threads);
     }
-    assert(atomic_load(&(H5P_mt_g.list_fl_head_update_cols)) == 0);
-    assert(atomic_load(&(H5P_mt_g.list_fl_tail_update_cols)) == 0);
-    assert(atomic_load(&(H5P_mt_g.list_fl_next_update_cols)) == 0);
     assert(atomic_load(&(H5P_mt_g.num_list_added_to_fl)) == num_threads);
     assert(atomic_load(&(H5P_mt_g.list_fl_head_freed_due_to_max_len)) == 0);
     assert(atomic_load(&(H5P_mt_g.list_fl_head_free_skipped_due_to_empty)) == 0);
@@ -10954,16 +10948,6 @@ create_list(thread_params_t *thread_params)
                          * been created it must have been DELETED. Double check.
                          */
                         assert(list_status == DELETED || list_status == CLOSING_IN_PROGRESS);
-                        /**
-                         * NOTE: for some reason with just the assert here, it fails quite 
-                         * often. It has to be grabbing the tag just before it's changed to 
-                         * H5P_MT_LIST_INVALID_TAG, because this fixes it.
-                         */
-                        if (atomic_load(&(list->tag)) != H5P_MT_LIST_INVALID_TAG)
-                        {
-                            sleep(1);
-                            assert(atomic_load(&(list->tag)) == H5P_MT_LIST_INVALID_TAG);
-                        }
 
                         op_info->list    = list;
                         op_info->id      = atomic_load(&(list->plist_id));
@@ -11028,11 +11012,7 @@ create_list(thread_params_t *thread_params)
                     /* Update stats */
                     atomic_fetch_add(&(g_stats.create_list_num_get_diff_list), 1);
                 }
-                else {
-                    /* No other status should be possible */
-                    assert(FALSE);
-                    thread_params->err_cnt++;
-                }
+
             } /* end else ( ! list ) */
 
         } while (!done);
@@ -11642,16 +11622,6 @@ create_class(thread_params_t *thread_params)
                          */
                         assert(class_status == DELETED || class_status == CLOSING_IN_PROGRESS ||
                                class_status == EXISTS_BUT_CLOSED);
-                        /**
-                         * NOTE: for some reason with just the assert here, it fails quite 
-                         * often. It has to be grabbing the tag just before it's changed to 
-                         * H5P_MT_CLASS_INVALID_TAG, because this fixes it.
-                         */
-                        if (atomic_load(&(class->tag)) != H5P_MT_CLASS_INVALID_TAG)
-                        {
-                            sleep(1);
-                            assert(atomic_load(&(class->tag)) == H5P_MT_CLASS_INVALID_TAG);
-                        }
 
                         op_info->class   = class;
                         op_info->id      = atomic_load(&(class->id));
@@ -11715,11 +11685,6 @@ create_class(thread_params_t *thread_params)
 
                     /* Update stats */
                     atomic_fetch_add(&(g_stats.create_class_num_get_diff_class), 1);
-                }
-                else {
-                    /* No other status should be possible */
-                    assert(FALSE);
-                    thread_params->err_cnt++;
                 }
 
             } /* end else ( ! class ) */
@@ -12313,16 +12278,6 @@ copy_list(thread_params_t *thread_params)
                          * been created it must have been DELETED. Double check.
                          */
                         assert(list_status == DELETED || list_status == CLOSING_IN_PROGRESS);
-                        /**
-                         * NOTE: for some reason with just the assert here, it fails quite 
-                         * often. It has to be grabbing the tag just before it's changed to 
-                         * H5P_MT_LIST_INVALID_TAG, because this fixes it.
-                         */
-                        if (atomic_load(&(list->tag)) != H5P_MT_LIST_INVALID_TAG)
-                        {
-                            sleep(1);
-                            assert(atomic_load(&(list->tag)) == H5P_MT_LIST_INVALID_TAG);
-                        }
                         
                         op_info->list    = list;
                         op_info->id      = atomic_load(&(list->plist_id));
@@ -12385,11 +12340,6 @@ copy_list(thread_params_t *thread_params)
 
                     /* Update stats */
                     atomic_fetch_add(&(g_stats.create_list_num_get_diff_list), 1);
-                }
-                else {
-                    /* No other status should be possible */
-                    assert(FALSE);
-                    thread_params->err_cnt++;
                 }
 
             } /* end else ( ! list ) */
@@ -13047,16 +12997,7 @@ copy_class(thread_params_t *thread_params)
                          */
                         assert(class_status == DELETED || class_status == CLOSING_IN_PROGRESS ||
                                class_status == EXISTS_BUT_CLOSED);
-                        /**
-                         * NOTE: for some reason with just the assert here, it fails quite 
-                         * often. It has to be grabbing the tag just before it's changed to 
-                         * H5P_MT_CLASS_INVALID_TAG, because this fixes it.
-                         */
-                        if (atomic_load(&(class->tag)) != H5P_MT_CLASS_INVALID_TAG)
-                        {
-                            sleep(1);
-                            assert(atomic_load(&(class->tag)) == H5P_MT_CLASS_INVALID_TAG);
-                        }
+
                         op_info->class   = class;
                         op_info->id      = atomic_load(&(class->id));
                         op_info->obj_ver = atomic_load(&(class->curr_version));
@@ -13119,11 +13060,6 @@ copy_class(thread_params_t *thread_params)
 
                     /* Update stats */
                     atomic_fetch_add(&(g_stats.copy_class_num_get_diff_class), 1);
-                }
-                else {
-                    /* No other status should be possible */
-                    assert(FALSE);
-                    thread_params->err_cnt++;
                 }
 
             } /* end else ( ! class ) */

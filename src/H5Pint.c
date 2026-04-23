@@ -493,7 +493,11 @@ H5FL_DEFINE_STATIC(H5P_genplist_t);
 /* Generic Property Class ID class */
 static const H5I_class_t H5I_GENPROPCLS_CLS[1] = {{
     H5I_GENPROP_CLS,                /* ID class value */
+#ifdef H5_HAVE_MULTITHREAD
+    H5I_CLASS_IS_MT_SAFE,           /* Class flags */
+#else /* H5_HAVE_MULTITHREAD */
     0,                              /* Class flags */
+#endif /* H5_HAVE_MULTITHREAD */
     0,                              /* # of reserved IDs for class */
     (H5I_free_t)H5P__close_class_cb /* Callback routine for closing objects of this class */
 }};
@@ -501,7 +505,11 @@ static const H5I_class_t H5I_GENPROPCLS_CLS[1] = {{
 /* Generic Property List ID class */
 static const H5I_class_t H5I_GENPROPLST_CLS[1] = {{
     H5I_GENPROP_LST,               /* ID class value */
-    0,                             /* Class flags */
+#ifdef H5_HAVE_MULTITHREAD
+    H5I_CLASS_IS_MT_SAFE,           /* Class flags */
+#else /* H5_HAVE_MULTITHREAD */
+    0,                              /* Class flags */
+#endif /* H5_HAVE_MULTITHREAD */
     0,                             /* # of reserved IDs for class */
     (H5I_free_t)H5P__close_list_cb /* Callback routine for closing objects of this class */
 }};
@@ -9028,6 +9036,8 @@ H5P_close(H5P_genplist_t *list)
     H5P_mt_list_t               *fl_list;
     H5P_mt_list_sptr_t           fl_head;
     H5P_mt_list_sptr_t           fl_tail;
+    H5P_mt_list_sptr_t           test_fl_tail;
+    H5P_mt_list_sptr_t           new_fl_tail;
     H5P_mt_list_sptr_t           fl_next;
     H5P_mt_list_sptr_t           fl_update;
     H5P_mt_active_thread_count_t local_thrd;
@@ -9037,7 +9047,6 @@ H5P_close(H5P_genplist_t *list)
     H5P_mt_prop_t               *base_prop;
     H5P_mt_prop_t               *prop;
     H5P_mt_prop_t               *prev_prop;
-    //H5P_mt_prop_t               *valid_prop;
     H5P_mt_prop_aptr_t           next_prop;
     H5P_mt_prop_value_t          prop_value;
     H5P_mt_class_ref_counts_t    ref_count;
@@ -9336,109 +9345,80 @@ H5P_close(H5P_genplist_t *list)
         HGOTO_ERROR(H5E_PLIST, H5E_BADVALUE, FAIL, "Couldn't decrement parent's pl ref count.");
     }
 
-    done = FALSE;
-
-    /* Atomically updates the current tail to point to the list being added */
-
-    fl_tail = atomic_load(&(H5P_mt_g.list_fl_tail));
-
-    if (fl_tail.ptr) {
-        do {
-            fl_list = fl_tail.ptr;
-
-            fl_next = atomic_load(&(fl_list->fl_next));
-
-            assert(!fl_next.ptr);
-
-            fl_update.ptr = list;
-            fl_update.sn  = fl_next.sn + 1;
-
-            if (!atomic_compare_exchange_strong(&(fl_list->fl_next), &fl_next, fl_update)) {
-                /* failed, updated stats and try again */
-                atomic_fetch_add(&(H5P_mt_g.list_fl_next_update_cols), 1);
-
-                /* assert is to not get stuck in an infinite loop while testing */
-                assert(H5P_MT_ASSERT_FAIL);
-            }
-            else {
-                /* success, update stats and continue */
-                atomic_fetch_add(&(H5P_mt_g.list_fl_next_update), 1);
-
-                done = TRUE;
-            }
-
-        } while (!done);
-
-    } /* end if ( fl_tail.ptr ) */
+    /* Atomically update the list's tag to invalid */
+    atomic_store(&(list->tag), H5P_MT_LIST_INVALID_TAG);
 
     done = FALSE;
 
-    /* Atomically updates the list_fl_tail to point to the new tail */
-
-    do {
+    /**
+     * Atomically update the current tail of the list free list to point to this list being closed,
+     * and if that succeeds atomically update the list free list tail pointer (H5P_mt_g.list_fl_tail) 
+     * to point to the new tail. If either atomic update fails, loop and try again.
+     */
+    do 
+    {
         fl_tail = atomic_load(&(H5P_mt_g.list_fl_tail));
+        assert(fl_tail.ptr);
 
-        fl_update.ptr = list;
-        fl_update.sn  = fl_tail.sn + 1;
+        fl_list = fl_tail.ptr;
 
-        if (!atomic_compare_exchange_strong(&(H5P_mt_g.list_fl_tail), &fl_tail, fl_update)) {
-            /* failed, updated stats and try again */
-            atomic_fetch_add(&(H5P_mt_g.list_fl_tail_update_cols), 1);
+        fl_next = atomic_load(&(fl_list->fl_next));
 
-            /* assert is to not get stuck in an infinite loop while testing */
-            assert(H5P_MT_ASSERT_FAIL);
-        }
-        else {
-            /* success, update stats and continue */
-            atomic_fetch_add(&(H5P_mt_g.list_fl_tail_update), 1);
-            atomic_fetch_add(&(H5P_mt_g.num_list_added_to_fl), 1);
+        test_fl_tail = atomic_load(&(H5P_mt_g.list_fl_tail));
 
-            atomic_fetch_add(&(H5P_mt_g.list_fl_len), 1);
+        if (( test_fl_tail.ptr == fl_list ) && ( test_fl_tail.sn == fl_tail.sn ))
+        {
+            if ( fl_next.ptr == NULL )
+            {
+                /* Atomically update current tail to point to new tail */
+                fl_update.ptr = list;
+                fl_update.sn  = fl_next.sn + 1;
 
-            if (atomic_load(&(H5P_mt_g.list_fl_len)) > atomic_load(&(H5P_mt_g.list_max_desired_fl_len))) {
-                try_to_free_entry = TRUE;
-            }
+                if (!atomic_compare_exchange_strong(&(fl_list->fl_next), &fl_next, fl_update)) {
+                    /* failed, updated stats and try again */
+                    atomic_fetch_add(&(H5P_mt_g.list_fl_next_update_cols), 1);
+                }
+                else {
+                    /* success, update stats and continue */
+                    atomic_fetch_add(&(H5P_mt_g.list_fl_next_update), 1);
 
-            done = TRUE;
-        }
+                    /* Atomically update global tail pointer to point to new tail */
+                    new_fl_tail.ptr = list;
+                    new_fl_tail.sn  = fl_tail.sn + 1;
+
+                    if (!atomic_compare_exchange_strong(&(H5P_mt_g.list_fl_tail), &fl_tail, new_fl_tail)) {
+                        /* failed, updated stats and try again */
+                        atomic_fetch_add(&(H5P_mt_g.list_fl_tail_update_cols), 1);
+                    }
+                    else 
+                    {
+                        /* success, update stats and continue */
+                        atomic_fetch_add(&(H5P_mt_g.list_fl_tail_update), 1);
+                        atomic_fetch_add(&(H5P_mt_g.num_list_added_to_fl), 1);
+
+                        atomic_fetch_add(&(H5P_mt_g.list_fl_len), 1);
+
+                        if (atomic_load(&(H5P_mt_g.list_fl_len)) > 
+                            atomic_load(&(H5P_mt_g.list_max_desired_fl_len))) 
+                        {
+                            try_to_free_entry = TRUE;
+                        }
+
+                        done = TRUE;
+                    }
+                }
+
+            } /* end if ( fl_next.ptr == NULL ) */
+        
+        } /* end if (( test_fl_tail.ptr == fl_list ) && ( test_fl_tail.sn == fl_tail.sn )) */
 
     } while (!done);
 
     /**
-     * If this is the first list added to the list free list, have the
-     * head pointer point to it as well.
+     * If TRUE then the free list has more entries then the desired max.
+     * If an entry is reallocable, remove it from the free list and free
+     * it to lower the number of entries.
      */
-    fl_head = atomic_load(&(H5P_mt_g.list_fl_head));
-
-    if (!fl_head.ptr) {
-        done = FALSE;
-
-        do {
-            fl_head = atomic_load(&(H5P_mt_g.list_fl_head));
-
-            fl_update.ptr = list;
-            fl_update.sn  = fl_head.sn + 1;
-
-            if (!atomic_compare_exchange_strong(&(H5P_mt_g.list_fl_head), &fl_head, fl_update)) {
-                /* failed, updated stats and try again */
-                atomic_fetch_add(&(H5P_mt_g.list_fl_head_update_cols), 1);
-
-                /* assert is to not get stuck in an infinite loop while testing */
-                assert(H5P_MT_ASSERT_FAIL);
-            }
-            else {
-                /* success, update stats and continue */
-                atomic_fetch_add(&(H5P_mt_g.list_fl_head_update), 1);
-
-                done = TRUE;
-            }
-
-        } while (!done);
-
-    } /* end if ( ! fl_head.ptr ) */
-
-    atomic_store(&(list->tag), H5P_MT_LIST_INVALID_TAG);
-
     if (try_to_free_entry) {
         done = FALSE;
 
@@ -10001,6 +9981,8 @@ H5P__close_class(H5P_mt_class_t *class)
     H5P_mt_class_t              *fl_class;
     H5P_mt_class_sptr_t          fl_head;
     H5P_mt_class_sptr_t          fl_tail;
+    H5P_mt_class_sptr_t          test_fl_tail;
+    H5P_mt_class_sptr_t          new_fl_tail;
     H5P_mt_class_sptr_t          fl_next;
     H5P_mt_class_sptr_t          fl_update;
     H5P_mt_active_thread_count_t local_thrd;
@@ -10154,110 +10136,73 @@ H5P__close_class(H5P_mt_class_t *class)
 
         } /* end if ( class->parent_ptr ) */
 
+        /* Atomically update the class's tag to invalid */
+        atomic_store(&(class->tag), H5P_MT_CLASS_INVALID_TAG);
+
         /**
-         * Atomically update the current tail of the class's
-         * free list to point to this class being closed.
+         * Atomically update the current tail of the class free list to point to this class being closed,
+         * and if that succeeds atomically update the class free list tail pointer (H5P_mt_g.class_fl_tail) 
+         * to point to the new tail. If either atomic update fails, loop and try again.
          */
-
-        fl_tail = atomic_load(&(H5P_mt_g.class_fl_tail));
-
-        if (fl_tail.ptr) {
-            do {
-                fl_class = fl_tail.ptr;
-
-                fl_next = atomic_load(&(fl_class->fl_next));
-
-                assert(!fl_next.ptr);
-
-                fl_update.ptr = class;
-                fl_update.sn  = fl_next.sn + 1;
-
-                if (!atomic_compare_exchange_strong(&(fl_class->fl_next), &fl_next, fl_update)) {
-                    /* failed, update stats and try again */
-                    atomic_fetch_add(&(H5P_mt_g.class_fl_next_update_cols), 1);
-
-                    /* assert is to not get stuck in an infinite loop while testing */
-                    assert(H5P_MT_ASSERT_FAIL);
-                }
-                else {
-                    /* success, update stats and continue */
-                    atomic_fetch_add(&(H5P_mt_g.class_fl_next_update), 1);
-
-                    done = TRUE;
-                }
-
-            } while (!done);
-
-        } /* end if ( fl_tail.ptr ) */
-
-        done = FALSE;
-
-        /* Atomically update the class_fl_tail to point to the new tail */
-
-        do {
+        do 
+        {
             fl_tail = atomic_load(&(H5P_mt_g.class_fl_tail));
+            assert(fl_tail.ptr);
 
-            fl_update.ptr = class;
-            fl_update.sn  = fl_tail.sn + 1;
+            fl_class = fl_tail.ptr;
 
-            if (!atomic_compare_exchange_strong(&(H5P_mt_g.class_fl_tail), &fl_tail, fl_update)) {
-                /* failed, updated stats and try again */
-                atomic_fetch_add(&(H5P_mt_g.class_fl_tail_update_cols), 1);
+            fl_next = atomic_load(&(fl_class->fl_next));
 
-                /* assert is to not get stuck in an infinite loop while testing */
-                assert(H5P_MT_ASSERT_FAIL);
-            }
-            else {
-                /* success, update stats and continue */
-                atomic_fetch_add(&(H5P_mt_g.class_fl_tail_update), 1);
-                atomic_fetch_add(&(H5P_mt_g.num_class_added_to_fl), 1);
+            test_fl_tail = atomic_load(&(H5P_mt_g.class_fl_tail));
 
-                atomic_fetch_add(&(H5P_mt_g.class_fl_len), 1);
+            if (( test_fl_tail.ptr == fl_class ) && ( test_fl_tail.sn == fl_tail.sn ))
+            {
+                if ( fl_next.ptr == NULL )
+                {
+                    /* Atomically update current tail to point to new tail */
+                    fl_update.ptr = class;
+                    fl_update.sn  = fl_next.sn + 1;
 
-                if (atomic_load(&(H5P_mt_g.class_fl_len)) >
-                    atomic_load(&(H5P_mt_g.class_max_desired_fl_len))) {
-                    try_to_free_entry = TRUE;
-                }
+                    if (!atomic_compare_exchange_strong(&(fl_class->fl_next), &fl_next, fl_update)) {
+                        /* failed, update stats and try again */
+                        atomic_fetch_add(&(H5P_mt_g.class_fl_next_update_cols), 1);
+                    }
+                    else {
+                        /* success, update stats and continue */
+                        atomic_fetch_add(&(H5P_mt_g.class_fl_next_update), 1);
 
-                done = TRUE;
-            }
+                        /* Atomically update global tail pointer to point to new tail */
+                        new_fl_tail.ptr = class;
+                        new_fl_tail.sn = fl_tail.sn + 1;
+
+                        if ( ! atomic_compare_exchange_strong(&(H5P_mt_g.class_fl_tail), &fl_tail, new_fl_tail))
+                        {
+                            /* failed, updated stats and try again */
+                            atomic_fetch_add(&(H5P_mt_g.class_fl_tail_update_cols), 1);
+                        }
+                        else
+                        {
+                            /* success, update stats and continue */
+                            atomic_fetch_add(&(H5P_mt_g.class_fl_tail_update), 1);
+                            atomic_fetch_add(&(H5P_mt_g.num_class_added_to_fl), 1);
+
+                            atomic_fetch_add(&(H5P_mt_g.class_fl_len), 1);
+
+                            if (atomic_load(&(H5P_mt_g.class_fl_len)) >
+                                atomic_load(&(H5P_mt_g.class_max_desired_fl_len))) 
+                            {
+                                try_to_free_entry = TRUE;
+                            }
+
+                            done = TRUE;
+                        }
+                    }
+                
+                } /* end if ( fl_next.ptr == NULL ) */
+            
+            } /* end if (( test_fl_tail.ptr == fl_class ) && (test_fl_tail.sn == fl_tail.sn)) */
 
         } while (!done);
-
-        /**
-         * If this is the first class added to the class free list, have the
-         * head pointer point to it as well.
-         */
-        fl_head = atomic_load(&(H5P_mt_g.class_fl_head));
-
-        if (!fl_head.ptr) {
-            done = FALSE;
-
-            do {
-                fl_head = atomic_load(&(H5P_mt_g.class_fl_head));
-
-                fl_update.ptr = class;
-                fl_update.sn  = fl_head.sn + 1;
-
-                if (!atomic_compare_exchange_strong(&(H5P_mt_g.class_fl_head), &fl_head, fl_update)) {
-                    /* failed, updated stats and try again */
-                    atomic_fetch_add(&(H5P_mt_g.class_fl_head_update_cols), 1);
-
-                    /* assert is to not get stuck in an infinite loop while testing */
-                    assert(H5P_MT_ASSERT_FAIL);
-                }
-                else {
-                    /* success, update stats and continue */
-                    atomic_fetch_add(&(H5P_mt_g.class_fl_head_update), 1);
-
-                    done = TRUE;
-                }
-
-            } while (!done);
-
-        } /* end if ( ! fl_head.ptr ) */
-
-        atomic_store(&(class->tag), H5P_MT_CLASS_INVALID_TAG);
 
         /**
          * If TRUE then the free list has more entries then the desired max.
@@ -10799,6 +10744,8 @@ H5P__mt_close_prop(H5P_mt_prop_t *prop)
     H5P_mt_prop_t     *fl_prop;
     H5P_mt_prop_aptr_t fl_head;
     H5P_mt_prop_aptr_t fl_tail;
+    H5P_mt_prop_aptr_t test_fl_tail;
+    H5P_mt_prop_aptr_t new_fl_tail;
     H5P_mt_prop_aptr_t fl_next;
     H5P_mt_prop_aptr_t update_next;
     H5P_mt_prop_aptr_t next;
@@ -10853,73 +10800,78 @@ H5P__mt_close_prop(H5P_mt_prop_t *prop)
 
     done = FALSE;
 
-    fl_tail = atomic_load(&(H5P_mt_g.prop_fl_tail));
-
-    /* Atomically update the current tail to point to the new tail */
-    if (fl_tail.ptr) {
-        do {
-            fl_prop = fl_tail.ptr;
-
-            fl_next = atomic_load(&(fl_prop->next));
-
-            if (fl_next.ptr) {
-                fl_next.ptr = NULL;
-
-                atomic_store(&(fl_prop->next), fl_next);
-            }
-
-            update_next.ptr = prop;
-
-            if (!atomic_compare_exchange_strong(&(fl_prop->next), &fl_next, update_next)) {
-                /* failed, update stats and try again */
-                atomic_fetch_add(&(H5P_mt_g.prop_fl_next_update_cols), 1);
-
-                /* assert is to not get stuck in an infinite loop while testing */
-                assert(H5P_MT_ASSERT_FAIL);
-            }
-            else {
-                /* success, update stats and continue */
-                atomic_fetch_add(&(H5P_mt_g.prop_fl_next_update), 1);
-
-                done = TRUE;
-            }
-
-        } while (!done);
-
-    } /* end if ( fl_tail.ptr ) */
-
-    done = FALSE;
-
-    /* Atomically updates the prop_fl_tail to point to the new tail */
-
-    do {
+    /**
+     * Atomically update the current tail of the prop free list to point to this prop being closed,
+     * and if that succeeds atomically update the prop free list tail pointer (H5P_mt_g.prop_fl_tail) 
+     * to point to the new tail. If either atomic update fails, loop and try again.
+     */
+    do 
+    {
         fl_tail = atomic_load(&(H5P_mt_g.prop_fl_tail));
+        assert(fl_tail.ptr);
 
-        update_next.ptr = prop;
+        fl_prop = fl_tail.ptr;
 
-        if (!atomic_compare_exchange_strong(&(H5P_mt_g.prop_fl_tail), &fl_tail, update_next)) {
-            /* failed, updated stats and try again */
-            atomic_fetch_add(&(H5P_mt_g.prop_fl_tail_update_cols), 1);
+        fl_next = atomic_load(&(fl_prop->next));
 
-            /* assert is to not get stuck in an infinite loop while testing */
-            assert(H5P_MT_ASSERT_FAIL);
-        }
-        else {
-            /* success, update stats and continue */
-            atomic_fetch_add(&(H5P_mt_g.prop_fl_tail_update), 1);
-            atomic_fetch_add(&(H5P_mt_g.num_props_added_to_fl), 1);
+        test_fl_tail = atomic_load(&(H5P_mt_g.prop_fl_tail));
 
-            atomic_fetch_add(&(H5P_mt_g.prop_fl_len), 1);
+        if ( test_fl_tail.ptr == fl_prop )
+        {
+            if ( fl_next.ptr == NULL )
+            {
 
-            if (atomic_load(&(H5P_mt_g.prop_fl_len)) > atomic_load(&(H5P_mt_g.prop_max_desired_fl_len))) {
-                try_to_free_entry = TRUE;
-            }
+                update_next.ptr = prop;
 
-            done = TRUE;
-        }
+                if (!atomic_compare_exchange_strong(&(fl_prop->next), &fl_next, update_next)) {
+                    /* failed, update stats and try again */
+                    atomic_fetch_add(&(H5P_mt_g.prop_fl_next_update_cols), 1);
+                }
+                else {
+                    /* success, update stats and continue */
+                    atomic_fetch_add(&(H5P_mt_g.prop_fl_next_update), 1);
+
+                    new_fl_tail.ptr          = prop;
+                    new_fl_tail.deleted      = FALSE;
+                    new_fl_tail.dummy_bool_1 = FALSE;
+                    new_fl_tail.dummy_bool_2 = FALSE;
+                    new_fl_tail.dummy_bool_3 = FALSE;
+                    
+
+                    if (!atomic_compare_exchange_strong(&(H5P_mt_g.prop_fl_tail), &fl_tail, new_fl_tail)) {
+                        /* failed, updated stats and try again */
+                        atomic_fetch_add(&(H5P_mt_g.prop_fl_tail_update_cols), 1);
+                    }
+                    else {
+                        /* success, update stats and continue */
+                        atomic_fetch_add(&(H5P_mt_g.prop_fl_tail_update), 1);
+                        atomic_fetch_add(&(H5P_mt_g.num_props_added_to_fl), 1);
+
+                        atomic_fetch_add(&(H5P_mt_g.prop_fl_len), 1);
+
+                        if (atomic_load(&(H5P_mt_g.prop_fl_len)) > 
+                            atomic_load(&(H5P_mt_g.prop_max_desired_fl_len))) 
+                        {
+                            try_to_free_entry = TRUE;
+                        }
+
+                        done = TRUE;
+                    }
+                }
+
+            } /* end if ( fl_next.ptr == NULL ) */
+
+        } /* end if ( test_fl_tail.ptr == fl_prop ) */
 
     } while (!done);
 
+    done = FALSE;
+
+    /**
+     * If TRUE then the free list has more entries then the desired max.
+     * If an entry is reallocable, remove it from the free list and free
+     * it to lower the number of entries.
+     */
     if (try_to_free_entry) {
         done = FALSE;
 
