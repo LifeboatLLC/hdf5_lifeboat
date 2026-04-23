@@ -1573,7 +1573,6 @@ H5P__create_class(H5P_mt_class_t *parent, const char *name, H5P_plist_type_t typ
         inc_thrd_flag = TRUE;
 
         if (0 >= H5I_inc_ref(atomic_load(&(parent->id)), FALSE)) {
-            assert(FALSE);
             HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, NULL, "Failed to increment parent's ID index ref count");
         }
 
@@ -1743,7 +1742,6 @@ H5P__copy_pclass(H5P_mt_class_t *og_class)
         par_thrd_flag = TRUE;
 
         if (0 >= H5I_inc_ref(atomic_load(&(parent->id)), FALSE)) {
-            assert(FALSE);
             HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, NULL, "Faile to increment parent's ID index ref count");
         }
 
@@ -2178,7 +2176,6 @@ H5P__create_list(H5P_mt_class_t *pclass, hbool_t app_ref)
     version = atomic_load(&(pclass->curr_version));
 
     if (0 >= H5I_inc_ref(atomic_load(&(pclass->id)), FALSE)) {
-        assert(FALSE);
         HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, NULL, "unable to increment parent's ID ref_count in index");
     }
     else
@@ -2352,7 +2349,6 @@ H5P_copy_plist(H5P_mt_list_t *og_list, hbool_t app_ref)
     }
 
     if (0 >= H5I_inc_ref(atomic_load(&(parent->id)), FALSE)) {
-        assert(FALSE);
         HGOTO_ERROR(H5E_PLIST, H5E_CANTINC, H5I_INVALID_HID,
                     "Failed to increment parent's ID index ref count");
     }
@@ -9335,7 +9331,6 @@ H5P_close(H5P_genplist_t *list)
      */
     if (0 != H5I_dec_ref(tmp_list_id))
     {
-        assert(FALSE);
         HGOTO_ERROR(H5E_PLIST, H5E_CANTDEC, FAIL,
                         "unable to decrement parent's ID ref_count in index");
     }
@@ -9477,7 +9472,6 @@ done:
 
         if (ref_count.deleted == FALSE) {
             if (0 > H5I_dec_ref(atomic_load(&(parent->id)))) {
-                assert(FALSE);
                 HDONE_ERROR(H5E_PLIST, H5E_CANTDEC, FAIL,
                             "unable to decrement parent's ID ref_count in index");
             }
@@ -10277,7 +10271,6 @@ done:
 
         if (ref_count.deleted == FALSE) {
             if (0 > H5I_dec_ref(atomic_load(&(parent->id)))) {
-                assert(FALSE);
                 HGOTO_ERROR(H5E_PLIST, H5E_CANTDEC, FAIL,
                             "unable to decrement parent's ID ref_count in index");
             }
