@@ -110,8 +110,8 @@ const char *LIBVER_NAMES[] = {"earliest", /* H5F_LIBVER_EARLIEST = 0  */
 static H5E_auto2_t err_func = NULL;
 
 /* Global variables for testing */
-static int TestExpress_g = -1; /* Whether to expedite testing. -1 means not set yet. */
-uint64_t vol_cap_flags_g = H5VL_CAP_FLAG_NONE;
+static int TestExpress_g   = -1; /* Whether to expedite testing. -1 means not set yet. */
+uint64_t   vol_cap_flags_g = H5VL_CAP_FLAG_NONE;
 
 /* Value of currently registered optional dynamic VOL operation */
 int reg_opt_curr_op_val = 0;
@@ -2339,7 +2339,6 @@ reg_opt_op_optional_verify(void *obj, H5VL_optional_args_t *args)
 
     return 0;
 } /* end reg_opt_op_optional_verify() */
-
 
 /*-------------------------------------------------------------------------
  * Function:    reg_opt_op_optional

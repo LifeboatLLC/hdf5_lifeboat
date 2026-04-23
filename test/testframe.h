@@ -166,8 +166,8 @@
     do {                                                                                                     \
         if ((TestParamsPtr)->IsMtTest) {                                                                     \
             snprintf((TestParamsPtr)->MtTestParams.ThreadErrMsg,                                             \
-                     sizeof((TestParamsPtr)->MtTestParams.ThreadErrMsg),                                     \
-                     "%s at %s:%d in %s()...", s, __FILE__, __LINE__, __func__);                             \
+                     sizeof((TestParamsPtr)->MtTestParams.ThreadErrMsg), "%s at %s:%d in %s()...", s,        \
+                     __FILE__, __LINE__, __func__);                                                          \
         }                                                                                                    \
         else if (IsTestOutputPrinter((TestParamsPtr))) {                                                     \
             puts(s);                                                                                         \
@@ -179,8 +179,8 @@
     do {                                                                                                     \
         if ((TestParamsPtr)->IsMtTest) {                                                                     \
             snprintf((TestParamsPtr)->MtTestParams.ThreadErrMsg,                                             \
-                     sizeof((TestParamsPtr)->MtTestParams.ThreadErrMsg),                                     \
-                     "failed at %s:%d in %s()...", __FILE__, __LINE__, __func__);                            \
+                     sizeof((TestParamsPtr)->MtTestParams.ThreadErrMsg), "failed at %s:%d in %s()...",       \
+                     __FILE__, __LINE__, __func__);                                                          \
         }                                                                                                    \
         else if (IsTestOutputPrinter((TestParamsPtr))) {                                                     \
             AT();                                                                                            \
@@ -198,8 +198,8 @@
     do {                                                                                                     \
         if ((TestParamsPtr)->IsMtTest) {                                                                     \
             snprintf((TestParamsPtr)->MtTestParams.ThreadErrMsg,                                             \
-                     sizeof((TestParamsPtr)->MtTestParams.ThreadErrMsg),                                     \
-                     "failed at %s:%d in %s()...", __FILE__, __LINE__, __func__);                            \
+                     sizeof((TestParamsPtr)->MtTestParams.ThreadErrMsg), "failed at %s:%d in %s()...",       \
+                     __FILE__, __LINE__, __func__);                                                          \
             H5Eprint2(H5E_DEFAULT, stdout);                                                                  \
         }                                                                                                    \
         else if (IsTestOutputPrinter((TestParamsPtr))) {                                                     \
@@ -208,17 +208,14 @@
         }                                                                                                    \
         goto error;                                                                                          \
     } while (0)
-#define TESTFRAME_FAIL_PUTS_ERROR(TestParamsPtr, s)                                                          \
-    TESTFRAME_PUTS_ERROR(TestParamsPtr, s);
-
+#define TESTFRAME_FAIL_PUTS_ERROR(TestParamsPtr, s) TESTFRAME_PUTS_ERROR(TestParamsPtr, s);
 
 /*
  * Semi-private macro for the below macros. Not intended
  * to be used directly by code outside the testing
  * framework internals.
  */
-#define SUBTEST_BANNER(Descr)                                                                                \
-    printf("  Testing %s\n", Descr)
+#define SUBTEST_BANNER(Descr) printf("  Testing %s\n", Descr)
 
 /*
  * Macros for denoting a sub-test within a test function.
@@ -320,7 +317,7 @@ typedef struct TestParams_t {
         size_t ThreadAmbigCnt;
         char   ThreadErrMsg[1024];
 
-        void  *ThreadPrivData;
+        void *ThreadPrivData;
     } MtTestParams;
 } TestParams_t;
 
@@ -449,8 +446,7 @@ extern "C" {
  */
 H5TEST_DLL herr_t TestInit(const char *ProgName, void (*TestPrivateUsage)(FILE *stream),
                            int (*TestPrivateParser)(int argc, char *argv[]), herr_t (*TestSetupFunc)(void),
-                           herr_t (*TestCleanupFunc)(void), uint64_t TestFrameworkFlags,
-                           int TestProcessID);
+                           herr_t (*TestCleanupFunc)(void), uint64_t TestFrameworkFlags, int TestProcessID);
 
 /**
  * --------------------------------------------------------------------------
@@ -624,10 +620,9 @@ H5TEST_DLL void TestInfo(FILE *stream);
  *
  */
 H5TEST_DLL herr_t AddTest(const char *TestName, herr_t (*TestFunc)(TestParams_t *),
-                          herr_t (*TestSetupFunc)(TestParams_t *),
-                          herr_t (*TestCleanupFunc)(TestParams_t *),
-                          const void *TestData, size_t TestDataSize,
-                          uint64_t TestFlags, const char *TestDescr);
+                          herr_t (*TestSetupFunc)(TestParams_t *), herr_t (*TestCleanupFunc)(TestParams_t *),
+                          const void *TestData, size_t TestDataSize, uint64_t TestFlags,
+                          const char *TestDescr);
 
 /**
  * --------------------------------------------------------------------------
@@ -651,8 +646,7 @@ H5TEST_DLL herr_t AddTest(const char *TestName, herr_t (*TestFunc)(TestParams_t 
  * \see AddTest()
  *
  */
-H5TEST_DLL herr_t AddTestHeaderFunc(const char *TestName,
-                                    void (*HeaderFunc)(TestParams_t *));
+H5TEST_DLL herr_t AddTestHeaderFunc(const char *TestName, void (*HeaderFunc)(TestParams_t *));
 
 /**
  * --------------------------------------------------------------------------

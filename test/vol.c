@@ -307,8 +307,6 @@ static const H5VL_class_t fake_async_vol_g = {
     NULL /* optional     */
 };
 
-
-
 /*-------------------------------------------------------------------------
  * Function:    fake_vol_info_to_str
  *
@@ -2372,9 +2370,10 @@ error:
  *-------------------------------------------------------------------------
  */
 static herr_t
-test_set_default_plist_vol_fail(void) {
-    hid_t vol_id  = H5I_INVALID_HID;
-    herr_t ret = FAIL;
+test_set_default_plist_vol_fail(void)
+{
+    hid_t  vol_id = H5I_INVALID_HID;
+    herr_t ret    = FAIL;
 
     TESTING("H5Pset_vol() on default FAPL");
 

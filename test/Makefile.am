@@ -70,7 +70,7 @@ TEST_PROG= testhdf5 \
            enc_dec_plist_cross_platform getname vfd ros3 s3comms hdfs ntypes \
            dangle dtransform reserved cross_read freespace mf vds file_image \
            unregister cache_logging cork swmr thread_id vol timer event_set \
-           onion mt_id_test
+           onion mt_id_test mt_prop_test
 
 # List programs to be built when testing here
 #
@@ -239,7 +239,7 @@ CHECK_CLEANFILES+=accum.h5 cmpd_dset.h5 mdset.h5 compact_dataset.h5 dataset.h5 d
 testhdf5_SOURCES=testhdf5.c tarray.c tattr.c tchecksum.c tconfig.c tfile.c \
     tgenprop.c th5o.c th5s.c th5_system.c tcoords.c tid.c titerate.c tmeta.c tmisc.c \
     trefer.c trefer_deprec.c trefstr.c tselect.c tskiplist.c tsohm.c ttime.c tunicode.c \
-    tvlstr.c tvltypes.c
+    tvlstr.c tvltypes.c 
 
 # Sources for Use Cases
 use_append_chunk_SOURCES=use_append_chunk.c use_common.c

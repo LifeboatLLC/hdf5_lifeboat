@@ -45,6 +45,13 @@
 /* Local Typedefs */
 /******************/
 
+#ifdef H5_HAVE_MULTITHREAD
+
+typedef H5P_mt_list_t  H5P_genplist_t;
+typedef H5P_mt_class_t H5P_genclass_t;
+
+#endif
+
 /* User data for path traversal routine for "insertion file" routine */
 typedef struct {
     H5G_loc_t *loc; /* Pointer to the location for insertion */

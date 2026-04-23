@@ -67,8 +67,8 @@ main(int argc, char *argv[])
     AddTest("attr", test_attr, NULL, cleanup_attr, NULL, 0, 0, "Attributes");
     AddTest("select", test_select, NULL, cleanup_select, NULL, 0, 0, "Selections");
     AddTest("time", test_time, NULL, cleanup_time, NULL, 0, 0, "Time Datatypes");
-    AddTest("ref_deprec", test_reference_deprec, NULL, cleanup_reference_deprec, NULL, 0,
-            0, "Deprecated References");
+    AddTest("ref_deprec", test_reference_deprec, NULL, cleanup_reference_deprec, NULL, 0, 0,
+            "Deprecated References");
     AddTest("ref", test_reference, NULL, cleanup_reference, NULL, 0, 0, "References");
     AddTest("vltypes", test_vltypes, NULL, cleanup_vltypes, NULL, 0, 0, "Variable-Length Datatypes");
     AddTest("vlstrings", test_vlstrings, NULL, cleanup_vlstrings, NULL, 0, 0, "Variable-Length Strings");

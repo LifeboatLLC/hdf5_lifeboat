@@ -2556,27 +2556,27 @@ main(int argc, char **argv)
 
         test_params.filename = PARATESTFILE;
 
-        AddTest("idsetw", dataset_writeInd, NULL, NULL, &test_params, sizeof(test_params),
-                0, "dataset independent write");
+        AddTest("idsetw", dataset_writeInd, NULL, NULL, &test_params, sizeof(test_params), 0,
+                "dataset independent write");
 
-        AddTest("idsetr", dataset_readInd, NULL, NULL, &test_params, sizeof(test_params),
-                0, "dataset independent read");
+        AddTest("idsetr", dataset_readInd, NULL, NULL, &test_params, sizeof(test_params), 0,
+                "dataset independent read");
 
-        AddTest("cdsetw", dataset_writeAll, NULL, NULL, &test_params, sizeof(test_params),
-                0, "dataset collective write");
+        AddTest("cdsetw", dataset_writeAll, NULL, NULL, &test_params, sizeof(test_params), 0,
+                "dataset collective write");
 
-        AddTest("cdsetr", dataset_readAll, NULL, NULL, &test_params, sizeof(test_params),
-                0, "dataset collective read");
+        AddTest("cdsetr", dataset_readAll, NULL, NULL, &test_params, sizeof(test_params), 0,
+                "dataset collective read");
 
-        AddTest("eidsetw2", extend_writeInd2, NULL, NULL, &test_params, sizeof(test_params),
-                0, "extendible dataset independent write #2");
+        AddTest("eidsetw2", extend_writeInd2, NULL, NULL, &test_params, sizeof(test_params), 0,
+                "extendible dataset independent write #2");
 
-        AddTest("selnone", none_selection_chunk, NULL, NULL, &test_params, sizeof(test_params),
-                0, "chunked dataset with none-selection");
+        AddTest("selnone", none_selection_chunk, NULL, NULL, &test_params, sizeof(test_params), 0,
+                "chunked dataset with none-selection");
 
 #ifdef H5_HAVE_FILTER_DEFLATE
-        AddTest("cmpdsetr", compress_readAll, NULL, NULL, &test_params, sizeof(test_params),
-                0, "compressed dataset collective read");
+        AddTest("cmpdsetr", compress_readAll, NULL, NULL, &test_params, sizeof(test_params), 0,
+                "compressed dataset collective read");
 #endif /* H5_HAVE_FILTER_DEFLATE */
 
         /* Display testing information */

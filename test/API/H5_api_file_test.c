@@ -236,8 +236,7 @@ test_create_file_excl(TestParams_t *params)
         return SKIP;
     }
 
-    if (prefix_test_filename(params, test_path_prefix, FILE_CREATE_EXCL_FILE_NAME,
-                             &prefixed_filename) < 0) {
+    if (prefix_test_filename(params, test_path_prefix, FILE_CREATE_EXCL_FILE_NAME, &prefixed_filename) < 0) {
         printf("    couldn't prefix filename\n");
         goto error;
     }
@@ -460,8 +459,7 @@ test_open_nonexistent_file(TestParams_t *params)
         return SKIP;
     }
 
-    if (prefix_test_filename(params, test_path_prefix, NONEXISTENT_FILENAME,
-                             &prefixed_filename) < 0) {
+    if (prefix_test_filename(params, test_path_prefix, NONEXISTENT_FILENAME, &prefixed_filename) < 0) {
         printf("    couldn't prefix filename\n");
         goto error;
     }
@@ -526,8 +524,8 @@ test_file_permission(TestParams_t *params)
         return SKIP;
     }
 
-    if (prefix_test_filename(params, test_path_prefix, FILE_PERMISSION_TEST_FILENAME,
-                             &prefixed_filename) < 0) {
+    if (prefix_test_filename(params, test_path_prefix, FILE_PERMISSION_TEST_FILENAME, &prefixed_filename) <
+        0) {
         printf("    couldn't prefix filename\n");
         goto error;
     }
@@ -565,7 +563,7 @@ test_file_permission(TestParams_t *params)
         H5E_BEGIN_TRY
         {
             group_id =
-                    H5Gcreate2(file_id, FILE_PERMISSION_TEST_GRP_NAME, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+                H5Gcreate2(file_id, FILE_PERMISSION_TEST_GRP_NAME, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
         }
         H5E_END_TRY
 
@@ -642,8 +640,8 @@ test_file_permission(TestParams_t *params)
         /* Commit a datatype with the read-only file handle (should fail) */
         H5E_BEGIN_TRY
         {
-            h5_ret = H5Tcommit2(file_id, FILE_PERMISSION_TEST_NAMED_DTYPE, dtype_id, H5P_DEFAULT,
-                                H5P_DEFAULT, H5P_DEFAULT);
+            h5_ret = H5Tcommit2(file_id, FILE_PERMISSION_TEST_NAMED_DTYPE, dtype_id, H5P_DEFAULT, H5P_DEFAULT,
+                                H5P_DEFAULT);
         }
         H5E_END_TRY
 
@@ -961,13 +959,13 @@ test_file_property_lists(TestParams_t *params)
         return SKIP;
     }
 
-    if (prefix_test_filename(params, test_path_prefix, FILE_PROPERTY_LIST_TEST_FNAME1,
-                             &prefixed_filename1) < 0) {
+    if (prefix_test_filename(params, test_path_prefix, FILE_PROPERTY_LIST_TEST_FNAME1, &prefixed_filename1) <
+        0) {
         printf("    couldn't prefix filename\n");
         goto error;
     }
-    if (prefix_test_filename(params, test_path_prefix, FILE_PROPERTY_LIST_TEST_FNAME2,
-                             &prefixed_filename2) < 0) {
+    if (prefix_test_filename(params, test_path_prefix, FILE_PROPERTY_LIST_TEST_FNAME2, &prefixed_filename2) <
+        0) {
         printf("    couldn't prefix filename\n");
         goto error;
     }
@@ -1017,8 +1015,7 @@ test_file_property_lists(TestParams_t *params)
 
         if (prop_val != FILE_PROPERTY_LIST_TEST_FCPL_PROP_VAL) {
             printf("    retrieved test property value '%llu' did not match expected value '%llu'\n",
-                   (long long unsigned)prop_val,
-                   (long long unsigned)FILE_PROPERTY_LIST_TEST_FCPL_PROP_VAL);
+                   (long long unsigned)prop_val, (long long unsigned)FILE_PROPERTY_LIST_TEST_FCPL_PROP_VAL);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -1029,9 +1026,8 @@ test_file_property_lists(TestParams_t *params)
 
         if (prop_val == FILE_PROPERTY_LIST_TEST_FCPL_PROP_VAL) {
             printf("    retrieved test property value '%llu' matched control value '%llu' when it "
-                    "shouldn't have\n",
-                    (long long unsigned)prop_val,
-                    (long long unsigned)FILE_PROPERTY_LIST_TEST_FCPL_PROP_VAL);
+                   "shouldn't have\n",
+                   (long long unsigned)prop_val, (long long unsigned)FILE_PROPERTY_LIST_TEST_FCPL_PROP_VAL);
             TESTFRAME_TEST_ERROR(params);
         }
     }
@@ -1140,8 +1136,7 @@ test_file_property_lists(TestParams_t *params)
 
         if (prop_val != FILE_PROPERTY_LIST_TEST_FCPL_PROP_VAL) {
             printf("    retrieved test property value '%llu' did not match expected value '%llu'\n",
-                   (long long unsigned)prop_val,
-                   (long long unsigned)FILE_PROPERTY_LIST_TEST_FCPL_PROP_VAL);
+                   (long long unsigned)prop_val, (long long unsigned)FILE_PROPERTY_LIST_TEST_FCPL_PROP_VAL);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -1152,9 +1147,8 @@ test_file_property_lists(TestParams_t *params)
 
         if (prop_val == FILE_PROPERTY_LIST_TEST_FCPL_PROP_VAL) {
             printf("    retrieved test property value '%llu' matched control value '%llu' when it "
-                    "shouldn't have\n",
-                    (long long unsigned)prop_val,
-                    (long long unsigned)FILE_PROPERTY_LIST_TEST_FCPL_PROP_VAL);
+                   "shouldn't have\n",
+                   (long long unsigned)prop_val, (long long unsigned)FILE_PROPERTY_LIST_TEST_FCPL_PROP_VAL);
             TESTFRAME_TEST_ERROR(params);
         }
     }
@@ -1361,11 +1355,13 @@ test_get_file_obj_count(TestParams_t *params)
         return SKIP;
     }
 
-    if (prefix_test_filename(params, test_path_prefix, GET_OBJ_COUNT_TEST_FILENAME1, &prefixed_filename1) < 0) {
+    if (prefix_test_filename(params, test_path_prefix, GET_OBJ_COUNT_TEST_FILENAME1, &prefixed_filename1) <
+        0) {
         printf("    couldn't prefix filename\n");
         goto error;
     }
-    if (prefix_test_filename(params, test_path_prefix, GET_OBJ_COUNT_TEST_FILENAME2, &prefixed_filename2) < 0) {
+    if (prefix_test_filename(params, test_path_prefix, GET_OBJ_COUNT_TEST_FILENAME2, &prefixed_filename2) <
+        0) {
         printf("    couldn't prefix filename\n");
         goto error;
     }
@@ -1476,8 +1472,8 @@ test_get_file_obj_count(TestParams_t *params)
         }
 
         if (check_open_obj_count(obj_count, 1) < 0) {
-            printf("    number of open named datatypes (%ld) did not match %s expected number (1)\n", obj_count,
-                   H5_API_TEST_EXECUTION_CONCURRENT ? "or exceed" : "");
+            printf("    number of open named datatypes (%ld) did not match %s expected number (1)\n",
+                   obj_count, H5_API_TEST_EXECUTION_CONCURRENT ? "or exceed" : "");
             TESTFRAME_TEST_ERROR(params);
         }
     }
@@ -1555,8 +1551,8 @@ test_get_file_obj_count(TestParams_t *params)
         }
 
         if (object_id != group_id) {
-            printf("    opened object ID (%ld) did not match only currently open group ID (%ld)\n",
-                   object_id, group_id);
+            printf("    opened object ID (%ld) did not match only currently open group ID (%ld)\n", object_id,
+                   group_id);
             TESTFRAME_TEST_ERROR(params);
         }
     }
@@ -1875,8 +1871,7 @@ test_get_file_name(TestParams_t *params)
         }
 
         if (strncmp(file_name_buf, prefixed_filename, (size_t)file_name_buf_len)) {
-            printf("    file name '%s' didn't match expected name '%s'\n", file_name_buf,
-                   prefixed_filename);
+            printf("    file name '%s' didn't match expected name '%s'\n", file_name_buf, prefixed_filename);
             TESTFRAME_TEST_ERROR(params);
         }
     }
@@ -1899,8 +1894,7 @@ test_get_file_name(TestParams_t *params)
         }
 
         if (strncmp(file_name_buf, prefixed_filename, (size_t)file_name_buf_len)) {
-            printf("    file name '%s' didn't match expected name '%s'\n", file_name_buf,
-                   prefixed_filename);
+            printf("    file name '%s' didn't match expected name '%s'\n", file_name_buf, prefixed_filename);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -1936,8 +1930,7 @@ test_get_file_name(TestParams_t *params)
         }
 
         if (strncmp(file_name_buf, prefixed_filename, (size_t)file_name_buf_len)) {
-            printf("    file name '%s' didn't match expected name '%s'\n", file_name_buf,
-                   prefixed_filename);
+            printf("    file name '%s' didn't match expected name '%s'\n", file_name_buf, prefixed_filename);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -1981,8 +1974,7 @@ test_get_file_name(TestParams_t *params)
         }
 
         if (strncmp(file_name_buf, prefixed_filename, (size_t)file_name_buf_len)) {
-            printf("    file name '%s' didn't match expected name '%s'\n", file_name_buf,
-                   prefixed_filename);
+            printf("    file name '%s' didn't match expected name '%s'\n", file_name_buf, prefixed_filename);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -2026,8 +2018,7 @@ test_get_file_name(TestParams_t *params)
         }
 
         if (strncmp(file_name_buf, prefixed_filename, (size_t)file_name_buf_len)) {
-            printf("    file name '%s' didn't match expected name '%s'\n", file_name_buf,
-                   prefixed_filename);
+            printf("    file name '%s' didn't match expected name '%s'\n", file_name_buf, prefixed_filename);
             TESTFRAME_TEST_ERROR(params);
         }
 
@@ -2111,23 +2102,27 @@ error:
     return FAIL;
 }
 
-/* 
+/*
  * Helper to check that the number of recorded open objects in the entire library is as expected.
  * This is only necessary when H5Fget_obj_count()'s first argument is H5F_OBJ_ALL.
  *
  * If the API tests are being run in a single thread, this is a wrapper around a direct comparison.
- * 
- * If the API tests are being run in multiple threads concurrently, then the 
- * number of open objects could be any value at least as large as the number of objects opened by this thread 
- * - the best we can do is verify it's not definitely wrong. 
+ *
+ * If the API tests are being run in multiple threads concurrently, then the
+ * number of open objects could be any value at least as large as the number of objects opened by this thread
+ * - the best we can do is verify it's not definitely wrong.
  */
-herr_t 
-check_open_obj_count(ssize_t obj_count, int expected) {
+herr_t
+check_open_obj_count(ssize_t obj_count, int expected)
+{
     herr_t ret_value = SUCCEED;
-    /* If multiple threads are concurrently executing tests, then more objects than expected may be open in the library */
+    /* If multiple threads are concurrently executing tests, then more objects than expected may be open in
+     * the library */
     if (H5_API_TEST_EXECUTION_CONCURRENT && obj_count < expected) {
         ret_value = FAIL;
-    } else if (!H5_API_TEST_EXECUTION_CONCURRENT && obj_count != expected) { /* Single thread, expect exact count */
+    }
+    else if (!H5_API_TEST_EXECUTION_CONCURRENT &&
+             obj_count != expected) { /* Single thread, expect exact count */
         ret_value = FAIL;
     }
 
@@ -2139,42 +2134,39 @@ H5_api_file_test_add(void)
 {
     uint64_t testframe_flags = ALLOW_MULTITHREAD;
 
-    AddTest("test_create_file", test_create_file, NULL, NULL, NULL, 0,
-            testframe_flags, "H5Fcreate");
+    AddTest("test_create_file", test_create_file, NULL, NULL, NULL, 0, testframe_flags, "H5Fcreate");
 
     /* Add a header to the first file test to distinguish different test interfaces */
     AddTestHeaderFunc("test_create_file", print_file_test_header);
 
     AddTest("test_create_file_invalid_params", test_create_file_invalid_params, NULL, NULL, NULL, 0,
             testframe_flags, "H5Fcreate with invalid parameters");
-    AddTest("test_create_file_excl", test_create_file_excl, NULL, NULL, NULL, 0,
-            testframe_flags, "H5Fcreate with H5F_ACC_EXCL/H5F_ACC_TRUNC flag");
-    AddTest("test_open_file", test_open_file, NULL, NULL, NULL, 0,
-            testframe_flags, "H5Fopen");
+    AddTest("test_create_file_excl", test_create_file_excl, NULL, NULL, NULL, 0, testframe_flags,
+            "H5Fcreate with H5F_ACC_EXCL/H5F_ACC_TRUNC flag");
+    AddTest("test_open_file", test_open_file, NULL, NULL, NULL, 0, testframe_flags, "H5Fopen");
     AddTest("test_open_file_invalid_params", test_open_file_invalid_params, NULL, NULL, NULL, 0,
             testframe_flags, "H5Fopen with invalid parameters");
-    AddTest("test_open_nonexistent_file", test_open_nonexistent_file, NULL, NULL, NULL, 0,
-            testframe_flags, "for invalid opening of a non-existent file");
-    AddTest("test_file_open_overlap", test_file_open_overlap, NULL, NULL, NULL, 0,
-            testframe_flags, "overlapping file opens");
-    AddTest("test_file_permission", test_file_permission, NULL, NULL, NULL, 0,
-            testframe_flags, "file permissions (invalid creation of objects in read-only file)");
-    AddTest("test_reopen_file", test_reopen_file, NULL, NULL, NULL, 0,
-            testframe_flags, "re-open of a file with H5Freopen");
-    AddTest("test_close_file_invalid_id", test_close_file_invalid_id, NULL, NULL, NULL, 0,
-            testframe_flags, "H5Fclose with an invalid ID");
-    AddTest("test_flush_file", test_flush_file, NULL, NULL, NULL, 0,
-            testframe_flags, "H5Fflush");
-    AddTest("test_file_is_accessible", test_file_is_accessible, NULL, NULL, NULL, 0,
-            testframe_flags, "H5Fis_accessible");
-    AddTest("test_file_property_lists", test_file_property_lists, NULL, NULL, NULL, 0,
-            testframe_flags, "file property list operations");
-    AddTest("test_get_file_intent", test_get_file_intent, NULL, NULL, NULL, 0,
-            testframe_flags, "retrieval of file intent with H5Fget_intent");
-    AddTest("test_get_file_obj_count", test_get_file_obj_count, NULL, NULL, NULL, 0,
-            testframe_flags, "retrieval of open object number and IDs");
-    AddTest("test_file_mounts", test_file_mounts, NULL, NULL, NULL, 0,
-            testframe_flags, "file mounting/unmounting");
-    AddTest("test_get_file_name", test_get_file_name, NULL, NULL, NULL, 0,
-            testframe_flags, "retrieval of file name");
+    AddTest("test_open_nonexistent_file", test_open_nonexistent_file, NULL, NULL, NULL, 0, testframe_flags,
+            "for invalid opening of a non-existent file");
+    AddTest("test_file_open_overlap", test_file_open_overlap, NULL, NULL, NULL, 0, testframe_flags,
+            "overlapping file opens");
+    AddTest("test_file_permission", test_file_permission, NULL, NULL, NULL, 0, testframe_flags,
+            "file permissions (invalid creation of objects in read-only file)");
+    AddTest("test_reopen_file", test_reopen_file, NULL, NULL, NULL, 0, testframe_flags,
+            "re-open of a file with H5Freopen");
+    AddTest("test_close_file_invalid_id", test_close_file_invalid_id, NULL, NULL, NULL, 0, testframe_flags,
+            "H5Fclose with an invalid ID");
+    AddTest("test_flush_file", test_flush_file, NULL, NULL, NULL, 0, testframe_flags, "H5Fflush");
+    AddTest("test_file_is_accessible", test_file_is_accessible, NULL, NULL, NULL, 0, testframe_flags,
+            "H5Fis_accessible");
+    AddTest("test_file_property_lists", test_file_property_lists, NULL, NULL, NULL, 0, testframe_flags,
+            "file property list operations");
+    AddTest("test_get_file_intent", test_get_file_intent, NULL, NULL, NULL, 0, testframe_flags,
+            "retrieval of file intent with H5Fget_intent");
+    AddTest("test_get_file_obj_count", test_get_file_obj_count, NULL, NULL, NULL, 0, testframe_flags,
+            "retrieval of open object number and IDs");
+    AddTest("test_file_mounts", test_file_mounts, NULL, NULL, NULL, 0, testframe_flags,
+            "file mounting/unmounting");
+    AddTest("test_get_file_name", test_get_file_name, NULL, NULL, NULL, 0, testframe_flags,
+            "retrieval of file name");
 }

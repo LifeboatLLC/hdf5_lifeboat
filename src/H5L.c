@@ -128,8 +128,8 @@ H5Lmove(hid_t src_loc_id, const char *src_name, hid_t dst_loc_id, const char *ds
 
     /* Verify access property list and set up collective metadata if appropriate */
     H5_API_LOCK
-    ret_value = H5CX_set_apl(&lapl_id, H5P_CLS_LACC, ((src_loc_id != H5L_SAME_LOC) ? src_loc_id : dst_loc_id),
-                             TRUE);
+    ret_value =
+        H5CX_set_apl(&lapl_id, H5P_CLS_LACC, ((src_loc_id != H5L_SAME_LOC) ? src_loc_id : dst_loc_id), TRUE);
     H5_API_UNLOCK
 
     if (ret_value < 0)
@@ -243,12 +243,12 @@ H5Lcopy(hid_t src_loc_id, const char *src_name, hid_t dst_loc_id, const char *ds
 
     /* Verify access property list and set up collective metadata if appropriate */
     H5_API_LOCK
-    ret_value = H5CX_set_apl(&lapl_id, H5P_CLS_LACC, ((src_loc_id != H5L_SAME_LOC) ? src_loc_id : dst_loc_id),
-                             TRUE);
+    ret_value =
+        H5CX_set_apl(&lapl_id, H5P_CLS_LACC, ((src_loc_id != H5L_SAME_LOC) ? src_loc_id : dst_loc_id), TRUE);
     H5_API_UNLOCK
 
     if (ret_value < 0)
-            HGOTO_ERROR(H5E_LINK, H5E_CANTSET, FAIL, "can't set access property list info");
+        HGOTO_ERROR(H5E_LINK, H5E_CANTSET, FAIL, "can't set access property list info");
 
     /* Set location parameter for source object */
     loc_params1.type                         = H5VL_OBJECT_BY_NAME;
@@ -355,6 +355,13 @@ H5L__create_soft_api_common(const char *link_target, hid_t link_loc_id, const ch
     H5CX_set_lcpl(lcpl_id);
     H5_API_UNLOCK
 
+/**
+ * This call to H5CX_set_apl() is redundant because the function immediately below,
+ * H5VL_setup_name_args() makes the same call to H5CX_set_apl() with the same
+ * parameters. Thus, for the multithread version this call is removed for tracking,
+ * debugging, and efficiency.
+ */
+#ifndef H5_HAVE_MULTITHREAD
     /* Verify access property list and set up collective metadata if appropriate */
     H5_API_LOCK
     ret_value = H5CX_set_apl(&lapl_id, H5P_CLS_LACC, link_loc_id, TRUE);
@@ -362,6 +369,7 @@ H5L__create_soft_api_common(const char *link_target, hid_t link_loc_id, const ch
 
     if (ret_value < 0)
         HGOTO_ERROR(H5E_LINK, H5E_CANTSET, FAIL, "can't set access property list info");
+#endif
 
     /* Set up object access arguments */
     if (H5VL_setup_name_args(link_loc_id, link_name, TRUE, lapl_id, vol_obj_ptr, &loc_params) < 0)
@@ -477,7 +485,7 @@ H5L__create_hard_api_common(hid_t cur_loc_id, const char *cur_name, hid_t link_l
     H5VL_link_create_args_t vol_cb_args;                  /* Arguments to VOL callback */
     H5VL_loc_params_t       link_loc_params;     /* Location parameters for link_loc_id object access */
     herr_t                  ret_value = SUCCEED; /* Return value */
-    htri_t                  ret      = FALSE;
+    htri_t                  ret       = FALSE;
 
     FUNC_ENTER_PACKAGE
 

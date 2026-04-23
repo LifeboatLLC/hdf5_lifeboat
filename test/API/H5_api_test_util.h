@@ -17,8 +17,8 @@
 
 #include "testframe.h"
 
-hid_t  generate_random_datatype(H5T_class_t parent_class, bool is_compact);
-hid_t  generate_random_dataspace(int rank, const hsize_t *max_dims, hsize_t *dims_out, bool is_compact);
+hid_t generate_random_datatype(H5T_class_t parent_class, bool is_compact);
+hid_t generate_random_dataspace(int rank, const hsize_t *max_dims, hsize_t *dims_out, bool is_compact);
 
 herr_t prefix_test_filename(TestParams_t *test_params, const char *prefix, const char *filename,
                             char **filename_out);

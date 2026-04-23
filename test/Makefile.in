@@ -187,7 +187,8 @@ am__EXEEXT_1 = testhdf5$(EXEEXT) cache$(EXEEXT) cache_api$(EXEEXT) \
 	mf$(EXEEXT) vds$(EXEEXT) file_image$(EXEEXT) \
 	unregister$(EXEEXT) cache_logging$(EXEEXT) cork$(EXEEXT) \
 	swmr$(EXEEXT) thread_id$(EXEEXT) vol$(EXEEXT) timer$(EXEEXT) \
-	event_set$(EXEEXT) onion$(EXEEXT) mt_id_test$(EXEEXT)
+	event_set$(EXEEXT) onion$(EXEEXT) mt_id_test$(EXEEXT) \
+	mt_prop_test$(EXEEXT)
 @HAVE_SHARED_CONDITIONAL_TRUE@am__EXEEXT_2 = filter_plugin$(EXEEXT) \
 @HAVE_SHARED_CONDITIONAL_TRUE@	vfd_plugin$(EXEEXT) \
 @HAVE_SHARED_CONDITIONAL_TRUE@	vol_plugin$(EXEEXT)
@@ -261,6 +262,44 @@ am_libh5test_la_OBJECTS = h5test.lo testframe.lo cache_common.lo \
 libh5test_la_OBJECTS = $(am_libh5test_la_OBJECTS)
 @HAVE_SHARED_CONDITIONAL_FALSE@am_libh5test_la_rpath =
 @HAVE_SHARED_CONDITIONAL_TRUE@am_libh5test_la_rpath =
+libmt_native_wrapper_vol_connector_la_LIBADD =
+am__libmt_native_wrapper_vol_connector_la_SOURCES_DIST =  \
+	mt_native_wrapper_vol_connector.c
+@HAVE_SHARED_CONDITIONAL_TRUE@am_libmt_native_wrapper_vol_connector_la_OBJECTS = mt_native_wrapper_vol_connector.lo
+libmt_native_wrapper_vol_connector_la_OBJECTS =  \
+	$(am_libmt_native_wrapper_vol_connector_la_OBJECTS)
+libmt_native_wrapper_vol_connector_la_LINK = $(LIBTOOL) $(AM_V_lt) \
+	--tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link \
+	$(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(libmt_native_wrapper_vol_connector_la_LDFLAGS) $(LDFLAGS) -o \
+	$@
+@HAVE_SHARED_CONDITIONAL_TRUE@am_libmt_native_wrapper_vol_connector_la_rpath =
+libmt_passthru_wrapper_vol_connector_la_LIBADD =
+am__libmt_passthru_wrapper_vol_connector_la_SOURCES_DIST =  \
+	mt_passthru_wrapper_vol_connector.c ../src/H5VLpassthru.c
+am__dirstamp = $(am__leading_dot)dirstamp
+@HAVE_SHARED_CONDITIONAL_TRUE@am_libmt_passthru_wrapper_vol_connector_la_OBJECTS = mt_passthru_wrapper_vol_connector.lo \
+@HAVE_SHARED_CONDITIONAL_TRUE@	../src/H5VLpassthru.lo
+libmt_passthru_wrapper_vol_connector_la_OBJECTS =  \
+	$(am_libmt_passthru_wrapper_vol_connector_la_OBJECTS)
+libmt_passthru_wrapper_vol_connector_la_LINK = $(LIBTOOL) $(AM_V_lt) \
+	--tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link \
+	$(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(libmt_passthru_wrapper_vol_connector_la_LDFLAGS) $(LDFLAGS) \
+	-o $@
+@HAVE_SHARED_CONDITIONAL_TRUE@am_libmt_passthru_wrapper_vol_connector_la_rpath =
+libmt_vl_test_vol_connector_la_LIBADD =
+am__libmt_vl_test_vol_connector_la_SOURCES_DIST =  \
+	mt_vl_test_vol_connector.c
+@HAVE_SHARED_CONDITIONAL_TRUE@am_libmt_vl_test_vol_connector_la_OBJECTS =  \
+@HAVE_SHARED_CONDITIONAL_TRUE@	mt_vl_test_vol_connector.lo
+libmt_vl_test_vol_connector_la_OBJECTS =  \
+	$(am_libmt_vl_test_vol_connector_la_OBJECTS)
+libmt_vl_test_vol_connector_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
+	$(AM_CFLAGS) $(CFLAGS) \
+	$(libmt_vl_test_vol_connector_la_LDFLAGS) $(LDFLAGS) -o $@
+@HAVE_SHARED_CONDITIONAL_TRUE@am_libmt_vl_test_vol_connector_la_rpath =
 libnull_vfd_plugin_la_LIBADD =
 am__libnull_vfd_plugin_la_SOURCES_DIST = null_vfd_plugin.c
 @HAVE_SHARED_CONDITIONAL_TRUE@am_libnull_vfd_plugin_la_OBJECTS =  \
@@ -607,6 +646,10 @@ mt_id_test_SOURCES = mt_id_test.c
 mt_id_test_OBJECTS = mt_id_test.$(OBJEXT)
 mt_id_test_LDADD = $(LDADD)
 mt_id_test_DEPENDENCIES = libh5test.la $(LIBHDF5)
+mt_prop_test_SOURCES = mt_prop_test.c
+mt_prop_test_OBJECTS = mt_prop_test.$(OBJEXT)
+mt_prop_test_LDADD = $(LDADD)
+mt_prop_test_DEPENDENCIES = libh5test.la $(LIBHDF5)
 mtime_SOURCES = mtime.c
 mtime_OBJECTS = mtime.$(OBJEXT)
 mtime_LDADD = $(LDADD)
@@ -823,17 +866,18 @@ am__v_at_1 =
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/src -I$(top_builddir)/fortran/src
 depcomp = $(SHELL) $(top_srcdir)/bin/depcomp
 am__maybe_remake_depfiles = depfiles
-am__depfiles_remade = ./$(DEPDIR)/accum.Po \
-	./$(DEPDIR)/accum_swmr_reader.Po ./$(DEPDIR)/app_ref.Po \
-	./$(DEPDIR)/atomic_reader.Po ./$(DEPDIR)/atomic_writer.Po \
-	./$(DEPDIR)/big.Po ./$(DEPDIR)/bittests.Po \
-	./$(DEPDIR)/btree2.Po ./$(DEPDIR)/cache.Po \
-	./$(DEPDIR)/cache_api.Po ./$(DEPDIR)/cache_common.Plo \
-	./$(DEPDIR)/cache_image.Po ./$(DEPDIR)/cache_logging.Po \
-	./$(DEPDIR)/cache_tagging.Po ./$(DEPDIR)/chunk_info.Po \
-	./$(DEPDIR)/cmpd_dset.Po ./$(DEPDIR)/cmpd_dtransform.Po \
-	./$(DEPDIR)/cork.Po ./$(DEPDIR)/cross_read.Po \
-	./$(DEPDIR)/dangle.Po ./$(DEPDIR)/del_many_dense_attrs.Po \
+am__depfiles_remade = ../src/$(DEPDIR)/H5VLpassthru.Plo \
+	./$(DEPDIR)/accum.Po ./$(DEPDIR)/accum_swmr_reader.Po \
+	./$(DEPDIR)/app_ref.Po ./$(DEPDIR)/atomic_reader.Po \
+	./$(DEPDIR)/atomic_writer.Po ./$(DEPDIR)/big.Po \
+	./$(DEPDIR)/bittests.Po ./$(DEPDIR)/btree2.Po \
+	./$(DEPDIR)/cache.Po ./$(DEPDIR)/cache_api.Po \
+	./$(DEPDIR)/cache_common.Plo ./$(DEPDIR)/cache_image.Po \
+	./$(DEPDIR)/cache_logging.Po ./$(DEPDIR)/cache_tagging.Po \
+	./$(DEPDIR)/chunk_info.Po ./$(DEPDIR)/cmpd_dset.Po \
+	./$(DEPDIR)/cmpd_dtransform.Po ./$(DEPDIR)/cork.Po \
+	./$(DEPDIR)/cross_read.Po ./$(DEPDIR)/dangle.Po \
+	./$(DEPDIR)/del_many_dense_attrs.Po \
 	./$(DEPDIR)/direct_chunk.Po ./$(DEPDIR)/dsets.Po \
 	./$(DEPDIR)/dt_arith.Po ./$(DEPDIR)/dtransform.Po \
 	./$(DEPDIR)/dtypes.Po ./$(DEPDIR)/earray.Po ./$(DEPDIR)/efc.Po \
@@ -870,8 +914,11 @@ am__depfiles_remade = ./$(DEPDIR)/accum.Po \
 	./$(DEPDIR)/links_env.Po ./$(DEPDIR)/mdset.Po \
 	./$(DEPDIR)/mf.Po ./$(DEPDIR)/mirror_vfd.Po \
 	./$(DEPDIR)/mount.Po ./$(DEPDIR)/mt_id_test.Po \
-	./$(DEPDIR)/mtime.Po ./$(DEPDIR)/ntypes.Po \
-	./$(DEPDIR)/null_vfd_plugin.Plo \
+	./$(DEPDIR)/mt_native_wrapper_vol_connector.Plo \
+	./$(DEPDIR)/mt_passthru_wrapper_vol_connector.Plo \
+	./$(DEPDIR)/mt_prop_test.Po \
+	./$(DEPDIR)/mt_vl_test_vol_connector.Plo ./$(DEPDIR)/mtime.Po \
+	./$(DEPDIR)/ntypes.Po ./$(DEPDIR)/null_vfd_plugin.Plo \
 	./$(DEPDIR)/null_vol_connector.Plo ./$(DEPDIR)/objcopy.Po \
 	./$(DEPDIR)/objcopy_ref.Po ./$(DEPDIR)/ohdr.Po \
 	./$(DEPDIR)/onion.Po ./$(DEPDIR)/page_buffer.Po \
@@ -937,6 +984,9 @@ SOURCES = $(libfilter_plugin1_dsets_la_SOURCES) \
 	$(libfilter_plugin2_dsets_la_SOURCES) \
 	$(libfilter_plugin3_dsets_la_SOURCES) \
 	$(libfilter_plugin4_groups_la_SOURCES) $(libh5test_la_SOURCES) \
+	$(libmt_native_wrapper_vol_connector_la_SOURCES) \
+	$(libmt_passthru_wrapper_vol_connector_la_SOURCES) \
+	$(libmt_vl_test_vol_connector_la_SOURCES) \
 	$(libnull_vfd_plugin_la_SOURCES) \
 	$(libnull_vol_connector_la_SOURCES) accum.c \
 	accum_swmr_reader.c app_ref.c atomic_reader.c atomic_writer.c \
@@ -957,15 +1007,15 @@ SOURCES = $(libfilter_plugin1_dsets_la_SOURCES) \
 	gen_nullspace.c gen_plist.c gen_sizes_lheap.c \
 	gen_specmetaread.c gen_udlinks.c getname.c gheap.c hdfs.c \
 	hyperslab.c istore.c lheap.c links.c links_env.c mdset.c mf.c \
-	$(mirror_vfd_SOURCES) mount.c mt_id_test.c mtime.c ntypes.c \
-	objcopy.c objcopy_ref.c ohdr.c onion.c page_buffer.c \
-	reserved.c ros3.c s3comms.c select_io_dset.c set_extent.c \
-	space_overflow.c stab.c swmr.c swmr_addrem_writer.c \
-	swmr_generator.c swmr_reader.c swmr_remove_reader.c \
-	swmr_remove_writer.c swmr_sparse_reader.c swmr_sparse_writer.c \
-	swmr_start_write.c swmr_writer.c tcheck_version.c \
-	$(testhdf5_SOURCES) testmeta.c thread_id.c timer.c \
-	$(ttsafe_SOURCES) twriteorder.c unlink.c unregister.c \
+	$(mirror_vfd_SOURCES) mount.c mt_id_test.c mt_prop_test.c \
+	mtime.c ntypes.c objcopy.c objcopy_ref.c ohdr.c onion.c \
+	page_buffer.c reserved.c ros3.c s3comms.c select_io_dset.c \
+	set_extent.c space_overflow.c stab.c swmr.c \
+	swmr_addrem_writer.c swmr_generator.c swmr_reader.c \
+	swmr_remove_reader.c swmr_remove_writer.c swmr_sparse_reader.c \
+	swmr_sparse_writer.c swmr_start_write.c swmr_writer.c \
+	tcheck_version.c $(testhdf5_SOURCES) testmeta.c thread_id.c \
+	timer.c $(ttsafe_SOURCES) twriteorder.c unlink.c unregister.c \
 	$(use_append_chunk_SOURCES) $(use_append_chunk_mirror_SOURCES) \
 	$(use_append_mchunks_SOURCES) \
 	$(use_disable_mdc_flushes_SOURCES) vds.c vds_env.c \
@@ -976,6 +1026,9 @@ DIST_SOURCES = $(am__libfilter_plugin1_dsets_la_SOURCES_DIST) \
 	$(am__libfilter_plugin3_dsets_la_SOURCES_DIST) \
 	$(am__libfilter_plugin4_groups_la_SOURCES_DIST) \
 	$(libh5test_la_SOURCES) \
+	$(am__libmt_native_wrapper_vol_connector_la_SOURCES_DIST) \
+	$(am__libmt_passthru_wrapper_vol_connector_la_SOURCES_DIST) \
+	$(am__libmt_vl_test_vol_connector_la_SOURCES_DIST) \
 	$(am__libnull_vfd_plugin_la_SOURCES_DIST) \
 	$(am__libnull_vol_connector_la_SOURCES_DIST) accum.c \
 	accum_swmr_reader.c app_ref.c atomic_reader.c atomic_writer.c \
@@ -996,25 +1049,41 @@ DIST_SOURCES = $(am__libfilter_plugin1_dsets_la_SOURCES_DIST) \
 	gen_nullspace.c gen_plist.c gen_sizes_lheap.c \
 	gen_specmetaread.c gen_udlinks.c getname.c gheap.c hdfs.c \
 	hyperslab.c istore.c lheap.c links.c links_env.c mdset.c mf.c \
-	$(mirror_vfd_SOURCES) mount.c mt_id_test.c mtime.c ntypes.c \
-	objcopy.c objcopy_ref.c ohdr.c onion.c page_buffer.c \
-	reserved.c ros3.c s3comms.c select_io_dset.c set_extent.c \
-	space_overflow.c stab.c swmr.c swmr_addrem_writer.c \
-	swmr_generator.c swmr_reader.c swmr_remove_reader.c \
-	swmr_remove_writer.c swmr_sparse_reader.c swmr_sparse_writer.c \
-	swmr_start_write.c swmr_writer.c tcheck_version.c \
-	$(testhdf5_SOURCES) testmeta.c thread_id.c timer.c \
-	$(ttsafe_SOURCES) twriteorder.c unlink.c unregister.c \
+	$(mirror_vfd_SOURCES) mount.c mt_id_test.c mt_prop_test.c \
+	mtime.c ntypes.c objcopy.c objcopy_ref.c ohdr.c onion.c \
+	page_buffer.c reserved.c ros3.c s3comms.c select_io_dset.c \
+	set_extent.c space_overflow.c stab.c swmr.c \
+	swmr_addrem_writer.c swmr_generator.c swmr_reader.c \
+	swmr_remove_reader.c swmr_remove_writer.c swmr_sparse_reader.c \
+	swmr_sparse_writer.c swmr_start_write.c swmr_writer.c \
+	tcheck_version.c $(testhdf5_SOURCES) testmeta.c thread_id.c \
+	timer.c $(ttsafe_SOURCES) twriteorder.c unlink.c unregister.c \
 	$(use_append_chunk_SOURCES) $(use_append_chunk_mirror_SOURCES) \
 	$(use_append_mchunks_SOURCES) \
 	$(use_disable_mdc_flushes_SOURCES) vds.c vds_env.c \
 	vds_swmr_gen.c vds_swmr_reader.c vds_swmr_writer.c vfd.c \
 	vfd_plugin.c vol.c vol_plugin.c
+RECURSIVE_TARGETS = all-recursive check-recursive cscopelist-recursive \
+	ctags-recursive dvi-recursive html-recursive info-recursive \
+	install-data-recursive install-dvi-recursive \
+	install-exec-recursive install-html-recursive \
+	install-info-recursive install-pdf-recursive \
+	install-ps-recursive install-recursive installcheck-recursive \
+	installdirs-recursive pdf-recursive ps-recursive \
+	tags-recursive uninstall-recursive
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
     *) (install-info --version) >/dev/null 2>&1;; \
   esac
+RECURSIVE_CLEAN_TARGETS = mostlyclean-recursive clean-recursive	\
+  distclean-recursive maintainer-clean-recursive
+am__recursive_targets = \
+  $(RECURSIVE_TARGETS) \
+  $(RECURSIVE_CLEAN_TARGETS) \
+  $(am__extra_recursive_targets)
+AM_RECURSIVE_TARGETS = $(am__recursive_targets:-recursive=) TAGS CTAGS \
+	check recheck distdir distdir-am
 am__tagged_files = $(HEADERS) $(SOURCES) $(TAGS_FILES) $(LISP)
 # Read a list of newline-separated strings from the standard input,
 # and print each of them once, without duplicates.  Input order is
@@ -1216,7 +1285,6 @@ am__set_TESTS_bases = \
   bases=`echo $$bases`
 AM_TESTSUITE_SUMMARY_HEADER = ' for $(PACKAGE_STRING)'
 RECHECK_LOGS = $(TEST_LOGS)
-AM_RECURSIVE_TARGETS = check recheck
 TEST_SUITE_LOG = test-suite.log
 LOG_DRIVER = $(SHELL) $(top_srcdir)/bin/test-driver
 LOG_COMPILE = $(LOG_COMPILER) $(AM_LOG_FLAGS) $(LOG_FLAGS)
@@ -1235,6 +1303,7 @@ am__test_logs2 = $(am__test_logs1:@EXEEXT@.log=.log)
 TEST_LOGS = $(am__test_logs2:.sh.log=.log)
 SH_LOG_DRIVER = $(SHELL) $(top_srcdir)/bin/test-driver
 SH_LOG_COMPILE = $(SH_LOG_COMPILER) $(AM_SH_LOG_FLAGS) $(SH_LOG_FLAGS)
+DIST_SUBDIRS = . threads API
 am__DIST_COMMON = $(srcdir)/H5srcdir_str.h.in $(srcdir)/Makefile.in \
 	$(srcdir)/test_abort_fail.sh.in \
 	$(srcdir)/test_check_version.sh.in $(srcdir)/test_error.sh.in \
@@ -1248,6 +1317,31 @@ am__DIST_COMMON = $(srcdir)/H5srcdir_str.h.in $(srcdir)/Makefile.in \
 	$(top_srcdir)/config/commence.am \
 	$(top_srcdir)/config/conclude.am
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
+am__relativize = \
+  dir0=`pwd`; \
+  sed_first='s,^\([^/]*\)/.*$$,\1,'; \
+  sed_rest='s,^[^/]*/*,,'; \
+  sed_last='s,^.*/\([^/]*\)$$,\1,'; \
+  sed_butlast='s,/*[^/]*$$,,'; \
+  while test -n "$$dir1"; do \
+    first=`echo "$$dir1" | sed -e "$$sed_first"`; \
+    if test "$$first" != "."; then \
+      if test "$$first" = ".."; then \
+        dir2=`echo "$$dir0" | sed -e "$$sed_last"`/"$$dir2"; \
+        dir0=`echo "$$dir0" | sed -e "$$sed_butlast"`; \
+      else \
+        first2=`echo "$$dir2" | sed -e "$$sed_first"`; \
+        if test "$$first2" = "$$first"; then \
+          dir2=`echo "$$dir2" | sed -e "$$sed_rest"`; \
+        else \
+          dir2="../$$dir2"; \
+        fi; \
+        dir0="$$dir0"/"$$first"; \
+      fi; \
+    fi; \
+    dir1=`echo "$$dir1" | sed -e "$$sed_rest"`; \
+  done; \
+  reldir="$$dir2"
 ACLOCAL = @ACLOCAL@
 ADD_PARALLEL_FILES = @ADD_PARALLEL_FILES@
 AMTAR = @AMTAR@
@@ -1370,7 +1464,6 @@ FCFLAGS_f90 = @FCFLAGS_f90@
 FCLIBS = @FCLIBS@
 FC_VERSION = @FC_VERSION@
 FGREP = @FGREP@
-FILECMD = @FILECMD@
 FORTRAN_C_LONG_DOUBLE_IS_UNIQUE = @FORTRAN_C_LONG_DOUBLE_IS_UNIQUE@
 FORTRAN_HAVE_C_LONG_DOUBLE = @FORTRAN_HAVE_C_LONG_DOUBLE@
 FSEARCH_DIRS = @FSEARCH_DIRS@
@@ -1604,6 +1697,7 @@ RUNEXEC = $(RUNSERIAL)
 # Libraries to link to while building
 LIBHDF5 = $(top_builddir)/src/libhdf5.la
 LIBH5TEST = $(top_builddir)/test/libh5test.la
+LIBH5TESTPAR = $(top_builddir)/testpar/libh5testpar.la
 LIBH5F = $(top_builddir)/fortran/src/libhdf5_fortran.la
 LIBH5FTEST = $(top_builddir)/fortran/test/libh5test_fortran.la
 LIBH5CPP = $(top_builddir)/c++/src/libhdf5_cpp.la
@@ -1746,7 +1840,7 @@ TEST_PROG = testhdf5 \
            enc_dec_plist_cross_platform getname vfd ros3 s3comms hdfs ntypes \
            dangle dtransform reserved cross_read freespace mf vds file_image \
            unregister cache_logging cork swmr thread_id vol timer event_set \
-           onion mt_id_test
+           onion mt_id_test mt_prop_test
 
 
 # These programs generate test files for the tests.  They don't need to be
@@ -1762,7 +1856,7 @@ BUILD_ALL_PROGS = gen_bad_ohdr gen_bogus gen_cross gen_deflate gen_filters gen_n
     gen_sizes_lheap gen_file_image gen_plist gen_bad_offset gen_bounds
 
 @HAVE_SHARED_CONDITIONAL_FALSE@noinst_LTLIBRARIES = libh5test.la
-@HAVE_SHARED_CONDITIONAL_TRUE@noinst_LTLIBRARIES = libh5test.la libfilter_plugin1_dsets.la libfilter_plugin2_dsets.la libfilter_plugin3_dsets.la libfilter_plugin4_groups.la libnull_vfd_plugin.la libnull_vol_connector.la
+@HAVE_SHARED_CONDITIONAL_TRUE@noinst_LTLIBRARIES = libh5test.la libfilter_plugin1_dsets.la libfilter_plugin2_dsets.la libfilter_plugin3_dsets.la libfilter_plugin4_groups.la libnull_vfd_plugin.la libnull_vol_connector.la libmt_vl_test_vol_connector.la libmt_native_wrapper_vol_connector.la libmt_passthru_wrapper_vol_connector.la
 @HAVE_SHARED_CONDITIONAL_TRUE@libfilter_plugin1_dsets_la_SOURCES = filter_plugin1_dsets.c
 @HAVE_SHARED_CONDITIONAL_TRUE@libfilter_plugin2_dsets_la_SOURCES = filter_plugin2_dsets.c
 @HAVE_SHARED_CONDITIONAL_TRUE@libfilter_plugin3_dsets_la_SOURCES = filter_plugin3_dsets.c
@@ -1777,9 +1871,15 @@ BUILD_ALL_PROGS = gen_bad_ohdr gen_bogus gen_cross gen_deflate gen_filters gen_n
 @HAVE_SHARED_CONDITIONAL_TRUE@libnull_vfd_plugin_la_LDFLAGS = $(AM_LDFLAGS) -avoid-version -module -shared -export-dynamic -rpath /nowhere
 @HAVE_SHARED_CONDITIONAL_TRUE@libnull_vol_connector_la_SOURCES = null_vol_connector.c
 @HAVE_SHARED_CONDITIONAL_TRUE@libnull_vol_connector_la_LDFLAGS = $(AM_LDFLAGS) -avoid-version -module -shared -export-dynamic -rpath /nowhere
+@HAVE_SHARED_CONDITIONAL_TRUE@libmt_vl_test_vol_connector_la_SOURCES = mt_vl_test_vol_connector.c
+@HAVE_SHARED_CONDITIONAL_TRUE@libmt_vl_test_vol_connector_la_LDFLAGS = $(AM_LDFLAGS) -avoid-version -module -shared -export-dynamic -rpath /nowhere
+@HAVE_SHARED_CONDITIONAL_TRUE@libmt_native_wrapper_vol_connector_la_SOURCES = mt_native_wrapper_vol_connector.c
+@HAVE_SHARED_CONDITIONAL_TRUE@libmt_native_wrapper_vol_connector_la_LDFLAGS = $(AM_LDFLAGS) -avoid-version -module -shared -export-dynamic -rpath /nowhere
+@HAVE_SHARED_CONDITIONAL_TRUE@libmt_passthru_wrapper_vol_connector_la_SOURCES = mt_passthru_wrapper_vol_connector.c ../src/H5VLpassthru.c
+@HAVE_SHARED_CONDITIONAL_TRUE@libmt_passthru_wrapper_vol_connector_la_LDFLAGS = $(AM_LDFLAGS) -avoid-version -module -shared -export-dynamic -rpath /nowhere
 libh5test_la_SOURCES = h5test.c testframe.c cache_common.c swmr_common.c external_common.c
 
-# Use libhd5test.la to compile all of the tests
+# Use libh5test.la to compile all of the tests
 LDADD = libh5test.la $(LIBHDF5)
 
 # List the source files for tests that have more than one
@@ -1793,7 +1893,7 @@ mirror_vfd_SOURCES = mirror_vfd.c genall5.c
 testhdf5_SOURCES = testhdf5.c tarray.c tattr.c tchecksum.c tconfig.c tfile.c \
     tgenprop.c th5o.c th5s.c th5_system.c tcoords.c tid.c titerate.c tmeta.c tmisc.c \
     trefer.c trefer_deprec.c trefstr.c tselect.c tskiplist.c tsohm.c ttime.c tunicode.c \
-    tvlstr.c tvltypes.c
+    tvlstr.c tvltypes.c 
 
 
 # Sources for Use Cases
@@ -1808,6 +1908,11 @@ DISTCLEANFILES = test_abort_fail.sh test_check_version.sh \
 	test_libinfo.sh test_links_env.sh test_plugin.sh test_swmr.sh \
 	test_use_cases.sh test_vds_env.sh test_vds_swmr.sh \
 	$(am__append_6)
+
+# Set up SUBDIRS, working around the fact that it must be defined all at once
+@BUILD_API_TESTS_TRUE@API_TESTS_DIR = API
+THREADS_TESTS_DIR = threads
+SUBDIRS = . $(THREADS_TESTS_DIR) $(API_TESTS_DIR)
 
 # Automake needs to be taught how to build lib, progs and tests targets.
 # These will be filled in automatically for the most part (e.g.,
@@ -1840,7 +1945,7 @@ VFD_LIST = sec2 stdio core core_paged split multi family splitter \
 VOL_LIST = native "pass_through under_vol=0;under_info={}" \
            "pass_through under_vol=1;under_info={under_vol=0;under_info={}}"
 
-all: all-am
+all: all-recursive
 
 .SUFFIXES:
 .SUFFIXES: .c .lo .log .o .obj .sh .sh$(EXEEXT) .trs
@@ -1946,6 +2051,23 @@ libfilter_plugin4_groups.la: $(libfilter_plugin4_groups_la_OBJECTS) $(libfilter_
 
 libh5test.la: $(libh5test_la_OBJECTS) $(libh5test_la_DEPENDENCIES) $(EXTRA_libh5test_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(LINK) $(am_libh5test_la_rpath) $(libh5test_la_OBJECTS) $(libh5test_la_LIBADD) $(LIBS)
+
+libmt_native_wrapper_vol_connector.la: $(libmt_native_wrapper_vol_connector_la_OBJECTS) $(libmt_native_wrapper_vol_connector_la_DEPENDENCIES) $(EXTRA_libmt_native_wrapper_vol_connector_la_DEPENDENCIES) 
+	$(AM_V_CCLD)$(libmt_native_wrapper_vol_connector_la_LINK) $(am_libmt_native_wrapper_vol_connector_la_rpath) $(libmt_native_wrapper_vol_connector_la_OBJECTS) $(libmt_native_wrapper_vol_connector_la_LIBADD) $(LIBS)
+../src/$(am__dirstamp):
+	@$(MKDIR_P) ../src
+	@: > ../src/$(am__dirstamp)
+../src/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) ../src/$(DEPDIR)
+	@: > ../src/$(DEPDIR)/$(am__dirstamp)
+../src/H5VLpassthru.lo: ../src/$(am__dirstamp) \
+	../src/$(DEPDIR)/$(am__dirstamp)
+
+libmt_passthru_wrapper_vol_connector.la: $(libmt_passthru_wrapper_vol_connector_la_OBJECTS) $(libmt_passthru_wrapper_vol_connector_la_DEPENDENCIES) $(EXTRA_libmt_passthru_wrapper_vol_connector_la_DEPENDENCIES) 
+	$(AM_V_CCLD)$(libmt_passthru_wrapper_vol_connector_la_LINK) $(am_libmt_passthru_wrapper_vol_connector_la_rpath) $(libmt_passthru_wrapper_vol_connector_la_OBJECTS) $(libmt_passthru_wrapper_vol_connector_la_LIBADD) $(LIBS)
+
+libmt_vl_test_vol_connector.la: $(libmt_vl_test_vol_connector_la_OBJECTS) $(libmt_vl_test_vol_connector_la_DEPENDENCIES) $(EXTRA_libmt_vl_test_vol_connector_la_DEPENDENCIES) 
+	$(AM_V_CCLD)$(libmt_vl_test_vol_connector_la_LINK) $(am_libmt_vl_test_vol_connector_la_rpath) $(libmt_vl_test_vol_connector_la_OBJECTS) $(libmt_vl_test_vol_connector_la_LIBADD) $(LIBS)
 
 libnull_vfd_plugin.la: $(libnull_vfd_plugin_la_OBJECTS) $(libnull_vfd_plugin_la_DEPENDENCIES) $(EXTRA_libnull_vfd_plugin_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(libnull_vfd_plugin_la_LINK) $(am_libnull_vfd_plugin_la_rpath) $(libnull_vfd_plugin_la_OBJECTS) $(libnull_vfd_plugin_la_LIBADD) $(LIBS)
@@ -2277,6 +2399,10 @@ mt_id_test$(EXEEXT): $(mt_id_test_OBJECTS) $(mt_id_test_DEPENDENCIES) $(EXTRA_mt
 	@rm -f mt_id_test$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(mt_id_test_OBJECTS) $(mt_id_test_LDADD) $(LIBS)
 
+mt_prop_test$(EXEEXT): $(mt_prop_test_OBJECTS) $(mt_prop_test_DEPENDENCIES) $(EXTRA_mt_prop_test_DEPENDENCIES) 
+	@rm -f mt_prop_test$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(mt_prop_test_OBJECTS) $(mt_prop_test_LDADD) $(LIBS)
+
 mtime$(EXEEXT): $(mtime_OBJECTS) $(mtime_DEPENDENCIES) $(EXTRA_mtime_DEPENDENCIES) 
 	@rm -f mtime$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(mtime_OBJECTS) $(mtime_LDADD) $(LIBS)
@@ -2463,10 +2589,13 @@ vol_plugin$(EXEEXT): $(vol_plugin_OBJECTS) $(vol_plugin_DEPENDENCIES) $(EXTRA_vo
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
+	-rm -f ../src/*.$(OBJEXT)
+	-rm -f ../src/*.lo
 
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@../src/$(DEPDIR)/H5VLpassthru.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/accum.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/accum_swmr_reader.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/app_ref.Po@am__quote@ # am--include-marker
@@ -2556,6 +2685,10 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mirror_vfd.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mount.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mt_id_test.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mt_native_wrapper_vol_connector.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mt_passthru_wrapper_vol_connector.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mt_prop_test.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mt_vl_test_vol_connector.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mtime.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ntypes.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/null_vfd_plugin.Plo@am__quote@ # am--include-marker
@@ -2673,15 +2806,63 @@ mostlyclean-libtool:
 
 clean-libtool:
 	-rm -rf .libs _libs
+	-rm -rf ../src/.libs ../src/_libs
+
+# This directory's subdirectories are mostly independent; you can cd
+# into them and run 'make' without going through this Makefile.
+# To change the values of 'make' variables: instead of editing Makefiles,
+# (1) if the variable is set in 'config.status', edit 'config.status'
+#     (which will cause the Makefiles to be regenerated when you run 'make');
+# (2) otherwise, pass the desired values on the 'make' command line.
+$(am__recursive_targets):
+	@fail=; \
+	if $(am__make_keepgoing); then \
+	  failcom='fail=yes'; \
+	else \
+	  failcom='exit 1'; \
+	fi; \
+	dot_seen=no; \
+	target=`echo $@ | sed s/-recursive//`; \
+	case "$@" in \
+	  distclean-* | maintainer-clean-*) list='$(DIST_SUBDIRS)' ;; \
+	  *) list='$(SUBDIRS)' ;; \
+	esac; \
+	for subdir in $$list; do \
+	  echo "Making $$target in $$subdir"; \
+	  if test "$$subdir" = "."; then \
+	    dot_seen=yes; \
+	    local_target="$$target-am"; \
+	  else \
+	    local_target="$$target"; \
+	  fi; \
+	  ($(am__cd) $$subdir && $(MAKE) $(AM_MAKEFLAGS) $$local_target) \
+	  || eval $$failcom; \
+	done; \
+	if test "$$dot_seen" = "no"; then \
+	  $(MAKE) $(AM_MAKEFLAGS) "$$target-am" || exit 1; \
+	fi; test -z "$$fail"
 
 ID: $(am__tagged_files)
 	$(am__define_uniq_tagged_files); mkid -fID $$unique
-tags: tags-am
+tags: tags-recursive
 TAGS: tags
 
 tags-am: $(TAGS_DEPENDENCIES) $(am__tagged_files)
 	set x; \
 	here=`pwd`; \
+	if ($(ETAGS) --etags-include --version) >/dev/null 2>&1; then \
+	  include_option=--etags-include; \
+	  empty_fix=.; \
+	else \
+	  include_option=--include; \
+	  empty_fix=; \
+	fi; \
+	list='$(SUBDIRS)'; for subdir in $$list; do \
+	  if test "$$subdir" = .; then :; else \
+	    test ! -f $$subdir/TAGS || \
+	      set "$$@" "$$include_option=$$here/$$subdir/TAGS"; \
+	  fi; \
+	done; \
 	$(am__define_uniq_tagged_files); \
 	shift; \
 	if test -z "$(ETAGS_ARGS)$$*$$unique"; then :; else \
@@ -2694,7 +2875,7 @@ tags-am: $(TAGS_DEPENDENCIES) $(am__tagged_files)
 	      $$unique; \
 	  fi; \
 	fi
-ctags: ctags-am
+ctags: ctags-recursive
 
 CTAGS: ctags
 ctags-am: $(TAGS_DEPENDENCIES) $(am__tagged_files)
@@ -2707,7 +2888,7 @@ GTAGS:
 	here=`$(am__cd) $(top_builddir) && pwd` \
 	  && $(am__cd) $(top_srcdir) \
 	  && gtags -i $(GTAGS_ARGS) "$$here"
-cscopelist: cscopelist-am
+cscopelist: cscopelist-recursive
 
 cscopelist-am: $(am__tagged_files)
 	list='$(am__tagged_files)'; \
@@ -3367,6 +3548,13 @@ mt_id_test.log: mt_id_test$(EXEEXT)
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
+mt_prop_test.log: mt_prop_test$(EXEEXT)
+	@p='mt_prop_test$(EXEEXT)'; \
+	b='mt_prop_test'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
 .sh.log:
 	@p='$<'; \
 	$(am__set_b); \
@@ -3414,21 +3602,47 @@ distdir-am: $(DISTFILES)
 	    || exit 1; \
 	  fi; \
 	done
+	@list='$(DIST_SUBDIRS)'; for subdir in $$list; do \
+	  if test "$$subdir" = .; then :; else \
+	    $(am__make_dryrun) \
+	      || test -d "$(distdir)/$$subdir" \
+	      || $(MKDIR_P) "$(distdir)/$$subdir" \
+	      || exit 1; \
+	    dir1=$$subdir; dir2="$(distdir)/$$subdir"; \
+	    $(am__relativize); \
+	    new_distdir=$$reldir; \
+	    dir1=$$subdir; dir2="$(top_distdir)"; \
+	    $(am__relativize); \
+	    new_top_distdir=$$reldir; \
+	    echo " (cd $$subdir && $(MAKE) $(AM_MAKEFLAGS) top_distdir="$$new_top_distdir" distdir="$$new_distdir" \\"; \
+	    echo "     am__remove_distdir=: am__skip_length_check=: am__skip_mode_fix=: distdir)"; \
+	    ($(am__cd) $$subdir && \
+	      $(MAKE) $(AM_MAKEFLAGS) \
+	        top_distdir="$$new_top_distdir" \
+	        distdir="$$new_distdir" \
+		am__remove_distdir=: \
+		am__skip_length_check=: \
+		am__skip_mode_fix=: \
+	        distdir) \
+	      || exit 1; \
+	  fi; \
+	done
 check-am: all-am
 	$(MAKE) $(AM_MAKEFLAGS) $(check_PROGRAMS) $(check_SCRIPTS)
 	$(MAKE) $(AM_MAKEFLAGS) check-TESTS
-check: check-am
+check: check-recursive
 all-am: Makefile $(PROGRAMS) $(LTLIBRARIES) all-local
-installdirs:
-install: install-am
-install-exec: install-exec-am
-install-data: install-data-am
-uninstall: uninstall-am
+installdirs: installdirs-recursive
+installdirs-am:
+install: install-recursive
+install-exec: install-exec-recursive
+install-data: install-data-recursive
+uninstall: uninstall-recursive
 
 install-am: all-am
 	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
 
-installcheck: installcheck-am
+installcheck: installcheck-recursive
 install-strip:
 	if test -z '$(STRIP)'; then \
 	  $(MAKE) $(AM_MAKEFLAGS) INSTALL_PROGRAM="$(INSTALL_STRIP_PROGRAM)" \
@@ -3449,18 +3663,21 @@ clean-generic:
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
+	-rm -f ../src/$(DEPDIR)/$(am__dirstamp)
+	-rm -f ../src/$(am__dirstamp)
 	-test -z "$(DISTCLEANFILES)" || rm -f $(DISTCLEANFILES)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
-clean: clean-am
+clean: clean-recursive
 
 clean-am: clean-checkPROGRAMS clean-generic clean-libtool \
 	clean-noinstLTLIBRARIES clean-noinstPROGRAMS mostlyclean-am
 
-distclean: distclean-am
-		-rm -f ./$(DEPDIR)/accum.Po
+distclean: distclean-recursive
+		-rm -f ../src/$(DEPDIR)/H5VLpassthru.Plo
+	-rm -f ./$(DEPDIR)/accum.Po
 	-rm -f ./$(DEPDIR)/accum_swmr_reader.Po
 	-rm -f ./$(DEPDIR)/app_ref.Po
 	-rm -f ./$(DEPDIR)/atomic_reader.Po
@@ -3549,6 +3766,10 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/mirror_vfd.Po
 	-rm -f ./$(DEPDIR)/mount.Po
 	-rm -f ./$(DEPDIR)/mt_id_test.Po
+	-rm -f ./$(DEPDIR)/mt_native_wrapper_vol_connector.Plo
+	-rm -f ./$(DEPDIR)/mt_passthru_wrapper_vol_connector.Plo
+	-rm -f ./$(DEPDIR)/mt_prop_test.Po
+	-rm -f ./$(DEPDIR)/mt_vl_test_vol_connector.Plo
 	-rm -f ./$(DEPDIR)/mtime.Po
 	-rm -f ./$(DEPDIR)/ntypes.Po
 	-rm -f ./$(DEPDIR)/null_vfd_plugin.Plo
@@ -3634,48 +3855,49 @@ distclean: distclean-am
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
 
-dvi: dvi-am
+dvi: dvi-recursive
 
 dvi-am:
 
-html: html-am
+html: html-recursive
 
 html-am:
 
-info: info-am
+info: info-recursive
 
 info-am:
 
 install-data-am:
 
-install-dvi: install-dvi-am
+install-dvi: install-dvi-recursive
 
 install-dvi-am:
 
 install-exec-am:
 
-install-html: install-html-am
+install-html: install-html-recursive
 
 install-html-am:
 
-install-info: install-info-am
+install-info: install-info-recursive
 
 install-info-am:
 
 install-man:
 
-install-pdf: install-pdf-am
+install-pdf: install-pdf-recursive
 
 install-pdf-am:
 
-install-ps: install-ps-am
+install-ps: install-ps-recursive
 
 install-ps-am:
 
 installcheck-am:
 
-maintainer-clean: maintainer-clean-am
-		-rm -f ./$(DEPDIR)/accum.Po
+maintainer-clean: maintainer-clean-recursive
+		-rm -f ../src/$(DEPDIR)/H5VLpassthru.Plo
+	-rm -f ./$(DEPDIR)/accum.Po
 	-rm -f ./$(DEPDIR)/accum_swmr_reader.Po
 	-rm -f ./$(DEPDIR)/app_ref.Po
 	-rm -f ./$(DEPDIR)/atomic_reader.Po
@@ -3764,6 +3986,10 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/mirror_vfd.Po
 	-rm -f ./$(DEPDIR)/mount.Po
 	-rm -f ./$(DEPDIR)/mt_id_test.Po
+	-rm -f ./$(DEPDIR)/mt_native_wrapper_vol_connector.Plo
+	-rm -f ./$(DEPDIR)/mt_passthru_wrapper_vol_connector.Plo
+	-rm -f ./$(DEPDIR)/mt_prop_test.Po
+	-rm -f ./$(DEPDIR)/mt_vl_test_vol_connector.Plo
 	-rm -f ./$(DEPDIR)/mtime.Po
 	-rm -f ./$(DEPDIR)/ntypes.Po
 	-rm -f ./$(DEPDIR)/null_vfd_plugin.Plo
@@ -3848,34 +4074,35 @@ maintainer-clean: maintainer-clean-am
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
-mostlyclean: mostlyclean-am
+mostlyclean: mostlyclean-recursive
 
 mostlyclean-am: mostlyclean-compile mostlyclean-generic \
 	mostlyclean-libtool mostlyclean-local
 
-pdf: pdf-am
+pdf: pdf-recursive
 
 pdf-am:
 
-ps: ps-am
+ps: ps-recursive
 
 ps-am:
 
 uninstall-am:
 
-.MAKE: check-am install-am install-strip
+.MAKE: $(am__recursive_targets) check-am install-am install-strip
 
-.PHONY: CTAGS GTAGS TAGS all all-am all-local am--depfiles check \
-	check-TESTS check-am clean clean-checkPROGRAMS clean-generic \
-	clean-libtool clean-noinstLTLIBRARIES clean-noinstPROGRAMS \
-	cscopelist-am ctags ctags-am distclean distclean-compile \
-	distclean-generic distclean-libtool distclean-tags distdir dvi \
-	dvi-am html html-am info info-am install install-am \
-	install-data install-data-am install-dvi install-dvi-am \
-	install-exec install-exec-am install-html install-html-am \
-	install-info install-info-am install-man install-pdf \
-	install-pdf-am install-ps install-ps-am install-strip \
-	installcheck installcheck-am installdirs maintainer-clean \
+.PHONY: $(am__recursive_targets) CTAGS GTAGS TAGS all all-am all-local \
+	am--depfiles check check-TESTS check-am clean \
+	clean-checkPROGRAMS clean-generic clean-libtool \
+	clean-noinstLTLIBRARIES clean-noinstPROGRAMS cscopelist-am \
+	ctags ctags-am distclean distclean-compile distclean-generic \
+	distclean-libtool distclean-tags distdir dvi dvi-am html \
+	html-am info info-am install install-am install-data \
+	install-data-am install-dvi install-dvi-am install-exec \
+	install-exec-am install-html install-html-am install-info \
+	install-info-am install-man install-pdf install-pdf-am \
+	install-ps install-ps-am install-strip installcheck \
+	installcheck-am installdirs installdirs-am maintainer-clean \
 	maintainer-clean-generic mostlyclean mostlyclean-compile \
 	mostlyclean-generic mostlyclean-libtool mostlyclean-local pdf \
 	pdf-am ps ps-am recheck tags tags-am uninstall uninstall-am
@@ -3906,7 +4133,8 @@ help:
 @HAVE_SHARED_CONDITIONAL_TRUE@  # VOL plugin test libraries
 @HAVE_SHARED_CONDITIONAL_TRUE@  #
 @HAVE_SHARED_CONDITIONAL_TRUE@  # null_vol_connector is used for testing basic VOL plugin functionality.
-
+@HAVE_SHARED_CONDITIONAL_TRUE@  # mt_vl_test_vol_connector is used for testing the H5VL module's internals
+@HAVE_SHARED_CONDITIONAL_TRUE@  # mt_native_wrapper_vol_connector and mt_passthru_wrapper_connector are used for testing the H5VL module with real operations
 @HAVE_SHARED_CONDITIONAL_FALSE@  # The libh5test library provides common support code for the tests.
 
 # Additional target for running timing test

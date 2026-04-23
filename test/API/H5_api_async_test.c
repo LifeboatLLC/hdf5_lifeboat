@@ -261,7 +261,6 @@ test_one_dataset_io(TestParams_t *params)
     if (H5ESclose(es_id) < 0)
         TESTFRAME_TEST_ERROR(params);
 
-
     return SUCCEED;
 
 error:
@@ -335,8 +334,7 @@ test_multi_dataset_io(TestParams_t *params)
                     wbuf[i][j][k] = 6 * 10 * i + 10 * j + k;
 
             /* Write the dataset asynchronously */
-            if (H5Dwrite_async(dset_id[i], H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, wbuf[i],
-                               es_id) < 0)
+            if (H5Dwrite_async(dset_id[i], H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, wbuf[i], es_id) < 0)
                 TESTFRAME_TEST_ERROR(params);
         } /* end for */
 
@@ -348,8 +346,7 @@ test_multi_dataset_io(TestParams_t *params)
         /* Loop over datasets */
         for (i = 0; i < 5; i++) {
             /* Read the dataset asynchronously */
-            if (H5Dread_async(dset_id[i], H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, rbuf[i], es_id) <
-                    0)
+            if (H5Dread_async(dset_id[i], H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, rbuf[i], es_id) < 0)
                 TESTFRAME_TEST_ERROR(params);
         } /* end for */
 
@@ -409,8 +406,7 @@ test_multi_dataset_io(TestParams_t *params)
                     wbuf[i][j][k] += 5 * 6 * 10;
 
             /* Write the dataset asynchronously */
-            if (H5Dwrite_async(dset_id[0], H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, wbuf[i],
-                               es_id) < 0)
+            if (H5Dwrite_async(dset_id[0], H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, wbuf[i], es_id) < 0)
                 TESTFRAME_TEST_ERROR(params);
 
             /* Close the dataset asynchronously */
@@ -433,8 +429,7 @@ test_multi_dataset_io(TestParams_t *params)
                 TESTFRAME_TEST_ERROR(params);
 
             /* Read the dataset asynchronously */
-            if (H5Dread_async(dset_id[0], H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, rbuf[i], es_id) <
-                    0)
+            if (H5Dread_async(dset_id[0], H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, rbuf[i], es_id) < 0)
                 TESTFRAME_TEST_ERROR(params);
 
             /* Close the dataset asynchronously */
@@ -550,8 +545,7 @@ test_multi_file_dataset_io(TestParams_t *params)
             snprintf(file_name, sizeof(file_name), ASYNC_API_TEST_FILE_PRINTF, i);
 
             /* Create file asynchronously */
-            if ((file_id[i] =
-                    H5Fcreate_async(file_name, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT, es_id)) < 0)
+            if ((file_id[i] = H5Fcreate_async(file_name, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT, es_id)) < 0)
                 TESTFRAME_TEST_ERROR(params);
             if (i > max_printf_file)
                 max_printf_file = i;
@@ -568,8 +562,7 @@ test_multi_file_dataset_io(TestParams_t *params)
                     wbuf[i][j][k] = 6 * 10 * i + 10 * j + k;
 
             /* Write the dataset asynchronously */
-            if (H5Dwrite_async(dset_id[i], H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, wbuf[i],
-                               es_id) < 0)
+            if (H5Dwrite_async(dset_id[i], H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, wbuf[i], es_id) < 0)
                 TESTFRAME_TEST_ERROR(params);
         } /* end for */
 
@@ -581,8 +574,7 @@ test_multi_file_dataset_io(TestParams_t *params)
                 TESTFRAME_TEST_ERROR(params);
 
             /* Read the dataset asynchronously */
-            if (H5Dread_async(dset_id[i], H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, rbuf[i], es_id) <
-                    0)
+            if (H5Dread_async(dset_id[i], H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, rbuf[i], es_id) < 0)
                 TESTFRAME_TEST_ERROR(params);
         } /* end for */
 
@@ -622,8 +614,7 @@ test_multi_file_dataset_io(TestParams_t *params)
                     wbuf[i][j][k] += 5 * 6 * 10;
 
             /* Write the dataset asynchronously */
-            if (H5Dwrite_async(dset_id[0], H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, wbuf[i],
-                               es_id) < 0)
+            if (H5Dwrite_async(dset_id[0], H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, wbuf[i], es_id) < 0)
                 TESTFRAME_TEST_ERROR(params);
 
             /* Close the dataset asynchronously */
@@ -643,8 +634,7 @@ test_multi_file_dataset_io(TestParams_t *params)
                 TESTFRAME_TEST_ERROR(params);
 
             /* Read the dataset asynchronously */
-            if (H5Dread_async(dset_id[0], H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, rbuf[i], es_id) <
-                    0)
+            if (H5Dread_async(dset_id[0], H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, rbuf[i], es_id) < 0)
                 TESTFRAME_TEST_ERROR(params);
 
             /* Close the dataset asynchronously */
@@ -695,8 +685,7 @@ test_multi_file_dataset_io(TestParams_t *params)
                     wbuf[i][j][k] += 5 * 6 * 10;
 
             /* Write the dataset asynchronously */
-            if (H5Dwrite_async(dset_id[0], H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, wbuf[i],
-                               es_id) < 0)
+            if (H5Dwrite_async(dset_id[0], H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, wbuf[i], es_id) < 0)
                 TESTFRAME_TEST_ERROR(params);
 
             /* Close the dataset asynchronously */
@@ -728,8 +717,7 @@ test_multi_file_dataset_io(TestParams_t *params)
                 TESTFRAME_TEST_ERROR(params);
 
             /* Read the dataset asynchronously */
-            if (H5Dread_async(dset_id[0], H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, rbuf[i], es_id) <
-                    0)
+            if (H5Dread_async(dset_id[0], H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, rbuf[i], es_id) < 0)
                 TESTFRAME_TEST_ERROR(params);
 
             /* Close the dataset asynchronously */
@@ -830,20 +818,18 @@ test_multi_file_grp_dset_io(TestParams_t *params)
             snprintf(file_name, sizeof(file_name), ASYNC_API_TEST_FILE_PRINTF, i);
 
             /* Create file asynchronously */
-            if ((file_id = H5Fcreate_async(file_name, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT, es_id)) <
-                    0)
+            if ((file_id = H5Fcreate_async(file_name, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT, es_id)) < 0)
                 TESTFRAME_TEST_ERROR(params);
             if (i > max_printf_file)
                 max_printf_file = i;
 
             /* Create the group asynchronously */
-            if ((grp_id = H5Gcreate_async(file_id, "grp", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT, es_id)) <
-                    0)
+            if ((grp_id = H5Gcreate_async(file_id, "grp", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT, es_id)) < 0)
                 TESTFRAME_TEST_ERROR(params);
 
             /* Create the dataset asynchronously */
-            if ((dset_id = H5Dcreate_async(grp_id, "dset", H5T_NATIVE_INT, space_id, H5P_DEFAULT,
-                                           H5P_DEFAULT, H5P_DEFAULT, es_id)) < 0)
+            if ((dset_id = H5Dcreate_async(grp_id, "dset", H5T_NATIVE_INT, space_id, H5P_DEFAULT, H5P_DEFAULT,
+                                           H5P_DEFAULT, es_id)) < 0)
                 TESTFRAME_TEST_ERROR(params);
 
             /* Initialize wbuf.  Must use a new slice of wbuf for each dset
@@ -853,8 +839,7 @@ test_multi_file_grp_dset_io(TestParams_t *params)
                     wbuf[i][j][k] = 6 * 10 * i + 10 * j + k;
 
             /* Write the dataset asynchronously */
-            if (H5Dwrite_async(dset_id, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, wbuf[i], es_id) <
-                    0)
+            if (H5Dwrite_async(dset_id, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, wbuf[i], es_id) < 0)
                 TESTFRAME_TEST_ERROR(params);
 
             /* Close the dataset asynchronously */
@@ -935,20 +920,18 @@ test_multi_file_grp_dset_io(TestParams_t *params)
             snprintf(file_name, sizeof(file_name), ASYNC_API_TEST_FILE_PRINTF, i);
 
             /* Create file asynchronously */
-            if ((file_id = H5Fcreate_async(file_name, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT, es_id)) <
-                    0)
+            if ((file_id = H5Fcreate_async(file_name, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT, es_id)) < 0)
                 TESTFRAME_TEST_ERROR(params);
             if (i > max_printf_file)
                 max_printf_file = i;
 
             /* Create the group asynchronously */
-            if ((grp_id = H5Gcreate_async(file_id, "grp", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT, es_id)) <
-                    0)
+            if ((grp_id = H5Gcreate_async(file_id, "grp", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT, es_id)) < 0)
                 TESTFRAME_TEST_ERROR(params);
 
             /* Create the dataset asynchronously */
-            if ((dset_id = H5Dcreate_async(grp_id, "dset", H5T_NATIVE_INT, space_id, H5P_DEFAULT,
-                                           H5P_DEFAULT, H5P_DEFAULT, es_id)) < 0)
+            if ((dset_id = H5Dcreate_async(grp_id, "dset", H5T_NATIVE_INT, space_id, H5P_DEFAULT, H5P_DEFAULT,
+                                           H5P_DEFAULT, es_id)) < 0)
                 TESTFRAME_TEST_ERROR(params);
 
             /* Update wbuf */
@@ -957,8 +940,7 @@ test_multi_file_grp_dset_io(TestParams_t *params)
                     wbuf[i][j][k] += 5 * 6 * 10;
 
             /* Write the dataset asynchronously */
-            if (H5Dwrite_async(dset_id, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, wbuf[i], es_id) <
-                    0)
+            if (H5Dwrite_async(dset_id, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, wbuf[i], es_id) < 0)
                 TESTFRAME_TEST_ERROR(params);
 
             /* Close the dataset asynchronously */
@@ -1080,9 +1062,9 @@ test_set_extent(TestParams_t *params)
     hid_t   file_id       = H5I_INVALID_HID;
     hid_t   dset_id       = H5I_INVALID_HID;
     hid_t   fspace_id[6]  = {H5I_INVALID_HID, H5I_INVALID_HID, H5I_INVALID_HID,
-                             H5I_INVALID_HID, H5I_INVALID_HID, H5I_INVALID_HID};
+                          H5I_INVALID_HID, H5I_INVALID_HID, H5I_INVALID_HID};
     hid_t   fspace_out[6] = {H5I_INVALID_HID, H5I_INVALID_HID, H5I_INVALID_HID,
-                             H5I_INVALID_HID, H5I_INVALID_HID, H5I_INVALID_HID};
+                           H5I_INVALID_HID, H5I_INVALID_HID, H5I_INVALID_HID};
     hid_t   mspace_id     = H5I_INVALID_HID;
     hid_t   dcpl_id       = H5I_INVALID_HID;
     hid_t   es_id         = H5I_INVALID_HID;
@@ -1357,7 +1339,8 @@ test_attribute_exists(TestParams_t *params)
 
     /* Check if H5Aexists returned the correct values */
     if (exists1)
-        TESTFRAME_FAIL_PUTS_ERROR(params, "    H5Aexists returned true for an attribute that should not exist");
+        TESTFRAME_FAIL_PUTS_ERROR(params,
+                                  "    H5Aexists returned true for an attribute that should not exist");
     if (!exists2)
         TESTFRAME_FAIL_PUTS_ERROR(params, "    H5Aexists returned false for an attribute that should exist");
 
@@ -2519,7 +2502,7 @@ test_file_cleanup(TestParams_t H5_ATTR_UNUSED *params)
     int  i;
 
     /* Don't try to remove test files if this connector doesn't support file creation */
-    if (!(vol_cap_flags_g & H5VL_CAP_FLAG_ASYNC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_FILE_BASIC) ) {
+    if (!(vol_cap_flags_g & H5VL_CAP_FLAG_ASYNC) || !(vol_cap_flags_g & H5VL_CAP_FLAG_FILE_BASIC)) {
         printf("    API functions for basic file, dataset, or flush aren't supported with this connector\n");
         return SKIP;
     }
@@ -2539,38 +2522,36 @@ H5_api_async_test_add(void)
 {
     uint64_t testframe_flags = ALLOW_MULTITHREAD;
 
-    AddTest("test_one_dataset_io", test_one_dataset_io, NULL, NULL, NULL, 0,
-            testframe_flags, "single dataset I/O");
+    AddTest("test_one_dataset_io", test_one_dataset_io, NULL, NULL, NULL, 0, testframe_flags,
+            "single dataset I/O");
 
     /* Add a header to the first async test to distinguish different test interfaces */
     AddTestHeaderFunc("test_one_dataset_io", print_async_test_header);
 
-    AddTest("test_multi_dataset_io", test_multi_dataset_io, NULL, NULL, NULL, 0,
-            testframe_flags, "multi dataset I/O");
-    AddTest("test_multi_file_dataset_io", test_multi_file_dataset_io, NULL, NULL, NULL, 0,
-            testframe_flags, "multi file dataset I/O");
-    AddTest("test_multi_file_grp_dset_io", test_multi_file_grp_dset_io, NULL, NULL, NULL, 0,
-            testframe_flags, "multi file dataset I/O with groups");
+    AddTest("test_multi_dataset_io", test_multi_dataset_io, NULL, NULL, NULL, 0, testframe_flags,
+            "multi dataset I/O");
+    AddTest("test_multi_file_dataset_io", test_multi_file_dataset_io, NULL, NULL, NULL, 0, testframe_flags,
+            "multi file dataset I/O");
+    AddTest("test_multi_file_grp_dset_io", test_multi_file_grp_dset_io, NULL, NULL, NULL, 0, testframe_flags,
+            "multi file dataset I/O with groups");
     AddTest("test_set_extent", test_set_extent, NULL, NULL, NULL, 0, testframe_flags,
             "H5Dset_extent() and H5Dget_space()");
     AddTest("test_attribute_exists", test_attribute_exists, NULL, NULL, NULL, 0, testframe_flags,
             "H5Aexists()");
-    AddTest("test_attribute_io", test_attribute_io, NULL, NULL, NULL, 0, testframe_flags,
-            "attribute I/O");
-    AddTest("test_attribute_io_tconv", test_attribute_io_tconv, NULL, NULL, NULL, 0,
-            testframe_flags, "attribute I/O with type conversion");
-    AddTest("test_attribute_io_compound", test_attribute_io_compound, NULL, NULL, NULL, 0,
-            testframe_flags, "attribute I/O with compound type conversion");
+    AddTest("test_attribute_io", test_attribute_io, NULL, NULL, NULL, 0, testframe_flags, "attribute I/O");
+    AddTest("test_attribute_io_tconv", test_attribute_io_tconv, NULL, NULL, NULL, 0, testframe_flags,
+            "attribute I/O with type conversion");
+    AddTest("test_attribute_io_compound", test_attribute_io_compound, NULL, NULL, NULL, 0, testframe_flags,
+            "attribute I/O with compound type conversion");
     AddTest("test_group", test_group, NULL, NULL, NULL, 0, testframe_flags, "group operations");
     AddTest("test_link", test_link, NULL, NULL, NULL, 0, testframe_flags, "link operations");
-    AddTest("test_ocopy_orefresh", test_ocopy_orefresh, NULL, NULL, NULL, 0,
-            testframe_flags, "H5Ocopy() and H5Orefresh()");
-    AddTest("test_file_reopen", test_file_reopen, NULL, NULL, NULL, 0, testframe_flags,
-            "H5Freopen()");
+    AddTest("test_ocopy_orefresh", test_ocopy_orefresh, NULL, NULL, NULL, 0, testframe_flags,
+            "H5Ocopy() and H5Orefresh()");
+    AddTest("test_file_reopen", test_file_reopen, NULL, NULL, NULL, 0, testframe_flags, "H5Freopen()");
 
     /* Add a fake test to cleanup test files due to current test interdependencies */
-    AddTest("test_file_cleanup", test_file_cleanup, NULL, NULL, NULL, 0,
-            testframe_flags, "cleanup test files");
+    AddTest("test_file_cleanup", test_file_cleanup, NULL, NULL, NULL, 0, testframe_flags,
+            "cleanup test files");
 }
 
 #else /* H5_API_TEST_HAVE_ASYNC */

@@ -10,12 +10,12 @@
  *
  * lfht_add
  *
- * Insert a node with the supplied id and value into the indicated lock 
- * free hash table.  Fail and return false if the hash table already 
+ * Insert a node with the supplied id and value into the indicated lock
+ * free hash table.  Fail and return false if the hash table already
  * contains already contains a node with the supplied id. Observe that
  * this implies that the hash generated from the id is unique within
- * the range of valid ids.  
- * 
+ * the range of valid ids.
+ *
  * Return true on success.
  *
  *                                           JRM -- 6/30/23
@@ -26,21 +26,22 @@
  *
  ************************************************************************/
 
-bool lfht_add(struct lfht_t * lfht_ptr, unsigned long long int id, void * value)
+bool
+lfht_add(struct lfht_t *lfht_ptr, unsigned long long int id, void *value)
 {
-    bool success;
-    int index_bits;
-    unsigned long long curr_buckets_defined;
-    unsigned long long new_buckets_defined;
+    bool                   success;
+    int                    index_bits;
+    unsigned long long     curr_buckets_defined;
+    unsigned long long     new_buckets_defined;
     unsigned long long int hash;
-    struct lfht_node_t * bucket_head_ptr;
-    struct lfht_fl_node_t * fl_node_ptr = NULL;
+    struct lfht_node_t    *bucket_head_ptr;
+    struct lfht_fl_node_t *fl_node_ptr = NULL;
 
     assert(lfht_ptr);
     assert(LFHT_VALID == lfht_ptr->tag);
 #ifdef H5_HAVE_MULTITHREAD
     assert((id & ID_MASK) <= LFHT__MAX_ID);
-#else /* H5_HAVE_MULTITHREAD */
+#else  /* H5_HAVE_MULTITHREAD */
     assert(id <= LFHT__MAX_ID);
 #endif /* H5_HAVE_MULTITHREAD */
 
@@ -48,7 +49,7 @@ bool lfht_add(struct lfht_t * lfht_ptr, unsigned long long int id, void * value)
 
 #ifdef H5_HAVE_MULTITHREAD
     hash = lfht_id_to_hash((id & ID_MASK), false);
-#else /* H5_HAVE_MULTITHREAD */
+#else  /* H5_HAVE_MULTITHREAD */
     hash = lfht_id_to_hash(id, false);
 #endif /* H5_HAVE_MULTITHREAD */
 
@@ -56,63 +57,63 @@ bool lfht_add(struct lfht_t * lfht_ptr, unsigned long long int id, void * value)
 
     success = lfht_add_internal(lfht_ptr, bucket_head_ptr, id, hash, false, value, NULL);
 
-    /* test to see if the logical length of the LFSLL has increased to 
+    /* test to see if the logical length of the LFSLL has increased to
      * the point that we should double the (logical) size of the bucket
-     * index.  If so, increment the index_bits and buckets_defined 
+     * index.  If so, increment the index_bits and buckets_defined
      * fields accordingly.
      */
 
-    index_bits = atomic_load(&(lfht_ptr->index_bits));
+    index_bits           = atomic_load(&(lfht_ptr->index_bits));
     curr_buckets_defined = 0x01ULL << index_bits;
 
-    if ( index_bits < lfht_ptr->max_index_bits ) {
+    if (index_bits < lfht_ptr->max_index_bits) {
 
-        if ( (atomic_load(&(lfht_ptr->lfsll_log_len)) / curr_buckets_defined) >= 8 ) {
+        if ((atomic_load(&(lfht_ptr->lfsll_log_len)) / curr_buckets_defined) >= 8) {
 
-            /* attempt to increment lfht_ptr->index_bits and lfht_buckets_defined.  Must do 
-             * this with a compare and exchange, as it is likely that other threads will be 
+            /* attempt to increment lfht_ptr->index_bits and lfht_buckets_defined.  Must do
+             * this with a compare and exchange, as it is likely that other threads will be
              * attempting to do the same thing at more or less the same time.
              *
-             * Do nothing if the compare and exchange fails, as that only means that 
+             * Do nothing if the compare and exchange fails, as that only means that
              * another thread beat us to it.
              *
              * However, do collect stats.
              */
 
-            if ( atomic_compare_exchange_strong(&(lfht_ptr->index_bits), &index_bits, index_bits + 1) ) {
+            if (atomic_compare_exchange_strong(&(lfht_ptr->index_bits), &index_bits, index_bits + 1)) {
 
                 /* set of lfht_ptr->index_bits succeeded -- must update lfht_ptr->buckets_defined
-                 * as well.  As it is possible that this update could be interleaved with another 
-                 * index_bits increment, this can get somewhat involved.  
+                 * as well.  As it is possible that this update could be interleaved with another
+                 * index_bits increment, this can get somewhat involved.
                  *
                  * For the first pass, use the computed current and new value for buckets defined
                  * in the call to atomic_compare_exchange_strong(). If this succeeds, we are done.
                  *
-                 * Otherwise, load the current values of lfht_ptr->index_bits and 
-                 * lfht_ptr->buckets_defined, and compute what lfht_ptr->buckets_defined should 
-                 * be given the current value of lfht_ptr->index_bits.  If the two values 
-                 * match, or if the actual value is greater than the computed value, we are 
+                 * Otherwise, load the current values of lfht_ptr->index_bits and
+                 * lfht_ptr->buckets_defined, and compute what lfht_ptr->buckets_defined should
+                 * be given the current value of lfht_ptr->index_bits.  If the two values
+                 * match, or if the actual value is greater than the computed value, we are
                  * done.
                  *
-                 * If not, call atomic_compare_exchange_strong() again to correct the value 
+                 * If not, call atomic_compare_exchange_strong() again to correct the value
                  * of lfht_ptr->buckets_defined, and repeat as necessary.
                  */
 
                 bool first = true;
-                bool done = false;
+                bool done  = false;
 
                 new_buckets_defined = curr_buckets_defined << 1;
 
                 do {
 
-                    if ( atomic_compare_exchange_strong(&(lfht_ptr->buckets_defined), &curr_buckets_defined,
-                                                        new_buckets_defined) ) {
+                    if (atomic_compare_exchange_strong(&(lfht_ptr->buckets_defined), &curr_buckets_defined,
+                                                       new_buckets_defined)) {
 
                         done = true;
+                    }
+                    else {
 
-                    } else {
-
-                        if ( first ) {
+                        if (first) {
 
                             first = false;
                             atomic_fetch_add(&(lfht_ptr->buckets_defined_update_cols), 1);
@@ -126,17 +127,18 @@ bool lfht_add(struct lfht_t * lfht_ptr, unsigned long long int id, void * value)
 
                         curr_buckets_defined = atomic_load(&(lfht_ptr->buckets_defined));
 
-                        if ( curr_buckets_defined >= new_buckets_defined ) {
+                        if (curr_buckets_defined >= new_buckets_defined) {
 
                             done = true;
-
-                        } else {
+                        }
+                        else {
 
                             atomic_fetch_add(&(lfht_ptr->buckets_defined_update_retries), 1);
                         }
                     }
-                } while ( ! done );
-            } else {
+                } while (!done);
+            }
+            else {
 
                 atomic_fetch_add(&(lfht_ptr->index_bits_incr_cols), 1);
             }
@@ -145,10 +147,9 @@ bool lfht_add(struct lfht_t * lfht_ptr, unsigned long long int id, void * value)
 
     lfht_exit(lfht_ptr, fl_node_ptr);
 
-    return(success);
+    return (success);
 
 } /* lfht_add() */
-
 
 /************************************************************************
  *
@@ -156,24 +157,24 @@ bool lfht_add(struct lfht_t * lfht_ptr, unsigned long long int id, void * value)
  *
  * **** INTERNAL USE ONLY - DO NOT CALL FROM OUTSIDE THE LFHT ****
  *
- * Intenal function to insert a node with the supplied value into the 
+ * Intenal function to insert a node with the supplied value into the
  * lock free singly linked list of the indicated lock free hash table.
  *
- * New entries are inserted into the LFSLL in increasing value order, 
- * using the sentinel node supplied in bucket_head_ptr as the starting 
- * point of the search for the target insertion point.  
+ * New entries are inserted into the LFSLL in increasing value order,
+ * using the sentinel node supplied in bucket_head_ptr as the starting
+ * point of the search for the target insertion point.
  *
- * The function will fail and return false if the LFSLL already contains 
- * a node with the supplied hash value.  
+ * The function will fail and return false if the LFSLL already contains
+ * a node with the supplied hash value.
  *
- * On success, the function will return true.  If the new_node_ptr_ptr 
- * parameter is not NULL, it will also set *new_node_ptr_ptr to point 
+ * On success, the function will return true.  If the new_node_ptr_ptr
+ * parameter is not NULL, it will also set *new_node_ptr_ptr to point
  * to the newly inserted node prior to returning.  This later function
  * exists to support insertion of new bucket sentinel nodes.
  *
- * In passing, the function will complete the deletion of nodes already 
- * marked for deletion when encountered and update stats accordingly.  
- * Similarly, update stats for restarts caused by collisions, 
+ * In passing, the function will complete the deletion of nodes already
+ * marked for deletion when encountered and update stats accordingly.
+ * Similarly, update stats for restarts caused by collisions,
  * successful or failed insrtions, etc.
  *
  *                                           JRM -- 6/30/23
@@ -184,26 +185,25 @@ bool lfht_add(struct lfht_t * lfht_ptr, unsigned long long int id, void * value)
  *
  ************************************************************************/
 
-bool lfht_add_internal(struct lfht_t * lfht_ptr, 
-                       struct lfht_node_t * bucket_head_ptr,
-                       unsigned long long int id, 
-                       unsigned long long int hash, bool sentinel, void * value, 
-                       struct lfht_node_t ** new_node_ptr_ptr)
+bool
+lfht_add_internal(struct lfht_t *lfht_ptr, struct lfht_node_t *bucket_head_ptr, unsigned long long int id,
+                  unsigned long long int hash, bool sentinel, void *value,
+                  struct lfht_node_t **new_node_ptr_ptr)
 {
-    bool done = false;
-    bool success = false;
-    int del_completions = 0;
-    int del_completion_cols = 0;
-    int insertion_cols = 0;
-    int nodes_visited = 0;
+    bool                   done                = false;
+    bool                   success             = false;
+    int                    del_completions     = 0;
+    int                    del_completion_cols = 0;
+    int                    insertion_cols      = 0;
+    int                    nodes_visited       = 0;
     unsigned long long int lfsll_log_len;
     unsigned long long int max_lfsll_log_len;
     unsigned long long int lfsll_phys_len;
     unsigned long long int max_lfsll_phys_len;
-    struct lfht_node_t * new_node_ptr = NULL;
-    struct lfht_node_t * first_node_ptr;
-    struct lfht_node_t * second_node_ptr;
-    
+    struct lfht_node_t    *new_node_ptr = NULL;
+    struct lfht_node_t    *first_node_ptr;
+    struct lfht_node_t    *second_node_ptr;
+
     assert(lfht_ptr);
     assert(LFHT_VALID == lfht_ptr->tag);
     assert(bucket_head_ptr);
@@ -217,7 +217,7 @@ bool lfht_add_internal(struct lfht_t * lfht_ptr,
      * returns, and we actually perform the insertion.
      *
      * This has a cost -- as the new value may already exist,
-     * in which case we must discard the node and return 
+     * in which case we must discard the node and return
      * failure.
      */
     new_node_ptr = lfht_create_node(lfht_ptr, id, hash, sentinel, value);
@@ -225,29 +225,23 @@ bool lfht_add_internal(struct lfht_t * lfht_ptr,
     assert(LFHT_VALID_NODE == new_node_ptr->tag);
 
     /* now do the insertion.  We repeat until we are successful,
-     * or we discover that the sll already contains a node with 
+     * or we discover that the sll already contains a node with
      * the specified hash.
      */
     do {
-        first_node_ptr = NULL;
+        first_node_ptr  = NULL;
         second_node_ptr = NULL;
 
         /* in its current implementation, lfsll_find_mod_point() will
          * either succeed or trigger an assertion -- thus no need to
          * check return value at present.
          */
-        lfht_find_mod_point(lfht_ptr,
-                            bucket_head_ptr,
-                            &first_node_ptr,
-                            &second_node_ptr,
-                            &del_completion_cols,
-                            &del_completions,
-                            &nodes_visited,
-                            hash);
+        lfht_find_mod_point(lfht_ptr, bucket_head_ptr, &first_node_ptr, &second_node_ptr,
+                            &del_completion_cols, &del_completions, &nodes_visited, hash);
 
         assert(first_node_ptr);
 
-        if ( hash == first_node_ptr->hash ) { 
+        if (hash == first_node_ptr->hash) {
 
             /* value already exists in the SLL.  Discard the new node,
              * and report failure.  Note that we must mark new_node_ptr->next
@@ -256,10 +250,10 @@ bool lfht_add_internal(struct lfht_t * lfht_ptr,
             atomic_store(&(new_node_ptr->next), (struct lfht_node_t *)0x01ULL);
             lfht_discard_node(lfht_ptr, new_node_ptr, 0);
             new_node_ptr = NULL;
-            done = true;
-            success = false;
-
-        } else {
+            done         = true;
+            success      = false;
+        }
+        else {
 
             assert(second_node_ptr);
 
@@ -267,65 +261,63 @@ bool lfht_add_internal(struct lfht_t * lfht_ptr,
             atomic_store(&(new_node_ptr->next), second_node_ptr);
 
             /* attempt to insert *new_node_ptr into the hash table's SLL */
-            if ( atomic_compare_exchange_strong(&(first_node_ptr->next), &second_node_ptr, new_node_ptr) ) {
+            if (atomic_compare_exchange_strong(&(first_node_ptr->next), &second_node_ptr, new_node_ptr)) {
 
                 /* insertion succeeded */
 
                 /* increment the logical and physical length of the lfsll */
-                if ( ! sentinel ) {
+                if (!sentinel) {
 
                     atomic_fetch_add(&(lfht_ptr->lfsll_log_len), 1);
                 }
                 atomic_fetch_add(&(lfht_ptr->lfsll_phys_len), 1);
 
-                done = true;
+                done    = true;
                 success = true;
-
-            } else {
+            }
+            else {
 
                 insertion_cols++;
             }
         }
-    } while ( ! done );
+    } while (!done);
 
-    if ( ( success ) && ( new_node_ptr_ptr ) ) {
+    if ((success) && (new_node_ptr_ptr)) {
 
         *new_node_ptr_ptr = new_node_ptr;
     }
 
     /* update statistics */
 
-    if ( success ) {
+    if (success) {
 
-        if ( ! sentinel ) {
+        if (!sentinel) {
 
             atomic_fetch_add(&(lfht_ptr->insertions), 1);
-
         }
         /* collect stats on successful sentinel insertions? */ /* JRM */
+    }
+    else {
 
-    } else {
-
-        if ( ! sentinel ) {
+        if (!sentinel) {
 
             atomic_fetch_add(&(lfht_ptr->insertion_failures), 1);
-
-         }
-         /* collect stats on failed sentinel insertions? */ /* JRM */
+        }
+        /* collect stats on failed sentinel insertions? */ /* JRM */
     }
 
-    /* if appropriate, attempt to update lfht_ptr->max_lfsll_log_len and lfht_ptr->max_lfsll_phys_len.  
-     * In the event of a collision, just ignore it and go on, as I don't see any reasonable way to 
+    /* if appropriate, attempt to update lfht_ptr->max_lfsll_log_len and lfht_ptr->max_lfsll_phys_len.
+     * In the event of a collision, just ignore it and go on, as I don't see any reasonable way to
      * recover.
      */
-    if ( (lfsll_log_len = atomic_load(&(lfht_ptr->lfsll_log_len))) > 
-         (max_lfsll_log_len = atomic_load(&(lfht_ptr->max_lfsll_log_len))) ) {
+    if ((lfsll_log_len = atomic_load(&(lfht_ptr->lfsll_log_len))) >
+        (max_lfsll_log_len = atomic_load(&(lfht_ptr->max_lfsll_log_len)))) {
 
         atomic_compare_exchange_strong(&(lfht_ptr->max_lfsll_log_len), &max_lfsll_log_len, lfsll_log_len);
     }
 
-    if ( (lfsll_phys_len = atomic_load(&(lfht_ptr->lfsll_phys_len))) > 
-         (max_lfsll_phys_len = atomic_load(&(lfht_ptr->max_lfsll_phys_len))) ) {
+    if ((lfsll_phys_len = atomic_load(&(lfht_ptr->lfsll_phys_len))) >
+        (max_lfsll_phys_len = atomic_load(&(lfht_ptr->max_lfsll_phys_len)))) {
 
         atomic_compare_exchange_strong(&(lfht_ptr->max_lfsll_phys_len), &max_lfsll_phys_len, lfsll_phys_len);
     }
@@ -334,16 +326,15 @@ bool lfht_add_internal(struct lfht_t * lfht_ptr,
     assert(del_completion_cols >= 0);
     assert(del_completions >= 0);
     assert(nodes_visited >= 0);
-    
+
     atomic_fetch_add(&(lfht_ptr->ins_restarts_due_to_ins_col), insertion_cols);
     atomic_fetch_add(&(lfht_ptr->ins_restarts_due_to_del_col), del_completion_cols);
-    atomic_fetch_add(&(lfht_ptr->ins_deletion_completions),    del_completions);
-    atomic_fetch_add(&(lfht_ptr->nodes_visited_during_ins),    nodes_visited);
+    atomic_fetch_add(&(lfht_ptr->ins_deletion_completions), del_completions);
+    atomic_fetch_add(&(lfht_ptr->nodes_visited_during_ins), nodes_visited);
 
-    return(success);
+    return (success);
 
 } /* lfht_add_internal() */
-
 
 /************************************************************************
  *
@@ -355,23 +346,24 @@ bool lfht_add_internal(struct lfht_t * lfht_ptr,
  *
  ************************************************************************/
 
-void lfht_clear(struct lfht_t * lfht_ptr)
+void
+lfht_clear(struct lfht_t *lfht_ptr)
 {
-    unsigned long long marked_nodes_discarded = 0;
-    unsigned long long unmarked_nodes_discarded = 0;
-    unsigned long long sentinel_nodes_discarded = 0;
-    struct lfht_node_t * discard_ptr = NULL;
-    struct lfht_node_t * node_ptr = NULL;
-    struct lfht_fl_node_t * fl_discard_ptr = NULL;
-    struct lfht_fl_node_t * fl_node_ptr = NULL;
-    struct lfht_flsptr_t init_flsptr = {NULL, 0x0ULL};
-    struct lfht_flsptr_t fl_shead;
-    struct lfht_flsptr_t snext;
+    unsigned long long     marked_nodes_discarded   = 0;
+    unsigned long long     unmarked_nodes_discarded = 0;
+    unsigned long long     sentinel_nodes_discarded = 0;
+    struct lfht_node_t    *discard_ptr              = NULL;
+    struct lfht_node_t    *node_ptr                 = NULL;
+    struct lfht_fl_node_t *fl_discard_ptr           = NULL;
+    struct lfht_fl_node_t *fl_node_ptr              = NULL;
+    struct lfht_flsptr_t   init_flsptr              = {NULL, 0x0ULL};
+    struct lfht_flsptr_t   fl_shead;
+    struct lfht_flsptr_t   snext;
 
     assert(lfht_ptr);
     assert(LFHT_VALID == lfht_ptr->tag);
 
-    /* Delete the elements of the LFSLL -- note that this moves 
+    /* Delete the elements of the LFSLL -- note that this moves
      * all elements from the LFHT to the free list.
      */
 
@@ -379,43 +371,43 @@ void lfht_clear(struct lfht_t * lfht_ptr)
 
     atomic_store(&(lfht_ptr->lfsll_root), NULL);
 
-    while ( node_ptr ) {
+    while (node_ptr) {
 
         assert(LFHT_VALID_NODE == node_ptr->tag);
 
         discard_ptr = node_ptr;
-        node_ptr = atomic_load(&(discard_ptr->next));
+        node_ptr    = atomic_load(&(discard_ptr->next));
 
-        /* first test to see if the node is a sentinel node -- if it is, it must not 
+        /* first test to see if the node is a sentinel node -- if it is, it must not
          * be marked.
          */
-        if ( discard_ptr->sentinel ) {
+        if (discard_ptr->sentinel) {
 
             /* sentinel nodes can't be marked for deletion -- verify this */
             assert(0x0ULL == (((unsigned long long)(discard_ptr->next)) & 0x01ULL));
 
             /* mark discard_ptr->next to keep lfht_discard_node() happy */
-            atomic_store(&(discard_ptr->next), 
+            atomic_store(&(discard_ptr->next),
                          (struct lfht_node_t *)(((unsigned long long)(node_ptr)) | 0x01ULL));
 
             sentinel_nodes_discarded++;
-
-        } else {
+        }
+        else {
 
             /* test to see if node_ptr is marked.  If it, remove the
              * mark so we can use it.
              */
-            if ( ((unsigned long long)(node_ptr)) & 0x01ULL ) {
+            if (((unsigned long long)(node_ptr)) & 0x01ULL) {
 
                 /* node_ptr is marked -- remove the mark and increment marked nodes visited */
                 node_ptr = (struct lfht_node_t *)(((unsigned long long)(node_ptr)) & (~0x01ULL));
 
                 marked_nodes_discarded++;
-
-            } else {
+            }
+            else {
 
                 /* mark discard_ptr->next to keep lfht_discard_node() happy */
-                atomic_store(&(discard_ptr->next), 
+                atomic_store(&(discard_ptr->next),
                              (struct lfht_node_t *)(((unsigned long long)(node_ptr)) | 0x01ULL));
 
                 unmarked_nodes_discarded++;
@@ -427,16 +419,16 @@ void lfht_clear(struct lfht_t * lfht_ptr)
 
     assert(atomic_load(&(lfht_ptr->buckets_initialized)) + 1 == sentinel_nodes_discarded);
 
-    assert(atomic_load(&(lfht_ptr->lfsll_phys_len)) == 
+    assert(atomic_load(&(lfht_ptr->lfsll_phys_len)) ==
            sentinel_nodes_discarded + marked_nodes_discarded + unmarked_nodes_discarded);
 
     assert(atomic_load(&(lfht_ptr->lfsll_log_len)) == unmarked_nodes_discarded);
 
-    /* Now delete and free all items in the free list.  Do 
-     * this directly, as lfht_discard_node() will try to 
+    /* Now delete and free all items in the free list.  Do
+     * this directly, as lfht_discard_node() will try to
      * put them back on the free list.
      */
-    fl_shead = atomic_load(&(lfht_ptr->fl_shead));
+    fl_shead    = atomic_load(&(lfht_ptr->fl_shead));
     fl_node_ptr = fl_shead.ptr;
 
     atomic_store(&(lfht_ptr->fl_shead), init_flsptr);
@@ -444,13 +436,13 @@ void lfht_clear(struct lfht_t * lfht_ptr)
 
     atomic_store(&(lfht_ptr->next_sn), 0ULL);
 
-    while ( fl_node_ptr ) {
+    while (fl_node_ptr) {
 
         assert(LFHT_FL_NODE_ON_FL == fl_node_ptr->tag);
 
         fl_discard_ptr = fl_node_ptr;
 
-        snext = atomic_load(&(fl_discard_ptr->snext));
+        snext       = atomic_load(&(fl_discard_ptr->snext));
         fl_node_ptr = snext.ptr;
 
         discard_ptr->tag = LFHT_FL_NODE_INVALID;
@@ -466,7 +458,6 @@ void lfht_clear(struct lfht_t * lfht_ptr)
 
 } /* lfht_clear() */
 
-
 /************************************************************************
  *
  * lfht_clear_stats()
@@ -478,7 +469,8 @@ void lfht_clear(struct lfht_t * lfht_ptr)
  *
  ************************************************************************/
 
-void lfht_clear_stats(struct lfht_t * lfht_ptr)
+void
+lfht_clear_stats(struct lfht_t *lfht_ptr)
 {
 
     assert(lfht_ptr);
@@ -562,38 +554,38 @@ void lfht_clear_stats(struct lfht_t * lfht_ptr)
 
 } /* lfht_clear_stats() */
 
-
 /************************************************************************
  *
- * lfht_create_hash_bucket() 
+ * lfht_create_hash_bucket()
  *
- *     Create a hash bucket for the supplied hash and number of hash 
- *     bucket table index bits.  
+ *     Create a hash bucket for the supplied hash and number of hash
+ *     bucket table index bits.
  *
- *     To do this, find the hash bucket for the same hash but with 
- *     index_bits minus 1, and use that hash bucket to find the insertion 
- *     point for the new bucket in the LFSLL.  
+ *     To do this, find the hash bucket for the same hash but with
+ *     index_bits minus 1, and use that hash bucket to find the insertion
+ *     point for the new bucket in the LFSLL.
  *
  *     Note that it is possible that the index bucket for the supplied
  *     hash but with index_bits minus 1 may not exist -- in which case
  *     a recursive call is made.  Further, it may be that hash buckets
  *     for the given hash and both index_bits and index_bits minus 1
- *     are the same -- in which case there will be nothing to do when 
+ *     are the same -- in which case there will be nothing to do when
  *     the recursive call returns.
  *
  *                                          JRM -- 6/30/23
  *
  ************************************************************************/
 
-void lfht_create_hash_bucket(struct lfht_t * lfht_ptr, unsigned long long int hash, int index_bits)
+void
+lfht_create_hash_bucket(struct lfht_t *lfht_ptr, unsigned long long int hash, int index_bits)
 {
-    bool result;
+    bool                   result;
     unsigned long long int target_index;
     unsigned long long int target_hash;
     unsigned long long int parent_index;
-    struct lfht_node_t * bucket_head_ptr;
-    struct lfht_node_t * sentinel_ptr = NULL;
-    struct lfht_node_t * null_ptr = NULL;
+    struct lfht_node_t    *bucket_head_ptr;
+    struct lfht_node_t    *sentinel_ptr = NULL;
+    struct lfht_node_t    *null_ptr     = NULL;
 
     assert(lfht_ptr);
     assert(LFHT_VALID == lfht_ptr->tag);
@@ -602,9 +594,9 @@ void lfht_create_hash_bucket(struct lfht_t * lfht_ptr, unsigned long long int ha
     target_index = lfht_hash_to_idx(hash, index_bits);
     parent_index = lfht_hash_to_idx(hash, index_bits - 1);
 
-    if ( NULL == atomic_load(&(lfht_ptr->bucket_idx[target_index])) ) {
+    if (NULL == atomic_load(&(lfht_ptr->bucket_idx[target_index]))) {
 
-        if ( NULL == atomic_load(&(lfht_ptr->bucket_idx[parent_index])) ) {
+        if (NULL == atomic_load(&(lfht_ptr->bucket_idx[parent_index]))) {
 
             /* parent bucket doesn't exist either -- make a recursive call */
 
@@ -618,14 +610,13 @@ void lfht_create_hash_bucket(struct lfht_t * lfht_ptr, unsigned long long int ha
 
         /* it is possible that parent_index == target_index -- hence the following check */
 
-        if ( NULL == atomic_load(&(lfht_ptr->bucket_idx[target_index])) ) {
+        if (NULL == atomic_load(&(lfht_ptr->bucket_idx[target_index]))) {
 
             target_hash = lfht_id_to_hash(target_index, true);
 
             assert(target_index == (lfht_id_to_hash(target_hash >> 1, true) >> 1));
 
-            if ( lfht_add_internal(lfht_ptr, bucket_head_ptr, 0ULL, 
-                                   target_hash, true, NULL, &sentinel_ptr) ) {
+            if (lfht_add_internal(lfht_ptr, bucket_head_ptr, 0ULL, target_hash, true, NULL, &sentinel_ptr)) {
 
                 /* creation of the sentinel node for the hash bucket succeeded.
                  * now store a pointer to the new node in the bucket index.
@@ -640,38 +631,39 @@ void lfht_create_hash_bucket(struct lfht_t * lfht_ptr, unsigned long long int ha
                 /* set lfht_ptr->bucket_idx[target_index].  Do this via atomic_compare_exchange_strong(). */
                 /* assert that this succeeds, as it should be impossible for it to fail */
 
-                result = atomic_compare_exchange_strong(&(lfht_ptr->bucket_idx[target_index]),
-                                                      &null_ptr, sentinel_ptr);
+                result = atomic_compare_exchange_strong(&(lfht_ptr->bucket_idx[target_index]), &null_ptr,
+                                                        sentinel_ptr);
                 assert(result);
 
                 atomic_fetch_add(&(lfht_ptr->buckets_initialized), 1);
+            }
+            else {
 
-            } else {
-
-                /* the attempt to insert the new sentinel node failed -- which means that 
-                 * that the node already exists.  Thus if it hasn't been set already, 
-                 * lfht_ptr->bucket_idx[target_index] will be set to point to the new 
+                /* the attempt to insert the new sentinel node failed -- which means that
+                 * that the node already exists.  Thus if it hasn't been set already,
+                 * lfht_ptr->bucket_idx[target_index] will be set to point to the new
                  * sentinel shortly.
                  */
 
                 atomic_fetch_add(&(lfht_ptr->bucket_init_cols), 1);
-            
-                while ( NULL == atomic_load(&(lfht_ptr->bucket_idx[target_index])) ) {
+
+                while (NULL == atomic_load(&(lfht_ptr->bucket_idx[target_index]))) {
 
                     /* need to do better than this.  Want to call pthread_yield(),
                      * but that call doesn't seem to be supported anymore.
                      */
                     sleep(1);
-               
+
                     atomic_fetch_add(&(lfht_ptr->bucket_init_col_sleeps), 1);
                 }
             }
         }
-    } else {
+    }
+    else {
 
-        /* Another thread beat us to defining the new bucket.  
+        /* Another thread beat us to defining the new bucket.
          *
-         * As there is nothing to back out of, I don't think this qualifies as a 
+         * As there is nothing to back out of, I don't think this qualifies as a
          * a collision -- hence no stats for this case.
          */
     }
@@ -680,64 +672,64 @@ void lfht_create_hash_bucket(struct lfht_t * lfht_ptr, unsigned long long int ha
 
 } /* lfht_create_hash_bucket() */
 
-
 /************************************************************************
  *
  * lfht_create_node
  *
- *     Test to see if an instance of lfht_fl_node_t is available on the 
- *     free list.  If there is remove it from the free list, re-initialize 
+ *     Test to see if an instance of lfht_fl_node_t is available on the
+ *     free list.  If there is remove it from the free list, re-initialize
  *     it, and return a pointer to the include instance of lfht_node_t
  *     the the caller.
  *
- *     Otherwise, allocate and initialize an instance of struct 
- *     lfht_fl_node_t and return a pointer to the included instance of 
- *     lfht_node_t to the caller.  
+ *     Otherwise, allocate and initialize an instance of struct
+ *     lfht_fl_node_t and return a pointer to the included instance of
+ *     lfht_node_t to the caller.
  *
- *     Return a pointer to the new instance on success, and NULL on 
+ *     Return a pointer to the new instance on success, and NULL on
  *     failure.
  *
  *                                          JRM -- 6/30/23
  *
  ************************************************************************/
 
-struct lfht_node_t * lfht_create_node(struct lfht_t * lfht_ptr, unsigned long long int id, 
-                                      unsigned long long int hash, bool sentinel, void * value)
+struct lfht_node_t *
+lfht_create_node(struct lfht_t *lfht_ptr, unsigned long long int id, unsigned long long int hash,
+                 bool sentinel, void *value)
 {
-    bool fl_search_done = false;
-    struct lfht_node_t * node_ptr = NULL;
-    struct lfht_fl_node_t * fl_node_ptr = NULL;
-    bool result;
-    struct lfht_flsptr_t sfirst;
-    struct lfht_flsptr_t new_sfirst;
-    struct lfht_flsptr_t test_sfirst;
-    struct lfht_flsptr_t slast;
-    struct lfht_flsptr_t new_slast;
-    struct lfht_flsptr_t snext;
-    struct lfht_flsptr_t new_snext;
+    bool                   fl_search_done = false;
+    struct lfht_node_t    *node_ptr       = NULL;
+    struct lfht_fl_node_t *fl_node_ptr    = NULL;
+    bool                   result;
+    struct lfht_flsptr_t   sfirst;
+    struct lfht_flsptr_t   new_sfirst;
+    struct lfht_flsptr_t   test_sfirst;
+    struct lfht_flsptr_t   slast;
+    struct lfht_flsptr_t   new_slast;
+    struct lfht_flsptr_t   snext;
+    struct lfht_flsptr_t   new_snext;
 
     assert(lfht_ptr);
     assert(LFHT_VALID == lfht_ptr->tag);
 
-    if ( hash > LFHT__MAX_HASH ) {
+    if (hash > LFHT__MAX_HASH) {
 
         fprintf(stderr, "hash = 0x%llx, LFHT__MAX_HASH = 0x%llx\n", hash, LFHT__MAX_HASH);
     }
     assert(hash <= LFHT__MAX_HASH);
 
     sfirst = atomic_load(&(lfht_ptr->fl_shead));
-    if ( NULL == sfirst.ptr ) {
+    if (NULL == sfirst.ptr) {
 
         /* the free list hasn't been initialized yet, so skip
          * the search of the free list.
          */
-       fl_search_done = true;
+        fl_search_done = true;
     }
 
-    while ( ! fl_search_done ) {
+    while (!fl_search_done) {
 
         sfirst = atomic_load(&(lfht_ptr->fl_shead));
-        slast = atomic_load(&(lfht_ptr->fl_stail));
+        slast  = atomic_load(&(lfht_ptr->fl_stail));
 
         assert(sfirst.ptr);
         assert(slast.ptr);
@@ -745,57 +737,57 @@ struct lfht_node_t * lfht_create_node(struct lfht_t * lfht_ptr, unsigned long lo
         snext = atomic_load(&(sfirst.ptr->snext));
 
         test_sfirst = atomic_load(&(lfht_ptr->fl_shead));
-        if ( ( test_sfirst.ptr == sfirst.ptr ) && ( test_sfirst.sn == sfirst.sn ) ) {
+        if ((test_sfirst.ptr == sfirst.ptr) && (test_sfirst.sn == sfirst.sn)) {
 
-            if ( sfirst.ptr == slast.ptr ) {
+            if (sfirst.ptr == slast.ptr) {
 
-                if ( NULL == snext.ptr ) {
+                if (NULL == snext.ptr) {
 
                     /* the free list is empty */
                     atomic_fetch_add(&(lfht_ptr->num_fl_req_denied_due_to_empty), 1);
                     fl_search_done = true;
                     break;
+                }
 
-                } 
-
-                /* attempt to set lfht_ptr->fl_tail to next.  It doesn't 
-                 * matter whether we succeed or fail, as if we fail, it 
+                /* attempt to set lfht_ptr->fl_tail to next.  It doesn't
+                 * matter whether we succeed or fail, as if we fail, it
                  * just means that some other thread beat us to it.
                  *
                  * that said, it doesn't hurt to collect stats
                  */
                 new_slast.ptr = snext.ptr;
                 new_slast.sn  = slast.sn + 1;
-                if ( ! atomic_compare_exchange_strong(&(lfht_ptr->fl_stail), &slast, new_slast) ) {
+                if (!atomic_compare_exchange_strong(&(lfht_ptr->fl_stail), &slast, new_slast)) {
 
                     atomic_fetch_add(&(lfht_ptr->num_fl_tail_update_cols), 1);
                 }
-            } else {
+            }
+            else {
 
                 /* set up new_sfirst now in case we need it later.  */
                 assert(snext.ptr);
                 new_sfirst.ptr = snext.ptr;
                 new_sfirst.sn  = sfirst.sn + 1;
 
-                if ( atomic_load(&(sfirst.ptr->ref_count)) > 0 ) {
+                if (atomic_load(&(sfirst.ptr->ref_count)) > 0) {
 
-                    /* The ref count on the entry at the head of the free list 
-                     * has a positive ref count, which means that there may be 
-                     * a pointer to it somewhere.  Rather than take the risk, 
-                     * let it sit on the free list until the ref count drops 
+                    /* The ref count on the entry at the head of the free list
+                     * has a positive ref count, which means that there may be
+                     * a pointer to it somewhere.  Rather than take the risk,
+                     * let it sit on the free list until the ref count drops
                      * to zero.
                      */
                     atomic_fetch_add(&(lfht_ptr->num_fl_req_denied_due_to_ref_count), 1);
                     fl_search_done = true;
-
-                } else if ( ! atomic_compare_exchange_strong(&(lfht_ptr->fl_shead), &sfirst, new_sfirst) ) {
+                }
+                else if (!atomic_compare_exchange_strong(&(lfht_ptr->fl_shead), &sfirst, new_sfirst)) {
 
                     /* the attempt to remove the first item from the free list
                      * failed.  Update stats and try again.
                      */
                     atomic_fetch_add(&(lfht_ptr->num_fl_head_update_cols), 1);
-
-                } else {
+                }
+                else {
 
                     /* first has been removed from the free list.  Set fl_node_ptr to first,
                      * update stats, and exit the loop by setting fl_search_done to true.
@@ -803,7 +795,7 @@ struct lfht_node_t * lfht_create_node(struct lfht_t * lfht_ptr, unsigned long lo
                     fl_node_ptr = sfirst.ptr;
 
                     atomic_store(&(fl_node_ptr->tag), LFHT_FL_NODE_IN_USE);
-                    assert( 0x0ULL == atomic_load(&(fl_node_ptr->ref_count)));
+                    assert(0x0ULL == atomic_load(&(fl_node_ptr->ref_count)));
 
                     new_snext.ptr = NULL;
                     new_snext.sn  = snext.sn + 1;
@@ -817,8 +809,8 @@ struct lfht_node_t * lfht_create_node(struct lfht_t * lfht_ptr, unsigned long lo
 
                     node_ptr->tag = LFHT_VALID_NODE;
                     atomic_store(&(node_ptr->next), NULL);
-                    node_ptr->id = id;
-                    node_ptr->hash = hash;
+                    node_ptr->id       = id;
+                    node_ptr->hash     = hash;
                     node_ptr->sentinel = sentinel;
                     atomic_store(&(node_ptr->value), value);
 
@@ -827,11 +819,11 @@ struct lfht_node_t * lfht_create_node(struct lfht_t * lfht_ptr, unsigned long lo
 
                     fl_search_done = true;
                 }
-            } 
+            }
         }
     } /* while ( ! fl_search_done ) */
 
-    if ( NULL == fl_node_ptr ) {
+    if (NULL == fl_node_ptr) {
 
         fl_node_ptr = (struct lfht_fl_node_t *)malloc(sizeof(struct lfht_fl_node_t));
 
@@ -853,18 +845,17 @@ struct lfht_node_t * lfht_create_node(struct lfht_t * lfht_ptr, unsigned long lo
 
         node_ptr->tag = LFHT_VALID_NODE;
         atomic_init(&(node_ptr->next), NULL);
-        node_ptr->id = id;
-        node_ptr->hash = hash;
+        node_ptr->id       = id;
+        node_ptr->hash     = hash;
         node_ptr->sentinel = sentinel;
         atomic_init(&(node_ptr->value), value);
     }
-    
+
     assert(fl_node_ptr);
 
-    return(node_ptr);
+    return (node_ptr);
 
 } /* lfht_create_node() */
-
 
 /************************************************************************
  *
@@ -877,8 +868,8 @@ struct lfht_node_t * lfht_create_node(struct lfht_t * lfht_ptr, unsigned long lo
  * If it is found, attempt to mark it for deletion.
  *
  * In passing, complete the deletion of any nodes encountered that are
- * already marked for deletion, and update stats accordingly.  Similarly, 
- * update stats for restarts caused by collisions, successful or failed 
+ * already marked for deletion, and update stats accordingly.  Similarly,
+ * update stats for restarts caused by collisions, successful or failed
  * deletions, etc.
  *
  *                                           JRM -- 6/13/23
@@ -889,27 +880,29 @@ struct lfht_node_t * lfht_create_node(struct lfht_t * lfht_ptr, unsigned long lo
  *
  ************************************************************************/
 
-bool lfht_delete(struct lfht_t * lfht_ptr, unsigned long long int id)
+bool
+lfht_delete(struct lfht_t *lfht_ptr, unsigned long long int id)
 {
-    bool done = false;
-    bool success = false;
-    int del_completions = 0;
-    int del_completion_cols = 0;
-    int del_init_cols = 0;
-    int del_retries = 0;
-    int nodes_visited = 0;
+    bool                   done                = false;
+    bool                   success             = false;
+    int                    del_completions     = 0;
+    int                    del_completion_cols = 0;
+    int                    del_init_cols       = 0;
+    int                    del_retries         = 0;
+    int                    nodes_visited       = 0;
     unsigned long long int hash;
-    struct lfht_node_t * bucket_head_ptr;;
-    struct lfht_node_t * first_node_ptr;
-    struct lfht_node_t * second_node_ptr;
-    struct lfht_node_t * marked_second_node_ptr = NULL;
-    struct lfht_fl_node_t * fl_node_ptr;
-    
+    struct lfht_node_t    *bucket_head_ptr;
+    ;
+    struct lfht_node_t    *first_node_ptr;
+    struct lfht_node_t    *second_node_ptr;
+    struct lfht_node_t    *marked_second_node_ptr = NULL;
+    struct lfht_fl_node_t *fl_node_ptr;
+
     assert(lfht_ptr);
     assert(LFHT_VALID == lfht_ptr->tag);
 #ifdef H5_HAVE_MULTITHREAD
     assert((id & ID_MASK) <= LFHT__MAX_ID);
-#else /* H5_HAVE_MULTITHREAD */
+#else  /* H5_HAVE_MULTITHREAD */
     assert(id <= LFHT__MAX_ID);
 #endif /* H5_HAVE_MULTITHREAD */
 
@@ -917,14 +910,14 @@ bool lfht_delete(struct lfht_t * lfht_ptr, unsigned long long int id)
 
 #ifdef H5_HAVE_MULTITHREAD
     hash = lfht_id_to_hash((id & ID_MASK), false);
-#else /* H5_HAVE_MULTITHREAD */
+#else  /* H5_HAVE_MULTITHREAD */
     hash = lfht_id_to_hash(id, false);
 #endif /* H5_HAVE_MULTITHREAD */
 
     bucket_head_ptr = lfht_get_hash_bucket_sentinel(lfht_ptr, hash);
 
-    do { 
-        first_node_ptr = NULL;
+    do {
+        first_node_ptr  = NULL;
         second_node_ptr = NULL;
         /* attempt to find the target */
 
@@ -932,23 +925,17 @@ bool lfht_delete(struct lfht_t * lfht_ptr, unsigned long long int id)
          * either succeed or trigger an assertion -- thus no need to
          * check return value at present.
          */
-        lfht_find_mod_point(lfht_ptr,
-                            bucket_head_ptr,
-                            &first_node_ptr,
-                            &second_node_ptr,
-                            &del_completion_cols,
-                            &del_completions,
-                            &nodes_visited,
-                            hash);
+        lfht_find_mod_point(lfht_ptr, bucket_head_ptr, &first_node_ptr, &second_node_ptr,
+                            &del_completion_cols, &del_completions, &nodes_visited, hash);
 
         assert(first_node_ptr);
 
-        if ( hash == first_node_ptr->hash ) { 
+        if (hash == first_node_ptr->hash) {
 
             assert(!first_node_ptr->sentinel);
             assert(id == first_node_ptr->id);
 
-            /* hash exists in the SLL.  Attempt to mark the 
+            /* hash exists in the SLL.  Attempt to mark the
              * node for deletion.  If we fail, that means that either:
              *
              * 1) another thread has beat us to marking *first_node_ptr as deleted.
@@ -958,47 +945,48 @@ bool lfht_delete(struct lfht_t * lfht_ptr, unsigned long long int id)
              *
              * No worries if the former, but in latter case, we must try again.
              */
-            marked_second_node_ptr = (struct lfht_node_t *)(((unsigned long long)(second_node_ptr)) | 0x01ULL);
+            marked_second_node_ptr =
+                (struct lfht_node_t *)(((unsigned long long)(second_node_ptr)) | 0x01ULL);
 
-            if ( atomic_compare_exchange_strong(&(first_node_ptr->next), &second_node_ptr, 
-                                                marked_second_node_ptr) ) {
+            if (atomic_compare_exchange_strong(&(first_node_ptr->next), &second_node_ptr,
+                                               marked_second_node_ptr)) {
 
-                /* decrement the logical lfsll length.  We will decrement the physical list 
+                /* decrement the logical lfsll length.  We will decrement the physical list
                  * length when the node is physically deleted from the list.
                  */
                 atomic_fetch_sub(&(lfht_ptr->lfsll_log_len), 1);
 
                 success = true;
-                done = true;
-
-            } else if ( 0 != (((unsigned long long)(second_node_ptr)) & 0x01ULL) ) {
+                done    = true;
+            }
+            else if (0 != (((unsigned long long)(second_node_ptr)) & 0x01ULL)) {
 
                 /* recall that atomic_compare_exchamge_strong replaces the expected value
-                 * with the actual value on failure.  If the low order bit is set, we are 
+                 * with the actual value on failure.  If the low order bit is set, we are
                  * in case 1) above -- another thread beat us to marking *first_node_ptr
                  * as deleted.
                  */
 
                 success = true;
-                done = true;
+                done    = true;
                 del_init_cols++;
-
-            } else {
+            }
+            else {
 
                 /* a node has been added or deleted just after *first_node_ptr.  Must
                  * retry the deletion.
                  */
                 del_retries++;
             }
-        } else {
+        }
+        else {
 
             /* target not in lfht */
 
             success = false;
-            done = true;
+            done    = true;
         }
-    }
-    while ( ! done );
+    } while (!done);
 
     /* update statistics */
 
@@ -1007,46 +995,46 @@ bool lfht_delete(struct lfht_t * lfht_ptr, unsigned long long int id)
     assert(del_completions >= 0);
     assert(nodes_visited >= 0);
     assert(del_retries >= 0);
-    
+
     atomic_fetch_add(&(lfht_ptr->deletion_attempts), 1);
 
-    if ( success ) {
+    if (success) {
 
-        if ( del_init_cols == 0 ) {
+        if (del_init_cols == 0) {
 
             atomic_fetch_add(&(lfht_ptr->deletion_starts), 1);
-
-        } else {
+        }
+        else {
 
             atomic_fetch_add(&(lfht_ptr->deletion_start_cols), 1);
-       }
-    } else {
+        }
+    }
+    else {
 
         atomic_fetch_add(&(lfht_ptr->deletion_failures), 1);
     }
 
-    atomic_fetch_add(&(lfht_ptr->del_retries),                 (long long)del_retries);
+    atomic_fetch_add(&(lfht_ptr->del_retries), (long long)del_retries);
     atomic_fetch_add(&(lfht_ptr->del_restarts_due_to_del_col), (long long)del_completion_cols);
-    atomic_fetch_add(&(lfht_ptr->del_deletion_completions),    (long long)del_completions);
-    atomic_fetch_add(&(lfht_ptr->nodes_visited_during_dels),   (long long)nodes_visited);
+    atomic_fetch_add(&(lfht_ptr->del_deletion_completions), (long long)del_completions);
+    atomic_fetch_add(&(lfht_ptr->nodes_visited_during_dels), (long long)nodes_visited);
 
     lfht_exit(lfht_ptr, fl_node_ptr);
 
-    return(success);
+    return (success);
 
 } /* lfht_delete() */
-
 
 /************************************************************************
  *
  * lfht_discard_node
  *
- *     Append the supplied instance of lfht_node_t 
- *     (really lfht_fl_node_t) to the free list and increment 
+ *     Append the supplied instance of lfht_node_t
+ *     (really lfht_fl_node_t) to the free list and increment
  *     lfht_ptr->fl_len.
  *
  *     If the free list length exceeds lfht_ptr->max_desired_fl_len,
- *     attempt the remove the node at the head of the free list from 
+ *     attempt the remove the node at the head of the free list from
  *     the free list, and discard it and decrement lfht_ptr->fl_len
  *     if successful
  *
@@ -1054,21 +1042,22 @@ bool lfht_delete(struct lfht_t * lfht_ptr, unsigned long long int id)
  *
  ************************************************************************/
 
-void lfht_discard_node(struct lfht_t * lfht_ptr, struct lfht_node_t * node_ptr, unsigned int expected_ref_count)
+void
+lfht_discard_node(struct lfht_t *lfht_ptr, struct lfht_node_t *node_ptr, unsigned int expected_ref_count)
 {
-    bool done = false;
-    bool result;
-    unsigned int in_use_tag = LFHT_FL_NODE_IN_USE;
-    long long int fl_len;
-    long long int max_fl_len;
-    struct lfht_node_t * next;
-    struct lfht_fl_node_t * fl_node_ptr;
-    struct lfht_flsptr_t snext = {NULL, 0ULL};
-    struct lfht_flsptr_t fl_stail;
-    struct lfht_flsptr_t fl_snext;
-    struct lfht_flsptr_t new_fl_snext;
-    struct lfht_flsptr_t test_fl_stail;
-    struct lfht_flsptr_t new_fl_stail;
+    bool                   done = false;
+    bool                   result;
+    unsigned int           in_use_tag = LFHT_FL_NODE_IN_USE;
+    long long int          fl_len;
+    long long int          max_fl_len;
+    struct lfht_node_t    *next;
+    struct lfht_fl_node_t *fl_node_ptr;
+    struct lfht_flsptr_t   snext = {NULL, 0ULL};
+    struct lfht_flsptr_t   fl_stail;
+    struct lfht_flsptr_t   fl_snext;
+    struct lfht_flsptr_t   new_fl_snext;
+    struct lfht_flsptr_t   test_fl_stail;
+    struct lfht_flsptr_t   new_fl_stail;
 
     assert(lfht_ptr);
     assert(LFHT_VALID == lfht_ptr->tag);
@@ -1092,13 +1081,13 @@ void lfht_discard_node(struct lfht_t * lfht_ptr, struct lfht_node_t * node_ptr, 
 
     atomic_store(&(fl_node_ptr->sn), atomic_fetch_add(&(lfht_ptr->next_sn), 1));
 
-    while ( ! done ) {
+    while (!done) {
 
         fl_stail = atomic_load(&(lfht_ptr->fl_stail));
 
         assert(fl_stail.ptr);
 
-        /* it is possible that *fl_tail.ptr has passed through the free list 
+        /* it is possible that *fl_tail.ptr has passed through the free list
          * and been re-allocated between the time we loaded it, and now.
          * If so, fl_stail_ptr->tag will no longer be LFHT_FL_NODE_ON_FL.
          * This isn't a problem, as if so, the following if statement will fail.
@@ -1109,60 +1098,60 @@ void lfht_discard_node(struct lfht_t * lfht_ptr, struct lfht_node_t * node_ptr, 
 
         test_fl_stail = atomic_load(&(lfht_ptr->fl_stail));
 
-        if ( ( test_fl_stail.ptr == fl_stail.ptr ) && ( test_fl_stail.sn == fl_stail.sn ) ) {
+        if ((test_fl_stail.ptr == fl_stail.ptr) && (test_fl_stail.sn == fl_stail.sn)) {
 
-            if ( NULL == fl_snext.ptr ) {
- 
-                /* attempt to append fl_node_ptr by setting fl_tail->next to fl_node_ptr.  
+            if (NULL == fl_snext.ptr) {
+
+                /* attempt to append fl_node_ptr by setting fl_tail->next to fl_node_ptr.
                  * If this succeeds, update stats and attempt to set lfht_ptr->fl_tail
-                 * to fl_node_ptr as well.  This may or may not succeed, but in either 
+                 * to fl_node_ptr as well.  This may or may not succeed, but in either
                  * case we are done.
                  */
                 new_fl_snext.ptr = fl_node_ptr;
                 new_fl_snext.sn  = fl_snext.sn + 1;
-                if ( atomic_compare_exchange_strong(&(fl_stail.ptr->snext), &fl_snext, new_fl_snext) ) {
+                if (atomic_compare_exchange_strong(&(fl_stail.ptr->snext), &fl_snext, new_fl_snext)) {
 
                     atomic_fetch_add(&(lfht_ptr->fl_len), 1);
                     atomic_fetch_add(&(lfht_ptr->num_nodes_added_to_fl), 1);
 
                     new_fl_stail.ptr = fl_node_ptr;
                     new_fl_stail.sn  = fl_stail.sn + 1;
-                    if ( ! atomic_compare_exchange_strong(&(lfht_ptr->fl_stail), &fl_stail, new_fl_stail) ) {
+                    if (!atomic_compare_exchange_strong(&(lfht_ptr->fl_stail), &fl_stail, new_fl_stail)) {
 
                         atomic_fetch_add(&(lfht_ptr->num_fl_tail_update_cols), 1);
                     }
 
                     /* if appropriate, attempt to update lfht_ptr->max_fl_len.  In the
-                     * event of a collision, just ignore it and go on, as I don't see any 
+                     * event of a collision, just ignore it and go on, as I don't see any
                      * reasonable way to recover.
                      */
-                    if ( (fl_len = atomic_load(&(lfht_ptr->fl_len))) > 
-                         (max_fl_len = atomic_load(&(lfht_ptr->max_fl_len))) ) {
+                    if ((fl_len = atomic_load(&(lfht_ptr->fl_len))) >
+                        (max_fl_len = atomic_load(&(lfht_ptr->max_fl_len)))) {
 
                         atomic_compare_exchange_strong(&(lfht_ptr->max_fl_len), &max_fl_len, fl_len);
                     }
 
                     done = true;
-
-                } else {
+                }
+                else {
 
                     /* append failed -- update stats and try again */
                     atomic_fetch_add(&(lfht_ptr->num_fl_append_cols), 1);
-
                 }
-            } else {
- 
+            }
+            else {
+
                 // assert(LFHT_FL_NODE_ON_FL == atomic_load(&(fl_next->tag)));
 
-                /* attempt to set lfht_ptr->fl_stail to fl_next.  It doesn't 
-                 * matter whether we succeed or fail, as if we fail, it 
+                /* attempt to set lfht_ptr->fl_stail to fl_next.  It doesn't
+                 * matter whether we succeed or fail, as if we fail, it
                  * just means that some other thread beat us to it.
                  *
                  * that said, it doesn't hurt to collect stats
                  */
                 new_fl_stail.ptr = fl_snext.ptr;
                 new_fl_stail.sn  = fl_stail.sn + 1;
-                if ( ! atomic_compare_exchange_strong(&(lfht_ptr->fl_stail), &fl_stail, new_fl_stail) ) {
+                if (!atomic_compare_exchange_strong(&(lfht_ptr->fl_stail), &fl_stail, new_fl_stail)) {
 
                     atomic_fetch_add(&(lfht_ptr->num_fl_tail_update_cols), 1);
                 }
@@ -1170,17 +1159,17 @@ void lfht_discard_node(struct lfht_t * lfht_ptr, struct lfht_node_t * node_ptr, 
         }
     }
 
-#if 0 /* Turn off deletion of excess free list entries.
-       *
-       * Do this because when run with large numbers of threads, it triggers 
-       * an off by one error in lfht_ptr->fl_len that is detected by sanity 
-       * checks on lock free hash table shutdown.
-       *
-       * While this is obviously a race condition of some sort, the management
-       * of lfht_ptr->fl_len appears to be correct.  This issue must be resolved, 
-       * but since turning off code to discard excess free list entries doesn't 
-       * cause any functional problems, I  am bypassing the issue for now.
-       */
+#if 0  /* Turn off deletion of excess free list entries.                                                     \
+        *                                                                                                    \
+        * Do this because when run with large numbers of threads, it triggers                                \
+        * an off by one error in lfht_ptr->fl_len that is detected by sanity                                 \
+        * checks on lock free hash table shutdown.                                                           \
+        *                                                                                                    \
+        * While this is obviously a race condition of some sort, the management                              \
+        * of lfht_ptr->fl_len appears to be correct.  This issue must be resolved,                           \
+        * but since turning off code to discard excess free list entries doesn't                             \
+        * cause any functional problems, I  am bypassing the issue for now.                                  \
+        */
     /* Test to see if the free list is longer than the max_desired_fl_len. 
      * If so, attempt to remove an entry from the head of the free list
      * and discard it.  No worries if this fails, as the max_desired_fl_len
@@ -1309,7 +1298,6 @@ void lfht_discard_node(struct lfht_t * lfht_ptr, struct lfht_node_t * node_ptr, 
 
 } /* lfht_discard_node() */
 
-
 /************************************************************************
  *
  * lfht_dump_list
@@ -1323,10 +1311,11 @@ void lfht_discard_node(struct lfht_t * lfht_ptr, struct lfht_node_t * node_ptr, 
  *
  ************************************************************************/
 
-void lfht_dump_list(struct lfht_t * lfht_ptr, FILE * file_ptr)
+void
+lfht_dump_list(struct lfht_t *lfht_ptr, FILE *file_ptr)
 {
-    long long int node_num = 0;
-    struct lfht_node_t * node_ptr;
+    long long int       node_num = 0;
+    struct lfht_node_t *node_ptr;
 
     assert(lfht_ptr);
     assert(LFHT_VALID == lfht_ptr->tag);
@@ -1334,18 +1323,18 @@ void lfht_dump_list(struct lfht_t * lfht_ptr, FILE * file_ptr)
 
     fprintf(file_ptr, "\n\n***** CONTENTS OF LFSLL IN THE LFHT *****\n");
 
-    fprintf(file_ptr, "\nLFSLL Logical / Physical Length = %lld/%lld, Free List Len = %lld.\n\n", 
+    fprintf(file_ptr, "\nLFSLL Logical / Physical Length = %lld/%lld, Free List Len = %lld.\n\n",
             atomic_load(&(lfht_ptr->lfsll_log_len)), atomic_load(&(lfht_ptr->lfsll_phys_len)),
             atomic_load(&(lfht_ptr->fl_len)));
 
     node_ptr = atomic_load(&(lfht_ptr->lfsll_root));
 
-    while ( node_ptr ) {
+    while (node_ptr) {
 
-        fprintf(file_ptr, 
-                "Node num = %lld, marked = %lld, sentinel = %d, id = 0x%lld, hash = 0x%llx, value = 0x%llx\n", 
+        fprintf(file_ptr,
+                "Node num = %lld, marked = %lld, sentinel = %d, id = 0x%lld, hash = 0x%llx, value = 0x%llx\n",
                 node_num++, (((unsigned long long)(atomic_load(&(node_ptr->next)))) & 0x01ULL),
-                (int)(node_ptr->sentinel), node_ptr->id, node_ptr->hash, 
+                (int)(node_ptr->sentinel), node_ptr->id, node_ptr->hash,
                 (unsigned long long)atomic_load(&(node_ptr->value)));
 
         node_ptr = atomic_load(&(node_ptr->next));
@@ -1360,7 +1349,6 @@ void lfht_dump_list(struct lfht_t * lfht_ptr, FILE * file_ptr)
 
 } /* lfht_dump_list() */
 
-
 /************************************************************************
  *
  * lfht_dump_stats
@@ -1373,7 +1361,8 @@ void lfht_dump_list(struct lfht_t * lfht_ptr, FILE * file_ptr)
  *
  ************************************************************************/
 
-void lfht_dump_stats(struct lfht_t * lfht_ptr, FILE * file_ptr)
+void
+lfht_dump_stats(struct lfht_t *lfht_ptr, FILE *file_ptr)
 {
 
     assert(lfht_ptr);
@@ -1382,22 +1371,20 @@ void lfht_dump_stats(struct lfht_t * lfht_ptr, FILE * file_ptr)
 
     fprintf(file_ptr, "\n\n***** LFSLL STATS *****\n");
 
-    fprintf(file_ptr, "\nCurrent logical / physical LFSLL length = %lld / %lld \n", 
+    fprintf(file_ptr, "\nCurrent logical / physical LFSLL length = %lld / %lld \n",
             atomic_load(&(lfht_ptr->lfsll_log_len)), atomic_load(&(lfht_ptr->lfsll_phys_len)));
-    fprintf(file_ptr, "Max logical / physical LFSLL length = %lld / %lld\n", 
+    fprintf(file_ptr, "Max logical / physical LFSLL length = %lld / %lld\n",
             atomic_load(&(lfht_ptr->max_lfsll_log_len)), atomic_load(&(lfht_ptr->max_lfsll_phys_len)));
 
     fprintf(file_ptr, "\nFree List:\n");
-    fprintf(file_ptr, 
+    fprintf(file_ptr,
             "Max / current FL Length = %lld /%lld, Nodes added / deleted from free list = %lld / %lld\n",
-            atomic_load(&(lfht_ptr->max_fl_len)),
-            atomic_load(&(lfht_ptr->fl_len)),
-            atomic_load(&(lfht_ptr->num_nodes_added_to_fl)), 
+            atomic_load(&(lfht_ptr->max_fl_len)), atomic_load(&(lfht_ptr->fl_len)),
+            atomic_load(&(lfht_ptr->num_nodes_added_to_fl)),
             atomic_load(&(lfht_ptr->num_nodes_drawn_from_fl)));
     fprintf(file_ptr, "FL head / tail / append cols = %lld / %lld / %lld.\n",
             atomic_load(&(lfht_ptr->num_fl_head_update_cols)),
-            atomic_load(&(lfht_ptr->num_fl_tail_update_cols)),
-            atomic_load(&(lfht_ptr->num_fl_append_cols)));
+            atomic_load(&(lfht_ptr->num_fl_tail_update_cols)), atomic_load(&(lfht_ptr->num_fl_append_cols)));
     fprintf(file_ptr, "FL reqs failed due to empty / ref count = %lld / %lld.\n",
             atomic_load(&(lfht_ptr->num_fl_req_denied_due_to_empty)),
             atomic_load(&(lfht_ptr->num_fl_req_denied_due_to_ref_count)));
@@ -1405,32 +1392,26 @@ void lfht_dump_stats(struct lfht_t * lfht_ptr, FILE * file_ptr)
             atomic_load(&(lfht_ptr->num_fl_node_ref_cnt_incs)),
             atomic_load(&(lfht_ptr->num_fl_node_ref_cnt_decs)),
             atomic_load(&(lfht_ptr->num_fl_node_ref_cnt_inc_retrys)));
-    fprintf(file_ptr, 
-            "Nodes allocated / freed = %lld / %lld, candidate selection for free retries = %lld\n",
-            atomic_load(&(lfht_ptr->num_nodes_allocated)),
-            atomic_load(&(lfht_ptr->num_nodes_freed)),
+    fprintf(file_ptr, "Nodes allocated / freed = %lld / %lld, candidate selection for free retries = %lld\n",
+            atomic_load(&(lfht_ptr->num_nodes_allocated)), atomic_load(&(lfht_ptr->num_nodes_freed)),
             atomic_load(&(lfht_ptr->num_node_free_candidate_selection_restarts)));
     fprintf(file_ptr, "Frees skiped due to empty / ref_count = %lld / %lld.\n",
             atomic_load(&(lfht_ptr->num_fl_frees_skiped_due_to_empty)),
             atomic_load(&(lfht_ptr->num_fl_frees_skiped_due_to_ref_count)));
 
     fprintf(file_ptr, "\nHash Buckets:\n");
-    fprintf(file_ptr, 
+    fprintf(file_ptr,
             "Hash buckets defined / initialized = %lld / %lld, index_bits = %d, max index_bits = %d\n",
-            atomic_load(&(lfht_ptr->buckets_defined)),
-            atomic_load(&(lfht_ptr->buckets_initialized)),
-            atomic_load(&(lfht_ptr->index_bits)),
-            lfht_ptr->max_index_bits);
+            atomic_load(&(lfht_ptr->buckets_defined)), atomic_load(&(lfht_ptr->buckets_initialized)),
+            atomic_load(&(lfht_ptr->index_bits)), lfht_ptr->max_index_bits);
     fprintf(file_ptr, "Index bits incr cols = %lld, buckets defined update cols / retries = %lld / %lld.\n",
             atomic_load(&(lfht_ptr->index_bits_incr_cols)),
             atomic_load(&(lfht_ptr->buckets_defined_update_cols)),
             atomic_load(&(lfht_ptr->buckets_defined_update_retries)));
-    fprintf(file_ptr, "Hash bucket init cols / col sleeps = %lld / %lld\n", 
-            atomic_load(&(lfht_ptr->bucket_init_cols)),
-            atomic_load(&(lfht_ptr->bucket_init_col_sleeps)));
+    fprintf(file_ptr, "Hash bucket init cols / col sleeps = %lld / %lld\n",
+            atomic_load(&(lfht_ptr->bucket_init_cols)), atomic_load(&(lfht_ptr->bucket_init_col_sleeps)));
     fprintf(file_ptr, "recursive bucket inits = %lld, sentinels traversed = %lld.\n",
-            atomic_load(&(lfht_ptr->recursive_bucket_inits)),
-            atomic_load(&(lfht_ptr->sentinels_traversed)));
+            atomic_load(&(lfht_ptr->recursive_bucket_inits)), atomic_load(&(lfht_ptr->sentinels_traversed)));
 
     fprintf(file_ptr, "\nInsertions:\n");
     fprintf(file_ptr, "successful / failed = %lld/%lld, ins / del cols = %lld/%lld\n",
@@ -1438,7 +1419,7 @@ void lfht_dump_stats(struct lfht_t * lfht_ptr, FILE * file_ptr)
             atomic_load(&(lfht_ptr->ins_restarts_due_to_ins_col)),
             atomic_load(&(lfht_ptr->ins_restarts_due_to_del_col)));
     fprintf(file_ptr, "del completions = %lld, nodes visited = %lld\n",
-            atomic_load(&(lfht_ptr->ins_deletion_completions)), 
+            atomic_load(&(lfht_ptr->ins_deletion_completions)),
             atomic_load(&(lfht_ptr->nodes_visited_during_ins)));
 
     fprintf(file_ptr, "\nDeletions:\n");
@@ -1447,69 +1428,69 @@ void lfht_dump_stats(struct lfht_t * lfht_ptr, FILE * file_ptr)
             atomic_load(&(lfht_ptr->deletion_starts)), atomic_load(&(lfht_ptr->deletion_start_cols)),
             atomic_load(&(lfht_ptr->del_retries)));
     fprintf(file_ptr, "del completions = %lld, del col restarts = %lld, nodes visited = %lld\n",
-            atomic_load(&(lfht_ptr->del_deletion_completions)), 
-            atomic_load(&(lfht_ptr->del_restarts_due_to_del_col)), 
+            atomic_load(&(lfht_ptr->del_deletion_completions)),
+            atomic_load(&(lfht_ptr->del_restarts_due_to_del_col)),
             atomic_load(&(lfht_ptr->nodes_visited_during_dels)));
 
     fprintf(file_ptr, "\nSearches:\n");
     fprintf(file_ptr, "attempted / successful / failed = %lld/%lld/%lld\n",
             atomic_load(&(lfht_ptr->searches)), atomic_load(&(lfht_ptr->successful_searches)),
             atomic_load(&(lfht_ptr->failed_searches)));
-    fprintf(file_ptr, 
+    fprintf(file_ptr,
             "marked/unmoard nodes visited in: successful search %lld/%lld, failed search %lld/%lld\n",
-            atomic_load(&(lfht_ptr->marked_nodes_visited_in_succ_searches)), 
-            atomic_load(&(lfht_ptr->unmarked_nodes_visited_in_succ_searches)), 
-            atomic_load(&(lfht_ptr->marked_nodes_visited_in_failed_searches)), 
+            atomic_load(&(lfht_ptr->marked_nodes_visited_in_succ_searches)),
+            atomic_load(&(lfht_ptr->unmarked_nodes_visited_in_succ_searches)),
+            atomic_load(&(lfht_ptr->marked_nodes_visited_in_failed_searches)),
             atomic_load(&(lfht_ptr->unmarked_nodes_visited_in_failed_searches)));
 
-    if ( atomic_load(&(lfht_ptr->value_swaps)) > 0LL ) {
+    if (atomic_load(&(lfht_ptr->value_swaps)) > 0LL) {
 
         fprintf(file_ptr, "\nValue Swaps:\n");
         fprintf(file_ptr, "attempted / successful / failed = %lld/%lld/%lld\n",
                 atomic_load(&(lfht_ptr->value_swaps)), atomic_load(&(lfht_ptr->successful_val_swaps)),
                 atomic_load(&(lfht_ptr->failed_val_swaps)));
-        fprintf(file_ptr, 
-            "marked/unmoard nodes visited in: successful value swaps %lld/%lld, failed value swaps %lld/%lld\n",
-                atomic_load(&(lfht_ptr->marked_nodes_visited_in_succ_val_swaps)), 
-                atomic_load(&(lfht_ptr->unmarked_nodes_visited_in_succ_val_swaps)), 
-                atomic_load(&(lfht_ptr->marked_nodes_visited_in_failed_val_swaps)), 
+        fprintf(file_ptr,
+                "marked/unmoard nodes visited in: successful value swaps %lld/%lld, failed value swaps "
+                "%lld/%lld\n",
+                atomic_load(&(lfht_ptr->marked_nodes_visited_in_succ_val_swaps)),
+                atomic_load(&(lfht_ptr->unmarked_nodes_visited_in_succ_val_swaps)),
+                atomic_load(&(lfht_ptr->marked_nodes_visited_in_failed_val_swaps)),
                 atomic_load(&(lfht_ptr->unmarked_nodes_visited_in_failed_val_swaps)));
-
-    } else {
+    }
+    else {
 
         fprintf(file_ptr, "\nNo Value Swaps.\n");
     }
 
-    if ( atomic_load(&(lfht_ptr->value_searches)) > 0LL ) {
+    if (atomic_load(&(lfht_ptr->value_searches)) > 0LL) {
 
         fprintf(file_ptr, "\nSearches by Value:\n");
         fprintf(file_ptr, "attempted / successful / failed = %lld/%lld/%lld\n",
                 atomic_load(&(lfht_ptr->value_searches)), atomic_load(&(lfht_ptr->successful_val_searches)),
                 atomic_load(&(lfht_ptr->failed_val_searches)));
-        fprintf(file_ptr, 
+        fprintf(file_ptr,
                 "marked/unmoard nodes visited in value searches %lld/%lld, sentinels traversed %lld\n",
-                atomic_load(&(lfht_ptr->marked_nodes_visited_in_val_searches)), 
-                atomic_load(&(lfht_ptr->unmarked_nodes_visited_in_val_searches)), 
+                atomic_load(&(lfht_ptr->marked_nodes_visited_in_val_searches)),
+                atomic_load(&(lfht_ptr->unmarked_nodes_visited_in_val_searches)),
                 atomic_load(&(lfht_ptr->sentinels_traversed_in_val_searches)));
-
-    } else {
+    }
+    else {
 
         fprintf(file_ptr, "\nNo Searches by Value.\n");
     }
 
-    if ( atomic_load(&(lfht_ptr->itter_inits)) > 0LL ) {
+    if (atomic_load(&(lfht_ptr->itter_inits)) > 0LL) {
 
         fprintf(file_ptr, "\nItterations:\n");
         fprintf(file_ptr, "initiated / nexts / completed = %lld/%lld/%lld\n",
                 atomic_load(&(lfht_ptr->itter_inits)), atomic_load(&(lfht_ptr->itter_nexts)),
                 atomic_load(&(lfht_ptr->itter_ends)));
-        fprintf(file_ptr, 
-                "marked/unmoard nodes visited in itterations %lld/%lld, sentinels traversed %lld\n",
-                atomic_load(&(lfht_ptr->marked_nodes_visited_in_itters)), 
-                atomic_load(&(lfht_ptr->unmarked_nodes_visited_in_itters)), 
+        fprintf(file_ptr, "marked/unmoard nodes visited in itterations %lld/%lld, sentinels traversed %lld\n",
+                atomic_load(&(lfht_ptr->marked_nodes_visited_in_itters)),
+                atomic_load(&(lfht_ptr->unmarked_nodes_visited_in_itters)),
                 atomic_load(&(lfht_ptr->sentinels_traversed_in_itters)));
-
-    } else {
+    }
+    else {
 
         fprintf(file_ptr, "\nNo Itterations Initiated.\n");
     }
@@ -1635,12 +1616,12 @@ struct lfht_fl_node_t * lfht_enter(struct lfht_t * lfht_ptr)
  * Function to be called on entry to any API call that touches the LFHT
  * data structures.
  *
- * At present, this function exists to insert an entry with refcount 1 
- * at the end of the free list, or (if such a node already exists) to 
+ * At present, this function exists to insert an entry with refcount 1
+ * at the end of the free list, or (if such a node already exists) to
  * increment its ref count.
  *
  * In either case, the pointer to the relevant node is returned to the
- * caller,  where it is then used by lfht_exit() to decrement the same 
+ * caller,  where it is then used by lfht_exit() to decrement the same
  * ref_count.
  *
  * Geven the frequency with which this function will be called, it may
@@ -1654,14 +1635,15 @@ struct lfht_fl_node_t * lfht_enter(struct lfht_t * lfht_ptr)
  *
  ************************************************************************/
 
-struct lfht_fl_node_t * lfht_enter(struct lfht_t * lfht_ptr)
+struct lfht_fl_node_t *
+lfht_enter(struct lfht_t *lfht_ptr)
 {
     bool done = false;
 #if 0 
     unsigned int curr_ref_count;
-#endif 
-    struct lfht_node_t * node_ptr = NULL;
-    struct lfht_fl_node_t * fl_node_ptr = NULL;
+#endif
+    struct lfht_node_t *node_ptr = NULL;
+    struct lfht_fl_node_t *fl_node_ptr = NULL;
 #if 0
     struct lfht_flsptr_t fl_stail;
 #endif
@@ -1689,7 +1671,7 @@ struct lfht_fl_node_t * lfht_enter(struct lfht_t * lfht_ptr)
     }
 #endif
 
-    if ( ! done ) {
+    if (!done) {
 
         node_ptr = lfht_create_node(lfht_ptr, 0ULL, 1ULL, false, NULL);
 
@@ -1714,12 +1696,11 @@ struct lfht_fl_node_t * lfht_enter(struct lfht_t * lfht_ptr)
     assert(LFHT_FL_NODE_ON_FL == atomic_load(&(fl_node_ptr->tag)));
     assert(atomic_load(&(fl_node_ptr->ref_count)) > 0);
 
-    return(fl_node_ptr);
+    return (fl_node_ptr);
 
 } /* lfht_enter() */
 
 #endif /* JRM */
-
 
 /************************************************************************
  *
@@ -1728,7 +1709,7 @@ struct lfht_fl_node_t * lfht_enter(struct lfht_t * lfht_ptr)
  * Function to be called on exit from any API call that touches the LFHT
  * data structure.
  *
- * At present, this function exists to decrement the ref_count on the 
+ * At present, this function exists to decrement the ref_count on the
  * free list node whose ref count was incremented by the lfht_enter()
  * call.
  *
@@ -1740,7 +1721,8 @@ struct lfht_fl_node_t * lfht_enter(struct lfht_t * lfht_ptr)
  *
  ************************************************************************/
 
-void lfht_exit(struct lfht_t * lfht_ptr, struct lfht_fl_node_t * fl_node_ptr)
+void
+lfht_exit(struct lfht_t *lfht_ptr, struct lfht_fl_node_t *fl_node_ptr)
 {
     assert(lfht_ptr);
     assert(LFHT_VALID == lfht_ptr->tag);
@@ -1881,7 +1863,7 @@ bool lfht_find(struct lfht_t * lfht_ptr,
  * Search the supplied lfht looking for a node with the supplied id..
  *
  * If it is found, and the node is not marked for deletion, set *value_ptr
- * equal to the value field of the node and return true.  
+ * equal to the value field of the node and return true.
  *
  * Otherwise, return false.
  *
@@ -1893,9 +1875,8 @@ bool lfht_find(struct lfht_t * lfht_ptr,
  *
  ************************************************************************/
 
-bool lfht_find(struct lfht_t * lfht_ptr,
-               unsigned long long int id,
-               void ** value_ptr)
+bool
+lfht_find(struct lfht_t *lfht_ptr, unsigned long long int id, void **value_ptr)
 
 {
     bool success = false;
@@ -1903,14 +1884,14 @@ bool lfht_find(struct lfht_t * lfht_ptr,
     long long int unmarked_nodes_visited = 0;
     long long int sentinels_traversed = 0;
     unsigned long long int hash;
-    struct lfht_node_t * node_ptr = NULL;
-    struct lfht_fl_node_t * fl_node_ptr;
+    struct lfht_node_t *node_ptr = NULL;
+    struct lfht_fl_node_t *fl_node_ptr;
 
     assert(lfht_ptr);
     assert(LFHT_VALID == lfht_ptr->tag);
 #ifdef H5_HAVE_MULTITHREAD
     assert((id & ID_MASK) <= LFHT__MAX_ID);
-#else /* H5_HAVE_MULTITHREAD */
+#else  /* H5_HAVE_MULTITHREAD */
     assert(id <= LFHT__MAX_ID);
 #endif /* H5_HAVE_MULTITHREAD */
     assert(value_ptr);
@@ -1919,53 +1900,53 @@ bool lfht_find(struct lfht_t * lfht_ptr,
 
 #ifdef H5_HAVE_MULTITHREAD
     hash = lfht_id_to_hash((id & ID_MASK), false);
-#else /* H5_HAVE_MULTITHREAD */
+#else  /* H5_HAVE_MULTITHREAD */
     hash = lfht_id_to_hash(id, false);
 #endif /* H5_HAVE_MULTITHREAD */
 
     /* now attempt to find the target */
 
-    node_ptr = lfht_find_internal(lfht_ptr, hash, &marked_nodes_visited, 
-                                  &unmarked_nodes_visited, &sentinels_traversed);
+    node_ptr = lfht_find_internal(lfht_ptr, hash, &marked_nodes_visited, &unmarked_nodes_visited,
+                                  &sentinels_traversed);
 
-    if ( ( NULL == node_ptr ) || ( node_ptr->hash != hash ) ||
-         ( ((unsigned long long)atomic_load(&(node_ptr->next))) & 0x01ULL)) {
+    if ((NULL == node_ptr) || (node_ptr->hash != hash) ||
+        (((unsigned long long)atomic_load(&(node_ptr->next))) & 0x01ULL)) {
 
         success = false;
+    }
+    else {
 
-    } else {
-
-        assert(! node_ptr->sentinel);
+        assert(!node_ptr->sentinel);
         assert(hash == node_ptr->hash);
         success = true;
         *value_ptr = atomic_load(&(node_ptr->value));
     }
 
     /* update statistics */
-    
+
     atomic_fetch_add(&(lfht_ptr->searches), 1);
 
-    if ( success ) {
+    if (success) {
 
         atomic_fetch_add(&(lfht_ptr->successful_searches), 1);
         atomic_fetch_add(&(lfht_ptr->marked_nodes_visited_in_succ_searches), marked_nodes_visited);
         atomic_fetch_add(&(lfht_ptr->unmarked_nodes_visited_in_succ_searches), unmarked_nodes_visited);
-
-    } else {
+    }
+    else {
 
         atomic_fetch_add(&(lfht_ptr->failed_searches), 1);
         atomic_fetch_add(&(lfht_ptr->marked_nodes_visited_in_failed_searches), marked_nodes_visited);
         atomic_fetch_add(&(lfht_ptr->unmarked_nodes_visited_in_failed_searches), unmarked_nodes_visited);
     }
 
-    if ( sentinels_traversed > 0 ) {
+    if (sentinels_traversed > 0) {
 
         atomic_fetch_add(&(lfht_ptr->sentinels_traversed), sentinels_traversed);
     }
 
     lfht_exit(lfht_ptr, fl_node_ptr);
 
-    return(success);
+    return (success);
 
 } /* lfht_find() */
 
@@ -1982,10 +1963,10 @@ bool lfht_find(struct lfht_t * lfht_ptr,
  *
  * Otherwise, return false.
  *
- * Note that at present this function just does a simple scan of the 
- * LFSLL used by the LFHT to store its entries -- as such it is very 
- * in-efficient.  As I believe that this operation is rare, this 
- * should be acceptable.  However, if this changes, it may be 
+ * Note that at present this function just does a simple scan of the
+ * LFSLL used by the LFHT to store its entries -- as such it is very
+ * in-efficient.  As I believe that this operation is rare, this
+ * should be acceptable.  However, if this changes, it may be
  * necessary to re-visit this.
  *
  *                                           JRM -- 7/14/23
@@ -1996,27 +1977,25 @@ bool lfht_find(struct lfht_t * lfht_ptr,
  *
  ************************************************************************/
 
-bool lfht_find_id_by_value(struct lfht_t * lfht_ptr,
-                           unsigned long long int *id_ptr,
-                           void * value)
+bool
+lfht_find_id_by_value(struct lfht_t *lfht_ptr, unsigned long long int *id_ptr, void *value)
 
 {
-    bool success = false;
-    bool marked;
-    unsigned long long int marked_nodes_visited = 0;
+    bool                   success = false;
+    bool                   marked;
+    unsigned long long int marked_nodes_visited   = 0;
     unsigned long long int unmarked_nodes_visited = 0;
-    unsigned long long int sentinels_traversed = 0;
+    unsigned long long int sentinels_traversed    = 0;
     unsigned long long int id;
-    struct lfht_node_t * next_ptr = NULL;
-    struct lfht_node_t * node_ptr = NULL;
-    struct lfht_fl_node_t * fl_node_ptr;
-    
+    struct lfht_node_t    *next_ptr = NULL;
+    struct lfht_node_t    *node_ptr = NULL;
+    struct lfht_fl_node_t *fl_node_ptr;
+
     assert(lfht_ptr);
     assert(LFHT_VALID == lfht_ptr->tag);
     assert(id_ptr);
 
     fl_node_ptr = lfht_enter(lfht_ptr);
-
 
     /* now attempt to find the target */
 
@@ -2026,16 +2005,16 @@ bool lfht_find_id_by_value(struct lfht_t * lfht_ptr,
     assert(0x0ULL == (((unsigned long long)(node_ptr)) & 0x01ULL));
     assert(node_ptr->sentinel);
 
-    while ( ( node_ptr ) && ( ! success ) ) {
+    while ((node_ptr) && (!success)) {
 
-        assert( LFHT_VALID_NODE == node_ptr->tag );
+        assert(LFHT_VALID_NODE == node_ptr->tag);
 
         next_ptr = atomic_load(&(node_ptr->next));
 
         /* test to see if next_ptr is marked.  If it, remove the
          * mark so we can use it.
          */
-        if ( ((unsigned long long)(next_ptr)) & 0x01ULL ) {
+        if (((unsigned long long)(next_ptr)) & 0x01ULL) {
 
             assert(!(node_ptr->sentinel));
 
@@ -2045,48 +2024,48 @@ bool lfht_find_id_by_value(struct lfht_t * lfht_ptr,
             marked = true;
 
             marked_nodes_visited++;
-
-        } else {
+        }
+        else {
 
             marked = false;
 
-            if ( ! node_ptr->sentinel ) {
+            if (!node_ptr->sentinel) {
 
                 unmarked_nodes_visited++;
             }
         }
 
-        assert( LFHT_VALID_NODE == node_ptr->tag );
+        assert(LFHT_VALID_NODE == node_ptr->tag);
 
-        if ( node_ptr->sentinel ) {
+        if (node_ptr->sentinel) {
 
             sentinels_traversed++;
+        }
+        else if ((!marked) && (atomic_load(&(node_ptr->value)) == value)) {
 
-        } else if ( ( ! marked ) && ( atomic_load(&(node_ptr->value)) == value ) ) {
-
-            id = node_ptr->id;
+            id      = node_ptr->id;
             success = true;
         }
 
         node_ptr = next_ptr;
     }
 
-    if ( success ) {
+    if (success) {
 
         *id_ptr = id;
     }
-    /* it is tempting to assert that lfht_ptr->lfsll_log_len == 0 if success is false.  
+    /* it is tempting to assert that lfht_ptr->lfsll_log_len == 0 if success is false.
      *
-     * However, there are two problems with this.  
+     * However, there are two problems with this.
      *
-     * First, lfsll_log_len is updated only after the fact, and thus will be briefly 
-     * incorrect after each insertion and deletion.  
-     * 
-     * Second, the search for the first element will fail if entries are inserted at 
-     * the front of the lfsll after the scan for the first element has passed.  
+     * First, lfsll_log_len is updated only after the fact, and thus will be briefly
+     * incorrect after each insertion and deletion.
      *
-     * This is OK, as the result will be correct for some ordering of the insertions and 
-     * the search for the first element.  If the user wishes to avoid this race, it is 
+     * Second, the search for the first element will fail if entries are inserted at
+     * the front of the lfsll after the scan for the first element has passed.
+     *
+     * This is OK, as the result will be correct for some ordering of the insertions and
+     * the search for the first element.  If the user wishes to avoid this race, it is
      * his responsibility to ensure that the hash table is quiecent during iterations.
      */
 
@@ -2094,11 +2073,11 @@ bool lfht_find_id_by_value(struct lfht_t * lfht_ptr,
 
     atomic_fetch_add(&(lfht_ptr->value_searches), 1);
 
-    if ( success ) {
+    if (success) {
 
         atomic_fetch_add(&(lfht_ptr->successful_val_searches), 1);
-
-    } else {
+    }
+    else {
 
         atomic_fetch_add(&(lfht_ptr->failed_val_searches), 1);
     }
@@ -2110,10 +2089,9 @@ bool lfht_find_id_by_value(struct lfht_t * lfht_ptr,
 
     lfht_exit(lfht_ptr, fl_node_ptr);
 
-    return(success);
+    return (success);
 
 } /* lfht_find_id_by_value() */
-
 
 /************************************************************************
  *
@@ -2121,7 +2099,7 @@ bool lfht_find_id_by_value(struct lfht_t * lfht_ptr,
  *
  * Search the supplied lfht looking for a node with the supplied hash.
  *
- * If it is found, and the node is not marked for deletion, return a 
+ * If it is found, and the node is not marked for deletion, return a
  * pointer to the node.
  *
  * Otherwise, return NULL.
@@ -2134,18 +2112,17 @@ bool lfht_find_id_by_value(struct lfht_t * lfht_ptr,
  *
  ************************************************************************/
 
-struct lfht_node_t * lfht_find_internal(struct lfht_t * lfht_ptr, 
-                                        unsigned long long int hash,
-                                        long long int * marked_nodes_visited_ptr,
-                                        long long int * unmarked_nodes_visited_ptr, 
-                                        long long int * sentinels_traversed_ptr)
+struct lfht_node_t *
+lfht_find_internal(struct lfht_t *lfht_ptr, unsigned long long int hash,
+                   long long int *marked_nodes_visited_ptr, long long int *unmarked_nodes_visited_ptr,
+                   long long int *sentinels_traversed_ptr)
 
 {
-    long long int marked_nodes_visited = 0;
-    long long int unmarked_nodes_visited = 0;
-    long long int sentinels_traversed = 0;
-    struct lfht_node_t * node_ptr = NULL;
-    
+    long long int       marked_nodes_visited   = 0;
+    long long int       unmarked_nodes_visited = 0;
+    long long int       sentinels_traversed    = 0;
+    struct lfht_node_t *node_ptr               = NULL;
+
     assert(lfht_ptr);
     assert(LFHT_VALID == lfht_ptr->tag);
     assert(hash <= LFHT__MAX_HASH);
@@ -2162,41 +2139,40 @@ struct lfht_node_t * lfht_find_internal(struct lfht_t * lfht_ptr,
     assert(node_ptr->sentinel);
     assert(node_ptr->hash < hash);
 
-    while ( node_ptr->hash < hash ) {
+    while (node_ptr->hash < hash) {
 
         node_ptr = atomic_load(&(node_ptr->next));
 
         /* test to see if node_ptr is marked.  If it, remove the
          * mark so we can use it.
          */
-        if ( ((unsigned long long)(node_ptr)) & 0x01ULL ) {
+        if (((unsigned long long)(node_ptr)) & 0x01ULL) {
 
             /* node is marked -- remove the mark and increment marked nodes visited */
             node_ptr = (struct lfht_node_t *)(((unsigned long long)(node_ptr)) & (~0x01ULL));
 
             marked_nodes_visited++;
-
-        } else {
+        }
+        else {
 
             unmarked_nodes_visited++;
         }
 
-        assert( LFHT_VALID_NODE == node_ptr->tag );
+        assert(LFHT_VALID_NODE == node_ptr->tag);
 
-        if ( ( node_ptr->sentinel ) && ( node_ptr->hash < hash ) ) {
+        if ((node_ptr->sentinel) && (node_ptr->hash < hash)) {
 
             sentinels_traversed++;
         }
     }
 
-    if ( ( node_ptr->hash != hash ) ||
-         ( ((unsigned long long)atomic_load(&(node_ptr->next))) & 0x01ULL)) {
+    if ((node_ptr->hash != hash) || (((unsigned long long)atomic_load(&(node_ptr->next))) & 0x01ULL)) {
 
         node_ptr = NULL;
+    }
+    else {
 
-    } else {
-
-        assert(! node_ptr->sentinel);
+        assert(!node_ptr->sentinel);
         assert(hash == node_ptr->hash);
     }
 
@@ -2204,35 +2180,34 @@ struct lfht_node_t * lfht_find_internal(struct lfht_t * lfht_ptr,
     *unmarked_nodes_visited_ptr = unmarked_nodes_visited;
     *sentinels_traversed_ptr    = sentinels_traversed;
 
-    return(node_ptr);
+    return (node_ptr);
 
 } /* lfht_find_internal() */
-
 
 /************************************************************************
  *
  * lfht_find_mod_point
  *
- * Starting at the sentinel node pointed to by bucket_head, scan the 
- * LFSLL in the hash table to find a pair of adjacent nodes such that 
- * the hash of the first node has value less than or equal to the 
- * supplied hash, and the hash of the second node has value greater 
+ * Starting at the sentinel node pointed to by bucket_head, scan the
+ * LFSLL in the hash table to find a pair of adjacent nodes such that
+ * the hash of the first node has value less than or equal to the
+ * supplied hash, and the hash of the second node has value greater
  * than the supplied hash.
  *
  * Observe that since the list is sorted in increasing hash order, the hash
- * of the first node is the largest hash in the list that is less than 
- * or equal to the supplied hash.  Similarly, the hash of the second 
- * node is the smallest hash in the SLL that is greater than the 
+ * of the first node is the largest hash in the list that is less than
+ * or equal to the supplied hash.  Similarly, the hash of the second
+ * node is the smallest hash in the SLL that is greater than the
  * supplied hash.
  *
- * On success, return pointers to the first and second nodes in 
+ * On success, return pointers to the first and second nodes in
  * *first_ptr_ptr and *second_ptr_ptr respectively.
  *
  * During the scan of the of the lfht, attempt to complete the deletion
- * of any node encountered that is marked for deletion.  If this 
+ * of any node encountered that is marked for deletion.  If this
  * attempt fails (due to a collision with another thread beating us
- * to the physical deletion), restart the scan from the beginning 
- * of the hash bucket.  Maintain a count of the number of collisions, and 
+ * to the physical deletion), restart the scan from the beginning
+ * of the hash bucket.  Maintain a count of the number of collisions, and
  * return this value in *cols_ptr.
  *
  * Recall that the sentry nodes at the beginning of each hash bucket
@@ -2249,23 +2224,19 @@ struct lfht_node_t * lfht_find_internal(struct lfht_t * lfht_ptr,
  *
  ************************************************************************/
 
-void lfht_find_mod_point(struct lfht_t * lfht_ptr,
-                         struct lfht_node_t * bucket_head_ptr,
-                         struct lfht_node_t ** first_ptr_ptr,
-                         struct lfht_node_t ** second_ptr_ptr,
-                         int * cols_ptr,
-                         int * dels_ptr,
-                         int * nodes_visited_ptr,
-                         unsigned long long int hash)
+void
+lfht_find_mod_point(struct lfht_t *lfht_ptr, struct lfht_node_t *bucket_head_ptr,
+                    struct lfht_node_t **first_ptr_ptr, struct lfht_node_t **second_ptr_ptr, int *cols_ptr,
+                    int *dels_ptr, int *nodes_visited_ptr, unsigned long long int hash)
 {
-    bool done = false;
-    bool retry = false;
-    int cols = 0;
-    int dels = 0;
-    int nodes_visited = 0;
-    struct lfht_node_t * first_ptr = NULL;
-    struct lfht_node_t * second_ptr = NULL;
-    struct lfht_node_t * third_ptr = NULL;
+    bool                done          = false;
+    bool                retry         = false;
+    int                 cols          = 0;
+    int                 dels          = 0;
+    int                 nodes_visited = 0;
+    struct lfht_node_t *first_ptr     = NULL;
+    struct lfht_node_t *second_ptr    = NULL;
+    struct lfht_node_t *third_ptr     = NULL;
 
     assert(lfht_ptr);
     assert(LFHT_VALID == lfht_ptr->tag);
@@ -2279,13 +2250,13 @@ void lfht_find_mod_point(struct lfht_t * lfht_ptr,
     assert(nodes_visited_ptr);
     assert(hash <= LFHT__MAX_HASH);
 
-    /* first, find the sentinel node marking the beginning of the 
-     * hash bucket that hash maps into.  Note that this sentinel 
+    /* first, find the sentinel node marking the beginning of the
+     * hash bucket that hash maps into.  Note that this sentinel
      * node may not exist -- if so, lfht_get_hash_bucket_sentinel()
      * will create and insert it.
      */
 
-    do { 
+    do {
         assert(!done);
 
         retry = false;
@@ -2302,18 +2273,17 @@ void lfht_find_mod_point(struct lfht_t * lfht_ptr,
         assert(second_ptr);
         assert(0x0ULL == (((unsigned long long)(second_ptr)) & 0x01ULL));
         assert(LFHT_VALID_NODE == second_ptr->tag);
-   
+
         do {
             third_ptr = atomic_load(&(second_ptr->next));
 
-            /* if the low order bit on third_ptr is set, *second_ptr has 
-             * been marked for deletion.  Attempt to unlink and discard 
-             * *second_ptr if so, and repeat until *second_ptr no longer 
-             * marked for deletion.  If any deletion completion fails, we 
+            /* if the low order bit on third_ptr is set, *second_ptr has
+             * been marked for deletion.  Attempt to unlink and discard
+             * *second_ptr if so, and repeat until *second_ptr no longer
+             * marked for deletion.  If any deletion completion fails, we
              * must re-start the search for the mod point
              */
-            while ( ((unsigned long long)(third_ptr)) & 0x01ULL ) 
-            {
+            while (((unsigned long long)(third_ptr)) & 0x01ULL) {
                 assert(first_ptr);
                 assert(LFHT_VALID_NODE == first_ptr->tag);
 
@@ -2321,8 +2291,8 @@ void lfht_find_mod_point(struct lfht_t * lfht_ptr,
                 assert(LFHT_VALID_NODE == second_ptr->tag);
                 assert(!(second_ptr->sentinel));
 
-                /* third_ptr has its low order bit set to indicate that 
-                 * *second_ptr is marked for deletion,  Before we use 
+                /* third_ptr has its low order bit set to indicate that
+                 * *second_ptr is marked for deletion,  Before we use
                  * third_ptr, we must reset the low order bit.
                  */
                 third_ptr = (struct lfht_node_t *)(((unsigned long long)(third_ptr)) & ~0x01ULL);
@@ -2330,21 +2300,21 @@ void lfht_find_mod_point(struct lfht_t * lfht_ptr,
                 assert(third_ptr);
                 assert(LFHT_VALID_NODE == third_ptr->tag);
 
-                if ( ! atomic_compare_exchange_strong(&(first_ptr->next), &second_ptr, third_ptr) ) {
+                if (!atomic_compare_exchange_strong(&(first_ptr->next), &second_ptr, third_ptr)) {
 
                     /* compare and exchange failed -- some other thread
                      * beat us to the unlink.  Increment cols, set retry
-                     * to TRUE and then restart the search at the head 
+                     * to TRUE and then restart the search at the head
                      * of the SLL.
                      */
                     cols++;
                     retry = true;
                     break;
-
-                } else {
+                }
+                else {
 
                     /* unlink of *second_ptr succeeded.  Decrement the logical list length,
-                     * increment dels, increment nodes_visited, discard *second_ptr, set 
+                     * increment dels, increment nodes_visited, discard *second_ptr, set
                      * second_ptr to third_ptr, and then load third_ptr
                      */
                     atomic_fetch_sub(&(lfht_ptr->lfsll_phys_len), 1);
@@ -2352,18 +2322,17 @@ void lfht_find_mod_point(struct lfht_t * lfht_ptr,
                     nodes_visited++;
                     lfht_discard_node(lfht_ptr, second_ptr, 0);
                     second_ptr = third_ptr;
-                    third_ptr = atomic_load(&(second_ptr->next));
+                    third_ptr  = atomic_load(&(second_ptr->next));
 
                     assert(first_ptr);
                     assert(LFHT_VALID_NODE == first_ptr->tag);
 
                     assert(second_ptr);
                     assert(LFHT_VALID_NODE == second_ptr->tag);
-
                 }
             } /* end while *second_ptr is marked for deletion */
 
-            if ( ! retry ) {
+            if (!retry) {
 
                 assert(first_ptr);
                 assert(LFHT_VALID_NODE == first_ptr->tag);
@@ -2372,29 +2341,29 @@ void lfht_find_mod_point(struct lfht_t * lfht_ptr,
                 assert(LFHT_VALID_NODE == second_ptr->tag);
 
                 assert(first_ptr->hash <= hash);
- 
-                if ( second_ptr->hash > hash ) {
+
+                if (second_ptr->hash > hash) {
 
                     done = true;
+                }
+                else {
 
-                } else {
-
-                    if ( second_ptr->sentinel ) {
+                    if (second_ptr->sentinel) {
 
                         atomic_fetch_add(&(lfht_ptr->sentinels_traversed), 1);
                     }
 
-                    first_ptr = second_ptr;
+                    first_ptr  = second_ptr;
                     second_ptr = third_ptr;
                     nodes_visited++;
                 }
             }
 
-        } while ( ( ! done ) && ( ! retry ) );
+        } while ((!done) && (!retry));
 
-        assert( ! ( done && retry ) );
+        assert(!(done && retry));
 
-    } while ( retry );
+    } while (retry);
 
     assert(done);
     assert(!retry);
@@ -2402,7 +2371,7 @@ void lfht_find_mod_point(struct lfht_t * lfht_ptr,
     assert(first_ptr->hash <= hash);
     assert(hash < second_ptr->hash);
 
-    *first_ptr_ptr = first_ptr;
+    *first_ptr_ptr  = first_ptr;
     *second_ptr_ptr = second_ptr;
     *cols_ptr += cols;
     *dels_ptr += dels;
@@ -2412,19 +2381,18 @@ void lfht_find_mod_point(struct lfht_t * lfht_ptr,
 
 } /* lfht_find_mod_point() */
 
-
 /***********************************************************************************
  *
  * lfht_get_first()
  *
- * One of two API calls to support itteration through all entries in the 
- * lock free hash table.  Note that the itteration will almost certainly not be in 
+ * One of two API calls to support itteration through all entries in the
+ * lock free hash table.  Note that the itteration will almost certainly not be in
  * id order, and that entries added during the itteration may or may not be included
  * in the itteration.
  *
  * If the supplied instance of a lock free hash table is empty, return false.
  *
- * If it contains at least one entry, return the id, and value of the first 
+ * If it contains at least one entry, return the id, and value of the first
  * entry in *id_ptr, and *value_ptr respectively, and then return true.
  *
  *                                                  JRM -- 7/16/23
@@ -2435,26 +2403,26 @@ void lfht_find_mod_point(struct lfht_t * lfht_ptr,
  *
  ***********************************************************************************/
 
-bool lfht_get_first(struct lfht_t * lfht_ptr, unsigned long long int * id_ptr, void ** value_ptr)
+bool
+lfht_get_first(struct lfht_t *lfht_ptr, unsigned long long int *id_ptr, void **value_ptr)
 {
-    bool success = false;
-    bool marked;
-    unsigned long long int marked_nodes_visited = 0;
+    bool                   success = false;
+    bool                   marked;
+    unsigned long long int marked_nodes_visited   = 0;
     unsigned long long int unmarked_nodes_visited = 0;
-    unsigned long long int sentinels_traversed = 0;
+    unsigned long long int sentinels_traversed    = 0;
     unsigned long long int id;
-    void * value;
-    struct lfht_node_t * next_ptr = NULL;
-    struct lfht_node_t * node_ptr = NULL;
-    struct lfht_fl_node_t * fl_node_ptr;
-    
+    void                  *value;
+    struct lfht_node_t    *next_ptr = NULL;
+    struct lfht_node_t    *node_ptr = NULL;
+    struct lfht_fl_node_t *fl_node_ptr;
+
     assert(lfht_ptr);
     assert(LFHT_VALID == lfht_ptr->tag);
     assert(id_ptr);
     assert(value_ptr);
 
     fl_node_ptr = lfht_enter(lfht_ptr);
-
 
     /* search for the first entry in the hash table, if it exists */
 
@@ -2464,16 +2432,16 @@ bool lfht_get_first(struct lfht_t * lfht_ptr, unsigned long long int * id_ptr, v
     assert(0x0ULL == (((unsigned long long)(node_ptr)) & 0x01ULL));
     assert(node_ptr->sentinel);
 
-    while ( ( node_ptr ) && ( ! success ) ) {
+    while ((node_ptr) && (!success)) {
 
-        assert( LFHT_VALID_NODE == node_ptr->tag );
+        assert(LFHT_VALID_NODE == node_ptr->tag);
 
         next_ptr = atomic_load(&(node_ptr->next));
 
         /* test to see if next_ptr is marked.  If it, remove the
          * mark so we can use it.
          */
-        if ( ((unsigned long long)(next_ptr)) & 0x01ULL ) {
+        if (((unsigned long long)(next_ptr)) & 0x01ULL) {
 
             assert(!(node_ptr->sentinel));
 
@@ -2483,44 +2451,44 @@ bool lfht_get_first(struct lfht_t * lfht_ptr, unsigned long long int * id_ptr, v
             marked = true;
 
             marked_nodes_visited++;
-
-        } else {
+        }
+        else {
 
             marked = false;
 
-            if ( ! node_ptr->sentinel ) {
+            if (!node_ptr->sentinel) {
 
                 unmarked_nodes_visited++;
             }
         }
 
-        assert( LFHT_VALID_NODE == node_ptr->tag );
+        assert(LFHT_VALID_NODE == node_ptr->tag);
 
-        if ( node_ptr->sentinel ) {
+        if (node_ptr->sentinel) {
 
             sentinels_traversed++;
+        }
+        else if (!marked) {
 
-        } else if ( ! marked ) {
-
-            id = node_ptr->id;
-            value = atomic_load(&(node_ptr->value));
+            id      = node_ptr->id;
+            value   = atomic_load(&(node_ptr->value));
             success = true;
         }
 
         node_ptr = next_ptr;
     }
 
-    if ( success ) {
+    if (success) {
 
         *id_ptr    = id;
         *value_ptr = value;
     }
 
     /* update statistics */
-    
+
     atomic_fetch_add(&(lfht_ptr->itter_inits), 1);
 
-    if ( ! success ) {
+    if (!success) {
 
         atomic_fetch_add(&(lfht_ptr->itter_ends), 1);
     }
@@ -2532,22 +2500,21 @@ bool lfht_get_first(struct lfht_t * lfht_ptr, unsigned long long int * id_ptr, v
 
     lfht_exit(lfht_ptr, fl_node_ptr);
 
-    return(success);
+    return (success);
 
 } /* lfht_get_first() */
-
 
 /***********************************************************************************
  *
  * lfht_get_hash_bucket_sentinel()
  *
- *    Given a hash, find the sentinel node in the LFSLL marking the bucket into 
+ *    Given a hash, find the sentinel node in the LFSLL marking the bucket into
  *    which the hash will fall, and return a pointer to it.
  *
- *    Usually, this is a trivial look up.  However, it is possible that the 
- *    containing hash bucket hasn't been initialized yet.  In this case, it 
- *    will be necessary to create the bucket before returning the pointer 
- *    to the required sentinel.  Further, observe that this operation may 
+ *    Usually, this is a trivial look up.  However, it is possible that the
+ *    containing hash bucket hasn't been initialized yet.  In this case, it
+ *    will be necessary to create the bucket before returning the pointer
+ *    to the required sentinel.  Further, observe that this operation may
  *    be recursing if a sequence of containing buckets haven't been initialized.
  *
  *                                                JRM -- 6/30/23
@@ -2558,17 +2525,18 @@ bool lfht_get_first(struct lfht_t * lfht_ptr, unsigned long long int * id_ptr, v
  *
  ***********************************************************************************/
 
-struct lfht_node_t * lfht_get_hash_bucket_sentinel(struct lfht_t * lfht_ptr, unsigned long long int hash)
+struct lfht_node_t *
+lfht_get_hash_bucket_sentinel(struct lfht_t *lfht_ptr, unsigned long long int hash)
 {
-    int index_bits;
-    struct lfht_node_t * sentinel_ptr = NULL;
+    int                    index_bits;
+    struct lfht_node_t    *sentinel_ptr = NULL;
     unsigned long long int hash_index;
 
     index_bits = atomic_load(&(lfht_ptr->index_bits));
 
     hash_index = lfht_hash_to_idx(hash, index_bits);
 
-    if ( NULL == atomic_load(&(lfht_ptr->bucket_idx[hash_index])) ) {
+    if (NULL == atomic_load(&(lfht_ptr->bucket_idx[hash_index]))) {
 
         /* bucket doesn't exist -- create it */
         lfht_create_hash_bucket(lfht_ptr, hash, atomic_load(&(lfht_ptr->index_bits)));
@@ -2581,30 +2549,29 @@ struct lfht_node_t * lfht_get_hash_bucket_sentinel(struct lfht_t * lfht_ptr, uns
     assert(sentinel_ptr->sentinel);
 
 #if 1 /* JRM */
-    if ( sentinel_ptr->hash > hash ) {
+    if (sentinel_ptr->hash > hash) {
 
-        fprintf(stderr, "\nhash_index = %lld, sentinel_ptr->hash = 0x%llx, hash = 0x%llx.\n",
-                hash_index, sentinel_ptr->hash, hash);
+        fprintf(stderr, "\nhash_index = %lld, sentinel_ptr->hash = 0x%llx, hash = 0x%llx.\n", hash_index,
+                sentinel_ptr->hash, hash);
     }
 #endif /* JRM */
     assert(sentinel_ptr->hash < hash);
 
-    return(sentinel_ptr);
+    return (sentinel_ptr);
 
 } /* lfht_get_hash_bucket_sentinel() */
-
 
 /***********************************************************************************
  *
  * lfht_get_next()
  *
- * One of two API calls to support itteration through all entries in the 
- * lock free hash table.  Note that the itteration will almost certainly not be in 
+ * One of two API calls to support itteration through all entries in the
+ * lock free hash table.  Note that the itteration will almost certainly not be in
  * id order, and that entries added during the itteration may or may not be included
  * in the itteration.
  *
- * Compute the hash of the supplied old_id, and attempt to find the entry in the 
- * hash table with the smallest hash that is greater than that of the old_id.  If 
+ * Compute the hash of the supplied old_id, and attempt to find the entry in the
+ * hash table with the smallest hash that is greater than that of the old_id.  If
  * it exists, this is the next entry in the itteration.
  *
  * If no next entry exists, return false.
@@ -2620,21 +2587,22 @@ struct lfht_node_t * lfht_get_hash_bucket_sentinel(struct lfht_t * lfht_ptr, uns
  *
  ***********************************************************************************/
 
-bool lfht_get_next(struct lfht_t * lfht_ptr, unsigned long long int old_id, 
-                   unsigned long long int * id_ptr, void ** value_ptr)
+bool
+lfht_get_next(struct lfht_t *lfht_ptr, unsigned long long int old_id, unsigned long long int *id_ptr,
+              void **value_ptr)
 {
-    bool success = false;
-    bool marked;
-    unsigned long long int marked_nodes_visited = 0;
+    bool                   success = false;
+    bool                   marked;
+    unsigned long long int marked_nodes_visited   = 0;
     unsigned long long int unmarked_nodes_visited = 0;
-    unsigned long long int sentinels_traversed = 0;
+    unsigned long long int sentinels_traversed    = 0;
     unsigned long long int id;
     unsigned long long int old_hash;
-    void * value;
-    struct lfht_node_t * next_ptr = NULL;
-    struct lfht_node_t * node_ptr = NULL;
-    struct lfht_fl_node_t * fl_node_ptr;
-    
+    void                  *value;
+    struct lfht_node_t    *next_ptr = NULL;
+    struct lfht_node_t    *node_ptr = NULL;
+    struct lfht_fl_node_t *fl_node_ptr;
+
     assert(lfht_ptr);
     assert(LFHT_VALID == lfht_ptr->tag);
     assert(id_ptr);
@@ -2642,14 +2610,14 @@ bool lfht_get_next(struct lfht_t * lfht_ptr, unsigned long long int old_id,
 
     fl_node_ptr = lfht_enter(lfht_ptr);
 
-    /* compute the hash of old_id.  The node with this hash should still be 
+    /* compute the hash of old_id.  The node with this hash should still be
      * in the hash table, but we have no way of enforcing this.  Thus, make
      * no assumptions.
      */
     old_hash = lfht_id_to_hash(old_id, false);
 
-    /* now search for the node in the hash table with the smallest hash 
-     * that is greater than old_hash.  This algorithm is very similar to 
+    /* now search for the node in the hash table with the smallest hash
+     * that is greater than old_hash.  This algorithm is very similar to
      * that used in lfht_find_internal().
      */
     node_ptr = lfht_get_hash_bucket_sentinel(lfht_ptr, old_hash);
@@ -2659,16 +2627,16 @@ bool lfht_get_next(struct lfht_t * lfht_ptr, unsigned long long int old_id,
     assert(node_ptr->sentinel);
     assert(node_ptr->hash < old_hash);
 
-    while ( ( node_ptr ) && ( ! success ) ) {
+    while ((node_ptr) && (!success)) {
 
-        assert( LFHT_VALID_NODE == node_ptr->tag );
+        assert(LFHT_VALID_NODE == node_ptr->tag);
 
         next_ptr = atomic_load(&(node_ptr->next));
 
         /* test to see if next_ptr is marked.  If it, remove the
          * mark so we can use it.
          */
-        if ( ((unsigned long long)(next_ptr)) & 0x01ULL ) {
+        if (((unsigned long long)(next_ptr)) & 0x01ULL) {
 
             assert(!(node_ptr->sentinel));
 
@@ -2678,34 +2646,34 @@ bool lfht_get_next(struct lfht_t * lfht_ptr, unsigned long long int old_id,
             marked = true;
 
             marked_nodes_visited++;
-
-        } else {
+        }
+        else {
 
             marked = false;
 
-            if ( ! node_ptr->sentinel ) {
+            if (!node_ptr->sentinel) {
 
                 unmarked_nodes_visited++;
             }
         }
 
-        assert( LFHT_VALID_NODE == node_ptr->tag );
+        assert(LFHT_VALID_NODE == node_ptr->tag);
 
-        if ( node_ptr->sentinel ) {
+        if (node_ptr->sentinel) {
 
             sentinels_traversed++;
+        }
+        else if ((!marked) && (node_ptr->hash > old_hash)) {
 
-        } else if ( ( ! marked ) && ( node_ptr->hash > old_hash ) ) {
-
-            id = node_ptr->id;
-            value = atomic_load(&(node_ptr->value));
+            id      = node_ptr->id;
+            value   = atomic_load(&(node_ptr->value));
             success = true;
         }
 
         node_ptr = next_ptr;
     }
 
-    if ( success ) {
+    if (success) {
 
         *id_ptr    = id;
         *value_ptr = value;
@@ -2713,11 +2681,11 @@ bool lfht_get_next(struct lfht_t * lfht_ptr, unsigned long long int old_id,
 
     /* update statistics */
 
-    if ( success ) {
+    if (success) {
 
         atomic_fetch_add(&(lfht_ptr->itter_nexts), 1);
-
-    } else {
+    }
+    else {
 
         atomic_fetch_add(&(lfht_ptr->itter_ends), 1);
     }
@@ -2729,22 +2697,21 @@ bool lfht_get_next(struct lfht_t * lfht_ptr, unsigned long long int old_id,
 
     lfht_exit(lfht_ptr, fl_node_ptr);
 
-    return(success);
+    return (success);
 
 } /* lfht_get_next() */
-
 
 /***********************************************************************************
  *
  * lfht_hash_to_bucket_idx()
  *
- *    Given a hash, compute the index of the containing bucket given the current 
+ *    Given a hash, compute the index of the containing bucket given the current
  *    value of index_bits.
  *
  *    Do this by first left shifting the supplied hash by one bit.
  *
- *    The copy the lfht_ptr->index_bits most significant bits of the hash into 
- *    the least significant bits of the index in reverse order, and return the 
+ *    The copy the lfht_ptr->index_bits most significant bits of the hash into
+ *    the least significant bits of the index in reverse order, and return the
  *    result.
  *
  *
@@ -2756,32 +2723,33 @@ bool lfht_get_next(struct lfht_t * lfht_ptr, unsigned long long int old_id,
  *
  ***********************************************************************************/
 
-unsigned long long lfht_hash_to_idx(unsigned long long hash, int index_bits)
+unsigned long long
+lfht_hash_to_idx(unsigned long long hash, int index_bits)
 {
-    int i;
+    int                i;
     unsigned long long index = 0x0ULL;
     unsigned long long hash_bit;
     unsigned long long idx_bit;
 
     assert(0 <= index_bits);
-    assert(LFHT__MAX_INDEX_BITS >= index_bits); 
+    assert(LFHT__MAX_INDEX_BITS >= index_bits);
 
     hash >>= 1;
 
     hash_bit = 0x01ULL << (LFHT__NUM_HASH_BITS - 1);
-    idx_bit = 0x01ULL;
+    idx_bit  = 0x01ULL;
 
-    for ( i = 0; i < index_bits; i++ ) {
+    for (i = 0; i < index_bits; i++) {
 
-        if ( 0 != (hash_bit & hash) ) {
+        if (0 != (hash_bit & hash)) {
 
             index |= idx_bit;
         }
         hash_bit >>= 1;
-        idx_bit <<= 1; 
+        idx_bit <<= 1;
     }
 
-    return ( index );
+    return (index);
 
 } /* lfht_hash_to_idx() */
 
@@ -2791,11 +2759,11 @@ unsigned long long lfht_hash_to_idx(unsigned long long hash, int index_bits)
  *
  *    Given an id, compute the reverse order hash and return it.
  *
- *    Do this by examining the LFHT__NUM_HASH_BITS bit in the id, and if it is 
+ *    Do this by examining the LFHT__NUM_HASH_BITS bit in the id, and if it is
  *    set, set the first bit in the hash.  Then examine the LFHT__NUM_HASH_BITS - 1th
  *    bit in the id, and if it is set, set the second bit in the hash.  Repeat until
- *    the lower LFHT__NUM_HASH_BITS bits of the id have been examined, and the 
- *    corresponding bits in the hash have been set where appropriate.  Observe that 
+ *    the lower LFHT__NUM_HASH_BITS bits of the id have been examined, and the
+ *    corresponding bits in the hash have been set where appropriate.  Observe that
  *    hash now contains the lower LFHT__NUM_HASH_BITS bits from the id in reverse
  *    order.
  *
@@ -2814,37 +2782,37 @@ unsigned long long lfht_hash_to_idx(unsigned long long hash, int index_bits)
  *
  ***********************************************************************************/
 
-unsigned long long lfht_id_to_hash(unsigned long long id, bool sentinel_hash)
+unsigned long long
+lfht_id_to_hash(unsigned long long id, bool sentinel_hash)
 {
-    int i;
+    int                i;
     unsigned long long id_bit;
     unsigned long long hash_bit;
     unsigned long long hash = 0;
 
-    id_bit = 0x01ULL << (LFHT__NUM_HASH_BITS - 1);
+    id_bit   = 0x01ULL << (LFHT__NUM_HASH_BITS - 1);
     hash_bit = 0x01ULL;
 
-    for ( i = 0; i < LFHT__NUM_HASH_BITS; i++ ) {
+    for (i = 0; i < LFHT__NUM_HASH_BITS; i++) {
 
-        if ( 0 != (id_bit & id) ) {
+        if (0 != (id_bit & id)) {
 
             hash |= hash_bit;
         }
         id_bit >>= 1;
-        hash_bit <<= 1; 
+        hash_bit <<= 1;
     }
 
     hash <<= 1;
 
-    if ( ! sentinel_hash ) {
+    if (!sentinel_hash) {
 
         hash |= 0x01ULL;
     }
 
-    return ( hash );
+    return (hash);
 
 } /* lfht_id_to_hash() */
-
 
 /************************************************************************
  *
@@ -2856,34 +2824,32 @@ unsigned long long lfht_id_to_hash(unsigned long long id, bool sentinel_hash)
  *
  ************************************************************************/
 
-void lfht_init(struct lfht_t * lfht_ptr)
+void
+lfht_init(struct lfht_t *lfht_ptr)
 {
-    int i;
-    unsigned long long int mask = 0x0ULL;
-    struct lfht_flsptr_t init_lfht_flsptr = {NULL, 0x0ULL};
-    struct lfht_flsptr_t fl_shead;
-    struct lfht_flsptr_t fl_stail;
-    struct lfht_flsptr_t snext;
+    int                    i;
+    unsigned long long int mask             = 0x0ULL;
+    struct lfht_flsptr_t   init_lfht_flsptr = {NULL, 0x0ULL};
+    struct lfht_flsptr_t   fl_shead;
+    struct lfht_flsptr_t   fl_stail;
+    struct lfht_flsptr_t   snext;
 
 #ifdef H5_HAVE_MULTITHREAD
     assert(LFHT__NUM_HASH_BITS == ID_BITS + 1);
 #endif /* H5_HAVE_MULTITHREAD */
 
-
-    struct lfht_node_t * head_sentinel_ptr = NULL;
-    struct lfht_node_t * tail_sentinel_ptr = NULL;
-    struct lfht_fl_node_t * fl_node_ptr = NULL;
+    struct lfht_node_t    *head_sentinel_ptr = NULL;
+    struct lfht_node_t    *tail_sentinel_ptr = NULL;
+    struct lfht_fl_node_t *fl_node_ptr       = NULL;
 
     assert(lfht_ptr);
 
     lfht_ptr->tag = LFHT_VALID;
 
-
     /* lock free singly linked list */
     atomic_init(&(lfht_ptr->lfsll_root), NULL);
     atomic_init(&(lfht_ptr->lfsll_log_len), 0ULL);
     atomic_init(&(lfht_ptr->lfsll_phys_len), 2ULL);
-
 
     /* free list */
     atomic_init(&(lfht_ptr->fl_shead), init_lfht_flsptr);
@@ -2892,11 +2858,10 @@ void lfht_init(struct lfht_t * lfht_ptr)
     lfht_ptr->max_desired_fl_len = LFHT__MAX_DESIRED_FL_LEN;
     atomic_init(&(lfht_ptr->next_sn), 0ULL);
 
-
     /* hash bucket index */
     atomic_init(&(lfht_ptr->index_bits), 0);
     lfht_ptr->max_index_bits = LFHT__MAX_INDEX_BITS;
-    for ( i = 0; i <= LFHT__NUM_HASH_BITS; i++ ) {
+    for (i = 0; i <= LFHT__NUM_HASH_BITS; i++) {
 
         lfht_ptr->index_masks[i] = mask;
         mask <<= 1;
@@ -2904,11 +2869,10 @@ void lfht_init(struct lfht_t * lfht_ptr)
     }
     atomic_init(&(lfht_ptr->buckets_defined), 1);
     atomic_init(&(lfht_ptr->buckets_initialized), 0);
-    for ( i = 0; i < LFHT__BASE_IDX_LEN; i++ ) {
+    for (i = 0; i < LFHT__BASE_IDX_LEN; i++) {
 
         atomic_init(&((lfht_ptr->bucket_idx)[i]), NULL);
     }
-
 
     /* statistics */
     atomic_init(&(lfht_ptr->max_lfsll_log_len), 0LL);
@@ -2985,14 +2949,13 @@ void lfht_init(struct lfht_t * lfht_ptr)
     atomic_init(&(lfht_ptr->unmarked_nodes_visited_in_itters), 0LL);
     atomic_init(&(lfht_ptr->sentinels_traversed_in_itters), 0LL);
 
-
     /* setup hash table */
 
     head_sentinel_ptr = lfht_create_node(lfht_ptr, 0ULL, 0ULL, true, NULL);
     assert(head_sentinel_ptr);
     assert(head_sentinel_ptr->tag == LFHT_VALID_NODE);
 
-    tail_sentinel_ptr = lfht_create_node(lfht_ptr, 0ULL, 0ULL, true, NULL);
+    tail_sentinel_ptr       = lfht_create_node(lfht_ptr, 0ULL, 0ULL, true, NULL);
     tail_sentinel_ptr->hash = LLONG_MAX;
     assert(tail_sentinel_ptr);
     assert(tail_sentinel_ptr->tag == LFHT_VALID_NODE);
@@ -3009,11 +2972,10 @@ void lfht_init(struct lfht_t * lfht_ptr)
     atomic_store(&((lfht_ptr->bucket_idx)[0]), head_sentinel_ptr);
     atomic_fetch_add(&(lfht_ptr->buckets_initialized), 1);
 
-
     /* Setup the free list.
      *
-     * The free list must always have at least one node.  Allocate, 
-     * initialize, and insert a node in the free list. 
+     * The free list must always have at least one node.  Allocate,
+     * initialize, and insert a node in the free list.
      */
     fl_node_ptr = (struct lfht_fl_node_t *)lfht_create_node(lfht_ptr, 0ULL, 0ULL, false, NULL);
     assert(fl_node_ptr);
@@ -3033,15 +2995,14 @@ void lfht_init(struct lfht_t * lfht_ptr)
 
 } /* lfht_init() */
 
-
 /************************************************************************
  *
  * lfht_swap_value()
  *
  * Search the supplied lfht looking for a node with the supplied id..
  *
- * If it is found, and the node is not marked for deletion, set the 
- * node's value to the supplied new_value, set *old_value_ptr to 
+ * If it is found, and the node is not marked for deletion, set the
+ * node's value to the supplied new_value, set *old_value_ptr to
  * the old value of the node, and return true.
  *
  * Otherwise, return false.
@@ -3054,20 +3015,18 @@ void lfht_init(struct lfht_t * lfht_ptr)
  *
  ************************************************************************/
 
-bool lfht_swap_value(struct lfht_t * lfht_ptr,
-                     unsigned long long int id,
-                     void * new_value,
-                     void ** old_value_ptr)
+bool
+lfht_swap_value(struct lfht_t *lfht_ptr, unsigned long long int id, void *new_value, void **old_value_ptr)
 
 {
-    bool success = false;
-    long long int marked_nodes_visited = 0;
-    long long int unmarked_nodes_visited = 0;
-    long long int sentinels_traversed = 0;
+    bool                   success                = false;
+    long long int          marked_nodes_visited   = 0;
+    long long int          unmarked_nodes_visited = 0;
+    long long int          sentinels_traversed    = 0;
     unsigned long long int hash;
-    struct lfht_node_t * node_ptr = NULL;
-    struct lfht_fl_node_t * fl_node_ptr;
-    
+    struct lfht_node_t    *node_ptr = NULL;
+    struct lfht_fl_node_t *fl_node_ptr;
+
     assert(lfht_ptr);
     assert(LFHT_VALID == lfht_ptr->tag);
     assert(id <= LFHT__MAX_ID);
@@ -3079,20 +3038,20 @@ bool lfht_swap_value(struct lfht_t * lfht_ptr,
 
     /* now attempt to find the target */
 
-    node_ptr = lfht_find_internal(lfht_ptr, hash, &marked_nodes_visited, 
-                                  &unmarked_nodes_visited, &sentinels_traversed);
+    node_ptr = lfht_find_internal(lfht_ptr, hash, &marked_nodes_visited, &unmarked_nodes_visited,
+                                  &sentinels_traversed);
 
-    if ( ( NULL == node_ptr ) || ( node_ptr->hash != hash ) ||
-         ( ((unsigned long long)atomic_load(&(node_ptr->next))) & 0x01ULL)) {
+    if ((NULL == node_ptr) || (node_ptr->hash != hash) ||
+        (((unsigned long long)atomic_load(&(node_ptr->next))) & 0x01ULL)) {
 
         success = false;
+    }
+    else {
 
-    } else {
-
-        assert(! node_ptr->sentinel);
+        assert(!node_ptr->sentinel);
         assert(hash == node_ptr->hash);
         *old_value_ptr = atomic_exchange(&(node_ptr->value), new_value);
-        success = true;
+        success        = true;
     }
 
     /* update statistics */
@@ -3100,29 +3059,29 @@ bool lfht_swap_value(struct lfht_t * lfht_ptr,
     assert(marked_nodes_visited >= 0);
     assert(unmarked_nodes_visited >= 0);
     assert(sentinels_traversed >= 0);
-    
+
     atomic_fetch_add(&(lfht_ptr->value_swaps), 1);
 
-    if ( success ) {
+    if (success) {
 
         atomic_fetch_add(&(lfht_ptr->successful_val_swaps), 1);
         atomic_fetch_add(&(lfht_ptr->marked_nodes_visited_in_succ_val_swaps), marked_nodes_visited);
         atomic_fetch_add(&(lfht_ptr->unmarked_nodes_visited_in_succ_val_swaps), unmarked_nodes_visited);
-
-    } else {
+    }
+    else {
 
         atomic_fetch_add(&(lfht_ptr->failed_val_swaps), 1);
         atomic_fetch_add(&(lfht_ptr->marked_nodes_visited_in_failed_val_swaps), marked_nodes_visited);
         atomic_fetch_add(&(lfht_ptr->unmarked_nodes_visited_in_failed_val_swaps), unmarked_nodes_visited);
     }
 
-    if ( sentinels_traversed > 0 ) {
+    if (sentinels_traversed > 0) {
 
         atomic_fetch_add(&(lfht_ptr->sentinels_traversed), sentinels_traversed);
     }
 
     lfht_exit(lfht_ptr, fl_node_ptr);
 
-    return(success);
+    return (success);
 
 } /* lfht_swap_value() */

@@ -362,8 +362,8 @@ main(int argc, char **argv)
     if (NULL == (test_path_prefix = getenv(HDF5_API_TEST_PATH_PREFIX)))
         test_path_prefix = "";
 
-    snprintf(H5_api_test_parallel_filename, H5_API_TEST_FILENAME_MAX_LENGTH, "%s%s",
-             test_path_prefix, PARALLEL_TEST_FILE_NAME);
+    snprintf(H5_api_test_parallel_filename, H5_API_TEST_FILENAME_MAX_LENGTH, "%s%s", test_path_prefix,
+             PARALLEL_TEST_FILE_NAME);
 
     if (NULL == (vol_connector_string = getenv(HDF5_VOL_CONNECTOR))) {
         if (MAINPROCESS)
@@ -442,7 +442,7 @@ main(int argc, char **argv)
             if (!is_registered) {
                 if (MAINPROCESS)
                     TestErrPrintf("Specified VOL connector '%s' wasn't correctly registered!\n",
-                            vol_connector_name);
+                                  vol_connector_name);
                 INDEPENDENT_OP_ERROR(check_vol_register);
             }
             else {
@@ -465,7 +465,8 @@ main(int argc, char **argv)
 
                 if (default_con_id != registered_con_id) {
                     if (MAINPROCESS)
-                        TestErrPrintf("VOL connector set on default FAPL didn't match specified VOL connector\n");
+                        TestErrPrintf(
+                            "VOL connector set on default FAPL didn't match specified VOL connector\n");
                     INDEPENDENT_OP_ERROR(check_vol_register);
                 }
             }
@@ -496,7 +497,7 @@ main(int argc, char **argv)
         if (MAINPROCESS) {
             if (create_test_container(H5_api_test_parallel_filename, vol_cap_flags_g) < 0) {
                 TestErrPrintf("    failed to create testing container file '%s'\n",
-                        H5_api_test_parallel_filename);
+                              H5_api_test_parallel_filename);
                 INDEPENDENT_OP_ERROR(create_test_container);
             }
         }
@@ -532,8 +533,8 @@ main(int argc, char **argv)
             printf("The below statistics are minimum values due to the possibility of some ranks failing a "
                    "test while others pass:\n");
 
-        if (MPI_SUCCESS != MPI_Allreduce(MPI_IN_PLACE, &n_tests_passed, 1, H5_SIZE_T_AS_MPI_TYPE, MPI_MIN,
-                                         MPI_COMM_WORLD)) {
+        if (MPI_SUCCESS !=
+            MPI_Allreduce(MPI_IN_PLACE, &n_tests_passed, 1, H5_SIZE_T_AS_MPI_TYPE, MPI_MIN, MPI_COMM_WORLD)) {
             if (MAINPROCESS)
                 printf("    failed to collect consensus about the minimum number of tests that passed -- "
                        "reporting rank 0's (possibly inaccurate) value\n");
@@ -544,8 +545,8 @@ main(int argc, char **argv)
                    n_tests_passed > 0 ? "At least " : "", n_tests_passed, n_tests_run,
                    ((double)n_tests_passed / (double)n_tests_run * 100.0), vol_connector_name);
 
-        if (MPI_SUCCESS != MPI_Allreduce(MPI_IN_PLACE, &n_tests_failed, 1, H5_SIZE_T_AS_MPI_TYPE, MPI_MIN,
-                                         MPI_COMM_WORLD)) {
+        if (MPI_SUCCESS !=
+            MPI_Allreduce(MPI_IN_PLACE, &n_tests_failed, 1, H5_SIZE_T_AS_MPI_TYPE, MPI_MIN, MPI_COMM_WORLD)) {
             if (MAINPROCESS)
                 printf("    failed to collect consensus about the minimum number of tests that failed -- "
                        "reporting rank 0's (possibly inaccurate) value\n");
@@ -557,8 +558,7 @@ main(int argc, char **argv)
                    ((double)n_tests_failed / (double)n_tests_run * 100.0), vol_connector_name);
 
             printf("%zu/%zu (%.2f%%) API tests were skipped with VOL connector '%s'\n", n_tests_skipped,
-                   n_tests_run, ((double)n_tests_skipped / (double)n_tests_run * 100.0),
-                   vol_connector_name);
+                   n_tests_run, ((double)n_tests_skipped / (double)n_tests_run * 100.0), vol_connector_name);
         }
     }
 

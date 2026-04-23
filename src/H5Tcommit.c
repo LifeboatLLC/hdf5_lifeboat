@@ -104,7 +104,7 @@ H5T__commit_api_common(hid_t loc_id, const char *name, hid_t type_id, hid_t lcpl
         (_vol_obj_ptr ? _vol_obj_ptr : &tmp_vol_obj); /* Ptr to object ptr for loc_id */
     H5VL_loc_params_t loc_params;                     /* Location parameters */
     herr_t            ret_value = SUCCEED;            /* Return value */
-    htri_t            ret      = FALSE;              /* Generic return value */
+    htri_t            ret       = FALSE;              /* Generic return value */
 
     FUNC_ENTER_PACKAGE
 
@@ -151,6 +151,13 @@ H5T__commit_api_common(hid_t loc_id, const char *name, hid_t type_id, hid_t lcpl
     /* Set up object access arguments */
     if (H5VL_setup_acc_args(loc_id, H5P_CLS_TACC, TRUE, &tapl_id, vol_obj_ptr, &loc_params) < 0)
         HGOTO_ERROR(H5E_DATATYPE, H5E_CANTSET, FAIL, "can't set object access arguments");
+
+#ifdef H5_HAVE_MULTITHREAD
+    /* Set the TCPL for the API context */
+    if (H5CX_set_plist(tcpl_id, H5P_TYPE_DATATYPE_CREATE) < 0) {
+        HGOTO_ERROR(H5E_ATTR, H5E_CANTSET, H5I_INVALID_HID, "can't set tcpl in context");
+    }
+#endif
 
     /* Commit the type */
     if (NULL == (data = H5VL_datatype_commit(*vol_obj_ptr, &loc_params, name, type_id, lcpl_id, tcpl_id,
@@ -339,7 +346,7 @@ H5Tcommit_anon(hid_t loc_id, hid_t type_id, hid_t tcpl_id, hid_t tapl_id)
     H5VL_object_t    *vol_obj = NULL; /* object of loc_id */
     H5VL_loc_params_t loc_params;
     herr_t            ret_value = SUCCEED; /* Return value */
-    htri_t            ret      = FALSE;   /* Generic return value */
+    htri_t            ret       = FALSE;   /* Generic return value */
 
     FUNC_ENTER_API_NO_MUTEX(FAIL)
     H5TRACE4("e", "iiii", loc_id, type_id, tcpl_id, tapl_id);
@@ -377,6 +384,13 @@ H5Tcommit_anon(hid_t loc_id, hid_t type_id, hid_t tcpl_id, hid_t tapl_id)
     H5_API_LOCK
     ret_value = H5CX_set_apl(&tapl_id, H5P_CLS_TACC, loc_id, TRUE);
     H5_API_UNLOCK
+
+#ifdef H5_HAVE_MULTITHREAD
+    /* Set the TCPL for the API context */
+    if (H5CX_set_plist(tcpl_id, H5P_TYPE_DATATYPE_CREATE) < 0) {
+        HGOTO_ERROR(H5E_ATTR, H5E_CANTSET, H5I_INVALID_HID, "can't set tcpl in context");
+    }
+#endif
 
     if (ret_value < 0)
         HGOTO_ERROR(H5E_DATATYPE, H5E_CANTSET, FAIL, "can't set access property list info");
@@ -718,11 +732,11 @@ hid_t
 H5Topen_async(const char *app_file, const char *app_func, unsigned app_line, hid_t loc_id, const char *name,
               hid_t tapl_id, hid_t es_id)
 {
-    H5VL_object_t *vol_obj   = NULL;            /* Object for loc_id */
-    void          *token     = NULL;            /* Request token for async operation */
-    void         **token_ptr = H5_REQUEST_NULL; /* Pointer to request token for async operation */
-    hid_t          ret_value = H5I_INVALID_HID; /* Return value */
-    int            dec_ref_ret = 0;             /* Ref count decrement return value */
+    H5VL_object_t *vol_obj     = NULL;            /* Object for loc_id */
+    void          *token       = NULL;            /* Request token for async operation */
+    void         **token_ptr   = H5_REQUEST_NULL; /* Pointer to request token for async operation */
+    hid_t          ret_value   = H5I_INVALID_HID; /* Return value */
+    int            dec_ref_ret = 0;               /* Ref count decrement return value */
 
     FUNC_ENTER_API_NO_MUTEX(H5I_INVALID_HID)
     H5TRACE7("i", "*s*sIui*sii", app_file, app_func, app_line, loc_id, name, tapl_id, es_id);
@@ -799,7 +813,7 @@ H5Tget_create_plist(hid_t dtype_id)
         /* Copy the default datatype creation property list */
         if (NULL == (tcpl_plist = (H5P_genplist_t *)H5I_object(H5P_LST_DATATYPE_CREATE_ID_g)))
             HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5I_INVALID_HID, "can't get default creation property list");
-        
+
         H5_API_LOCK
         ret_value = H5P_copy_plist(tcpl_plist, TRUE);
         H5_API_UNLOCK
@@ -957,7 +971,7 @@ H5T__get_create_plist(const H5T_t *type)
     /* Copy the default datatype creation property list */
     if (NULL == (tcpl_plist = (H5P_genplist_t *)H5I_object(H5P_LST_DATATYPE_CREATE_ID_g)))
         HGOTO_ERROR(H5E_DATATYPE, H5E_BADTYPE, H5I_INVALID_HID, "can't get default creation property list");
-    
+
     H5_API_LOCK
     new_tcpl_id = H5P_copy_plist(tcpl_plist, TRUE);
     H5_API_UNLOCK

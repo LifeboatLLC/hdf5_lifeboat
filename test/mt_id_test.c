@@ -5,7 +5,7 @@
 #include <stdatomic.h>
 
 #include "H5Iprivate.h"
-#define H5I_FRIEND    /*suppress error about including H5Ipkg      */
+#define H5I_FRIEND /*suppress error about including H5Ipkg      */
 #include "H5Ipkg.h"
 
 #define NUM_ID_TYPES     256
@@ -14,26 +14,26 @@
 
 #define DEFAULT_MAX_NUM_THREADS 32
 
-#define SERIAL_TEST_1__DISPLAY_FINAL_STATS              FALSE
-#define SERIAL_TEST_2__DISPLAY_FINAL_STATS              FALSE
-#define SERIAL_TEST_3__DISPLAY_FINAL_STATS              FALSE
-#define SERIAL_TEST_4__DISPLAY_FINAL_STATS              FALSE
-#define FUTURE_SERIAL_TEST_1__DISPLAY_FINAL_STATS       FALSE
-#define FUTURE_SERIAL_TEST_2__DISPLAY_FINAL_STATS       FALSE
-#define MT_TEST_FCN_1_SERIAL_TEST__DISPLAY_FINAL_STATS  FALSE
+#define SERIAL_TEST_1__DISPLAY_FINAL_STATS             FALSE
+#define SERIAL_TEST_2__DISPLAY_FINAL_STATS             FALSE
+#define SERIAL_TEST_3__DISPLAY_FINAL_STATS             FALSE
+#define SERIAL_TEST_4__DISPLAY_FINAL_STATS             FALSE
+#define FUTURE_SERIAL_TEST_1__DISPLAY_FINAL_STATS      FALSE
+#define FUTURE_SERIAL_TEST_2__DISPLAY_FINAL_STATS      FALSE
+#define MT_TEST_FCN_1_SERIAL_TEST__DISPLAY_FINAL_STATS FALSE
 
-#define MT_TEST_1__DISPLAY_FINAL_STATS                  FALSE
-#define MT_TEST_2__DISPLAY_FINAL_STATS                  FALSE
+#define MT_TEST_1__DISPLAY_FINAL_STATS FALSE
+#define MT_TEST_2__DISPLAY_FINAL_STATS FALSE
 
-#define MT_FUTURE_TEST_1__DISPLAY_FINAL_STATS           FALSE
-#define MT_FUTURE_TEST_2__DISPLAY_FINAL_STATS           FALSE
-#define MT_FUTURE_TEST_3__DISPLAY_FINAL_STATS           FALSE
+#define MT_FUTURE_TEST_1__DISPLAY_FINAL_STATS FALSE
+#define MT_FUTURE_TEST_2__DISPLAY_FINAL_STATS FALSE
+#define MT_FUTURE_TEST_3__DISPLAY_FINAL_STATS FALSE
 
 /*********************************************************************************
  * struct id_type_t
  *
- * An array of instance of id_type_t is used to track the expected state of 
- * types in H5I in multi-thread tests.  The fields of this structure are 
+ * An array of instance of id_type_t is used to track the expected state of
+ * types in H5I in multi-thread tests.  The fields of this structure are
  * discussed individually below.
  *
  * Note that id_type_kernel_t is included in this section, as it gathers together
@@ -42,15 +42,15 @@
  * tag:         Integer field that must be set to ID_TYPE_T__TAG.  This field
  *              is used to sanity check pointers.
  *
- * index:       integer field containing the index of this instance of 
+ * index:       integer field containing the index of this instance of
  *              id_type_t in its containing array.
  *
  * k            Atomic instance of id_type_kernel_t -- a structure that contains
  *              all fields in id_type_t that must be treated as a single atomic
  *              value.  These fields are discussed individually below:
  *
- * k.in_progress:  Creation of an id type is not atomic.  This field is set 
- *              when a thread is about to create an ID.  If successful, it 
+ * k.in_progress:  Creation of an id type is not atomic.  This field is set
+ *              when a thread is about to create an ID.  If successful, it
  *              may proceed with the creation, and update kernel again when
  *              done.
  *
@@ -63,14 +63,14 @@
  *              when the type is discarded.
  *
  * k.buffer_bool: Padding to bring the size of id_type_t up to 16 bytes.
- *              
+ *
  *
  * k.buffer_int: Padding to bring the size of id_type_t up to 16 bytes.
  *
- * k.type_id:   Initialized to H5I_BADID, and set to the ID assigned to the type 
+ * k.type_id:   Initialized to H5I_BADID, and set to the ID assigned to the type
  *              when it is created.
  *
- * mt_safe:     Boolean flag indicating whether the free function for all IDs in 
+ * mt_safe:     Boolean flag indicating whether the free function for all IDs in
  *              the type, and the realize and discard callback for future IDs in
  *              the type are multi-thread safe.
  *
@@ -88,10 +88,10 @@
  *
  * failed_clears: Number of times that a clear of the type has failed.
  *
- * successful_destroys: Number of times that the type has been destroyed 
+ * successful_destroys: Number of times that the type has been destroyed
  *              successfully.
  *
- * failed_destroys: Number of times that an attempt to destroy the type has 
+ * failed_destroys: Number of times that an attempt to destroy the type has
  *              failed.
  *
  * free_func:   Pointer to the free function that is applied to all IDs
@@ -99,15 +99,15 @@
  *
  *********************************************************************************/
 
-#define ID_TYPE_T__TAG           0x1010
+#define ID_TYPE_T__TAG 0x1010
 
 typedef struct id_type_kernel_t {
-    hbool_t    in_progress;
-    hbool_t    created;
-    hbool_t    discarded;
-    hbool_t    buffer_bool;
-    int        buffer_int;
-    hid_t      type_id;
+    hbool_t in_progress;
+    hbool_t created;
+    hbool_t discarded;
+    hbool_t buffer_bool;
+    int     buffer_int;
+    hid_t   type_id;
 } id_type_kernel_t;
 
 typedef struct id_type_t {
@@ -118,42 +118,41 @@ typedef struct id_type_t {
     hbool_t                  mt_safe;
 
     /* stats */
-    _Atomic long long int    successful_registers;
-    _Atomic long long int    failed_registers;
-    _Atomic long long int    successful_clears;
-    _Atomic long long int    failed_clears;
-    _Atomic long long int    successful_destroys;
-    _Atomic long long int    failed_destroys;
+    _Atomic long long int successful_registers;
+    _Atomic long long int failed_registers;
+    _Atomic long long int successful_clears;
+    _Atomic long long int failed_clears;
+    _Atomic long long int successful_destroys;
+    _Atomic long long int failed_destroys;
 } id_type_t;
-
 
 /*********************************************************************************
  * struct id_object_t
  *
  * An array of instance of id_object_t is used to supply the objects associated
- * with newly allocated IDs.  These objects are acted upon by the free_func 
- * on discard, and by the per ID realize and discard callback if the ID is a 
+ * with newly allocated IDs.  These objects are acted upon by the free_func
+ * on discard, and by the per ID realize and discard callback if the ID is a
  * future ID.
- * 
+ *
  * The fields of this structure are discussed individually below.
  *
- * Note that id_object_kernel_t is included in this header comment, as it gathers 
+ * Note that id_object_kernel_t is included in this header comment, as it gathers
  * together all fields of id_object_t that must be handled as a single atomic unit.
  *
  * tag:         Integer field that must be set to ID_OBJECT_T__TAG.  This field
  *              is used to sanity check pointers.
  *
- * index:       integer field containing the index of this instance of 
+ * index:       integer field containing the index of this instance of
  *              id_object_t in its containing array.
  *
- * id_index     Atomic integer field containing the index of the associated 
- *              instance of id_instance_t in its containing array, or -1 if 
- *              this field is undefined.  
+ * id_index     Atomic integer field containing the index of the associated
+ *              instance of id_instance_t in its containing array, or -1 if
+ *              this field is undefined.
  *
- * old_id_index: Atomic integer field that is undefined (i.e. set to -1) in 
- *              the typical case.  This field is only used when an instance of 
+ * old_id_index: Atomic integer field that is undefined (i.e. set to -1) in
+ *              the typical case.  This field is only used when an instance of
  *              id_object_t is transfered from one instance of id_instance_t
- *              to another.  In this case, it is used to store the index of 
+ *              to another.  In this case, it is used to store the index of
  *              the previous instance of id_instance_t.
  *
  *              At present, this only happens when a future ID is realized.
@@ -168,8 +167,8 @@ typedef struct id_type_t {
  *              all fields in id_object_t that must be treated as a single atomic
  *              value.  These fields are discussed individually below:
  *
- * k.in_progress:  Creation of an id is not atomic.  This field is set 
- *              when a thread is about to create an ID.  If successful, it 
+ * k.in_progress:  Creation of an id is not atomic.  This field is set
+ *              when a thread is about to create an ID.  If successful, it
  *              may proceed with the creation, and update kernel again when
  *              done.
  *
@@ -181,10 +180,10 @@ typedef struct id_type_t {
  * k.discarded: Boolean flag that is initialized to FALSE, and set to TRUE
  *              when the ID is discarded.
  *
- * k.future:    Boolean flag that is set to TRUE if the ID was created as 
+ * k.future:    Boolean flag that is set to TRUE if the ID was created as
  *              a future ID, and has not yet been converted to a regular ID.
  *
- * real_id_def_in_prog: Boolean flag that is initialized to FALSE, and set to 
+ * real_id_def_in_prog: Boolean flag that is initialized to FALSE, and set to
  *              TRUE while a real ID is being associated with the future ID.
  *              It is set back to FALSE when real_id_defined is set to TRUE.
  *
@@ -192,24 +191,24 @@ typedef struct id_type_t {
  *              is associated with a future ID, and the associated real ID
  *              is defined, this field is set to TRUE
  *
- * k.future_id_realized: Boolean flag that is initialized to FALSE, and set to 
- *              TRUE when realize_cb returns success.  
+ * k.future_id_realized: Boolean flag that is initialized to FALSE, and set to
+ *              TRUE when realize_cb returns success.
  *
  * k.future_id_discarded:  Boolean flag that is initialized to FALSE, and set
- *              to TRUE if the discard_cb is successful.  Note that this 
+ *              to TRUE if the discard_cb is successful.  Note that this
  *              may happen when future_id_realize is FALSE (i.e. the future
- *              id has not been realized -- if so, all subsequent calls to 
+ *              id has not been realized -- if so, all subsequent calls to
  *              the realize_cb() must fail
  *
- * k.id:        Initialized to 0, and set to the ID number assigned when the 
+ * k.id:        Initialized to 0, and set to the ID number assigned when the
  *              ID is created.
  *
- * k.id_info_ptr:  Initialized to NULL, and set to the address of the newly 
- *              allocated instance of H5I_mt_id_info_t just after the above 
+ * k.id_info_ptr:  Initialized to NULL, and set to the address of the newly
+ *              allocated instance of H5I_mt_id_info_t just after the above
  *              ID is returned.  Note that this pointer need not be valid,
  *              and will be invalid if k.discarded is TRUE.
  *
- * real_id:     If k.real_id_defined is TRUE, this field contains the ID of the 
+ * real_id:     If k.real_id_defined is TRUE, this field contains the ID of the
  *              real ID. Undefined otherwise.
  *
  * real_id_obj_index: If k.real_id_defined is TRUE, this field contains the index
@@ -220,19 +219,19 @@ typedef struct id_type_t {
  *
  *********************************************************************************/
 
-#define ID_OBJECT_T__TAG              0x2020
+#define ID_OBJECT_T__TAG 0x2020
 
 typedef struct id_object_kernel_t {
-    hbool_t            in_progress;
-    hbool_t            allocated;
-    hbool_t            discarded;
-    hbool_t            future;
-    hbool_t            real_id_def_in_prog;
-    hbool_t            real_id_defined;
-    hbool_t            future_id_realized;
-    hbool_t            future_id_discarded;
-    hid_t              id;
-    H5I_mt_id_info_t * id_info_ptr;
+    hbool_t           in_progress;
+    hbool_t           allocated;
+    hbool_t           discarded;
+    hbool_t           future;
+    hbool_t           real_id_def_in_prog;
+    hbool_t           real_id_defined;
+    hbool_t           future_id_realized;
+    hbool_t           future_id_discarded;
+    hid_t             id;
+    H5I_mt_id_info_t *id_info_ptr;
 } id_object_kernel_t;
 
 typedef struct id_object_t {
@@ -244,32 +243,31 @@ typedef struct id_object_t {
     _Atomic hid_t              real_id;
     _Atomic int                real_id_obj_index;
     _Atomic long long int      accesses;
-} id_object_t; 
-
+} id_object_t;
 
 /*********************************************************************************
  * struct id_instance_t
  *
  * An array of instance of id_instance_t is used to track the expected state of
  * IDs.
- * 
+ *
  * The fields of this structure are discussed individually below.
  *
- * Note that id_instance_kernel_t is included in this header comment, as it gathers 
+ * Note that id_instance_kernel_t is included in this header comment, as it gathers
  * together all fields of id_instance_t that must be handled as a single atomic unit.
  *
  * tag:         Integer field that must be set to ID_INSTANCE_T__TAG.  This field
  *              is used to sanity check pointers.
  *
- * index:       integer field containing the index of this instance of 
+ * index:       integer field containing the index of this instance of
  *              id_instance_t in its containing array.
  *
  * k            Atomic instance of id_instance_kernel_t -- a structure that contains
  *              all fields in id_instance_t that must be treated as a single atomic
  *              value.  These fields are discussed individually below:
  *
- * k.in_progress:  Creation of an id is not atomic.  This field is set 
- *              when a thread is about to create an ID.  If successful, it 
+ * k.in_progress:  Creation of an id is not atomic.  This field is set
+ *              when a thread is about to create an ID.  If successful, it
  *              may proceed with the creation, and update kernel again when
  *              done.
  *
@@ -278,35 +276,35 @@ typedef struct id_object_t {
  *              and the above k.in_progress, this initialization must be done
  *              by a single process.
  *
- * k.closings_attempted: Integer field containing the number of times the 
- *              H5I code has reported that it is about to attempt to set 
+ * k.closings_attempted: Integer field containing the number of times the
+ *              H5I code has reported that it is about to attempt to set
  *              the closing flag on the target instance of H5I_mt_id_info_t.
  *
  * k.closings_failed: Integer field containing the number of times the
- *              H5I code has reported that an attempt to set the closing 
+ *              H5I code has reported that an attempt to set the closing
  *              flag on the target instance of H5I_mt_id_info_t has failed.
- *              This should always be due to another thread modifying 
+ *              This should always be due to another thread modifying
  *              the kernel prior to a call to atomic_compare_exchange_strong..
  *
  * k.closing:   Boolean flag that is initialized to FALSE, and set to TRUE
  *              when the H5I code reports that the closing flag has been set
  *              on the associated instance of H5I_mt_id_info_t.  This field
- *              is initialized to FALSE, and must not be set to TRUE more 
+ *              is initialized to FALSE, and must not be set to TRUE more
  *              than once.
  *
  * k.discarded: Boolean flag that is initialized to FALSE, and set to TRUE
  *              when the ID is discarded.
  *
- * k.future:    Boolean flag that is set to TRUE if the ID was created as 
+ * k.future:    Boolean flag that is set to TRUE if the ID was created as
  *              a future ID, and to FALSE othereise.
- *              
+ *
  * k.realized:  Boolean flag that is initialized to FALSE, and set to TRUE
  *              if the ID was created as a future ID, and has been converted
  *              to a regular ID.
  *
  * k.future_id_src:  Boolean flag that is initialize to FALSE, and set to TRUE
  *              when a real ID is linked to a future ID in preparation for the
- *              realization of the future ID.  
+ *              realization of the future ID.
  *
  *              When the linked future ID is realized, it discards its own object,
  *              and adopts the object from the source real ID.  When this is done,
@@ -316,83 +314,83 @@ typedef struct id_object_t {
  *
  * k.bool_buf_2: Padding to bring the size of id_type_t up to 16 bytes.
  *
- * k.id:        Initialized to 0, and set to the ID number assigned when the 
+ * k.id:        Initialized to 0, and set to the ID number assigned when the
  *              ID is created.
  *
- * obj_index:   Atomic integer field containing the index of the associated 
+ * obj_index:   Atomic integer field containing the index of the associated
  *              instance of id_object_t -- if any.  The field is set to -1
  *              when undefined.
  *
- *              This field is initialized to -1, and set to the index of the 
+ *              This field is initialized to -1, and set to the index of the
  *              associatedinstance of id_object_t on id registration.  Once
  *              set, it is not changed unless the instance of id_instance_t
  *              is involved in the realization of a future ID.
  *
  *              if the instance of id_instance_t is marked as a future ID
- *              (k.future == TRUE), the value of obj_index is modified to that 
- *              of the same field in the instance of id_instance_t of the linked 
+ *              (k.future == TRUE), the value of obj_index is modified to that
+ *              of the same field in the instance of id_instance_t of the linked
  *              real ID on future ID realization.
  *
  *              If the instance of id_instance_t is marked as a future ID
- *              source (k.future_id_src == TRUE), the obj_index field is 
+ *              source (k.future_id_src == TRUE), the obj_index field is
  *              set to -1 on future ID realization.
  *
- * type_index:  In some multi-thread tests, this field is used to associated a 
- *              (possibly not yet registered) instance of id_instance_t with a 
- *              (possibly not yet registered) instance of id_type_t. 
+ * type_index:  In some multi-thread tests, this field is used to associated a
+ *              (possibly not yet registered) instance of id_instance_t with a
+ *              (possibly not yet registered) instance of id_type_t.
  *
- *              In this context, the ID must belong to the type associated with 
- *              the indicated instance of id_type_t.  
+ *              In this context, the ID must belong to the type associated with
+ *              the indicated instance of id_type_t.
  *
  *              When un-used, this field is set to -1.
  *
  * type_id:     Atomic instance of H5I_type_t.  This field is a convenience field for
- *              use when type_index is non-negative.  In this context, it is 
+ *              use when type_index is non-negative.  In this context, it is
  *              initialized to H5I_BADID, and set to the id of the type
  *              associated with the instance of id_type_t indicated by type_index
- *              if it is defined.  Note that that this field being set does not 
+ *              if it is defined.  Note that that this field being set does not
  *              imply that the indicated type ID is still valid.
  *
  * remove_verify_starts:  Atomic unsigned long long.  This field is incremented
- *              whenever a thread is just about to call H5Iremove_verify(), and 
+ *              whenever a thread is just about to call H5Iremove_verify(), and
  *              decremented if the call to H5Iremove_verify() fails.
  *
- *              This field is necessary because H5Iremove_verify() doesn't call 
- *              the free_func(), and thus the test framework is not updated 
+ *              This field is necessary because H5Iremove_verify() doesn't call
+ *              the free_func(), and thus the test framework is not updated
  *              atomically when a call to H5Iremove_verify() completes successfully.
- *              As a result it is possible for other calls to fail when according 
- *              to the test bed, the target ID exists and the other call should 
- *              have succeeded.  
+ *              As a result it is possible for other calls to fail when according
+ *              to the test bed, the target ID exists and the other call should
+ *              have succeeded.
  *
- *              By incrementing the remove_verify_starts counter when a call to 
+ *              By incrementing the remove_verify_starts counter when a call to
  *              H5Iremove_verify() is initiated, and decrementing it if the call
  *              fails, we give the test frame enough information to detect cases
- *              in which a successful H5Iremove_verify() could be the cause of 
+ *              in which a successful H5Iremove_verify() could be the cause of
  *              an otherwise un-explained failure.
- * 
+ *
  * discard_in_progress: Atomic boolean field that is set to TRUE when a thread is
  *              entering the free_func. CAS this value, if not as expected,
  *              return immediately to avoid a double free.
  *
- * 
+ *
  * Statistics:
  *
- * The following fields are used to collect statistics on the ID with which this 
+ * The following fields are used to collect statistics on the ID with which this
  * instance of id_instance_t is associated.  All statistics fields are initialized
  * to zero, and incremented to reflect the target events.
  *
  * Note that statistics are not maintained in all tests.
  *
- * successful_registrations:  Atomic long long integer used to track the number 
+ * successful_registrations:  Atomic long long integer used to track the number
  *              of times the ID associated with this instance of id_instance_t
  *              has been successfully registered.  As currently conceived, this
  *              value should never be greater than 1.
  *
  * failed_registrations: Atomic long long integer used to track the number
- *              of failed attempts to register the object asscciated with this 
- *              instance of id_instance_t.  
+ *              of failed attempts to register the object asscciated with this
+ *              instance of id_instance_t.
  *
- * successful_verifies: Atomic long long integer used to track the number of 
+ * successful_verifies: Atomic long long integer used to track the number of
  *              successful lookups of the object associated with the id.
  *
  * failed_verifies: Atomic long long integer used to track the number of
@@ -423,40 +421,40 @@ typedef struct id_object_t {
  * failed_remove_verifies: Atomic long long integer used to track the number of
  *              failed attempts to remove the ID and return a pointer to its
  *              associated object.
- * 
+ *
  * Future ID Statistics
- * 
+ *
  * successful_future_reserves: Atomic long long integer used to track the number
  *              of successful attempts to reserve a futurre ID.
- * 
+ *
  * failed_future_reserves: Atomic long long integer used to track the number of
  *              failed attempts to reserve a future ID.
- * 
+ *
  * successful_future_defines: Atomic long long integer used to track the number
  *              of successful attempts to define a future ID and return a pointer
  *              to its associated object.
- * 
+ *
  * failed_future_defines: Atomic long long integer used to track the number
  *              of failed attempts to define a future ID.
- * 
+ *
  * progress_calls: Atomic long long integer used to track the number of times
- *              the progress callback is invoked for a future ID. 
+ *              the progress callback is invoked for a future ID.
  *
  *********************************************************************************/
 
 #define ID_INSTANCE_T__TAG 0x3030
 
 typedef struct id_instance_kernel_t {
-    hbool_t  in_progress;
-    hbool_t  created;
-    int32_t  closings_attempted;
-    int32_t  closings_failed;
-    hbool_t  closing;
-    hbool_t  discarded;
-    hbool_t  future;
-    hbool_t  realized;
-    hbool_t  future_id_src;
-    hid_t id;
+    hbool_t in_progress;
+    hbool_t created;
+    int32_t closings_attempted;
+    int32_t closings_failed;
+    hbool_t closing;
+    hbool_t discarded;
+    hbool_t future;
+    hbool_t realized;
+    hbool_t future_id_src;
+    hid_t   id;
 } id_instance_kernel_t;
 
 typedef struct id_instance_t {
@@ -470,19 +468,19 @@ typedef struct id_instance_t {
     _Atomic hbool_t              discard_in_progress;
 
     /* statistics */
-    _Atomic long long int        successful_registrations;
-    _Atomic long long int        failed_registrations;
-    _Atomic long long int        successful_verifies;
-    _Atomic long long int        failed_verifies;
-    _Atomic long long int        successful_inc_refs;
-    _Atomic long long int        failed_inc_refs;
-    _Atomic long long int        successful_dec_refs;
-    _Atomic long long int        failed_dec_refs;
-    _Atomic long long int        dec_ref_deletes;
-    _Atomic long long int        successful_get_ref_cnts;
-    _Atomic long long int        failed_get_ref_cnts;
-    _Atomic long long int        successful_remove_verifies;
-    _Atomic long long int        failed_remove_verifies;
+    _Atomic long long int successful_registrations;
+    _Atomic long long int failed_registrations;
+    _Atomic long long int successful_verifies;
+    _Atomic long long int failed_verifies;
+    _Atomic long long int successful_inc_refs;
+    _Atomic long long int failed_inc_refs;
+    _Atomic long long int successful_dec_refs;
+    _Atomic long long int failed_dec_refs;
+    _Atomic long long int dec_ref_deletes;
+    _Atomic long long int successful_get_ref_cnts;
+    _Atomic long long int failed_get_ref_cnts;
+    _Atomic long long int successful_remove_verifies;
+    _Atomic long long int failed_remove_verifies;
 
     /* future id test statistics */
     _Atomic long long int successful_future_reserves;
@@ -491,7 +489,6 @@ typedef struct id_instance_t {
     _Atomic long long int failed_future_defines;
 
     _Atomic int progress_calls;
-
 
 } id_instance_t;
 
@@ -532,9 +529,9 @@ typedef struct id_instance_t {
  *
  * err_cnt: Integer field used to collect the total number of errors detected
  *
- * ambig_cnt: Integer field used to collec the total number of ambiguous test 
+ * ambig_cnt: Integer field used to collec the total number of ambiguous test
  *      results.
- * 
+ *
  * num_threads: Integer field used to store current amount of threads.
  *
  ***********************************************************************************/
@@ -564,35 +561,34 @@ typedef struct mt_test_params_t {
 
 } mt_test_params_t;
 
-
 /***********************************************************************************
  *
  * struct test_progress_event_t
  *
  * Test representation of a deferred future-ID realization event. This structure
  * models a unit of work that must be completed before a future ID can be realized.
- * It is used by the test harness to simulate asynchronous progress without 
+ * It is used by the test harness to simulate asynchronous progress without
  * introducing additional threads, convars, or locks.
- * 
- * Each event corresponds to exactly one future ID and is processed 
+ *
+ * Each event corresponds to exactly one future ID and is processed
  * when there is an opportunity from the H5I progress callback path.
- * 
+ *
  * The fields of this structure are discussed individually below.
  *
  * id: The reserved future ID that this event is associated with.
- * 
+ *
  * remaining: Countdown value representing how many progress callbacks must occur
- *            before this event becomes eligible for realization. This simulates 
+ *            before this event becomes eligible for realization. This simulates
  *            delayed or staged completion (e.g., async I/O finishing later).
- * 
+ *
  * active: Boolean flag indicating whether this event is valid and should be
- *         considered by the progress engine. Inactive entries are ignored. 
- * 
+ *         considered by the progress engine. Inactive entries are ignored.
+ *
  *
  ***********************************************************************************/
-typedef struct test_progress_event_t{
+typedef struct test_progress_event_t {
     hid_t   id;
-    int     remaining;   /* countdown until ready */
+    int     remaining; /* countdown until ready */
     hbool_t active;
 } test_progress_event_t;
 
@@ -601,53 +597,53 @@ typedef struct test_progress_event_t{
  * struct test_progress_queue_t
  *
  * Test global queue for scheduling future-ID realization progress.
- * 
+ *
  * This structure implements a simple bounded FIFO queue used by the test harness
  * to simulate asynchronous progress toward future-ID realization.
- * 
+ *
  * Progress is driven naturally by existing H5I lookup and reference operations,
  * closely matching how real users are expected to drive progress through library
- * calls. 
- * 
+ * calls.
+ *
  * Concurrency / Race-Tolerance:
- * 
+ *
  *      This queue is intentionally NOT a fully-correct lock-free MPMC queue.
  *      Producers and consumers may race on head/tail snapshots, and the buf[]
  *      slots are not protected by per-slot sequence numbers.
- * 
+ *
  *      This is acceptable for the test harness because:
  *          - Events are hints, not correctness requirements.
  *          - Dropping, duplicating, or reordering events only changes timing
  *            and the number of define attempts; it must not violate library
  *            semantics.
  *          - The progress path is bounded and re-tries later; forward progress
- *            does not depend on any single event being delivered. 
- * 
+ *            does not depend on any single event being delivered.
+ *
  * The fields of this structure are discussed individually below.
  *
  * buf: Fixed size circular buffer holding queued H5I_test_event_entries.
- * 
+ *
  * head: Atomic Index of the next event to be popped.
- * 
+ *
  * tail: Atomic Index where the next event will be inserted.
- * 
+ *
  * Invariants:
- * 
+ *
  *  - head == tail indicates an empty queue.
  *  - (tail + 1) % capacity == head indicates a full queue.
- * 
+ *
  * Scope:
- * 
+ *
  *  This queue exists ONLY for the test harness, specifically for future ID
- *  realization via a progress callback. 
+ *  realization via a progress callback.
  *
  ***********************************************************************************/
-#define H5I_TEST_Q_CAPACITY   4096
-#define H5I_TEST_PUMP_STEPS   4     /* how much progress_cb does per call */
+#define H5I_TEST_Q_CAPACITY 4096
+#define H5I_TEST_PUMP_STEPS 4 /* how much progress_cb does per call */
 
 /* Values for the definer thread */
-#define H5I_TEST_SCAN_BUDGET     256     /* how many random id_index samples when queue empty */
-#define H5I_TEST_MAX_DELAY       50 /*5*/ /* 0..MAX delay to simulate async readiness */
+#define H5I_TEST_SCAN_BUDGET 256      /* how many random id_index samples when queue empty */
+#define H5I_TEST_MAX_DELAY   50 /*5*/ /* 0..MAX delay to simulate async readiness */
 
 typedef struct test_progress_queue_t {
 
@@ -657,102 +653,97 @@ typedef struct test_progress_queue_t {
 
 } test_progress_queue_t;
 
-
 static id_type_t     *types_array;
 static id_object_t   *objects_array;
 static id_instance_t *id_instance_array;
 
 static test_progress_queue_t *progress_test_queue;
-static _Atomic hbool_t test_definer_stop; /* signal the future definer thread */
+static _Atomic hbool_t        test_definer_stop; /* signal the future definer thread */
 
-extern H5I_closing_rpt_t  closing_rpt_fcn;
+extern H5I_closing_rpt_t closing_rpt_fcn;
 
 extern H5I_future_free_rpt_t future_free_rpt_fcn;
 
 static herr_t init_globals(void);
 static herr_t reset_globals(TestParams_t *params);
 
-
-static herr_t free_func(void * obj, void ** request);
+static herr_t free_func(void *obj, void **request);
 static herr_t update_freed_future(int id_index);
-static void future_free_rpt(hid_t id, void * client_data);
-static void closing_rpt(hid_t id, void * obj, int op);
-static herr_t realize_cb_0(void * future_object, hid_t * actual_object_id);
-static herr_t discard_cb_0(void * future_object);
+static void   future_free_rpt(hid_t id, void *client_data);
+static void   closing_rpt(hid_t id, void *obj, int op);
+static herr_t realize_cb_0(void *future_object, hid_t *actual_object_id);
+static herr_t discard_cb_0(void *future_object);
 
+static int  register_type(id_type_t *id_type_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid);
+static void try_register_type(int type_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid);
+static int  clear_type(id_type_t *id_type_ptr, hbool_t force, hbool_t cs, hbool_t ds, hbool_t rpt_failures,
+                       int tid);
+static void try_clear_type(int type_index, hbool_t force, hbool_t cs, hbool_t ds, hbool_t rpt_failures,
+                           int tid);
+static int  destroy_type(id_type_t *id_type_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid);
+static int  try_destroy_type(int type_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid);
 
-static int     register_type(id_type_t * id_type_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid);
-static void    try_register_type(int type_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid);
-static int     clear_type(id_type_t * id_type_ptr, hbool_t force, hbool_t cs, hbool_t ds, hbool_t rpt_failures,
-                          int tid);
-static void    try_clear_type(int type_index, hbool_t force, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid);
-static int     destroy_type(id_type_t * id_type_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid);
-static int     try_destroy_type(int type_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid);
-
-
-static int     register_id(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_t * id_obj_ptr,
-                           hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid);
-static void    try_register_id(int id_index, int obj_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid);
-static int     register_future_id(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_t * id_obj_ptr,
-                                  H5I_future_realize_func_t realize_cb, H5I_future_discard_func_t discard_cb,
-                                  hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid);
-static int     reserve_future_id(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, 
-                                 H5I_progress_func_t progress_cb, hbool_t cs, hbool_t ds, 
-                                 hbool_t rpt_failures, int tid);
-static void    try_reserve_future_id(int id_index, H5I_progress_func_t progress_cb, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid);
-static herr_t  define_future_0(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_t * id_object_ptr, 
-                               hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid);
-static int     try_define_future_id(int id_index, int obj_index,
-                               hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid);                               
-static int     link_real_and_future_ids(id_object_t * future_id_obj_ptr, id_object_t * real_id_obj_ptr,
-                                        hbool_t rpt_failures);
-static int     object_verify(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_t * id_obj_ptr,
-                             hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid);
-static int     try_object_verify(int id_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid);
-static int     get_type(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr,
-                        hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid);
-static int     remove_verify(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_t * id_obj_ptr,
-                             hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid);
-static int     try_remove_verify(int id_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid);
-static int     dec_ref(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_t * id_obj_ptr,
-                       hbool_t cs, hbool_t ds, hbool_t rpt_failure, int tid);
-static int     try_dec_ref(int id_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid);
-static int     inc_ref(id_instance_t * id_inst_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid);
-static int     try_inc_ref(int id_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid);
-static int     get_ref(id_instance_t * id_inst_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid);
-static int     try_get_ref(int id_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid);
-static int     nmembers(id_type_t * id_type_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid);
-static htri_t  type_exists(id_type_t * id_type_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid);
-static int     inc_type_ref(id_type_t * id_type_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid);
-static int     dec_type_ref(id_type_t * id_type_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid);
-static int     try_dec_type_ref(id_type_t * id_type_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid);
-
-
-static int  create_types(int types_start, int types_count, int types_stride, hbool_t cs, hbool_t ds,
-                         hbool_t rpt_failures, int tid);
-static int  dec_type_refs(int types_start, int types_count, int types_stride,
+static int    register_id(id_type_t *id_type_ptr, id_instance_t *id_inst_ptr, id_object_t *id_obj_ptr,
                           hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid);
-static int  inc_type_refs(int types_start, int types_count, int types_stride,
-                          hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid);
-static int  destroy_types(int types_start, int types_count, int types_stride,
-                          hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid);
-
-static int register_ids(int types_start, int types_count, int types_stride, int ids_start, int ids_count, int ids_stride,
-                        hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid);
-static int define_futures_0(int types_start, int types_count, int types_stride,
-                            int ids_start, int ids_count, int ids_stride,
-                            hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid);
-static int reserve_future_ids(int types_start, int types_count, int types_stride,
-                              int ids_start, int ids_count, int ids_stride,
-                              H5I_progress_func_t progress_cb,
+static void   try_register_id(int id_index, int obj_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures,
+                              int tid);
+static int    register_future_id(id_type_t *id_type_ptr, id_instance_t *id_inst_ptr, id_object_t *id_obj_ptr,
+                                 H5I_future_realize_func_t realize_cb, H5I_future_discard_func_t discard_cb,
+                                 hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid);
+static int    reserve_future_id(id_type_t *id_type_ptr, id_instance_t *id_inst_ptr,
+                                H5I_progress_func_t progress_cb, hbool_t cs, hbool_t ds, hbool_t rpt_failures,
+                                int tid);
+static void   try_reserve_future_id(int id_index, H5I_progress_func_t progress_cb, hbool_t cs, hbool_t ds,
+                                    hbool_t rpt_failures, int tid);
+static herr_t define_future_0(id_type_t *id_type_ptr, id_instance_t *id_inst_ptr, id_object_t *id_object_ptr,
                               hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid);
-static int dec_refs(int types_start, int types_count, int types_stride, int ids_start, int ids_count, int ids_stride,
-                    hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid);
-static int inc_refs(int ids_start, int ids_count, int ids_stride,
-                    hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid);
-static int verify_objects(int types_start, int types_count, int types_stride,
-                          int ids_start, int ids_count, int ids_stride,
-                          hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid);
+static int    try_define_future_id(int id_index, int obj_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures,
+                                   int tid);
+static int    link_real_and_future_ids(id_object_t *future_id_obj_ptr, id_object_t *real_id_obj_ptr,
+                                       hbool_t rpt_failures);
+static int    object_verify(id_type_t *id_type_ptr, id_instance_t *id_inst_ptr, id_object_t *id_obj_ptr,
+                            hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid);
+static int    try_object_verify(int id_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid);
+static int    get_type(id_type_t *id_type_ptr, id_instance_t *id_inst_ptr, hbool_t cs, hbool_t ds,
+                       hbool_t rpt_failures, int tid);
+static int    remove_verify(id_type_t *id_type_ptr, id_instance_t *id_inst_ptr, id_object_t *id_obj_ptr,
+                            hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid);
+static int    try_remove_verify(int id_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid);
+static int    dec_ref(id_type_t *id_type_ptr, id_instance_t *id_inst_ptr, id_object_t *id_obj_ptr, hbool_t cs,
+                      hbool_t ds, hbool_t rpt_failure, int tid);
+static int    try_dec_ref(int id_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid);
+static int    inc_ref(id_instance_t *id_inst_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid);
+static int    try_inc_ref(int id_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid);
+static int    get_ref(id_instance_t *id_inst_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid);
+static int    try_get_ref(int id_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid);
+static int    nmembers(id_type_t *id_type_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid);
+static htri_t type_exists(id_type_t *id_type_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid);
+static int    inc_type_ref(id_type_t *id_type_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid);
+static int    dec_type_ref(id_type_t *id_type_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid);
+static int    try_dec_type_ref(id_type_t *id_type_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid);
+
+static int create_types(int types_start, int types_count, int types_stride, hbool_t cs, hbool_t ds,
+                        hbool_t rpt_failures, int tid);
+static int dec_type_refs(int types_start, int types_count, int types_stride, hbool_t cs, hbool_t ds,
+                         hbool_t rpt_failures, int tid);
+static int inc_type_refs(int types_start, int types_count, int types_stride, hbool_t cs, hbool_t ds,
+                         hbool_t rpt_failures, int tid);
+static int destroy_types(int types_start, int types_count, int types_stride, hbool_t cs, hbool_t ds,
+                         hbool_t rpt_failures, int tid);
+
+static int register_ids(int types_start, int types_count, int types_stride, int ids_start, int ids_count,
+                        int ids_stride, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid);
+static int define_futures_0(int types_start, int types_count, int types_stride, int ids_start, int ids_count,
+                            int ids_stride, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid);
+static int reserve_future_ids(int types_start, int types_count, int types_stride, int ids_start,
+                              int ids_count, int ids_stride, H5I_progress_func_t progress_cb, hbool_t cs,
+                              hbool_t ds, hbool_t rpt_failures, int tid);
+static int dec_refs(int types_start, int types_count, int types_stride, int ids_start, int ids_count,
+                    int ids_stride, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid);
+static int inc_refs(int ids_start, int ids_count, int ids_stride, hbool_t cs, hbool_t ds,
+                    hbool_t rpt_failures, int tid);
+static int verify_objects(int types_start, int types_count, int types_stride, int ids_start, int ids_count,
+                          int ids_stride, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid);
 
 static herr_t serial_test_1(TestParams_t *params);
 static herr_t serial_test_2(TestParams_t *params);
@@ -762,33 +753,33 @@ static herr_t serial_test_4(TestParams_t *params);
 static herr_t future_serial_test_1(TestParams_t H5_ATTR_UNUSED *params);
 static herr_t future_serial_test_2(TestParams_t H5_ATTR_UNUSED *params);
 
-static void * mt_test_fcn_1(void *params);
-static void * mt_test_fcn_2(void *params);
-static void * mt_future_test_fcn_1(void *params);
-static void * mt_future_test_fcn_2(void *params);
-static void * mt_future_test_fcn_3(void *params);
+static void *mt_test_fcn_1(void *params);
+static void *mt_test_fcn_2(void *params);
+static void *mt_future_test_fcn_1(void *params);
+static void *mt_future_test_fcn_2(void *params);
+static void *mt_future_test_fcn_3(void *params);
 
 static herr_t mt_test_fcn_1_serial_test(TestParams_t *params);
 static herr_t mt_test_1(TestParams_t *params);
-static void mt_test_1_helper(int num_threads);
+static void   mt_test_1_helper(int num_threads);
 
 static herr_t mt_test_2(TestParams_t *params);
-static void mt_test_2_helper(int num_threads);
+static void   mt_test_2_helper(int num_threads);
 
 static herr_t mt_future_test_fcn_1_serial_test(TestParams_t *params);
 static herr_t mt_future_test_1(TestParams_t *params);
-static void mt_future_test_1_helper(int num_threads);
+static void   mt_future_test_1_helper(int num_threads);
 
-static herr_t mt_future_test_2(TestParams_t *params);
-static void mt_future_test_2_helper(int num_threads);
-static void future_progress_queue_push(int id_index, int delay);
+static herr_t  mt_future_test_2(TestParams_t *params);
+static void    mt_future_test_2_helper(int num_threads);
+static void    future_progress_queue_push(int id_index, int delay);
 static hbool_t future_progress_queue_pop(test_progress_event_t *out);
-static void future_progress_queue_requeue(const test_progress_event_t *progress_event);
-static herr_t future_progress_cb(hid_t id);
+static void    future_progress_queue_requeue(const test_progress_event_t *progress_event);
+static herr_t  future_progress_cb(hid_t id);
 
 static herr_t mt_future_test_3(TestParams_t *params);
-static void mt_future_test_3_helper(int num_threads);
-static void *future_engine_thread(void *params);
+static void   mt_future_test_3_helper(int num_threads);
+static void  *future_engine_thread(void *params);
 
 static herr_t
 init_globals(void)
@@ -833,27 +824,25 @@ init_globals(void)
     inst_k.future_id_src      = FALSE;
     inst_k.id                 = H5I_INVALID_HID;
 
-    types_array = calloc(NUM_ID_TYPES, sizeof(id_type_t));
-    objects_array = calloc(NUM_ID_OBJECTS, sizeof(id_object_t));
+    types_array       = calloc(NUM_ID_TYPES, sizeof(id_type_t));
+    objects_array     = calloc(NUM_ID_OBJECTS, sizeof(id_object_t));
     id_instance_array = calloc(NUM_ID_INSTANCES, sizeof(id_instance_t));
     /* Specific to the progress callback queue */
     progress_test_queue = calloc(H5I_TEST_Q_CAPACITY, sizeof(test_progress_queue_t));
 
-    if ( ( NULL == types_array ) || ( NULL == objects_array ) || ( NULL == id_instance_array )
-        || ( NULL == progress_test_queue ) )
-    {
+    if ((NULL == types_array) || (NULL == objects_array) || (NULL == id_instance_array) ||
+        (NULL == progress_test_queue)) {
 
         fprintf(stderr, "init_globals(): One or more array allocations failed\n");
         return FAIL;
     }
 
-    for ( i = 0; i < NUM_ID_TYPES; i++ )
-    {
-        types_array[i].tag = ID_TYPE_T__TAG;
+    for (i = 0; i < NUM_ID_TYPES; i++) {
+        types_array[i].tag   = ID_TYPE_T__TAG;
         types_array[i].index = i;
         atomic_init(&(types_array[i].k), type_k);
         types_array[i].free_func = free_func;
-        types_array[i].mt_safe = FALSE;
+        types_array[i].mt_safe   = FALSE;
 
         /* stats */
         atomic_init(&(types_array[i].successful_registers), 0ULL);
@@ -864,9 +853,8 @@ init_globals(void)
         atomic_init(&(types_array[i].failed_destroys), 0ULL);
     }
 
-    for ( i = 0; i < NUM_ID_OBJECTS; i++ )
-    {
-        objects_array[i].tag = ID_OBJECT_T__TAG;
+    for (i = 0; i < NUM_ID_OBJECTS; i++) {
+        objects_array[i].tag   = ID_OBJECT_T__TAG;
         objects_array[i].index = i;
         atomic_init(&(objects_array[i].id_index), -1);
         atomic_init(&(objects_array[i].old_id_index), -1);
@@ -876,9 +864,8 @@ init_globals(void)
         atomic_init(&(objects_array[i].accesses), 0ULL);
     }
 
-    for ( i = 0; i < NUM_ID_INSTANCES; i++ )
-    {
-        id_instance_array[i].tag = ID_INSTANCE_T__TAG;
+    for (i = 0; i < NUM_ID_INSTANCES; i++) {
+        id_instance_array[i].tag   = ID_INSTANCE_T__TAG;
         id_instance_array[i].index = i;
         atomic_init(&(id_instance_array[i].k), inst_k);
         atomic_init(&(id_instance_array[i].obj_index), -1);
@@ -910,8 +897,7 @@ init_globals(void)
         atomic_init(&(id_instance_array[i].progress_calls), 0ULL);
     }
     /* initialize the work queue */
-    for ( i = 0; i < H5I_TEST_Q_CAPACITY; i++ ) 
-    {
+    for (i = 0; i < H5I_TEST_Q_CAPACITY; i++) {
         progress_test_queue->buf[i].id        = H5I_INVALID_HID;
         progress_test_queue->buf[i].remaining = -1;
         progress_test_queue->buf[i].active    = FALSE;
@@ -926,7 +912,7 @@ init_globals(void)
 static herr_t
 reset_globals(TestParams_t H5_ATTR_UNUSED *params)
 {
-    int i;
+    int                         i;
     struct id_type_kernel_t     type_k;
     struct id_object_kernel_t   obj_k;
     struct id_instance_kernel_t inst_k;
@@ -966,13 +952,12 @@ reset_globals(TestParams_t H5_ATTR_UNUSED *params)
     inst_k.future_id_src      = FALSE;
     inst_k.id                 = H5I_INVALID_HID;
 
-    for ( i = 0; i < NUM_ID_TYPES; i++ )
-    {
-        types_array[i].tag = ID_TYPE_T__TAG;
+    for (i = 0; i < NUM_ID_TYPES; i++) {
+        types_array[i].tag   = ID_TYPE_T__TAG;
         types_array[i].index = i;
         atomic_store(&(types_array[i].k), type_k);
         types_array[i].free_func = free_func;
-        types_array[i].mt_safe = FALSE;
+        types_array[i].mt_safe   = FALSE;
 
         /* stats */
         atomic_store(&(types_array[i].successful_registers), 0ULL);
@@ -983,9 +968,8 @@ reset_globals(TestParams_t H5_ATTR_UNUSED *params)
         atomic_store(&(types_array[i].failed_destroys), 0ULL);
     }
 
-    for ( i = 0; i < NUM_ID_OBJECTS; i++ )
-    {
-        objects_array[i].tag = ID_OBJECT_T__TAG;
+    for (i = 0; i < NUM_ID_OBJECTS; i++) {
+        objects_array[i].tag   = ID_OBJECT_T__TAG;
         objects_array[i].index = i;
         atomic_store(&(objects_array[i].id_index), -1);
         atomic_store(&(objects_array[i].old_id_index), -1);
@@ -995,9 +979,8 @@ reset_globals(TestParams_t H5_ATTR_UNUSED *params)
         atomic_store(&(objects_array[i].accesses), 0ULL);
     }
 
-    for ( i = 0; i < NUM_ID_INSTANCES; i++ )
-    {
-        id_instance_array[i].tag = ID_INSTANCE_T__TAG;
+    for (i = 0; i < NUM_ID_INSTANCES; i++) {
+        id_instance_array[i].tag   = ID_INSTANCE_T__TAG;
         id_instance_array[i].index = i;
         atomic_store(&(id_instance_array[i].k), inst_k);
         atomic_store(&(id_instance_array[i].obj_index), -1);
@@ -1029,8 +1012,7 @@ reset_globals(TestParams_t H5_ATTR_UNUSED *params)
         atomic_store(&(id_instance_array[i].progress_calls), 0ULL);
     }
     /* future ID queue testing fields */
-    for ( i = 0; i < H5I_TEST_Q_CAPACITY; i++ ) 
-    {
+    for (i = 0; i < H5I_TEST_Q_CAPACITY; i++) {
         progress_test_queue->buf[i].id        = H5I_INVALID_HID;
         progress_test_queue->buf[i].remaining = -1;
         progress_test_queue->buf[i].active    = FALSE;
@@ -1146,7 +1128,7 @@ free_func(void * obj, void H5_ATTR_UNUSED ** request)
  *      Discard the object associated with an ID in the index.
  *
  *      In the context of the H5I test code, this means that both the instance of id_object_t
- *      pointed to by the obj parameter, and the instance of id_instance_t associated with 
+ *      pointed to by the obj parameter, and the instance of id_instance_t associated with
  *      it must be marked as deleted.
  *
  *      Note that this implementation of the free function is not multi-thread safe -- and
@@ -1154,38 +1136,38 @@ free_func(void * obj, void H5_ATTR_UNUSED ** request)
  *
  *                                                        JRM -- 4/16/24
  *
- * Changes: 
+ * Changes:
  *
- *      Modified function to allow for the possibility that the kernel of an instance 
+ *      Modified function to allow for the possibility that the kernel of an instance
  *      of id_object_t may be modified during the execution of the free function.
  *
  *                                                      JRM -- 10/27/25
- * 
+ *
  *      Modified to explicitly handle the rare race where a future ID is being defined
- *      concurrently with a close/free. If free_func() is invoked while the harness 
+ *      concurrently with a close/free. If free_func() is invoked while the harness
  *      considers the object to be in-progress or not yet allocated, the free is treated as
  *      invalid and fails, enforcing the rule that either definition or free must fail in this
  *      interleaving. CAS on the discard_in_progress flag to prevent multiple concurrent frees.
  *      If the CAS fails, the free is treated as invalid and fails, enforcing the rule that only
  *      one free can succeed for a given instance.
- * 
- *      
+ *
+ *
  *                                                      AZO -- 1/15/25
- *      
+ *
  ***********************************************************************************************/
 
 static herr_t
-free_func(void * obj, void H5_ATTR_UNUSED ** request)
+free_func(void *obj, void H5_ATTR_UNUSED **request)
 {
-    hbool_t                       inst_done = FALSE;
-    hbool_t                       obj_done = FALSE;
-        hbool_t                   expected = FALSE;
-    int                           id_index;
-    id_object_t                 * object_ptr = (id_object_t *)obj;
-    id_instance_kernel_t          id_inst_k;
-    id_instance_kernel_t          mod_id_inst_k;
-    id_object_kernel_t            obj_k;
-    id_object_kernel_t            mod_obj_k;
+    hbool_t              inst_done = FALSE;
+    hbool_t              obj_done  = FALSE;
+    hbool_t              expected  = FALSE;
+    int                  id_index;
+    id_object_t         *object_ptr = (id_object_t *)obj;
+    id_instance_kernel_t id_inst_k;
+    id_instance_kernel_t mod_id_inst_k;
+    id_object_kernel_t   obj_k;
+    id_object_kernel_t   mod_obj_k;
 
     assert(object_ptr);
 
@@ -1196,11 +1178,11 @@ free_func(void * obj, void H5_ATTR_UNUSED ** request)
     if (id_index < 0 || id_index >= NUM_ID_INSTANCES)
         return FAIL; /* called before harness cross-links were published */
 
-    if ( !atomic_compare_exchange_strong(&(id_instance_array[id_index].discard_in_progress), &expected, TRUE) )
+    if (!atomic_compare_exchange_strong(&(id_instance_array[id_index].discard_in_progress), &expected, TRUE))
         return SUCCEED; /* another free already in progress for this instance */
 
-    assert( ( 0 <= id_index ) && ( id_index < NUM_ID_INSTANCES ) );
-    assert( ID_INSTANCE_T__TAG == id_instance_array[id_index].tag );
+    assert((0 <= id_index) && (id_index < NUM_ID_INSTANCES));
+    assert(ID_INSTANCE_T__TAG == id_instance_array[id_index].tag);
 
     memset(&obj_k, 0, sizeof(id_object_kernel_t));
     memset(&mod_obj_k, 0, sizeof(id_object_kernel_t));
@@ -1209,20 +1191,18 @@ free_func(void * obj, void H5_ATTR_UNUSED ** request)
     obj_k = atomic_load(&(object_ptr->k));
 
     /* In the case of a future ID, H5Idefine_future_id() may have succeeded and the test define
-     * function may not have updated the test-side variables yet. In this case, free via the 
+     * function may not have updated the test-side variables yet. In this case, free via the
      * future free function as it is still registered as a future in the harness here.
      */
-    if ( ( obj_k.in_progress ) || ( !obj_k.allocated ) 
-         || ( obj_k.discarded ) ) 
-    {
+    if ((obj_k.in_progress) || (!obj_k.allocated) || (obj_k.discarded)) {
 
         update_freed_future(id_index);
 
         return SUCCEED;
-    }    
+    }
 
-    assert( ! obj_k.discarded );
-    assert( ! obj_k.future );
+    assert(!obj_k.discarded);
+    assert(!obj_k.future);
 
     mod_obj_k.allocated           = obj_k.allocated;
     mod_obj_k.discarded           = TRUE;
@@ -1242,13 +1222,13 @@ free_func(void * obj, void H5_ATTR_UNUSED ** request)
 
         id_inst_k = atomic_load(&(id_instance_array[id_index].k));
 
-        assert( id_inst_k.created );
-        assert( ! id_inst_k.discarded );
+        assert(id_inst_k.created);
+        assert(!id_inst_k.discarded);
 #if 1
-        if ( ( !id_inst_k.in_progress ) )
-            assert( ( ! id_inst_k.future ) || ( id_inst_k.realized ) );
-#else 
-        assert( ( ! id_inst_k.future ) || ( id_inst_k.realized ) );
+        if ((!id_inst_k.in_progress))
+            assert((!id_inst_k.future) || (id_inst_k.realized));
+#else
+        assert((!id_inst_k.future) || (id_inst_k.realized));
 #endif
 
         mod_id_inst_k.in_progress        = id_inst_k.in_progress;
@@ -1263,34 +1243,35 @@ free_func(void * obj, void H5_ATTR_UNUSED ** request)
         mod_id_inst_k.in_progress        = id_inst_k.in_progress;
         mod_id_inst_k.id                 = id_inst_k.id;
 
-        inst_done = atomic_compare_exchange_strong(&(id_instance_array[id_index].k), &id_inst_k, mod_id_inst_k);
+        inst_done =
+            atomic_compare_exchange_strong(&(id_instance_array[id_index].k), &id_inst_k, mod_id_inst_k);
 
-        if ( ! obj_done ) {
+        if (!obj_done) {
 
             obj_done = atomic_compare_exchange_strong(&(object_ptr->k), &obj_k, mod_obj_k);
-        } 
+        }
 
-        /* at present, the atomic_compare_exchange_strong on object_ptr->k must always succeed.  
+        /* at present, the atomic_compare_exchange_strong on object_ptr->k must always succeed.
          * display a diagnostic and fail if this is not the case.
          */
 
-        if ( ! obj_done ) {
+        if (!obj_done) {
 
             fprintf(stderr, "\nfree_func() failed for id_index = %d\n\n", id_index);
 
-            return(FAIL);
+            return (FAIL);
         }
 
-        /* It is possible that another thread will modify id_instance_array[id_index].k between the 
+        /* It is possible that another thread will modify id_instance_array[id_index].k between the
          * atomic load and the call to atomic_compare_exchange_strong().  If so, just retry.  Note
-         * that the modification of object_ptr->k must succeed the first time, and thus is not 
+         * that the modification of object_ptr->k must succeed the first time, and thus is not
          * repeated.
          */
-    } while ( ! inst_done );
+    } while (!inst_done);
 
     atomic_store(&(id_instance_array[id_index].discard_in_progress), FALSE);
 
-    return(SUCCEED);
+    return (SUCCEED);
 
 } /* free_func() */
 
@@ -1298,53 +1279,53 @@ free_func(void * obj, void H5_ATTR_UNUSED ** request)
 
 /***********************************************************************************************
  * update_freed_future()
- * 
+ *
  *      Update harness bookkeeping for a future ID that is freed/discarded without free_func.
- * 
+ *
  *      Marks id_instance_array[id_index].k.discarded = TRUE, and marks the associated would-be
  *      associated object (objects_array[obj_index].k.discarded) TRUE, if present.
- * 
+ *
  *      The test suite is built upon the assumption that IDs have associated objects. With
- *      the introduction of lock-free future IDs, IDs may exist and be operated on before 
+ *      the introduction of lock-free future IDs, IDs may exist and be operated on before
  *      an object is defined or associated. If an unrealized future ID is freed or discarded,
  *      H5I marks the ID as closing/marked and intentionally skips the free_func() call,
  *      since no object exists to clean up.
- * 
+ *
  *      In such cases, update_freed_future() is used to bring the test harness state into
  *      agreement with the library state by marking the ID and any would be associated object
  *      as discarded.
- * 
+ *
  *      Repeated calls are benign: If the ID or object is already marked as discarded, no
  *      additional action is taken.
- * 
- *      Returns success. This function is not expected to fail. 
- * 
- * 
+ *
+ *      Returns success. This function is not expected to fail.
+ *
+ *
  *                                                                AZO -- 1/02/26
- * 
+ *
  **********************************************************************************************/
 
 static herr_t
 update_freed_future(int id_index)
 {
     id_instance_kernel_t id_inst_k, mod_id_inst_k;
-    id_object_kernel_t obj_k, mod_obj_k;
-    int obj_index;
+    id_object_kernel_t   obj_k, mod_obj_k;
+    int                  obj_index;
 
     memset(&mod_id_inst_k, 0, sizeof(id_instance_kernel_t));
-    memset(&id_inst_k, 0, sizeof(id_instance_kernel_t));        
+    memset(&id_inst_k, 0, sizeof(id_instance_kernel_t));
     memset(&obj_k, 0, sizeof(id_object_kernel_t));
     memset(&mod_obj_k, 0, sizeof(id_object_kernel_t));
 
     assert(0 <= id_index && id_index < NUM_ID_INSTANCES);
 
     /* Update the instance kernel */
-    while ( 1 ) {
+    while (1) {
 
         id_inst_k = atomic_load(&(id_instance_array[id_index].k));
 
         /* If the ID is already marked, return - nothing to do here */
-        if ( id_inst_k.discarded ) 
+        if (id_inst_k.discarded)
             break;
 
         mod_id_inst_k.in_progress        = id_inst_k.in_progress;
@@ -1360,7 +1341,7 @@ update_freed_future(int id_index)
         mod_id_inst_k.discarded          = TRUE;
 
         /* Attempt to CAS the new state, retry until success */
-        if ( atomic_compare_exchange_strong(&(id_instance_array[id_index].k), &id_inst_k, mod_id_inst_k))
+        if (atomic_compare_exchange_strong(&(id_instance_array[id_index].k), &id_inst_k, mod_id_inst_k))
             break;
     }
 
@@ -1368,30 +1349,30 @@ update_freed_future(int id_index)
     obj_index = atomic_load(&(id_instance_array[id_index].obj_index));
 
     /* If no mapping exists yet, nothing to do (future may have had no harness object) */
-    if ( obj_index < 0 || obj_index >= NUM_ID_OBJECTS )
+    if (obj_index < 0 || obj_index >= NUM_ID_OBJECTS)
         return SUCCEED;
 
     /* Update the harness object */
     obj_k = atomic_load(&(objects_array[id_index].k));
 
-    while ( 1 ) {
+    while (1) {
 
         /* if the object is already marked return */
-        if( obj_k.discarded ) {
+        if (obj_k.discarded) {
             break;
         }
-        
-            mod_obj_k.in_progress         = obj_k.in_progress;
-            mod_obj_k.allocated           = obj_k.allocated;
-            mod_obj_k.discarded           = TRUE;
-            mod_obj_k.future              = obj_k.future;
-            mod_obj_k.real_id_def_in_prog = obj_k.real_id_def_in_prog;
-            mod_obj_k.real_id_defined     = obj_k.real_id_defined;
-            mod_obj_k.future_id_realized  = obj_k.future_id_realized;
-            mod_obj_k.future_id_discarded = TRUE;
-            mod_obj_k.id                  = H5I_INVALID_HID;
-            mod_obj_k.id_info_ptr         = obj_k.id_info_ptr;
-        
+
+        mod_obj_k.in_progress         = obj_k.in_progress;
+        mod_obj_k.allocated           = obj_k.allocated;
+        mod_obj_k.discarded           = TRUE;
+        mod_obj_k.future              = obj_k.future;
+        mod_obj_k.real_id_def_in_prog = obj_k.real_id_def_in_prog;
+        mod_obj_k.real_id_defined     = obj_k.real_id_defined;
+        mod_obj_k.future_id_realized  = obj_k.future_id_realized;
+        mod_obj_k.future_id_discarded = TRUE;
+        mod_obj_k.id                  = H5I_INVALID_HID;
+        mod_obj_k.id_info_ptr         = obj_k.id_info_ptr;
+
         /* If CAS fails, someone else updated it */
         if (atomic_compare_exchange_strong(&(objects_array[id_index].k), &obj_k, mod_obj_k))
             break;
@@ -1404,23 +1385,23 @@ update_freed_future(int id_index)
 
 /***********************************************************************************************
  * future_free_rpt()
- * 
- *      Update instrumentation on the current test to reflect that a future ID is about to be 
- *      freed and therefore the test-side stats need to be updated as the free_func is not 
+ *
+ *      Update instrumentation on the current test to reflect that a future ID is about to be
+ *      freed and therefore the test-side stats need to be updated as the free_func is not
  *      invoked on future IDs.
- * 
+ *
  *                                                      A.Z.O -- 1/2/26
- * 
+ *
  **********************************************************************************************/
 
 static void
-future_free_rpt(hid_t id, void * client_data)
+future_free_rpt(hid_t id, void *client_data)
 {
     int id_index;
     (void)id;
-    
+
     id_index = (int)(uintptr_t)client_data;
-    if ( id_index < 0 || id_index >= NUM_ID_INSTANCES ) {
+    if (id_index < 0 || id_index >= NUM_ID_INSTANCES) {
         return;
     }
     update_freed_future(id_index);
@@ -1429,15 +1410,15 @@ future_free_rpt(hid_t id, void * client_data)
 /***********************************************************************************************
  * closing_rpt
  *
- *      Update instrumentation on the current test to reflect the fact that the closing 
+ *      Update instrumentation on the current test to reflect the fact that the closing
  *      flag on the supplied ID / object is about to be manipulated.
- * 
+ *
  * Changes:
  *      Updated to support the possibility of future IDs. If not a future ID, proceed as usual.
  *      Otherwise if it is a future ID, there is no object index and associated ID. Instead of
  *      deriving the index from the object, use the client_data ctx. On ID reservation in the
- *      test, the client_data ctx is set to the id_index. 
- * 
+ *      test, the client_data ctx is set to the id_index.
+ *
  *                                                      A.Z.O -- 1/2/26
  *
  ***********************************************************************************************/
@@ -1542,17 +1523,17 @@ closing_rpt(hid_t id, void * obj, int op)
 #endif
 
 static void
-closing_rpt(hid_t id, void * obj, int op)
+closing_rpt(hid_t id, void *obj, int op)
 {
-    hbool_t done = FALSE;
-    H5I_type_t id_type;
-    int obj_index;
-    int id_index;
+    hbool_t                     done = FALSE;
+    H5I_type_t                  id_type;
+    int                         obj_index;
+    int                         id_index;
     struct id_instance_kernel_t inst_k;
     struct id_instance_kernel_t mod_inst_k;
-    H5I_mt_id_info_t *info;
-    H5I_mt_type_info_t  *type_info_ptr;
-    void *index_ctx; /* Future case, ID index stored here at reserve */
+    H5I_mt_id_info_t           *info;
+    H5I_mt_type_info_t         *type_info_ptr;
+    void                       *index_ctx; /* Future case, ID index stored here at reserve */
 
     /* if the id is of a type maintained by the HDF5 library proper, just return without
      * doing anything.
@@ -1560,23 +1541,23 @@ closing_rpt(hid_t id, void * obj, int op)
 
     assert(id > 0);
 
-    id_type =  H5I_TYPE(id);
+    id_type = H5I_TYPE(id);
 
     if (H5I_IS_LIB_TYPE(id_type)) {
 
         return;
-    } 
+    }
 
     id_index = -1;
 
-    if ( obj ) {
+    if (obj) {
 
         assert(ID_OBJECT_T__TAG == ((id_object_t *)obj)->tag);
 
-        /* Obtain the index of the target ID in the id_instance_array[], with lots of 
-        * sanity checking along the way.
-        */
-        obj_index = ((id_object_t *)obj)->index;  
+        /* Obtain the index of the target ID in the id_instance_array[], with lots of
+         * sanity checking along the way.
+         */
+        obj_index = ((id_object_t *)obj)->index;
 
         assert(objects_array);
         assert(0 <= obj_index);
@@ -1589,8 +1570,8 @@ closing_rpt(hid_t id, void * obj, int op)
         assert(id_index < NUM_ID_INSTANCES);
         assert(ID_INSTANCE_T__TAG == id_instance_array[id_index].tag);
         assert(id_instance_array[id_index].obj_index == obj_index);
-
-    } else {
+    }
+    else {
         /* In the case of a future ID there is no associated object, though closing flags are
          * still useful. We instead derive the id_index from the client_data, set to hold the
          * value of the id index when the future ID was reserved. Sanity check along the way
@@ -1598,14 +1579,14 @@ closing_rpt(hid_t id, void * obj, int op)
         memset(&inst_k, 0, sizeof(id_instance_kernel_t));
 
         type_info_ptr = atomic_load(&(H5I_mt_g.type_info_array[id_type]));
-        info = NULL;
+        info          = NULL;
 
-        lfht_find(&(type_info_ptr->lfht), (unsigned long long)id, (void **)&info );
-        
+        lfht_find(&(type_info_ptr->lfht), (unsigned long long)id, (void **)&info);
+
         /* If no info, return rather than fail */
-        if ( !info ) {
+        if (!info) {
             return;
-        }     
+        }
 
         index_ctx = atomic_load(&info->client_data);
 
@@ -1618,7 +1599,6 @@ closing_rpt(hid_t id, void * obj, int op)
         assert(ID_INSTANCE_T__TAG == id_instance_array[id_index].tag);
 
         inst_k = atomic_load(&(id_instance_array[id_index].k));
-
     }
 
     do {
@@ -1639,14 +1619,14 @@ closing_rpt(hid_t id, void * obj, int op)
         mod_inst_k.future_id_src      = inst_k.future_id_src;
         mod_inst_k.id                 = inst_k.id;
 
-        switch(op) {
+        switch (op) {
 
             case H5I_CLOSING_STAT__PENDING:
                 mod_inst_k.closings_attempted++;
                 break;
 
             case H5I_CLOSING_STAT__SUCCESS:
-                assert(! mod_inst_k.closing);
+                assert(!mod_inst_k.closing);
                 mod_inst_k.closing = TRUE;
                 break;
 
@@ -1659,19 +1639,19 @@ closing_rpt(hid_t id, void * obj, int op)
                 break;
         }
 
-        if ( atomic_compare_exchange_strong(&(id_instance_array[id_index].k), &inst_k, mod_inst_k) ) {
+        if (atomic_compare_exchange_strong(&(id_instance_array[id_index].k), &inst_k, mod_inst_k)) {
 
             done = TRUE;
+        }
+        else {
 
-        } else {
-
-            /* since no locks need be held during the call to closing_rpt_fcn() it is possible 
+            /* since no locks need be held during the call to closing_rpt_fcn() it is possible
              * that some other thread has changed id_instance_array[id_index].k).  Just re-try.
              * done is still FALSE, so don't need to do anything to trigger this.
              */
-        } 
-    } while ( ! done );
-    
+        }
+    } while (!done);
+
     return;
 
 } /* closing_rpt_fcn() */
@@ -1698,26 +1678,26 @@ closing_rpt(hid_t id, void * obj, int op)
  *
  *      If any of these conditions FAIL, return FAIL
  *
- *      If all of these conditions are met, attempt to update the test test framework 
+ *      If all of these conditions are met, attempt to update the test test framework
  *      to reflect the immenant relization of the future ID as follows:
  *
- *      1) Invalidate the obj_index field of the id_instance_t associated with the 
+ *      1) Invalidate the obj_index field of the id_instance_t associated with the
  *         real id.  Do this with a compare and set, so as to detect the case in which
  *         the real ID has been deleted.  If this is the case, return failure.
  *
- *         Note that we are running into a fundamental problem with the future ID 
- *         mechanism -- since H5I doesn't know anything about the real ID until it 
- *         gets a successful return from the realize callback, it can't protect 
+ *         Note that we are running into a fundamental problem with the future ID
+ *         mechanism -- since H5I doesn't know anything about the real ID until it
+ *         gets a successful return from the realize callback, it can't protect
  *         the real ID from deletion prior to its consumption as part of fhe future
  *         ID realization.
  *
- *         Needless to say, a well behaved host application can do this, but we don't 
+ *         Needless to say, a well behaved host application can do this, but we don't
  *         want to depend on this.  Thus for now, I am papering over the problem in my
- *         test bed, as the effect of using a compare and set here is to cause the 
+ *         test bed, as the effect of using a compare and set here is to cause the
  *         realize callback to fail on subsequent if the first realize call succeeds.
  *
  *      2) Set the old_id_index field of the id_object_t associated with the real_id
- *         equal to its id_index field, and then set the id_index field equal to the 
+ *         equal to its id_index field, and then set the id_index field equal to the
  *         same field in the future object.
  *
  *      3) Set the obj_index field in the future instance of id_instance_t to the value
@@ -1725,21 +1705,21 @@ closing_rpt(hid_t id, void * obj, int op)
  *
  *      4) Invalidate the id_index field of the future id instance of id_object_t.
  *
- *      5) set set the furure_id_realized flag via a call to 
- *          atomic_compare_exchange_strong() on &(future_id->k).  
+ *      5) set set the furure_id_realized flag via a call to
+ *          atomic_compare_exchange_strong() on &(future_id->k).
  *
- *      If all the above succeed, set *actual_object_id to future_object->real_id, 
+ *      If all the above succeed, set *actual_object_id to future_object->real_id,
  *      and return SUCCEED.
  *
  *      Otherwise, return FAIL.
  *
- *      Observe that the operations of the realize callback are anything but atomic.  As 
- *      long as the host type is not listed as mulit-thread safe, this function should 
- *      be run within the global mutex -- making this point moot.  
+ *      Observe that the operations of the realize callback are anything but atomic.  As
+ *      long as the host type is not listed as mulit-thread safe, this function should
+ *      be run within the global mutex -- making this point moot.
  *
  *                                                              JRM -- 3/8/24
  *
- * Returs:  
+ * Returs:
  *
  *      SUCCEED on success, and FAIL otherwise.
  *
@@ -1750,61 +1730,60 @@ closing_rpt(hid_t id, void * obj, int op)
  ***********************************************************************************************/
 
 static herr_t
-realize_cb_0(void * future_object, hid_t * actual_object_id)
+realize_cb_0(void *future_object, hid_t *actual_object_id)
 {
-    hbool_t                     success = TRUE;
-    hbool_t                     rpt_failures = FALSE;
-    int                         real_id_inst_index   = -1;
-    int                         real_id_obj_index    = -1;
-    int                         future_id_inst_index = -1;
-    volatile id_instance_t    * real_id_inst_ptr     = NULL;
-    volatile id_instance_t    * future_id_inst_ptr   = NULL;
-    volatile id_object_t      * real_id_obj_ptr      = NULL;
-    volatile id_object_t      * future_id_obj_ptr = (id_object_t *)future_object;
-    id_object_kernel_t          future_id_obj_k;
-    id_object_kernel_t          mod_future_id_obj_k;
+    hbool_t                 success              = TRUE;
+    hbool_t                 rpt_failures         = FALSE;
+    int                     real_id_inst_index   = -1;
+    int                     real_id_obj_index    = -1;
+    int                     future_id_inst_index = -1;
+    volatile id_instance_t *real_id_inst_ptr     = NULL;
+    volatile id_instance_t *future_id_inst_ptr   = NULL;
+    volatile id_object_t   *real_id_obj_ptr      = NULL;
+    volatile id_object_t   *future_id_obj_ptr    = (id_object_t *)future_object;
+    id_object_kernel_t      future_id_obj_k;
+    id_object_kernel_t      mod_future_id_obj_k;
 
     memset(&future_id_obj_k, 0, sizeof(id_object_kernel_t));
     memset(&mod_future_id_obj_k, 0, sizeof(id_object_kernel_t));
     mod_future_id_obj_k.id = H5I_INVALID_HID;
 
-    if ( ( NULL == future_id_obj_ptr )  || ( ID_OBJECT_T__TAG != future_id_obj_ptr->tag ) || 
-         ( NULL == actual_object_id ) ) {
+    if ((NULL == future_id_obj_ptr) || (ID_OBJECT_T__TAG != future_id_obj_ptr->tag) ||
+        (NULL == actual_object_id)) {
 
         assert(FALSE);
 
         success = FALSE;
 
-        if ( rpt_failures ) {
+        if (rpt_failures) {
 
             fprintf(stderr, "realize_cb_0(): Invalid params on entry.\n");
         }
     }
 
     /* Verify that the supplied future object is valid. */
-    if ( success ) {
+    if (success) {
 
-        future_id_obj_k  = atomic_load(&(future_id_obj_ptr->k));
+        future_id_obj_k = atomic_load(&(future_id_obj_ptr->k));
 
-        if ( ( future_id_obj_k.in_progress ) || ( ! future_id_obj_k.allocated ) || 
-             ( future_id_obj_k.discarded ) ) {
+        if ((future_id_obj_k.in_progress) || (!future_id_obj_k.allocated) || (future_id_obj_k.discarded)) {
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                fprintf(stderr, 
-                       "realize_cb_0(): future id obj in progress, not created, or discarded on entry.\n");
+                fprintf(stderr,
+                        "realize_cb_0(): future id obj in progress, not created, or discarded on entry.\n");
             }
         }
     }
 
     /* Verify that the supplied future object is marked as being a future object. */
-    if ( ( success ) && ( ! future_id_obj_k.future ) ) {
+    if ((success) && (!future_id_obj_k.future)) {
 
         success = FALSE;
 
-        if ( rpt_failures ) {
+        if (rpt_failures) {
 
             fprintf(stderr, "realize_cb_0(): future id obj not marked as future.\n");
         }
@@ -1813,7 +1792,7 @@ realize_cb_0(void * future_object, hid_t * actual_object_id)
     /* Verify that a real object for the supplied future object has been created
      * (i.e. that the real_id_defined flag is set).
      */
-    if ( ( success ) && ( ! future_id_obj_k.real_id_defined ) ) {
+    if ((success) && (!future_id_obj_k.real_id_defined)) {
 
         /* real ID isn't defined yet -- function reports failure, but no error message */
 
@@ -1825,29 +1804,29 @@ realize_cb_0(void * future_object, hid_t * actual_object_id)
      *
      * If so, just return failure since this condition will occur if the source real ID is deleted
      * before the future ID is realized.  If so, the realize_cb will succeed the first time around,
-     * but the realization will fail when H5I tries to remove the 
+     * but the realization will fail when H5I tries to remove the
      */
-    if ( ( success ) && ( future_id_obj_k.future_id_realized ) ) {
+    if ((success) && (future_id_obj_k.future_id_realized)) {
 
         success = FALSE;
 
-        if ( rpt_failures ) {
+        if (rpt_failures) {
 
             fprintf(stderr, "realize_cb_0(): future id already realized.\n");
         }
     }
 
-    if ( ( success ) && ( future_id_obj_k.future_id_discarded ) ) {
+    if ((success) && (future_id_obj_k.future_id_discarded)) {
 
         success = FALSE;
 
-        if ( rpt_failures ) {
+        if (rpt_failures) {
 
-            fprintf(stderr, "realize_cb_0(): future id has been discarded.\n"); 
+            fprintf(stderr, "realize_cb_0(): future id has been discarded.\n");
         }
     }
-        
-    if ( success ) {
+
+    if (success) {
 
         int expected_obj_index;
 
@@ -1856,9 +1835,9 @@ realize_cb_0(void * future_object, hid_t * actual_object_id)
          * of id_instance_t or id_object_t, this operation should succeed.
          */
 
-        /* get indicies and pointers to the real id instance and object, and the future id_instance.  
+        /* get indicies and pointers to the real id instance and object, and the future id_instance.
          *
-         * Do basic sanity checks, but don't verify that the real ID is still valid.  If it has been 
+         * Do basic sanity checks, but don't verify that the real ID is still valid.  If it has been
          * deleted, this should be caught by the H5I future ID realization code.
          */
         real_id_obj_index = atomic_load(&(future_id_obj_ptr->real_id_obj_index));
@@ -1890,73 +1869,69 @@ realize_cb_0(void * future_object, hid_t * actual_object_id)
 
         assert(future_id_inst_ptr);
         assert(ID_INSTANCE_T__TAG == future_id_inst_ptr->tag);
- 
+
         assert(atomic_load(&(real_id_inst_ptr->obj_index)) == real_id_obj_ptr->index);
         assert(atomic_load(&(real_id_obj_ptr->id_index)) == real_id_inst_ptr->index);
- 
+
         assert(atomic_load(&(future_id_inst_ptr->obj_index)) == future_id_obj_ptr->index);
         assert(atomic_load(&(future_id_obj_ptr->id_index)) == future_id_inst_ptr->index);
 
-
-        /* Invalidate the obj_index field of the id_instance_t associated with the 
+        /* Invalidate the obj_index field of the id_instance_t associated with the
          * real id.  Do this with a compare and set, so as to detect the case in which
          * the real ID has been deleted.  If this is the case, return failure.
          *
-         * Note that we are running into a fundamental problem with the future ID 
-         * mechanism -- since H5I doesn't know anything about the real ID until it 
-         * gets a successful return from the realize callback, it can't protect 
+         * Note that we are running into a fundamental problem with the future ID
+         * mechanism -- since H5I doesn't know anything about the real ID until it
+         * gets a successful return from the realize callback, it can't protect
          * the real ID from deletion prior to its consumption as part of fhe future
          * ID realization.
          *
-         * Needless to say, a well behaved host application can do this, but we don't 
+         * Needless to say, a well behaved host application can do this, but we don't
          * want to depend on this.  Thus for now, I am papering over the problem in my
-         * test bed, as the effect of using a compare and set here is to cause the 
+         * test bed, as the effect of using a compare and set here is to cause the
          * realize callback to fail on subsequent if the first realize call succeeds.
          */
         expected_obj_index = real_id_obj_index;
 
-        if ( ! atomic_compare_exchange_strong(&(real_id_inst_ptr->obj_index), &expected_obj_index, -1) ) {
+        if (!atomic_compare_exchange_strong(&(real_id_inst_ptr->obj_index), &expected_obj_index, -1)) {
 
             /* unexpected real_id_inst_ptr->obj_index -- exit reporting failure. */
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
                 fprintf(stderr, "realize_cb_0(): expected real_id_inst_ptr->obj_index = %d, actual = %d.\n",
-                       real_id_obj_index, expected_obj_index); 
+                        real_id_obj_index, expected_obj_index);
             }
         }
     }
 
-    if ( success ) {
+    if (success) {
 
         /* Set the old_id_index field of the id_object_t associated with the real_id
-         * equal to its id_index field, and then set the id_index field equal to the 
+         * equal to its id_index field, and then set the id_index field equal to the
          * value of the same field in the future object.
          */
         assert(atomic_load(&(real_id_obj_ptr->old_id_index)) == -1);
         atomic_store(&(real_id_obj_ptr->old_id_index), atomic_load(&(real_id_obj_ptr->id_index)));
         atomic_store(&(real_id_obj_ptr->id_index), future_id_inst_index);
- 
 
         /* Set the obj_index field in the future instance of id_instance_t to the value
          * of the index field of the real_id instance of id_object_t.
          */
         assert(future_id_obj_ptr->index == atomic_load(&(future_id_inst_ptr->obj_index)));
         atomic_store(&(future_id_inst_ptr->obj_index), real_id_obj_ptr->index);
- 
 
         /* Invalidate the id_index field of the future id instance of id_object_t, but save
-         * the value in the old_id_index field first. 
+         * the value in the old_id_index field first.
          */
         assert(future_id_inst_ptr->index == atomic_load(&(future_id_obj_ptr->id_index)));
         assert(-1 == atomic_load(&(future_id_obj_ptr->old_id_index)));
         atomic_store(&(future_id_obj_ptr->old_id_index), atomic_load(&(future_id_obj_ptr->id_index)));
         atomic_store(&(future_id_obj_ptr->id_index), -1);
- 
 
-        /* Set set the furure_id_realized flag via a call to 
-         * atomic_compare_exchange_strong() on &(future_id->k).  
+        /* Set set the furure_id_realized flag via a call to
+         * atomic_compare_exchange_strong() on &(future_id->k).
          */
         mod_future_id_obj_k.in_progress         = future_id_obj_k.in_progress;
         mod_future_id_obj_k.allocated           = future_id_obj_k.allocated;
@@ -1967,47 +1942,45 @@ realize_cb_0(void * future_object, hid_t * actual_object_id)
         mod_future_id_obj_k.future_id_discarded = future_id_obj_k.future_id_discarded;
         mod_future_id_obj_k.id                  = future_id_obj_k.id;
         mod_future_id_obj_k.id_info_ptr         = future_id_obj_k.id_info_ptr;
-        
 
-        if ( atomic_compare_exchange_strong(&(future_id_obj_ptr->k), &future_id_obj_k, mod_future_id_obj_k) ) {
+        if (atomic_compare_exchange_strong(&(future_id_obj_ptr->k), &future_id_obj_k, mod_future_id_obj_k)) {
 
             *actual_object_id = atomic_load(&(future_id_obj_ptr->real_id));
-
-        } else {
+        }
+        else {
 
             assert(FALSE);
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                fprintf(stderr, "realize_cb_0(): attempt to set ruture_id_realized failed.\n"); 
+                fprintf(stderr, "realize_cb_0(): attempt to set ruture_id_realized failed.\n");
             }
         }
-    } 
+    }
 
-    return( success ? SUCCEED : FAIL );
+    return (success ? SUCCEED : FAIL);
 
 } /* realize_cb_0() */
-
 
 /***********************************************************************************************
  * discard_cb_0
  *
- *      Test framework implementation of the discard_cb used to test future IDs.  Note that 
+ *      Test framework implementation of the discard_cb used to test future IDs.  Note that
  *      this implementation of the discard call back is not multi-thread safe, and depends
- *      upon calling function to ensure mutual exclusion on the target future object during 
+ *      upon calling function to ensure mutual exclusion on the target future object during
  *      execution.
  *
  *      The discard callback in invoked under two circumstances.
  *
- *      The first case is the discard of the object associated with a future ID after it has 
- *      been replaced with the object associated the source real ID.  In this case, it is 
- *      necessary to set the discarded and future_id_discarded flags on the target instance 
+ *      The first case is the discard of the object associated with a future ID after it has
+ *      been replaced with the object associated the source real ID.  In this case, it is
+ *      necessary to set the discarded and future_id_discarded flags on the target instance
  *      of id_object_t, and the realized flag in the associated instance of 1d_instance_t.
  *
- *      The second case is the discard of the object associated with a future ID when that 
- *      ID is discarded before it can be realized.  Here, it is only necessary to set 
+ *      The second case is the discard of the object associated with a future ID when that
+ *      ID is discarded before it can be realized.  Here, it is only necessary to set
  *      the discarded flag in the target instance of id_object_t.
  *
  *      The two cases can be distinguished by the value of the future_id_realized flag.
@@ -2023,10 +1996,10 @@ realize_cb_0(void * future_object, hid_t * actual_object_id)
  *      if either of these tests fail, return failure.
  *
  *      Then test to see if the supplied future object is maked as being realized (i.e.
- *      that the future_id_realized flag is set).  
+ *      that the future_id_realized flag is set).
  *
- *      if it isn't, we are dealing with case 2 above.  set the discarded flag via a 
- *      call to via a call to atomic_compare_exchange_strong() on &(future_id_obj_ptr->k), 
+ *      if it isn't, we are dealing with case 2 above.  set the discarded flag via a
+ *      call to via a call to atomic_compare_exchange_strong() on &(future_id_obj_ptr->k),
  *      and return SUCCESS if this operation succeeds, and FAIL otherwise.
  *
  *      If it is, we are dealing with case 1 above.  Proceeds as follows:
@@ -2040,9 +2013,9 @@ realize_cb_0(void * future_object, hid_t * actual_object_id)
  *         is valid, is marked as a future ID, but not yet marked as being realized.
  *
  *      If all of these conditions are met, attempt to set the discarded and future_id_
- *      discarded flags via a call to atomic_compare_exchange_strong() on 
+ *      discarded flags via a call to atomic_compare_exchange_strong() on
  *      &(future_id_obj_ptr->k), and attempt to set the realized flag on the associated
- *      instance of id_instance_t to TRUE.  
+ *      instance of id_instance_t to TRUE.
  *
  *      If any of these tests fail, or if any of the flag updates fail, return FALSE.
  *
@@ -2050,7 +2023,7 @@ realize_cb_0(void * future_object, hid_t * actual_object_id)
  *
  *                                                              JRM -- 3/8/24
  *
- * Returs:  
+ * Returs:
  *
  *      SUCCEED on success, and FAIL otherwise.
  *
@@ -2061,17 +2034,17 @@ realize_cb_0(void * future_object, hid_t * actual_object_id)
  ***********************************************************************************************/
 
 static herr_t
-discard_cb_0(void * future_object)
+discard_cb_0(void *future_object)
 {
-    hbool_t                       success = TRUE;
-    hbool_t                       rpt_failures = TRUE;
-    int                           future_id_inst_index = -1;
-    id_object_t                 * future_id_obj_ptr = (id_object_t *)future_object;
-    id_object_kernel_t            id_obj_k;
-    id_object_kernel_t            mod_id_obj_k;
-    volatile id_instance_t      * future_id_inst_ptr = NULL;
-    id_instance_kernel_t          id_inst_k;
-    id_instance_kernel_t          mod_id_inst_k;
+    hbool_t                 success              = TRUE;
+    hbool_t                 rpt_failures         = TRUE;
+    int                     future_id_inst_index = -1;
+    id_object_t            *future_id_obj_ptr    = (id_object_t *)future_object;
+    id_object_kernel_t      id_obj_k;
+    id_object_kernel_t      mod_id_obj_k;
+    volatile id_instance_t *future_id_inst_ptr = NULL;
+    id_instance_kernel_t    id_inst_k;
+    id_instance_kernel_t    mod_id_inst_k;
 
     memset(&id_inst_k, 0, sizeof(id_instance_kernel_t));
     memset(&mod_id_inst_k, 0, sizeof(id_instance_kernel_t));
@@ -2079,56 +2052,55 @@ discard_cb_0(void * future_object)
     memset(&id_obj_k, 0, sizeof(id_object_kernel_t));
     memset(&mod_id_obj_k, 0, sizeof(id_object_kernel_t));
     mod_id_obj_k.id = H5I_INVALID_HID;
-    
 
-    if ( ( NULL == future_id_obj_ptr )  || ( ID_OBJECT_T__TAG != future_id_obj_ptr->tag ) ) {
+    if ((NULL == future_id_obj_ptr) || (ID_OBJECT_T__TAG != future_id_obj_ptr->tag)) {
 
         assert(FALSE);
 
         success = FALSE;
 
-        if ( rpt_failures ) {
+        if (rpt_failures) {
 
             fprintf(stderr, "discard_cb_0(): Invalid params on entry.\n");
         }
     }
 
-    if ( success ) {
+    if (success) {
 
-        id_obj_k  = atomic_load(&(future_id_obj_ptr->k));
+        id_obj_k = atomic_load(&(future_id_obj_ptr->k));
 
-        if ( ( id_obj_k.in_progress ) || ( ! id_obj_k.allocated ) || ( id_obj_k.discarded ) ) {
+        if ((id_obj_k.in_progress) || (!id_obj_k.allocated) || (id_obj_k.discarded)) {
 
             assert(FALSE);
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                fprintf(stderr, 
-                       "discard_cb_0(): future id obj in progress, not created, or discarded on entry.\n");
+                fprintf(stderr,
+                        "discard_cb_0(): future id obj in progress, not created, or discarded on entry.\n");
             }
         }
     }
 
-    if ( success ) {
+    if (success) {
 
-        if ( ! id_obj_k.future ) {
+        if (!id_obj_k.future) {
 
             assert(FALSE);
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
                 fprintf(stderr, "discard_cb_0(): future id obj not marked as future.\n");
             }
         }
     }
 
-    if ( ( success ) && ( ! id_obj_k.future_id_realized ) ) {
+    if ((success) && (!id_obj_k.future_id_realized)) {
 
-        /* this is case 2 -- just set the discarded flag and return success.  Note 
+        /* this is case 2 -- just set the discarded flag and return success.  Note
          * that whether this set succeeds or not, we are done.
          */
 
@@ -2142,112 +2114,115 @@ discard_cb_0(void * future_object)
         mod_id_obj_k.id                  = id_obj_k.id;
         mod_id_obj_k.id_info_ptr         = id_obj_k.id_info_ptr;
 
-        if ( ! atomic_compare_exchange_strong(&(future_id_obj_ptr->k), &id_obj_k, mod_id_obj_k) ) {
+        if (!atomic_compare_exchange_strong(&(future_id_obj_ptr->k), &id_obj_k, mod_id_obj_k)) {
 
             assert(FALSE);
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                fprintf(stderr, 
-                     "discard_cb_0(): case 2: attempt to set discarded flag on future id objected failed.\n");
+                fprintf(
+                    stderr,
+                    "discard_cb_0(): case 2: attempt to set discarded flag on future id objected failed.\n");
             }
         }
-
     }
 
-    if ( ( success ) && ( id_obj_k.future_id_realized ) ) {
+    if ((success) && (id_obj_k.future_id_realized)) {
 
-        if ( id_obj_k.future_id_discarded ) {
+        if (id_obj_k.future_id_discarded) {
 
             assert(FALSE);
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                fprintf(stderr, "discard_cb_0(): future id already discarded.\n"); 
+                fprintf(stderr, "discard_cb_0(): future id already discarded.\n");
             }
         }
     }
 
-    if ( ( success ) && ( id_obj_k.future_id_realized ) ) {
+    if ((success) && (id_obj_k.future_id_realized)) {
 
         assert(-1 == atomic_load(&(future_id_obj_ptr->id_index)));
 
         future_id_inst_index = atomic_load(&(future_id_obj_ptr->old_id_index));
 
-        if ( ( future_id_inst_index < 0 ) || ( future_id_inst_index >= NUM_ID_INSTANCES ) ) {
+        if ((future_id_inst_index < 0) || (future_id_inst_index >= NUM_ID_INSTANCES)) {
 
             assert(FALSE);
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                fprintf(stderr, "discard_cb_0(): invalid future_id_inst_index (%d).\n", future_id_inst_index); 
+                fprintf(stderr, "discard_cb_0(): invalid future_id_inst_index (%d).\n", future_id_inst_index);
             }
-        } else {
+        }
+        else {
 
             future_id_inst_ptr = &(id_instance_array[future_id_inst_index]);
-        } 
+        }
     }
-    
-    if ( ( success ) && ( id_obj_k.future_id_realized ) ) {
 
-        if ( ( NULL == future_id_inst_ptr ) || ( ID_INSTANCE_T__TAG != future_id_inst_ptr->tag ) ) {
+    if ((success) && (id_obj_k.future_id_realized)) {
+
+        if ((NULL == future_id_inst_ptr) || (ID_INSTANCE_T__TAG != future_id_inst_ptr->tag)) {
 
             assert(FALSE);
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                fprintf(stderr, "discard_cb_0(): invalid future_id_inst_ptr.\n"); 
+                fprintf(stderr, "discard_cb_0(): invalid future_id_inst_ptr.\n");
             }
         }
     }
 
-    if ( ( success ) && ( id_obj_k.future_id_realized ) ) {
+    if ((success) && (id_obj_k.future_id_realized)) {
 
-        id_inst_k  = atomic_load(&(future_id_inst_ptr->k));
+        id_inst_k = atomic_load(&(future_id_inst_ptr->k));
 
-        if ( ( id_inst_k.in_progress ) || ( ! id_inst_k.created ) || ( id_inst_k.discarded ) ) {
+        if ((id_inst_k.in_progress) || (!id_inst_k.created) || (id_inst_k.discarded)) {
 
             assert(FALSE);
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                fprintf(stderr, 
+                fprintf(stderr,
                         "discard_cb_0(): future id instance in progress, not created, or discarded.\n");
             }
-        } else if ( ! id_inst_k.future ) {
+        }
+        else if (!id_inst_k.future) {
 
             assert(FALSE);
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
                 fprintf(stderr, "discard_cb_0(): future id instance not marked as future id.\n");
             }
-        } else if ( id_inst_k.realized ) {
+        }
+        else if (id_inst_k.realized) {
 
             assert(FALSE);
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
                 fprintf(stderr, "discard_cb_0(): future id instance already marked as realized.\n");
             }
         }
     }
-        
-    if ( ( success ) && ( id_obj_k.future_id_realized ) ) {
+
+    if ((success) && (id_obj_k.future_id_realized)) {
 
         mod_id_obj_k.in_progress         = id_obj_k.in_progress;
         mod_id_obj_k.allocated           = id_obj_k.allocated;
@@ -2259,20 +2234,20 @@ discard_cb_0(void * future_object)
         mod_id_obj_k.id                  = id_obj_k.id;
         mod_id_obj_k.id_info_ptr         = id_obj_k.id_info_ptr;
 
-        if ( ! atomic_compare_exchange_strong(&(future_id_obj_ptr->k), &id_obj_k, mod_id_obj_k) ) {
+        if (!atomic_compare_exchange_strong(&(future_id_obj_ptr->k), &id_obj_k, mod_id_obj_k)) {
 
             assert(FALSE);
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
                 fprintf(stderr, "discard_cb_0(): attempt to set flags on future id objected failed..\n");
             }
         }
     }
 
-    if ( ( success ) && ( id_obj_k.future_id_realized ) ) {
+    if ((success) && (id_obj_k.future_id_realized)) {
 
         mod_id_inst_k.in_progress        = id_inst_k.in_progress;
         mod_id_inst_k.created            = id_inst_k.created;
@@ -2286,37 +2261,35 @@ discard_cb_0(void * future_object)
         mod_id_inst_k.in_progress        = id_inst_k.in_progress;
         mod_id_inst_k.id                 = id_inst_k.id;
 
-        if ( ! atomic_compare_exchange_strong(&(future_id_inst_ptr->k), &id_inst_k, mod_id_inst_k) ) {
+        if (!atomic_compare_exchange_strong(&(future_id_inst_ptr->k), &id_inst_k, mod_id_inst_k)) {
 
             assert(FALSE);
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
                 fprintf(stderr, "discard_cb_0(): attempt to set flags on future id instance failed..\n");
             }
         }
-
     }
 
-    return( success ? SUCCEED : FAIL );
+    return (success ? SUCCEED : FAIL);
 
 } /* discard_cb_0() */
-
 
 /***********************************************************************************************
  * register_type()
  *
  *    Register a new type, associate it with the supplied instance of id_type_t, and update that
- *    structure accordingly.  
+ *    structure accordingly.
  *
  *    If the cs flag is set, the function clears statistics on entry.
  *
  *    If the ds flag is set, the function displays statistics just before exit.
  *
- *    If the rpt_failures flag is set, the function will write an error message to stderr 
- *    if an error is detected.  If such an error message is generated, the triggering thread 
+ *    If the rpt_failures flag is set, the function will write an error message to stderr
+ *    if an error is detected.  If such an error message is generated, the triggering thread
  *    (given in the tid field) is reported.
  *
  *    The function returns 0 on success, and 1 if any error is detected.
@@ -2324,68 +2297,69 @@ discard_cb_0(void * future_object)
  ***********************************************************************************************/
 
 static int
-register_type(id_type_t * id_type_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
+register_type(id_type_t *id_type_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
 {
-    hbool_t                   success = TRUE; /* will set to FALSE on failure */
-    id_type_kernel_t          id_k;
-    id_type_kernel_t          mod_id_k;
+    hbool_t          success = TRUE; /* will set to FALSE on failure */
+    id_type_kernel_t id_k;
+    id_type_kernel_t mod_id_k;
 
     memset(&id_k, 0, sizeof(id_type_kernel_t));
     memset(&mod_id_k, 0, sizeof(id_type_kernel_t));
     mod_id_k.type_id = H5I_BADID;
 
-    if ( cs ) {
+    if (cs) {
 
         H5I_clear_stats();
     }
 
-    if ( ( NULL == id_type_ptr ) || ( ID_TYPE_T__TAG != id_type_ptr->tag ) ) {
+    if ((NULL == id_type_ptr) || (ID_TYPE_T__TAG != id_type_ptr->tag)) {
 
         success = FALSE;
 
-        if ( rpt_failures ) {
+        if (rpt_failures) {
 
             fprintf(stderr, "register_type():%d: initial sanity checks failed.\n", tid);
         }
     }
 
-    if ( success ) {
+    if (success) {
 
         id_k = atomic_load(&(id_type_ptr->k));
 
-        if ( ( id_k.in_progress ) || ( id_k.created ) ) {
+        if ((id_k.in_progress) || (id_k.created)) {
 
             success = FALSE; /* another thread beat us to it */
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                fprintf(stderr, 
+                fprintf(stderr,
                         "register_type():%d: type at index %d registraion already done or in progress (1).\n",
                         tid, id_type_ptr->index);
             }
-
-        } else {
+        }
+        else {
 
             mod_id_k.in_progress = TRUE;
             mod_id_k.created     = id_k.created;
             mod_id_k.discarded   = id_k.discarded;
             mod_id_k.type_id     = id_k.type_id;
 
-            if ( ! atomic_compare_exchange_strong(&(id_type_ptr->k), &id_k, mod_id_k) ) {
+            if (!atomic_compare_exchange_strong(&(id_type_ptr->k), &id_k, mod_id_k)) {
 
                 success = FALSE; /* another thread beat us to it */
 
-                if ( rpt_failures ) {
+                if (rpt_failures) {
 
-                    fprintf(stderr, 
-                            "register_type():%d: type at index %d registraion already done or in progress (2).\n",
-                            tid, id_type_ptr->index);
+                    fprintf(
+                        stderr,
+                        "register_type():%d: type at index %d registraion already done or in progress (2).\n",
+                        tid, id_type_ptr->index);
                 }
             }
         }
     }
 
-    if ( success ) {
+    if (success) {
 
         hid_t type_id;
 
@@ -2393,7 +2367,7 @@ register_type(id_type_t * id_type_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failu
 
         type_id = H5Iregister_type((size_t)0, 0, id_type_ptr->free_func);
 
-        if ( H5I_BADID == type_id ) {
+        if (H5I_BADID == type_id) {
 
             mod_id_k.in_progress = FALSE;
             mod_id_k.created     = id_k.created;
@@ -2402,15 +2376,16 @@ register_type(id_type_t * id_type_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failu
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                fprintf(stderr, "register_type():%d: call to H5Iregister_type() failed of type at index %d.\n",
-                        tid, id_type_ptr->index);
+                fprintf(stderr,
+                        "register_type():%d: call to H5Iregister_type() failed of type at index %d.\n", tid,
+                        id_type_ptr->index);
             }
 
             assert(success);
-
-        } else {
+        }
+        else {
 
             mod_id_k.in_progress = FALSE;
             mod_id_k.created     = TRUE;
@@ -2418,44 +2393,43 @@ register_type(id_type_t * id_type_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failu
             mod_id_k.type_id     = type_id;
         }
 
-        if ( ! atomic_compare_exchange_strong(&(id_type_ptr->k), &id_k, mod_id_k) ) {
+        if (!atomic_compare_exchange_strong(&(id_type_ptr->k), &id_k, mod_id_k)) {
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                fprintf(stderr, 
+                fprintf(stderr,
                         "register_type():%d: update of id_type_ptr->k failed.  index = %d, id = 0x%llx.\n",
                         tid, id_type_ptr->index, (unsigned long long)type_id);
             }
         }
     }
 
-    if ( ds ) {
+    if (ds) {
 
         H5I_dump_nz_stats(stdout, "H5Iregister_type");
     }
 
-    return(success?0:1);
+    return (success ? 0 : 1);
 
 } /* register_type() */
-
 
 /***********************************************************************************************
  * try_register_type()
  *
  *    Attempt to register a new type, associate it with types_array[type_index] and update that
- *    instance of id_type_t accordingly.  
+ *    instance of id_type_t accordingly.
  *
- *    If successful, increment types_array[type_index].successful_registers.  On failure, 
+ *    If successful, increment types_array[type_index].successful_registers.  On failure,
  *    increment increment types_array[type_index].failed_registers
  *
  *    If the cs flag is set, the function clears statistics on entry.
  *
  *    If the ds flag is set, the function displays statistics just before exit.
  *
- *    If the rpt_failures flag is set, the function will write an error message to stderr 
- *    if an error is detected.  If such an error message is generated, the triggering thread 
+ *    If the rpt_failures flag is set, the function will write an error message to stderr
+ *    if an error is detected.  If such an error message is generated, the triggering thread
  *    (given in the tid field) is reported.
  *                                                           JRM -- 4/2/24
  *
@@ -2466,70 +2440,72 @@ register_type(id_type_t * id_type_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failu
 static void
 try_register_type(int type_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
 {
-    hbool_t                   success = TRUE; /* will set to FALSE on failure */
-    hbool_t                   index_ok = TRUE; /* will set to FALSE if not */
-    id_type_kernel_t          id_k;
-    id_type_kernel_t          mod_id_k;
+    hbool_t          success  = TRUE; /* will set to FALSE on failure */
+    hbool_t          index_ok = TRUE; /* will set to FALSE if not */
+    id_type_kernel_t id_k;
+    id_type_kernel_t mod_id_k;
 
     memset(&id_k, 0, sizeof(id_type_kernel_t));
     memset(&mod_id_k, 0, sizeof(id_type_kernel_t));
     mod_id_k.type_id = H5I_BADID;
 
-    if ( cs ) {
+    if (cs) {
 
         H5I_clear_stats();
     }
 
-    if ( ( 0 > type_index ) || ( type_index >= NUM_ID_TYPES ) ) {
+    if ((0 > type_index) || (type_index >= NUM_ID_TYPES)) {
 
-        success = FALSE;
+        success  = FALSE;
         index_ok = FALSE;
 
-        if ( rpt_failures ) {
+        if (rpt_failures) {
 
             fprintf(stderr, "try_register_type():%d: type_index = %d out of reange.\n", tid, type_index);
         }
     }
 
-    if ( success ) {
+    if (success) {
 
         assert(ID_TYPE_T__TAG == types_array[type_index].tag);
 
         id_k = atomic_load(&(types_array[type_index].k));
 
-        if ( ( id_k.in_progress ) || ( id_k.created ) ) {
+        if ((id_k.in_progress) || (id_k.created)) {
 
             success = FALSE; /* another thread beat us to it */
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                fprintf(stderr, 
-                     "try_register_type():%d: type at index %d registraion already done or in progress (1).\n",
-                     tid, type_index);
+                fprintf(
+                    stderr,
+                    "try_register_type():%d: type at index %d registraion already done or in progress (1).\n",
+                    tid, type_index);
             }
-
-        } else {
+        }
+        else {
 
             mod_id_k.in_progress = TRUE;
             mod_id_k.created     = id_k.created;
             mod_id_k.discarded   = id_k.discarded;
             mod_id_k.type_id     = id_k.type_id;
 
-            if ( ! atomic_compare_exchange_strong(&(types_array[type_index].k), &id_k, mod_id_k) ) {
+            if (!atomic_compare_exchange_strong(&(types_array[type_index].k), &id_k, mod_id_k)) {
 
                 success = FALSE; /* another thread beat us to it */
 
-                if ( rpt_failures ) {
+                if (rpt_failures) {
 
-                    fprintf(stderr, 
-                     "try_register_type():%d: type at index %d registraion already done or in progress (2).\n",
-                     tid, type_index);
+                    fprintf(stderr,
+                            "try_register_type():%d: type at index %d registraion already done or in "
+                            "progress (2).\n",
+                            tid, type_index);
                 }
             }
         }
     }
 
-    if ( success ) {
+    if (success) {
 
         hid_t type_id;
 
@@ -2537,7 +2513,7 @@ try_register_type(int type_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, 
 
         type_id = H5Iregister_type((size_t)0, 0, types_array[type_index].free_func);
 
-        if ( H5I_BADID == type_id ) {
+        if (H5I_BADID == type_id) {
 
             mod_id_k.in_progress = FALSE;
             mod_id_k.created     = id_k.created;
@@ -2546,13 +2522,14 @@ try_register_type(int type_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, 
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                fprintf(stderr, 
+                fprintf(stderr,
                         "try_register_type():%d: call to H5Iregister_type() failed for type at index %d.\n",
                         tid, type_index);
             }
-        } else {
+        }
+        else {
 
             mod_id_k.in_progress = FALSE;
             mod_id_k.created     = TRUE;
@@ -2560,31 +2537,32 @@ try_register_type(int type_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, 
             mod_id_k.type_id     = type_id;
         }
 
-        if ( ! atomic_compare_exchange_strong(&(types_array[type_index].k), &id_k, mod_id_k) ) {
+        if (!atomic_compare_exchange_strong(&(types_array[type_index].k), &id_k, mod_id_k)) {
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                fprintf(stderr, 
-                        "try_register_type():%d: update of id_type_ptr->k failed.  index = %d, id = 0x%llx.\n",
-                        tid, type_index, (unsigned long long)type_id);
+                fprintf(
+                    stderr,
+                    "try_register_type():%d: update of id_type_ptr->k failed.  index = %d, id = 0x%llx.\n",
+                    tid, type_index, (unsigned long long)type_id);
             }
         }
     }
 
-    if ( ds ) {
+    if (ds) {
 
         H5I_dump_nz_stats(stdout, "H5Iregister_type");
     }
 
-    if ( index_ok ) {
+    if (index_ok) {
 
-        if ( success ) {
+        if (success) {
 
             atomic_fetch_add(&(types_array[type_index].successful_registers), 1ULL);
-
-        } else {
+        }
+        else {
 
             atomic_fetch_add(&(types_array[type_index].failed_registers), 1ULL);
         }
@@ -2594,105 +2572,105 @@ try_register_type(int type_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, 
 
 } /* try_register_type() */
 
-
 /***********************************************************************************************
  * clear_type()
  *
- *    If it is marked as existing, call H5Iclear_type() on the type ID associated with the 
- *    instance of id_type_t pointed to by id_type_ptr, with the supplied force flag, and 
+ *    If it is marked as existing, call H5Iclear_type() on the type ID associated with the
+ *    instance of id_type_t pointed to by id_type_ptr, with the supplied force flag, and
  *    update *id_type_ptr accordingly.
  *
  *    If the cs flag is set, the function clears statistics on entry.
  *
  *    If the ds flag is set, the function displays statistics just before exit.
  *
- *    If the rpt_failures flag is set, the function will write an error message to stderr 
- *    if an error is detected.  If such an error message is generated, the triggering thread 
+ *    If the rpt_failures flag is set, the function will write an error message to stderr
+ *    if an error is detected.  If such an error message is generated, the triggering thread
  *    (given in the tid field) is reported.
  *
- *    The function returns 0 on success, and 1 if any error (including non-existance of the 
+ *    The function returns 0 on success, and 1 if any error (including non-existance of the
  *    target type) is detected.
  *
  ***********************************************************************************************/
 
 static int
-clear_type(id_type_t * id_type_ptr, hbool_t force, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
+clear_type(id_type_t *id_type_ptr, hbool_t force, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
 {
     hbool_t          success = TRUE; /* will set to FALSE on failure */
     id_type_kernel_t id_type_k;
 
-    if ( ( NULL == id_type_ptr ) || ( ID_TYPE_T__TAG != id_type_ptr->tag ) ) {
+    if ((NULL == id_type_ptr) || (ID_TYPE_T__TAG != id_type_ptr->tag)) {
 
         success = FALSE;
 
-        if ( rpt_failures ) {
+        if (rpt_failures) {
 
             fprintf(stderr, "clear_type():%d: initial sanity checks failed.\n", tid);
         }
     }
 
-    if ( cs ) {
+    if (cs) {
 
         H5I_clear_stats();
     }
 
     id_type_k = atomic_load(&(id_type_ptr->k));
 
-    if ( success ) {
+    if (success) {
 
-        if ( ( id_type_k.in_progress) || ( ! id_type_k.created ) || ( id_type_k.discarded ) ) {
+        if ((id_type_k.in_progress) || (!id_type_k.created) || (id_type_k.discarded)) {
 
             assert(FALSE);
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                fprintf(stderr,
-                        "clear_id():%d: target id type either in progress, not created, or discarded on entry.\n",
-                        tid);
+                fprintf(
+                    stderr,
+                    "clear_id():%d: target id type either in progress, not created, or discarded on entry.\n",
+                    tid);
             }
         }
     }
 
-    if ( success ) {
+    if (success) {
 
-        if ( H5Iclear_type((H5I_type_t)(id_type_k.type_id), force) != SUCCEED ) {
+        if (H5Iclear_type((H5I_type_t)(id_type_k.type_id), force) != SUCCEED) {
 
             success = FALSE;
             atomic_fetch_add(&(id_type_ptr->failed_clears), 1ULL);
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                fprintf(stderr, "clear_type():%d: H5Iclear_type(0x%llx, %d) reports failure.\n", 
-                        tid, (unsigned long long)(id_type_k.type_id), (int)force);
+                fprintf(stderr, "clear_type():%d: H5Iclear_type(0x%llx, %d) reports failure.\n", tid,
+                        (unsigned long long)(id_type_k.type_id), (int)force);
             }
-        } else {
+        }
+        else {
 
             atomic_fetch_add(&(id_type_ptr->successful_clears), 1ULL);
         }
     }
 
-    if ( ds ) {
+    if (ds) {
 
         H5I_dump_nz_stats(stdout, "H5Iclear_type");
     }
 
-    return( success ? 0 : 1 );
+    return (success ? 0 : 1);
 
 } /* clear_type() */
-
 
 /***********************************************************************************************
  * try_clear_type()
  *
  *    Attempt to clear the type associated with it with types_array[type_index] and update that
- *    instance of id_type_t accordingly.  
+ *    instance of id_type_t accordingly.
  *
  *    Call H5Iclear_type() on types_array[type_index].k.type_id with the supplied force flag, and
- *    update types_array[type_index] accordingly.  
+ *    update types_array[type_index] accordingly.
  *
- *    Note that types_array[type_index].k.type_id may not be defined, or the target type may 
+ *    Note that types_array[type_index].k.type_id may not be defined, or the target type may
  *    have been deteted when the call is made.  However, the call to H5Iclear_type() is made
  *    regardless, and the results recorded.
  *
@@ -2700,8 +2678,8 @@ clear_type(id_type_t * id_type_ptr, hbool_t force, hbool_t cs, hbool_t ds, hbool
  *
  *    If the ds flag is set, the function displays statistics just before exit.
  *
- *    If the rpt_failures flag is set, the function will write an error message to stderr 
- *    if an error is detected.  If such an error message is generated, the triggering thread 
+ *    If the rpt_failures flag is set, the function will write an error message to stderr
+ *    if an error is detected.  If such an error message is generated, the triggering thread
  *    (given in the tid field) is reported.
  *                                                         JRM -- 4/2/24
  *
@@ -2713,55 +2691,55 @@ static void
 try_clear_type(int type_index, hbool_t force, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
 {
     hbool_t                   index_ok = TRUE;
-    hbool_t                   success = TRUE; /* will set to FALSE on failure */
+    hbool_t                   success  = TRUE; /* will set to FALSE on failure */
     volatile id_type_kernel_t id_type_k;
 
-    if ( ( 0 > type_index ) || ( type_index >= NUM_ID_TYPES ) ) {
+    if ((0 > type_index) || (type_index >= NUM_ID_TYPES)) {
 
-        success = FALSE;
+        success  = FALSE;
         index_ok = FALSE;
 
-        if ( rpt_failures ) {
+        if (rpt_failures) {
 
             fprintf(stderr, "try_clear_type():%d: type_index = %d out of reange.\n", tid, type_index);
         }
     }
 
-    if ( cs ) {
+    if (cs) {
 
         H5I_clear_stats();
     }
 
-    if ( success ) {
+    if (success) {
 
-        assert( ID_TYPE_T__TAG == types_array[type_index].tag );
+        assert(ID_TYPE_T__TAG == types_array[type_index].tag);
 
         id_type_k = atomic_load(&(types_array[type_index].k));
 
-        if ( H5Iclear_type((H5I_type_t)(id_type_k.type_id), force) != SUCCEED ) {
+        if (H5Iclear_type((H5I_type_t)(id_type_k.type_id), force) != SUCCEED) {
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                fprintf(stderr, "try_clear_type():%d: H5Iclear_type(0x%llx, %d) reports failure.\n", 
-                        tid, (unsigned long long)(id_type_k.type_id), (int)force);
+                fprintf(stderr, "try_clear_type():%d: H5Iclear_type(0x%llx, %d) reports failure.\n", tid,
+                        (unsigned long long)(id_type_k.type_id), (int)force);
             }
         }
     }
 
-    if ( ds ) {
+    if (ds) {
 
         H5I_dump_nz_stats(stdout, "H5Iclear_type");
     }
 
-    if ( index_ok ) {
+    if (index_ok) {
 
-        if ( success ) {
+        if (success) {
 
             atomic_fetch_add(&(types_array[type_index].successful_clears), 1ULL);
-
-        } else {
+        }
+        else {
 
             atomic_fetch_add(&(types_array[type_index].failed_clears), 1ULL);
         }
@@ -2771,28 +2749,27 @@ try_clear_type(int type_index, hbool_t force, hbool_t cs, hbool_t ds, hbool_t rp
 
 } /* try_clear_type() */
 
-
 /***********************************************************************************************
  * destroy_type()()
  *
- *    If it is marked as existing, call H5Idestroy_type() on the type ID associated with the 
+ *    If it is marked as existing, call H5Idestroy_type() on the type ID associated with the
  *    instance of id_type_t pointed to by id_type_ptr, and update *id_type_ptr accordingly.
  *
  *    If the cs flag is set, the function clears statistics on entry.
  *
  *    If the ds flag is set, the function displays statistics just before exit.
  *
- *    If the rpt_failures flag is set, the function will write an error message to stderr 
- *    if an error is detected.  If such an error message is generated, the triggering thread 
+ *    If the rpt_failures flag is set, the function will write an error message to stderr
+ *    if an error is detected.  If such an error message is generated, the triggering thread
  *    (given in the tid field) is reported.
  *
- *    The function returns 0 on success, and 1 if any error (including non-existance of the 
+ *    The function returns 0 on success, and 1 if any error (including non-existance of the
  *    target type) is detected.
  *
  ***********************************************************************************************/
 
 static int
-destroy_type(id_type_t * id_type_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
+destroy_type(id_type_t *id_type_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
 {
     hbool_t          success = TRUE; /* will set to FALSE on failure */
     hbool_t          destroy_succeeded;
@@ -2804,59 +2781,60 @@ destroy_type(id_type_t * id_type_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failur
     memset(&mod_id_type_k, 0, sizeof(id_type_kernel_t));
     mod_id_type_k.type_id = H5I_BADID;
 
-    if ( ( NULL == id_type_ptr ) || ( ID_TYPE_T__TAG != id_type_ptr->tag ) ) {
+    if ((NULL == id_type_ptr) || (ID_TYPE_T__TAG != id_type_ptr->tag)) {
 
         success = FALSE;
 
-        if ( rpt_failures ) {
+        if (rpt_failures) {
 
             fprintf(stderr, "destroy_type():%d: initial sanity checks failed.\n", tid);
         }
     }
 
-    if ( cs ) {
+    if (cs) {
 
         H5I_clear_stats();
     }
 
     id_type_k = atomic_load(&(id_type_ptr->k));
 
-    if ( success ) {
+    if (success) {
 
-        if ( ( id_type_k.in_progress) || ( ! id_type_k.created ) || ( id_type_k.discarded ) ) {
+        if ((id_type_k.in_progress) || (!id_type_k.created) || (id_type_k.discarded)) {
 
             assert(FALSE);
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
                 fprintf(stderr,
-                 "destroy_type():%d: target id type either in progress, not created, or discarded on entry.\n",
-                 tid);
+                        "destroy_type():%d: target id type either in progress, not created, or discarded on "
+                        "entry.\n",
+                        tid);
             }
         }
     }
 
-    if ( success ) {
+    if (success) {
 
-        if ( H5Idestroy_type((H5I_type_t)(id_type_k.type_id)) != SUCCEED ) {
+        if (H5Idestroy_type((H5I_type_t)(id_type_k.type_id)) != SUCCEED) {
 
-            success = FALSE;
+            success           = FALSE;
             destroy_succeeded = FALSE;
             atomic_fetch_add(&(id_type_ptr->failed_destroys), 1ULL);
-
-        } else {
+        }
+        else {
 
             destroy_succeeded = TRUE;
             atomic_fetch_add(&(id_type_ptr->successful_destroys), 1ULL);
         }
 
-        if ( destroy_succeeded ) { /* set the discarded flag */
+        if (destroy_succeeded) { /* set the discarded flag */
 
             id_type_k = atomic_load(&(id_type_ptr->k));
 
-            while ( ! id_type_k.discarded ) {
+            while (!id_type_k.discarded) {
 
                 mod_id_type_k.in_progress = id_type_k.in_progress;
                 mod_id_type_k.created     = id_type_k.created;
@@ -2870,31 +2848,31 @@ destroy_type(id_type_t * id_type_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failur
                 retries++;
             }
 
-            if ( retries > 0 ) {
+            if (retries > 0) {
 
                 assert(FALSE);
 
                 success = FALSE;
 
-                if ( rpt_failures ) {
+                if (rpt_failures) {
 
-                    fprintf(stderr, 
-                           "dec_ref():%d: %d retries needed  to mark type as discarded after H5Idestroy_type(0x%llx) reports success.\n", 
-                           tid, retries, (unsigned long long)(id_type_k.type_id));
+                    fprintf(stderr,
+                            "dec_ref():%d: %d retries needed  to mark type as discarded after "
+                            "H5Idestroy_type(0x%llx) reports success.\n",
+                            tid, retries, (unsigned long long)(id_type_k.type_id));
                 }
             }
         }
     }
 
-    if ( ds ) {
+    if (ds) {
 
         H5I_dump_nz_stats(stdout, "H5Idestroy_type");
     }
 
-    return(success ? 0 : 1);
+    return (success ? 0 : 1);
 
 } /* destroy_type() */
-
 
 /***********************************************************************************************
  * try_destroy_type()
@@ -2902,10 +2880,10 @@ destroy_type(id_type_t * id_type_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failur
  *    Attempt to destroy the type associated with it with types_array[type_index] and update that
  *    instance of id_type_t accordingly.
  *
- *    Call H5Idestroy_type() on types_array[type_index].k.type_id, and update 
+ *    Call H5Idestroy_type() on types_array[type_index].k.type_id, and update
  *    types_array[type_index] accordingly.
  *
- *    Examine the kernel of types_array[type_index] before and after to determine 
+ *    Examine the kernel of types_array[type_index] before and after to determine
  *    the expected result, and flag an assert if the result is contrary to the expected one.
  *    Note that the expected result may not be known -- in which case the test is ambiguous.
  *
@@ -2929,14 +2907,14 @@ destroy_type(id_type_t * id_type_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failur
 static int
 try_destroy_type(int type_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
 {
-    hbool_t                   success = TRUE; /* will set to FALSE on failure */
-    int                       retries = -1;
-    int                       ambiguous_result = 0;
-    herr_t                    result;
-    id_type_kernel_t          pre_id_type_k;
-    id_type_kernel_t          post_id_type_k;
-    id_type_kernel_t          id_type_k;
-    id_type_kernel_t          mod_id_type_k;
+    hbool_t          success          = TRUE; /* will set to FALSE on failure */
+    int              retries          = -1;
+    int              ambiguous_result = 0;
+    herr_t           result;
+    id_type_kernel_t pre_id_type_k;
+    id_type_kernel_t post_id_type_k;
+    id_type_kernel_t id_type_k;
+    id_type_kernel_t mod_id_type_k;
 
     memset(&pre_id_type_k, 0, sizeof(id_type_kernel_t));
     memset(&post_id_type_k, 0, sizeof(id_type_kernel_t));
@@ -2944,35 +2922,33 @@ try_destroy_type(int type_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, i
     memset(&mod_id_type_k, 0, sizeof(id_type_kernel_t));
     mod_id_type_k.type_id = H5I_BADID;
 
-    assert( ( 0 <= type_index ) && ( type_index < NUM_ID_TYPES ));
-    assert( ID_TYPE_T__TAG == types_array[type_index].tag );
+    assert((0 <= type_index) && (type_index < NUM_ID_TYPES));
+    assert(ID_TYPE_T__TAG == types_array[type_index].tag);
 
-    if ( cs ) {
+    if (cs) {
 
         H5I_clear_stats();
     }
 
-
-    if ( success ) {
+    if (success) {
 
         pre_id_type_k = atomic_load(&(types_array[type_index].k));
 
         result = H5Idestroy_type((H5I_type_t)(pre_id_type_k.type_id));
 
         post_id_type_k = atomic_load(&(types_array[type_index].k));
- 
 
-        if ( result != SUCCEED ) {
+        if (result != SUCCEED) {
 
             success = FALSE;
-
-        } else {
+        }
+        else {
 
             success = TRUE;
 
             id_type_k = atomic_load(&(types_array[type_index].k));
 
-            while ( ! id_type_k.discarded ) {
+            while (!id_type_k.discarded) {
 
                 mod_id_type_k.in_progress = id_type_k.in_progress;
                 mod_id_type_k.created     = id_type_k.created;
@@ -2986,74 +2962,72 @@ try_destroy_type(int type_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, i
                 retries++;
             }
 
-            if ( retries > 0 ) {
+            if (retries > 0) {
 
-                if ( rpt_failures ) {
+                if (rpt_failures) {
 
-                    fprintf(stderr, 
-                           "try_destroy_type():%d: %d retries needed to mark type (0x%llx) as discarded.\n", 
-                           tid, retries, (unsigned long long)(id_type_k.type_id));
+                    fprintf(stderr,
+                            "try_destroy_type():%d: %d retries needed to mark type (0x%llx) as discarded.\n",
+                            tid, retries, (unsigned long long)(id_type_k.type_id));
                 }
             }
         }
 
-
-        if ( ( ( ! pre_id_type_k.created ) && ( ! post_id_type_k.created ) ) ||
-             ( ( pre_id_type_k.discarded ) && ( post_id_type_k.discarded ) ) ) {
+        if (((!pre_id_type_k.created) && (!post_id_type_k.created)) ||
+            ((pre_id_type_k.discarded) && (post_id_type_k.discarded))) {
 
             /* Type did not exists at the time that H5Idestroy_type() was called -- thus
              * the call should have failed.
              */
-            assert( ! success );
-
-        } else if ( ( ( pre_id_type_k.created ) && ( post_id_type_k.created ) ) ||
-                    ( ( ! pre_id_type_k.discarded ) && ( ! post_id_type_k.discarded ) ) ) {
+            assert(!success);
+        }
+        else if (((pre_id_type_k.created) && (post_id_type_k.created)) ||
+                 ((!pre_id_type_k.discarded) && (!post_id_type_k.discarded))) {
 
             /* the type existed when H5Idestroy_type() case called -- thus the call should
              * have succeeded.
              */
-            assert( success );
+            assert(success);
+        }
+        else {
 
-        } else {
-
-            /* the type may or may not have existed at the time that H5Idestroy_type() was 
+            /* the type may or may not have existed at the time that H5Idestroy_type() was
              * called -- thus the test result is ambiguous.
              */
             ambiguous_result++;
         }
     }
 
-    if ( success ) {
+    if (success) {
 
         atomic_fetch_add(&(types_array[type_index].successful_destroys), 1ULL);
-
-    } else {
+    }
+    else {
 
         atomic_fetch_add(&(types_array[type_index].failed_destroys), 1ULL);
     }
 
-    if ( ds ) {
+    if (ds) {
 
         H5I_dump_nz_stats(stdout, "H5Idestroy_type");
     }
 
-    return(ambiguous_result);
+    return (ambiguous_result);
 
 } /* try_destroy_type() */
-
 
 /***********************************************************************************************
  * register_id()
  *
- *    Register a new id, associate it with the supplied instances of id_instance_t and 
- *    id_object_t, and update those structures accordingly.  
+ *    Register a new id, associate it with the supplied instances of id_instance_t and
+ *    id_object_t, and update those structures accordingly.
  *
  *    If the cs flag is set, the function clears statistics on entry.
  *
  *    If the ds flag is set, the function displays statistics just before exit.
  *
- *    If the rpt_failures flag is set, the function will write an error message to stderr 
- *    if an error is detected.  If such an error message is generated, the triggering thread 
+ *    If the rpt_failures flag is set, the function will write an error message to stderr
+ *    if an error is detected.  If such an error message is generated, the triggering thread
  *    (given in the tid field) is reported.
  *
  *    The function returns 0 on success, and 1 if any error is detected.
@@ -3061,8 +3035,8 @@ try_destroy_type(int type_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, i
  ***********************************************************************************************/
 
 static int
-register_id(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_t * id_obj_ptr,
-            hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
+register_id(id_type_t *id_type_ptr, id_instance_t *id_inst_ptr, id_object_t *id_obj_ptr, hbool_t cs,
+            hbool_t ds, hbool_t rpt_failures, int tid)
 {
     hbool_t              success = TRUE; /* will set to FALSE on failure */
     H5I_type_t           type;
@@ -3081,21 +3055,21 @@ register_id(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_t * 
     memset(&mod_id_obj_k, 0, sizeof(id_object_kernel_t));
     mod_id_obj_k.id = H5I_INVALID_HID;
 
-    if ( ( NULL == id_type_ptr ) || ( ID_TYPE_T__TAG != id_type_ptr->tag ) ||
-         ( NULL == id_inst_ptr ) || ( ID_INSTANCE_T__TAG != id_inst_ptr->tag ) ||
-         ( NULL == id_obj_ptr )  || ( ID_OBJECT_T__TAG != id_obj_ptr->tag ) ) {
+    if ((NULL == id_type_ptr) || (ID_TYPE_T__TAG != id_type_ptr->tag) || (NULL == id_inst_ptr) ||
+        (ID_INSTANCE_T__TAG != id_inst_ptr->tag) || (NULL == id_obj_ptr) ||
+        (ID_OBJECT_T__TAG != id_obj_ptr->tag)) {
 
         assert(FALSE);
 
         success = FALSE;
 
-        if ( rpt_failures ) {
+        if (rpt_failures) {
 
             fprintf(stderr, "register_id():%d: Invalid params on entry.\n", tid);
         }
     }
 
-    if ( cs ) {
+    if (cs) {
 
         H5I_clear_stats();
     }
@@ -3104,58 +3078,58 @@ register_id(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_t * 
     id_inst_k = atomic_load(&(id_inst_ptr->k));
     id_obj_k  = atomic_load(&(id_obj_ptr->k));
 
-    if ( ( id_type_k.in_progress) || ( ! id_type_k.created ) || ( id_type_k.discarded ) ) {
+    if ((id_type_k.in_progress) || (!id_type_k.created) || (id_type_k.discarded)) {
 
         assert(FALSE);
 
         success = FALSE;
 
-        if ( rpt_failures ) {
+        if (rpt_failures) {
 
-            fprintf(stderr, 
-                    "register_id():%d: target id type either in progress, not created, or discarded on entry.\n",
-                    tid);
+            fprintf(
+                stderr,
+                "register_id():%d: target id type either in progress, not created, or discarded on entry.\n",
+                tid);
         }
-    } else {
+    }
+    else {
 
         type = (H5I_type_t)id_type_k.type_id;
-    } 
+    }
 
-    if ( success )
-    {
-        if ( ( id_inst_k.in_progress ) || ( id_inst_k.created ) || ( id_inst_k.discarded ) ) {
+    if (success) {
+        if ((id_inst_k.in_progress) || (id_inst_k.created) || (id_inst_k.discarded)) {
 
             assert(FALSE);
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                fprintf(stderr, 
+                fprintf(stderr,
                         "register_id():%d: target id inst in progress, not created, or discarded on entry.\n",
                         tid);
             }
         }
     }
 
-    if ( success )
-    {
-        if ( ( id_obj_k.in_progress ) || ( id_obj_k.allocated ) || ( id_obj_k.discarded ) ) {
+    if (success) {
+        if ((id_obj_k.in_progress) || (id_obj_k.allocated) || (id_obj_k.discarded)) {
 
             assert(FALSE);
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                fprintf(stderr, 
+                fprintf(stderr,
                         "register_id():%d: target id obj in progress, not created, or discarded on entry.\n",
                         tid);
             }
         }
     }
 
-    if ( success ) {
+    if (success) {
 
         mod_id_inst_k.in_progress        = TRUE;
         mod_id_inst_k.created            = id_inst_k.created;
@@ -3168,23 +3142,24 @@ register_id(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_t * 
         mod_id_inst_k.future_id_src      = id_inst_k.future_id_src;
         mod_id_inst_k.id                 = id_inst_k.id;
 
-        if ( ! atomic_compare_exchange_strong(&(id_inst_ptr->k), &id_inst_k, mod_id_inst_k) ) {
+        if (!atomic_compare_exchange_strong(&(id_inst_ptr->k), &id_inst_k, mod_id_inst_k)) {
 
             assert(FALSE);
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
                 fprintf(stderr, "register_id():%d: can't mark target id inst in progress.\n", tid);
             }
-        } else {
+        }
+        else {
 
             id_inst_k = atomic_load(&(id_inst_ptr->k)); /* get fresh copy */
         }
     }
 
-    if ( success ) { 
+    if (success) {
 
         mod_id_obj_k.in_progress         = TRUE;
         mod_id_obj_k.allocated           = id_obj_k.allocated;
@@ -3196,14 +3171,14 @@ register_id(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_t * 
         mod_id_obj_k.future_id_discarded = id_obj_k.future_id_discarded;
         mod_id_obj_k.id                  = id_obj_k.id;
         mod_id_obj_k.id_info_ptr         = id_obj_k.id_info_ptr;
-        
-        if ( ! atomic_compare_exchange_strong(&(id_obj_ptr->k), &id_obj_k, mod_id_obj_k) ) {
+
+        if (!atomic_compare_exchange_strong(&(id_obj_ptr->k), &id_obj_k, mod_id_obj_k)) {
 
             assert(FALSE);
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
                 fprintf(stderr, "register_id():%d: can't mark target id obj in progress.\n", tid);
             }
@@ -3220,20 +3195,22 @@ register_id(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_t * 
             mod_id_inst_k.future_id_src      = id_inst_k.future_id_src;
             mod_id_inst_k.id                 = id_inst_k.id;
 
-            if ( ! atomic_compare_exchange_strong(&(id_inst_ptr->k), &id_inst_k, mod_id_inst_k) ) {
+            if (!atomic_compare_exchange_strong(&(id_inst_ptr->k), &id_inst_k, mod_id_inst_k)) {
 
-                if ( rpt_failures ) {
+                if (rpt_failures) {
 
-                    fprintf(stderr, "register_id():%d: can't reset in progress on mark target id inst.\n", tid);
+                    fprintf(stderr, "register_id():%d: can't reset in progress on mark target id inst.\n",
+                            tid);
                 }
             }
-        } else {
+        }
+        else {
 
-            id_obj_k  = atomic_load(&(id_obj_ptr->k));
+            id_obj_k = atomic_load(&(id_obj_ptr->k));
         }
     }
 
-    if ( success ) {
+    if (success) {
 
         assert(-1 == atomic_load(&(id_obj_ptr->id_index)));
         assert(-1 == atomic_load(&(id_obj_ptr->old_id_index)));
@@ -3266,7 +3243,7 @@ register_id(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_t * 
 
         id = H5Iregister(type, (void *)id_obj_ptr);
 
-        if ( id != H5I_INVALID_HID ) { 
+        if (id != H5I_INVALID_HID) {
 
             mod_id_inst_k.created = TRUE;
             mod_id_inst_k.id      = id;
@@ -3274,62 +3251,62 @@ register_id(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_t * 
             mod_id_obj_k.allocated   = TRUE;
             mod_id_obj_k.id          = id;
             mod_id_obj_k.id_info_ptr = H5I__find_id(id, FALSE);
-
-        } else {
+        }
+        else {
 
             success = FALSE;
 
             assert(FALSE);
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
                 fprintf(stderr, "register_id():%d: Call to H5Iregister() failed.\n", tid);
             }
-        } 
+        }
 
-        if ( ! atomic_compare_exchange_strong(&(id_obj_ptr->k), &id_obj_k, mod_id_obj_k) ) {
+        if (!atomic_compare_exchange_strong(&(id_obj_ptr->k), &id_obj_k, mod_id_obj_k)) {
 
             success = FALSE;
 
             assert(FALSE);
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                fprintf(stderr, 
+                fprintf(stderr,
                         "register_id():%d: Can't update id object for id registration success or failure.\n",
                         tid);
             }
         }
 
-        if ( ! atomic_compare_exchange_strong(&(id_inst_ptr->k), &id_inst_k, mod_id_inst_k) ) {
+        if (!atomic_compare_exchange_strong(&(id_inst_ptr->k), &id_inst_k, mod_id_inst_k)) {
 
             success = FALSE;
 
             assert(FALSE);
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                fprintf(stderr, 
-                        "register_id():%d: Can't update id instande for id registration success or failure.\n",
-                        tid);
+                fprintf(
+                    stderr,
+                    "register_id():%d: Can't update id instande for id registration success or failure.\n",
+                    tid);
             }
         }
     }
 
-    if ( ds ) {
+    if (ds) {
 
         H5I_dump_nz_stats(stdout, "H5Iregister");
     }
 
-    return(success ? 0 : 1);
+    return (success ? 0 : 1);
 
-} /* register_id() */ 
-
+} /* register_id() */
 
 /***********************************************************************************************
  * try_register_id()
  *
- *    Attempt to register a new id of type id_instance_array[id_index].type_index and 
+ *    Attempt to register a new id of type id_instance_array[id_index].type_index and
  *    associated object objects_array[obj_index], and update id_instance_array[id_index] and
  *    objects_array[obj_index] accordingly.
  *
@@ -3339,8 +3316,8 @@ register_id(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_t * 
  *
  *    If the ds flag is set, the function displays statistics just before exit.
  *
- *    If the rpt_failures flag is set, the function will write an error message to stderr 
- *    if an error is detected.  If such an error message is generated, the triggering thread 
+ *    If the rpt_failures flag is set, the function will write an error message to stderr
+ *    if an error is detected.  If such an error message is generated, the triggering thread
  *    (given in the tid field) is reported.
  *                                                        JRM -- 4/2/24
  *
@@ -3367,85 +3344,84 @@ try_register_id(int id_index, int obj_index, hbool_t cs, hbool_t ds, hbool_t rpt
     memset(&mod_id_obj_k, 0, sizeof(id_object_kernel_t));
     mod_id_obj_k.id = H5I_INVALID_HID;
 
-    if ( cs ) {
+    if (cs) {
 
         H5I_clear_stats();
     }
 
-    assert( ( 0 <= id_index ) && ( id_index < NUM_ID_INSTANCES ) );
-    assert( ( 0 <= obj_index ) && ( obj_index < NUM_ID_OBJECTS ) );
+    assert((0 <= id_index) && (id_index < NUM_ID_INSTANCES));
+    assert((0 <= obj_index) && (obj_index < NUM_ID_OBJECTS));
 
-    if ( success ) {
+    if (success) {
 
-        assert( ID_INSTANCE_T__TAG == id_instance_array[id_index].tag );
-        assert( ID_OBJECT_T__TAG   == objects_array[obj_index].tag );
+        assert(ID_INSTANCE_T__TAG == id_instance_array[id_index].tag);
+        assert(ID_OBJECT_T__TAG == objects_array[obj_index].tag);
 
         type_index = id_instance_array[id_index].type_index;
         type_id    = (H5I_type_t)atomic_load(&(id_instance_array[id_index].type_id));
 
-        if ( ( type_index < 0 ) || ( type_index >= NUM_ID_TYPES ) ) {
+        if ((type_index < 0) || (type_index >= NUM_ID_TYPES)) {
 
-            if ( rpt_failures ) {
-            
+            if (rpt_failures) {
+
                 fprintf(stderr, "try_register_id():%d: type_index = %d out of reange.\n", tid, type_index);
             }
-            assert( ( 0 <= type_index ) && ( type_index < NUM_ID_TYPES ) );
+            assert((0 <= type_index) && (type_index < NUM_ID_TYPES));
         }
     }
 
-    if ( success ) {
+    if (success) {
 
         id_inst_k = atomic_load(&(id_instance_array[id_index].k));
         id_obj_k  = atomic_load(&(objects_array[obj_index].k));
 
-        assert( ID_TYPE_T__TAG == types_array[type_index].tag );
+        assert(ID_TYPE_T__TAG == types_array[type_index].tag);
 
-        if ( H5I_BADID == type_id ) {
+        if (H5I_BADID == type_id) {
 
             id_type_k = atomic_load(&(types_array[type_index].k));
-            type_id = (H5I_type_t)id_type_k.type_id;
+            type_id   = (H5I_type_t)id_type_k.type_id;
 
-            if ( H5I_BADID != type_id ) {
+            if (H5I_BADID != type_id) {
 
-                assert( ( H5I_BADID < type_id ) && ( type_id < H5I_MAX_NUM_TYPES ) );
+                assert((H5I_BADID < type_id) && (type_id < H5I_MAX_NUM_TYPES));
 
                 atomic_store(&(id_instance_array[id_index].type_id), type_id);
             }
         }
     }
 
+    if (success) {
+        if ((id_inst_k.in_progress) || (id_inst_k.created) || (id_inst_k.discarded)) {
 
-    if ( success )
-    {
-        if ( ( id_inst_k.in_progress ) || ( id_inst_k.created ) || ( id_inst_k.discarded ) ) {
+            if (rpt_failures) {
 
-            if ( rpt_failures ) {
-
-                fprintf(stderr, 
-                     "try_register_id():%d: target id inst in progress, not created, or discarded on entry.\n",
-                     tid);
+                fprintf(
+                    stderr,
+                    "try_register_id():%d: target id inst in progress, not created, or discarded on entry.\n",
+                    tid);
             }
 
             assert(FALSE);
         }
     }
 
-    if ( success )
-    {
-        if ( ( id_obj_k.in_progress ) || ( id_obj_k.allocated ) || ( id_obj_k.discarded ) ) {
+    if (success) {
+        if ((id_obj_k.in_progress) || (id_obj_k.allocated) || (id_obj_k.discarded)) {
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                fprintf(stderr, 
-                     "try_register_id():%d: target id obj in progress, not created, or discarded on entry.\n",
-                     tid);
+                fprintf(
+                    stderr,
+                    "try_register_id():%d: target id obj in progress, not created, or discarded on entry.\n",
+                    tid);
             }
 
             assert(FALSE);
         }
     }
 
-    if ( success ) {
+    if (success) {
 
         mod_id_inst_k.in_progress        = TRUE;
         mod_id_inst_k.created            = id_inst_k.created;
@@ -3458,24 +3434,24 @@ try_register_id(int id_index, int obj_index, hbool_t cs, hbool_t ds, hbool_t rpt
         mod_id_inst_k.future_id_src      = id_inst_k.future_id_src;
         mod_id_inst_k.id                 = id_inst_k.id;
 
-        if ( ! atomic_compare_exchange_strong(&(id_instance_array[id_index].k), &id_inst_k, mod_id_inst_k) ) {
+        if (!atomic_compare_exchange_strong(&(id_instance_array[id_index].k), &id_inst_k, mod_id_inst_k)) {
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
                 fprintf(stderr, "try_register_id():%d: can't mark target id inst in progress.\n", tid);
             }
 
             assert(FALSE);
-
-        } else {
+        }
+        else {
 
             id_inst_k = atomic_load(&(id_instance_array[id_index].k)); /* get fresh copy */
 
-            assert( id_inst_k.in_progress );
+            assert(id_inst_k.in_progress);
         }
     }
 
-    if ( success ) { 
+    if (success) {
 
         mod_id_obj_k.in_progress         = TRUE;
         mod_id_obj_k.allocated           = id_obj_k.allocated;
@@ -3487,10 +3463,10 @@ try_register_id(int id_index, int obj_index, hbool_t cs, hbool_t ds, hbool_t rpt
         mod_id_obj_k.future_id_discarded = id_obj_k.future_id_discarded;
         mod_id_obj_k.id                  = id_obj_k.id;
         mod_id_obj_k.id_info_ptr         = id_obj_k.id_info_ptr;
-        
-        if ( ! atomic_compare_exchange_strong(&(objects_array[obj_index].k), &id_obj_k, mod_id_obj_k) ) {
 
-            if ( rpt_failures ) {
+        if (!atomic_compare_exchange_strong(&(objects_array[obj_index].k), &id_obj_k, mod_id_obj_k)) {
+
+            if (rpt_failures) {
 
                 fprintf(stderr, "try_register_id():%d: can't mark target id obj in progress.\n", tid);
             }
@@ -3507,26 +3483,27 @@ try_register_id(int id_index, int obj_index, hbool_t cs, hbool_t ds, hbool_t rpt
             mod_id_inst_k.future_id_src      = id_inst_k.future_id_src;
             mod_id_inst_k.id                 = id_inst_k.id;
 
-            if ( ! atomic_compare_exchange_strong(&(id_instance_array[id_index].k), &id_inst_k, mod_id_inst_k) ) {
+            if (!atomic_compare_exchange_strong(&(id_instance_array[id_index].k), &id_inst_k,
+                                                mod_id_inst_k)) {
 
-                if ( rpt_failures ) {
+                if (rpt_failures) {
 
-                    fprintf(stderr, 
-                            "try_register_id():%d: can't reset in progress on target id inst.\n", tid);
+                    fprintf(stderr, "try_register_id():%d: can't reset in progress on target id inst.\n",
+                            tid);
                 }
             }
 
-            assert( FALSE ) ;
+            assert(FALSE);
+        }
+        else {
 
-        } else {
+            id_obj_k = atomic_load(&(objects_array[obj_index].k)); /* get fresh copy */
 
-            id_obj_k  = atomic_load(&(objects_array[obj_index].k)); /* get fresh copy */
-
-            assert( id_obj_k.in_progress );
+            assert(id_obj_k.in_progress);
         }
     }
 
-    if ( success ) {
+    if (success) {
 
         assert(-1 == atomic_load(&(objects_array[obj_index].id_index)));
         assert(-1 == atomic_load(&(objects_array[obj_index].old_id_index)));
@@ -3559,7 +3536,7 @@ try_register_id(int id_index, int obj_index, hbool_t cs, hbool_t ds, hbool_t rpt
 
         id = H5Iregister(type_id, (void *)(&(objects_array[obj_index])));
 
-        if ( id != H5I_INVALID_HID ) { 
+        if (id != H5I_INVALID_HID) {
 
             mod_id_inst_k.created = TRUE;
             mod_id_inst_k.id      = id;
@@ -3567,62 +3544,63 @@ try_register_id(int id_index, int obj_index, hbool_t cs, hbool_t ds, hbool_t rpt
             mod_id_obj_k.allocated   = TRUE;
             mod_id_obj_k.id          = id;
             mod_id_obj_k.id_info_ptr = H5I__find_id(id, FALSE);
-
-        } else {
+        }
+        else {
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
                 fprintf(stderr, "try_register_id():%d: Call to H5Iregister() failed.\n", tid);
             }
 
             assert(FALSE);
-        } 
-
-        if ( ! atomic_compare_exchange_strong(&(objects_array[obj_index].k), &id_obj_k, mod_id_obj_k) ) {
-
-            if ( rpt_failures ) {
-
-                fprintf(stderr, 
-                      "try_register_id():%d: Can't update id object for id registration success on failure.\n",
-                      tid);
-            }
-
-            assert(FALSE);
         }
 
-        if ( ! atomic_compare_exchange_strong(&(id_instance_array[id_index].k), &id_inst_k, mod_id_inst_k) ) {
+        if (!atomic_compare_exchange_strong(&(objects_array[obj_index].k), &id_obj_k, mod_id_obj_k)) {
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                fprintf(stderr, 
-                    "try_register_id():%d: Can't update id instance for id registration success or failure.\n",
+                fprintf(
+                    stderr,
+                    "try_register_id():%d: Can't update id object for id registration success on failure.\n",
                     tid);
             }
 
             assert(FALSE);
         }
+
+        if (!atomic_compare_exchange_strong(&(id_instance_array[id_index].k), &id_inst_k, mod_id_inst_k)) {
+
+            if (rpt_failures) {
+
+                fprintf(stderr,
+                        "try_register_id():%d: Can't update id instance for id registration success or "
+                        "failure.\n",
+                        tid);
+            }
+
+            assert(FALSE);
+        }
     }
 
-    if ( ds ) {
+    if (ds) {
 
         H5I_dump_nz_stats(stdout, "H5Iregister");
     }
 
-    if ( success ) {
+    if (success) {
 
         atomic_fetch_add(&(id_instance_array[id_index].successful_registrations), 1ULL);
-
-    } else {
+    }
+    else {
 
         atomic_fetch_add(&(id_instance_array[id_index].failed_registrations), 1ULL);
     }
 
     return;
 
-} /* try_register_id() */ 
-
+} /* try_register_id() */
 
 /***********************************************************************************************
  * register_future_id()
@@ -3634,8 +3612,8 @@ try_register_id(int id_index, int obj_index, hbool_t cs, hbool_t ds, hbool_t rpt
  *
  *    If the ds flag is set, the function displays statistics just before exit.
  *
- *    If the rpt_failures flag is set, the function will write an error message to stderr 
- *    if an error is detected.  If such an error message is generated, the triggering thread 
+ *    If the rpt_failures flag is set, the function will write an error message to stderr
+ *    if an error is detected.  If such an error message is generated, the triggering thread
  *    (given in the tid field) is reported.
  *
  *    The function returns 0 on success, and 1 if any error is detected.
@@ -3643,9 +3621,9 @@ try_register_id(int id_index, int obj_index, hbool_t cs, hbool_t ds, hbool_t rpt
  ***********************************************************************************************/
 
 static int
-register_future_id(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_t * id_obj_ptr,
-                   H5I_future_realize_func_t realize_cb, H5I_future_discard_func_t discard_cb,
-                   hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
+register_future_id(id_type_t *id_type_ptr, id_instance_t *id_inst_ptr, id_object_t *id_obj_ptr,
+                   H5I_future_realize_func_t realize_cb, H5I_future_discard_func_t discard_cb, hbool_t cs,
+                   hbool_t ds, hbool_t rpt_failures, int tid)
 {
     hbool_t              success = TRUE; /* will set to FALSE on failure */
     H5I_type_t           type;
@@ -3664,21 +3642,21 @@ register_future_id(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_obje
     memset(&mod_id_obj_k, 0, sizeof(id_object_kernel_t));
     mod_id_obj_k.id = H5I_INVALID_HID;
 
-    if ( ( NULL == id_type_ptr ) || ( ID_TYPE_T__TAG != id_type_ptr->tag ) ||
-         ( NULL == id_inst_ptr ) || ( ID_INSTANCE_T__TAG != id_inst_ptr->tag ) ||
-         ( NULL == id_obj_ptr )  || ( ID_OBJECT_T__TAG != id_obj_ptr->tag ) ) {
+    if ((NULL == id_type_ptr) || (ID_TYPE_T__TAG != id_type_ptr->tag) || (NULL == id_inst_ptr) ||
+        (ID_INSTANCE_T__TAG != id_inst_ptr->tag) || (NULL == id_obj_ptr) ||
+        (ID_OBJECT_T__TAG != id_obj_ptr->tag)) {
 
         assert(FALSE);
 
         success = FALSE;
 
-        if ( rpt_failures ) {
+        if (rpt_failures) {
 
             fprintf(stderr, "register_future_id():%d: Invalid params on entry.\n", tid);
         }
     }
 
-    if ( cs ) {
+    if (cs) {
 
         H5I_clear_stats();
     }
@@ -3687,58 +3665,60 @@ register_future_id(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_obje
     id_inst_k = atomic_load(&(id_inst_ptr->k));
     id_obj_k  = atomic_load(&(id_obj_ptr->k));
 
-    if ( ( id_type_k.in_progress) || ( ! id_type_k.created ) || ( id_type_k.discarded ) ) {
+    if ((id_type_k.in_progress) || (!id_type_k.created) || (id_type_k.discarded)) {
 
         assert(FALSE);
 
         success = FALSE;
 
-        if ( rpt_failures ) {
+        if (rpt_failures) {
 
-            fprintf(stderr, 
-           "register_future_id():%d: target id type either in progress, not created, or discarded on entry.\n",
+            fprintf(stderr,
+                    "register_future_id():%d: target id type either in progress, not created, or discarded "
+                    "on entry.\n",
                     tid);
         }
-    } else {
+    }
+    else {
 
         type = (H5I_type_t)id_type_k.type_id;
-    } 
+    }
 
-    if ( success )
-    {
-        if ( ( id_inst_k.in_progress ) || ( id_inst_k.created ) || ( id_inst_k.discarded ) ) {
+    if (success) {
+        if ((id_inst_k.in_progress) || (id_inst_k.created) || (id_inst_k.discarded)) {
 
             assert(FALSE);
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                fprintf(stderr, 
-                  "register_future_id():%d: target id inst in progress, not created, or discarded on entry.\n",
-                  tid);
+                fprintf(stderr,
+                        "register_future_id():%d: target id inst in progress, not created, or discarded on "
+                        "entry.\n",
+                        tid);
             }
         }
     }
 
-    if ( success )
-    {
-        if ( ( id_obj_k.in_progress ) || ( id_obj_k.allocated ) || ( id_obj_k.discarded ) ) {
+    if (success) {
+        if ((id_obj_k.in_progress) || (id_obj_k.allocated) || (id_obj_k.discarded)) {
 
             assert(FALSE);
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                fprintf(stderr, 
-                   "register_future_id():%d: target id obj in progress, not created, or discarded on entry.\n",
-                   tid);
+                fprintf(stderr,
+                        "register_future_id():%d: target id obj in progress, not created, or discarded on "
+                        "entry.\n",
+                        tid);
             }
         }
     }
 
-    if ( success ) {
+    if (success) {
 
         mod_id_inst_k.in_progress        = TRUE;
         mod_id_inst_k.created            = id_inst_k.created;
@@ -3751,23 +3731,24 @@ register_future_id(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_obje
         mod_id_inst_k.future_id_src      = id_inst_k.future_id_src;
         mod_id_inst_k.id                 = id_inst_k.id;
 
-        if ( ! atomic_compare_exchange_strong(&(id_inst_ptr->k), &id_inst_k, mod_id_inst_k) ) {
+        if (!atomic_compare_exchange_strong(&(id_inst_ptr->k), &id_inst_k, mod_id_inst_k)) {
 
             assert(FALSE);
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
                 fprintf(stderr, "register_future_id():%d: can't mark target id inst in progress.\n", tid);
             }
-        } else {
+        }
+        else {
 
             id_inst_k = atomic_load(&(id_inst_ptr->k)); /* get fresh copy */
         }
     }
 
-    if ( success ) { 
+    if (success) {
 
         mod_id_obj_k.in_progress         = TRUE;
         mod_id_obj_k.allocated           = id_obj_k.allocated;
@@ -3779,14 +3760,14 @@ register_future_id(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_obje
         mod_id_obj_k.future_id_discarded = id_obj_k.future_id_discarded;
         mod_id_obj_k.id                  = id_obj_k.id;
         mod_id_obj_k.id_info_ptr         = id_obj_k.id_info_ptr;
-        
-        if ( ! atomic_compare_exchange_strong(&(id_obj_ptr->k), &id_obj_k, mod_id_obj_k) ) {
+
+        if (!atomic_compare_exchange_strong(&(id_obj_ptr->k), &id_obj_k, mod_id_obj_k)) {
 
             assert(FALSE);
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
                 fprintf(stderr, "register_future_id():%d: can't mark target id obj in progress.\n", tid);
             }
@@ -3803,21 +3784,23 @@ register_future_id(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_obje
             mod_id_inst_k.future_id_src      = id_inst_k.future_id_src;
             mod_id_inst_k.id                 = id_inst_k.id;
 
-            if ( ! atomic_compare_exchange_strong(&(id_inst_ptr->k), &id_inst_k, mod_id_inst_k) ) {
+            if (!atomic_compare_exchange_strong(&(id_inst_ptr->k), &id_inst_k, mod_id_inst_k)) {
 
-                if ( rpt_failures ) {
+                if (rpt_failures) {
 
-                    fprintf(stderr, 
-                            "register_future_id():%d: can't reset in progress on mark target id inst.\n", tid);
+                    fprintf(stderr,
+                            "register_future_id():%d: can't reset in progress on mark target id inst.\n",
+                            tid);
                 }
             }
-        } else {
+        }
+        else {
 
-            id_obj_k  = atomic_load(&(id_obj_ptr->k));
+            id_obj_k = atomic_load(&(id_obj_ptr->k));
         }
     }
 
-    if ( success ) {
+    if (success) {
 
         assert(-1 == atomic_load(&(id_obj_ptr->id_index)));
         assert(-1 == atomic_load(&(id_obj_ptr->old_id_index)));
@@ -3850,7 +3833,7 @@ register_future_id(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_obje
 
         id = H5Iregister_future(type, (void *)id_obj_ptr, realize_cb, discard_cb);
 
-        if ( id != H5I_INVALID_HID ) { 
+        if (id != H5I_INVALID_HID) {
 
             mod_id_inst_k.created = TRUE;
             mod_id_inst_k.future  = TRUE;
@@ -3860,112 +3843,111 @@ register_future_id(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_obje
             mod_id_obj_k.future      = TRUE;
             mod_id_obj_k.id          = id;
             mod_id_obj_k.id_info_ptr = H5I__find_id(id, FALSE);
-
-        } else {
+        }
+        else {
 
             success = FALSE;
 
             assert(FALSE);
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
                 fprintf(stderr, "register_future__id():%d: Call to H5Iregister_future() failed.\n", tid);
             }
-        } 
+        }
 
-        if ( ! atomic_compare_exchange_strong(&(id_obj_ptr->k), &id_obj_k, mod_id_obj_k) ) {
+        if (!atomic_compare_exchange_strong(&(id_obj_ptr->k), &id_obj_k, mod_id_obj_k)) {
 
             success = FALSE;
 
             assert(FALSE);
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                fprintf(stderr, 
-                   "register_future_id():%d: Can't update id object for id registration success or failure.\n",
-                   tid);
+                fprintf(stderr,
+                        "register_future_id():%d: Can't update id object for id registration success or "
+                        "failure.\n",
+                        tid);
             }
         }
 
-        if ( ! atomic_compare_exchange_strong(&(id_inst_ptr->k), &id_inst_k, mod_id_inst_k) ) {
+        if (!atomic_compare_exchange_strong(&(id_inst_ptr->k), &id_inst_k, mod_id_inst_k)) {
 
             success = FALSE;
 
             assert(FALSE);
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                fprintf(stderr, 
-                 "register_future_id():%d: Can't update id instande for id registration success or failure.\n",
-                 tid);
+                fprintf(stderr,
+                        "register_future_id():%d: Can't update id instande for id registration success or "
+                        "failure.\n",
+                        tid);
             }
         }
     }
 
-    if ( ds ) {
+    if (ds) {
 
         H5I_dump_nz_stats(stdout, "H5Iregister");
     }
 
-    return(success ? 0 : 1);
+    return (success ? 0 : 1);
 
-} /* register_future_id() */ 
-
+} /* register_future_id() */
 
 /***********************************************************************************************
  * reserve_future_id()
  *
- *    Reserve a future ID.  Note that the realization of this ID and object association is 
- *    a seperate operation. 
- * 
+ *    Reserve a future ID.  Note that the realization of this ID and object association is
+ *    a seperate operation.
+ *
  *    Wrapper for H5Ireserve_future_id() - Updates test specific fields and calls the
- *    H5I internal future reserve function. 
+ *    H5I internal future reserve function.
  *
  *    If the cs flag is set, the function clears statistics on entry.
  *
  *    If the ds flag is set, the function displays statistics just before exit.
  *
- *    If the rpt_failures flag is set, the function will write an error message to stderr 
- *    if an error is detected.  If such an error message is generated, the triggering thread 
+ *    If the rpt_failures flag is set, the function will write an error message to stderr
+ *    if an error is detected.  If such an error message is generated, the triggering thread
  *    (given in the tid field) is reported.
  *
  *    The function returns 0 on success, and 1 if any error is detected.
- * 
+ *
  *                                                A.Z.O -- 11/22/25
- * 
+ *
  ***********************************************************************************************/
 static int
-reserve_future_id(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr,
-                  H5I_progress_func_t progress_cb, hbool_t cs, hbool_t ds, 
-                  hbool_t rpt_failures, int tid)
+reserve_future_id(id_type_t *id_type_ptr, id_instance_t *id_inst_ptr, H5I_progress_func_t progress_cb,
+                  hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
 {
-    hbool_t              success = TRUE; 
+    hbool_t              success = TRUE;
     H5I_type_t           type;
     hid_t                id;
     id_type_kernel_t     id_type_k;
     id_instance_kernel_t id_inst_k;
     id_instance_kernel_t mod_id_inst_k;
 
-
     memset(&id_type_k, 0, sizeof(id_type_kernel_t));
     memset(&id_inst_k, 0, sizeof(id_instance_kernel_t));
     memset(&mod_id_inst_k, 0, sizeof(id_instance_kernel_t));
     mod_id_inst_k.id = H5I_INVALID_HID;
 
-    if ( ( NULL == id_type_ptr ) || ( ID_TYPE_T__TAG != id_type_ptr->tag ) ||
-         ( NULL == id_inst_ptr ) || ( ID_INSTANCE_T__TAG != id_inst_ptr->tag )) {
+    if ((NULL == id_type_ptr) || (ID_TYPE_T__TAG != id_type_ptr->tag) || (NULL == id_inst_ptr) ||
+        (ID_INSTANCE_T__TAG != id_inst_ptr->tag)) {
 
         assert(FALSE);
 
         success = FALSE;
 
-        if ( rpt_failures ) {
+        if (rpt_failures) {
 
             fprintf(stderr, "reserve_future_id():%d: Invalid params on entry.\n", tid);
         }
     }
 
-    if ( cs ) {
+    if (cs) {
 
         H5I_clear_stats();
     }
@@ -3973,41 +3955,43 @@ reserve_future_id(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr,
     id_type_k = atomic_load(&(id_type_ptr->k));
     id_inst_k = atomic_load(&(id_inst_ptr->k));
 
-    if ( ( id_type_k.in_progress) || ( ! id_type_k.created ) || ( id_type_k.discarded ) ) {
+    if ((id_type_k.in_progress) || (!id_type_k.created) || (id_type_k.discarded)) {
 
         assert(FALSE);
 
         success = FALSE;
 
-        if ( rpt_failures ) {
+        if (rpt_failures) {
 
-            fprintf(stderr, 
-              "reserve_future_id():%d: target id type either in progress, not created, or discarded on entry.\n",
+            fprintf(stderr,
+                    "reserve_future_id():%d: target id type either in progress, not created, or discarded on "
+                    "entry.\n",
                     tid);
         }
-    } else {
+    }
+    else {
 
         type = (H5I_type_t)id_type_k.type_id;
-    } 
+    }
 
-    if ( success )
-    {
-        if ( ( id_inst_k.in_progress ) || ( id_inst_k.created ) || ( id_inst_k.discarded ) ) {
+    if (success) {
+        if ((id_inst_k.in_progress) || (id_inst_k.created) || (id_inst_k.discarded)) {
 
             assert(FALSE);
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                fprintf(stderr, 
-                  "reserve_future_id():%d: target id inst in progress, not created, or discarded on entry.\n",
-                  tid);
+                fprintf(stderr,
+                        "reserve_future_id():%d: target id inst in progress, not created, or discarded on "
+                        "entry.\n",
+                        tid);
             }
         }
     }
 
-    if ( success ) {
+    if (success) {
 
         mod_id_inst_k.in_progress        = TRUE;
         mod_id_inst_k.created            = id_inst_k.created;
@@ -4020,23 +4004,24 @@ reserve_future_id(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr,
         mod_id_inst_k.future_id_src      = id_inst_k.future_id_src;
         mod_id_inst_k.id                 = id_inst_k.id;
 
-        if ( ! atomic_compare_exchange_strong(&(id_inst_ptr->k), &id_inst_k, mod_id_inst_k) ) {
+        if (!atomic_compare_exchange_strong(&(id_inst_ptr->k), &id_inst_k, mod_id_inst_k)) {
 
             assert(FALSE);
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
                 fprintf(stderr, "reserve_future_id():%d: can't mark target id inst in progress.\n", tid);
             }
-        } else {
+        }
+        else {
 
             id_inst_k = atomic_load(&(id_inst_ptr->k)); /* get fresh copy */
         }
     }
 
-    if ( success ) {
+    if (success) {
 
         assert(-1 == atomic_load(&(id_inst_ptr->obj_index)));
 
@@ -4053,46 +4038,46 @@ reserve_future_id(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr,
 
         id = H5Ireserve_future_id(type, progress_cb);
 
-        if ( id != H5I_INVALID_HID ) { 
+        if (id != H5I_INVALID_HID) {
 
             mod_id_inst_k.created = TRUE;
             mod_id_inst_k.future  = TRUE;
             mod_id_inst_k.id      = id;
-            
-
-        } else {
+        }
+        else {
 
             success = FALSE;
 
             assert(FALSE);
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
                 fprintf(stderr, "reserve_future__id():%d: Call to H5Ireserve_future_id() failed.\n", tid);
             }
-        } 
+        }
 
-        if ( ! atomic_compare_exchange_strong(&(id_inst_ptr->k), &id_inst_k, mod_id_inst_k) ) {
+        if (!atomic_compare_exchange_strong(&(id_inst_ptr->k), &id_inst_k, mod_id_inst_k)) {
 
             success = FALSE;
 
             assert(FALSE);
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                fprintf(stderr, 
-                 "reserve_future_id():%d: Can't update id instance for id registration success or failure.\n",
-                 tid);
+                fprintf(stderr,
+                        "reserve_future_id():%d: Can't update id instance for id registration success or "
+                        "failure.\n",
+                        tid);
             }
         }
     }
 
-    if ( ds ) {
+    if (ds) {
 
         H5I_dump_nz_stats(stdout, "H5Iregister");
     }
 
-    return(success ? 0 : 1);
+    return (success ? 0 : 1);
 
 } /* reserve_future_id() */
 
@@ -4101,25 +4086,26 @@ reserve_future_id(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr,
  *
  *    Attempt to reserve a new future ID of the type id_instance_array[id_index].type_index.
  *    Update id_instance_array[id_index] accordingly.
- * 
+ *
  *    Note that assigning an object to this ID is performed by another operation - typically
  *    H5Idefine_future_id. As a future ID, there is no associated object until it is defined/
  *    realized.
- * 
+ *
  *    Note that there is no guarnatee that the type exists.
  *
  *    If the cs flag is set, the function clears statistics on entry.
  *
  *    If the ds flag is set, the function displays statistics just before exit.
  *
- *    If the rpt_failures flag is set, the function will write an error message to stderr 
- *    if an error is detected.  If such an error message is generated, the triggering thread 
+ *    If the rpt_failures flag is set, the function will write an error message to stderr
+ *    if an error is detected.  If such an error message is generated, the triggering thread
  *    (given in the tid field) is reported.
  *                                                        AZO -- 1/2/25
  *
  ***********************************************************************************************/
 static void
-try_reserve_future_id(int id_index, H5I_progress_func_t progress_cb, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
+try_reserve_future_id(int id_index, H5I_progress_func_t progress_cb, hbool_t cs, hbool_t ds,
+                      hbool_t rpt_failures, int tid)
 {
     hbool_t              success = TRUE; /* will set to FALSE on failure */
     int                  type_index;
@@ -4138,67 +4124,67 @@ try_reserve_future_id(int id_index, H5I_progress_func_t progress_cb, hbool_t cs,
 
     mod_id_inst_k.id = H5I_INVALID_HID;
 
-    if ( cs ) {
+    if (cs) {
 
         H5I_clear_stats();
     }
 
-    assert( ( 0 <= id_index ) && ( id_index < NUM_ID_INSTANCES ) );
+    assert((0 <= id_index) && (id_index < NUM_ID_INSTANCES));
 
-    if ( success ) {
+    if (success) {
 
-        assert( ID_INSTANCE_T__TAG == id_instance_array[id_index].tag );
+        assert(ID_INSTANCE_T__TAG == id_instance_array[id_index].tag);
 
         type_index = id_instance_array[id_index].type_index;
         type_id    = (H5I_type_t)atomic_load(&(id_instance_array[id_index].type_id));
 
-        if ( ( type_index < 0 ) || ( type_index >= NUM_ID_TYPES ) ) {
+        if ((type_index < 0) || (type_index >= NUM_ID_TYPES)) {
 
-            if ( rpt_failures ) {
-            
-                fprintf(stderr, "try_reserve_future_id():%d: type_index = %d out of range.\n", tid, type_index);
+            if (rpt_failures) {
+
+                fprintf(stderr, "try_reserve_future_id():%d: type_index = %d out of range.\n", tid,
+                        type_index);
             }
-            assert( ( 0 <= type_index ) && ( type_index < NUM_ID_TYPES ) );
+            assert((0 <= type_index) && (type_index < NUM_ID_TYPES));
         }
     }
 
-    if ( success ) {
+    if (success) {
 
         id_inst_k = atomic_load(&(id_instance_array[id_index].k));
 
-        assert( ID_TYPE_T__TAG == types_array[type_index].tag );
+        assert(ID_TYPE_T__TAG == types_array[type_index].tag);
 
-        if ( H5I_BADID == type_id ) {
+        if (H5I_BADID == type_id) {
 
             id_type_k = atomic_load(&(types_array[type_index].k));
-            type_id = (H5I_type_t)id_type_k.type_id;
+            type_id   = (H5I_type_t)id_type_k.type_id;
 
-            if ( H5I_BADID != type_id ) {
+            if (H5I_BADID != type_id) {
 
-                assert( ( H5I_BADID < type_id ) && ( type_id < H5I_MAX_NUM_TYPES ) );
+                assert((H5I_BADID < type_id) && (type_id < H5I_MAX_NUM_TYPES));
 
                 atomic_store(&(id_instance_array[id_index].type_id), type_id);
             }
         }
     }
 
+    if (success) {
+        if ((id_inst_k.in_progress) || (id_inst_k.created) || (id_inst_k.discarded)) {
 
-    if ( success )
-    {
-        if ( ( id_inst_k.in_progress ) || ( id_inst_k.created ) || ( id_inst_k.discarded ) ) {
+            if (rpt_failures) {
 
-            if ( rpt_failures ) {
-
-                fprintf(stderr, 
-                     "try_reserve_future_id():%d: target id inst in progress, not created, or discarded on entry.\n",
-                     tid);
+                fprintf(stderr,
+                        "try_reserve_future_id():%d: target id inst in progress, not created, or discarded "
+                        "on entry.\n",
+                        tid);
             }
 
             assert(FALSE);
         }
     }
 
-    if ( success ) {
+    if (success) {
 
         mod_id_inst_k.in_progress        = TRUE;
         mod_id_inst_k.created            = id_inst_k.created;
@@ -4211,24 +4197,24 @@ try_reserve_future_id(int id_index, H5I_progress_func_t progress_cb, hbool_t cs,
         mod_id_inst_k.future_id_src      = id_inst_k.future_id_src;
         mod_id_inst_k.id                 = id_inst_k.id;
 
-        if ( ! atomic_compare_exchange_strong(&(id_instance_array[id_index].k), &id_inst_k, mod_id_inst_k) ) {
+        if (!atomic_compare_exchange_strong(&(id_instance_array[id_index].k), &id_inst_k, mod_id_inst_k)) {
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
                 fprintf(stderr, "try_reserve_future_id():%d: can't mark target id inst in progress.\n", tid);
             }
 
             assert(FALSE);
-
-        } else {
+        }
+        else {
 
             id_inst_k = atomic_load(&(id_instance_array[id_index].k)); /* get fresh copy */
 
-            assert( id_inst_k.in_progress );
+            assert(id_inst_k.in_progress);
         }
     }
 
-    if ( success ) {
+    if (success) {
 
         /* Object index should be NULL (-1) and remain until defined/realized */
         assert(-1 == atomic_load(&(id_instance_array[id_index].obj_index)));
@@ -4246,22 +4232,21 @@ try_reserve_future_id(int id_index, H5I_progress_func_t progress_cb, hbool_t cs,
 
         id = H5Ireserve_future_id(type_id, progress_cb);
 
-        if ( id != H5I_INVALID_HID ) { 
+        if (id != H5I_INVALID_HID) {
 
             mod_id_inst_k.created = TRUE;
             mod_id_inst_k.id      = id;
             mod_id_inst_k.future  = TRUE;
-            
 
-            type = H5I_TYPE(id);
+            type          = H5I_TYPE(id);
             type_info_ptr = atomic_load(&H5I_mt_g.type_info_array[type]);
-            info_ptr = NULL;
+            info_ptr      = NULL;
 
             if (!type_info_ptr || atomic_load(&type_info_ptr->init_count) <= 0)
                 success = FALSE;
 
             /* Avoid H5I__find_id() to prevent recursion when a progress_cb is provided */
-            if ( !lfht_find(&(type_info_ptr->lfht), (unsigned long long)id, (void **)&info_ptr ) || !info_ptr )
+            if (!lfht_find(&(type_info_ptr->lfht), (unsigned long long)id, (void **)&info_ptr) || !info_ptr)
                 success = FALSE;
 
             assert(info_ptr);
@@ -4271,42 +4256,43 @@ try_reserve_future_id(int id_index, H5I_progress_func_t progress_cb, hbool_t cs,
              * needs to be a way to get the id_index otherwise
              */
             atomic_store(&(info_ptr->client_data), (void *)(uintptr_t)(id_index));
-
-        } else {
+        }
+        else {
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
                 fprintf(stderr, "try_reserve_future_id():%d: Call to H5Iregister() failed.\n", tid);
             }
 
             assert(FALSE);
-        } 
+        }
 
-        if ( ! atomic_compare_exchange_strong(&(id_instance_array[id_index].k), &id_inst_k, mod_id_inst_k) ) {
+        if (!atomic_compare_exchange_strong(&(id_instance_array[id_index].k), &id_inst_k, mod_id_inst_k)) {
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                fprintf(stderr, 
-                    "try_reserve_future_id():%d: Can't update id instance for future id reservation success or failure.\n",
-                    tid);
+                fprintf(stderr,
+                        "try_reserve_future_id():%d: Can't update id instance for future id reservation "
+                        "success or failure.\n",
+                        tid);
             }
 
             assert(FALSE);
         }
     }
 
-    if ( ds ) {
+    if (ds) {
 
         H5I_dump_nz_stats(stdout, "H5Ireserve_future_id");
     }
 
-    if ( success ) {
+    if (success) {
 
         atomic_fetch_add(&(id_instance_array[id_index].successful_future_reserves), 1ULL);
-
-    } else {
+    }
+    else {
 
         atomic_fetch_add(&(id_instance_array[id_index].failed_future_reserves), 1ULL);
     }
@@ -4318,30 +4304,30 @@ try_reserve_future_id(int id_index, H5I_progress_func_t progress_cb, hbool_t cs,
 /***********************************************************************************************
  * define_future_0()
  *
- *      Internal wrapper for H5Idefine_future_id(). Note that the reservation of a future ID is 
+ *      Internal wrapper for H5Idefine_future_id(). Note that the reservation of a future ID is
  *      a seperate operation.
- * 
+ *
  *      Updates test specific fields and calls the H5I internal future define function. Rather
  *      than complex object mapping / swapping / discarding, simply pass in an object to define
- *      a future ID. Upon define, the passed in object is assigned to the provided ID. 
+ *      a future ID. Upon define, the passed in object is assigned to the provided ID.
  *
  *      If the cs flag is set, the function clears statistics on entry.
  *
  *      If the ds flag is set, the function displays statistics just before exit.
  *
- *      If the rpt_failures flag is set, the function will write an error message to stderr 
- *      if an error is detected.  If such an error message is generated, the triggering thread 
+ *      If the rpt_failures flag is set, the function will write an error message to stderr
+ *      if an error is detected.  If such an error message is generated, the triggering thread
  *      (given in the tid field) is reported.
  *
  *      The function returns 0 on success, and 1 if any error is detected.
- * 
+ *
  *                                                A.Z.O -- 11/22/25
- * 
+ *
  ***********************************************************************************************/
 
 static int
-define_future_0(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_t * id_obj_ptr,
-            hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
+define_future_0(id_type_t *id_type_ptr, id_instance_t *id_inst_ptr, id_object_t *id_obj_ptr, hbool_t cs,
+                hbool_t ds, hbool_t rpt_failures, int tid)
 {
     hbool_t              success = TRUE; /* will set to FALSE on failure */
     H5I_type_t           type;
@@ -4360,21 +4346,21 @@ define_future_0(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_
     memset(&mod_id_obj_k, 0, sizeof(id_object_kernel_t));
     mod_id_obj_k.id = H5I_INVALID_HID;
 
-    if ( ( NULL == id_type_ptr ) || ( ID_TYPE_T__TAG != id_type_ptr->tag ) ||
-         ( NULL == id_inst_ptr ) || ( ID_INSTANCE_T__TAG != id_inst_ptr->tag ) ||
-         ( NULL == id_obj_ptr )  || ( ID_OBJECT_T__TAG != id_obj_ptr->tag ) ) {
+    if ((NULL == id_type_ptr) || (ID_TYPE_T__TAG != id_type_ptr->tag) || (NULL == id_inst_ptr) ||
+        (ID_INSTANCE_T__TAG != id_inst_ptr->tag) || (NULL == id_obj_ptr) ||
+        (ID_OBJECT_T__TAG != id_obj_ptr->tag)) {
 
         assert(FALSE);
 
         success = FALSE;
 
-        if ( rpt_failures ) {
+        if (rpt_failures) {
 
             fprintf(stderr, "define_future_0():%d: Invalid params on entry.\n", tid);
         }
     }
 
-    if ( cs ) {
+    if (cs) {
 
         H5I_clear_stats();
     }
@@ -4383,58 +4369,58 @@ define_future_0(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_
     id_inst_k = atomic_load(&(id_inst_ptr->k));
     id_obj_k  = atomic_load(&(id_obj_ptr->k));
 
-    if ( ( id_type_k.in_progress) || ( ! id_type_k.created ) || ( id_type_k.discarded ) ) {
+    if ((id_type_k.in_progress) || (!id_type_k.created) || (id_type_k.discarded)) {
 
         assert(FALSE);
 
         success = FALSE;
 
-        if ( rpt_failures ) {
+        if (rpt_failures) {
 
-            fprintf(stderr, 
-                    "define_future_0():%d: target id type either in progress, not created, or discarded on entry.\n",
+            fprintf(stderr,
+                    "define_future_0():%d: target id type either in progress, not created, or discarded on "
+                    "entry.\n",
                     tid);
         }
-    } else {
+    }
+    else {
 
         type = H5I_TYPE(id_inst_k.id);
-    } 
+    }
 
-    if ( success )
-    {
-        if ( ( id_inst_k.in_progress ) || ( id_inst_k.discarded ) ) {
+    if (success) {
+        if ((id_inst_k.in_progress) || (id_inst_k.discarded)) {
 
             assert(FALSE);
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                fprintf(stderr, 
-                        "define_future_0():%d: target id inst in progress or discarded on entry.\n",
+                fprintf(stderr, "define_future_0():%d: target id inst in progress or discarded on entry.\n",
                         tid);
             }
         }
     }
 
-    if ( success )
-    {
-        if ( ( id_obj_k.in_progress ) || ( id_obj_k.allocated ) || ( id_obj_k.discarded ) ) {
+    if (success) {
+        if ((id_obj_k.in_progress) || (id_obj_k.allocated) || (id_obj_k.discarded)) {
 
             assert(FALSE);
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                fprintf(stderr, 
-                        "define_future_0():%d: target id obj in progress, not created, or discarded on entry.\n",
-                        tid);
+                fprintf(
+                    stderr,
+                    "define_future_0():%d: target id obj in progress, not created, or discarded on entry.\n",
+                    tid);
             }
         }
     }
 
-    if ( success ) {
+    if (success) {
 
         mod_id_inst_k.in_progress        = TRUE;
         mod_id_inst_k.created            = id_inst_k.created;
@@ -4447,23 +4433,24 @@ define_future_0(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_
         mod_id_inst_k.future_id_src      = id_inst_k.future_id_src;
         mod_id_inst_k.id                 = id_inst_k.id;
 
-        if ( ! atomic_compare_exchange_strong(&(id_inst_ptr->k), &id_inst_k, mod_id_inst_k) ) {
+        if (!atomic_compare_exchange_strong(&(id_inst_ptr->k), &id_inst_k, mod_id_inst_k)) {
 
             assert(FALSE);
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
                 fprintf(stderr, "define_future_0():%d: can't mark target id inst in progress.\n", tid);
             }
-        } else {
+        }
+        else {
 
             id_inst_k = atomic_load(&(id_inst_ptr->k)); /* get fresh copy */
         }
     }
 
-    if ( success ) { 
+    if (success) {
 
         mod_id_obj_k.in_progress         = TRUE;
         mod_id_obj_k.allocated           = id_obj_k.allocated;
@@ -4475,14 +4462,14 @@ define_future_0(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_
         mod_id_obj_k.future_id_discarded = id_obj_k.future_id_discarded;
         mod_id_obj_k.id                  = id_obj_k.id;
         mod_id_obj_k.id_info_ptr         = id_obj_k.id_info_ptr;
-        
-        if ( ! atomic_compare_exchange_strong(&(id_obj_ptr->k), &id_obj_k, mod_id_obj_k) ) {
+
+        if (!atomic_compare_exchange_strong(&(id_obj_ptr->k), &id_obj_k, mod_id_obj_k)) {
 
             assert(FALSE);
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
                 fprintf(stderr, "define_future_0():%d: can't mark target id obj in progress.\n", tid);
             }
@@ -4499,20 +4486,22 @@ define_future_0(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_
             mod_id_inst_k.future_id_src      = id_inst_k.future_id_src;
             mod_id_inst_k.id                 = id_inst_k.id;
 
-            if ( ! atomic_compare_exchange_strong(&(id_inst_ptr->k), &id_inst_k, mod_id_inst_k) ) {
+            if (!atomic_compare_exchange_strong(&(id_inst_ptr->k), &id_inst_k, mod_id_inst_k)) {
 
-                if ( rpt_failures ) {
+                if (rpt_failures) {
 
-                    fprintf(stderr, "define_future_0():%d: can't reset in progress on mark target id inst.\n", tid);
+                    fprintf(stderr, "define_future_0():%d: can't reset in progress on mark target id inst.\n",
+                            tid);
                 }
             }
-        } else {
+        }
+        else {
 
-            id_obj_k  = atomic_load(&(id_obj_ptr->k));
+            id_obj_k = atomic_load(&(id_obj_ptr->k));
         }
     }
 
-    if ( success ) {
+    if (success) {
 
         assert(-1 == atomic_load(&(id_obj_ptr->id_index)));
         assert(-1 == atomic_load(&(id_obj_ptr->old_id_index)));
@@ -4544,73 +4533,74 @@ define_future_0(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_
         mod_id_obj_k.id_info_ptr         = id_obj_k.id_info_ptr;
 
         id = id_inst_k.id;
-        if ( H5Idefine_future_id(type, id, (void *)id_obj_ptr) < 0 ) {
+        if (H5Idefine_future_id(type, id, (void *)id_obj_ptr) < 0) {
             success = FALSE;
         }
 
-        if ( success ) { 
+        if (success) {
 
-            mod_id_inst_k.future = FALSE;
-            mod_id_inst_k.realized = TRUE;
+            mod_id_inst_k.future        = FALSE;
+            mod_id_inst_k.realized      = TRUE;
             mod_id_inst_k.future_id_src = TRUE;
-            mod_id_inst_k.id      = id;
+            mod_id_inst_k.id            = id;
 
-            mod_id_obj_k.allocated   = TRUE;
-            mod_id_obj_k.future      = FALSE;
+            mod_id_obj_k.allocated          = TRUE;
+            mod_id_obj_k.future             = FALSE;
             mod_id_obj_k.future_id_realized = TRUE;
-            mod_id_obj_k.id          = id;
-            mod_id_obj_k.id_info_ptr = H5I__find_id(id, FALSE);
-
-        } else {
+            mod_id_obj_k.id                 = id;
+            mod_id_obj_k.id_info_ptr        = H5I__find_id(id, FALSE);
+        }
+        else {
 
             success = FALSE;
 
             assert(FALSE);
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
                 fprintf(stderr, "define_future_0():%d: Call to H5Iregister() failed.\n", tid);
             }
-        } 
+        }
 
-        if ( ! atomic_compare_exchange_strong(&(id_obj_ptr->k), &id_obj_k, mod_id_obj_k) ) {
+        if (!atomic_compare_exchange_strong(&(id_obj_ptr->k), &id_obj_k, mod_id_obj_k)) {
 
             success = FALSE;
 
             assert(FALSE);
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                fprintf(stderr, 
-                        "define_future_0():%d: Can't update id object for id registration success or failure.\n",
-                        tid);
+                fprintf(
+                    stderr,
+                    "define_future_0():%d: Can't update id object for id registration success or failure.\n",
+                    tid);
             }
         }
 
-        if ( ! atomic_compare_exchange_strong(&(id_inst_ptr->k), &id_inst_k, mod_id_inst_k) ) {
+        if (!atomic_compare_exchange_strong(&(id_inst_ptr->k), &id_inst_k, mod_id_inst_k)) {
 
             success = FALSE;
 
             assert(FALSE);
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                fprintf(stderr, 
-                        "define_future_0():%d: Can't update id instande for id registration success or failure.\n",
+                fprintf(stderr,
+                        "define_future_0():%d: Can't update id instande for id registration success or "
+                        "failure.\n",
                         tid);
             }
         }
     }
 
-    if ( ds ) {
+    if (ds) {
 
         H5I_dump_nz_stats(stdout, "H5Idefine_future_id");
     }
 
-    return(success ? 0 : 1);
+    return (success ? 0 : 1);
 
-} /* define_future_0() */ 
-
+} /* define_future_0() */
 
 /*************************************************************************************
  * try_define_future_id()
@@ -4619,40 +4609,39 @@ define_future_0(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_
  *    id_instance_array[id_index] using the object in objects_array[obj_index].
  *
  *    The function takes the same flags as try_register_id:
- * 
+ *
  *    If cs is true, clears stats on entry; if ds is true, dumps stats on exit.
- * 
+ *
  *    If rpt_failures is true, errors (including ambiguity) are logged to stderr.
- * 
+ *
  *    The return value is 0 if the outcome is unambiguous, or 1 if it is ambiguous.
- * 
+ *
  *    Note that this is made to expect concurrent operations (looping on CAS), this
  *    is to be expected - values changing out from under the define in the test
  *    harness. This behavior mimics H5Idefine_future_id() behavior.
- * 
+ *
  *                                      AZO -- 1/2/26
  ************************************************************************************/
 
 static int
-try_define_future_id(int id_index, int obj_index,
-                     hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
+try_define_future_id(int id_index, int obj_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
 {
-    hbool_t               success    = TRUE;
-    hbool_t               done       = FALSE;
-    int                   ambiguous  = 0;
-    int                   type_index = -1;
-    H5I_type_t            type_id    = H5I_BADID;
-    hid_t                 id         = H5I_INVALID_HID;
-    id_type_kernel_t      id_type_k;
-    id_instance_kernel_t  id_inst_k;
-    id_instance_kernel_t  mod_id_inst_k;
-    id_object_kernel_t    id_obj_k;
-    id_object_kernel_t    mod_id_obj_k;
+    hbool_t              success    = TRUE;
+    hbool_t              done       = FALSE;
+    int                  ambiguous  = 0;
+    int                  type_index = -1;
+    H5I_type_t           type_id    = H5I_BADID;
+    hid_t                id         = H5I_INVALID_HID;
+    id_type_kernel_t     id_type_k;
+    id_instance_kernel_t id_inst_k;
+    id_instance_kernel_t mod_id_inst_k;
+    id_object_kernel_t   id_obj_k;
+    id_object_kernel_t   mod_id_obj_k;
 
     /* For avoiding recursion when progress_cb exists */
-    H5I_type_t            type;
-    H5I_mt_type_info_t   *type_info_ptr = NULL;
-    H5I_mt_id_info_t     *info_ptr      = NULL;
+    H5I_type_t          type;
+    H5I_mt_type_info_t *type_info_ptr = NULL;
+    H5I_mt_id_info_t   *info_ptr      = NULL;
 
     /* Track what we’ve claimed so we can clean up */
     hbool_t claimed_inst = FALSE;
@@ -4666,68 +4655,70 @@ try_define_future_id(int id_index, int obj_index,
     memset(&mod_id_obj_k, 0, sizeof(id_object_kernel_t));
     mod_id_obj_k.id = H5I_INVALID_HID;
 
-    if ( cs ) {
+    if (cs) {
 
         H5I_clear_stats();
     }
 
-    assert((0 <= id_index)  && (id_index  < NUM_ID_INSTANCES));
+    assert((0 <= id_index) && (id_index < NUM_ID_INSTANCES));
     assert((0 <= obj_index) && (obj_index < NUM_ID_OBJECTS));
 
-    if ( success ) {
+    if (success) {
 
         assert(ID_INSTANCE_T__TAG == id_instance_array[id_index].tag);
-        assert(ID_OBJECT_T__TAG   == objects_array[obj_index].tag);
+        assert(ID_OBJECT_T__TAG == objects_array[obj_index].tag);
 
         type_index = id_instance_array[id_index].type_index;
 
-        if ( ( type_index < 0 ) || ( type_index >= NUM_ID_TYPES ) ) {
+        if ((type_index < 0) || (type_index >= NUM_ID_TYPES)) {
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                fprintf(stderr, "try_define_future_id():%d: type_index = %d out of range.\n", tid, type_index);
+                fprintf(stderr, "try_define_future_id():%d: type_index = %d out of range.\n", tid,
+                        type_index);
             }
-            assert( ( type_index >= 0 ) && ( type_index < NUM_ID_TYPES ) );
+            assert((type_index >= 0) && (type_index < NUM_ID_TYPES));
         }
     }
 
-    if ( success ) { 
+    if (success) {
 
         assert(ID_TYPE_T__TAG == types_array[type_index].tag);
 
         /* Ensure we have a valid H5I type id cached in the instance (best-effort) */
         type_id = (H5I_type_t)atomic_load(&(id_instance_array[id_index].type_id));
 
-        if ( H5I_BADID == type_id ) {
+        if (H5I_BADID == type_id) {
 
             id_type_k = atomic_load(&(types_array[type_index].k));
             type_id   = (H5I_type_t)id_type_k.type_id;
 
-            if ( H5I_BADID != type_id ) { 
+            if (H5I_BADID != type_id) {
 
-                assert( ( H5I_BADID < type_id ) && ( type_id < H5I_MAX_NUM_TYPES ) );
+                assert((H5I_BADID < type_id) && (type_id < H5I_MAX_NUM_TYPES));
                 atomic_store(&(id_instance_array[id_index].type_id), type_id);
             }
         }
     }
 
     /* Claim id_instance.in_progress */
-    if ( success ) {
+    if (success) {
 
         done = FALSE;
 
-        while ( !done ) {
+        while (!done) {
 
             id_inst_k = atomic_load(&(id_instance_array[id_index].k));
 
             /* If it’s not eligible anymore, this is a benign race */
-            if ( ( !id_inst_k.created ) || ( id_inst_k.discarded ) || ( !id_inst_k.future ) || ( id_inst_k.closing ) ) {
+            if ((!id_inst_k.created) || (id_inst_k.discarded) || (!id_inst_k.future) || (id_inst_k.closing)) {
                 ambiguous++;
                 success = FALSE;
 
-                if ( rpt_failures ) {
+                if (rpt_failures) {
 
-                    fprintf(stderr, "try_define_future_id():%d: target id:%d already created, discarded, realized.\n", 
+                    fprintf(stderr,
+                            "try_define_future_id():%d: target id:%d already created, discarded, realized.\n",
                             tid, id_index);
                 }
                 break;
@@ -4744,32 +4735,34 @@ try_define_future_id(int id_index, int obj_index,
             mod_id_inst_k.future_id_src      = id_inst_k.future_id_src;
             mod_id_inst_k.id                 = id_inst_k.id;
 
-            if ( atomic_compare_exchange_strong(&(id_instance_array[id_index].k), &id_inst_k, mod_id_inst_k) ) {
+            if (atomic_compare_exchange_strong(&(id_instance_array[id_index].k), &id_inst_k, mod_id_inst_k)) {
                 claimed_inst = TRUE;
                 id_inst_k    = mod_id_inst_k;
                 done         = TRUE;
-            } else {
+            }
+            else {
                 /* CAS lost: loop and re-check */
             }
         }
     }
 
     /* Claim objects_array[obj_index].k.in_progress*/
-    if ( success ) {
+    if (success) {
         done = FALSE;
 
-        while ( !done ) {
+        while (!done) {
             id_obj_k = atomic_load(&(objects_array[obj_index].k));
 
             /* Object must be available for defining (not allocated/discarded) */
-            if ( ( id_obj_k.discarded ) || ( id_obj_k.allocated ) ) {
+            if ((id_obj_k.discarded) || (id_obj_k.allocated)) {
                 ambiguous++;
                 success = FALSE;
 
-                if ( rpt_failures ) {
-                    fprintf(stderr, 
-                        "try_define_future_id():%d: target id obj in progress, not created, or discarded on entry.\n",
-                        tid);
+                if (rpt_failures) {
+                    fprintf(stderr,
+                            "try_define_future_id():%d: target id obj in progress, not created, or discarded "
+                            "on entry.\n",
+                            tid);
                 }
                 break;
             }
@@ -4790,8 +4783,8 @@ try_define_future_id(int id_index, int obj_index,
                 claimed_obj = TRUE;
                 id_obj_k    = mod_id_obj_k;
                 done        = TRUE;
-
-            } else {
+            }
+            else {
                 /* CAS lost: loop */
                 continue;
             }
@@ -4799,59 +4792,59 @@ try_define_future_id(int id_index, int obj_index,
     }
 
     /* Define the future in H5I */
-    if ( success ) {
+    if (success) {
         /* Re-check instance now that we “own” in_progress */
         id_inst_k = atomic_load(&(id_instance_array[id_index].k));
 
         atomic_store(&(objects_array[obj_index].id_index), id_instance_array[id_index].index);
         atomic_store(&(id_instance_array[id_index].obj_index), objects_array[obj_index].index);
 
-        if ( ( !id_inst_k.future ) || ( id_inst_k.realized ) || ( id_inst_k.discarded ) || ( id_inst_k.closing ) ) {
+        if ((!id_inst_k.future) || (id_inst_k.realized) || (id_inst_k.discarded) || (id_inst_k.closing)) {
 
             success = FALSE;
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                fprintf(stderr, "try_define_future_id():%d: target id:%d already discarded, realized.\n", 
-                        tid, id_index);
+                fprintf(stderr, "try_define_future_id():%d: target id:%d already discarded, realized.\n", tid,
+                        id_index);
             }
-        } else {
+        }
+        else {
 
             id = id_inst_k.id;
-            if ( ( H5I_INVALID_HID == id ) || ( id <= 0 ) ) {
+            if ((H5I_INVALID_HID == id) || (id <= 0)) {
                 /* reserve should have set this; if not, harness is inconsistent */
                 assert(FALSE);
             }
 
-            if ( H5I__define_future_id(type_id, id, (void *)&objects_array[obj_index]) < 0 ) {
+            if (H5I__define_future_id(type_id, id, (void *)&objects_array[obj_index]) < 0) {
 
                 ambiguous++;
                 success = FALSE;
 
-                if ( rpt_failures ) {
+                if (rpt_failures) {
                     fprintf(stderr,
                             "try_define_future_id():%d: H5Idefine_future_id failed id_index=%d id=0x%llx\n",
                             tid, id_index, (unsigned long long)id);
                 }
             }
-
         }
     }
 
     /* Grab info_ptr without calling H5I__find_id (avoid recursion) */
-    if ( success ) {
+    if (success) {
 
-        type = H5I_TYPE(id);
+        type          = H5I_TYPE(id);
         type_info_ptr = atomic_load(&H5I_mt_g.type_info_array[type]);
-        info_ptr = NULL;
+        info_ptr      = NULL;
 
-        if ( ( !type_info_ptr ) || ( atomic_load(&type_info_ptr->init_count) <= 0 ) ) {
+        if ((!type_info_ptr) || (atomic_load(&type_info_ptr->init_count) <= 0)) {
 
             ambiguous++;
             success = FALSE;
+        }
+        else {
 
-        } else {
-
-            if ( !lfht_find(&(type_info_ptr->lfht), (unsigned long long)id, (void **)&info_ptr) || !info_ptr ) {
+            if (!lfht_find(&(type_info_ptr->lfht), (unsigned long long)id, (void **)&info_ptr) || !info_ptr) {
                 /* Very rare race: defined but not visible yet / or destroyed concurrently */
                 ambiguous++;
                 success = FALSE;
@@ -4860,43 +4853,40 @@ try_define_future_id(int id_index, int obj_index,
     }
 
     /* Publish harness-side state (object then instance)*/
-    if ( success ) {
+    if (success) {
         /* publish object kernel */
-        
+
         done = FALSE;
 
-        while ( !done ) 
-        {
+        while (!done) {
             id_obj_k = atomic_load(&(objects_array[obj_index].k));
 
-            mod_id_obj_k.allocated = TRUE;
-            mod_id_obj_k.discarded = id_obj_k.discarded;
-            mod_id_obj_k.future = FALSE;
+            mod_id_obj_k.allocated           = TRUE;
+            mod_id_obj_k.discarded           = id_obj_k.discarded;
+            mod_id_obj_k.future              = FALSE;
             mod_id_obj_k.future_id_discarded = id_obj_k.future_id_discarded;
-            mod_id_obj_k.future_id_realized = TRUE;
-            mod_id_obj_k.id = id;
+            mod_id_obj_k.future_id_realized  = TRUE;
+            mod_id_obj_k.id                  = id;
             mod_id_obj_k.real_id_def_in_prog = id_obj_k.real_id_def_in_prog;
-            mod_id_obj_k.real_id_defined = id_obj_k.real_id_defined;
-            mod_id_obj_k.in_progress = FALSE;
-            mod_id_obj_k.id_info_ptr = info_ptr;
-            
+            mod_id_obj_k.real_id_defined     = id_obj_k.real_id_defined;
+            mod_id_obj_k.in_progress         = FALSE;
+            mod_id_obj_k.id_info_ptr         = info_ptr;
 
-            if ( atomic_compare_exchange_strong(&(objects_array[obj_index].k), &id_obj_k, mod_id_obj_k) ) {
+            if (atomic_compare_exchange_strong(&(objects_array[obj_index].k), &id_obj_k, mod_id_obj_k)) {
                 done = TRUE;
-            } else {
+            }
+            else {
                 /* CAS lost: loop */
             }
         }
-    
     }
 
-    if ( success ) {
+    if (success) {
         /* publish instance kernel */
-        
+
         done = FALSE;
 
-        while ( !done ) 
-        {
+        while (!done) {
             id_inst_k = atomic_load(&(id_instance_array[id_index].k));
 
             mod_id_inst_k.closing            = id_inst_k.closing;
@@ -4912,39 +4902,38 @@ try_define_future_id(int id_index, int obj_index,
 
             if (atomic_compare_exchange_strong(&(id_instance_array[id_index].k), &id_inst_k, mod_id_inst_k)) {
                 done = TRUE;
-            } else {
+            }
+            else {
                 /* CAS lost: loop */
             }
-        
         }
     }
 
     /* Cleanup: if we failed after claiming in_progress, release it*/
-    if ( !success ) {
+    if (!success) {
         /* Release object in_progress if we claimed it */
-        if ( claimed_obj ) {
+        if (claimed_obj) {
 
             done = FALSE;
-            while ( !done ) 
-            {
+            while (!done) {
                 id_obj_k = atomic_load(&(objects_array[obj_index].k));
 
-                if ( !id_obj_k.in_progress ) {
+                if (!id_obj_k.in_progress) {
 
                     done = TRUE;
                     break;
                 }
 
-                mod_id_obj_k.allocated = id_obj_k.allocated;
-                mod_id_obj_k.discarded = id_obj_k.discarded;
-                mod_id_obj_k.future = id_obj_k.future;
+                mod_id_obj_k.allocated           = id_obj_k.allocated;
+                mod_id_obj_k.discarded           = id_obj_k.discarded;
+                mod_id_obj_k.future              = id_obj_k.future;
                 mod_id_obj_k.future_id_discarded = id_obj_k.future_id_discarded;
-                mod_id_obj_k.future_id_realized = TRUE;
-                mod_id_obj_k.id = id;
+                mod_id_obj_k.future_id_realized  = TRUE;
+                mod_id_obj_k.id                  = id;
                 mod_id_obj_k.real_id_def_in_prog = id_obj_k.real_id_def_in_prog;
-                mod_id_obj_k.real_id_defined = id_obj_k.real_id_defined;
-                mod_id_obj_k.in_progress = FALSE;
-                mod_id_obj_k.id_info_ptr = id_obj_k.id_info_ptr;
+                mod_id_obj_k.real_id_defined     = id_obj_k.real_id_defined;
+                mod_id_obj_k.in_progress         = FALSE;
+                mod_id_obj_k.id_info_ptr         = id_obj_k.id_info_ptr;
 
                 if (atomic_compare_exchange_strong(&(objects_array[obj_index].k), &id_obj_k, mod_id_obj_k))
                     done = TRUE;
@@ -4952,38 +4941,38 @@ try_define_future_id(int id_index, int obj_index,
         }
 
         /* Release instance in_progress if we claimed it */
-        if ( claimed_inst ) {
+        if (claimed_inst) {
 
             done = FALSE;
-            while ( !done ) 
-            {
+            while (!done) {
                 id_inst_k = atomic_load(&(id_instance_array[id_index].k));
 
-                if ( !id_inst_k.in_progress ) {
+                if (!id_inst_k.in_progress) {
                     done = TRUE;
                     break;
                 }
 
-                mod_id_inst_k.closing = id_inst_k.closing;
+                mod_id_inst_k.closing            = id_inst_k.closing;
                 mod_id_inst_k.closings_attempted = id_inst_k.closings_attempted;
-                mod_id_inst_k.closings_failed = id_inst_k.closings_failed;
-                mod_id_inst_k.created = id_inst_k.created;
-                mod_id_inst_k.discarded = id_inst_k.discarded;
-                mod_id_inst_k.future = id_inst_k.future;
-                mod_id_inst_k.future_id_src = id_inst_k.future_id_src;
-                mod_id_inst_k.id = id;
-                mod_id_inst_k.realized = id_inst_k.realized;
+                mod_id_inst_k.closings_failed    = id_inst_k.closings_failed;
+                mod_id_inst_k.created            = id_inst_k.created;
+                mod_id_inst_k.discarded          = id_inst_k.discarded;
+                mod_id_inst_k.future             = id_inst_k.future;
+                mod_id_inst_k.future_id_src      = id_inst_k.future_id_src;
+                mod_id_inst_k.id                 = id;
+                mod_id_inst_k.realized           = id_inst_k.realized;
 
                 mod_id_inst_k.in_progress = FALSE;
 
-                if (atomic_compare_exchange_strong(&(id_instance_array[id_index].k), &id_inst_k, mod_id_inst_k))
+                if (atomic_compare_exchange_strong(&(id_instance_array[id_index].k), &id_inst_k,
+                                                   mod_id_inst_k))
                     done = TRUE;
             }
         }
     }
 
     /* stats */
-    if ( success ) {
+    if (success) {
         atomic_fetch_add(&(id_instance_array[id_index].successful_future_defines), 1ULL);
     }
     else {
@@ -4995,11 +4984,10 @@ try_define_future_id(int id_index, int obj_index,
     return ambiguous;
 }
 
-
 /***********************************************************************************************
  * link_real_and_future_ids
  *
- *    Link the supplied real id object with the supplied future id object.  Once this is 
+ *    Link the supplied real id object with the supplied future id object.  Once this is
  *    done, the next look up of the future ID will cause the future ID object to be replaced
  *    with the real ID object.
  *
@@ -5007,7 +4995,7 @@ try_define_future_id(int id_index, int obj_index,
  *
  *                                                              JRM -- 3/8/24
  *
- * Returs:  
+ * Returs:
  *
  *      zero on success, and one otherwise.
  *
@@ -5018,18 +5006,17 @@ try_define_future_id(int id_index, int obj_index,
  ***********************************************************************************************/
 
 static int
-link_real_and_future_ids(id_object_t * future_id_obj_ptr, id_object_t * real_id_obj_ptr,
-                         hbool_t rpt_failures)
+link_real_and_future_ids(id_object_t *future_id_obj_ptr, id_object_t *real_id_obj_ptr, hbool_t rpt_failures)
 {
-    hbool_t                       done = FALSE;
-    hbool_t                       success = TRUE;
-    int                           real_id_inst_index;
-    volatile id_instance_t      * real_id_inst_ptr;
-    id_instance_kernel_t          real_id_inst_k;
-    id_instance_kernel_t          mod_real_id_inst_k;
-    id_object_kernel_t            real_id_obj_k;
-    id_object_kernel_t            future_id_obj_k;
-    id_object_kernel_t            mod_future_id_obj_k;
+    hbool_t                 done    = FALSE;
+    hbool_t                 success = TRUE;
+    int                     real_id_inst_index;
+    volatile id_instance_t *real_id_inst_ptr;
+    id_instance_kernel_t    real_id_inst_k;
+    id_instance_kernel_t    mod_real_id_inst_k;
+    id_object_kernel_t      real_id_obj_k;
+    id_object_kernel_t      future_id_obj_k;
+    id_object_kernel_t      mod_future_id_obj_k;
 
     memset(&real_id_inst_k, 0, sizeof(id_instance_kernel_t));
     memset(&mod_real_id_inst_k, 0, sizeof(id_instance_kernel_t));
@@ -5039,100 +5026,99 @@ link_real_and_future_ids(id_object_t * future_id_obj_ptr, id_object_t * real_id_
     memset(&mod_future_id_obj_k, 0, sizeof(id_object_kernel_t));
     mod_future_id_obj_k.id = H5I_INVALID_HID;
 
-    if ( ( NULL == future_id_obj_ptr )  || ( ID_OBJECT_T__TAG != future_id_obj_ptr->tag ) ||
-         ( NULL == real_id_obj_ptr )    || ( ID_OBJECT_T__TAG != real_id_obj_ptr->tag ) ) {
+    if ((NULL == future_id_obj_ptr) || (ID_OBJECT_T__TAG != future_id_obj_ptr->tag) ||
+        (NULL == real_id_obj_ptr) || (ID_OBJECT_T__TAG != real_id_obj_ptr->tag)) {
 
         assert(FALSE);
 
         success = FALSE;
 
-        if ( rpt_failures ) {
+        if (rpt_failures) {
 
             fprintf(stderr, "link_real_and_future_ids(): Invalid params on entry.\n");
         }
     }
 
-    /* First mark the instance of id_instance_t associated with *real_id_obj_ptr as being 
-     * the source real ID for a future ID.  
+    /* First mark the instance of id_instance_t associated with *real_id_obj_ptr as being
+     * the source real ID for a future ID.
      *
      * Note that there isn't much of a problem if we succed in marking the real id instance
-     * as being the source real ID for a future ID and then fail to set up the future id 
+     * as being the source real ID for a future ID and then fail to set up the future id
      * instance.
      */
-    while ( ( success ) && ( ! done ) ) {
+    while ((success) && (!done)) {
 
-        real_id_obj_k    = atomic_load(&(real_id_obj_ptr->k));
+        real_id_obj_k = atomic_load(&(real_id_obj_ptr->k));
 
-        if ( success ) {
+        if (success) {
 
-            if ( ( real_id_obj_k.in_progress ) || ( ! real_id_obj_k.allocated ) || 
-                 ( real_id_obj_k.discarded ) ) {
+            if ((real_id_obj_k.in_progress) || (!real_id_obj_k.allocated) || (real_id_obj_k.discarded)) {
 
                 assert(FALSE);
 
                 success = FALSE;
 
-                if ( rpt_failures ) {
+                if (rpt_failures) {
 
-                    fprintf(stderr, 
-                            "link_real_and_future_ids(): real id obj in progress, not created, or discarded on entry(1).\n");
+                    fprintf(stderr, "link_real_and_future_ids(): real id obj in progress, not created, or "
+                                    "discarded on entry(1).\n");
                 }
             }
         }
 
-        if ( success ) {
+        if (success) {
 
             real_id_inst_index = atomic_load(&(real_id_obj_ptr->id_index));
 
-            if ( ( real_id_inst_index < 0) || ( real_id_inst_index >= NUM_ID_INSTANCES ) ) {
+            if ((real_id_inst_index < 0) || (real_id_inst_index >= NUM_ID_INSTANCES)) {
 
                 assert(FALSE);
 
                 success = FALSE;
 
-                if ( rpt_failures ) {
+                if (rpt_failures) {
 
                     fprintf(stderr, "link_real_and_future_ids(): real id instance index out of range).\n");
                 }
             }
         }
 
-        if ( success ) {
+        if (success) {
 
             real_id_inst_ptr = &(id_instance_array[real_id_inst_index]);
 
-            if ( ( NULL == real_id_inst_ptr ) || ( ID_INSTANCE_T__TAG != real_id_inst_ptr->tag ) ) {
+            if ((NULL == real_id_inst_ptr) || (ID_INSTANCE_T__TAG != real_id_inst_ptr->tag)) {
 
                 assert(FALSE);
 
                 success = FALSE;
 
-                if ( rpt_failures ) {
+                if (rpt_failures) {
 
                     fprintf(stderr, "link_real_and_future_ids(): Invalid real_id_inst_ptr.\n");
                 }
             }
         }
 
-        if ( success ) {
+        if (success) {
 
             real_id_inst_k = atomic_load(&(real_id_inst_ptr->k));
 
-            if ( real_id_inst_k.future_id_src ) {
+            if (real_id_inst_k.future_id_src) {
 
                 assert(FALSE);
 
                 success = FALSE;
 
-                if ( rpt_failures ) {
+                if (rpt_failures) {
 
-                    fprintf(stderr, 
+                    fprintf(stderr,
                             "link_real_and_future_ids(): future_id_src already set in real ID inst.\n");
                 }
             }
         }
 
-        if ( success ) {
+        if (success) {
 
             mod_real_id_inst_k.in_progress        = real_id_inst_k.in_progress;
             mod_real_id_inst_k.created            = real_id_inst_k.created;
@@ -5145,142 +5131,139 @@ link_real_and_future_ids(id_object_t * future_id_obj_ptr, id_object_t * real_id_
             mod_real_id_inst_k.future_id_src      = TRUE;
             mod_real_id_inst_k.id                 = real_id_inst_k.id;
 
-            if ( atomic_compare_exchange_strong(&(real_id_inst_ptr->k), 
-                                                &real_id_inst_k, mod_real_id_inst_k) ) {
+            if (atomic_compare_exchange_strong(&(real_id_inst_ptr->k), &real_id_inst_k, mod_real_id_inst_k)) {
                 done = TRUE;
-
-            } else {
+            }
+            else {
 
                 continue;
             }
         }
     }
 
-    if ( success ) {
+    if (success) {
 
         done = FALSE;
     }
 
+    while ((success) && (!done)) {
 
-    while ( ( success ) && ( ! done ) ) {
+        future_id_obj_k = atomic_load(&(future_id_obj_ptr->k));
+        real_id_obj_k   = atomic_load(&(real_id_obj_ptr->k));
 
-        future_id_obj_k  = atomic_load(&(future_id_obj_ptr->k));
-        real_id_obj_k    = atomic_load(&(real_id_obj_ptr->k));
+        if (success) {
 
-        if ( success ) {
-
-            if ( ( future_id_obj_k.in_progress ) || ( ! future_id_obj_k.allocated ) || 
-                 ( future_id_obj_k.discarded ) ) {
-
-                assert(FALSE);
-
-                success = FALSE;
-
-                if ( rpt_failures ) {
-
-                    fprintf(stderr, 
-                            "link_real_and_future_ids(): future id obj in progress, not created, or discarded on entry.\n");
-                }
-            } 
-        }
-
-        if ( success ) {
-
-            if ( ( real_id_obj_k.in_progress ) || ( ! real_id_obj_k.allocated ) || 
-                 ( real_id_obj_k.discarded ) ) {
+            if ((future_id_obj_k.in_progress) || (!future_id_obj_k.allocated) ||
+                (future_id_obj_k.discarded)) {
 
                 assert(FALSE);
 
                 success = FALSE;
 
-                if ( rpt_failures ) {
+                if (rpt_failures) {
 
-                    fprintf(stderr, 
-                            "link_real_and_future_ids(): real id obj in progress, not created, or discarded on entry(2).\n");
+                    fprintf(stderr, "link_real_and_future_ids(): future id obj in progress, not created, or "
+                                    "discarded on entry.\n");
                 }
             }
         }
 
-        if ( success ) {
+        if (success) {
 
-            if ( ! future_id_obj_k.future ) {
+            if ((real_id_obj_k.in_progress) || (!real_id_obj_k.allocated) || (real_id_obj_k.discarded)) {
 
                 assert(FALSE);
 
                 success = FALSE;
 
-                if ( rpt_failures ) {
+                if (rpt_failures) {
+
+                    fprintf(stderr, "link_real_and_future_ids(): real id obj in progress, not created, or "
+                                    "discarded on entry(2).\n");
+                }
+            }
+        }
+
+        if (success) {
+
+            if (!future_id_obj_k.future) {
+
+                assert(FALSE);
+
+                success = FALSE;
+
+                if (rpt_failures) {
 
                     fprintf(stderr, "link_real_and_future_ids(): future id obj not marked as future.\n");
                 }
             }
         }
 
-        if ( success ) {
+        if (success) {
 
-            if ( real_id_obj_k.future ) {
+            if (real_id_obj_k.future) {
 
                 assert(FALSE);
 
                 success = FALSE;
 
-                if ( rpt_failures ) {
+                if (rpt_failures) {
 
                     fprintf(stderr, "link_real_and_future_ids(): real id obj is marked as future.\n");
                 }
             }
         }
 
-        if ( success ) {
+        if (success) {
 
-            if ( future_id_obj_k.future_id_discarded ) {
-
-                assert(FALSE);
-
-                success = FALSE;
-
-                if ( rpt_failures ) {
-
-                    fprintf(stderr, "link_real_and_future_ids(): future id already discarded.\n"); 
-                }
-            }
-        }
-
-        if ( success ) {
-
-            if ( future_id_obj_k.real_id_defined ) {
+            if (future_id_obj_k.future_id_discarded) {
 
                 assert(FALSE);
 
                 success = FALSE;
 
-                if ( rpt_failures ) {
+                if (rpt_failures) {
 
-                    fprintf(stderr, "link_real_and_future_ids(): real id already defined.\n"); 
+                    fprintf(stderr, "link_real_and_future_ids(): future id already discarded.\n");
                 }
             }
         }
-              
-        if ( success ) {
 
-            if ( future_id_obj_k.real_id_def_in_prog ) {
+        if (success) {
+
+            if (future_id_obj_k.real_id_defined) {
 
                 assert(FALSE);
 
                 success = FALSE;
 
-                if ( rpt_failures ) {
+                if (rpt_failures) {
 
-                    fprintf(stderr, 
-                            "link_real_and_future_ids(): link of real and future ID alread in progress.\n"); 
+                    fprintf(stderr, "link_real_and_future_ids(): real id already defined.\n");
                 }
             }
         }
-        
-        if ( success ) {
 
-            /* attempt to set the real_id_def_in_progress flag.  IF this fails, re-start the 
-             * loop and try again.  The objective here is to serialize attempts at setting the 
+        if (success) {
+
+            if (future_id_obj_k.real_id_def_in_prog) {
+
+                assert(FALSE);
+
+                success = FALSE;
+
+                if (rpt_failures) {
+
+                    fprintf(stderr,
+                            "link_real_and_future_ids(): link of real and future ID alread in progress.\n");
+                }
+            }
+        }
+
+        if (success) {
+
+            /* attempt to set the real_id_def_in_progress flag.  IF this fails, re-start the
+             * loop and try again.  The objective here is to serialize attempts at setting the
              * the real ID -- thus forcing exactly one attempt to succeed.
              */
 
@@ -5295,11 +5278,11 @@ link_real_and_future_ids(id_object_t * future_id_obj_ptr, id_object_t * real_id_
             mod_future_id_obj_k.id                  = future_id_obj_k.id;
             mod_future_id_obj_k.id_info_ptr         = future_id_obj_k.id_info_ptr;
 
-            if ( atomic_compare_exchange_strong(&(future_id_obj_ptr->k), 
-                                                &future_id_obj_k, mod_future_id_obj_k) ) {
+            if (atomic_compare_exchange_strong(&(future_id_obj_ptr->k), &future_id_obj_k,
+                                               mod_future_id_obj_k)) {
                 done = TRUE;
-
-            } else {
+            }
+            else {
 
                 continue;
             }
@@ -5308,11 +5291,11 @@ link_real_and_future_ids(id_object_t * future_id_obj_ptr, id_object_t * real_id_
 
     done = FALSE;
 
-    while ( ( success ) && ( ! done ) ) {
+    while ((success) && (!done)) {
 
-        /* we have successfully set future_id_obj_ptr->k.real_id_def_in_prog to TRUE.  Now 
-         * set future_id_obj_ptr->real_id and future_id_obj_ptr->real_id_obj_index, and then 
-         * reset future_id_obj_ptr->k.real_id_def_in_prog and set 
+        /* we have successfully set future_id_obj_ptr->k.real_id_def_in_prog to TRUE.  Now
+         * set future_id_obj_ptr->real_id and future_id_obj_ptr->real_id_obj_index, and then
+         * reset future_id_obj_ptr->k.real_id_def_in_prog and set
          * future_id_obj_ptr->k.real_id_defined.
          */
 
@@ -5320,22 +5303,22 @@ link_real_and_future_ids(id_object_t * future_id_obj_ptr, id_object_t * real_id_
         hid_t real_id;
 
         real_id_obj_index = real_id_obj_ptr->index;
-        real_id = real_id_obj_k.id;
+        real_id           = real_id_obj_k.id;
 
         /* set the real_id and real_id_obj_index fields. */
         atomic_store(&(future_id_obj_ptr->real_id), real_id);
         atomic_store(&(future_id_obj_ptr->real_id_obj_index), real_id_obj_index);
 
         /* get a fresh copy of future_id_obj_k */
-        future_id_obj_k  = atomic_load(&(future_id_obj_ptr->k));
+        future_id_obj_k = atomic_load(&(future_id_obj_ptr->k));
 
-        assert( future_id_obj_k.real_id_def_in_prog );
-        assert( ! future_id_obj_k.real_id_defined );
-            
-        /* note that the real_id_def_in_prog flag only blocks additional attempts to 
-         * associate a real ID with the future ID.  Thus is is possible for other 
-         * operations to occur while this association of a real ID with a future ID 
-         * is in progress.  
+        assert(future_id_obj_k.real_id_def_in_prog);
+        assert(!future_id_obj_k.real_id_defined);
+
+        /* note that the real_id_def_in_prog flag only blocks additional attempts to
+         * associate a real ID with the future ID.  Thus is is possible for other
+         * operations to occur while this association of a real ID with a future ID
+         * is in progress.
          *
          * As a result, it is possible that the following atomic_compare_exchange_strong()
          * will fail.  If so, we will just retry.  Note that the above setting of the real_id
@@ -5354,22 +5337,20 @@ link_real_and_future_ids(id_object_t * future_id_obj_ptr, id_object_t * real_id_
         mod_future_id_obj_k.id                  = future_id_obj_k.id;
         mod_future_id_obj_k.id_info_ptr         = future_id_obj_k.id_info_ptr;
 
-        if ( atomic_compare_exchange_strong(&(future_id_obj_ptr->k), 
-                                            &future_id_obj_k, mod_future_id_obj_k) ) {
+        if (atomic_compare_exchange_strong(&(future_id_obj_ptr->k), &future_id_obj_k, mod_future_id_obj_k)) {
 
             done = TRUE;
         }
     } /* while ( ( success ) && ( ! done ) ) */
 
-    return( success ? 0 : 1 );
+    return (success ? 0 : 1);
 
 } /* link_real_and_future_ids() */
-
 
 /***********************************************************************************************
  * object_verify()
  *
- *      Call H5Iobject_verify() and verify that it returns the expected pointer.  In general, 
+ *      Call H5Iobject_verify() and verify that it returns the expected pointer.  In general,
  *      this will be a pointer to and instance of id_object_t as supplied by in the id_obj_ptr
  *      parameter.  However, if the call to H5Iobject_verify is expected to fail, id_obj_ptr
  *      should be NULL.
@@ -5378,13 +5359,13 @@ link_real_and_future_ids(id_object_t * future_id_obj_ptr, id_object_t * real_id_
  *
  *      If the ds flag is set, the function displays statistics just before exit.
  *
- *      If the rpt_failures flag is set, the function will write an error message to stderr 
- *      if an error is detected.  If such an error message is generated, the triggering thread 
+ *      If the rpt_failures flag is set, the function will write an error message to stderr
+ *      if an error is detected.  If such an error message is generated, the triggering thread
  *      (given in the tid field) is reported.
  *
  *      The function returns 0 on success -- that is either:
  *
- *              H5Iobject_verify() returns a non-NULL value, and this value is equal to 
+ *              H5Iobject_verify() returns a non-NULL value, and this value is equal to
  *              id_obj_ptr, or
  *
  *              H5Iobject_verify() returns NULL and id_obj_ptr is NULL.
@@ -5400,8 +5381,8 @@ link_real_and_future_ids(id_object_t * future_id_obj_ptr, id_object_t * real_id_
  ***********************************************************************************************/
 
 static int
-object_verify(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_t * id_obj_ptr,
-              hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
+object_verify(id_type_t *id_type_ptr, id_instance_t *id_inst_ptr, id_object_t *id_obj_ptr, hbool_t cs,
+              hbool_t ds, hbool_t rpt_failures, int tid)
 {
     hbool_t              success = TRUE; /* will set to FALSE on failure */
     H5I_type_t           type;
@@ -5414,21 +5395,21 @@ object_verify(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_t 
     memset(&id_inst_k, 0, sizeof(id_instance_kernel_t));
     memset(&id_obj_k, 0, sizeof(id_object_kernel_t));
 
-    if ( ( NULL == id_type_ptr ) || ( ID_TYPE_T__TAG != id_type_ptr->tag ) ||
-         ( NULL == id_inst_ptr ) || ( ID_INSTANCE_T__TAG != id_inst_ptr->tag ) ||
-         ( ( NULL != id_obj_ptr ) && ( ID_OBJECT_T__TAG != id_obj_ptr->tag ) ) ) {
+    if ((NULL == id_type_ptr) || (ID_TYPE_T__TAG != id_type_ptr->tag) || (NULL == id_inst_ptr) ||
+        (ID_INSTANCE_T__TAG != id_inst_ptr->tag) ||
+        ((NULL != id_obj_ptr) && (ID_OBJECT_T__TAG != id_obj_ptr->tag))) {
 
         assert(FALSE);
 
         success = FALSE;
 
-        if ( rpt_failures ) {
+        if (rpt_failures) {
 
             fprintf(stderr, "object_verify():%d: Invalid params on entry.\n", tid);
         }
     }
 
-    if ( cs ) {
+    if (cs) {
 
         H5I_clear_stats();
     }
@@ -5436,165 +5417,167 @@ object_verify(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_t 
     id_type_k = atomic_load(&(id_type_ptr->k));
     id_inst_k = atomic_load(&(id_inst_ptr->k));
 
-    if ( id_obj_ptr ) {
+    if (id_obj_ptr) {
 
-        id_obj_k  = atomic_load(&(id_obj_ptr->k));
+        id_obj_k = atomic_load(&(id_obj_ptr->k));
     }
 
-    /* If the target ID is neither in progress, not created, discarded, a future ID that 
-     * hasn't been realized, nor a real ID that has been used to realize a future ID, 
-     * id_object_ptr must not be NULL.  
+    /* If the target ID is neither in progress, not created, discarded, a future ID that
+     * hasn't been realized, nor a real ID that has been used to realize a future ID,
+     * id_object_ptr must not be NULL.
      *
-     * If so, id_obj_ptr->index must equal id_inst_ptr->obj_index, and id_obj_ptr->id_index must 
+     * If so, id_obj_ptr->index must equal id_inst_ptr->obj_index, and id_obj_ptr->id_index must
      * equal id_inst_ptr->index.
      *
      * Verify that this condition holds on entry.
      */
-    if ( ! ( ( id_inst_k.in_progress ) || ( ! id_inst_k.created ) || ( id_inst_k.discarded ) ||
-             ( ( id_inst_k.future ) && ( ! id_inst_k.realized ) ) || 
-             ( ( id_inst_k.future_id_src ) && ( -1 == atomic_load(&(id_inst_ptr->obj_index)) ) ) ) ) {
+    if (!((id_inst_k.in_progress) || (!id_inst_k.created) || (id_inst_k.discarded) ||
+          ((id_inst_k.future) && (!id_inst_k.realized)) ||
+          ((id_inst_k.future_id_src) && (-1 == atomic_load(&(id_inst_ptr->obj_index)))))) {
 
-        if ( NULL == id_obj_ptr ) {
+        if (NULL == id_obj_ptr) {
 
             assert(FALSE);
 
             success = FALSE;
 
             fprintf(stderr, "object_verify():%d: NULL expected object ptr for non future id.\n", tid);
-
-        } else if ( id_inst_ptr->index != id_obj_ptr->id_index ) {
+        }
+        else if (id_inst_ptr->index != id_obj_ptr->id_index) {
 
             assert(FALSE);
 
             success = FALSE;
 
-            fprintf(stderr, "object_verify():%d:i id_inst_ptr->index = %d != %d = id_obj_ptr->id_index.\n", 
+            fprintf(stderr, "object_verify():%d:i id_inst_ptr->index = %d != %d = id_obj_ptr->id_index.\n",
                     tid, id_inst_ptr->index, atomic_load(&(id_obj_ptr->id_index)));
-        
-        } else if ( id_obj_ptr->index != id_inst_ptr->obj_index  ) {
+        }
+        else if (id_obj_ptr->index != id_inst_ptr->obj_index) {
 
             assert(FALSE);
 
             success = FALSE;
 
-            fprintf(stderr, "object_verify():%d: id_obj_ptr->index = %d != %d = id_inst_ptr->obj_index.\n", 
+            fprintf(stderr, "object_verify():%d: id_obj_ptr->index = %d != %d = id_inst_ptr->obj_index.\n",
                     tid, id_obj_ptr->index, atomic_load(&(id_inst_ptr->obj_index)));
-        }        
+        }
     }
 
-    if ( success ) {
+    if (success) {
 
-        if ( ( id_type_k.in_progress ) || ( ! id_type_k.created ) || ( id_type_k.discarded ) ) {
+        if ((id_type_k.in_progress) || (!id_type_k.created) || (id_type_k.discarded)) {
 
             assert(FALSE);
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                fprintf(stderr, "object_verify():%d: id_obj_ptr->index = %d != %d = id_obj_ptr->id_index.\n", 
+                fprintf(stderr, "object_verify():%d: id_obj_ptr->index = %d != %d = id_obj_ptr->id_index.\n",
                         tid, id_obj_ptr->index, atomic_load(&(id_inst_ptr->obj_index)));
             }
-        } else {
+        }
+        else {
 
             type = (H5I_type_t)id_type_k.type_id;
-        } 
+        }
     }
 
-
     /* If id_obj_ptr is not NULL, verify that the id instance has been created and not discarded.
-     * Since a NULL id_obj_ptr indicates that the lookup is expected to FAIL, skip this test if 
+     * Since a NULL id_obj_ptr indicates that the lookup is expected to FAIL, skip this test if
      * id_obj_ptr is NULL.
      */
-    if ( success )
-    {
-        if ( ( NULL != id_obj_ptr ) && 
-             ( ( id_inst_k.in_progress) || ( ! id_inst_k.created ) || ( id_inst_k.discarded ) ) ) {
+    if (success) {
+        if ((NULL != id_obj_ptr) &&
+            ((id_inst_k.in_progress) || (!id_inst_k.created) || (id_inst_k.discarded))) {
 
             assert(FALSE);
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                 fprintf(stderr, 
-                   "object_verify():%d: target id inst either in progress, not created, or discarded on entry.\n",
-                   tid);
+                fprintf(stderr,
+                        "object_verify():%d: target id inst either in progress, not created, or discarded on "
+                        "entry.\n",
+                        tid);
             }
-        } else {
+        }
+        else {
 
             id = id_inst_k.id;
         }
     }
 
-    if ( ( success ) && ( id_obj_ptr ) ) 
-    {
-        if ( ( id_obj_k.in_progress) || ( ! id_obj_k.allocated ) || ( id_obj_k.discarded ) ) {
+    if ((success) && (id_obj_ptr)) {
+        if ((id_obj_k.in_progress) || (!id_obj_k.allocated) || (id_obj_k.discarded)) {
 
             assert(FALSE);
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                 fprintf(stderr, 
-                    "object_verify():%d: target id obj either in progress, not created, or discarded on entry.\n",
-                    tid);
+                fprintf(stderr,
+                        "object_verify():%d: target id obj either in progress, not created, or discarded on "
+                        "entry.\n",
+                        tid);
             }
         }
     }
 
-    if ( success ) {
+    if (success) {
 
-        if ( (void *)id_obj_ptr != H5Iobject_verify(id, type) ) {
+        if ((void *)id_obj_ptr != H5Iobject_verify(id, type)) {
 
             assert(FALSE);
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                 fprintf(stderr, "object_verify():%d: H5Iobject_verify(id = 0x%llx, type = 0x%llx).\n",
-                         tid, (unsigned long long)id, (unsigned long long)type);
+                fprintf(stderr, "object_verify():%d: H5Iobject_verify(id = 0x%llx, type = 0x%llx).\n", tid,
+                        (unsigned long long)id, (unsigned long long)type);
             }
-        } else if ( id_obj_ptr ) {
+        }
+        else if (id_obj_ptr) {
 
             /* the call to H5Iobject_verify() has returned id_obj_ptr, and id_obj_ptr is not NULL.
-             * verify that id_obj_ptr->index equals id_inst_ptr->obj_index, and id_obj_ptr->id_index 
+             * verify that id_obj_ptr->index equals id_inst_ptr->obj_index, and id_obj_ptr->id_index
              * equals id_inst_ptr->index.
              */
 
-            if ( id_inst_ptr->index != atomic_load(&(id_obj_ptr->id_index)) ) {
+            if (id_inst_ptr->index != atomic_load(&(id_obj_ptr->id_index))) {
 
                 assert(FALSE);
 
                 success = FALSE;
 
-                fprintf(stderr, "object_verify():%d:f id_inst_ptr->index = %d != %d = id_obj_ptr->id_index.\n",
-                        tid, id_inst_ptr->index, atomic_load(&(id_obj_ptr->id_index)));
-        
-            } else if ( id_obj_ptr->index != atomic_load(&(id_inst_ptr->obj_index)) ) {
+                fprintf(stderr,
+                        "object_verify():%d:f id_inst_ptr->index = %d != %d = id_obj_ptr->id_index.\n", tid,
+                        id_inst_ptr->index, atomic_load(&(id_obj_ptr->id_index)));
+            }
+            else if (id_obj_ptr->index != atomic_load(&(id_inst_ptr->obj_index))) {
 
                 assert(FALSE);
 
                 success = FALSE;
 
-                fprintf(stderr, 
-                        "object_verify():%d:f id_obj_ptr->index = %d != %d = id_inst_ptr->obj_index.\n", 
-                        tid, id_obj_ptr->index, atomic_load(&(id_inst_ptr->obj_index)));
-            }        
+                fprintf(stderr,
+                        "object_verify():%d:f id_obj_ptr->index = %d != %d = id_inst_ptr->obj_index.\n", tid,
+                        id_obj_ptr->index, atomic_load(&(id_inst_ptr->obj_index)));
+            }
         }
     }
 
-    if ( ds ) {
+    if (ds) {
 
         H5I_dump_nz_stats(stdout, "H5Iobject_verify");
     }
 
-    return(success ? 0 : 1);
+    return (success ? 0 : 1);
 
 } /* object_verify() */
-
 
 /***********************************************************************************************
  * try_object_verify()
@@ -5603,15 +5586,15 @@ object_verify(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_t 
  *      returned equals &(objects_array[obj_index]).  Update stats in id_instance_array[id_index]
  *      and objects_array[obj_index] as appropriate to refect success or failure.
  *
- *      Note that id_instance_array[id_index].k.id may or may not have been initialized on 
+ *      Note that id_instance_array[id_index].k.id may or may not have been initialized on
  *      entry.
  *
  *      If the cs flag is set, the function clears statistics on entry.
  *
  *      If the ds flag is set, the function displays statistics just before exit.
  *
- *      If the rpt_failures flag is set, the function will write an error message to stderr 
- *      if an error is detected.  If such an error message is generated, the triggering thread 
+ *      If the rpt_failures flag is set, the function will write an error message to stderr
+ *      if an error is detected.  If such an error message is generated, the triggering thread
  *      (given in the tid field) is reported.
  *                                                     JRM -- 4/4/24
  *
@@ -5621,7 +5604,7 @@ object_verify(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_t 
  *
  *      Added future ID support where needed. Removes assumptions that the object must exist,
  *      if the ID is a future there should be no associated object.
- *                              
+ *
  *                                                    AZO -- 12/22/24
  *
  ***********************************************************************************************/
@@ -5629,34 +5612,34 @@ object_verify(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_t 
 static int
 try_object_verify(int id_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
 {
-    hbool_t                       success = TRUE; /* will set to FALSE on failure */
-    int                           ambiguous_results = 0;
-    int                           obj_index;
-    int                           type_index;
-    unsigned long long            pre_remove_verify_starts;
-    unsigned long long            post_remove_verify_starts;
-    id_object_t                 * expected_id_obj_ptr = NULL;
-    id_object_t                 * reported_id_obj_ptr = NULL;
-    id_type_kernel_t              id_type_k;
-    id_instance_kernel_t          pre_id_inst_k;
-    id_instance_kernel_t          post_id_inst_k;
+    hbool_t              success           = TRUE; /* will set to FALSE on failure */
+    int                  ambiguous_results = 0;
+    int                  obj_index;
+    int                  type_index;
+    unsigned long long   pre_remove_verify_starts;
+    unsigned long long   post_remove_verify_starts;
+    id_object_t         *expected_id_obj_ptr = NULL;
+    id_object_t         *reported_id_obj_ptr = NULL;
+    id_type_kernel_t     id_type_k;
+    id_instance_kernel_t pre_id_inst_k;
+    id_instance_kernel_t post_id_inst_k;
 
     memset(&id_type_k, 0, sizeof(id_type_kernel_t));
     memset(&pre_id_inst_k, 0, sizeof(id_instance_kernel_t));
     memset(&post_id_inst_k, 0, sizeof(id_instance_kernel_t));
 
-    if ( cs ) {
+    if (cs) {
 
         H5I_clear_stats();
     }
 
-    assert( ( 0 <= id_index ) && ( id_index < NUM_ID_INSTANCES ) );
-    assert( ID_INSTANCE_T__TAG == id_instance_array[id_index].tag );
+    assert((0 <= id_index) && (id_index < NUM_ID_INSTANCES));
+    assert(ID_INSTANCE_T__TAG == id_instance_array[id_index].tag);
 
     type_index = id_instance_array[id_index].type_index;
 
-    assert( ( 0 <= type_index ) && ( type_index < NUM_ID_TYPES ) );
-    assert( ID_TYPE_T__TAG == types_array[type_index].tag );
+    assert((0 <= type_index) && (type_index < NUM_ID_TYPES));
+    assert(ID_TYPE_T__TAG == types_array[type_index].tag);
 
     id_type_k = atomic_load(&(types_array[type_index].k));
 
@@ -5664,7 +5647,7 @@ try_object_verify(int id_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, in
 
     pre_id_inst_k = atomic_load(&(id_instance_array[id_index].k));
 
-    if ( success ) {
+    if (success) {
 
         reported_id_obj_ptr = (id_object_t *)H5Iobject_verify(pre_id_inst_k.id, id_type_k.type_id);
 
@@ -5674,184 +5657,184 @@ try_object_verify(int id_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, in
 
         post_remove_verify_starts = atomic_load(&(id_instance_array[id_index].remove_verify_starts));
 
-        assert( ( -1 == obj_index ) || ( ( 0 <= obj_index ) && ( obj_index < NUM_ID_OBJECTS ) ) );
-        assert( ( -1 == obj_index ) || ( ID_OBJECT_T__TAG == objects_array[obj_index].tag ) );
+        assert((-1 == obj_index) || ((0 <= obj_index) && (obj_index < NUM_ID_OBJECTS)));
+        assert((-1 == obj_index) || (ID_OBJECT_T__TAG == objects_array[obj_index].tag));
 
-        if ( ( NULL == reported_id_obj_ptr ) && ( pre_id_inst_k.future ) && ( !pre_id_inst_k.discarded ) ) {
+        if ((NULL == reported_id_obj_ptr) && (pre_id_inst_k.future) && (!pre_id_inst_k.discarded)) {
             /* Expected - future ids have no object associated */
             success = TRUE;
         }
-        else if ( NULL == reported_id_obj_ptr ) {
-            
+        else if (NULL == reported_id_obj_ptr) {
+
             success = FALSE;
-        
-        } else {
+        }
+        else {
 
             success = TRUE;
 
-            assert( H5I_BADID != id_type_k.type_id );
-            assert( H5I_INVALID_HID != pre_id_inst_k.id );
+            assert(H5I_BADID != id_type_k.type_id);
+            assert(H5I_INVALID_HID != pre_id_inst_k.id);
 
-            assert( ( 0 <= obj_index ) && ( obj_index < NUM_ID_OBJECTS ) );
-            assert( ID_OBJECT_T__TAG == objects_array[obj_index].tag );
+            assert((0 <= obj_index) && (obj_index < NUM_ID_OBJECTS));
+            assert(ID_OBJECT_T__TAG == objects_array[obj_index].tag);
 
             expected_id_obj_ptr = &(objects_array[obj_index]);
 
-            assert( expected_id_obj_ptr == reported_id_obj_ptr );
+            assert(expected_id_obj_ptr == reported_id_obj_ptr);
         }
 
-        if ( ( ! pre_id_inst_k.created ) && ( ! post_id_inst_k.created ) ) {
+        if ((!pre_id_inst_k.created) && (!post_id_inst_k.created)) {
 
-            /* the type did not exist when H5Iobject_verify() was called -- thus the 
+            /* the type did not exist when H5Iobject_verify() was called -- thus the
              * call must fail.
              */
-            assert( ! success );
+            assert(!success);
 
-            /* However, it is possible that the id is in the process of being registerd.  
+            /* However, it is possible that the id is in the process of being registerd.
              * If so, the object index is set before the created flag is set.  Thus it
-             * is possible that object verify will fail, but 
-             * id_instance_array[id_index].obj_index will be set.  
+             * is possible that object verify will fail, but
+             * id_instance_array[id_index].obj_index will be set.
              *
              * At present, the only possible values for id_instance_array[id_index].obj_index
-             * are -1 and id_index.  
+             * are -1 and id_index.
              */
-            assert( ( -1 == obj_index ) || ( id_index == obj_index ) );
+            assert((-1 == obj_index) || (id_index == obj_index));
+        }
+        else if ((pre_id_inst_k.discarded) && (post_id_inst_k.discarded)) {
 
-        } else if ( ( pre_id_inst_k.discarded ) && ( post_id_inst_k.discarded ) ) {
-
-            /* the type did not exist when H5Iobject_verify() was called -- thus the 
+            /* the type did not exist when H5Iobject_verify() was called -- thus the
              * call must fail.
              */
-            if ( success ) {
+            if (success) {
 
-                if ( rpt_failures ) {
+                if (rpt_failures) {
 
-                    fprintf(stderr, "try_object_verify():%d: pre / post discarded = %d / %d\n",
-                            tid, (int)pre_id_inst_k.discarded, (int)post_id_inst_k.discarded);
+                    fprintf(stderr, "try_object_verify():%d: pre / post discarded = %d / %d\n", tid,
+                            (int)pre_id_inst_k.discarded, (int)post_id_inst_k.discarded);
                 }
                 H5I_dump_stats(stdout);
             }
-            assert( ! success );
+            assert(!success);
 
-            if ( !pre_id_inst_k.future ) {
+            if (!pre_id_inst_k.future) {
 
                 assert((0 <= obj_index) && (obj_index < NUM_ID_OBJECTS));
-            } 
+            }
             else {
                 /* future: no object mapping is expected though it's possible the id was in the process
-                 * of being defined where the obj_index by design is set before the actual definition. 
+                 * of being defined where the obj_index by design is set before the actual definition.
                  */
-                assert( ( -1 == obj_index ) || ( id_index == obj_index ) );
+                assert((-1 == obj_index) || (id_index == obj_index));
             }
+        }
+        else if ((pre_id_inst_k.created) && (post_id_inst_k.created) && (!pre_id_inst_k.discarded) &&
+                 (!post_id_inst_k.discarded)) {
 
+            if (((pre_remove_verify_starts > 0) || (post_remove_verify_starts > 0)) && (!success)) {
 
-        } else if ( ( pre_id_inst_k.created ) && ( post_id_inst_k.created ) &&
-                    ( ! pre_id_inst_k.discarded ) && ( ! post_id_inst_k.discarded ) ) {
-
-            if ( ( ( pre_remove_verify_starts > 0 ) || ( post_remove_verify_starts > 0 ) ) && ( ! success ) ) {
-
-                /* A call to H5Iremove verify() may have been active about the time the call to 
+                /* A call to H5Iremove verify() may have been active about the time the call to
                  * H5Iobject_verify() was made.  Since this would explain the failure, log an
                  * ambiguous test.
                  */
                 ambiguous_results++;
 
-                if ( rpt_failures ) {
+                if (rpt_failures) {
 
-                    fprintf(stderr, 
-                            "try_object_verify(%d):%d failure possibly explained by a remove verify in progress.\n",
+                    fprintf(stderr,
+                            "try_object_verify(%d):%d failure possibly explained by a remove verify in "
+                            "progress.\n",
                             id_index, tid);
                 }
-            } else if ( post_id_inst_k.closing ) {
-        
-                ambiguous_results++;  
-        
-                if ( rpt_failures ) { 
-        
-                    fprintf(stderr,   
-                            "try_object_verify(%d):%d failure possibly explained by closing flag.\n",
+            }
+            else if (post_id_inst_k.closing) {
+
+                ambiguous_results++;
+
+                if (rpt_failures) {
+
+                    fprintf(stderr, "try_object_verify(%d):%d failure possibly explained by closing flag.\n",
                             id_index, tid);
                 }
-            } else {
+            }
+            else {
 
                 /* the id existed when H5Iobject_verify() was called -- thus the
                  * call must succeed.
                  */
-                if ( pre_id_inst_k.closings_attempted == post_id_inst_k.closings_attempted ) {
+                if (pre_id_inst_k.closings_attempted == post_id_inst_k.closings_attempted) {
 
                     assert(success);
                 }
                 else {
-                    /* It's possible that a call to H5Iremove_verify() was active about the time the call to 
-                     * H5Iobject_verify() was made, and that this call attempted to close the ID.  Since 
+                    /* It's possible that a call to H5Iremove_verify() was active about the time the call to
+                     * H5Iobject_verify() was made, and that this call attempted to close the ID.  Since
                      * this would explain the failure, log an ambiguous test.
                      */
                     ambiguous_results++;
 
-                    if ( rpt_failures ) {
+                    if (rpt_failures) {
 
-                        fprintf(stderr, 
-                                "try_object_verify(%d):%d failure possibly explained by a remove verify closing the ID.\n",
+                        fprintf(stderr,
+                                "try_object_verify(%d):%d failure possibly explained by a remove verify "
+                                "closing the ID.\n",
                                 id_index, tid);
                     }
                 }
 
-                if ( ( !post_id_inst_k.future ) && ( !pre_id_inst_k.future) ) {
+                if ((!post_id_inst_k.future) && (!pre_id_inst_k.future)) {
 
-                    assert( -1 != obj_index );
+                    assert(-1 != obj_index);
                 }
                 else {
-                    assert( ( -1 == obj_index ) || ( id_index == obj_index ) );
+                    assert((-1 == obj_index) || (id_index == obj_index));
                 }
             }
-        } else if ( ( ( pre_id_inst_k.discarded ) && ( post_id_inst_k.discarded ) ) || 
-                    ( ! pre_id_inst_k.created ) ) {
+        }
+        else if (((pre_id_inst_k.discarded) && (post_id_inst_k.discarded)) || (!pre_id_inst_k.created)) {
 
             assert(!success);
-            
-        } 
+        }
         else {
 
-            /* the id may or may not have existed when H5Iverify_object() was called -- thus 
+            /* the id may or may not have existed when H5Iverify_object() was called -- thus
              * the outcome of the test is ambiguous.
              */
             ambiguous_results++;
         }
     }
 
-    if ( ds ) {
+    if (ds) {
 
         H5I_dump_nz_stats(stdout, "H5Iobject_verify");
     }
 
-    if ( success ) {
+    if (success) {
 
         atomic_fetch_add(&(id_instance_array[id_index].successful_verifies), 1ULL);
         atomic_fetch_add(&(objects_array[obj_index].accesses), 1ULL);
-
-    } else {
+    }
+    else {
 
         atomic_fetch_add(&(id_instance_array[id_index].failed_verifies), 1ULL);
     }
 
-    return(ambiguous_results);
+    return (ambiguous_results);
 
 } /* try_object_verify() */
-
 
 /***********************************************************************************************
  * get_type()
  *
- *    Verify that the target ID associated with the instance of id_instance_t pointed to by 
- *    id_inst_ptr exists, and has the type associaed with the instance of id_type_t pointed 
- *    to by id_type_ptr.  
+ *    Verify that the target ID associated with the instance of id_instance_t pointed to by
+ *    id_inst_ptr exists, and has the type associaed with the instance of id_type_t pointed
+ *    to by id_type_ptr.
  *
  *    If the cs flag is set, the function clears statistics on entry.
  *
  *    If the ds flag is set, the function displays statistics just before exit.
  *
- *    If the rpt_failures flag is set, the function will write an error message to stderr 
- *    if an error is detected.  If such an error message is generated, the triggering thread 
+ *    If the rpt_failures flag is set, the function will write an error message to stderr
+ *    if an error is detected.  If such an error message is generated, the triggering thread
  *    (given in the tid field) is reported.
  *
  *    The function returns 0 on success (i.e. if the target ID exists and is of the indicated
@@ -5860,10 +5843,10 @@ try_object_verify(int id_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, in
  ***********************************************************************************************/
 
 static int
-get_type(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr,
-         hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
+get_type(id_type_t *id_type_ptr, id_instance_t *id_inst_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failures,
+         int tid)
 {
-    hbool_t success = TRUE; /* will set to FALSE on failure */
+    hbool_t              success = TRUE; /* will set to FALSE on failure */
     H5I_type_t           type;
     hid_t                id = 0;
     id_type_kernel_t     id_type_k;
@@ -5872,20 +5855,20 @@ get_type(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr,
     memset(&id_type_k, 0, sizeof(id_type_kernel_t));
     memset(&id_inst_k, 0, sizeof(id_instance_kernel_t));
 
-    if ( ( NULL == id_type_ptr ) || ( ID_TYPE_T__TAG != id_type_ptr->tag ) ||
-         ( NULL == id_inst_ptr ) || ( ID_INSTANCE_T__TAG != id_inst_ptr->tag ) ) {
+    if ((NULL == id_type_ptr) || (ID_TYPE_T__TAG != id_type_ptr->tag) || (NULL == id_inst_ptr) ||
+        (ID_INSTANCE_T__TAG != id_inst_ptr->tag)) {
 
         assert(FALSE);
 
         success = FALSE;
 
-        if ( rpt_failures ) {
+        if (rpt_failures) {
 
             fprintf(stderr, "get_type():%d: Invalid params on entry.\n", tid);
         }
     }
 
-    if ( cs ) {
+    if (cs) {
 
         H5I_clear_stats();
     }
@@ -5893,71 +5876,73 @@ get_type(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr,
     id_type_k = atomic_load(&(id_type_ptr->k));
     id_inst_k = atomic_load(&(id_inst_ptr->k));
 
-    if ( success ) {
+    if (success) {
 
-        if ( ( id_type_k.in_progress) || ( ! id_type_k.created ) || ( id_type_k.discarded ) ) {
+        if ((id_type_k.in_progress) || (!id_type_k.created) || (id_type_k.discarded)) {
 
             assert(FALSE);
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                 fprintf(stderr, 
-                        "get_type():%d: target id type either in progress, not created, or discarded on entry.\n",
-                        tid);
+                fprintf(
+                    stderr,
+                    "get_type():%d: target id type either in progress, not created, or discarded on entry.\n",
+                    tid);
             }
-        } else {
+        }
+        else {
 
             type = (H5I_type_t)id_type_k.type_id;
         }
-    } 
+    }
 
-    if ( success )
-    {
-        if ( ( id_inst_k.in_progress) || ( ! id_inst_k.created ) || ( id_inst_k.discarded ) ) {
+    if (success) {
+        if ((id_inst_k.in_progress) || (!id_inst_k.created) || (id_inst_k.discarded)) {
 
             assert(FALSE);
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                 fprintf(stderr, 
-                        "get_type():%d: target id inst either in progress, not created, or discarded on entry.\n",
-                        tid);
+                fprintf(
+                    stderr,
+                    "get_type():%d: target id inst either in progress, not created, or discarded on entry.\n",
+                    tid);
             }
-        } else {
+        }
+        else {
 
             id = id_inst_k.id;
         }
     }
 
-    if ( success ) {
+    if (success) {
 
-        if ( type != H5Iget_type(id) ) {
+        if (type != H5Iget_type(id)) {
 
             assert(FALSE);
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                 fprintf(stderr, "get_type():%d: type == 0x%llx != H5Iget_type(id = 0x%llx).\n",
-                        tid, (unsigned long long)type, (unsigned long long)id);
+                fprintf(stderr, "get_type():%d: type == 0x%llx != H5Iget_type(id = 0x%llx).\n", tid,
+                        (unsigned long long)type, (unsigned long long)id);
             }
         }
     }
 
-    if ( ds ) {
+    if (ds) {
 
         H5I_dump_nz_stats(stdout, "H5Iget_type");
     }
 
-    return(success ? 0 : 1);
+    return (success ? 0 : 1);
 
 } /* get_type() */
-
 
 /***********************************************************************************************
  * remove_verify()
@@ -5965,11 +5950,11 @@ get_type(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr,
  *    Call H5Iremove_verify() to delete the target ID.
  *
  *    Before doing so, verify that the supplied instances of id_instance_t and id_object_t
- *    indicate that the target ID exists.  Similarly, verify that supplied instance of 
+ *    indicate that the target ID exists.  Similarly, verify that supplied instance of
  *    id_type_t exists.  In passing, also look up the target type and ID needed to call
  *    H5Iremove_verify().
  *
- *    Assuming that H5Iremove_verify() is successful, update the instance of id_object_t 
+ *    Assuming that H5Iremove_verify() is successful, update the instance of id_object_t
  *    associated with the ID to mark it as removed.  This is necessary as H5Iremove_verify()
  *    doesn't call the free function associaed with the type (and ID).
  *
@@ -5977,20 +5962,20 @@ get_type(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr,
  *
  *    If the ds flag is set, the function displays statistics just before exit.
  *
- *    If the rpt_failures flag is set, the function will write an error message to stderr 
- *    if an error is detected.  If such an error message is generated, the triggering thread 
+ *    If the rpt_failures flag is set, the function will write an error message to stderr
+ *    if an error is detected.  If such an error message is generated, the triggering thread
  *    (given in the tid field) is reported.
  *
- *    The function returns 0 on success (i.e. if the target ID exists and is successfully 
+ *    The function returns 0 on success (i.e. if the target ID exists and is successfully
  *    removed, and 1 if not, or if any error (including non-existance) is detected.
  *
  ***********************************************************************************************/
 
 static int
-remove_verify(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_t * id_obj_ptr,
-              hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
+remove_verify(id_type_t *id_type_ptr, id_instance_t *id_inst_ptr, id_object_t *id_obj_ptr, hbool_t cs,
+              hbool_t ds, hbool_t rpt_failures, int tid)
 {
-    hbool_t success = TRUE; /* will set to FALSE on failure */
+    hbool_t              success = TRUE; /* will set to FALSE on failure */
     H5I_type_t           type;
     hid_t                id;
     id_type_kernel_t     id_type_k;
@@ -6007,140 +5992,145 @@ remove_verify(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_t 
     memset(&mod_id_obj_k, 0, sizeof(id_object_kernel_t));
     mod_id_obj_k.id = H5I_INVALID_HID;
 
-    if ( ( NULL == id_type_ptr ) || ( ID_TYPE_T__TAG != id_type_ptr->tag ) ||
-         ( NULL == id_inst_ptr ) || ( ID_INSTANCE_T__TAG != id_inst_ptr->tag ) ||
-         ( NULL == id_obj_ptr )  || ( ID_OBJECT_T__TAG != id_obj_ptr->tag ) ) {
+    if ((NULL == id_type_ptr) || (ID_TYPE_T__TAG != id_type_ptr->tag) || (NULL == id_inst_ptr) ||
+        (ID_INSTANCE_T__TAG != id_inst_ptr->tag) || (NULL == id_obj_ptr) ||
+        (ID_OBJECT_T__TAG != id_obj_ptr->tag)) {
 
         assert(FALSE);
 
         success = FALSE;
 
-        if ( rpt_failures ) {
+        if (rpt_failures) {
 
             fprintf(stderr, "remove_verify():%d: Invalid params on entry.\n", tid);
         }
     }
 
-    if ( cs ) {
+    if (cs) {
 
         H5I_clear_stats();
     }
 
     id_type_k = atomic_load(&(id_type_ptr->k));
     id_inst_k = atomic_load(&(id_inst_ptr->k));
-    id_obj_k = atomic_load(&(id_obj_ptr->k));
+    id_obj_k  = atomic_load(&(id_obj_ptr->k));
 
-    if ( success ) {
+    if (success) {
 
-        if ( ( id_type_k.in_progress) || ( ! id_type_k.created ) || ( id_type_k.discarded ) ) {
+        if ((id_type_k.in_progress) || (!id_type_k.created) || (id_type_k.discarded)) {
 
             assert(FALSE);
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                 fprintf(stderr, 
-                   "remove_verify():%d: target id type either in progress, not created, or discarded on entry.\n",
-                   tid);
+                fprintf(stderr,
+                        "remove_verify():%d: target id type either in progress, not created, or discarded on "
+                        "entry.\n",
+                        tid);
             }
-        } else {
+        }
+        else {
 
             type = (H5I_type_t)id_type_k.type_id;
         }
-    } 
+    }
 
-    if ( success )
-    {
-        if ( ( id_inst_k.in_progress) || ( ! id_inst_k.created ) || ( id_inst_k.discarded ) ) {
+    if (success) {
+        if ((id_inst_k.in_progress) || (!id_inst_k.created) || (id_inst_k.discarded)) {
 
             assert(FALSE);
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                 fprintf(stderr, 
-                   "remove_verify():%d: target id inst either in progress, not created, or discarded on entry.\n",
-                   tid);
+                fprintf(stderr,
+                        "remove_verify():%d: target id inst either in progress, not created, or discarded on "
+                        "entry.\n",
+                        tid);
             }
-        } else {
+        }
+        else {
 
             id = id_inst_k.id;
         }
     }
 
-    if ( success )
-    {
-        if ( ( id_obj_k.in_progress) || ( ! id_obj_k.allocated ) || ( id_obj_k.discarded ) ) {
+    if (success) {
+        if ((id_obj_k.in_progress) || (!id_obj_k.allocated) || (id_obj_k.discarded)) {
 
             assert(FALSE);
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                 fprintf(stderr, 
-                    "remove_verify():%d: target id obj either in progress, not created, or discarded on entry.\n",
-                    tid);
+                fprintf(stderr,
+                        "remove_verify():%d: target id obj either in progress, not created, or discarded on "
+                        "entry.\n",
+                        tid);
             }
         }
     }
 
-    if ( success ) {
+    if (success) {
 
-        if ( (void *)id_obj_ptr != H5Iremove_verify(id, type) ) {
+        if ((void *)id_obj_ptr != H5Iremove_verify(id, type)) {
 
             assert(FALSE);
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                 fprintf(stderr, "remove_verify():%d: H5Iremove_verify(id = 0x%llx, type = 0x%llx) failed.\n",
-                         tid, (unsigned long long)id, (unsigned long long)type);
+                fprintf(stderr, "remove_verify():%d: H5Iremove_verify(id = 0x%llx, type = 0x%llx) failed.\n",
+                        tid, (unsigned long long)id, (unsigned long long)type);
             }
-        } else {
+        }
+        else {
 
-            id_obj_k  = atomic_load(&(id_obj_ptr->k));
+            id_obj_k = atomic_load(&(id_obj_ptr->k));
 
-            if ( id_obj_k.id != id ) {
+            if (id_obj_k.id != id) {
 
                 assert(FALSE);
 
                 success = FALSE;
 
-                if ( rpt_failures ) {
+                if (rpt_failures) {
 
-                     fprintf(stderr, "remove_verify():%d: ID missmatch -- id = 0x%llx != 0x%llx = id_obj_k.id.\n",
-                             tid, (unsigned long long)id, (unsigned long long)(id_obj_k.id));
+                    fprintf(stderr,
+                            "remove_verify():%d: ID missmatch -- id = 0x%llx != 0x%llx = id_obj_k.id.\n", tid,
+                            (unsigned long long)id, (unsigned long long)(id_obj_k.id));
                 }
             }
         }
     }
 
-    if ( success ) { 
+    if (success) {
 
-        if ( ( id_inst_k.discarded ) || ( id_obj_k.discarded ) ) {
+        if ((id_inst_k.discarded) || (id_obj_k.discarded)) {
 
             assert(FALSE);
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                 fprintf(stderr, "remove_verify():%d: ((id_inst_k.discarded) || (id_obj_k.discarded))\n", tid);
+                fprintf(stderr, "remove_verify():%d: ((id_inst_k.discarded) || (id_obj_k.discarded))\n", tid);
             }
         }
     }
 
-    if ( success ) { /* must mark *id_inst_ptr as discarded */
+    if (success) { /* must mark *id_inst_ptr as discarded */
 
         int inst_retry_cnt = -1;
-        int obj_retry_cnt = -1;
+        int obj_retry_cnt  = -1;
 
         /* mark *id_inst_k as discarded */
-        while ( ! id_inst_k.discarded ) {
+        while (!id_inst_k.discarded) {
 
             memset(&mod_id_inst_k, 0, sizeof(id_instance_kernel_t));
             mod_id_inst_k.id = H5I_INVALID_HID;
@@ -6163,11 +6153,11 @@ remove_verify(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_t 
             inst_retry_cnt++;
         }
 
-        /* for whatever reason, H5Iremove_verify() doesn't call the free routine 
-         * for objects in the index.  Thus we should set the discarded flag on 
+        /* for whatever reason, H5Iremove_verify() doesn't call the free routine
+         * for objects in the index.  Thus we should set the discarded flag on
          * the object so we can detect other calls to the free function.
          */
-        while ( ! id_obj_k.discarded ) {
+        while (!id_obj_k.discarded) {
 
             memset(&mod_id_obj_k, 0, sizeof(id_object_kernel_t));
 
@@ -6189,44 +6179,43 @@ remove_verify(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_t 
             obj_retry_cnt++;
         }
 
-        if ( ( inst_retry_cnt > 0 ) || ( obj_retry_cnt > 0 ) ) {
+        if ((inst_retry_cnt > 0) || (obj_retry_cnt > 0)) {
 
             assert(FALSE);
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                 fprintf(stderr, "remove_verify():%d: inst_retry_cnt = %d, obj_retry_cnt = %d\n", 
-                         tid, inst_retry_cnt, obj_retry_cnt);
+                fprintf(stderr, "remove_verify():%d: inst_retry_cnt = %d, obj_retry_cnt = %d\n", tid,
+                        inst_retry_cnt, obj_retry_cnt);
             }
         }
     }
 
-    if ( ds ) {
+    if (ds) {
 
         H5I_dump_nz_stats(stdout, "H5Iremove_verify");
     }
 
-    return( success ? 0 : 1 );
+    return (success ? 0 : 1);
 
 } /* remove_verify() */
-
 
 /***********************************************************************************************
  * try_remove_verify()
  *
- *      Call H5Iremove_verify() on id_instance_array[id_index].k.id, and test to see if the 
- *      pointer returned equals &(objects_array[obj_index]).  Update stats in 
- *      id_instance_array[id_index] and objects_array[obj_index] as appropriate to refect 
+ *      Call H5Iremove_verify() on id_instance_array[id_index].k.id, and test to see if the
+ *      pointer returned equals &(objects_array[obj_index]).  Update stats in
+ *      id_instance_array[id_index] and objects_array[obj_index] as appropriate to refect
  *      success or failure.
  *
  *      Note that id_instance_array[id_index].k.id may or may not have been initialized on
  *      entry.
  *
- *      Thus the call may either succeed or fail.  In either case, examine 
+ *      Thus the call may either succeed or fail.  In either case, examine
  *      id_instance_array[id_index] to see whether success or failure is expected, and assert
- *      if an unexpected is returned by H5Iremove_verify().  In ambiguous cases, increment the 
+ *      if an unexpected is returned by H5Iremove_verify().  In ambiguous cases, increment the
  *      ambiguous results counter, and generate an error message if rpt_failures is TRUE.
  *
  *      If the cs flag is set, the function clears statistics on entry.
@@ -6242,7 +6231,7 @@ remove_verify(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_t 
  *
  * Changes:
  *
- *      Updated to work with future IDs, some object expectations changed. Added free helper for 
+ *      Updated to work with future IDs, some object expectations changed. Added free helper for
  *      futures so the test stats can update appropriately for futures.
  *
  ***********************************************************************************************/
@@ -6261,101 +6250,105 @@ try_remove_verify(int id_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, in
     id_type_kernel_t     id_type_k;
     id_instance_kernel_t pre_id_inst_k;
     id_instance_kernel_t post_id_inst_k;
-    id_object_t        * reported_id_obj_ptr = NULL;
+    id_object_t         *reported_id_obj_ptr = NULL;
 
     memset(&id_type_k, 0, sizeof(id_type_kernel_t));
     memset(&pre_id_inst_k, 0, sizeof(id_instance_kernel_t));
     memset(&post_id_inst_k, 0, sizeof(id_instance_kernel_t));
 
-    if ( cs ) {
+    if (cs) {
 
         H5I_clear_stats();
     }
 
-    assert( ( 0 <= id_index ) && ( id_index < NUM_ID_INSTANCES ) );
-    assert( ID_INSTANCE_T__TAG == id_instance_array[id_index].tag );
+    assert((0 <= id_index) && (id_index < NUM_ID_INSTANCES));
+    assert(ID_INSTANCE_T__TAG == id_instance_array[id_index].tag);
 
     pre_id_inst_k = atomic_load(&(id_instance_array[id_index].k));
-    id = pre_id_inst_k.id;
+    id            = pre_id_inst_k.id;
 
     type_index = id_instance_array[id_index].type_index;
 
-    assert( ( 0 <= type_index ) && ( type_index < NUM_ID_TYPES ) );
-    assert( ID_TYPE_T__TAG == types_array[type_index].tag );
+    assert((0 <= type_index) && (type_index < NUM_ID_TYPES));
+    assert(ID_TYPE_T__TAG == types_array[type_index].tag);
 
     id_type_k = atomic_load(&(types_array[type_index].k));
-    type = (H5I_type_t)id_type_k.type_id;
+    type      = (H5I_type_t)id_type_k.type_id;
 
     obj_index = atomic_load(&(id_instance_array[id_index].obj_index));
 
-    assert( ( -1 == obj_index ) || ( ( 0 <= obj_index ) && ( obj_index < NUM_ID_OBJECTS ) ) );
-    assert( ( -1 == obj_index ) || ( ID_OBJECT_T__TAG == objects_array[obj_index].tag ) );
+    assert((-1 == obj_index) || ((0 <= obj_index) && (obj_index < NUM_ID_OBJECTS)));
+    assert((-1 == obj_index) || (ID_OBJECT_T__TAG == objects_array[obj_index].tag));
 
-    if ( success ) {
+    if (success) {
 
-        pre_remove_verify_starts = atomic_fetch_add(&(id_instance_array[id_index].remove_verify_starts), 1ULL);
+        pre_remove_verify_starts =
+            atomic_fetch_add(&(id_instance_array[id_index].remove_verify_starts), 1ULL);
 
-        reported_id_obj_ptr =  H5Iremove_verify(id, type);
+        reported_id_obj_ptr = H5Iremove_verify(id, type);
 
         post_id_inst_k = atomic_load(&(id_instance_array[id_index].k));
 
-        if ( NULL == reported_id_obj_ptr && pre_id_inst_k.future && !pre_id_inst_k.discarded && !post_id_inst_k.discarded ) {
+        if (NULL == reported_id_obj_ptr && pre_id_inst_k.future && !pre_id_inst_k.discarded &&
+            !post_id_inst_k.discarded) {
             /* reported_id_obj_ptr should be NULL on futures since there is no object to operate on */
-            success = TRUE;
+            success                   = TRUE;
             post_remove_verify_starts = atomic_load(&(id_instance_array[id_index].remove_verify_starts));
-        } 
-        else if ( NULL == reported_id_obj_ptr ) {
+        }
+        else if (NULL == reported_id_obj_ptr) {
 
-            post_remove_verify_starts = atomic_fetch_sub(&(id_instance_array[id_index].remove_verify_starts), 1ULL);
+            post_remove_verify_starts =
+                atomic_fetch_sub(&(id_instance_array[id_index].remove_verify_starts), 1ULL);
 
             success = FALSE;
-
-        } else {
+        }
+        else {
 
             post_remove_verify_starts = atomic_load(&(id_instance_array[id_index].remove_verify_starts));
         }
 
-        if ( ( ! pre_id_inst_k.created ) && ( ! post_id_inst_k.created ) ) {
+        if ((!pre_id_inst_k.created) && (!post_id_inst_k.created)) {
 
-            /* The id didn't exist when H5Iremove_verify() was called -- thus 
-             * the call must have failed.  
+            /* The id didn't exist when H5Iremove_verify() was called -- thus
+             * the call must have failed.
              *
-             * While the object index will usually be -1, the registration of an ID in the 
-             * test bed is not an atomic process.  In particular, since the obj_index is 
-             * set before the id is marked as created, it is possible that it will be 
-             * set even though the id instance is not listed as being created.  
+             * While the object index will usually be -1, the registration of an ID in the
+             * test bed is not an atomic process.  In particular, since the obj_index is
+             * set before the id is marked as created, it is possible that it will be
+             * set even though the id instance is not listed as being created.
              *
              * Deal with this case by allowing the obj_index to be either -1 or equal to
              * to the id_index.  While this is good for now, note that it may change.
              */
-            assert( ! success );
-            assert( ( -1 == obj_index ) || ( id_index == obj_index ) );;
+            assert(!success);
+            assert((-1 == obj_index) || (id_index == obj_index));
+            ;
+        }
+        else if ((pre_id_inst_k.created) && (post_id_inst_k.created) && (pre_id_inst_k.discarded) &&
+                 (post_id_inst_k.discarded)) {
 
-        } else if ( ( pre_id_inst_k.created ) && ( post_id_inst_k.created ) &&
-                    ( pre_id_inst_k.discarded ) && ( post_id_inst_k.discarded ) ) {
-
-            /* The id was created and discarded before H5Iremove_verify() was called -- 
-             * thus the call must have failed.  However, the object index must 
-             * be defined (i.e. not -1).  Further the indicated object must be 
+            /* The id was created and discarded before H5Iremove_verify() was called --
+             * thus the call must have failed.  However, the object index must
+             * be defined (i.e. not -1).  Further the indicated object must be
              * marked as discarded, and must be linked to the id via its id_index
              * field.
-             * 
+             *
              * The above is only the case in the event that the id was not a future,
-             * if it was it has no associated object. 
+             * if it was it has no associated object.
              */
-            assert( ! success );
+            assert(!success);
 
-            if ( !pre_id_inst_k.future && !post_id_inst_k.future ) {
-                assert( ( 0 <= obj_index ) && ( obj_index < NUM_ID_OBJECTS ) );
-                assert( id_index == atomic_load(&(objects_array[obj_index].id_index)) );
-            } 
+            if (!pre_id_inst_k.future && !post_id_inst_k.future) {
+                assert((0 <= obj_index) && (obj_index < NUM_ID_OBJECTS));
+                assert(id_index == atomic_load(&(objects_array[obj_index].id_index)));
+            }
+        }
+        else if ((pre_id_inst_k.created) && (post_id_inst_k.created) && (!pre_id_inst_k.discarded) &&
+                 (!post_id_inst_k.discarded)) {
 
-        } else if ( ( pre_id_inst_k.created ) && ( post_id_inst_k.created ) &&
-                    ( ! pre_id_inst_k.discarded ) && ( ! post_id_inst_k.discarded ) ) {
+            if (((0 < pre_remove_verify_starts) || (0 < post_remove_verify_starts)) && (!success)) {
 
-             if ( ( ( 0 < pre_remove_verify_starts ) || ( 0 < post_remove_verify_starts ) )  && ( ! success ) ) {
-
-                /* another call to H5Iremove_verify() has been active sometime around the 
+                /* another call to H5Iremove_verify() has been active sometime around the
                  * same time as this call.  Thus the failure of this call to H5Iremove_verify()
                  * is probably OK.  Since we don't know this sure, log this as an ambiguous
                  * result.
@@ -6363,135 +6356,141 @@ try_remove_verify(int id_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, in
 
                 ambiguous_results++;
 
-                if ( rpt_failures ) {
+                if (rpt_failures) {
 
-                    fprintf(stderr, 
-                            "try_remove_verify(%d):%d: failure possibly caused by a concurrent remove verify.\n",
+                    fprintf(
+                        stderr,
+                        "try_remove_verify(%d):%d: failure possibly caused by a concurrent remove verify.\n",
+                        id_index, tid);
+                }
+            }
+            else if ((post_id_inst_k.closing) && (!success)) {
+
+                ambiguous_results++;
+
+                if (rpt_failures) {
+
+                    fprintf(stderr, "try_remove_verify(%d):%d failure possibly explained by closing flag.\n",
                             id_index, tid);
                 }
-             } else if ( ( post_id_inst_k.closing ) && ( ! success ) ) {
-        
-                ambiguous_results++;  
-        
-                if ( rpt_failures ) { 
-        
-                    fprintf(stderr,   
-                            "try_remove_verify(%d):%d failure possibly explained by closing flag.\n",
-                            id_index, tid);
-                }
-            } else {
+            }
+            else {
 
-                /* the ID was created and not discarded at the time that H5Iremove_verify() 
-                 * was called -- thus the call must have succeeded.  
+                /* the ID was created and not discarded at the time that H5Iremove_verify()
+                 * was called -- thus the call must have succeeded.
                  *
-                 * Note that while H5Iremove_verify() will delete the ID from the 
-                 * index, it doesn't call the free function.  Thus we call it here 
+                 * Note that while H5Iremove_verify() will delete the ID from the
+                 * index, it doesn't call the free function.  Thus we call it here
                  * to update the test code for the deletion.
-                 * 
+                 *
                  * The above is untrue if the id is a future. No object is expected and
                  * the free func should not be called on a future ID. If this is the case,
                  * call update_freed_future to reflect changes in the test-side variables.
-                 * 
+                 *
                  */
-                assert( success );
-                if ( ( ! post_id_inst_k.future ) ) {
-                    
+                assert(success);
+                if ((!post_id_inst_k.future)) {
+
                     obj_index = atomic_load(&(id_instance_array[id_index].obj_index));
 
-                    assert( ( 0 <= obj_index ) && ( obj_index < NUM_ID_OBJECTS ) );
-                    assert( id_index == atomic_load(&(objects_array[obj_index].id_index)) );
+                    assert((0 <= obj_index) && (obj_index < NUM_ID_OBJECTS));
+                    assert(id_index == atomic_load(&(objects_array[obj_index].id_index)));
 
-                    if ( SUCCEED != free_func((void *)(&(objects_array[obj_index])), NULL) ) {
+                    if (SUCCEED != free_func((void *)(&(objects_array[obj_index])), NULL)) {
 
-                        if ( rpt_failures ) {
+                        if (rpt_failures) {
 
-                            fprintf(stderr, "try_remove_verify():%d: free_func() failed -- id/obj indexes = %d / %d.\n",
-                                    tid, id_index, obj_index);
+                            fprintf(
+                                stderr,
+                                "try_remove_verify():%d: free_func() failed -- id/obj indexes = %d / %d.\n",
+                                tid, id_index, obj_index);
                         }
                         assert(FALSE);
                     }
                 }
                 else {
-                    
-                    if ( SUCCEED != update_freed_future(id_index) ) {
 
-                        if ( rpt_failures ) {
+                    if (SUCCEED != update_freed_future(id_index)) {
 
-                            fprintf(stderr, "try_remove_verify():%d: update_freed_future() failed -- id index = %d.\n",
-                                    tid, id_index);
+                        if (rpt_failures) {
+
+                            fprintf(
+                                stderr,
+                                "try_remove_verify():%d: update_freed_future() failed -- id index = %d.\n",
+                                tid, id_index);
                         }
                         assert(FALSE);
                     }
                 }
             }
-        } else if ( ( pre_id_inst_k.created ) && ( post_id_inst_k.created ) &&
-                    ( ! pre_id_inst_k.discarded ) && ( post_id_inst_k.discarded ) ) {
+        }
+        else if ((pre_id_inst_k.created) && (post_id_inst_k.created) && (!pre_id_inst_k.discarded) &&
+                 (post_id_inst_k.discarded)) {
 
-            /* The ID was created before the call to H5Iremove_verify() and deleted 
-             * afterwards.  Since H5Iremove_verify() does not call the free_func(), this 
-             * implies that some other call deleted the target ID from the index, and 
+            /* The ID was created before the call to H5Iremove_verify() and deleted
+             * afterwards.  Since H5Iremove_verify() does not call the free_func(), this
+             * implies that some other call deleted the target ID from the index, and
              * thus that the call to H5Iremove_verify() failed.
              *
-             * However, since the ID pre-existed the call, object index should be 
+             * However, since the ID pre-existed the call, object index should be
              * valid, and should be linked with the ID.
              */
-            assert( ! success );
-            if ( !pre_id_inst_k.future ) {
-                assert( ( 0 <= obj_index ) && ( obj_index < NUM_ID_OBJECTS ) );
-                assert( id_index == atomic_load(&(objects_array[obj_index].id_index)) );
-            } else {
-                assert( 0 > obj_index );
+            assert(!success);
+            if (!pre_id_inst_k.future) {
+                assert((0 <= obj_index) && (obj_index < NUM_ID_OBJECTS));
+                assert(id_index == atomic_load(&(objects_array[obj_index].id_index)));
             }
-
+            else {
+                assert(0 > obj_index);
+            }
         }
     }
 
-    if ( ds ) {
+    if (ds) {
 
         H5I_dump_nz_stats(stdout, "H5Iremove_verify");
     }
 
-    if ( success ) {
+    if (success) {
 
         atomic_fetch_add(&(id_instance_array[id_index].successful_remove_verifies), 1ULL);
-
-    } else {
+    }
+    else {
 
         atomic_fetch_add(&(id_instance_array[id_index].failed_remove_verifies), 1ULL);
     }
 
-    return(ambiguous_results);
+    return (ambiguous_results);
 
 } /* try_remove_verify() */
-
 
 /***********************************************************************************************
  * dec_ref()
  *
  *    If the target id instance is listed as existing in the supplied instance of id_instance_t,
- *    call H5Idec_ref() to decrement the current ref count for the id.  If the reference count 
- *    is decremented to zero, mark the supplied id instance as discarded, and verify that 
+ *    call H5Idec_ref() to decrement the current ref count for the id.  If the reference count
+ *    is decremented to zero, mark the supplied id instance as discarded, and verify that
  *    the associated id_object_t is marked as discarded.
  *
  *    If the cs flag is set, the function clears statistics on entry.
  *
  *    If the ds flag is set, the function displays statistics just before exit.
  *
- *    If the rpt_failures flag is set, the function will write an error message to stderr 
- *    if an error is detected.  If such an error message is generated, the triggering thread 
+ *    If the rpt_failures flag is set, the function will write an error message to stderr
+ *    if an error is detected.  If such an error message is generated, the triggering thread
  *    (given in the tid field) is reported.
  *
  *    The function returns 0 on success (i.e. if the target ID exists and H5Idec_ref() returned
- *    a non-negative integer, and 1 otherwise, or if any error (including non-existance) is 
+ *    a non-negative integer, and 1 otherwise, or if any error (including non-existance) is
  *    detected.
  *
  ***********************************************************************************************/
 
 static int
-dec_ref(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_t * id_obj_ptr,
-        hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
+dec_ref(id_type_t *id_type_ptr, id_instance_t *id_inst_ptr, id_object_t *id_obj_ptr, hbool_t cs, hbool_t ds,
+        hbool_t rpt_failures, int tid)
 {
-    hbool_t success = TRUE; /* will set to FALSE on failure */
+    hbool_t              success = TRUE; /* will set to FALSE on failure */
     hid_t                id;
     int                  ref_count;
     id_type_kernel_t     id_type_k;
@@ -6505,102 +6504,105 @@ dec_ref(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_t * id_o
     mod_id_inst_k.id = H5I_INVALID_HID;
     memset(&id_obj_k, 0, sizeof(id_object_kernel_t));
 
-    if ( ( NULL == id_type_ptr ) || ( ID_TYPE_T__TAG != id_type_ptr->tag ) ||
-         ( NULL == id_inst_ptr ) || ( ID_INSTANCE_T__TAG != id_inst_ptr->tag ) ||
-         ( NULL == id_obj_ptr )  || ( ID_OBJECT_T__TAG != id_obj_ptr->tag ) ) {
+    if ((NULL == id_type_ptr) || (ID_TYPE_T__TAG != id_type_ptr->tag) || (NULL == id_inst_ptr) ||
+        (ID_INSTANCE_T__TAG != id_inst_ptr->tag) || (NULL == id_obj_ptr) ||
+        (ID_OBJECT_T__TAG != id_obj_ptr->tag)) {
 
         assert(FALSE);
 
         success = FALSE;
 
-        if ( rpt_failures ) {
+        if (rpt_failures) {
 
             fprintf(stderr, "dec_ref():%d: Invalid params on entry.\n", tid);
         }
     }
 
-    if ( cs ) {
+    if (cs) {
 
         H5I_clear_stats();
     }
 
     id_type_k = atomic_load(&(id_type_ptr->k));
     id_inst_k = atomic_load(&(id_inst_ptr->k));
-    id_obj_k = atomic_load(&(id_obj_ptr->k));
+    id_obj_k  = atomic_load(&(id_obj_ptr->k));
 
-    if ( success ) {
+    if (success) {
 
-        if ( ( id_type_k.in_progress) || ( ! id_type_k.created ) || ( id_type_k.discarded ) ) {
+        if ((id_type_k.in_progress) || (!id_type_k.created) || (id_type_k.discarded)) {
 
             assert(FALSE);
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                 fprintf(stderr, 
-                         "dec_ref():%d: target id type either in progress, not created, or discarded on entry.\n",
-                         tid);
+                fprintf(
+                    stderr,
+                    "dec_ref():%d: target id type either in progress, not created, or discarded on entry.\n",
+                    tid);
             }
         }
-    } 
+    }
 
-    if ( success )
-    {
+    if (success) {
 
-        if ( ( id_inst_k.in_progress) || ( ! id_inst_k.created ) || ( id_inst_k.discarded ) ) {
+        if ((id_inst_k.in_progress) || (!id_inst_k.created) || (id_inst_k.discarded)) {
 
             assert(FALSE);
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                 fprintf(stderr, 
-                   "dec_ref():%d: target id inst either in progress, not created, or discarded on entry.\n",
-                   tid);
+                fprintf(
+                    stderr,
+                    "dec_ref():%d: target id inst either in progress, not created, or discarded on entry.\n",
+                    tid);
             }
-        } else {
+        }
+        else {
 
             id = id_inst_k.id;
         }
     }
 
-    if ( success )
-    {
-        if ( ( id_obj_k.in_progress) || ( ! id_obj_k.allocated ) || ( id_obj_k.discarded ) ) {
+    if (success) {
+        if ((id_obj_k.in_progress) || (!id_obj_k.allocated) || (id_obj_k.discarded)) {
 
             assert(FALSE);
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                 fprintf(stderr, 
-                         "dec_ref():%d: target id obj either in progress, not created, or discarded on entry.\n",
-                         tid);
+                fprintf(
+                    stderr,
+                    "dec_ref():%d: target id obj either in progress, not created, or discarded on entry.\n",
+                    tid);
             }
         }
     }
 
-    if ( success ) {
+    if (success) {
 
         ref_count = H5Idec_ref(id);
 #if 0
         fprintf(stderr, "H5Idec_ref(0x%llx) returns %d.\n", (unsigned long long)id, ref_count);
 #endif
-        if ( ref_count < 0 ) {
+        if (ref_count < 0) {
 
             assert(FALSE);
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                fprintf(stderr, "dec_ref():%d: H5Idec_ref(0x%llx) returns %d.\n", 
-                        tid, (unsigned long long)id, ref_count);
+                fprintf(stderr, "dec_ref():%d: H5Idec_ref(0x%llx) returns %d.\n", tid, (unsigned long long)id,
+                        ref_count);
             }
-        } else if ( 0 == ref_count ) {
+        }
+        else if (0 == ref_count) {
 
             int retries = -1;
 
@@ -6610,22 +6612,23 @@ dec_ref(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_t * id_o
 
             id_obj_k = atomic_load(&(id_obj_ptr->k));
 
-            if ( ! id_obj_k.discarded ) {
+            if (!id_obj_k.discarded) {
 
                 assert(FALSE);
 
                 success = FALSE;
 
-                if ( rpt_failures ) {
+                if (rpt_failures) {
 
-                    fprintf(stderr, 
-                           "dec_ref():%d: H5Idec_ref(0x%llx) returns 0, but id object not marked as discared.\n", 
-                           tid, (unsigned long long)id);
+                    fprintf(
+                        stderr,
+                        "dec_ref():%d: H5Idec_ref(0x%llx) returns 0, but id object not marked as discared.\n",
+                        tid, (unsigned long long)id);
                 }
             }
 
             /* mark *id_inst_k as discarded */
-            while ( ! id_inst_k.discarded ) {
+            while (!id_inst_k.discarded) {
 
                 mod_id_inst_k.in_progress        = id_inst_k.in_progress;
                 mod_id_inst_k.created            = id_inst_k.created;
@@ -6636,7 +6639,7 @@ dec_ref(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_t * id_o
                 mod_id_inst_k.future             = id_inst_k.future;
                 mod_id_inst_k.realized           = id_inst_k.realized;
                 mod_id_inst_k.future_id_src      = id_inst_k.future_id_src;
-                mod_id_inst_k.id                = id_inst_k.id;
+                mod_id_inst_k.id                 = id_inst_k.id;
 
                 atomic_compare_exchange_strong(&(id_inst_ptr->k), &id_inst_k, mod_id_inst_k);
 
@@ -6645,31 +6648,31 @@ dec_ref(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_t * id_o
                 retries++;
             }
 
-            if ( retries > 0 ) {
+            if (retries > 0) {
 
                 assert(FALSE);
 
                 success = FALSE;
 
-                if ( rpt_failures ) {
+                if (rpt_failures) {
 
-                    fprintf(stderr, 
-                           "dec_ref():%d: %d retries needed  to mark instance as discarded after H5Idec_ref(0x%llx) returns 0.\n", 
-                           tid, retries, (unsigned long long)id);
+                    fprintf(stderr,
+                            "dec_ref():%d: %d retries needed  to mark instance as discarded after "
+                            "H5Idec_ref(0x%llx) returns 0.\n",
+                            tid, retries, (unsigned long long)id);
                 }
             }
         }
     }
 
-    if ( ds ) {
+    if (ds) {
 
         H5I_dump_nz_stats(stdout, "H5Idec_ref");
     }
 
-    return(success ? 0 : 1);
+    return (success ? 0 : 1);
 
 } /* dec_ref() */
-
 
 /***********************************************************************************************
  * try_dec_ref()
@@ -6677,11 +6680,11 @@ dec_ref(id_type_t * id_type_ptr, id_instance_t * id_inst_ptr, id_object_t * id_o
  *      Call H5Ided_ref() on id_instance_array[id_index].k.id, and update stats in
  *      id_instance_array[id_index] to reflect success or failure.
  *
- *      Record the relevant elements of the state of id_instance_array[id_index] both 
+ *      Record the relevant elements of the state of id_instance_array[id_index] both
  *      before and after the call to H5Idec_ref().  Test to see if this data is consistent
  *      with the result of the call to H5Idec_ref(), and trigger an assert if it is not.
  *
- *      Note that it is not always possible to determine the expected result from this 
+ *      Note that it is not always possible to determine the expected result from this
  *      data -- if so, test is ambiguous.
  *
  *      Note that id_instance_array[id_index].k.id may or may not have been registered on
@@ -6714,16 +6717,16 @@ try_dec_ref(int id_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
     memset(&pre_id_inst_k, 0, sizeof(id_instance_kernel_t));
     memset(&post_id_inst_k, 0, sizeof(id_instance_kernel_t));
 
-    if ( cs ) {
+    if (cs) {
 
         H5I_clear_stats();
     }
 
-    if ( success ) {
+    if (success) {
 
-        assert( ( 0 <= id_index ) && ( id_index < NUM_ID_INSTANCES ) );
+        assert((0 <= id_index) && (id_index < NUM_ID_INSTANCES));
 
-        assert( ID_INSTANCE_T__TAG == id_instance_array[id_index].tag );
+        assert(ID_INSTANCE_T__TAG == id_instance_array[id_index].tag);
 
         pre_remove_verify_starts = atomic_load(&(id_instance_array[id_index].remove_verify_starts));
 
@@ -6739,59 +6742,58 @@ try_dec_ref(int id_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
 
         post_remove_verify_starts = atomic_load(&(id_instance_array[id_index].remove_verify_starts));
 
-        if ( ref_count < 0 ) {
+        if (ref_count < 0) {
 
             success = FALSE;
+        }
+        else if (0 == ref_count) {
 
-        } else if ( 0 == ref_count ) {
-
-            int                  obj_index;
-            id_object_kernel_t   id_obj_k;
+            int                obj_index;
+            id_object_kernel_t id_obj_k;
 
             success = TRUE;
 
-            /* 0 == ref_count implies that the call to H5Idec_ref() deleted the id from the 
-             * the index.  
+            /* 0 == ref_count implies that the call to H5Idec_ref() deleted the id from the
+             * the index.
              */
             /* If the deleted id was a future, there is no associated object */
-            if ( !pre_id_inst_k.future ) {
+            if (!pre_id_inst_k.future) {
                 /* Verify that the associated object is marked as being deleted. */
                 obj_index = atomic_load(&(id_instance_array[id_index].obj_index));
 
-                assert( ( 0 <= obj_index ) && ( obj_index < NUM_ID_INSTANCES ) );
+                assert((0 <= obj_index) && (obj_index < NUM_ID_INSTANCES));
 
-                assert( ID_OBJECT_T__TAG == objects_array[obj_index].tag );
+                assert(ID_OBJECT_T__TAG == objects_array[obj_index].tag);
 
                 /* verify that the object is marked as being discarded */
                 id_obj_k = atomic_load(&(objects_array[obj_index].k));
 
-                assert( id_obj_k.discarded );
-
+                assert(id_obj_k.discarded);
 
                 /* verify that id_instance_array[id_index] is marked as being deleted */
             }
-            assert( post_id_inst_k.discarded );
+            assert(post_id_inst_k.discarded);
+        }
+        else {
 
-        } else {
-
-            assert( ref_count > 0 );
+            assert(ref_count > 0);
 
             success = TRUE;
         }
 
-        if ( ( ( ! pre_id_inst_k.created ) && ( ! post_id_inst_k.created ) ) ||
-             ( ( pre_id_inst_k.discarded ) && ( post_id_inst_k.discarded ) ) ) {
+        if (((!pre_id_inst_k.created) && (!post_id_inst_k.created)) ||
+            ((pre_id_inst_k.discarded) && (post_id_inst_k.discarded))) {
 
             /* the id was not registered during at the time H5Idec_ref() was called -- thus
              * the call cannot have succeeded.
              */
-            assert( ! success );
-            assert( -1 == ref_count );
+            assert(!success);
+            assert(-1 == ref_count);
+        }
+        else if ((pre_id_inst_k.created) && (!pre_id_inst_k.discarded) && (post_id_inst_k.created) &&
+                 (!post_id_inst_k.discarded)) {
 
-        } else if ( ( pre_id_inst_k.created ) && ( ! pre_id_inst_k.discarded ) &&
-                    ( post_id_inst_k.created ) && ( ! post_id_inst_k.discarded ) ) {
-
-            if ( ( ( 0 < pre_remove_verify_starts ) || ( 0 < post_remove_verify_starts ) ) && ( ref_count <= 0 ) ) {
+            if (((0 < pre_remove_verify_starts) || (0 < post_remove_verify_starts)) && (ref_count <= 0)) {
 
                 /* A call to H5Iremove verify() may have been active about the time the call to
                  * H5Idec_ref() was made.  Since this could explain the failure, log an
@@ -6799,82 +6801,83 @@ try_dec_ref(int id_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
                  */
                 ambiguous_results++;
 
-                if ( rpt_failures ) {
+                if (rpt_failures) {
 
                     fprintf(stderr,
                             "try_dec_ref(%d):%d failure possibly explained by a remove verify in progress.\n",
                             id_index, tid);
                 }
-            } else if ( post_id_inst_k.closing ) {
-        
-                ambiguous_results++;  
-        
-                if ( rpt_failures ) { 
-        
-                    fprintf(stderr,   
-                            "try_dec_ref(%d):%d failure possibly explained by closing flag.\n",
+            }
+            else if (post_id_inst_k.closing) {
+
+                ambiguous_results++;
+
+                if (rpt_failures) {
+
+                    fprintf(stderr, "try_dec_ref(%d):%d failure possibly explained by closing flag.\n",
                             id_index, tid);
                 }
-            } else { 
+            }
+            else {
 
-                /* ID was registerd before and after the call to H5Idec_ref().  Thus the 
-                 * call must have succeeded, and the returned ref count must have been 
+                /* ID was registerd before and after the call to H5Idec_ref().  Thus the
+                 * call must have succeeded, and the returned ref count must have been
                  * positive.
                  */
-                assert( ref_count > 0 );
-                assert( success );
+                assert(ref_count > 0);
+                assert(success);
             }
-        } else if ( ref_count == 0 ) {
+        }
+        else if (ref_count == 0) {
 
             /* H5Idec_ref() reports that the target ID existed, had a ref count of 1,
              * and was therefore deleted.
              */
-            assert( ( pre_id_inst_k.created ) && ( ! pre_id_inst_k.discarded ) );
-            assert( ( post_id_inst_k.created ) && ( post_id_inst_k.discarded ) );
-            assert( success );
+            assert((pre_id_inst_k.created) && (!pre_id_inst_k.discarded));
+            assert((post_id_inst_k.created) && (post_id_inst_k.discarded));
+            assert(success);
 
             atomic_fetch_add(&(id_instance_array[id_index].dec_ref_deletes), 1ULL);
-
-        } else {
+        }
+        else {
 
             /* The id may or may not have been registered when H5Idec_ref() was called.
              * Thus the test result is ambiguous.
              */
             ambiguous_results++;
-        } 
+        }
     }
 
-    if ( ds ) {
+    if (ds) {
 
         H5I_dump_nz_stats(stdout, "H5Idec_ref");
     }
 
-    if ( success ) {
+    if (success) {
 
         atomic_fetch_add(&(id_instance_array[id_index].successful_dec_refs), 1ULL);
-
-    } else {
+    }
+    else {
 
         atomic_fetch_add(&(id_instance_array[id_index].failed_dec_refs), 1ULL);
     }
 
-    return(ambiguous_results);
+    return (ambiguous_results);
 
 } /* try_dec_ref() */
-
 
 /***********************************************************************************************
  * inc_ref()
  *
  *    If the target id instance is listed as existing in the supplied instance of id_instance_t,
- *    call H5Iinc_ref() to increment the current ref count for the id.  
+ *    call H5Iinc_ref() to increment the current ref count for the id.
  *
  *    If the cs flag is set, the function clears statistics on entry.
  *
  *    If the ds flag is set, the function displays statistics just before exit.
  *
- *    If the rpt_failures flag is set, the function will write an error message to stderr 
- *    if an error is detected.  If such an error message is generated, the triggering thread 
+ *    If the rpt_failures flag is set, the function will write an error message to stderr
+ *    if an error is detected.  If such an error message is generated, the triggering thread
  *    (given in the tid field) is reported.
  *
  *    The function returns 0 on success (i.e. if the target ID exists and H5Iinc_ref() returned
@@ -6883,16 +6886,16 @@ try_dec_ref(int id_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
  ***********************************************************************************************/
 
 static int
-inc_ref(id_instance_t * id_inst_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
+inc_ref(id_instance_t *id_inst_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
 {
-    hbool_t success = TRUE; /* will set to FALSE on failure */
+    hbool_t              success = TRUE; /* will set to FALSE on failure */
     hid_t                id;
     int                  ref_count;
     id_instance_kernel_t id_inst_k;
 
     memset(&id_inst_k, 0, sizeof(id_instance_kernel_t));
 
-    if ( ( NULL == id_inst_ptr ) || ( ID_INSTANCE_T__TAG != id_inst_ptr->tag ) ) {
+    if ((NULL == id_inst_ptr) || (ID_INSTANCE_T__TAG != id_inst_ptr->tag)) {
 
         assert(FALSE);
 
@@ -6900,84 +6903,85 @@ inc_ref(id_instance_t * id_inst_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failure
 
         ref_count = -2;
 
-        if ( rpt_failures ) {
+        if (rpt_failures) {
 
             fprintf(stderr, "inc_ref():%d: Invalid params on entry.\n", tid);
         }
     }
 
-    if ( cs ) {
+    if (cs) {
 
         H5I_clear_stats();
     }
 
     id_inst_k = atomic_load(&(id_inst_ptr->k));
 
-    if ( success ) {
+    if (success) {
 
         id_inst_k = atomic_load(&(id_inst_ptr->k));
 
-        if ( ( id_inst_k.in_progress) || ( ! id_inst_k.created ) || ( id_inst_k.discarded ) ) {
+        if ((id_inst_k.in_progress) || (!id_inst_k.created) || (id_inst_k.discarded)) {
 
             assert(FALSE);
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                 fprintf(stderr, 
-                   "inc_ref():%d: target id inst either in progress, not created, or discarded on entry.\n",
-                   tid);
+                fprintf(
+                    stderr,
+                    "inc_ref():%d: target id inst either in progress, not created, or discarded on entry.\n",
+                    tid);
             }
-        } else {
+        }
+        else {
 
             id = id_inst_k.id;
         }
     }
 
-    if ( success ) {
+    if (success) {
 
         ref_count = H5Iinc_ref(id);
 
-        if ( ref_count <= 0 ) {
+        if (ref_count <= 0) {
 
             assert(FALSE);
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                 fprintf(stderr, "inc_ref():%d: H5Iinc_ref(0x%llx) returned %d -- positive value expected.\n",
-                         tid, (unsigned long long)id, ref_count);
+                fprintf(stderr, "inc_ref():%d: H5Iinc_ref(0x%llx) returned %d -- positive value expected.\n",
+                        tid, (unsigned long long)id, ref_count);
             }
         }
     }
 
-    if ( ds ) {
+    if (ds) {
 
         H5I_dump_nz_stats(stdout, "H5Iinc_ref");
     }
 
-    return(success ? 0 : 1);
+    return (success ? 0 : 1);
 
 } /* inc_ref() */
-
 
 /***********************************************************************************************
  * try_inc_ref()
  *
- *      Call H5Iinc_ref() on id_instance_array[id_index].k.id, and update stats in 
- *      id_instance_array[id_index] to reflect success or failure.  
+ *      Call H5Iinc_ref() on id_instance_array[id_index].k.id, and update stats in
+ *      id_instance_array[id_index] to reflect success or failure.
  *
- *      If the target id is defined both before and after the call to H5Iinc_ref(), the 
+ *      If the target id is defined both before and after the call to H5Iinc_ref(), the
  *      function asserts that the call to H5Iinc_ref() is successful.
  *
  *      If the target id is undefined both before and after the call to H5Iinc_ref(), the
  *      function asserts that the call to H5Iinc_ref() is unsuccessful.
  *
  *      If the target id is undefined on one side of the call to H5Iinc_ref(), and defined
- *      on the other side, the expected result of the call to H5Iinc_ref() is unknown, and 
- *      thus the result of the test is ambiguous.  
+ *      on the other side, the expected result of the call to H5Iinc_ref() is unknown, and
+ *      thus the result of the test is ambiguous.
  *
  *      Note that id_instance_array[id_index].k.id may or may not have been registered on
  *      entry.
@@ -6990,12 +6994,12 @@ inc_ref(id_instance_t * id_inst_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failure
  *      if an error is detected.  If such an error message is generated, the triggering thread
  *      (given in the tid field) is reported.
  *                                                     JRM -- 4/4/24
- * 
- * Changes: 
- * 
+ *
+ * Changes:
+ *
  *      Altered the check asserting that the call to H5Iinc_ref() is unsuccessful to check the
  *      defined state before the call to H5Iinc_ref() only rather than requiring that both the
- *      before AND after states are both false. If the defined state before the H5Iinc_ref() 
+ *      before AND after states are both false. If the defined state before the H5Iinc_ref()
  *      call is FALSE, we pass an invalid ID into the inc ref call and expect failure. Removing
  *      the rule that both must be false prevents some valid and expected cases from counting
  *      as ambiguities, i.e. the ID was created during the call. This is legal and doesn't alter
@@ -7021,16 +7025,16 @@ try_inc_ref(int id_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
     memset(&pre_id_inst_k, 0, sizeof(id_instance_kernel_t));
     memset(&post_id_inst_k, 0, sizeof(id_instance_kernel_t));
 
-    assert( ( id_index >= 0 ) && ( id_index < NUM_ID_INSTANCES ) );
+    assert((id_index >= 0) && (id_index < NUM_ID_INSTANCES));
 
-    if ( cs ) {
+    if (cs) {
 
         H5I_clear_stats();
     }
 
-    if ( success ) {
+    if (success) {
 
-        assert( ID_INSTANCE_T__TAG == id_instance_array[id_index].tag );
+        assert(ID_INSTANCE_T__TAG == id_instance_array[id_index].tag);
 
         pre_remove_verify_starts = atomic_load(&(id_instance_array[id_index].remove_verify_starts));
 
@@ -7040,7 +7044,7 @@ try_inc_ref(int id_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
 
         obj_index = atomic_load(&(id_instance_array[id_index].obj_index));
 
-        assert( ( -1 == obj_index ) || ( ( 0 <= obj_index ) && ( obj_index < NUM_ID_OBJECTS ) ) );
+        assert((-1 == obj_index) || ((0 <= obj_index) && (obj_index < NUM_ID_OBJECTS)));
 
         ref_count = H5Iinc_ref(id);
 
@@ -7050,68 +7054,68 @@ try_inc_ref(int id_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
 #if 0
         fprintf(stderr, "H5Iinc_ref(0x%llx) returns %d.\n", (unsigned long long)id, ref_count);
 #endif
-        if ( ref_count <= 0 ) {
+        if (ref_count <= 0) {
 
             success = FALSE;
         }
 
-        if ( ( pre_id_inst_k.created ) && ( post_id_inst_k.created ) &&
-             ( ! pre_id_inst_k.discarded ) && ( ! post_id_inst_k.discarded ) ) {
+        if ((pre_id_inst_k.created) && (post_id_inst_k.created) && (!pre_id_inst_k.discarded) &&
+            (!post_id_inst_k.discarded)) {
 
-            if ( ( ( 0 < pre_remove_verify_starts ) || ( 0 < post_remove_verify_starts ) )  && ( ! success ) ) {
+            if (((0 < pre_remove_verify_starts) || (0 < post_remove_verify_starts)) && (!success)) {
 
                 ambiguous_results++;
 
-                if ( rpt_failures ) {
+                if (rpt_failures) {
 
-                    fprintf(stderr, "try_inc_ref(%d):%d: failure possibly caused by a concurrent remove verify.\n",
+                    fprintf(stderr,
+                            "try_inc_ref(%d):%d: failure possibly caused by a concurrent remove verify.\n",
                             id_index, tid);
                 }
-            } else if ( post_id_inst_k.closing ) {
-        
-                ambiguous_results++;  
-        
-                if ( rpt_failures ) { 
-        
-                    fprintf(stderr,   
-                            "try_inc_ref(%d):%d failure possibly explained by closing flag.\n",
+            }
+            else if (post_id_inst_k.closing) {
+
+                ambiguous_results++;
+
+                if (rpt_failures) {
+
+                    fprintf(stderr, "try_inc_ref(%d):%d failure possibly explained by closing flag.\n",
                             id_index, tid);
                 }
-            } else {
+            }
+            else {
 
                 assert(success);
             }
-
-        } else if ( ( ( pre_id_inst_k.discarded ) && ( post_id_inst_k.discarded ) ) || 
-                    ( ( ! pre_id_inst_k.created ) && ( ! post_id_inst_k.created ) ) ) {
-
+        }
+        else if (((pre_id_inst_k.discarded) && (post_id_inst_k.discarded)) ||
+                 ((!pre_id_inst_k.created) && (!post_id_inst_k.created))) {
 
             assert(!success);
-
-        } else {
+        }
+        else {
 
             ambiguous_results++;
         }
     }
 
-    if ( ds ) {
+    if (ds) {
 
         H5I_dump_nz_stats(stdout, "H5Idec_ref");
     }
 
-    if ( success ) {
+    if (success) {
 
         atomic_fetch_add(&(id_instance_array[id_index].successful_inc_refs), 1ULL);
-
-    } else {
+    }
+    else {
 
         atomic_fetch_add(&(id_instance_array[id_index].failed_inc_refs), 1ULL);
     }
 
-    return(ambiguous_results);
+    return (ambiguous_results);
 
 } /* try_inc_ref() */
-
 
 /***********************************************************************************************
  * get_ref()
@@ -7127,17 +7131,17 @@ try_inc_ref(int id_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
  *
  *    If the ds flag is set, the function displays statistics just before exit.
  *
- *    If the rpt_failures flag is set, the function will write an error message to stderr 
- *    if an error is detected.  If such an error message is generated, the triggering thread 
+ *    If the rpt_failures flag is set, the function will write an error message to stderr
+ *    if an error is detected.  If such an error message is generated, the triggering thread
  *    (given in the tid field) is reported.
  *
- *    The function returns 0 on success (i.e. if the target ID exists and is successfully 
+ *    The function returns 0 on success (i.e. if the target ID exists and is successfully
  *    removed, and 1 if not, or if any error (including non-existance) is detected.
  *
  ***********************************************************************************************/
 
 static int
-get_ref(id_instance_t * id_inst_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
+get_ref(id_instance_t *id_inst_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
 {
     hbool_t              success = TRUE; /* will set to FALSE on failure */
     hid_t                id;
@@ -7146,7 +7150,7 @@ get_ref(id_instance_t * id_inst_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failure
 
     memset(&id_inst_k, 0, sizeof(id_instance_kernel_t));
 
-    if ( ( NULL == id_inst_ptr ) || ( ID_INSTANCE_T__TAG != id_inst_ptr->tag ) ) {
+    if ((NULL == id_inst_ptr) || (ID_INSTANCE_T__TAG != id_inst_ptr->tag)) {
 
         assert(FALSE);
 
@@ -7154,72 +7158,74 @@ get_ref(id_instance_t * id_inst_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failure
 
         ref_count = -2;
 
-        if ( rpt_failures ) {
+        if (rpt_failures) {
 
             fprintf(stderr, "get_ref():%d: Invalid params on entry.\n", tid);
         }
     }
 
-    if ( cs ) {
+    if (cs) {
 
         H5I_clear_stats();
     }
 
-    if ( success ) {
+    if (success) {
 
         id_inst_k = atomic_load(&(id_inst_ptr->k));
 
-        if ( ( id_inst_k.in_progress) || ( ! id_inst_k.created ) || ( id_inst_k.discarded ) ) {
+        if ((id_inst_k.in_progress) || (!id_inst_k.created) || (id_inst_k.discarded)) {
 
             assert(FALSE);
 
-            success = FALSE;
+            success   = FALSE;
             ref_count = -2;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                 fprintf(stderr, 
-                   "get_ref():%d: target id inst either in progress, not created, or discarded on entry.\n",
-                   tid);
+                fprintf(
+                    stderr,
+                    "get_ref():%d: target id inst either in progress, not created, or discarded on entry.\n",
+                    tid);
             }
-        } else {
+        }
+        else {
 
             id = id_inst_k.id;
         }
     }
 
-    if ( success ) {
+    if (success) {
 
         ref_count = H5Iget_ref(id);
     }
 
-    if ( ds ) {
+    if (ds) {
 
         H5I_dump_nz_stats(stdout, "H5Iget_ref");
     }
 
-    return(ref_count);
+    return (ref_count);
 
 } /* get_ref()() */
 
 /***********************************************************************************************
  * try_get_ref()
  *
- *      Call H5Iget_ref() on id_instance_array[id_index].k.id, and update stats in 
- *      id_instance_array[id_index] to reflect success or failure.  
+ *      Call H5Iget_ref() on id_instance_array[id_index].k.id, and update stats in
+ *      id_instance_array[id_index] to reflect success or failure.
  *
- *      If the target id is defined both before and after the call to H5Iget_ref(), the 
- *      function asserts that the call to H5Iget_ref() is successful and returns a 
- *      non-negative value (since we are using an external API call, it is possible that 
+ *      If the target id is defined both before and after the call to H5Iget_ref(), the
+ *      function asserts that the call to H5Iget_ref() is successful and returns a
+ *      non-negative value (since we are using an external API call, it is possible that
  *      the application ref coutn is zero, while the internal ref count is positive).
  *
  *      If the target id is undefined both before and after the call to H5Iget_ref(), the
- *      function asserts that the call to H5Iget_ref() returns -1, which indicates that 
+ *      function asserts that the call to H5Iget_ref() returns -1, which indicates that
  *      that the target id doesn't exist.
  *
  *      If the target id is undefined on one side of the call to H5Iinc_ref(), and defined
- *      on the other side, the expected result of the call to H5Iinc_ref() is unknown, and 
- *      thus the result of the test is ambiguous.  
+ *      on the other side, the expected result of the call to H5Iinc_ref() is unknown, and
+ *      thus the result of the test is ambiguous.
  *
  *      Note that id_instance_array[id_index].k.id may or may not have been registered on
  *      entry.
@@ -7252,16 +7258,16 @@ try_get_ref(int id_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
     memset(&pre_id_inst_k, 0, sizeof(id_instance_kernel_t));
     memset(&post_id_inst_k, 0, sizeof(id_instance_kernel_t));
 
-    assert( ( id_index >= 0 ) && ( id_index < NUM_ID_INSTANCES ) );
+    assert((id_index >= 0) && (id_index < NUM_ID_INSTANCES));
 
-    if ( cs ) {
+    if (cs) {
 
         H5I_clear_stats();
     }
 
-    if ( success ) {
+    if (success) {
 
-        assert( ID_INSTANCE_T__TAG == id_instance_array[id_index].tag );
+        assert(ID_INSTANCE_T__TAG == id_instance_array[id_index].tag);
 
         pre_remove_verify_starts = atomic_load(&(id_instance_array[id_index].remove_verify_starts));
 
@@ -7277,65 +7283,66 @@ try_get_ref(int id_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
 #if 0
         fprintf(stderr, "H5Iget_ref(0x%llx) returns %d.\n", (unsigned long long)id, ref_count);
 #endif
-        if ( ref_count < 0 ) {
+        if (ref_count < 0) {
 
             success = FALSE;
         }
 
-        if ( ( pre_id_inst_k.created ) && ( post_id_inst_k.created ) &&
-             ( ! pre_id_inst_k.discarded ) && ( ! post_id_inst_k.discarded ) ) {
+        if ((pre_id_inst_k.created) && (post_id_inst_k.created) && (!pre_id_inst_k.discarded) &&
+            (!post_id_inst_k.discarded)) {
 
-            if ( ( ( pre_remove_verify_starts > 0 ) || ( post_remove_verify_starts > 0 ) ) && ( ! success ) ) {
+            if (((pre_remove_verify_starts > 0) || (post_remove_verify_starts > 0)) && (!success)) {
 
                 ambiguous_results++;
 
-                if ( rpt_failures ) {
+                if (rpt_failures) {
 
                     fprintf(stderr,
                             "try_get_ref(%d):%d failure possibly explained by a remove verify in progress.\n",
                             id_index, tid);
                 }
-            } else if ( post_id_inst_k.closing ) {
+            }
+            else if (post_id_inst_k.closing) {
 
                 ambiguous_results++;
 
-                if ( rpt_failures ) {
+                if (rpt_failures) {
 
-                    fprintf(stderr,
-                            "try_get_ref(%d):%d failure possibly explained by closing flag.\n",
+                    fprintf(stderr, "try_get_ref(%d):%d failure possibly explained by closing flag.\n",
                             id_index, tid);
                 }
-            } else {
+            }
+            else {
 
                 assert(success);
             }
-        } else if ( ( ( ! pre_id_inst_k.created ) && ( ! post_id_inst_k.created ) ) ||
-                    ( ( pre_id_inst_k.discarded ) && ( post_id_inst_k.discarded ) ) ) {
+        }
+        else if (((!pre_id_inst_k.created) && (!post_id_inst_k.created)) ||
+                 ((pre_id_inst_k.discarded) && (post_id_inst_k.discarded))) {
 
             assert(!success);
-
-        } else {
+        }
+        else {
 
             ambiguous_results++;
         }
     }
 
-    if ( success ) {
+    if (success) {
 
         atomic_fetch_add(&(id_instance_array[id_index].successful_get_ref_cnts), 1ULL);
-
-    } else {
+    }
+    else {
 
         atomic_fetch_add(&(id_instance_array[id_index].failed_get_ref_cnts), 1ULL);
     }
 
-
-    if ( ds ) {
+    if (ds) {
 
         H5I_dump_nz_stats(stdout, "H5Iget_ref");
     }
 
-    return(ambiguous_results);
+    return (ambiguous_results);
 
 } /* try_get_ref() */
 
@@ -7346,98 +7353,98 @@ try_get_ref(int id_index, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
  *    call H5Inmembers() to obtain the current number of IDs of the supplied type, and then
  *    return this value.
  *
- *    If the target id instance is not listed as existing, H5Inmembers() failes, or any other 
+ *    If the target id instance is not listed as existing, H5Inmembers() failes, or any other
  *    error is detected, return -1.
  *
  *    If the cs flag is set, the function clears statistics on entry.
  *
  *    If the ds flag is set, the function displays statistics just before exit.
  *
- *    If the rpt_failures flag is set, the function will write an error message to stderr 
- *    if an error is detected.  If such an error message is generated, the triggering thread 
+ *    If the rpt_failures flag is set, the function will write an error message to stderr
+ *    if an error is detected.  If such an error message is generated, the triggering thread
  *    (given in the tid field) is reported.
  *
  ***********************************************************************************************/
 
 static int
-nmembers(id_type_t * id_type_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
+nmembers(id_type_t *id_type_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
 {
-    hbool_t              success = TRUE; /* will set to FALSE on failure */
-    hsize_t              num_members;    /* H5Inmembers() will overwrite this if it is called */
-    H5I_type_t           type;
-    id_type_kernel_t     id_type_k;
+    hbool_t          success = TRUE; /* will set to FALSE on failure */
+    hsize_t          num_members;    /* H5Inmembers() will overwrite this if it is called */
+    H5I_type_t       type;
+    id_type_kernel_t id_type_k;
 
     memset(&id_type_k, 0, sizeof(id_type_kernel_t));
 
-    if ( ( NULL == id_type_ptr ) || ( ID_TYPE_T__TAG != id_type_ptr->tag ) ) {
+    if ((NULL == id_type_ptr) || (ID_TYPE_T__TAG != id_type_ptr->tag)) {
 
         assert(FALSE);
 
         success = FALSE;
 
-        if ( rpt_failures ) {
+        if (rpt_failures) {
 
             fprintf(stderr, "nmembers():%d: Invalid params on entry.\n", tid);
         }
     }
 
-    if ( cs ) {
+    if (cs) {
 
         H5I_clear_stats();
     }
 
     id_type_k = atomic_load(&(id_type_ptr->k));
 
-    if ( success ) {
+    if (success) {
 
-        if ( ( id_type_k.in_progress) || ( ! id_type_k.created ) || ( id_type_k.discarded ) ) {
+        if ((id_type_k.in_progress) || (!id_type_k.created) || (id_type_k.discarded)) {
 
             assert(FALSE);
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                 fprintf(stderr, 
-                        "nmembers():%d: target id type either in progress, not created, or discarded on entry.\n",
-                        tid);
+                fprintf(
+                    stderr,
+                    "nmembers():%d: target id type either in progress, not created, or discarded on entry.\n",
+                    tid);
             }
-        } else {
+        }
+        else {
 
             type = (H5I_type_t)id_type_k.type_id;
         }
-    } 
+    }
 
+    if (success) {
 
-    if ( success ) {
-
-        if ( H5Inmembers(type, &num_members) != SUCCEED ) {
+        if (H5Inmembers(type, &num_members) != SUCCEED) {
 
             assert(FALSE);
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                 fprintf(stderr, 
-                        "nmembers():%d: H5Inmembers(type = 0x%llx, &num_members) failed.\n",
-                        tid, (unsigned long long)type);
+                fprintf(stderr, "nmembers():%d: H5Inmembers(type = 0x%llx, &num_members) failed.\n", tid,
+                        (unsigned long long)type);
             }
         }
     }
 
-    if ( ds ) {
+    if (ds) {
 
         H5I_dump_nz_stats(stdout, "nmembers");
     }
 
-    if ( success ) {
+    if (success) {
 
-        return((int)num_members);
+        return ((int)num_members);
+    }
+    else {
 
-    } else {
-
-        return(-1);
+        return (-1);
     }
 
 } /* nmembers() */
@@ -7452,60 +7459,60 @@ nmembers(id_type_t * id_type_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failures, 
  *
  *    If the ds flag is set, the function displays statistics just before exit.
  *
- *    If the rpt_failures flag is set, the function will write an error message to stderr 
- *    if an error is detected.  If such an error message is generated, the triggering thread 
+ *    If the rpt_failures flag is set, the function will write an error message to stderr
+ *    if an error is detected.  If such an error message is generated, the triggering thread
  *    (given in the tid field) is reported.
  *
  ***********************************************************************************************/
 
 static htri_t
-type_exists(id_type_t * id_type_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
+type_exists(id_type_t *id_type_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
 {
-    htri_t               result = TRUE; /* will set to FAIL on failure */
-    H5I_type_t           type;
-    id_type_kernel_t     id_type_k;
+    htri_t           result = TRUE; /* will set to FAIL on failure */
+    H5I_type_t       type;
+    id_type_kernel_t id_type_k;
 
     memset(&id_type_k, 0, sizeof(id_type_kernel_t));
 
-    if ( ( NULL == id_type_ptr ) || ( ID_TYPE_T__TAG != id_type_ptr->tag ) ) {
+    if ((NULL == id_type_ptr) || (ID_TYPE_T__TAG != id_type_ptr->tag)) {
 
         assert(FALSE);
 
         result = FAIL;
 
-        if ( rpt_failures ) {
+        if (rpt_failures) {
 
             fprintf(stderr, "type_exists():%d: Invalid params on entry.\n", tid);
         }
     }
 
-    if ( cs ) {
+    if (cs) {
 
         H5I_clear_stats();
     }
 
     id_type_k = atomic_load(&(id_type_ptr->k));
 
-    if ( ! id_type_k.created ) {
+    if (!id_type_k.created) {
 
         result = FAIL;
-
-    } else {
+    }
+    else {
 
         type = (H5I_type_t)id_type_k.type_id;
-    } 
+    }
 
-    if ( result == TRUE ) {
+    if (result == TRUE) {
 
         result = H5Itype_exists(type);
     }
 
-    if ( ds ) {
+    if (ds) {
 
         H5I_dump_nz_stats(stdout, "H5Itype_exists");
     }
 
-    return(result);
+    return (result);
 
 } /* type_exists() */
 
@@ -7513,306 +7520,306 @@ type_exists(id_type_t * id_type_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failure
  * inc_type_ref()
  *
  *    If the target type id is listed as having been created in the supplied instance of id_type_t,
- *    call H5Iinc_type_ref().  If this call returns success, return 0.  If it fails, or if any 
+ *    call H5Iinc_type_ref().  If this call returns success, return 0.  If it fails, or if any
  *    other error is detected (including target type id not created) return 1.
  *
  *    If the cs flag is set, the function clears statistics on entry.
  *
  *    If the ds flag is set, the function displays statistics just before exit.
  *
- *    If the rpt_failures flag is set, the function will write an error message to stderr 
- *    if an error is detected.  If such an error message is generated, the triggering thread 
+ *    If the rpt_failures flag is set, the function will write an error message to stderr
+ *    if an error is detected.  If such an error message is generated, the triggering thread
  *    (given in the tid field) is reported.
  *
  ***********************************************************************************************/
 
 static int
-inc_type_ref(id_type_t * id_type_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
+inc_type_ref(id_type_t *id_type_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
 {
-    hbool_t              success = TRUE; /* will set to FAIL on failure */
-    int                  ref_count;
-    H5I_type_t           type;
-    id_type_kernel_t     id_type_k;
+    hbool_t          success = TRUE; /* will set to FAIL on failure */
+    int              ref_count;
+    H5I_type_t       type;
+    id_type_kernel_t id_type_k;
 
     memset(&id_type_k, 0, sizeof(id_type_kernel_t));
 
-    if ( ( NULL == id_type_ptr ) || ( ID_TYPE_T__TAG != id_type_ptr->tag ) ) {
+    if ((NULL == id_type_ptr) || (ID_TYPE_T__TAG != id_type_ptr->tag)) {
 
         assert(FALSE);
 
         success = FALSE;
 
-        if ( rpt_failures ) {
+        if (rpt_failures) {
 
             fprintf(stderr, "inc_type_ref():%d: Invalid params on entry.\n", tid);
         }
     }
 
-    if ( cs ) {
+    if (cs) {
 
         H5I_clear_stats();
     }
 
     id_type_k = atomic_load(&(id_type_ptr->k));
 
-    if ( success ) {
+    if (success) {
 
-        if ( ! id_type_k.created ) {
+        if (!id_type_k.created) {
 
             assert(FALSE);
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                 fprintf(stderr, "inc_type_ref():%d: target id type not created.\n", tid);
+                fprintf(stderr, "inc_type_ref():%d: target id type not created.\n", tid);
             }
-        } else {
+        }
+        else {
 
             type = (H5I_type_t)id_type_k.type_id;
         }
-    } 
+    }
 
-    if ( success ) {
+    if (success) {
 
         ref_count = H5Iinc_type_ref(type);
 
-        if ( ref_count == -1 ) {
+        if (ref_count == -1) {
 
             assert(FALSE);
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                 fprintf(stderr, "inc_type_ref():%d: H5Iinc_type_ref(0x%llx) reports failure.\n", 
-                         tid, (unsigned long long)type);
+                fprintf(stderr, "inc_type_ref():%d: H5Iinc_type_ref(0x%llx) reports failure.\n", tid,
+                        (unsigned long long)type);
             }
         }
     }
 
-    if ( ds ) {
+    if (ds) {
 
         H5I_dump_nz_stats(stdout, "H5Iinc_type_ref");
     }
 
-    return(success ? 0 : 1);
+    return (success ? 0 : 1);
 
 } /* inc_type_ref() */
-
 
 /***********************************************************************************************
  * dec_type_ref()
  *
  *    If the target type id is listed as having been created in the supplied instance of id_type_t,
- *    call H5Idec_type_ref().  If this call returns success, return 0.  If it fails, or if any 
+ *    call H5Idec_type_ref().  If this call returns success, return 0.  If it fails, or if any
  *    other error is detected (including target type id not created) return 1.
  *
  *    If the cs flag is set, the function clears statistics on entry.
  *
  *    If the ds flag is set, the function displays statistics just before exit.
  *
- *    If the rpt_failures flag is set, the function will write an error message to stderr 
- *    if an error is detected.  If such an error message is generated, the triggering thread 
+ *    If the rpt_failures flag is set, the function will write an error message to stderr
+ *    if an error is detected.  If such an error message is generated, the triggering thread
  *    (given in the tid field) is reported.
  *
  ***********************************************************************************************/
 
 static int
-dec_type_ref(id_type_t * id_type_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
+dec_type_ref(id_type_t *id_type_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
 {
-    hbool_t              success = TRUE; /* will set to FAIL on failure */
-    herr_t               ref_count;
-    H5I_type_t           type;
-    id_type_kernel_t     id_type_k;
+    hbool_t          success = TRUE; /* will set to FAIL on failure */
+    herr_t           ref_count;
+    H5I_type_t       type;
+    id_type_kernel_t id_type_k;
 
     memset(&id_type_k, 0, sizeof(id_type_kernel_t));
 
-    if ( ( NULL == id_type_ptr ) || ( ID_TYPE_T__TAG != id_type_ptr->tag ) ) {
+    if ((NULL == id_type_ptr) || (ID_TYPE_T__TAG != id_type_ptr->tag)) {
 
         assert(FALSE);
 
         success = FALSE;
 
-        if ( rpt_failures ) {
+        if (rpt_failures) {
 
             fprintf(stderr, "dec_type_ref():%d: Invalid params on entry.\n", tid);
         }
     }
 
-    if ( cs ) {
+    if (cs) {
 
         H5I_clear_stats();
     }
 
     id_type_k = atomic_load(&(id_type_ptr->k));
 
-    if ( success ) {
+    if (success) {
 
-        if ( ! id_type_k.created ) {
+        if (!id_type_k.created) {
 
             assert(FALSE);
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                 fprintf(stderr, "dec_type_ref():%d: target id type not created.\n", tid);
+                fprintf(stderr, "dec_type_ref():%d: target id type not created.\n", tid);
             }
-        } else {
+        }
+        else {
 
             type = (H5I_type_t)id_type_k.type_id;
         }
-    } 
+    }
 
-    if ( success ) {
+    if (success) {
 
         ref_count = H5Idec_type_ref(type);
 
-        if ( ref_count == -1 ) {
+        if (ref_count == -1) {
 
             assert(FALSE);
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                 fprintf(stderr, "dec_type_ref():%d: H5Idec_type_ref(0x%llx) reports failure.\n", 
-                         tid, (unsigned long long)type);
+                fprintf(stderr, "dec_type_ref():%d: H5Idec_type_ref(0x%llx) reports failure.\n", tid,
+                        (unsigned long long)type);
             }
         }
     }
 
-    if ( ds ) {
+    if (ds) {
 
         H5I_dump_nz_stats(stdout, "H5Idec_type_ref");
     }
 
-    return( success ? 0 : 1 );
+    return (success ? 0 : 1);
 
 } /* dec_type_ref() */
-
 
 /***********************************************************************************************
  * try_dec_type_ref()
  *
  *    If the target type id is listed as having been created in the supplied instance of id_type_t,
- *    call H5Idec_type_ref().  If this call returns success, return 0.  If it fails, or if any 
+ *    call H5Idec_type_ref().  If this call returns success, return 0.  If it fails, or if any
  *    other error is detected (including target type id not created) return 1.
  *
  *    If the cs flag is set, the function clears statistics on entry.
  *
  *    If the ds flag is set, the function displays statistics just before exit.
  *
- *    If the rpt_failures flag is set, the function will write an error message to stderr 
- *    if an error is detected.  If such an error message is generated, the triggering thread 
+ *    If the rpt_failures flag is set, the function will write an error message to stderr
+ *    if an error is detected.  If such an error message is generated, the triggering thread
  *    (given in the tid field) is reported.
  *
  ***********************************************************************************************/
 
 static int
-try_dec_type_ref(id_type_t * id_type_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
+try_dec_type_ref(id_type_t *id_type_ptr, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
 {
-    hbool_t              success = TRUE; /* will set to FAIL on failure */
-    herr_t               ref_count;
-    H5I_type_t           type;
-    id_type_kernel_t     id_type_k;
+    hbool_t          success = TRUE; /* will set to FAIL on failure */
+    herr_t           ref_count;
+    H5I_type_t       type;
+    id_type_kernel_t id_type_k;
 
     memset(&id_type_k, 0, sizeof(id_type_kernel_t));
 
-    if ( ( NULL == id_type_ptr ) || ( ID_TYPE_T__TAG != id_type_ptr->tag ) ) {
+    if ((NULL == id_type_ptr) || (ID_TYPE_T__TAG != id_type_ptr->tag)) {
 
         assert(FALSE);
 
         success = FALSE;
 
-        if ( rpt_failures ) {
+        if (rpt_failures) {
 
             fprintf(stderr, "dec_type_ref():%d: Invalid params on entry.\n", tid);
         }
     }
 
-    if ( cs ) {
+    if (cs) {
 
         H5I_clear_stats();
     }
 
     id_type_k = atomic_load(&(id_type_ptr->k));
 
-    if ( success ) {
+    if (success) {
 
-        if ( ! id_type_k.created ) {
+        if (!id_type_k.created) {
 
             assert(FALSE);
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                 fprintf(stderr, "dec_type_ref():%d: target id type not created.\n", tid);
+                fprintf(stderr, "dec_type_ref():%d: target id type not created.\n", tid);
             }
-        } else {
+        }
+        else {
 
             type = (H5I_type_t)id_type_k.type_id;
         }
-    } 
+    }
 
-    if ( success ) {
+    if (success) {
 
         ref_count = H5Idec_type_ref(type);
 
-        if ( ref_count == -1 ) {
+        if (ref_count == -1) {
 
             assert(FALSE);
 
             success = FALSE;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                 fprintf(stderr, "dec_type_ref():%d: H5Idec_type_ref(0x%llx) reports failure.\n", 
-                         tid, (unsigned long long)type);
+                fprintf(stderr, "dec_type_ref():%d: H5Idec_type_ref(0x%llx) reports failure.\n", tid,
+                        (unsigned long long)type);
             }
         }
     }
 
-    if ( ds ) {
+    if (ds) {
 
         H5I_dump_nz_stats(stdout, "H5Idec_type_ref");
     }
 
-    return( success ? 0 : 1 );
+    return (success ? 0 : 1);
 
 } /* try_dec_type_ref() */
-
 
 /***********************************************************************************************
  * create_types()
  *
  *    Register types_count new types, associate them with entries in types_array[] starting with
- *    types_start, and every types_stride entries thereafter until types_count types have been 
+ *    types_start, and every types_stride entries thereafter until types_count types have been
  *    created.  For each effected instance of id_type_t in types_array[], update that
- *    structure accordingly.  
+ *    structure accordingly.
  *
  *    These type creations are implemented via calls to register_type().
  *
  *    The cs and ds flags are simply passed to register_type().
  *
- *    If the rpt_failures flag is set, the function will write an error message to stderr 
- *    if one or more errors are detected.  If such an error message is generated, the 
+ *    If the rpt_failures flag is set, the function will write an error message to stderr
+ *    if one or more errors are detected.  If such an error message is generated, the
  *    triggering thread (given in the tid field) is reported.
  *
  *    The function returns 0 on success, and the number of errors encountered otherwise.
- * 
+ *
  ***********************************************************************************************/
 
 static int
-create_types(int types_start, int types_count, int types_stride, hbool_t cs, hbool_t ds,
-             hbool_t rpt_failures, int tid)
+create_types(int types_start, int types_count, int types_stride, hbool_t cs, hbool_t ds, hbool_t rpt_failures,
+             int tid)
 {
     int i;
     int err_cnt = 0;
 
-    for ( i = types_start; i < types_start + (types_count * types_stride); i += types_stride ) {
+    for (i = types_start; i < types_start + (types_count * types_stride); i += types_stride) {
 
         assert(i >= 0);
         assert(i < NUM_ID_TYPES);
@@ -7820,32 +7827,32 @@ create_types(int types_start, int types_count, int types_stride, hbool_t cs, hbo
         err_cnt += register_type(&(types_array[i]), cs, ds, rpt_failures, tid);
     }
 
-    if ( ( err_cnt > 0 ) && ( rpt_failures ) ) {
+    if ((err_cnt > 0) && (rpt_failures)) {
 
-        fprintf(stderr, "create_types():%d: %d errors reported (types start/count/stride = %d/%d/%d)\n",
-                tid, err_cnt, types_start, types_count, types_stride);
+        fprintf(stderr, "create_types():%d: %d errors reported (types start/count/stride = %d/%d/%d)\n", tid,
+                err_cnt, types_start, types_count, types_stride);
     }
 
-    return(err_cnt);
+    return (err_cnt);
 
 } /* create_types() */
 
 /***********************************************************************************************
  * dec_type_refs()
  *
- *    Decrement the reference counts on types_count types, starting with types_start in 
+ *    Decrement the reference counts on types_count types, starting with types_start in
  *    types_array[], and then every types_stride entries thereafter until the reference counts
  *    of types_count types have been decremented.  Do this via calls to dec_type_ref().
  *    Return the number of errors encountered.
  *
  *    The cs and ds flags are simply passed to dec_type_ref().
  *
- *    If the rpt_failures flag is set, the function will write an error message to stderr 
- *    if one or more errors are detected.  If such an error message is generated, the 
+ *    If the rpt_failures flag is set, the function will write an error message to stderr
+ *    if one or more errors are detected.  If such an error message is generated, the
  *    triggering thread (given in the tid field) is reported.
  *
  *    The function returns 0 on success, and the number of errors encountered otherwise.
- * 
+ *
  ***********************************************************************************************/
 
 static int
@@ -7855,7 +7862,7 @@ dec_type_refs(int types_start, int types_count, int types_stride, hbool_t cs, hb
     int err_cnt = 0;
     int i;
 
-    for ( i = types_start; i < types_start + (types_count * types_stride); i += types_stride ) {
+    for (i = types_start; i < types_start + (types_count * types_stride); i += types_stride) {
 
         assert(i >= 0);
         assert(i < NUM_ID_TYPES);
@@ -7864,42 +7871,42 @@ dec_type_refs(int types_start, int types_count, int types_stride, hbool_t cs, hb
         assert(0 == err_cnt);
     }
 
-    if ( ( err_cnt > 0 ) && ( rpt_failures ) ) {
+    if ((err_cnt > 0) && (rpt_failures)) {
 
-        fprintf(stderr, "dec_type_refs():%d: %d errors reported (types start/count/stride = %d/%d/%d)\n",
-                tid, err_cnt, types_start, types_count, types_stride);
+        fprintf(stderr, "dec_type_refs():%d: %d errors reported (types start/count/stride = %d/%d/%d)\n", tid,
+                err_cnt, types_start, types_count, types_stride);
     }
 
-    return(err_cnt);
+    return (err_cnt);
 
 } /* dec_type_refs() */
 
 /***********************************************************************************************
  * inc_type_refs()
  *
- *    Increment the reference counts on types_count types, starting with types_start in 
+ *    Increment the reference counts on types_count types, starting with types_start in
  *    types_array[], and then every types_stride entry thereafter until the reference counts
  *    of types_count types have been incremented.  Do this via calls to inc_type_ref().
  *    Return the number of errors encountered.
  *
  *    The cs and ds flags are simply passed to inc_type_ref().
  *
- *    If the rpt_failures flag is set, the function will write an error message to stderr 
- *    if one or more errors are detected.  If such an error message is generated, the 
+ *    If the rpt_failures flag is set, the function will write an error message to stderr
+ *    if one or more errors are detected.  If such an error message is generated, the
  *    triggering thread (given in the tid field) is reported.
  *
  *    The function returns 0 on success, and the number of errors encountered otherwise.
- * 
+ *
  ***********************************************************************************************/
 
 static int
-inc_type_refs(int types_start, int types_count, int types_stride,
-              hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
+inc_type_refs(int types_start, int types_count, int types_stride, hbool_t cs, hbool_t ds,
+              hbool_t rpt_failures, int tid)
 {
     int err_cnt = 0;
     int i;
 
-    for ( i = types_start; i < types_start + (types_count * types_stride); i += types_stride ) {
+    for (i = types_start; i < types_start + (types_count * types_stride); i += types_stride) {
 
         assert(i >= 0);
         assert(i < NUM_ID_TYPES);
@@ -7908,24 +7915,24 @@ inc_type_refs(int types_start, int types_count, int types_stride,
         assert(0 == err_cnt);
     }
 
-    if ( ( err_cnt > 0 ) && ( rpt_failures ) ) {
+    if ((err_cnt > 0) && (rpt_failures)) {
 
-        fprintf(stderr, "inc_type_refs():%d: %d errors reported (types start/count/stride = %d/%d/%d)\n",
-                tid, err_cnt, types_start, types_count, types_stride);
+        fprintf(stderr, "inc_type_refs():%d: %d errors reported (types start/count/stride = %d/%d/%d)\n", tid,
+                err_cnt, types_start, types_count, types_stride);
     }
 
-    return(err_cnt);
+    return (err_cnt);
 
 } /* inc_type_refs() */
 
 static int
-destroy_types(int types_start, int types_count, int types_stride,
-              hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
+destroy_types(int types_start, int types_count, int types_stride, hbool_t cs, hbool_t ds,
+              hbool_t rpt_failures, int tid)
 {
     int i;
     int err_cnt = 0;
 
-    for ( i = types_start; i < types_start + (types_count * types_stride); i += types_stride ) {
+    for (i = types_start; i < types_start + (types_count * types_stride); i += types_stride) {
 
         assert(i >= 0);
         assert(i < NUM_ID_TYPES);
@@ -7934,40 +7941,39 @@ destroy_types(int types_start, int types_count, int types_stride,
         assert(0 == err_cnt);
     }
 
-    if ( ( err_cnt > 0 ) && ( rpt_failures ) ) {
+    if ((err_cnt > 0) && (rpt_failures)) {
 
-        fprintf(stderr, "destroy_types():%d: %d errors reported (types start/count/stride = %d/%d/%d)\n",
-                tid, err_cnt, types_start, types_count, types_stride);
+        fprintf(stderr, "destroy_types():%d: %d errors reported (types start/count/stride = %d/%d/%d)\n", tid,
+                err_cnt, types_start, types_count, types_stride);
     }
 
-    return(err_cnt);
+    return (err_cnt);
 
 } /* destroy_types() */
 
 /*******************************************************************************************
  * register_ids()
  *
- *    Register ids_count new ids, associate them with entries in id_instance_array[] starting 
- *    with ids_start, and every ids_stride entries thereafter until ids_count ids have been 
+ *    Register ids_count new ids, associate them with entries in id_instance_array[] starting
+ *    with ids_start, and every ids_stride entries thereafter until ids_count ids have been
  *    created.  For each effected instance of id_instance_t in id_inst_array[] and effected
- *    instance of id_object_t in id_objs_array[], update those structures accordingly.  
+ *    instance of id_object_t in id_objs_array[], update those structures accordingly.
  *
  *    These id creations are implemented via calls to register_type().
  *
  *    The cs and ds flags are simply passed to register_id().
  *
- *    If the rpt_failures flag is set, the function will write an error message to stderr 
- *    if one or more errors are detected.  If such an error message is generated, the 
+ *    If the rpt_failures flag is set, the function will write an error message to stderr
+ *    if one or more errors are detected.  If such an error message is generated, the
  *    triggering thread (given in the tid field) is reported.
  *
  *    The function returns 0 on success, and the number of errors encountered otherwise.
- * 
+ *
  *
  *******************************************************************************************/
 
 static int
-register_ids(int types_start, int types_count, int types_stride,
-             int ids_start, int ids_count, int ids_stride,
+register_ids(int types_start, int types_count, int types_stride, int ids_start, int ids_count, int ids_stride,
              hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
 {
     int i;
@@ -7975,27 +7981,28 @@ register_ids(int types_start, int types_count, int types_stride,
     int k;
     int err_cnt = 0;
 
-    for ( j = ids_start, k = 0; j < ids_start + (ids_count * ids_stride); j++, k = (k + 1) % types_count ) {
+    for (j = ids_start, k = 0; j < ids_start + (ids_count * ids_stride); j++, k = (k + 1) % types_count) {
 
-        assert( k >= 0);
-        assert( k < types_stride);
+        assert(k >= 0);
+        assert(k < types_stride);
         i = types_start + (k * types_stride);
-        assert( i >= types_start );
-        assert( i < types_start + (types_count * types_stride) );
+        assert(i >= types_start);
+        assert(i < types_start + (types_count * types_stride));
 
-        err_cnt += register_id(&(types_array[i]), &(id_instance_array[j]), &(objects_array[j]), 
-                             cs, ds, rpt_failures, tid);
+        err_cnt += register_id(&(types_array[i]), &(id_instance_array[j]), &(objects_array[j]), cs, ds,
+                               rpt_failures, tid);
         assert(0 == err_cnt);
     }
 
-    if ( ( err_cnt > 0 ) && ( rpt_failures ) ) {
+    if ((err_cnt > 0) && (rpt_failures)) {
 
-        fprintf(stderr, 
-               "register_ids():%d: %d errors reported (types st/cnt/str = %d/%d/%d, ids st/cnt/str = %d/%d/%d)\n",
-               tid, err_cnt, types_start, types_count, types_stride, ids_start, ids_count, ids_stride);
+        fprintf(stderr,
+                "register_ids():%d: %d errors reported (types st/cnt/str = %d/%d/%d, ids st/cnt/str = "
+                "%d/%d/%d)\n",
+                tid, err_cnt, types_start, types_count, types_stride, ids_start, ids_count, ids_stride);
     }
 
-    return(err_cnt);
+    return (err_cnt);
 
 } /* register_ids() */
 
@@ -8003,27 +8010,26 @@ register_ids(int types_start, int types_count, int types_stride,
  * define_futures_0()
  *
  *    Define ids_count future IDs, associate them with entries  in id_instance_array[] starting
- *    with ids_start, and every ids_stride entries thereafter until ids_count future ids have 
+ *    with ids_start, and every ids_stride entries thereafter until ids_count future ids have
  *    been defined. For each effected instance of id_instance_t in id_inst_array[] and effected
- *    instance of id_object_t in id_objs_array[], update those structures accordingly. 
- * 
+ *    instance of id_object_t in id_objs_array[], update those structures accordingly.
+ *
  *    These future id creations are implemented via calls to reserve_future_id().
  *
  *    The cs and ds flags are simply passed to define_future_0().
  *
- *    If the rpt_failures flag is set, the function will write an error message to stderr 
- *    if one or more errors are detected.  If such an error message is generated, the 
+ *    If the rpt_failures flag is set, the function will write an error message to stderr
+ *    if one or more errors are detected.  If such an error message is generated, the
  *    triggering thread (given in the tid field) is reported.
  *
  *    The function returns 0 on success, and the number of errors encountered otherwise.
- * 
+ *
  *                                                A.Z.O -- 11/16/25
- * 
+ *
  ***********************************************************************************************/
 static int
-define_futures_0(int types_start, int types_count, int types_stride,
-                 int ids_start, int ids_count, int ids_stride,
-                 hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
+define_futures_0(int types_start, int types_count, int types_stride, int ids_start, int ids_count,
+                 int ids_stride, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
 {
     int err_cnt = 0;
     int j;
@@ -8031,7 +8037,7 @@ define_futures_0(int types_start, int types_count, int types_stride,
     int i;
     int n;
 
-    for ( n = 0; n < ids_count; n++ ) {
+    for (n = 0; n < ids_count; n++) {
 
         j = ids_start + (n * ids_stride);
         k = n % types_count;
@@ -8043,55 +8049,55 @@ define_futures_0(int types_start, int types_count, int types_stride,
         assert(i >= types_start);
         assert(i < types_start + (types_count * types_stride));
 
-        err_cnt += define_future_0(&(types_array[i]), &(id_instance_array[j]), &(objects_array[j]), cs, ds, rpt_failures, tid);
+        err_cnt += define_future_0(&(types_array[i]), &(id_instance_array[j]), &(objects_array[j]), cs, ds,
+                                   rpt_failures, tid);
 
         /* Optional throttle to encourage interleaving */
         if ((n % 128) == 0)
             usleep(100);
-
     }
 
-    if ( ( err_cnt  > 0 ) && ( rpt_failures ) ) {
+    if ((err_cnt > 0) && (rpt_failures)) {
 
         fprintf(stderr,
-                "define_futures_0():%d: %d errors (types st/cnt/str=%d/%d/%d ids st/cnt/str=%d/%d/%d)\n",
-                tid, err_cnt, types_start, types_count, types_stride, ids_start, ids_count, ids_stride);
+                "define_futures_0():%d: %d errors (types st/cnt/str=%d/%d/%d ids st/cnt/str=%d/%d/%d)\n", tid,
+                err_cnt, types_start, types_count, types_stride, ids_start, ids_count, ids_stride);
     }
 
-    return(err_cnt);
+    return (err_cnt);
 
 } /* define_futures_0() */
 
 /*******************************************************************************************
  * reserve_future_ids()
- * 
+ *
  *      Register ids_count new future IDs, associate them with entries in id_instance_array[]
- *      starting with ids_start, and every ids_stride entries thereafter until ids_count ids 
- *      have been created. For each effected instance of id_instance_t in id_inst_array[], 
+ *      starting with ids_start, and every ids_stride entries thereafter until ids_count ids
+ *      have been created. For each effected instance of id_instance_t in id_inst_array[],
  *      update those structures accordingly.
- * 
+ *
  *      Note we are not doing anything with the instance of id_object_t in id_objs_array[]
  *      here since the future ID system does not associate an object with a future ID until
- *      that ID is realized. 
- * 
+ *      that ID is realized.
+ *
  *      These future ID creations are implemented via calls to reserve_future_id().
- * 
+ *
  *      The cs and ds flags are simply passed to reserve_future_id().
- * 
+ *
  *      If the rpt_failures flag is set, the function will write an error message to stderr
- *      if one or more errors are detected. If such an error message is generated, the 
+ *      if one or more errors are detected. If such an error message is generated, the
  *      triggering thread (given in the tid field) is reported.
- * 
+ *
  *      The function returns 0 on success, and the number of errors encountered otherwise.
- *  
+ *
  *                                                              A.Z.O. -- 10/26/25
- *  
+ *
  ******************************************************************************************/
 
 static int
-reserve_future_ids(int types_start, int types_count, int types_stride,
-                   int ids_start, int ids_count, int ids_stride, H5I_progress_func_t progress_cb,
-                   hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
+reserve_future_ids(int types_start, int types_count, int types_stride, int ids_start, int ids_count,
+                   int ids_stride, H5I_progress_func_t progress_cb, hbool_t cs, hbool_t ds,
+                   hbool_t rpt_failures, int tid)
 {
     int err_cnt = 0;
     int n;
@@ -8099,7 +8105,7 @@ reserve_future_ids(int types_start, int types_count, int types_stride,
     int k;
     int i;
 
-    for ( n = 0; n < ids_count; n++ ) {
+    for (n = 0; n < ids_count; n++) {
 
         j = ids_start + (n * ids_stride);
         k = n % types_count;
@@ -8111,43 +8117,42 @@ reserve_future_ids(int types_start, int types_count, int types_stride,
         assert(i >= types_start);
         assert(i < types_start + (types_count * types_stride));
 
-        err_cnt += reserve_future_id(&(types_array[i]), &(id_instance_array[j]), progress_cb,
-                                     cs, ds, rpt_failures, tid);
-
+        err_cnt += reserve_future_id(&(types_array[i]), &(id_instance_array[j]), progress_cb, cs, ds,
+                                     rpt_failures, tid);
     }
 
-    if ( ( err_cnt > 0 ) && ( rpt_failures ) ) {
+    if ((err_cnt > 0) && (rpt_failures)) {
 
         fprintf(stderr,
                 "reserve_future_ids():%d: %d errors (types st/cnt/str=%d/%d/%d ids st/cnt/str=%d/%d/%d)\n",
                 tid, err_cnt, types_start, types_count, types_stride, ids_start, ids_count, ids_stride);
     }
 
-    return(err_cnt);
+    return (err_cnt);
 
 } /* reserve_future_ids() */
 
 /*******************************************************************************************
  * dec_refs()
  *
- *    Decrement the ref counts of ids_count existing IDs.  If the ref count drops to zero, 
- *    mark the associated instances of id_object_t as deleted, and verify that the associated 
+ *    Decrement the ref counts of ids_count existing IDs.  If the ref count drops to zero,
+ *    mark the associated instances of id_object_t as deleted, and verify that the associated
  *    instances of id_object_t are marked as deleted as well.
- *    
- *    Decrement the ref counts of IDs associated with entries in id_instance_array[] starting 
- *    with ids_start, and every ids_stride entries thereafter until ids_count ids have been 
- *    created.  
+ *
+ *    Decrement the ref counts of IDs associated with entries in id_instance_array[] starting
+ *    with ids_start, and every ids_stride entries thereafter until ids_count ids have been
+ *    created.
  *
  *    These id creations are implemented via calls to register_type().
  *
  *    The cs and ds flags are simply passed to register_id().
  *
- *    If the rpt_failures flag is set, the function will write an error message to stderr 
- *    if one or more errors are detected.  If such an error message is generated, the 
+ *    If the rpt_failures flag is set, the function will write an error message to stderr
+ *    if one or more errors are detected.  If such an error message is generated, the
  *    triggering thread (given in the tid field) is reported.
  *
  *    The function returns 0 on success, and the number of errors encountered otherwise.
- * 
+ *
  *
  *******************************************************************************************/
 
@@ -8165,47 +8170,47 @@ dec_refs(int types_start, int types_count, int types_stride, int ids_start, int 
             types_start, types_count, types_stride, ids_start, ids_count, ids_stride);
 #endif
 
-    for ( j = ids_start, k = 0; 
-          j < ids_start + (ids_count * ids_stride); 
-          j += ids_stride, k = (k + 1) % types_count ) {
+    for (j = ids_start, k   = 0; j < ids_start + (ids_count * ids_stride);
+         j += ids_stride, k = (k + 1) % types_count) {
 
-        assert( k >= 0);
-        assert( k < types_stride);
+        assert(k >= 0);
+        assert(k < types_stride);
         i = types_start + (k * types_stride);
-        assert( i >= types_start );
-        assert( i < types_start + (types_count * types_stride) );
+        assert(i >= types_start);
+        assert(i < types_start + (types_count * types_stride));
 
-        err_cnt += dec_ref(&(types_array[i]), &(id_instance_array[j]), &(objects_array[j]), 
-                           cs, ds, rpt_failures, tid);
+        err_cnt += dec_ref(&(types_array[i]), &(id_instance_array[j]), &(objects_array[j]), cs, ds,
+                           rpt_failures, tid);
         assert(0 == err_cnt);
     }
 
-    if ( ( err_cnt > 0 ) && ( rpt_failures ) ) {
+    if ((err_cnt > 0) && (rpt_failures)) {
 
-        fprintf(stderr, 
-               "dec_refs():%d: %d errors reported (types st/cnt/str = %d/%d/%d, ids st/cnt/str = %d/%d/%d)\n",
-               tid, err_cnt, types_start, types_count, types_stride, ids_start, ids_count, ids_stride);
+        fprintf(
+            stderr,
+            "dec_refs():%d: %d errors reported (types st/cnt/str = %d/%d/%d, ids st/cnt/str = %d/%d/%d)\n",
+            tid, err_cnt, types_start, types_count, types_stride, ids_start, ids_count, ids_stride);
     }
 
-    return(err_cnt);
+    return (err_cnt);
 
 } /* dec_refs() */
 
 /*******************************************************************************************
  * inc_refs()
  *
- *    Increment the ref counts of ids_count existing IDs. 
- *    
- *    Increment the ref counts of IDs associated with entries in id_instance_array[] starting 
- *    with ids_start, and every ids_stride entries thereafter until ids_count ids have been 
- *    created.  
+ *    Increment the ref counts of ids_count existing IDs.
+ *
+ *    Increment the ref counts of IDs associated with entries in id_instance_array[] starting
+ *    with ids_start, and every ids_stride entries thereafter until ids_count ids have been
+ *    created.
  *
  *    These id creations are implemented via calls to register_type().
  *
  *    The cs and ds flags are simply passed to register_id().
  *
- *    If the rpt_failures flag is set, the function will write an error message to stderr 
- *    if one or more errors are detected.  If such an error message is generated, the 
+ *    If the rpt_failures flag is set, the function will write an error message to stderr
+ *    if one or more errors are detected.  If such an error message is generated, the
  *    triggering thread (given in the tid field) is reported.
  *
  *    The function returns 0 on success, and the number of errors encountered otherwise.
@@ -8213,41 +8218,40 @@ dec_refs(int types_start, int types_count, int types_stride, int ids_start, int 
  *******************************************************************************************/
 
 static int
-inc_refs(int ids_start, int ids_count, int ids_stride,
-         hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
+inc_refs(int ids_start, int ids_count, int ids_stride, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
 {
     int err_cnt = 0;
     int j;
 
-    for ( j = ids_start; j < ids_start + (ids_count * ids_stride); j += ids_stride ) {
+    for (j = ids_start; j < ids_start + (ids_count * ids_stride); j += ids_stride) {
 
         err_cnt += inc_ref(&(id_instance_array[j]), cs, ds, rpt_failures, tid);
         assert(0 == err_cnt);
     }
 
-    if ( ( err_cnt > 0 ) && ( rpt_failures ) ) {
+    if ((err_cnt > 0) && (rpt_failures)) {
 
-        fprintf(stderr, "inc_refs():%d: %d errors reported (ids st/cnt/str = %d/%d/%d)\n",
-                tid, err_cnt, ids_start, ids_count, ids_stride);
+        fprintf(stderr, "inc_refs():%d: %d errors reported (ids st/cnt/str = %d/%d/%d)\n", tid, err_cnt,
+                ids_start, ids_count, ids_stride);
     }
 
-    return(err_cnt);
+    return (err_cnt);
 
 } /* inc_refs() */
 
 /*******************************************************************************************
  * verify_objects()
  *
- *    Verify that ids_count ids exist, and that their associated entries in 
- *    id_instance_array[] and id_objs_array[] (starting with ids_start, and every ids_stride 
+ *    Verify that ids_count ids exist, and that their associated entries in
+ *    id_instance_array[] and id_objs_array[] (starting with ids_start, and every ids_stride
  *    entries thereafter until ids_count ids have been verified) have been updated accordingly.
  *
  *    These verifications are implemented via calls to verify_object().
  *
  *    The cs and ds flags are simply passed to verify_object().
  *
- *    If the rpt_failures flag is set, the function will write an error message to stderr 
- *    if one or more errors are detected.  If such an error message is generated, the 
+ *    If the rpt_failures flag is set, the function will write an error message to stderr
+ *    if one or more errors are detected.  If such an error message is generated, the
  *    triggering thread (given in the tid field) is reported.
  *
  *    The function returns 0 on success, and the number of errors / failed verifications
@@ -8256,41 +8260,39 @@ inc_refs(int ids_start, int ids_count, int ids_stride,
  *******************************************************************************************/
 
 static int
-verify_objects(int types_start, int types_count, int types_stride,
-               int ids_start, int ids_count, int ids_stride,
-               hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
+verify_objects(int types_start, int types_count, int types_stride, int ids_start, int ids_count,
+               int ids_stride, hbool_t cs, hbool_t ds, hbool_t rpt_failures, int tid)
 {
     int i;
     int j;
     int k;
     int err_cnt = 0;
 
-    for ( j = ids_start, k = 0; 
-          j < ids_start + (ids_count * ids_stride); 
-          j += ids_stride, k = (k + 1) % types_count ) {
+    for (j = ids_start, k   = 0; j < ids_start + (ids_count * ids_stride);
+         j += ids_stride, k = (k + 1) % types_count) {
 
-        assert( k >= 0);
-        assert( k < types_stride);
+        assert(k >= 0);
+        assert(k < types_stride);
         i = types_start + (k * types_stride);
-        assert( i >= types_start );
-        assert( i < types_start + (types_count * types_stride) );
+        assert(i >= types_start);
+        assert(i < types_start + (types_count * types_stride));
 
-        err_cnt += object_verify(&(types_array[i]), &(id_instance_array[j]), &(objects_array[j]), 
-                                 cs, ds, rpt_failures, tid);
+        err_cnt += object_verify(&(types_array[i]), &(id_instance_array[j]), &(objects_array[j]), cs, ds,
+                                 rpt_failures, tid);
         assert(0 == err_cnt);
     }
 
-    if ( ( err_cnt > 0 ) && ( rpt_failures ) ) {
+    if ((err_cnt > 0) && (rpt_failures)) {
 
-        fprintf(stderr, 
-            "verify_objects():%d: %d errors reported (types st/cnt/str = %d/%d/%d, ids st/cnt/str = %d/%d/%d)\n",
-            tid, err_cnt, types_start, types_count, types_stride, ids_start, ids_count, ids_stride);
+        fprintf(stderr,
+                "verify_objects():%d: %d errors reported (types st/cnt/str = %d/%d/%d, ids st/cnt/str = "
+                "%d/%d/%d)\n",
+                tid, err_cnt, types_start, types_count, types_stride, ids_start, ids_count, ids_stride);
     }
 
-    return(err_cnt);
+    return (err_cnt);
 
 } /* verify_objects() */
-
 
 /*******************************************************************************************
 '*
@@ -8322,10 +8324,10 @@ verify_objects(int types_start, int types_count, int types_stride,
  *
  *    i) verify that both of the new IDs have ref count 2
  *
- *    j) decrement the ref count on one of the IDs, and verify that its ref count is 
+ *    j) decrement the ref count on one of the IDs, and verify that its ref count is
  *       is now 1.
  *
- *    k) decrement its ref count again, and verify that the number of IDs in the 
+ *    k) decrement its ref count again, and verify that the number of IDs in the
  *       type is now 1.
  *
  *    l) register two more IDs and verify that their ref counts are 1
@@ -8339,7 +8341,7 @@ verify_objects(int types_start, int types_count, int types_stride,
  *
  *    p) verify that the type exists.
  *
- *    q) Increment the type ref count, decrement it, and then verify that the type 
+ *    q) Increment the type ref count, decrement it, and then verify that the type
  *       still exits.
  *
  *    r) If i is even, decrement the ref count the ref count of the type.  If i is odd
@@ -8354,18 +8356,18 @@ verify_objects(int types_start, int types_count, int types_stride,
 static herr_t
 serial_test_1(TestParams_t H5_ATTR_UNUSED *params)
 {
-    hbool_t cs = FALSE;
-    hbool_t ds = FALSE;
+    hbool_t cs           = FALSE;
+    hbool_t ds           = FALSE;
     hbool_t rpt_failures = TRUE;
-    int i;
-    int j;
-    int k;
-    int l;
-    int m;
-    int err_cnt = 0;
-    int num_mem;
-    int ref_count;
-    int tid = 0;
+    int     i;
+    int     j;
+    int     k;
+    int     l;
+    int     m;
+    int     err_cnt = 0;
+    int     num_mem;
+    int     ref_count;
+    int     tid = 0;
 #if 0
     fprintf(stderr, "sizeof(hbool_t)              = %d\n", (int)sizeof(hbool_t));
     fprintf(stderr, "sizeof(bool)                 = %d\n", (int)sizeof(bool));
@@ -8378,17 +8380,16 @@ serial_test_1(TestParams_t H5_ATTR_UNUSED *params)
 #endif
     TESTING("MT ID serial test #1");
 
-
-    if ( H5open() < 0 ) {
+    if (H5open() < 0) {
 
         err_cnt++;
 
-        if ( rpt_failures ) {
+        if (rpt_failures) {
 
             fprintf(stderr, "serial_test_1():%d: H5open() failed.\n", 0);
         }
     }
-    for ( i = 0; i < NUM_ID_TYPES; i++ ) {
+    for (i = 0; i < NUM_ID_TYPES; i++) {
 
 #if 0
         if ( 1 == i || 2 == i ) {
@@ -8407,7 +8408,7 @@ serial_test_1(TestParams_t H5_ATTR_UNUSED *params)
         l = k + NUM_ID_TYPES;
         m = l + NUM_ID_TYPES;
 
-        if ( ds ) {
+        if (ds) {
 
             fprintf(stdout, "\ni/j/k/l/m = %d/%d/%d/%d/%d\n\n", i, j, k, l, m);
         }
@@ -8415,44 +8416,44 @@ serial_test_1(TestParams_t H5_ATTR_UNUSED *params)
         err_cnt += register_type(&(types_array[i]), cs, ds, rpt_failures, tid);
         assert(0 == err_cnt);
 
-        err_cnt += register_id(&(types_array[i]), &(id_instance_array[i]), &(objects_array[i]), 
-                               cs, ds, rpt_failures, tid);
+        err_cnt += register_id(&(types_array[i]), &(id_instance_array[i]), &(objects_array[i]), cs, ds,
+                               rpt_failures, tid);
         assert(0 == err_cnt);
 
-        err_cnt += object_verify(&(types_array[i]), &(id_instance_array[i]), &(objects_array[i]), 
-                                 cs, ds, rpt_failures, tid);
+        err_cnt += object_verify(&(types_array[i]), &(id_instance_array[i]), &(objects_array[i]), cs, ds,
+                                 rpt_failures, tid);
         assert(0 == err_cnt);
 
         err_cnt += get_type(&(types_array[i]), &(id_instance_array[i]), cs, ds, rpt_failures, tid);
         assert(0 == err_cnt);
 
-        err_cnt += remove_verify(&(types_array[i]), &(id_instance_array[i]), &(objects_array[i]), 
-                                 cs, ds, rpt_failures, tid);
+        err_cnt += remove_verify(&(types_array[i]), &(id_instance_array[i]), &(objects_array[i]), cs, ds,
+                                 rpt_failures, tid);
         assert(0 == err_cnt);
 
-        err_cnt += register_id(&(types_array[i]), &(id_instance_array[j]), &(objects_array[j]),
-                               cs, ds, rpt_failures, tid);
+        err_cnt += register_id(&(types_array[i]), &(id_instance_array[j]), &(objects_array[j]), cs, ds,
+                               rpt_failures, tid);
         assert(0 == err_cnt);
-      
-        err_cnt += register_id(&(types_array[i]), &(id_instance_array[k]), &(objects_array[k]),
-                               cs, ds, rpt_failures, tid);
+
+        err_cnt += register_id(&(types_array[i]), &(id_instance_array[k]), &(objects_array[k]), cs, ds,
+                               rpt_failures, tid);
         assert(0 == err_cnt);
-      
+
         ref_count = get_ref(&(id_instance_array[j]), cs, ds, rpt_failures, tid);
-        if ( ref_count != 1 ) {
+        if (ref_count != 1) {
             err_cnt++;
             assert(FALSE);
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
                 fprintf(stderr, "serial_test_1():%d: ref_count = %d -- 1 expected.\n", tid, ref_count);
             }
         }
 
         ref_count = get_ref(&(id_instance_array[k]), cs, ds, rpt_failures, tid);
-        if ( ref_count != 1 ) {
+        if (ref_count != 1) {
             err_cnt++;
             assert(FALSE);
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
                 fprintf(stderr, "serial_test_1():%d: ref_count = %d -- 1 expected.\n", tid, ref_count);
             }
@@ -8463,78 +8464,78 @@ serial_test_1(TestParams_t H5_ATTR_UNUSED *params)
 
         err_cnt += inc_ref(&(id_instance_array[k]), cs, ds, rpt_failures, tid);
         assert(0 == err_cnt);
-      
+
         ref_count = get_ref(&(id_instance_array[j]), cs, ds, rpt_failures, tid);
-        if ( ref_count != 2 ) {
+        if (ref_count != 2) {
             err_cnt++;
             assert(FALSE);
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
                 fprintf(stderr, "serial_test_1():%d: ref_count = %d -- 2 expected.\n", tid, ref_count);
             }
         }
 
         ref_count = get_ref(&(id_instance_array[k]), cs, ds, rpt_failures, tid);
-        if ( ref_count != 2 ) {
+        if (ref_count != 2) {
             err_cnt++;
             assert(FALSE);
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
                 fprintf(stderr, "serial_test_1():%d: ref_count = %d -- 2 expected.\n", tid, ref_count);
             }
         }
 
-        err_cnt += dec_ref(&(types_array[i]), &(id_instance_array[j]), &(objects_array[j]), 
-                           cs, ds, rpt_failures, tid);
+        err_cnt += dec_ref(&(types_array[i]), &(id_instance_array[j]), &(objects_array[j]), cs, ds,
+                           rpt_failures, tid);
         assert(0 == err_cnt);
-      
+
         ref_count = get_ref(&(id_instance_array[j]), cs, ds, rpt_failures, tid);
-        if ( ref_count != 1 ) {
+        if (ref_count != 1) {
             err_cnt++;
             assert(FALSE);
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
                 fprintf(stderr, "serial_test_1():%d: ref_count = %d -- 1 expected.\n", tid, ref_count);
             }
         }
 
-        err_cnt += dec_ref(&(types_array[i]), &(id_instance_array[j]), &(objects_array[j]), 
-                           cs, ds, rpt_failures, tid);
+        err_cnt += dec_ref(&(types_array[i]), &(id_instance_array[j]), &(objects_array[j]), cs, ds,
+                           rpt_failures, tid);
         assert(0 == err_cnt);
 
-        if ( 1 != (num_mem = nmembers(&(types_array[i]), cs, ds, rpt_failures, tid)) ) {
+        if (1 != (num_mem = nmembers(&(types_array[i]), cs, ds, rpt_failures, tid))) {
 
             err_cnt++;
             assert(FALSE);
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
                 fprintf(stderr, "serial_test_1():%d: nmembers returns %d, 1 expected.\n", tid, num_mem);
             }
         }
 
-        err_cnt += register_id(&(types_array[i]), &(id_instance_array[l]), &(objects_array[l]),
-                               cs, ds, rpt_failures, tid);
+        err_cnt += register_id(&(types_array[i]), &(id_instance_array[l]), &(objects_array[l]), cs, ds,
+                               rpt_failures, tid);
         assert(0 == err_cnt);
 
-        err_cnt += register_id(&(types_array[i]), &(id_instance_array[m]), &(objects_array[m]),
-                               cs, ds, rpt_failures, tid);
+        err_cnt += register_id(&(types_array[i]), &(id_instance_array[m]), &(objects_array[m]), cs, ds,
+                               rpt_failures, tid);
         assert(0 == err_cnt);
-      
+
         ref_count = get_ref(&(id_instance_array[l]), cs, ds, rpt_failures, tid);
-        if ( ref_count != 1 ) {
+        if (ref_count != 1) {
             err_cnt++;
             assert(FALSE);
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
                 fprintf(stderr, "serial_test_1():%d: ref_count = %d -- 1 expected.\n", tid, ref_count);
             }
         }
 
         ref_count = get_ref(&(id_instance_array[m]), cs, ds, rpt_failures, tid);
-        if ( ref_count != 1 ) {
+        if (ref_count != 1) {
             err_cnt++;
             assert(FALSE);
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
                 fprintf(stderr, "serial_test_1():%d: ref_count = %d -- 1 expected.\n", tid, ref_count);
             }
@@ -8545,66 +8546,63 @@ serial_test_1(TestParams_t H5_ATTR_UNUSED *params)
 
         err_cnt += inc_ref(&(id_instance_array[m]), cs, ds, rpt_failures, tid);
         assert(0 == err_cnt);
-      
+
         ref_count = get_ref(&(id_instance_array[l]), cs, ds, rpt_failures, tid);
-        if ( ref_count != 2 ) {
+        if (ref_count != 2) {
             err_cnt++;
             assert(FALSE);
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
                 fprintf(stderr, "serial_test_1():%d: ref_count = %d -- 2 expected.\n", tid, ref_count);
             }
         }
 
         ref_count = get_ref(&(id_instance_array[m]), cs, ds, rpt_failures, tid);
-        if ( ref_count != 2 ) {
+        if (ref_count != 2) {
             err_cnt++;
             assert(FALSE);
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
                 fprintf(stderr, "serial_test_1():%d: ref_count = %d -- 2 expected.\n", tid, ref_count);
             }
         }
 
-
-        if ( 3 != (num_mem = nmembers(&(types_array[i]), cs, ds, rpt_failures, tid)) ) {
+        if (3 != (num_mem = nmembers(&(types_array[i]), cs, ds, rpt_failures, tid))) {
 
             err_cnt++;
             assert(FALSE);
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
                 fprintf(stderr, "serial_test_1():%d: nmembers returns %d, 3 expected.\n", tid, num_mem);
             }
         }
-
 
         err_cnt += clear_type(&(types_array[i]), FALSE, cs, ds, rpt_failures, tid);
         assert(0 == err_cnt);
 
-
-        if ( 3 != (num_mem = nmembers(&(types_array[i]), cs, ds, rpt_failures, tid)) ) {
+        if (3 != (num_mem = nmembers(&(types_array[i]), cs, ds, rpt_failures, tid))) {
 
             err_cnt++;
             assert(FALSE);
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
                 fprintf(stderr, "serial_test_1():%d: nmembers returns %d, 3 expected.\n", tid, num_mem);
             }
         }
 
-
-        switch ( type_exists(&(types_array[i]), cs, ds, rpt_failures, tid) ) {
+        switch (type_exists(&(types_array[i]), cs, ds, rpt_failures, tid)) {
             case TRUE:
                 /* nothing to do -- this is the expected value */
                 break;
             case FALSE:
                 err_cnt++;
                 assert(FALSE);
-                if ( rpt_failures ) {
+                if (rpt_failures) {
 
-                    fprintf(stderr, 
-                    "serial_test_1():%d: type_exists(&(types_array[%d]), ...) returned FALSE, TRUE expected.\n",
-                    tid, i);
+                    fprintf(stderr,
+                            "serial_test_1():%d: type_exists(&(types_array[%d]), ...) returned FALSE, TRUE "
+                            "expected.\n",
+                            tid, i);
                 }
                 break;
             case FAIL:
@@ -8614,36 +8612,35 @@ serial_test_1(TestParams_t H5_ATTR_UNUSED *params)
             default:
                 err_cnt++;
                 assert(FALSE);
-                if ( rpt_failures ) {
+                if (rpt_failures) {
 
-                    fprintf(stderr, 
-                    "serial_test_1():%d: type_exists(&(types_array[%d]), ...) returned invalid value.\n",
-                    tid, i);
+                    fprintf(
+                        stderr,
+                        "serial_test_1():%d: type_exists(&(types_array[%d]), ...) returned invalid value.\n",
+                        tid, i);
                 }
                 break;
         }
-
 
         err_cnt += inc_type_ref(&(types_array[i]), cs, ds, rpt_failures, tid);
         assert(0 == err_cnt);
 
-
         err_cnt += dec_type_ref(&(types_array[i]), cs, ds, rpt_failures, tid);
         assert(0 == err_cnt);
 
-
-        switch ( type_exists(&(types_array[i]), cs, ds, rpt_failures, tid) ) {
+        switch (type_exists(&(types_array[i]), cs, ds, rpt_failures, tid)) {
             case TRUE:
                 /* nothing to do -- this is the expected value */
                 break;
             case FALSE:
                 err_cnt++;
                 assert(FALSE);
-                if ( rpt_failures ) {
+                if (rpt_failures) {
 
-                    fprintf(stderr, 
-                    "serial_test_1():%d: type_exists(&(types_array[%d]), ...) returned FALSE, TRUE expected.\n",
-                    tid, i);
+                    fprintf(stderr,
+                            "serial_test_1():%d: type_exists(&(types_array[%d]), ...) returned FALSE, TRUE "
+                            "expected.\n",
+                            tid, i);
                 }
                 break;
             case FAIL:
@@ -8653,37 +8650,37 @@ serial_test_1(TestParams_t H5_ATTR_UNUSED *params)
             default:
                 err_cnt++;
                 assert(FALSE);
-                if ( rpt_failures ) {
+                if (rpt_failures) {
 
-                    fprintf(stderr, 
-                    "serial_test_1():%d: type_exists(&(types_array[%d]), ...) returned invalid value.\n",
-                    tid, i);
+                    fprintf(
+                        stderr,
+                        "serial_test_1():%d: type_exists(&(types_array[%d]), ...) returned invalid value.\n",
+                        tid, i);
                 }
                 break;
         }
 
-
-        if ( (i % 2) > 0 ) {
+        if ((i % 2) > 0) {
 
             err_cnt += dec_type_ref(&(types_array[i]), cs, ds, rpt_failures, tid);
             assert(0 == err_cnt);
-
-        } else {
+        }
+        else {
 
             err_cnt += destroy_type(&(types_array[i]), cs, ds, rpt_failures, tid);
             assert(0 == err_cnt);
         }
 
-        
-        switch ( type_exists(&(types_array[i]), cs, ds, rpt_failures, tid) ) {
+        switch (type_exists(&(types_array[i]), cs, ds, rpt_failures, tid)) {
             case TRUE:
                 err_cnt++;
                 assert(FALSE);
-                if ( rpt_failures ) {
+                if (rpt_failures) {
 
-                    fprintf(stderr, 
-                    "serial_test_1():%d: type_exists(&(types_array[%d]), ...) returned TRUE, FALSE expected.\n",
-                    tid, i);
+                    fprintf(stderr,
+                            "serial_test_1():%d: type_exists(&(types_array[%d]), ...) returned TRUE, FALSE "
+                            "expected.\n",
+                            tid, i);
                 }
                 break;
             case FALSE:
@@ -8696,72 +8693,72 @@ serial_test_1(TestParams_t H5_ATTR_UNUSED *params)
             default:
                 err_cnt++;
                 assert(FALSE);
-                if ( rpt_failures ) {
+                if (rpt_failures) {
 
-                    fprintf(stderr, 
-                    "serial_test_1():%d: type_exists(&(types_array[%d]), ...) returned invalid value.\n",
-                    tid, i);
+                    fprintf(
+                        stderr,
+                        "serial_test_1():%d: type_exists(&(types_array[%d]), ...) returned invalid value.\n",
+                        tid, i);
                 }
                 break;
         }
     }
 
-    if ( SERIAL_TEST_1__DISPLAY_FINAL_STATS ) {
+    if (SERIAL_TEST_1__DISPLAY_FINAL_STATS) {
 
         H5I_dump_stats(stdout);
     }
 
     /* Sanity checks on the id info and type info free lists. */
 
-    /* verify that the id info and type info free lists balance. 
+    /* verify that the id info and type info free lists balance.
      * This assertion can ignore the initial free list length, since whatever it is
      * on entry, the number of ids created is such that it will be empty by the
-     * time any entries are returned to the free list.  The +1 accounts for the 
+     * time any entries are returned to the free list.  The +1 accounts for the
      * minimum length of the free list
      */
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_id_info_structs_added_to_fl)) -
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_freed)) -
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_alloced_from_fl)) -
-                  atomic_load(&(H5I_mt_g.id_info_fl_len)) + 1) );
+    assert(0 == (atomic_load(&(H5I_mt_g.num_id_info_structs_added_to_fl)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_freed)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_alloced_from_fl)) -
+                 atomic_load(&(H5I_mt_g.id_info_fl_len)) + 1));
 
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_type_info_structs_added_to_fl)) -
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_freed)) -
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_alloced_from_fl)) -
-                  atomic_load(&(H5I_mt_g.type_info_fl_len)) + 1) );
-
+    assert(0 == (atomic_load(&(H5I_mt_g.num_type_info_structs_added_to_fl)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_freed)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_alloced_from_fl)) -
+                 atomic_load(&(H5I_mt_g.type_info_fl_len)) + 1));
 
     /* Verify that the increments to all the stats for the serial numbers balance correctly.
      */
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_id_next_sn_assigned)) - 
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_added_to_fl))));
+    assert(0 == (atomic_load(&(H5I_mt_g.num_id_next_sn_assigned)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_added_to_fl))));
 
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_id_serial_num_resets)) -
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_alloced_from_fl)) -
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_freed))));
+    assert(0 == (atomic_load(&(H5I_mt_g.num_id_serial_num_resets)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_alloced_from_fl)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_freed))));
 
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_type_next_sn_assigned)) - 
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_added_to_fl))));
+    assert(0 == (atomic_load(&(H5I_mt_g.num_type_next_sn_assigned)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_added_to_fl))));
 
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_type_serial_num_resets)) -
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_alloced_from_fl)) -
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_freed))));
+    assert(0 == (atomic_load(&(H5I_mt_g.num_type_serial_num_resets)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_alloced_from_fl)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_freed))));
 
-    if ( H5close() < 0 ) {
+    if (H5close() < 0) {
 
         err_cnt++;
 
-        if ( rpt_failures ) {
+        if (rpt_failures) {
 
             fprintf(stderr, "serial_test_1():%d: H5close() failed.\n", 0);
         }
     }
 
-    if ( 0 == err_cnt ) {
+    if (0 == err_cnt) {
 
         PASSED();
         return SUCCEED;
-
-    } else {
+    }
+    else {
 
         IncTestNumErrs();
         H5_FAILED();
@@ -8769,7 +8766,6 @@ serial_test_1(TestParams_t H5_ATTR_UNUSED *params)
     }
 
 } /* serial_test_1() */
-
 
 /*******************************************************************************************
  *
@@ -8787,14 +8783,14 @@ serial_test_1(TestParams_t H5_ATTR_UNUSED *params)
  *
  *      4) Verify that the types (or indexes) have the expected number of members.
  *
- *      5) Increment the ref count on every other ID, decrementing the ref count on 
+ *      5) Increment the ref count on every other ID, decrementing the ref count on
  *         the remaining IDs.
  *
  *      6) Clear all the types indicated by types_start and types_count.
  *
  *      7) Verify that every other ID still exists.
  *
- *      8) Destroy every other type, and decrement the ref count on the other 
+ *      8) Destroy every other type, and decrement the ref count on the other
  *         half -- should have the same effect.
  *
  *******************************************************************************************/
@@ -8803,21 +8799,21 @@ static herr_t
 serial_test_2(TestParams_t *params)
 {
     const mt_test_params_t *test_params;
-    hbool_t cs = FALSE;
-    hbool_t ds = FALSE;
-    hbool_t rpt_failures = TRUE;
-    int err_cnt = 0;
-    int i;
-    int j;
-    int expected;
-    int num_mem;
-    int tid = 0;
-    int types_start;
-    int types_count;
-    int ids_start;
-    int ids_count;
-    uint64_t init_id_info_fl_len;
-    uint64_t init_type_info_fl_len;
+    hbool_t                 cs           = FALSE;
+    hbool_t                 ds           = FALSE;
+    hbool_t                 rpt_failures = TRUE;
+    int                     err_cnt      = 0;
+    int                     i;
+    int                     j;
+    int                     expected;
+    int                     num_mem;
+    int                     tid = 0;
+    int                     types_start;
+    int                     types_count;
+    int                     ids_start;
+    int                     ids_count;
+    uint64_t                init_id_info_fl_len;
+    uint64_t                init_type_info_fl_len;
 
     TESTING("MT ID serial test #2");
     fflush(stdout);
@@ -8829,11 +8825,11 @@ serial_test_2(TestParams_t *params)
     ids_start   = test_params->ids_start;
     ids_count   = test_params->ids_count;
 
-    if ( H5open() < 0 ) {
+    if (H5open() < 0) {
 
         err_cnt++;
 
-        if ( rpt_failures ) {
+        if (rpt_failures) {
 
             fprintf(stderr, "serial_test_2():%d: H5open() failed.\n", 0);
         }
@@ -8844,101 +8840,101 @@ serial_test_2(TestParams_t *params)
     init_id_info_fl_len   = atomic_load(&(H5I_mt_g.id_info_fl_len));
     init_type_info_fl_len = atomic_load(&(H5I_mt_g.type_info_fl_len));
 
-    for ( i = types_start; i < types_start + types_count; i++ ) {
+    for (i = types_start; i < types_start + types_count; i++) {
 
         err_cnt += register_type(&(types_array[i]), cs, ds, rpt_failures, tid);
         assert(0 == err_cnt);
     }
 
-    for ( j = ids_start; j < ids_start + ids_count; j++ ) {
+    for (j = ids_start; j < ids_start + ids_count; j++) {
 
         i = types_start + (j % types_count);
-        assert( i >= types_start );
-        assert( i < types_start + types_count );
+        assert(i >= types_start);
+        assert(i < types_start + types_count);
 
-        err_cnt += register_id(&(types_array[i]), &(id_instance_array[j]), &(objects_array[j]), 
-                               cs, ds, rpt_failures, tid);
+        err_cnt += register_id(&(types_array[i]), &(id_instance_array[j]), &(objects_array[j]), cs, ds,
+                               rpt_failures, tid);
         assert(0 == err_cnt);
     }
 
-    for ( j = ids_start + ids_count - 1; j >= ids_start; j-- ) {
+    for (j = ids_start + ids_count - 1; j >= ids_start; j--) {
 
         i = types_start + (j % types_count);
-        assert( i >= types_start );
-        assert( i < types_start + types_count );
+        assert(i >= types_start);
+        assert(i < types_start + types_count);
 
-        err_cnt += object_verify(&(types_array[i]), &(id_instance_array[j]), &(objects_array[j]), 
-                                 cs, ds, rpt_failures, tid);
+        err_cnt += object_verify(&(types_array[i]), &(id_instance_array[j]), &(objects_array[j]), cs, ds,
+                                 rpt_failures, tid);
         assert(0 == err_cnt);
     }
 
-    for ( i = types_start; i < types_start + types_count; i++ ) {
+    for (i = types_start; i < types_start + types_count; i++) {
 
-        num_mem = nmembers(&(types_array[i]), cs, ds, rpt_failures, tid);
+        num_mem  = nmembers(&(types_array[i]), cs, ds, rpt_failures, tid);
         expected = (ids_count / types_count) + (((ids_count % types_count) > i) ? 1 : 0);
 
-        if ( num_mem != expected ) {
+        if (num_mem != expected) {
             assert(FALSE);
             err_cnt++;
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
-                fprintf(stderr, "nmembers(type_array[%d], ...) returns %d, %d expected,\n", 
-                        i, num_mem, expected);
+                fprintf(stderr, "nmembers(type_array[%d], ...) returns %d, %d expected,\n", i, num_mem,
+                        expected);
             }
         }
     }
 
-    for ( j = ids_start; j < ids_start + ids_count; j++ ) {
+    for (j = ids_start; j < ids_start + ids_count; j++) {
 
         i = types_start + (j % types_count);
-        assert( i >= types_start );
-        assert( i < types_start + types_count );
+        assert(i >= types_start);
+        assert(i < types_start + types_count);
 
-        if ( j % 2 > 0 ) {
+        if (j % 2 > 0) {
 
             err_cnt += inc_ref(&(id_instance_array[j]), cs, ds, rpt_failures, tid);
             assert(0 == err_cnt);
+        }
+        else {
 
-        } else {
-
-            err_cnt += dec_ref(&(types_array[i]), &(id_instance_array[j]), &(objects_array[j]), 
-                               cs, ds, rpt_failures, tid);
+            err_cnt += dec_ref(&(types_array[i]), &(id_instance_array[j]), &(objects_array[j]), cs, ds,
+                               rpt_failures, tid);
             assert(0 == err_cnt);
         }
     }
 
-    for ( i = types_start; i < types_start + types_count; i++ ) {
+    for (i = types_start; i < types_start + types_count; i++) {
 
         err_cnt += clear_type(&(types_array[i]), FALSE, cs, ds, rpt_failures, tid);
         assert(0 == err_cnt);
     }
 
-    for ( j = ids_start + 1; j < ids_start + ids_count; j += 2 ) {
+    for (j = ids_start + 1; j < ids_start + ids_count; j += 2) {
 
         i = types_start + (j % types_count);
-        assert( i >= types_start );
-        assert( i < types_start + types_count );
+        assert(i >= types_start);
+        assert(i < types_start + types_count);
 
-        err_cnt += object_verify(&(types_array[i]), &(id_instance_array[j]), &(objects_array[j]), 
-                                 cs, ds, rpt_failures, tid);
+        err_cnt += object_verify(&(types_array[i]), &(id_instance_array[j]), &(objects_array[j]), cs, ds,
+                                 rpt_failures, tid);
         assert(0 == err_cnt);
     }
 
-    for ( i = types_start; i < types_start + types_count; i++ ) {
+    for (i = types_start; i < types_start + types_count; i++) {
 
-        if ( (i % 2) > 0 ) {
+        if ((i % 2) > 0) {
 
             err_cnt += dec_type_ref(&(types_array[i]), cs, ds, rpt_failures, tid);
             assert(0 == err_cnt);
-
-        } else {
+        }
+        else {
 
             err_cnt += destroy_type(&(types_array[i]), cs, ds, rpt_failures, tid);
             assert(0 == err_cnt);
         }
     }
 
-    if ( SERIAL_TEST_2__DISPLAY_FINAL_STATS ) {
+    if (SERIAL_TEST_2__DISPLAY_FINAL_STATS) {
 
         H5I_dump_stats(stdout);
 
@@ -8949,52 +8945,51 @@ serial_test_2(TestParams_t *params)
     /* Sanity checks on the id info and type info free lists. */
 
     /* verify that the id info and type info free lists balance.
-     * Note that in this case, the allocs and frees balance, so we must take 
+     * Note that in this case, the allocs and frees balance, so we must take
      * account of the initial free list length in out tests.
      */
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_id_info_structs_added_to_fl)) -
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_freed)) -
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_alloced_from_fl)) -
-                  atomic_load(&(H5I_mt_g.id_info_fl_len)) + init_id_info_fl_len) );
+    assert(0 == (atomic_load(&(H5I_mt_g.num_id_info_structs_added_to_fl)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_freed)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_alloced_from_fl)) -
+                 atomic_load(&(H5I_mt_g.id_info_fl_len)) + init_id_info_fl_len));
 
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_type_info_structs_added_to_fl)) -
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_freed)) -
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_alloced_from_fl)) -
-                  atomic_load(&(H5I_mt_g.type_info_fl_len)) + init_type_info_fl_len) );
+    assert(0 == (atomic_load(&(H5I_mt_g.num_type_info_structs_added_to_fl)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_freed)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_alloced_from_fl)) -
+                 atomic_load(&(H5I_mt_g.type_info_fl_len)) + init_type_info_fl_len));
 
     /* Verify that the increments to all the stats for the serial numbers balance correctly.
      */
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_id_next_sn_assigned)) - 
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_added_to_fl))));
+    assert(0 == (atomic_load(&(H5I_mt_g.num_id_next_sn_assigned)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_added_to_fl))));
 
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_id_serial_num_resets)) -
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_alloced_from_fl)) -
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_freed))));
+    assert(0 == (atomic_load(&(H5I_mt_g.num_id_serial_num_resets)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_alloced_from_fl)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_freed))));
 
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_type_next_sn_assigned)) - 
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_added_to_fl))));
+    assert(0 == (atomic_load(&(H5I_mt_g.num_type_next_sn_assigned)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_added_to_fl))));
 
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_type_serial_num_resets)) -
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_alloced_from_fl)) -
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_freed))));
+    assert(0 == (atomic_load(&(H5I_mt_g.num_type_serial_num_resets)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_alloced_from_fl)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_freed))));
 
-
-    if ( H5close() < 0 ) {
+    if (H5close() < 0) {
 
         err_cnt++;
 
-        if ( rpt_failures ) {
+        if (rpt_failures) {
 
             fprintf(stderr, "serial_test_2():%d: H5close() failed.\n", 0);
         }
     }
 
-    if ( 0 == err_cnt ) {
+    if (0 == err_cnt) {
 
         PASSED();
         return SUCCEED;
-
-    } else {
+    }
+    else {
 
         IncTestNumErrs();
         H5_FAILED();
@@ -9002,7 +8997,6 @@ serial_test_2(TestParams_t *params)
     }
 
 } /* serial_test_2() */
-
 
 /*******************************************************************************************
  *
@@ -9041,23 +9035,23 @@ serial_test_2(TestParams_t *params)
 static herr_t
 serial_test_3(TestParams_t H5_ATTR_UNUSED *params)
 {
-    hbool_t display_op_stats = FALSE;
-    hbool_t cs = FALSE;
-    hbool_t ds = FALSE;
-    hbool_t rpt_failures = TRUE;
-    int err_cnt = 0;
-    int tid = 0;
+    hbool_t  display_op_stats = FALSE;
+    hbool_t  cs               = FALSE;
+    hbool_t  ds               = FALSE;
+    hbool_t  rpt_failures     = TRUE;
+    int      err_cnt          = 0;
+    int      tid              = 0;
     uint64_t init_id_info_fl_len;
     uint64_t init_type_info_fl_len;
 
     TESTING("MT ID serial test #3");
     fflush(stdout);
 
-    if ( H5open() < 0 ) {
+    if (H5open() < 0) {
 
         err_cnt++;
 
-        if ( rpt_failures ) {
+        if (rpt_failures) {
 
             fprintf(stderr, "serial_test_3():%d: H5open() failed.\n", 0);
         }
@@ -9070,7 +9064,7 @@ serial_test_3(TestParams_t H5_ATTR_UNUSED *params)
 
     err_cnt += create_types(0, 3, 3, cs, ds, rpt_failures, tid);
 
-    if ( display_op_stats ) {
+    if (display_op_stats) {
 
         H5I_dump_nz_stats(stdout, "create_types()");
         H5I_clear_stats();
@@ -9078,7 +9072,7 @@ serial_test_3(TestParams_t H5_ATTR_UNUSED *params)
 
     err_cnt += register_ids(0, 3, 3, 0, 10000, 1, cs, ds, rpt_failures, tid);
 
-    if ( display_op_stats ) {
+    if (display_op_stats) {
 
         H5I_dump_nz_stats(stdout, "register_ids");
         H5I_clear_stats();
@@ -9086,7 +9080,7 @@ serial_test_3(TestParams_t H5_ATTR_UNUSED *params)
 
     err_cnt += inc_type_refs(0, 2, 3, cs, ds, rpt_failures, tid);
 
-    if ( display_op_stats ) {
+    if (display_op_stats) {
 
         H5I_dump_nz_stats(stdout, "inc_type_refs()");
         H5I_clear_stats();
@@ -9096,23 +9090,23 @@ serial_test_3(TestParams_t H5_ATTR_UNUSED *params)
     err_cnt += dec_refs(3, 1, 1, 1, 1000, 3, cs, ds, rpt_failures, tid);
     err_cnt += dec_refs(6, 1, 1, 2, 1000, 3, cs, ds, rpt_failures, tid);
 
-    if ( display_op_stats ) {
+    if (display_op_stats) {
 
         H5I_dump_nz_stats(stdout, "dec_refs()");
         H5I_clear_stats();
-    }    
+    }
 
     err_cnt += inc_refs(3001, 3000, 1, cs, ds, rpt_failures, tid);
 
-    if ( display_op_stats ) {
+    if (display_op_stats) {
 
         H5I_dump_nz_stats(stdout, "inc_refs()");
         H5I_clear_stats();
     }
 
-    err_cnt += verify_objects(0, 3, 3,  3000, 7000, 1, cs, ds, rpt_failures, tid);
+    err_cnt += verify_objects(0, 3, 3, 3000, 7000, 1, cs, ds, rpt_failures, tid);
 
-    if ( display_op_stats ) {
+    if (display_op_stats) {
 
         H5I_dump_nz_stats(stdout, "verify_objects()");
         H5I_clear_stats();
@@ -9120,7 +9114,7 @@ serial_test_3(TestParams_t H5_ATTR_UNUSED *params)
 
     err_cnt += dec_type_refs(0, 3, 3, cs, ds, rpt_failures, tid);
 
-    if ( display_op_stats ) {
+    if (display_op_stats) {
 
         H5I_dump_nz_stats(stdout, "dec_type_refs()");
         H5I_clear_stats();
@@ -9128,13 +9122,13 @@ serial_test_3(TestParams_t H5_ATTR_UNUSED *params)
 
     err_cnt += destroy_types(0, 2, 3, cs, ds, rpt_failures, tid);
 
-    if ( display_op_stats ) {
+    if (display_op_stats) {
 
         H5I_dump_nz_stats(stdout, "destroy_types()");
         H5I_clear_stats();
     }
 
-    if ( SERIAL_TEST_3__DISPLAY_FINAL_STATS ) {
+    if (SERIAL_TEST_3__DISPLAY_FINAL_STATS) {
 
         H5I_dump_stats(stdout);
 
@@ -9145,52 +9139,51 @@ serial_test_3(TestParams_t H5_ATTR_UNUSED *params)
     /* Sanity checks on the id info and type info free lists. */
 
     /* verify that the id info and type info free lists balance.
-     * Note that in this case, the allocs and frees balance, so we must take 
+     * Note that in this case, the allocs and frees balance, so we must take
      * account of the initial free list length in out tests.
      */
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_id_info_structs_added_to_fl)) -
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_freed)) -
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_alloced_from_fl)) -
-                  atomic_load(&(H5I_mt_g.id_info_fl_len)) + init_id_info_fl_len) );
+    assert(0 == (atomic_load(&(H5I_mt_g.num_id_info_structs_added_to_fl)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_freed)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_alloced_from_fl)) -
+                 atomic_load(&(H5I_mt_g.id_info_fl_len)) + init_id_info_fl_len));
 
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_type_info_structs_added_to_fl)) -
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_freed)) -
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_alloced_from_fl)) -
-                  atomic_load(&(H5I_mt_g.type_info_fl_len)) + init_type_info_fl_len) );
+    assert(0 == (atomic_load(&(H5I_mt_g.num_type_info_structs_added_to_fl)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_freed)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_alloced_from_fl)) -
+                 atomic_load(&(H5I_mt_g.type_info_fl_len)) + init_type_info_fl_len));
 
     /* Verify that the increments to all the stats for the serial numbers balance correctly.
      */
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_id_next_sn_assigned)) - 
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_added_to_fl))));
+    assert(0 == (atomic_load(&(H5I_mt_g.num_id_next_sn_assigned)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_added_to_fl))));
 
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_id_serial_num_resets)) -
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_alloced_from_fl)) -
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_freed))));
+    assert(0 == (atomic_load(&(H5I_mt_g.num_id_serial_num_resets)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_alloced_from_fl)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_freed))));
 
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_type_next_sn_assigned)) - 
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_added_to_fl))));
+    assert(0 == (atomic_load(&(H5I_mt_g.num_type_next_sn_assigned)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_added_to_fl))));
 
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_type_serial_num_resets)) -
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_alloced_from_fl)) -
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_freed))));
+    assert(0 == (atomic_load(&(H5I_mt_g.num_type_serial_num_resets)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_alloced_from_fl)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_freed))));
 
-
-    if ( H5close() < 0 ) {
+    if (H5close() < 0) {
 
         err_cnt++;
 
-        if ( rpt_failures ) {
+        if (rpt_failures) {
 
             fprintf(stderr, "serial_test_3():%d: H5close() failed.\n", 0);
         }
     }
 
-    if ( 0 == err_cnt ) {
+    if (0 == err_cnt) {
 
         PASSED();
         return SUCCEED;
-
-    } else {
+    }
+    else {
 
         IncTestNumErrs();
         H5_FAILED();
@@ -9199,40 +9192,39 @@ serial_test_3(TestParams_t H5_ATTR_UNUSED *params)
 
 } /* serial_test_3() */
 
-
 /*******************************************************************************************
  *
  * serial_test_4
  *
  *      Smoke check of the future ID facility.
  *
- *       1) Create 64 future IDs and 64 real IDs that will evenutally be associated with 
+ *       1) Create 64 future IDs and 64 real IDs that will evenutally be associated with
  *          the future IDs, and allow them to be realized.  Do not set up the associations
  *          just yet.
  *
  *
  *      Verify that verification of future IDs works in the base case:
  *
- *       2) Lookup all the future and real IDs.  Verify that the real ID lookups succeed, 
+ *       2) Lookup all the future and real IDs.  Verify that the real ID lookups succeed,
  *          and that the future ID lookups all fail.
  *
- *       3) For every eighth future ID (i = 0, 16, 32, 48, ... ), link the associated real 
+ *       3) For every eighth future ID (i = 0, 16, 32, 48, ... ), link the associated real
  *          ID (j = 1, 17, 33, 47, ...) to the future ID.
  *
  *       4) Verify that lookups of all the real IDs still succeed.
  *
- *       5) Lookup all the future and real IDs.  Verify that every eighth future ID lookup 
+ *       5) Lookup all the future and real IDs.  Verify that every eighth future ID lookup
  *          (i = 0, 16, 32, 48, ... ) succeeds, while the rest fail, and that every eighth
  *          real ID lookup (j = 1, 17, 33, 47, ...) fails while the rest succeed.
  *
  *
- *      Link some real IDs to future IDs, and then delete the real IDs before the linked 
+ *      Link some real IDs to future IDs, and then delete the real IDs before the linked
  *      future IDs are realized.  This appears to expose a fundamental problem with the current
  *      future ID mechanism.  At present, this is papered over via the user provided realize and
- *      discard callbacks -- however, in the absence of this fix, data structure corruption 
+ *      discard callbacks -- however, in the absence of this fix, data structure corruption
  *      is possible.  NEED A FIX FOR THIS.
  *
- *       6) For every eighth + 1 future ID (i = 2, 18, 34, 50, ... ), link the associated real 
+ *       6) For every eighth + 1 future ID (i = 2, 18, 34, 50, ... ), link the associated real
  *          ID (j = 3, 19, 35, 51, ...) to the future ID.
  *
  *       7) Verify that lookups of the newly linked real IDs still succeed.
@@ -9241,19 +9233,19 @@ serial_test_3(TestParams_t H5_ATTR_UNUSED *params)
  *
  *       9) Verify that lookups of the newly linked real IDs all fail.
  *
- *      10) Lookup all the ruture and real IDs.  
+ *      10) Lookup all the ruture and real IDs.
  *
- *          Verify that every eighth future ID lookup (i = 0, 16, 32, 48, ... ) succeeds, 
+ *          Verify that every eighth future ID lookup (i = 0, 16, 32, 48, ... ) succeeds,
  *          while the rest fail
  *
  *          Verify that every eighth (j = 1, 17, 33, 47, ... ) and every eighth + 1
- *          (j = 3, 19, 35, 51, ...) real ID fails, while the rest succeed. 
+ *          (j = 3, 19, 35, 51, ...) real ID fails, while the rest succeed.
  *
  *
- *      Verify that source real IDs are deleted properly even if their reference counts are 
+ *      Verify that source real IDs are deleted properly even if their reference counts are
  *      are greater than 1.
  *
- *      11) For every eighth + 1 future ID (i = 2, 18, 34, 50, ... ), link the associated real 
+ *      11) For every eighth + 1 future ID (i = 2, 18, 34, 50, ... ), link the associated real
  *          ID (j = 3, 19, 35, 51, ...) to the future ID.
  *
  *      12) Verify that lookups of the newly linked real IDs still succeed.
@@ -9262,15 +9254,15 @@ serial_test_3(TestParams_t H5_ATTR_UNUSED *params)
  *
  *      14) Verify that lookups of the newly linked real IDs all succeed.
  *
- *      15) Lookup all the ruture and real IDs.  
+ *      15) Lookup all the ruture and real IDs.
  *
- *          Verify that every eighth and every eight +2 future ID lookup (i = 0, 16, 32, 48, ... ) 
+ *          Verify that every eighth and every eight +2 future ID lookup (i = 0, 16, 32, 48, ... )
  *          succeeds, while the rest fail
  *
  *          Verify that every eighth (j = 1, 17, 33, 47, ... ), every eighth + 1
- *          (j = 3, 19, 35, 51, ...) and every eight + 2 (j = 5, 21, 37, 53, ...) real ID 
- *          fails, while the rest succeed. 
- *      
+ *          (j = 3, 19, 35, 51, ...) and every eight + 2 (j = 5, 21, 37, 53, ...) real ID
+ *          fails, while the rest succeed.
+ *
  *
  *
  *******************************************************************************************/
@@ -9278,25 +9270,25 @@ serial_test_3(TestParams_t H5_ATTR_UNUSED *params)
 static herr_t
 serial_test_4(TestParams_t H5_ATTR_UNUSED *params)
 {
-    hbool_t display_op_stats = FALSE;
-    hbool_t cs = FALSE;
-    hbool_t ds = FALSE;
-    hbool_t rpt_failures = TRUE;
-    int err_cnt = 0;
-    int i;
-    int j;
-    int tid = 0;
+    hbool_t  display_op_stats = FALSE;
+    hbool_t  cs               = FALSE;
+    hbool_t  ds               = FALSE;
+    hbool_t  rpt_failures     = TRUE;
+    int      err_cnt          = 0;
+    int      i;
+    int      j;
+    int      tid = 0;
     uint64_t init_id_info_fl_len;
     uint64_t init_type_info_fl_len;
 
     TESTING("MT ID serial test #4");
     fflush(stdout);
 
-    if ( H5open() < 0 ) {
+    if (H5open() < 0) {
 
         err_cnt++;
 
-        if ( rpt_failures ) {
+        if (rpt_failures) {
 
             fprintf(stderr, "serial_test_4():%d: H5open() failed.\n", 0);
         }
@@ -9309,21 +9301,20 @@ serial_test_4(TestParams_t H5_ATTR_UNUSED *params)
 
     err_cnt += register_type(&(types_array[0]), cs, ds, rpt_failures, tid);
 
-    /* create the future IDs and their associated real IDs.  Note that they are not 
+    /* create the future IDs and their associated real IDs.  Note that they are not
      * associated yet, so the future IDs can't be realized on search.
      */
-    for ( i = 0; i < 128; i += 2 )
-    {
+    for (i = 0; i < 128; i += 2) {
         j = i + 1;
 
         err_cnt += register_future_id(&(types_array[0]), &(id_instance_array[i]), &(objects_array[i]),
                                       realize_cb_0, discard_cb_0, cs, ds, rpt_failures, tid);
 
-        err_cnt += register_id(&(types_array[0]), &(id_instance_array[j]), &(objects_array[j]), 
-                               cs, ds, rpt_failures, tid);
+        err_cnt += register_id(&(types_array[0]), &(id_instance_array[j]), &(objects_array[j]), cs, ds,
+                               rpt_failures, tid);
     }
 
-    if ( display_op_stats ) {
+    if (display_op_stats) {
 
         H5I_dump_nz_stats(stdout, "Register future IDs 1");
 
@@ -9331,401 +9322,389 @@ serial_test_4(TestParams_t H5_ATTR_UNUSED *params)
     }
 
     /* verify that lookups of the future IDs fail and lookups of the real IDs succeed */
-    for ( i = 0; i < 128; i += 2 ) {
-    
+    for (i = 0; i < 128; i += 2) {
+
         j = i + 1;
 
-        err_cnt += object_verify(&(types_array[0]), &(id_instance_array[i]), NULL,
-                                 cs, ds, rpt_failures, tid);
+        err_cnt += object_verify(&(types_array[0]), &(id_instance_array[i]), NULL, cs, ds, rpt_failures, tid);
 
-        err_cnt += object_verify(&(types_array[0]), &(id_instance_array[j]), &(objects_array[j]), 
-                                 cs, ds, rpt_failures, tid);
+        err_cnt += object_verify(&(types_array[0]), &(id_instance_array[j]), &(objects_array[j]), cs, ds,
+                                 rpt_failures, tid);
     }
 
-    if ( display_op_stats ) {
+    if (display_op_stats) {
 
         H5I_dump_nz_stats(stdout, "ID lookups 1 -- test a");
 
         H5I_clear_stats();
     }
 
-    /* For every eighth future ID (i = 0, 16, 32, 48, ... ), link the associated real 
+    /* For every eighth future ID (i = 0, 16, 32, 48, ... ), link the associated real
      * ID (j = 1, 17, 33, 47, ...) to the future ID.
      */
-    for ( i = 0; i < 128; i += 2 * 8 ) {
+    for (i = 0; i < 128; i += 2 * 8) {
 
         j = i + 1;
 
-        err_cnt += link_real_and_future_ids(&(objects_array[i]),  &(objects_array[j]), rpt_failures);
+        err_cnt += link_real_and_future_ids(&(objects_array[i]), &(objects_array[j]), rpt_failures);
     }
 
-    if ( display_op_stats ) {
+    if (display_op_stats) {
 
         H5I_dump_nz_stats(stdout, "Link real and future IDs 1 -- test a");
 
         H5I_clear_stats();
     }
-    
-    /* Verify that lookups of all the real IDs still succeed. */
-    for ( j = 1; j <= 128; j += 2 ) {
 
-        err_cnt += object_verify(&(types_array[0]), &(id_instance_array[j]), &(objects_array[j]), 
-                                 cs, ds, rpt_failures, tid);
+    /* Verify that lookups of all the real IDs still succeed. */
+    for (j = 1; j <= 128; j += 2) {
+
+        err_cnt += object_verify(&(types_array[0]), &(id_instance_array[j]), &(objects_array[j]), cs, ds,
+                                 rpt_failures, tid);
     }
 
-    if ( display_op_stats ) {
+    if (display_op_stats) {
 
         H5I_dump_nz_stats(stdout, "ID lookups 2 -- verify real IDs -- test a");
 
         H5I_clear_stats();
     }
 
-
-    /* Lookup all the future and real IDs.  Verify that every eighth future ID lookup 
+    /* Lookup all the future and real IDs.  Verify that every eighth future ID lookup
      * (i = 0, 16, 32, 48, ... ) succeeds, while the rest fail, and that every eighth
      * real ID lookup (j = 1, 17, 33, 47, ...) fails while the rest succeed.
      */
-    for ( i = 0; i < 128; i += 2 ) {
-    
+    for (i = 0; i < 128; i += 2) {
+
         j = i + 1;
 
-        if ( 0 == i % 16 ) {
+        if (0 == i % 16) {
 
             id_object_kernel_t id_obj_k;
 
-            err_cnt += object_verify(&(types_array[0]), &(id_instance_array[i]), &(objects_array[j]),
-                                     cs, ds, FALSE, tid);
+            err_cnt += object_verify(&(types_array[0]), &(id_instance_array[i]), &(objects_array[j]), cs, ds,
+                                     FALSE, tid);
 
-            err_cnt += object_verify(&(types_array[0]), &(id_instance_array[j]), NULL,
-                                    cs, ds, rpt_failures, tid);
+            err_cnt +=
+                object_verify(&(types_array[0]), &(id_instance_array[j]), NULL, cs, ds, rpt_failures, tid);
 
             id_obj_k = atomic_load(&(objects_array[i].k));
 
-            if ( ! id_obj_k.discarded ) {
+            if (!id_obj_k.discarded) {
 
                 err_cnt++;
 
-                if ( rpt_failures ) {
+                if (rpt_failures) {
 
-                    fprintf(stderr, 
-                           "objects_array[%d], not marked as discarded after future id realized.\n", i);
+                    fprintf(stderr, "objects_array[%d], not marked as discarded after future id realized.\n",
+                            i);
                 }
             }
-        } else {
+        }
+        else {
 
-            err_cnt += object_verify(&(types_array[0]), &(id_instance_array[i]), NULL,
-                                   cs, ds, FALSE, tid);
+            err_cnt += object_verify(&(types_array[0]), &(id_instance_array[i]), NULL, cs, ds, FALSE, tid);
 
-            err_cnt += object_verify(&(types_array[0]), &(id_instance_array[j]), &(objects_array[j]),
-                                     cs, ds, TRUE, tid);
+            err_cnt += object_verify(&(types_array[0]), &(id_instance_array[j]), &(objects_array[j]), cs, ds,
+                                     TRUE, tid);
         }
     }
 
-    if ( display_op_stats ) {
+    if (display_op_stats) {
 
         H5I_dump_nz_stats(stdout, "Realize future IDs 1 -- test a");
 
         H5I_clear_stats();
     }
 
-
-    /* For every eighth + 1 future ID (i = 2, 18, 34, 50, ... ), link the associated real 
+    /* For every eighth + 1 future ID (i = 2, 18, 34, 50, ... ), link the associated real
      * ID (j = 3, 19, 35, 51, ...) to the future ID.
      */
-    for ( i = 2; i < 128; i += 2 * 8 ) {
+    for (i = 2; i < 128; i += 2 * 8) {
 
         j = i + 1;
 
-        err_cnt += link_real_and_future_ids(&(objects_array[i]),  &(objects_array[j]), rpt_failures);
+        err_cnt += link_real_and_future_ids(&(objects_array[i]), &(objects_array[j]), rpt_failures);
     }
 
-    if ( display_op_stats ) {
+    if (display_op_stats) {
 
         H5I_dump_nz_stats(stdout, "Link real and future IDs 2 -- test b");
 
         H5I_clear_stats();
     }
- 
 
     /* Verify that lookups of the newly linked real IDs still succeed. */
-    for ( i = 2; i < 128; i += 2 * 8 ) {
+    for (i = 2; i < 128; i += 2 * 8) {
 
         j = i + 1;
 
-        err_cnt += object_verify(&(types_array[0]), &(id_instance_array[j]), &(objects_array[j]),
-                                 cs, ds, TRUE, tid);
+        err_cnt +=
+            object_verify(&(types_array[0]), &(id_instance_array[j]), &(objects_array[j]), cs, ds, TRUE, tid);
     }
 
-    if ( display_op_stats ) {
+    if (display_op_stats) {
 
         H5I_dump_nz_stats(stdout, "ID lookups 3 -- verify real IDs -- test b");
 
         H5I_clear_stats();
     }
 
-
     /* Decrement the ref count on eacy of the newly linked reals IDs. */
-    for ( i = 2; i < 128; i += 2 * 8 ) {
+    for (i = 2; i < 128; i += 2 * 8) {
 
         j = i + 1;
 
-        err_cnt += dec_ref(&(types_array[0]), &(id_instance_array[j]), &(objects_array[j]), cs, ds, TRUE, tid);
+        err_cnt +=
+            dec_ref(&(types_array[0]), &(id_instance_array[j]), &(objects_array[j]), cs, ds, TRUE, tid);
     }
 
-    if ( display_op_stats ) {
+    if (display_op_stats) {
 
         H5I_dump_nz_stats(stdout, "decrement (really delete) real ID ref counts 1 -- test b");
 
         H5I_clear_stats();
     }
- 
 
     /* Verify that lookups of the newly linked real IDs all fail. */
-    for ( i = 2; i < 128; i += 2 * 8 ) {
+    for (i = 2; i < 128; i += 2 * 8) {
 
         j = i + 1;
 
         err_cnt += object_verify(&(types_array[0]), &(id_instance_array[j]), NULL, cs, ds, TRUE, tid);
     }
 
-    if ( display_op_stats ) {
+    if (display_op_stats) {
 
         H5I_dump_nz_stats(stdout, "ID lookups 4 -- verify real IDs -- should fail -- test b");
 
         H5I_clear_stats();
     }
 
-
-    /* Lookup all the ruture and real IDs.  
+    /* Lookup all the ruture and real IDs.
      *
-     * Verify that every eighth future ID lookup (i = 0, 16, 32, 48, ... ) succeeds, 
+     * Verify that every eighth future ID lookup (i = 0, 16, 32, 48, ... ) succeeds,
      * while the rest fail
      *
      * Verify that every eighth (j = 1, 17, 33, 47, ... ) and every eighth + 1
-     * (j = 3, 19, 35, 51, ...) real ID fails, while the rest succeed. 
+     * (j = 3, 19, 35, 51, ...) real ID fails, while the rest succeed.
      */
-    for ( i = 0; i < 128; i += 2 ) {
-    
+    for (i = 0; i < 128; i += 2) {
+
         j = i + 1;
 
-        if ( 0 == i % 16 ) {
+        if (0 == i % 16) {
 
             id_object_kernel_t id_obj_k;
 
-            err_cnt += object_verify(&(types_array[0]), &(id_instance_array[i]), &(objects_array[j]),
-                                     cs, ds, FALSE, tid);
+            err_cnt += object_verify(&(types_array[0]), &(id_instance_array[i]), &(objects_array[j]), cs, ds,
+                                     FALSE, tid);
 
-            err_cnt += object_verify(&(types_array[0]), &(id_instance_array[j]), NULL,
-                                    cs, ds, rpt_failures, tid);
+            err_cnt +=
+                object_verify(&(types_array[0]), &(id_instance_array[j]), NULL, cs, ds, rpt_failures, tid);
 
             id_obj_k = atomic_load(&(objects_array[i].k));
 
-            if ( ! id_obj_k.discarded ) {
+            if (!id_obj_k.discarded) {
 
                 err_cnt++;
 
-                if ( rpt_failures ) {
+                if (rpt_failures) {
 
-                    fprintf(stderr, 
-                           "objects_array[%d], not marked as discarded after future id realized.\n", i);
+                    fprintf(stderr, "objects_array[%d], not marked as discarded after future id realized.\n",
+                            i);
                 }
             }
-        } else if ( 2 == i % 16 ) {
+        }
+        else if (2 == i % 16) {
 
-            /* Attempt to verify the future ID twise -- should fail both times.  Need to do this 
+            /* Attempt to verify the future ID twise -- should fail both times.  Need to do this
              * because the fact that the real ID has been deleted will not become evident until after
-             * the realize callback has been called on the first invocation.  Thus a second attempt 
+             * the realize callback has been called on the first invocation.  Thus a second attempt
              * is necessary to verify that we handle the repeat call to the realize callback gracefully.
              */
             err_cnt += object_verify(&(types_array[0]), &(id_instance_array[i]), NULL, cs, ds, FALSE, tid);
             err_cnt += object_verify(&(types_array[0]), &(id_instance_array[i]), NULL, cs, ds, FALSE, tid);
 
             err_cnt += object_verify(&(types_array[0]), &(id_instance_array[j]), NULL, cs, ds, TRUE, tid);
+        }
+        else {
 
-        } else {
+            err_cnt += object_verify(&(types_array[0]), &(id_instance_array[i]), NULL, cs, ds, FALSE, tid);
 
-            err_cnt += object_verify(&(types_array[0]), &(id_instance_array[i]), NULL,
-                                   cs, ds, FALSE, tid);
-
-            err_cnt += object_verify(&(types_array[0]), &(id_instance_array[j]), &(objects_array[j]),
-                                     cs, ds, TRUE, tid);
+            err_cnt += object_verify(&(types_array[0]), &(id_instance_array[j]), &(objects_array[j]), cs, ds,
+                                     TRUE, tid);
         }
     }
 
-    if ( display_op_stats ) {
+    if (display_op_stats) {
 
         H5I_dump_nz_stats(stdout, "Realize future IDs 2 -- should fail -- test b");
 
         H5I_clear_stats();
     }
 
-
-
-    /* For every eighth + 1 future ID (i = 2, 18, 34, 50, ... ), link the associated real 
+    /* For every eighth + 1 future ID (i = 2, 18, 34, 50, ... ), link the associated real
      * ID (j = 3, 19, 35, 51, ...) to the future ID.
      */
-    for ( i = 4; i < 128; i += 2 * 8 ) {
+    for (i = 4; i < 128; i += 2 * 8) {
 
         j = i + 1;
 
-        err_cnt += link_real_and_future_ids(&(objects_array[i]),  &(objects_array[j]), rpt_failures);
+        err_cnt += link_real_and_future_ids(&(objects_array[i]), &(objects_array[j]), rpt_failures);
     }
 
-    if ( display_op_stats ) {
+    if (display_op_stats) {
 
         H5I_dump_nz_stats(stdout, "Link real and future IDs 3 -- test c");
 
         H5I_clear_stats();
     }
- 
 
     /* Verify that lookups of the newly linked real IDs still succeed. */
-    for ( i = 4; i < 128; i += 2 * 8 ) {
+    for (i = 4; i < 128; i += 2 * 8) {
 
         j = i + 1;
 
-        err_cnt += object_verify(&(types_array[0]), &(id_instance_array[j]), &(objects_array[j]),
-                                 cs, ds, TRUE, tid);
+        err_cnt +=
+            object_verify(&(types_array[0]), &(id_instance_array[j]), &(objects_array[j]), cs, ds, TRUE, tid);
     }
 
-    if ( display_op_stats ) {
+    if (display_op_stats) {
 
         H5I_dump_nz_stats(stdout, "ID lookups 5 -- verify real IDs -- test c");
 
         H5I_clear_stats();
     }
 
-
     /* Incecrement the ref counts on each of the newly linked reals IDs. */
-    for ( i = 4; i < 128; i += 2 * 8 ) {
+    for (i = 4; i < 128; i += 2 * 8) {
 
         j = i + 1;
 
         err_cnt += inc_ref(&(id_instance_array[j]), cs, ds, rpt_failures, tid);
     }
 
-    if ( display_op_stats ) {
+    if (display_op_stats) {
 
         H5I_dump_nz_stats(stdout, "ncrement real ID ref counts 1 -- test c");
 
         H5I_clear_stats();
     }
- 
 
     /* Verify that lookups of the newly linked real IDs all succeed. */
-    for ( i = 4; i < 128; i += 2 * 8 ) {
+    for (i = 4; i < 128; i += 2 * 8) {
 
         j = i + 1;
 
-        err_cnt += object_verify(&(types_array[0]), &(id_instance_array[j]), &(objects_array[j]),
-                                 cs, ds, TRUE, tid);
+        err_cnt +=
+            object_verify(&(types_array[0]), &(id_instance_array[j]), &(objects_array[j]), cs, ds, TRUE, tid);
     }
 
-    if ( display_op_stats ) {
+    if (display_op_stats) {
 
         H5I_dump_nz_stats(stdout, "ID lookups 6 -- verify real IDs -- test c");
 
         H5I_clear_stats();
     }
 
-
-    /* Lookup all the future and real IDs.  
+    /* Lookup all the future and real IDs.
      *
-     *      Verify that every eighth and every eight +2 future ID lookup (i = 0, 16, 32, 48, ... ) 
+     *      Verify that every eighth and every eight +2 future ID lookup (i = 0, 16, 32, 48, ... )
      *      succeeds, while the rest fail
      *
      *      Verify that every eighth (j = 1, 17, 33, 47, ... ), every eighth + 1
-     *      (j = 3, 19, 35, 51, ...) and every eight + 2 (j = 5, 21, 37, 53, ...) real ID 
-     *      fails, while the rest succeed. 
+     *      (j = 3, 19, 35, 51, ...) and every eight + 2 (j = 5, 21, 37, 53, ...) real ID
+     *      fails, while the rest succeed.
      */
-    for ( i = 0; i < 128; i += 2 ) {
-    
+    for (i = 0; i < 128; i += 2) {
+
         j = i + 1;
 
-        if ( 0 == i % 16 ) {
+        if (0 == i % 16) {
 
             id_object_kernel_t id_obj_k;
 
-            err_cnt += object_verify(&(types_array[0]), &(id_instance_array[i]), &(objects_array[j]),
-                                     cs, ds, FALSE, tid);
+            err_cnt += object_verify(&(types_array[0]), &(id_instance_array[i]), &(objects_array[j]), cs, ds,
+                                     FALSE, tid);
 
-            err_cnt += object_verify(&(types_array[0]), &(id_instance_array[j]), NULL,
-                                    cs, ds, rpt_failures, tid);
+            err_cnt +=
+                object_verify(&(types_array[0]), &(id_instance_array[j]), NULL, cs, ds, rpt_failures, tid);
 
             id_obj_k = atomic_load(&(objects_array[i].k));
 
-            if ( ! id_obj_k.discarded ) {
+            if (!id_obj_k.discarded) {
 
                 err_cnt++;
 
-                if ( rpt_failures ) {
+                if (rpt_failures) {
 
-                    fprintf(stderr, 
-                           "objects_array[%d], not marked as discarded after future id realized.\n", i);
+                    fprintf(stderr, "objects_array[%d], not marked as discarded after future id realized.\n",
+                            i);
                 }
             }
-        } else if ( 2 == i % 16 ) {
+        }
+        else if (2 == i % 16) {
 
-            /* Attempt to verify the future ID twise -- should fail both times.  Need to do this 
+            /* Attempt to verify the future ID twise -- should fail both times.  Need to do this
              * because the fact that the real ID has been deleted will not become evident until after
-             * the realize callback has been called on the first invocation.  Thus a second attempt 
+             * the realize callback has been called on the first invocation.  Thus a second attempt
              * is necessary to verify that we handle the repeat call to the realize callback gracefully.
              */
             err_cnt += object_verify(&(types_array[0]), &(id_instance_array[i]), NULL, cs, ds, FALSE, tid);
 
             err_cnt += object_verify(&(types_array[0]), &(id_instance_array[j]), NULL, cs, ds, TRUE, tid);
-
-        } else if ( 4 == i % 16 ) {
+        }
+        else if (4 == i % 16) {
 
             id_object_kernel_t id_obj_k;
 
-            err_cnt += object_verify(&(types_array[0]), &(id_instance_array[i]), &(objects_array[j]),
-                                     cs, ds, FALSE, tid);
+            err_cnt += object_verify(&(types_array[0]), &(id_instance_array[i]), &(objects_array[j]), cs, ds,
+                                     FALSE, tid);
 
-            err_cnt += object_verify(&(types_array[0]), &(id_instance_array[j]), NULL,
-                                    cs, ds, rpt_failures, tid);
+            err_cnt +=
+                object_verify(&(types_array[0]), &(id_instance_array[j]), NULL, cs, ds, rpt_failures, tid);
 
             id_obj_k = atomic_load(&(objects_array[i].k));
 
-            if ( ! id_obj_k.discarded ) {
+            if (!id_obj_k.discarded) {
 
                 err_cnt++;
 
-                if ( rpt_failures ) {
+                if (rpt_failures) {
 
-                    fprintf(stderr, 
-                           "objects_array[%d], not marked as discarded after future id realized.\n", i);
+                    fprintf(stderr, "objects_array[%d], not marked as discarded after future id realized.\n",
+                            i);
                 }
             }
-        } else {
+        }
+        else {
 
-            err_cnt += object_verify(&(types_array[0]), &(id_instance_array[i]), NULL,
-                                   cs, ds, FALSE, tid);
+            err_cnt += object_verify(&(types_array[0]), &(id_instance_array[i]), NULL, cs, ds, FALSE, tid);
 
-            err_cnt += object_verify(&(types_array[0]), &(id_instance_array[j]), &(objects_array[j]),
-                                     cs, ds, TRUE, tid);
+            err_cnt += object_verify(&(types_array[0]), &(id_instance_array[j]), &(objects_array[j]), cs, ds,
+                                     TRUE, tid);
         }
     }
 
-    if ( display_op_stats ) {
+    if (display_op_stats) {
 
         H5I_dump_nz_stats(stdout, "Realize future IDs 3 -- should succeed -- test c");
 
         H5I_clear_stats();
     }
- 
 
     /* cleanup after test */
 
     err_cnt += destroy_type(&(types_array[0]), cs, ds, rpt_failures, tid);
 
-    if ( display_op_stats ) {
+    if (display_op_stats) {
 
         H5I_dump_nz_stats(stdout, "destroy_type()");
         H5I_clear_stats();
     }
 
-    if ( SERIAL_TEST_4__DISPLAY_FINAL_STATS ) {
+    if (SERIAL_TEST_4__DISPLAY_FINAL_STATS) {
 
         H5I_dump_stats(stdout);
 
@@ -9736,53 +9715,51 @@ serial_test_4(TestParams_t H5_ATTR_UNUSED *params)
     /* Sanity checks on the id info and type info free lists. */
 
     /* verify that the id info and type info free lists balance.
-     * Note that in this case, the allocs and frees balance, so we must take 
+     * Note that in this case, the allocs and frees balance, so we must take
      * account of the initial free list length in out tests.
      */
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_id_info_structs_added_to_fl)) -
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_freed)) -
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_alloced_from_fl)) -
-                  atomic_load(&(H5I_mt_g.id_info_fl_len)) + init_id_info_fl_len) );
+    assert(0 == (atomic_load(&(H5I_mt_g.num_id_info_structs_added_to_fl)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_freed)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_alloced_from_fl)) -
+                 atomic_load(&(H5I_mt_g.id_info_fl_len)) + init_id_info_fl_len));
 
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_type_info_structs_added_to_fl)) -
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_freed)) -
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_alloced_from_fl)) -
-                  atomic_load(&(H5I_mt_g.type_info_fl_len)) + init_type_info_fl_len) );
-
+    assert(0 == (atomic_load(&(H5I_mt_g.num_type_info_structs_added_to_fl)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_freed)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_alloced_from_fl)) -
+                 atomic_load(&(H5I_mt_g.type_info_fl_len)) + init_type_info_fl_len));
 
     /* Verify that the increments to all the stats for the serial numbers balance correctly.
      */
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_id_next_sn_assigned)) - 
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_added_to_fl))));
+    assert(0 == (atomic_load(&(H5I_mt_g.num_id_next_sn_assigned)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_added_to_fl))));
 
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_id_serial_num_resets)) -
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_alloced_from_fl)) -
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_freed))));
+    assert(0 == (atomic_load(&(H5I_mt_g.num_id_serial_num_resets)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_alloced_from_fl)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_freed))));
 
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_type_next_sn_assigned)) - 
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_added_to_fl))));
+    assert(0 == (atomic_load(&(H5I_mt_g.num_type_next_sn_assigned)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_added_to_fl))));
 
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_type_serial_num_resets)) -
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_alloced_from_fl)) -
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_freed))));
+    assert(0 == (atomic_load(&(H5I_mt_g.num_type_serial_num_resets)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_alloced_from_fl)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_freed))));
 
-
-    if ( H5close() < 0 ) {
+    if (H5close() < 0) {
 
         err_cnt++;
 
-        if ( rpt_failures ) {
+        if (rpt_failures) {
 
             fprintf(stderr, "serial_test_4():%d: H5close() failed.\n", 0);
         }
     }
 
-    if ( 0 == err_cnt ) {
+    if (0 == err_cnt) {
 
         PASSED();
         return SUCCEED;
-
-    } else {
+    }
+    else {
 
         IncTestNumErrs();
         H5_FAILED();
@@ -9793,42 +9770,42 @@ serial_test_4(TestParams_t H5_ATTR_UNUSED *params)
 
 /****************************************************************************************
  * serial_test_future_id
- * 
+ *
  * Basic functionality test for the reserve/define future ID system (no progress-cb).
- * 
- *      1. Create 64 future IDs and 64 real IDS for the sake of ensuring there is no 
- *         no interference. Note that these two IDs will never be associated with each 
+ *
+ *      1. Create 64 future IDs and 64 real IDS for the sake of ensuring there is no
+ *         no interference. Note that these two IDs will never be associated with each
  *         other as the new API does not require the coupling the reserve/define system
- *         had. 
- * 
+ *         had.
+ *
  *      Verify that verification of future IDs works in the base case and that they have
- *      a NULL object associated until define and the ID is no longer a future. 
- * 
- * 
- * 
+ *      a NULL object associated until define and the ID is no longer a future.
+ *
+ *
+ *
  ****************************************************************************************/
 static herr_t
 future_serial_test_1(TestParams_t H5_ATTR_UNUSED *params)
 {
-    hbool_t display_op_stats = FALSE;
-    hbool_t cs = FALSE;
-    hbool_t ds = FALSE;
-    hbool_t rpt_failures = TRUE;
-    int err_cnt = 0;
-    int i;
-    int j;
-    int tid = 0;
+    hbool_t  display_op_stats = FALSE;
+    hbool_t  cs               = FALSE;
+    hbool_t  ds               = FALSE;
+    hbool_t  rpt_failures     = TRUE;
+    int      err_cnt          = 0;
+    int      i;
+    int      j;
+    int      tid = 0;
     uint64_t init_id_info_fl_len;
     uint64_t init_type_info_fl_len;
 
     TESTING("MT future ID serial test #1");
     fflush(stdout);
 
-    if ( H5open() < 0 ) {
+    if (H5open() < 0) {
 
         err_cnt++;
 
-        if ( rpt_failures ) {
+        if (rpt_failures) {
 
             fprintf(stderr, "future_serial_test_1():%d: H5open() failed.\n", 0);
         }
@@ -9836,26 +9813,25 @@ future_serial_test_1(TestParams_t H5_ATTR_UNUSED *params)
 
     H5I_clear_stats();
 
-    init_id_info_fl_len    = atomic_load(&(H5I_mt_g.id_info_fl_len));
-    init_type_info_fl_len  = atomic_load(&(H5I_mt_g.type_info_fl_len));
+    init_id_info_fl_len   = atomic_load(&(H5I_mt_g.id_info_fl_len));
+    init_type_info_fl_len = atomic_load(&(H5I_mt_g.type_info_fl_len));
 
     err_cnt += register_type(&(types_array[0]), cs, ds, rpt_failures, tid);
 
-    /* Create the future IDs and non-associated real IDs. Note that these will not be associated 
+    /* Create the future IDs and non-associated real IDs. Note that these will not be associated
      * but are here to show real IDs behave normally and do not interfere with future IDs
      */
-    for ( i = 0; i < 128; i += 2 )
-    {
+    for (i = 0; i < 128; i += 2) {
         j = i + 1;
 
-        err_cnt += reserve_future_id(&(types_array[0]), &(id_instance_array[i]), NULL,
-                                              cs, ds, rpt_failures, tid);
-                            
-        err_cnt += register_id(&(types_array[0]), &(id_instance_array[j]), &(objects_array[j]),
-                                cs, ds, rpt_failures, tid);
+        err_cnt +=
+            reserve_future_id(&(types_array[0]), &(id_instance_array[i]), NULL, cs, ds, rpt_failures, tid);
+
+        err_cnt += register_id(&(types_array[0]), &(id_instance_array[j]), &(objects_array[j]), cs, ds,
+                               rpt_failures, tid);
     }
 
-    if( display_op_stats ) {
+    if (display_op_stats) {
 
         H5I_dump_nz_stats(stdout, "Register future IDs 1");
 
@@ -9863,19 +9839,17 @@ future_serial_test_1(TestParams_t H5_ATTR_UNUSED *params)
     }
 
     /* Verify that the lookups of the future IDs fail and lookups of the real IDs succeed */
-    for ( i = 0; i < 128; i += 2) {
+    for (i = 0; i < 128; i += 2) {
 
         j = i + 1;
 
-        err_cnt += object_verify(&(types_array[0]), &(id_instance_array[i]), NULL,
-                                  cs, ds, rpt_failures, tid);
+        err_cnt += object_verify(&(types_array[0]), &(id_instance_array[i]), NULL, cs, ds, rpt_failures, tid);
 
-        err_cnt += object_verify(&(types_array[0]), &(id_instance_array[j]), &(objects_array[j]),
-                                  cs, ds, rpt_failures, tid);
-
+        err_cnt += object_verify(&(types_array[0]), &(id_instance_array[j]), &(objects_array[j]), cs, ds,
+                                 rpt_failures, tid);
     }
 
-    if( display_op_stats ) {
+    if (display_op_stats) {
 
         H5I_dump_nz_stats(stdout, "ID lookups 1 -- test a");
 
@@ -9883,15 +9857,15 @@ future_serial_test_1(TestParams_t H5_ATTR_UNUSED *params)
     }
 
     /* For every eighth future ID (i = 0, 16, 32, 48,...), define with the associated group A object */
-    for ( i = 0; i < 128; i += 2 * 8 ) {
+    for (i = 0; i < 128; i += 2 * 8) {
 
         j = i + 1;
 
-        err_cnt += define_future_0(&(types_array[0]), &(id_instance_array[i]), (void *)&objects_array[i], 
-                                    cs, ds, rpt_failures, tid);
+        err_cnt += define_future_0(&(types_array[0]), &(id_instance_array[i]), (void *)&objects_array[i], cs,
+                                   ds, rpt_failures, tid);
     }
 
-    if ( display_op_stats ) {
+    if (display_op_stats) {
 
         H5I_dump_nz_stats(stdout, "Define future IDs 1 -- test a");
 
@@ -9899,26 +9873,26 @@ future_serial_test_1(TestParams_t H5_ATTR_UNUSED *params)
     }
 
     /* Verify that the lookups of the real IDs succeed and the group A futures are now defined and real IDs */
-    for ( i = 0; i < 128; i += 2 ) {
+    for (i = 0; i < 128; i += 2) {
 
         j = i + 1;
 
-        if ( 0 == i % 16 ) {
+        if (0 == i % 16) {
 
-            err_cnt += object_verify(&(types_array[0]), &(id_instance_array[i]), &(objects_array[i]), 
-                                    cs, ds, rpt_failures, tid);
+            err_cnt += object_verify(&(types_array[0]), &(id_instance_array[i]), &(objects_array[i]), cs, ds,
+                                     rpt_failures, tid);
         }
         else {
 
-            err_cnt += object_verify(&(types_array[0]), &(id_instance_array[i]), NULL, 
-                                    cs, ds, rpt_failures, tid);
+            err_cnt +=
+                object_verify(&(types_array[0]), &(id_instance_array[i]), NULL, cs, ds, rpt_failures, tid);
         }
 
-        err_cnt += object_verify(&(types_array[0]), &(id_instance_array[j]), &(objects_array[j]), 
-                                  cs, ds, rpt_failures, tid);
+        err_cnt += object_verify(&(types_array[0]), &(id_instance_array[j]), &(objects_array[j]), cs, ds,
+                                 rpt_failures, tid);
     }
 
-    if ( display_op_stats ) {
+    if (display_op_stats) {
 
         H5I_dump_nz_stats(stdout, "ID lookups 2 -- verify defined future IDs -- test a");
 
@@ -9929,13 +9903,13 @@ future_serial_test_1(TestParams_t H5_ATTR_UNUSED *params)
 
     err_cnt += destroy_type(&(types_array[0]), cs, ds, rpt_failures, tid);
 
-    if ( display_op_stats ) {
+    if (display_op_stats) {
 
         H5I_dump_nz_stats(stdout, "destroy_type()");
         H5I_clear_stats();
     }
 
-    if ( FUTURE_SERIAL_TEST_1__DISPLAY_FINAL_STATS ) {
+    if (FUTURE_SERIAL_TEST_1__DISPLAY_FINAL_STATS) {
 
         H5I_dump_stats(stdout);
 
@@ -9946,144 +9920,141 @@ future_serial_test_1(TestParams_t H5_ATTR_UNUSED *params)
     /* Sanity checks on the id info and type info free lists. */
 
     /* verify that the id info and type info free lists balance.
-     * Note that in this case, the allocs and frees balance, so we must take 
+     * Note that in this case, the allocs and frees balance, so we must take
      * account of the initial free list length in out tests.
      */
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_id_info_structs_added_to_fl)) -
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_freed)) -
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_alloced_from_fl)) -
-                  atomic_load(&(H5I_mt_g.id_info_fl_len)) + init_id_info_fl_len) );
+    assert(0 == (atomic_load(&(H5I_mt_g.num_id_info_structs_added_to_fl)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_freed)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_alloced_from_fl)) -
+                 atomic_load(&(H5I_mt_g.id_info_fl_len)) + init_id_info_fl_len));
 
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_type_info_structs_added_to_fl)) -
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_freed)) -
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_alloced_from_fl)) -
-                  atomic_load(&(H5I_mt_g.type_info_fl_len)) + init_type_info_fl_len) );
-
+    assert(0 == (atomic_load(&(H5I_mt_g.num_type_info_structs_added_to_fl)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_freed)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_alloced_from_fl)) -
+                 atomic_load(&(H5I_mt_g.type_info_fl_len)) + init_type_info_fl_len));
 
     /* Verify that the increments to all the stats for the serial numbers balance correctly.
      */
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_id_next_sn_assigned)) - 
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_added_to_fl))));
+    assert(0 == (atomic_load(&(H5I_mt_g.num_id_next_sn_assigned)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_added_to_fl))));
 
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_id_serial_num_resets)) -
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_alloced_from_fl)) -
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_freed))));
+    assert(0 == (atomic_load(&(H5I_mt_g.num_id_serial_num_resets)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_alloced_from_fl)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_freed))));
 
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_type_next_sn_assigned)) - 
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_added_to_fl))));
+    assert(0 == (atomic_load(&(H5I_mt_g.num_type_next_sn_assigned)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_added_to_fl))));
 
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_type_serial_num_resets)) -
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_alloced_from_fl)) -
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_freed))));
+    assert(0 == (atomic_load(&(H5I_mt_g.num_type_serial_num_resets)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_alloced_from_fl)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_freed))));
 
-
-    if ( H5close() < 0 ) {
+    if (H5close() < 0) {
 
         err_cnt++;
 
-        if ( rpt_failures ) {
+        if (rpt_failures) {
 
             fprintf(stderr, "future_serial_test_1():%d: H5close() failed.\n", 0);
         }
     }
 
-    if ( 0 == err_cnt ) {
+    if (0 == err_cnt) {
 
         PASSED();
         return SUCCEED;
-
-    } else {
+    }
+    else {
 
         IncTestNumErrs();
         H5_FAILED();
         return FAIL;
     }
 
-
 } /* future_serial_test_1() */
 
 /**********************************************************************************************
  * future_serial_test_2()
- * 
+ *
  *      Serial smoke check of the new future ID reserve/define facility.
- * 
+ *
  *      This test exercises the basic, single-threaded behavior of reserved(undefined) future
- *      IDs, including refcount operations on undefined futures, defining a subset of the 
+ *      IDs, including refcount operations on undefined futures, defining a subset of the
  *      futures with concrete objects, and ensuring that deletion paths behave correctly for
  *      both realized and never-realized futures.
- * 
+ *
  *      The test proceeds as follows:
- * 
+ *
  *      1) Register one ID type (types_array[0]) for use in the test.
- * 
+ *
  *      2) Reserve 128 future IDs of this type via reserve_future_id(). Each future ID is
  *         created with no associated object (progress_cb is NULL in this test), so all
  *         reserved IDs begin as undefined futures.
- * 
+ *
  *      3) Verify that lookups for the future IDs fail (i.e., no object is associated with
  *         the IDs) via object_verify().
- * 
+ *
  *      4) Increment the refcount on every other future ID (i = 0, 2, 4, 6, ...). This confirms
  *         that refcount operations on undefined future IDs are permitted and do not implicitly
  *         realize/define the IDs.
- * 
+ *
  *      5) Verify again that lookups for all future IDs still fail.
- *  
- *      6) Define every other future ID (i = 0, 2, 4, ...) with its corresponding object 
- *         (objects_array[i]) via define_future_0() (which calls the internal 
+ *
+ *      6) Define every other future ID (i = 0, 2, 4, ...) with its corresponding object
+ *         (objects_array[i]) via define_future_0() (which calls the internal
  *         H5Idefine_future_id()) and updates the test harness bookkeeping.
- * 
+ *
  *      7) Verify post-define behavior:
- * 
+ *
  *              a) For defined futures (even indices), verify that lookups succeed adn return
  *                 the expected object pointer.
- *  
+ *
  *              b) For the still-undefined futures (odd indicies), verify that lookups continue
  *                 to fail.
- * 
+ *
  *      8) Delete the realize futures (even indices) by decrementing their reference counts
  *         twice. This drives the normal free_func path and confirms that realized future IDs
  *         are deleted like ordinary IDs once their refcount reaches zero.
- * 
+ *
  *      9) Verify that lookups of the realized-then-deleted futures (even indices) now fail.
- * 
+ *
  *      10) Delete the never-realized futures (odd indices) by decrementing their refcounts
  *          directly with H5Idec_ref(). This bypass is used becayse the test harness wrapper
  *          for dec_ref() expects an associated object; in normal library use, undefined
  *          future IDs should be droppable without invoking the free_func, and the ID entry
- *          should simply be removed from the index. 
- * 
+ *          should simply be removed from the index.
+ *
  *      11) Verify that lookups of the never-realized futures (odd indices) still fail.
- * 
+ *
  *      12) Destroy the test type, dump final stats if enabled, and perform sanity checks
- *          on free list balancing and serial number statistics to ensure no leaks or 
- *          accounting inconsistencies were introduced by the reserve/define operations. 
- * 
- * 
+ *          on free list balancing and serial number statistics to ensure no leaks or
+ *          accounting inconsistencies were introduced by the reserve/define operations.
+ *
+ *
  *      A.Z.O   11/14/25
- * 
+ *
  **********************************************************************************************/
 static herr_t
 future_serial_test_2(TestParams_t H5_ATTR_UNUSED *params)
 {
-    hbool_t display_op_stats = FALSE;
-    hbool_t cs = FALSE;
-    hbool_t ds = FALSE;
-    hbool_t rpt_failures = TRUE;
-    int err_cnt = 0;
-    int i;
-    int tid = 0;
+    hbool_t  display_op_stats = FALSE;
+    hbool_t  cs               = FALSE;
+    hbool_t  ds               = FALSE;
+    hbool_t  rpt_failures     = TRUE;
+    int      err_cnt          = 0;
+    int      i;
+    int      tid = 0;
     uint64_t init_id_info_fl_len;
     uint64_t init_type_info_fl_len;
 
     TESTING("MT future ID serial test #2");
     fflush(stdout);
 
-    if ( H5open() < 0 ) {
+    if (H5open() < 0) {
 
         err_cnt++;
 
-        if ( rpt_failures ) {
+        if (rpt_failures) {
 
             fprintf(stderr, "future_serial_test_2():%d: H5open() failed.\n", 0);
         }
@@ -10091,22 +10062,20 @@ future_serial_test_2(TestParams_t H5_ATTR_UNUSED *params)
 
     H5I_clear_stats();
 
-    init_id_info_fl_len    = atomic_load(&(H5I_mt_g.id_info_fl_len));
-    init_type_info_fl_len  = atomic_load(&(H5I_mt_g.type_info_fl_len));
+    init_id_info_fl_len   = atomic_load(&(H5I_mt_g.id_info_fl_len));
+    init_type_info_fl_len = atomic_load(&(H5I_mt_g.type_info_fl_len));
 
     err_cnt += register_type(&(types_array[0]), cs, ds, rpt_failures, tid);
 
-    /* Create 128 future IDs 
+    /* Create 128 future IDs
      */
-    for ( i = 0; i < 128; i++ )
-    {
+    for (i = 0; i < 128; i++) {
 
-        err_cnt += reserve_future_id(&(types_array[0]), &(id_instance_array[i]), NULL,
-                                     cs, ds, rpt_failures, tid);
-
+        err_cnt +=
+            reserve_future_id(&(types_array[0]), &(id_instance_array[i]), NULL, cs, ds, rpt_failures, tid);
     }
 
-    if( display_op_stats ) {
+    if (display_op_stats) {
 
         H5I_dump_nz_stats(stdout, "Register future IDs 1");
 
@@ -10114,14 +10083,12 @@ future_serial_test_2(TestParams_t H5_ATTR_UNUSED *params)
     }
 
     /* Verify that the lookups of the future IDs fail and lookups of the real IDs succeed */
-    for ( i = 0; i < 128; i += 2) {
+    for (i = 0; i < 128; i += 2) {
 
-        err_cnt += object_verify(&(types_array[0]), &(id_instance_array[i]), NULL,
-                                  cs, ds, rpt_failures, tid);
-
+        err_cnt += object_verify(&(types_array[0]), &(id_instance_array[i]), NULL, cs, ds, rpt_failures, tid);
     }
 
-    if( display_op_stats ) {
+    if (display_op_stats) {
 
         H5I_dump_nz_stats(stdout, "ID lookups 1 -- test a");
 
@@ -10129,12 +10096,12 @@ future_serial_test_2(TestParams_t H5_ATTR_UNUSED *params)
     }
 
     /* Increment the refcounts on the future IDs  */
-    for ( i = 0; i < 128; i += 2 ) {
+    for (i = 0; i < 128; i += 2) {
 
         err_cnt += inc_ref(&(id_instance_array[i]), cs, ds, rpt_failures, tid);
     }
 
-    if ( display_op_stats ) {
+    if (display_op_stats) {
 
         H5I_dump_nz_stats(stdout, "Increment future ID ref counts 1 -- test a");
 
@@ -10142,13 +10109,12 @@ future_serial_test_2(TestParams_t H5_ATTR_UNUSED *params)
     }
 
     /* Verify that the lookups of the future IDs still fail */
-    for ( i = 0; i < 128; i++ ) {
+    for (i = 0; i < 128; i++) {
 
-        err_cnt += object_verify(&(types_array[0]), &(id_instance_array[i]), NULL, cs, ds, 
-                                  rpt_failures, tid);
+        err_cnt += object_verify(&(types_array[0]), &(id_instance_array[i]), NULL, cs, ds, rpt_failures, tid);
     }
 
-    if( display_op_stats ) {
+    if (display_op_stats) {
 
         H5I_dump_nz_stats(stdout, "ID lookups 2 -- test a");
 
@@ -10156,37 +10122,36 @@ future_serial_test_2(TestParams_t H5_ATTR_UNUSED *params)
     }
 
     /* For every second future ID (i = 0, 2, 4, 6, 8, ... ) define with the associated group A object */
-    for ( i = 0; i < 128; i += 2  ) {
+    for (i = 0; i < 128; i += 2) {
 
-        err_cnt += define_future_0(&(types_array[0]), &(id_instance_array[i]), &(objects_array[i]), 
-                                   cs, ds, rpt_failures, tid);
-
+        err_cnt += define_future_0(&(types_array[0]), &(id_instance_array[i]), &(objects_array[i]), cs, ds,
+                                   rpt_failures, tid);
     }
 
-    if ( display_op_stats ) {
+    if (display_op_stats) {
 
         H5I_dump_nz_stats(stdout, "Define future IDs 1 -- test a");
 
         H5I_clear_stats();
     }
 
-    /* Verify that the lookups of the defined group A futures are now real IDs with objects and the rest fail */
-    for ( i = 0; i < 128; i ++ ) {
+    /* Verify that the lookups of the defined group A futures are now real IDs with objects and the rest fail
+     */
+    for (i = 0; i < 128; i++) {
 
-        if ( i % 2 == 0) {
+        if (i % 2 == 0) {
 
-            err_cnt += object_verify(&(types_array[0]), &(id_instance_array[i]), &(objects_array[i]), cs, ds, 
-                            rpt_failures, tid);
-        } 
+            err_cnt += object_verify(&(types_array[0]), &(id_instance_array[i]), &(objects_array[i]), cs, ds,
+                                     rpt_failures, tid);
+        }
         else {
 
-            err_cnt += object_verify(&(types_array[0]), &(id_instance_array[i]), NULL, cs, ds, 
-                                  rpt_failures, tid);
+            err_cnt +=
+                object_verify(&(types_array[0]), &(id_instance_array[i]), NULL, cs, ds, rpt_failures, tid);
         }
-
     }
 
-    if ( display_op_stats ) {
+    if (display_op_stats) {
 
         H5I_dump_nz_stats(stdout, "ID lookups 3 -- test a");
 
@@ -10194,29 +10159,30 @@ future_serial_test_2(TestParams_t H5_ATTR_UNUSED *params)
     }
 
     /* Decrement the ref count on each of the realized future IDs twice to run the free func */
-    for (i = 0; i < 128; i += 2 ) {
+    for (i = 0; i < 128; i += 2) {
 
-        err_cnt += dec_ref(&(types_array[0]), &(id_instance_array[i]), &(objects_array[i]), cs, ds, TRUE, tid);
+        err_cnt +=
+            dec_ref(&(types_array[0]), &(id_instance_array[i]), &(objects_array[i]), cs, ds, TRUE, tid);
 
-        err_cnt += dec_ref(&(types_array[0]), &(id_instance_array[i]), &(objects_array[i]), cs, ds, TRUE, tid);
-
+        err_cnt +=
+            dec_ref(&(types_array[0]), &(id_instance_array[i]), &(objects_array[i]), cs, ds, TRUE, tid);
     }
 
-    if ( display_op_stats ) {
+    if (display_op_stats) {
 
-        H5I_dump_nz_stats(stdout, "decrement (really delete) realized futures (real IDs) ref counts 1 -- test b");
+        H5I_dump_nz_stats(stdout,
+                          "decrement (really delete) realized futures (real IDs) ref counts 1 -- test b");
 
         H5I_clear_stats();
     }
 
     /* Verify the lookup of the realized future IDs fail */
-    for ( i = 0; i < 128; i += 2 ) {
+    for (i = 0; i < 128; i += 2) {
 
-        err_cnt += object_verify(&(types_array[0]), &(id_instance_array[i]), NULL, cs, ds, 
-                                  rpt_failures, tid);
+        err_cnt += object_verify(&(types_array[0]), &(id_instance_array[i]), NULL, cs, ds, rpt_failures, tid);
     }
 
-    if ( display_op_stats ) {
+    if (display_op_stats) {
 
         H5I_dump_nz_stats(stdout, "ID lookups 4 -- test b");
 
@@ -10227,16 +10193,16 @@ future_serial_test_2(TestParams_t H5_ATTR_UNUSED *params)
      * Note that we are directly calling H5I's dec ref since the test harness wrapper requires
      * the id to have an associated object. In normal library use this is not a prerequisit for
      * this operation, and for any future ID passed it should simply mark the id for deletion,
-     * skipping the free_func call and drop the ID. 
+     * skipping the free_func call and drop the ID.
      */
-    for ( i = 1; i < 128; i += 2 ) {
+    for (i = 1; i < 128; i += 2) {
 
         id_instance_kernel_t ik = atomic_load(&(id_instance_array[i].k));
-        hid_t id = ik.id;
+        hid_t                id = ik.id;
         err_cnt += H5Idec_ref(id);
     }
 
-    if ( display_op_stats ) {
+    if (display_op_stats) {
 
         H5I_dump_nz_stats(stdout, "decrement (really delete/ drop entry) future ID ref counts 2 -- test b");
 
@@ -10244,31 +10210,29 @@ future_serial_test_2(TestParams_t H5_ATTR_UNUSED *params)
     }
 
     /* Verify the lookup of the realized future IDs fail */
-    for ( i = 1; i < 128; i += 2 ) {
+    for (i = 1; i < 128; i += 2) {
 
-        err_cnt += object_verify(&(types_array[0]), &(id_instance_array[i]), NULL, cs, ds, 
-                                  rpt_failures, tid);
+        err_cnt += object_verify(&(types_array[0]), &(id_instance_array[i]), NULL, cs, ds, rpt_failures, tid);
     }
 
-    if ( display_op_stats ) {
+    if (display_op_stats) {
 
         H5I_dump_nz_stats(stdout, "ID lookups 4 -- test b");
 
         H5I_clear_stats();
     }
-    
 
     /* cleanup after test */
 
     err_cnt += destroy_type(&(types_array[0]), cs, ds, rpt_failures, tid);
 
-    if ( display_op_stats ) {
+    if (display_op_stats) {
 
         H5I_dump_nz_stats(stdout, "destroy_type()");
         H5I_clear_stats();
     }
 
-    if ( FUTURE_SERIAL_TEST_2__DISPLAY_FINAL_STATS ) {
+    if (FUTURE_SERIAL_TEST_2__DISPLAY_FINAL_STATS) {
 
         H5I_dump_stats(stdout);
 
@@ -10279,59 +10243,56 @@ future_serial_test_2(TestParams_t H5_ATTR_UNUSED *params)
     /* Sanity checks on the id info and type info free lists. */
 
     /* verify that the id info and type info free lists balance.
-     * Note that in this case, the allocs and frees balance, so we must take 
+     * Note that in this case, the allocs and frees balance, so we must take
      * account of the initial free list length in out tests.
      */
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_id_info_structs_added_to_fl)) -
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_freed)) -
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_alloced_from_fl)) -
-                  atomic_load(&(H5I_mt_g.id_info_fl_len)) + init_id_info_fl_len) );
+    assert(0 == (atomic_load(&(H5I_mt_g.num_id_info_structs_added_to_fl)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_freed)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_alloced_from_fl)) -
+                 atomic_load(&(H5I_mt_g.id_info_fl_len)) + init_id_info_fl_len));
 
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_type_info_structs_added_to_fl)) -
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_freed)) -
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_alloced_from_fl)) -
-                  atomic_load(&(H5I_mt_g.type_info_fl_len)) + init_type_info_fl_len) );
-
+    assert(0 == (atomic_load(&(H5I_mt_g.num_type_info_structs_added_to_fl)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_freed)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_alloced_from_fl)) -
+                 atomic_load(&(H5I_mt_g.type_info_fl_len)) + init_type_info_fl_len));
 
     /* Verify that the increments to all the stats for the serial numbers balance correctly.
      */
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_id_next_sn_assigned)) - 
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_added_to_fl))));
+    assert(0 == (atomic_load(&(H5I_mt_g.num_id_next_sn_assigned)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_added_to_fl))));
 
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_id_serial_num_resets)) -
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_alloced_from_fl)) -
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_freed))));
+    assert(0 == (atomic_load(&(H5I_mt_g.num_id_serial_num_resets)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_alloced_from_fl)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_freed))));
 
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_type_next_sn_assigned)) - 
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_added_to_fl))));
+    assert(0 == (atomic_load(&(H5I_mt_g.num_type_next_sn_assigned)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_added_to_fl))));
 
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_type_serial_num_resets)) -
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_alloced_from_fl)) -
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_freed))));
+    assert(0 == (atomic_load(&(H5I_mt_g.num_type_serial_num_resets)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_alloced_from_fl)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_freed))));
 
-
-    if ( H5close() < 0 ) {
+    if (H5close() < 0) {
 
         err_cnt++;
 
-        if ( rpt_failures ) {
+        if (rpt_failures) {
 
             fprintf(stderr, "future_serial_test_2():%d: H5close() failed.\n", 0);
         }
     }
 
-    if ( 0 == err_cnt ) {
+    if (0 == err_cnt) {
 
         PASSED();
         return SUCCEED;
-
-    } else {
+    }
+    else {
 
         IncTestNumErrs();
         H5_FAILED();
         return FAIL;
     }
-
 
 } /* future_serial_test_2() */
 
@@ -10339,17 +10300,17 @@ future_serial_test_2(TestParams_t H5_ATTR_UNUSED *params)
  *
  * mt_test_fcn_1()
  *
- *      First multi-thread test function.  
+ *      First multi-thread test function.
  *
- *      This test function is intended to implement an initial smoke check in which 
- *      multiple IDs of multiple types are created, accessed, ref count incremented and/or 
+ *      This test function is intended to implement an initial smoke check in which
+ *      multiple IDs of multiple types are created, accessed, ref count incremented and/or
  *      decremented, and finally discarded -- all without any expected failures.
  *
  *      Note that all types must be defined prior to the invocation of this function.
  *
  *      The test proceeds as follows:
  *
- *      1) register params->ids_count IDs with the specified start and stride in the 
+ *      1) register params->ids_count IDs with the specified start and stride in the
  *         id_instance_array[], and with types specified by the params->type_start,
  *         parame->types-count, params->types_stride,
  *
@@ -10369,74 +10330,74 @@ future_serial_test_2(TestParams_t H5_ATTR_UNUSED *params)
  *******************************************************************************************/
 
 static void *
-mt_test_fcn_1(void * _params)
+mt_test_fcn_1(void *_params)
 {
-    hbool_t display_op_stats = FALSE;
-    hbool_t show_progress = FALSE;
-    int                i;
-    int                j;
-    mt_test_params_t * params = (mt_test_params_t *)_params;
+    hbool_t           display_op_stats = FALSE;
+    hbool_t           show_progress    = FALSE;
+    int               i;
+    int               j;
+    mt_test_params_t *params = (mt_test_params_t *)_params;
 
-    if ( show_progress ) {
+    if (show_progress) {
 
         fprintf(stderr, "mt_test_fcn_1:%d: -- point 0 -- entering \n", params->thread_id);
-        fprintf(stderr, 
-         "mt_test_fcn_1:%d: params st/cnt/st = %d/%d/%d, id st/cnt/st = %d/%d/%d, obj st/cnt/st = %d/%d/%d\n",
-         params->thread_id, 
-         params->types_start, params->types_count, params->types_stride,
-         params->ids_start, params->ids_count, params->ids_stride,
-         params->objects_start, params->objects_count, params->objects_stride);
+        fprintf(stderr,
+                "mt_test_fcn_1:%d: params st/cnt/st = %d/%d/%d, id st/cnt/st = %d/%d/%d, obj st/cnt/st = "
+                "%d/%d/%d\n",
+                params->thread_id, params->types_start, params->types_count, params->types_stride,
+                params->ids_start, params->ids_count, params->ids_stride, params->objects_start,
+                params->objects_count, params->objects_stride);
     }
 
-    if ( display_op_stats ) {
+    if (display_op_stats) {
 
         H5I_clear_stats();
     }
 
-    if ( show_progress ) {
+    if (show_progress) {
 
         fprintf(stderr, "mt_test_fcn_1:%d: -- point 1\n", params->thread_id);
     }
 
     params->err_cnt += register_ids(params->types_start, params->types_count, params->types_stride,
-                                    params->ids_start, params->ids_count, params->ids_stride,
-                                    params->cs, params->ds, params->rpt_failures, params->thread_id);
+                                    params->ids_start, params->ids_count, params->ids_stride, params->cs,
+                                    params->ds, params->rpt_failures, params->thread_id);
 
-    if ( show_progress ) {
+    if (show_progress) {
 
         fprintf(stderr, "mt_test_fcn_1:%d: -- point 2\n", params->thread_id);
     }
 
-    if ( display_op_stats ) {
+    if (display_op_stats) {
 
         H5I_dump_nz_stats(stdout, "register_ids()");
         H5I_clear_stats();
     }
 
-    params->err_cnt += inc_refs(params->ids_start, params->ids_count, params->ids_stride, 
-                                params->cs, params->ds, params->rpt_failures, params->thread_id);
+    params->err_cnt += inc_refs(params->ids_start, params->ids_count, params->ids_stride, params->cs,
+                                params->ds, params->rpt_failures, params->thread_id);
 
-    if ( show_progress ) {
+    if (show_progress) {
 
         fprintf(stderr, "mt_test_fcn_1:%d: -- point 3\n", params->thread_id);
     }
 
-    if ( display_op_stats ) {
+    if (display_op_stats) {
 
         H5I_dump_nz_stats(stdout, "inc_refs()");
         H5I_clear_stats();
     }
 
     params->err_cnt += verify_objects(params->types_start, params->types_count, params->types_stride,
-                                      params->ids_start, params->ids_count, params->ids_stride,
-                                      params->cs, params->ds, params->rpt_failures, params->thread_id);
+                                      params->ids_start, params->ids_count, params->ids_stride, params->cs,
+                                      params->ds, params->rpt_failures, params->thread_id);
 
-    if ( show_progress ) {
+    if (show_progress) {
 
         fprintf(stderr, "mt_test_fcn_1:%d: -- point 4\n", params->thread_id);
     }
 
-    if ( display_op_stats ) {
+    if (display_op_stats) {
 
         H5I_dump_nz_stats(stdout, "verify_objects()");
         H5I_clear_stats();
@@ -10445,153 +10406,151 @@ mt_test_fcn_1(void * _params)
     params->err_cnt += inc_type_refs(params->types_start, params->types_count / 2, params->types_stride,
                                      params->cs, params->ds, params->rpt_failures, params->thread_id);
 
-    if ( show_progress ) {
+    if (show_progress) {
 
         fprintf(stderr, "mt_test_fcn_1:%d: -- point 5\n", params->thread_id);
     }
 
-    if ( display_op_stats ) {
+    if (display_op_stats) {
 
         H5I_dump_nz_stats(stdout, "inc_type_refs()");
         H5I_clear_stats();
     }
 
-    for ( i = 0; i < params->types_count; i++ ) {
+    for (i = 0; i < params->types_count; i++) {
 
         j = params->types_start + (i * params->types_stride);
 
-        params->err_cnt += dec_refs(j, 1, 1, params->ids_start + i, params->ids_count / (params->types_count * 2),
-                                    params->ids_stride * params->types_count, params->cs, params->ds, 
-                                    params->rpt_failures, params->thread_id);
+        params->err_cnt +=
+            dec_refs(j, 1, 1, params->ids_start + i, params->ids_count / (params->types_count * 2),
+                     params->ids_stride * params->types_count, params->cs, params->ds, params->rpt_failures,
+                     params->thread_id);
     }
 
-    if ( show_progress ) {
+    if (show_progress) {
 
         fprintf(stderr, "mt_test_fcn_1:%d: -- point 6\n", params->thread_id);
     }
 
-    if ( display_op_stats ) {
+    if (display_op_stats) {
 
         H5I_dump_nz_stats(stdout, "dec_refs()");
         H5I_clear_stats();
     }
 
-    if ( show_progress ) {
+    if (show_progress) {
 
         fprintf(stderr, "mt_test_fcn_1:%d: -- point 7\n", params->thread_id);
     }
 
     params->err_cnt += verify_objects(params->types_start, params->types_count, params->types_stride,
-                                      params->ids_start, params->ids_count, params->ids_stride, 
-                                      params->cs, params->ds, params->rpt_failures, params->thread_id);
+                                      params->ids_start, params->ids_count, params->ids_stride, params->cs,
+                                      params->ds, params->rpt_failures, params->thread_id);
 
-    if ( display_op_stats ) {
+    if (display_op_stats) {
 
         H5I_dump_nz_stats(stdout, "verify_objects()");
         H5I_clear_stats();
     }
 
-    if ( show_progress ) {
+    if (show_progress) {
 
         fprintf(stderr, "mt_test_fcn_1:%d: -- point 8\n", params->thread_id);
     }
-    
-    params->err_cnt += dec_refs(params->types_start, params->types_count, params->types_stride,
-                                params->ids_start, params->ids_count, params->ids_stride,
-                                params->cs, params->ds, params->rpt_failures, params->thread_id);
 
-    if ( show_progress ) {
+    params->err_cnt += dec_refs(params->types_start, params->types_count, params->types_stride,
+                                params->ids_start, params->ids_count, params->ids_stride, params->cs,
+                                params->ds, params->rpt_failures, params->thread_id);
+
+    if (show_progress) {
 
         fprintf(stderr, "mt_test_fcn_1:%d: -- point 9\n", params->thread_id);
     }
 
-    if ( display_op_stats ) {
+    if (display_op_stats) {
 
         H5I_dump_nz_stats(stdout, "dec_refs()");
         H5I_clear_stats();
     }
 
-    if ( show_progress ) {
+    if (show_progress) {
 
         fprintf(stderr, "mt_test_fcn_1:%d: -- point 10 -- exiting\n", params->thread_id);
     }
 
-    return(NULL);
+    return (NULL);
 
 } /* mt_test_fcn_1() */
-
 
 /*******************************************************************************************
  *
  * mt_test_fcn_2()
  *
- *      Second multi-thread test function.  
+ *      Second multi-thread test function.
  *
- *      This test function is intended to implement a test consisting of a largely random 
- *      interleaving of various H5I API calls in which types are created, flushed, and 
- *      destroyed, and IDs are registered, accessed, reference counts incremented and 
- *      decremented, and eventually deleted.  Since this process is largely random, this 
- *      means that types and IDs may be referenced after they are deleted.  
+ *      This test function is intended to implement a test consisting of a largely random
+ *      interleaving of various H5I API calls in which types are created, flushed, and
+ *      destroyed, and IDs are registered, accessed, reference counts incremented and
+ *      decremented, and eventually deleted.  Since this process is largely random, this
+ *      means that types and IDs may be referenced after they are deleted.
  *
  *******************************************************************************************/
 
 static void *
-mt_test_fcn_2(void * _params)
+mt_test_fcn_2(void *_params)
 {
-    hbool_t            show_progress = FALSE;
-    hbool_t            proceed = TRUE;
-    hbool_t            types_assigned[NUM_ID_TYPES];
-    int                type_index;
-    int                target_id_type_index;
-    int                id_incr_ambig = 0;
-    int                id_decr_ambig = 0;
-    int                id_get_ref_ambig = 0;
-    int                id_obj_ver_ambig = 0;
-    int                id_obj_remove_ver_ambig = 0;
-    int                i;
-    int                j;
-    int                target_id_index;
-    int                operation;
-    int                ops_per_id = 10;
-    int                ids_completed = 0;
-    int              * id_op_counts = NULL;
-    mt_test_params_t * params = (mt_test_params_t *)_params;
+    hbool_t           show_progress = FALSE;
+    hbool_t           proceed       = TRUE;
+    hbool_t           types_assigned[NUM_ID_TYPES];
+    int               type_index;
+    int               target_id_type_index;
+    int               id_incr_ambig           = 0;
+    int               id_decr_ambig           = 0;
+    int               id_get_ref_ambig        = 0;
+    int               id_obj_ver_ambig        = 0;
+    int               id_obj_remove_ver_ambig = 0;
+    int               i;
+    int               j;
+    int               target_id_index;
+    int               operation;
+    int               ops_per_id    = 10;
+    int               ids_completed = 0;
+    int              *id_op_counts  = NULL;
+    mt_test_params_t *params        = (mt_test_params_t *)_params;
 
-    if ( show_progress ) {
+    if (show_progress) {
 
         fprintf(stderr, "mt_test_fcn_1:%d: -- point 0 -- entering \n", params->thread_id);
-        fprintf(stderr, 
-         "mt_test_fcn_2:%d: type st/cnt/st = %d/%d/%d, id st/cnt/st = %d/%d/%d, obj st/cnt/st = %d/%d/%d\n",
-         params->thread_id, 
-         params->types_start, params->types_count, params->types_stride,
-         params->ids_start, params->ids_count, params->ids_stride,
-         params->objects_start, params->objects_count, params->objects_stride);
+        fprintf(stderr,
+                "mt_test_fcn_2:%d: type st/cnt/st = %d/%d/%d, id st/cnt/st = %d/%d/%d, obj st/cnt/st = "
+                "%d/%d/%d\n",
+                params->thread_id, params->types_start, params->types_count, params->types_stride,
+                params->ids_start, params->ids_count, params->ids_stride, params->objects_start,
+                params->objects_count, params->objects_stride);
     }
-
 
     /* setup the types assigned array, and register the assigned types in passing.
      *
-     * Cells in this array are set to TRUE if this thread is is responsible for 
-     * registering and de-registring the type managed by the instance of 
+     * Cells in this array are set to TRUE if this thread is is responsible for
+     * registering and de-registring the type managed by the instance of
      * id_type_t at the same index in types_array[].
      */
-    j = 0;
+    j          = 0;
     type_index = params->types_start;
-    for ( i = 0; i < NUM_ID_TYPES; i++ ) {
+    for (i = 0; i < NUM_ID_TYPES; i++) {
 
-        if ( i < type_index ) {
+        if (i < type_index) {
 
             types_assigned[i] = FALSE;
+        }
+        else {
 
-        } else {
-
-            assert( i == type_index );
+            assert(i == type_index);
 
             assert(0 == atomic_load(&(types_array[type_index].successful_registers)));
             assert(0 == atomic_load(&(types_array[type_index].failed_registers)));
 
-            try_register_type(type_index, params->cs, params->ds, params->rpt_failures, 
-                              params->thread_id);
+            try_register_type(type_index, params->cs, params->ds, params->rpt_failures, params->thread_id);
 
             assert(1 == atomic_load(&(types_array[type_index].successful_registers)));
             assert(0 == atomic_load(&(types_array[type_index].failed_registers)));
@@ -10600,317 +10559,318 @@ mt_test_fcn_2(void * _params)
 
             j++;
 
-            if ( j < params->types_count ) {
+            if (j < params->types_count) {
 
                 type_index += params->types_stride;
+            }
+            else { /* no more types assigned to this thread */
 
-            } else {  /* no more types assigned to this thread */
-
-                type_index = NUM_ID_TYPES; 
+                type_index = NUM_ID_TYPES;
             }
         }
     }
 
-    H5E_BEGIN_TRY {
+    H5E_BEGIN_TRY
+    {
 
-    assert( j == params->types_count );
+        assert(j == params->types_count);
 
-    /* setup the id progress array, and initialize it to zero */
-    if ( NULL == (id_op_counts = (int *)malloc(((size_t)(NUM_ID_INSTANCES)) * sizeof(int))) ) {
+        /* setup the id progress array, and initialize it to zero */
+        if (NULL == (id_op_counts = (int *)malloc(((size_t)(NUM_ID_INSTANCES)) * sizeof(int)))) {
 
-        proceed = FALSE;
-
-    } else {
-
-        for ( i = 0; i < NUM_ID_INSTANCES; i++ ) {
- 
-            id_op_counts[i] = 0;
+            proceed = FALSE;
         }
-    }
+        else {
 
-    while ( ( proceed ) && ( ids_completed < params->ids_count ) ) {
+            for (i = 0; i < NUM_ID_INSTANCES; i++) {
 
-        /* pick an ID */
-        
-        target_id_index = params->ids_start + ((rand() % params->ids_count) * params->ids_stride);
-        assert(target_id_index >= 0);
-        assert(target_id_index < NUM_ID_INSTANCES);
-
-        /* load the target ID's assigned type index.  Note that this type is not guaranteed to 
-         * have benn registered yet unless it is one of the types assigned to this thread.
-         */
-        target_id_type_index = id_instance_array[target_id_index].type_index;
-        assert( 0 <= target_id_type_index );
-        assert( target_id_type_index < NUM_ID_TYPES );
-
-        /* if id_op_counts[target_id_index] == 0, check to see if the target_id_type_index is one 
-         * of the type indexes assigned to this thread.  If so, register the target id.  Otherwise, 
-         * increment its reference count.
-         */
-        if ( 0 == id_op_counts[target_id_index] ) {
-
-            if ( types_assigned[target_id_type_index] ) {
-
-                /* the type assigned to target_id_type_index has been registered -- now register the id */
-
-                assert(0 == atomic_load(&(id_instance_array[target_id_index].successful_registrations)));
-                assert(0 == atomic_load(&(id_instance_array[target_id_index].failed_registrations)));
-
-                /* use the same index for the object as the instance */
-                try_register_id(target_id_index, target_id_index, params->cs, params->ds, 
-                                params->rpt_failures, params->thread_id);
-
-                assert(1 == atomic_load(&(id_instance_array[target_id_index].successful_registrations)));
-                assert(0 == atomic_load(&(id_instance_array[target_id_index].failed_registrations)));
-                
-            } else {
-
-                /* the target id may or may not be registerd -- just try to increment its ref count */
-                i = try_inc_ref(target_id_index, params->cs, params->ds, 
-                                                 params->rpt_failures, params->thread_id);
-                params->ambig_cnt += i;
-                id_incr_ambig += i;
-
+                id_op_counts[i] = 0;
             }
+        }
 
-            id_op_counts[target_id_index]++;
+        while ((proceed) && (ids_completed < params->ids_count)) {
 
-        } else if ( id_op_counts[target_id_index] >= ops_per_id ) {
+            /* pick an ID */
 
-            ids_completed++;
+            target_id_index = params->ids_start + ((rand() % params->ids_count) * params->ids_stride);
+            assert(target_id_index >= 0);
+            assert(target_id_index < NUM_ID_INSTANCES);
 
-        } else {
+            /* load the target ID's assigned type index.  Note that this type is not guaranteed to
+             * have benn registered yet unless it is one of the types assigned to this thread.
+             */
+            target_id_type_index = id_instance_array[target_id_index].type_index;
+            assert(0 <= target_id_type_index);
+            assert(target_id_type_index < NUM_ID_TYPES);
 
-            operation = rand() % 100;
+            /* if id_op_counts[target_id_index] == 0, check to see if the target_id_type_index is one
+             * of the type indexes assigned to this thread.  If so, register the target id.  Otherwise,
+             * increment its reference count.
+             */
+            if (0 == id_op_counts[target_id_index]) {
 
-            id_op_counts[target_id_index]++;
+                if (types_assigned[target_id_type_index]) {
 
-            switch ( operation ) {
+                    /* the type assigned to target_id_type_index has been registered -- now register the id */
 
-                case  0:
-                case  1:
-                case  2:
-                case  3: 
-                case  4:
-                case  5:
-                case  6:
-                case  7:
-                case  8:
-                case  9:
-#if 1
-                    i = try_inc_ref(target_id_index, params->cs, params->ds, 
+                    assert(0 == atomic_load(&(id_instance_array[target_id_index].successful_registrations)));
+                    assert(0 == atomic_load(&(id_instance_array[target_id_index].failed_registrations)));
+
+                    /* use the same index for the object as the instance */
+                    try_register_id(target_id_index, target_id_index, params->cs, params->ds,
                                     params->rpt_failures, params->thread_id);
+
+                    assert(1 == atomic_load(&(id_instance_array[target_id_index].successful_registrations)));
+                    assert(0 == atomic_load(&(id_instance_array[target_id_index].failed_registrations)));
+                }
+                else {
+
+                    /* the target id may or may not be registerd -- just try to increment its ref count */
+                    i = try_inc_ref(target_id_index, params->cs, params->ds, params->rpt_failures,
+                                    params->thread_id);
                     params->ambig_cnt += i;
                     id_incr_ambig += i;
-                    break;
-#endif
-                case 10:
-                case 11:
-                case 12:
-                case 13: 
-                case 14:
-                case 15:
-                case 16:
-                case 17:
-                case 18:
-#if 1
-                    i = try_dec_ref(target_id_index, params->cs, params->ds, 
-                                    params->rpt_failures, params->thread_id);
-                    params->ambig_cnt += i;
-                    id_decr_ambig += i;
-                    break;
-#endif
-                case 19:
-#if 1
-                    i = try_remove_verify(target_id_index, params->cs, params->ds,
-                                          params->rpt_failures, params->thread_id);
-                    params->ambig_cnt += i;
-                    id_obj_remove_ver_ambig += i;
-                    break;
-#endif
-                case 20:
-                case 21:
-                case 22:
-                case 23: 
-                case 24:
-                case 25:
-                case 26:
-                case 27:
-                case 28:
-                case 29:
-                    i = try_get_ref(target_id_index, params->cs, params->ds,
-                                    params->rpt_failures, params->thread_id);
-                    params->ambig_cnt += i;
-                    id_get_ref_ambig += i;
-                    break;
+                }
 
-                case 30:
-                case 31:
-                case 32:
-                case 33: 
-                case 34:
-                case 35:
-                case 36:
-                case 37:
-                case 38:
-                case 39:
-                case 40:
-                case 41:
-                case 42:
-                case 43: 
-                case 44:
-                case 45:
-                case 46:
-                case 47:
-                case 48:
-                case 49:
-                case 50:
-                case 51:
-                case 52:
-                case 53: 
-                case 54:
-                case 55:
-                case 56:
-                case 57:
-                case 58:
-                case 59:
-                case 60:
-                case 61:
-                case 62:
-                case 63: 
-                case 64:
-                case 65:
-                case 66:
-                case 67:
-                case 68:
-                case 69:
-                case 70:
-                case 71:
-                case 72:
-                case 73: 
-                case 74:
-                case 75:
-                case 76:
-                case 77:
-                case 78:
-                case 79:
-                case 80:
-                case 81:
-                case 82:
-                case 83: 
-                case 84:
-                case 85:
-                case 86:
-                case 87:
-                case 88:
-                case 89:
-                case 90:
-                case 91:
-                case 92:
-                case 93: 
-                case 94:
-                case 95:
-                case 96:
-                case 97:
-                case 98:
-                case 99:
-                    i = try_object_verify(target_id_index, params->cs, params->ds, 
-                                                           params->rpt_failures, params->thread_id);
-                    params->ambig_cnt += i;
-                    id_obj_ver_ambig += i;
-                    break;
+                id_op_counts[target_id_index]++;
+            }
+            else if (id_op_counts[target_id_index] >= ops_per_id) {
 
-                default: 
-                    assert(FALSE);
+                ids_completed++;
+            }
+            else {
+
+                operation = rand() % 100;
+
+                id_op_counts[target_id_index]++;
+
+                switch (operation) {
+
+                    case 0:
+                    case 1:
+                    case 2:
+                    case 3:
+                    case 4:
+                    case 5:
+                    case 6:
+                    case 7:
+                    case 8:
+                    case 9:
+#if 1
+                        i = try_inc_ref(target_id_index, params->cs, params->ds, params->rpt_failures,
+                                        params->thread_id);
+                        params->ambig_cnt += i;
+                        id_incr_ambig += i;
+                        break;
+#endif
+                    case 10:
+                    case 11:
+                    case 12:
+                    case 13:
+                    case 14:
+                    case 15:
+                    case 16:
+                    case 17:
+                    case 18:
+#if 1
+                        i = try_dec_ref(target_id_index, params->cs, params->ds, params->rpt_failures,
+                                        params->thread_id);
+                        params->ambig_cnt += i;
+                        id_decr_ambig += i;
+                        break;
+#endif
+                    case 19:
+#if 1
+                        i = try_remove_verify(target_id_index, params->cs, params->ds, params->rpt_failures,
+                                              params->thread_id);
+                        params->ambig_cnt += i;
+                        id_obj_remove_ver_ambig += i;
+                        break;
+#endif
+                    case 20:
+                    case 21:
+                    case 22:
+                    case 23:
+                    case 24:
+                    case 25:
+                    case 26:
+                    case 27:
+                    case 28:
+                    case 29:
+                        i = try_get_ref(target_id_index, params->cs, params->ds, params->rpt_failures,
+                                        params->thread_id);
+                        params->ambig_cnt += i;
+                        id_get_ref_ambig += i;
+                        break;
+
+                    case 30:
+                    case 31:
+                    case 32:
+                    case 33:
+                    case 34:
+                    case 35:
+                    case 36:
+                    case 37:
+                    case 38:
+                    case 39:
+                    case 40:
+                    case 41:
+                    case 42:
+                    case 43:
+                    case 44:
+                    case 45:
+                    case 46:
+                    case 47:
+                    case 48:
+                    case 49:
+                    case 50:
+                    case 51:
+                    case 52:
+                    case 53:
+                    case 54:
+                    case 55:
+                    case 56:
+                    case 57:
+                    case 58:
+                    case 59:
+                    case 60:
+                    case 61:
+                    case 62:
+                    case 63:
+                    case 64:
+                    case 65:
+                    case 66:
+                    case 67:
+                    case 68:
+                    case 69:
+                    case 70:
+                    case 71:
+                    case 72:
+                    case 73:
+                    case 74:
+                    case 75:
+                    case 76:
+                    case 77:
+                    case 78:
+                    case 79:
+                    case 80:
+                    case 81:
+                    case 82:
+                    case 83:
+                    case 84:
+                    case 85:
+                    case 86:
+                    case 87:
+                    case 88:
+                    case 89:
+                    case 90:
+                    case 91:
+                    case 92:
+                    case 93:
+                    case 94:
+                    case 95:
+                    case 96:
+                    case 97:
+                    case 98:
+                    case 99:
+                        i = try_object_verify(target_id_index, params->cs, params->ds, params->rpt_failures,
+                                              params->thread_id);
+                        params->ambig_cnt += i;
+                        id_obj_ver_ambig += i;
+                        break;
+
+                    default:
+                        assert(FALSE);
+                }
+            }
+        } /* while */
+
+        if (MT_TEST_1__DISPLAY_FINAL_STATS) {
+
+            fprintf(stderr,
+                    "\nref cnt incr / decr / get ambig = %d / %d / %d, obj ver / rmv ver ambig = %d / %d, "
+                    "ambig_cnt = %d\n\n",
+                    id_incr_ambig, id_decr_ambig, id_get_ref_ambig, id_obj_ver_ambig, id_obj_remove_ver_ambig,
+                    params->ambig_cnt);
+        }
+
+        for (i = 0; i < NUM_ID_TYPES; i++) {
+
+            if (types_assigned[i]) {
+
+                params->ambig_cnt +=
+                    try_destroy_type(i, params->cs, params->ds, params->rpt_failures, params->thread_id);
             }
         }
-    } /* while */
-
-    if ( MT_TEST_1__DISPLAY_FINAL_STATS ) {
-
-        fprintf(stderr, 
-          "\nref cnt incr / decr / get ambig = %d / %d / %d, obj ver / rmv ver ambig = %d / %d, ambig_cnt = %d\n\n",
-            id_incr_ambig, id_decr_ambig, id_get_ref_ambig, id_obj_ver_ambig, id_obj_remove_ver_ambig, 
-            params->ambig_cnt);
     }
+    H5E_END_TRY
 
-    for ( i = 0; i < NUM_ID_TYPES; i++ ) {
-
-        if ( types_assigned[i] ) {
-
-            params->ambig_cnt += try_destroy_type(i, params->cs, params->ds, params->rpt_failures, 
-                                                  params->thread_id);
-        }
-    }
-
-    } H5E_END_TRY
-
-    return(NULL);
+    return (NULL);
 
 } /* mt_test_fcn_2() */
 
 /*****************************************************************************
- * 
+ *
  * mt_future_test_fcn_1()
- * 
- *  First multi-thread test function for the Future ID mechanism. 
- * 
+ *
+ *  First multi-thread test function for the Future ID mechanism.
+ *
  *  This test function is intendeed to implement an initial smoke check of the
  *  future ID reserve / define infrastructure in a multi-threaded environment.
- * 
+ *
  *  In this test, multiple IDs of different types are first reserved as future
  *  IDs, then explicitly definedm verfied, and finally released - all without
  *  any expected failures.
- * 
+ *
  *  This test exercises the basic lifecycle of future IDs in the absence of
- *  progress callbacks or lookup-driven resolution. All future IDs are 
+ *  progress callbacks or lookup-driven resolution. All future IDs are
  *  explicitly defined by the same thread that reserved them.
- * 
+ *
  *  The test proceeds as follows:
- * 
+ *
  *  1) Register params->ids_count future IDs with the specified start and stride
  *     in id_instance_array[], using types specified by params->types_start,
  *     params->types_count, and params->types_stride.
- * 
- *  2) Define all previously reserved future IDs by associating each ID with 
+ *
+ *  2) Define all previously reserved future IDs by associating each ID with
  *     its corresponding object in objects_array[].
- * 
+ *
  *  3) Verify that all future IDs have transitioned to fully defined IDs and
  *     that each ID correctly resolves to its expected object.
- * 
+ *
  *  4) Decrement the reference count on all IDs, triggering normal cleanup and
  *     deletion behavior.
- * 
- *  This test serves as a baseline validation of the future ID machinery, 
+ *
+ *  This test serves as a baseline validation of the future ID machinery,
  *  ensuring that reservation, definition, verification, and teardown all
  *  function correctly in a multi-threaded environment without requiring
- *  lookup-driven progress or condition-variable waiting. 
- * 
+ *  lookup-driven progress or condition-variable waiting.
+ *
  *****************************************************************************/
-static void * 
-mt_future_test_fcn_1(void * _params)
+static void *
+mt_future_test_fcn_1(void *_params)
 {
-    hbool_t display_op_stats = FALSE;
-    hbool_t show_progress = FALSE;
-    mt_test_params_t * params = (mt_test_params_t *)_params;
+    hbool_t           display_op_stats = FALSE;
+    hbool_t           show_progress    = FALSE;
+    mt_test_params_t *params           = (mt_test_params_t *)_params;
 
-    if ( show_progress ) {
+    if (show_progress) {
 
         fprintf(stderr, "mt_future_test_fcn_1:%d: -- point 0 -- entering \n", params->thread_id);
-        fprintf(stderr, 
-         "mt_future_test_fcn_1:%d: params st/cnt/st = %d/%d/%d, id st/cnt/st = %d/%d/%d, obj st/cnt/st = %d/%d/%d\n",
-         params->thread_id, 
-         params->types_start, params->types_count, params->types_stride,
-         params->ids_start, params->ids_count, params->ids_stride,
-         params->objects_start, params->objects_count, params->objects_stride);
+        fprintf(stderr,
+                "mt_future_test_fcn_1:%d: params st/cnt/st = %d/%d/%d, id st/cnt/st = %d/%d/%d, obj "
+                "st/cnt/st = %d/%d/%d\n",
+                params->thread_id, params->types_start, params->types_count, params->types_stride,
+                params->ids_start, params->ids_count, params->ids_stride, params->objects_start,
+                params->objects_count, params->objects_stride);
     }
 
-    if ( display_op_stats ) {
+    if (display_op_stats) {
 
         H5I_clear_stats();
     }
 
-    if ( show_progress ) {
+    if (show_progress) {
 
         fprintf(stderr, "mt_future_test_fcn_1:%d: -- point 1\n", params->thread_id);
     }
@@ -10919,69 +10879,68 @@ mt_future_test_fcn_1(void * _params)
                                           params->ids_start, params->ids_count, params->ids_stride, NULL,
                                           params->cs, params->ds, params->rpt_failures, params->thread_id);
 
-    if ( show_progress ) {
+    if (show_progress) {
 
         fprintf(stderr, "mt_future_test_fcn_1:%d: -- point 2\n", params->thread_id);
     }
 
-    if ( display_op_stats ) {
+    if (display_op_stats) {
 
         H5I_dump_nz_stats(stdout, "register_ids()");
         H5I_clear_stats();
     }
 
     params->err_cnt += define_futures_0(params->types_start, params->types_count, params->types_stride,
-                            params->ids_start, params->ids_count, params->ids_stride,
-                            params->cs, params->ds, params->rpt_failures, params->thread_id);
+                                        params->ids_start, params->ids_count, params->ids_stride, params->cs,
+                                        params->ds, params->rpt_failures, params->thread_id);
 
-    if ( show_progress ) {
+    if (show_progress) {
 
         fprintf(stderr, "mt_future_test_fcn_1:%d: -- point 2\n", params->thread_id);
     }
 
-    if ( display_op_stats ) {
+    if (display_op_stats) {
 
         H5I_dump_nz_stats(stdout, "define_futures_0()");
         H5I_clear_stats();
     }
 
-        params->err_cnt += verify_objects(params->types_start, params->types_count, params->types_stride,
-                                      params->ids_start, params->ids_count, params->ids_stride, 
-                                      params->cs, params->ds, params->rpt_failures, params->thread_id);
+    params->err_cnt += verify_objects(params->types_start, params->types_count, params->types_stride,
+                                      params->ids_start, params->ids_count, params->ids_stride, params->cs,
+                                      params->ds, params->rpt_failures, params->thread_id);
 
-    if ( display_op_stats ) {
+    if (display_op_stats) {
 
         H5I_dump_nz_stats(stdout, "verify_objects()");
         H5I_clear_stats();
     }
 
-    if ( show_progress ) {
+    if (show_progress) {
 
         fprintf(stderr, "mt_future_test_1:%d: -- point 8\n", params->thread_id);
     }
-    
-    params->err_cnt += dec_refs(params->types_start, params->types_count, params->types_stride,
-                                params->ids_start, params->ids_count, params->ids_stride,
-                                params->cs, params->ds, params->rpt_failures, params->thread_id);
 
-    if ( show_progress ) {
+    params->err_cnt += dec_refs(params->types_start, params->types_count, params->types_stride,
+                                params->ids_start, params->ids_count, params->ids_stride, params->cs,
+                                params->ds, params->rpt_failures, params->thread_id);
+
+    if (show_progress) {
 
         fprintf(stderr, "mt_future_test_1:%d: -- point 9\n", params->thread_id);
     }
 
-    if ( display_op_stats ) {
+    if (display_op_stats) {
 
         H5I_dump_nz_stats(stdout, "dec_refs()");
         H5I_clear_stats();
     }
 
-    if ( show_progress ) {
+    if (show_progress) {
 
         fprintf(stderr, "mt_future_test_1:%d: -- point 10 -- exiting\n", params->thread_id);
     }
 
-    return(NULL);
-
+    return (NULL);
 
 } /* mt_future_test_fcn_1() */
 
@@ -10989,79 +10948,77 @@ mt_future_test_fcn_1(void * _params)
  *
  * mt_future_test_fcn_2()
  *
- *      Second multi-thread test function.  
+ *      Second multi-thread test function.
  *
- *      This test function is intended to implement a test consisting of a largely random 
- *      interleaving of various H5I API calls in which types are created, flushed, and 
- *      destroyed, and future IDs are reserved, accessed, reference counts incremented and 
- *      decremented, and eventually deleted.  Since this process is largely random, this 
- *      means that types and IDs may be referenced after they are deleted.  
- * 
+ *      This test function is intended to implement a test consisting of a largely random
+ *      interleaving of various H5I API calls in which types are created, flushed, and
+ *      destroyed, and future IDs are reserved, accessed, reference counts incremented and
+ *      decremented, and eventually deleted.  Since this process is largely random, this
+ *      means that types and IDs may be referenced after they are deleted.
+ *
  *      This test largely aims at testing future ID functionality when a progress_cb is
  *      provided. Testing that the progress_cb drives progress towards ID realization
- *      
+ *
  *
  *******************************************************************************************/
 
 static void *
-mt_future_test_fcn_2(void * _params)
+mt_future_test_fcn_2(void *_params)
 {
-    hbool_t            show_progress = FALSE;
-    hbool_t            proceed = TRUE;
-    hbool_t            types_assigned[NUM_ID_TYPES];
-    int                type_index;
-    int                target_id_type_index;
-    int                id_incr_ambig = 0;
-    int                id_decr_ambig = 0;
-    int                id_get_ref_ambig = 0;
-    int                id_obj_ver_ambig = 0;
-    int                id_obj_remove_ver_ambig = 0;
-    int                id_def_ambig = 0;
-    int                i;
-    int                j;
-    int                target_id_index;
-    int                operation;
-    int                ops_per_id = 10;
-    int                ids_completed = 0;
-    int              * id_op_counts = NULL;
-    int                delay;
-    mt_test_params_t * params = (mt_test_params_t *)_params;
+    hbool_t           show_progress = FALSE;
+    hbool_t           proceed       = TRUE;
+    hbool_t           types_assigned[NUM_ID_TYPES];
+    int               type_index;
+    int               target_id_type_index;
+    int               id_incr_ambig           = 0;
+    int               id_decr_ambig           = 0;
+    int               id_get_ref_ambig        = 0;
+    int               id_obj_ver_ambig        = 0;
+    int               id_obj_remove_ver_ambig = 0;
+    int               id_def_ambig            = 0;
+    int               i;
+    int               j;
+    int               target_id_index;
+    int               operation;
+    int               ops_per_id    = 10;
+    int               ids_completed = 0;
+    int              *id_op_counts  = NULL;
+    int               delay;
+    mt_test_params_t *params = (mt_test_params_t *)_params;
 
-
-    if ( show_progress ) {
+    if (show_progress) {
 
         fprintf(stderr, "mt_future_test_fcn_2:%d: -- point 0 -- entering \n", params->thread_id);
-        fprintf(stderr, 
-         "mt_test_fcn_2:%d: type st/cnt/st = %d/%d/%d, id st/cnt/st = %d/%d/%d, obj st/cnt/st = %d/%d/%d\n",
-         params->thread_id, 
-         params->types_start, params->types_count, params->types_stride,
-         params->ids_start, params->ids_count, params->ids_stride,
-         params->objects_start, params->objects_count, params->objects_stride);
+        fprintf(stderr,
+                "mt_test_fcn_2:%d: type st/cnt/st = %d/%d/%d, id st/cnt/st = %d/%d/%d, obj st/cnt/st = "
+                "%d/%d/%d\n",
+                params->thread_id, params->types_start, params->types_count, params->types_stride,
+                params->ids_start, params->ids_count, params->ids_stride, params->objects_start,
+                params->objects_count, params->objects_stride);
     }
 
     /* setup the types assigned array, and register the assigned types in passing.
      *
-     * Cells in this array are set to TRUE if this thread is is responsible for 
-     * registering and de-registring the type managed by the instance of 
+     * Cells in this array are set to TRUE if this thread is is responsible for
+     * registering and de-registring the type managed by the instance of
      * id_type_t at the same index in types_array[].
      */
-    j = 0;
+    j          = 0;
     type_index = params->types_start;
-    for ( i = 0; i < NUM_ID_TYPES; i++ ) {
+    for (i = 0; i < NUM_ID_TYPES; i++) {
 
-        if ( i < type_index ) {
+        if (i < type_index) {
 
             types_assigned[i] = FALSE;
+        }
+        else {
 
-        } else {
-
-            assert( i == type_index );
+            assert(i == type_index);
 
             assert(0 == atomic_load(&(types_array[type_index].successful_registers)));
             assert(0 == atomic_load(&(types_array[type_index].failed_registers)));
 
-            try_register_type(type_index, params->cs, params->ds, params->rpt_failures, 
-                              params->thread_id);
+            try_register_type(type_index, params->cs, params->ds, params->rpt_failures, params->thread_id);
 
             assert(1 == atomic_load(&(types_array[type_index].successful_registers)));
             assert(0 == atomic_load(&(types_array[type_index].failed_registers)));
@@ -11070,338 +11027,339 @@ mt_future_test_fcn_2(void * _params)
 
             j++;
 
-            if ( j < params->types_count ) {
+            if (j < params->types_count) {
 
                 type_index += params->types_stride;
+            }
+            else { /* no more types assigned to this thread */
 
-            } else {  /* no more types assigned to this thread */
-
-                type_index = NUM_ID_TYPES; 
+                type_index = NUM_ID_TYPES;
             }
         }
     }
 
-    H5E_BEGIN_TRY {
+    H5E_BEGIN_TRY
+    {
 
-    assert( j == params->types_count );
+        assert(j == params->types_count);
 
-    /* setup the id progress array, and initialize it to zero */
-    if ( NULL == (id_op_counts = (int *)malloc(((size_t)(NUM_ID_INSTANCES)) * sizeof(int))) ) {
+        /* setup the id progress array, and initialize it to zero */
+        if (NULL == (id_op_counts = (int *)malloc(((size_t)(NUM_ID_INSTANCES)) * sizeof(int)))) {
 
-        proceed = FALSE;
-
-    } else {
-
-        for ( i = 0; i < NUM_ID_INSTANCES; i++ ) {
- 
-            id_op_counts[i] = 0;
+            proceed = FALSE;
         }
-    }
+        else {
 
-    while ( ( proceed ) && ( ids_completed < params->ids_count ) ) {
+            for (i = 0; i < NUM_ID_INSTANCES; i++) {
 
-        /* pick an ID */
-        
-        target_id_index = params->ids_start + ((rand() % params->ids_count) * params->ids_stride);
-        assert(target_id_index >= 0);
-        assert(target_id_index < NUM_ID_INSTANCES);
-
-        /* load the target ID's assigned type index.  Note that this type is not guaranteed to 
-         * have benn registered yet unless it is one of the types assigned to this thread.
-         */
-        target_id_type_index = id_instance_array[target_id_index].type_index;
-        assert( 0 <= target_id_type_index );
-        assert( target_id_type_index < NUM_ID_TYPES );
-
-        /* if id_op_counts[target_id_index] == 0, check to see if the target_id_type_index is one 
-         * of the type indexes assigned to this thread.  If so, register the target future id.  Otherwise, 
-         * increment its reference count.
-         */
-        if ( 0 == id_op_counts[target_id_index] ) {
-
-            if ( types_assigned[target_id_type_index] ) {
-
-                /* the type assigned to target_id_type_index has been registered -- now register the id */
-
-                assert(0 == atomic_load(&(id_instance_array[target_id_index].successful_future_reserves)));
-                assert(0 == atomic_load(&(id_instance_array[target_id_index].failed_future_reserves)));
-
-                /* use the same index for the object as the instance */
-                try_reserve_future_id(target_id_index, future_progress_cb, params->cs, params->ds, params->rpt_failures, params->thread_id);
-               
-                assert(1 == atomic_load(&(id_instance_array[target_id_index].successful_future_reserves)));
-                assert(0 == atomic_load(&(id_instance_array[target_id_index].failed_future_reserves)));
-                
-            } else {
-
-                /* the target id may or may not be registerd -- just try to increment its ref count */
-                i = try_inc_ref(target_id_index, params->cs, params->ds, 
-                                                 params->rpt_failures, params->thread_id);
-                params->ambig_cnt += i;
-                id_incr_ambig += i;
-
+                id_op_counts[i] = 0;
             }
+        }
 
-            id_op_counts[target_id_index]++;
+        while ((proceed) && (ids_completed < params->ids_count)) {
 
-        } else if ( id_op_counts[target_id_index] >= ops_per_id ) {
+            /* pick an ID */
 
-            ids_completed++;
+            target_id_index = params->ids_start + ((rand() % params->ids_count) * params->ids_stride);
+            assert(target_id_index >= 0);
+            assert(target_id_index < NUM_ID_INSTANCES);
 
-        } else {
+            /* load the target ID's assigned type index.  Note that this type is not guaranteed to
+             * have benn registered yet unless it is one of the types assigned to this thread.
+             */
+            target_id_type_index = id_instance_array[target_id_index].type_index;
+            assert(0 <= target_id_type_index);
+            assert(target_id_type_index < NUM_ID_TYPES);
 
-            operation = rand() % 100;
+            /* if id_op_counts[target_id_index] == 0, check to see if the target_id_type_index is one
+             * of the type indexes assigned to this thread.  If so, register the target future id.  Otherwise,
+             * increment its reference count.
+             */
+            if (0 == id_op_counts[target_id_index]) {
 
-            id_op_counts[target_id_index]++;
+                if (types_assigned[target_id_type_index]) {
 
-            switch ( operation ) {
+                    /* the type assigned to target_id_type_index has been registered -- now register the id */
 
-                case  0:
-                case  1:
-                case  2:
-                case  3: 
-                case  4:
-                case  5:
-                case  6:
-                case  7:
-                case  8:
-                case  9:
-#if 1
-                    i = try_inc_ref(target_id_index, params->cs, params->ds, 
-                                    params->rpt_failures, params->thread_id);
+                    assert(0 ==
+                           atomic_load(&(id_instance_array[target_id_index].successful_future_reserves)));
+                    assert(0 == atomic_load(&(id_instance_array[target_id_index].failed_future_reserves)));
+
+                    /* use the same index for the object as the instance */
+                    try_reserve_future_id(target_id_index, future_progress_cb, params->cs, params->ds,
+                                          params->rpt_failures, params->thread_id);
+
+                    assert(1 ==
+                           atomic_load(&(id_instance_array[target_id_index].successful_future_reserves)));
+                    assert(0 == atomic_load(&(id_instance_array[target_id_index].failed_future_reserves)));
+                }
+                else {
+
+                    /* the target id may or may not be registerd -- just try to increment its ref count */
+                    i = try_inc_ref(target_id_index, params->cs, params->ds, params->rpt_failures,
+                                    params->thread_id);
                     params->ambig_cnt += i;
                     id_incr_ambig += i;
-                    break;
-#endif
-                case 10:
-                case 11:
-                case 12:
-                case 13: 
-                case 14:
-                case 15:
-                case 16:
-                case 17:
-                case 18:
+                }
+
+                id_op_counts[target_id_index]++;
+            }
+            else if (id_op_counts[target_id_index] >= ops_per_id) {
+
+                ids_completed++;
+            }
+            else {
+
+                operation = rand() % 100;
+
+                id_op_counts[target_id_index]++;
+
+                switch (operation) {
+
+                    case 0:
+                    case 1:
+                    case 2:
+                    case 3:
+                    case 4:
+                    case 5:
+                    case 6:
+                    case 7:
+                    case 8:
+                    case 9:
 #if 1
-                    i = try_dec_ref(target_id_index, params->cs, params->ds, 
-                                      params->rpt_failures, params->thread_id);
-
-                    params->ambig_cnt += i;
-                    id_decr_ambig += i;
-                    break;
+                        i = try_inc_ref(target_id_index, params->cs, params->ds, params->rpt_failures,
+                                        params->thread_id);
+                        params->ambig_cnt += i;
+                        id_incr_ambig += i;
+                        break;
 #endif
-                case 19:
+                    case 10:
+                    case 11:
+                    case 12:
+                    case 13:
+                    case 14:
+                    case 15:
+                    case 16:
+                    case 17:
+                    case 18:
 #if 1
-                    i = try_remove_verify(target_id_index, params->cs, params->ds,
-                                           params->rpt_failures, params->thread_id);
-                    params->ambig_cnt += i;
-                    id_obj_remove_ver_ambig += i;
-                    break;
+                        i = try_dec_ref(target_id_index, params->cs, params->ds, params->rpt_failures,
+                                        params->thread_id);
+
+                        params->ambig_cnt += i;
+                        id_decr_ambig += i;
+                        break;
 #endif
-                case 20:
-                case 21:
-                case 22:
-                case 23: 
-                case 24:
-                case 25:
-                case 26:
-                case 27:
-                case 28:
-                case 29:
-                    i = try_get_ref(target_id_index, params->cs, params->ds,
-                                    params->rpt_failures, params->thread_id);
-                    params->ambig_cnt += i;
-                    id_get_ref_ambig += i;
-                    break;
+                    case 19:
+#if 1
+                        i = try_remove_verify(target_id_index, params->cs, params->ds, params->rpt_failures,
+                                              params->thread_id);
+                        params->ambig_cnt += i;
+                        id_obj_remove_ver_ambig += i;
+                        break;
+#endif
+                    case 20:
+                    case 21:
+                    case 22:
+                    case 23:
+                    case 24:
+                    case 25:
+                    case 26:
+                    case 27:
+                    case 28:
+                    case 29:
+                        i = try_get_ref(target_id_index, params->cs, params->ds, params->rpt_failures,
+                                        params->thread_id);
+                        params->ambig_cnt += i;
+                        id_get_ref_ambig += i;
+                        break;
 
-                case 30:
-                case 31:
-                case 32:
-                case 33: 
-                case 34:
-                case 35:
-                case 36:
-                case 37:
-                case 38:
-                case 39:
-                case 40:
-                case 41:
-                case 42:
-                case 43: 
-                case 44:
-                case 45:
-                case 46:
-                case 47:
-                case 48:
-                case 49:
-                    delay = 1 + (rand() % H5I_TEST_MAX_DELAY);
-                    future_progress_queue_push(target_id_index, delay);
-                    break;
+                    case 30:
+                    case 31:
+                    case 32:
+                    case 33:
+                    case 34:
+                    case 35:
+                    case 36:
+                    case 37:
+                    case 38:
+                    case 39:
+                    case 40:
+                    case 41:
+                    case 42:
+                    case 43:
+                    case 44:
+                    case 45:
+                    case 46:
+                    case 47:
+                    case 48:
+                    case 49:
+                        delay = 1 + (rand() % H5I_TEST_MAX_DELAY);
+                        future_progress_queue_push(target_id_index, delay);
+                        break;
 
-                case 50:
-                case 51:
-                case 52:
-                case 53: 
-                case 54:
-                case 55:
-                case 56:
-                case 57:
-                case 58:
-                case 59:
-                case 60:
-                case 61:
-                case 62:
-                case 63: 
-                case 64:
-                case 65:
-                case 66:
-                case 67:
-                case 68:
-                case 69:
-                case 70:
-                case 71:
-                case 72:
-                case 73: 
-                case 74:
-                case 75:
-                case 76:
-                case 77:
-                case 78:
-                case 79:
-                case 80:
-                case 81:
-                case 82:
-                case 83: 
-                case 84:
-                case 85:
-                case 86:
-                case 87:
-                case 88:
-                case 89:
-                case 90:
-                case 91:
-                case 92:
-                case 93: 
-                case 94:
-                case 95:
-                case 96:
-                case 97:
-                case 98:
-                case 99:
-                    i = try_object_verify(target_id_index, params->cs, params->ds, 
-                                                     params->rpt_failures, params->thread_id);
-                    params->ambig_cnt += i;
-                    id_obj_ver_ambig += i;
-                    break;
+                    case 50:
+                    case 51:
+                    case 52:
+                    case 53:
+                    case 54:
+                    case 55:
+                    case 56:
+                    case 57:
+                    case 58:
+                    case 59:
+                    case 60:
+                    case 61:
+                    case 62:
+                    case 63:
+                    case 64:
+                    case 65:
+                    case 66:
+                    case 67:
+                    case 68:
+                    case 69:
+                    case 70:
+                    case 71:
+                    case 72:
+                    case 73:
+                    case 74:
+                    case 75:
+                    case 76:
+                    case 77:
+                    case 78:
+                    case 79:
+                    case 80:
+                    case 81:
+                    case 82:
+                    case 83:
+                    case 84:
+                    case 85:
+                    case 86:
+                    case 87:
+                    case 88:
+                    case 89:
+                    case 90:
+                    case 91:
+                    case 92:
+                    case 93:
+                    case 94:
+                    case 95:
+                    case 96:
+                    case 97:
+                    case 98:
+                    case 99:
+                        i = try_object_verify(target_id_index, params->cs, params->ds, params->rpt_failures,
+                                              params->thread_id);
+                        params->ambig_cnt += i;
+                        id_obj_ver_ambig += i;
+                        break;
 
-                default: 
-                    assert(FALSE);
+                    default:
+                        assert(FALSE);
+                }
+            }
+        } /* while */
+
+        if (MT_FUTURE_TEST_2__DISPLAY_FINAL_STATS) {
+
+            fprintf(stderr,
+                    "\nref cnt incr / decr / get ambig = %d / %d / %d, obj ver / rmv ver ambig = %d / %d, "
+                    "def ambig = %d, ambig_cnt = %d\n\n",
+                    id_incr_ambig, id_decr_ambig, id_get_ref_ambig, id_obj_ver_ambig, id_obj_remove_ver_ambig,
+                    id_def_ambig, params->ambig_cnt);
+        }
+
+        for (i = 0; i < NUM_ID_TYPES; i++) {
+
+            if (types_assigned[i]) {
+
+                params->ambig_cnt +=
+                    try_destroy_type(i, params->cs, params->ds, params->rpt_failures, params->thread_id);
             }
         }
-    } /* while */
-
-    if ( MT_FUTURE_TEST_2__DISPLAY_FINAL_STATS ) {
-
-        fprintf(stderr, 
-          "\nref cnt incr / decr / get ambig = %d / %d / %d, obj ver / rmv ver ambig = %d / %d, def ambig = %d, ambig_cnt = %d\n\n",
-            id_incr_ambig, id_decr_ambig, id_get_ref_ambig, id_obj_ver_ambig, id_obj_remove_ver_ambig, 
-            id_def_ambig, params->ambig_cnt);
     }
+    H5E_END_TRY
 
-    for ( i = 0; i < NUM_ID_TYPES; i++ ) {
-
-        if ( types_assigned[i] ) {
-
-            params->ambig_cnt += try_destroy_type(i, params->cs, params->ds, params->rpt_failures, 
-                                                  params->thread_id);
-        }
-    }
-
-    } H5E_END_TRY
-
-    return(NULL);
+    return (NULL);
 
 } /* mt_future_test_fcn_2() */
-
 
 /*******************************************************************************************
  *
  * mt_future_test_fcn_3()
  *
- *      Third multi-thread test function.  
+ *      Third multi-thread test function.
  *
- *      This test function is intended to implement a test consisting of a largely random 
- *      interleaving of various H5I API calls in which types are created, flushed, and 
- *      destroyed, and future IDs are reserved, accessed, reference counts incremented and 
- *      decremented, defined, and eventually deleted.  Since this process is largely random, this 
- *      means that types and IDs may be referenced after they are deleted.  
- * 
+ *      This test function is intended to implement a test consisting of a largely random
+ *      interleaving of various H5I API calls in which types are created, flushed, and
+ *      destroyed, and future IDs are reserved, accessed, reference counts incremented and
+ *      decremented, defined, and eventually deleted.  Since this process is largely random, this
+ *      means that types and IDs may be referenced after they are deleted.
+ *
  *      This test mainly aims at testing future ID functionality when no progress_cb is
  *      provided, relying on the stall path with per-type condvars in H5I__find_id().
  *
  *******************************************************************************************/
 
 static void *
-mt_future_test_fcn_3(void * _params)
+mt_future_test_fcn_3(void *_params)
 {
-    hbool_t            show_progress = FALSE;
-    hbool_t            proceed = TRUE;
-    hbool_t            types_assigned[NUM_ID_TYPES];
+    hbool_t              show_progress = FALSE;
+    hbool_t              proceed       = TRUE;
+    hbool_t              types_assigned[NUM_ID_TYPES];
     id_instance_kernel_t ik;
-    hid_t              fid;
-    int                type_index;
-    int                target_id_type_index;
-    int                id_incr_ambig = 0;
-    int                id_decr_ambig = 0;
-    int                id_get_ref_ambig = 0;
-    int                id_obj_ver_ambig = 0;
-    int                id_obj_remove_ver_ambig = 0;
-    int                i;
-    int                j;
-    int                target_id_index;
-    int                operation;
-    int                ops_per_id = 10;
-    int                ids_completed = 0;
-    int              * id_op_counts = NULL;
-    mt_test_params_t * params = (mt_test_params_t *)_params;
+    hid_t                fid;
+    int                  type_index;
+    int                  target_id_type_index;
+    int                  id_incr_ambig           = 0;
+    int                  id_decr_ambig           = 0;
+    int                  id_get_ref_ambig        = 0;
+    int                  id_obj_ver_ambig        = 0;
+    int                  id_obj_remove_ver_ambig = 0;
+    int                  i;
+    int                  j;
+    int                  target_id_index;
+    int                  operation;
+    int                  ops_per_id    = 10;
+    int                  ids_completed = 0;
+    int                 *id_op_counts  = NULL;
+    mt_test_params_t    *params        = (mt_test_params_t *)_params;
 
-
-    if ( show_progress ) {
+    if (show_progress) {
 
         fprintf(stderr, "mt_future_test_fcn_3:%d: -- point 0 -- entering \n", params->thread_id);
-        fprintf(stderr, 
-         "mt_future_test_fcn_3:%d: type st/cnt/st = %d/%d/%d, id st/cnt/st = %d/%d/%d, obj st/cnt/st = %d/%d/%d\n",
-         params->thread_id, 
-         params->types_start, params->types_count, params->types_stride,
-         params->ids_start, params->ids_count, params->ids_stride,
-         params->objects_start, params->objects_count, params->objects_stride);
+        fprintf(stderr,
+                "mt_future_test_fcn_3:%d: type st/cnt/st = %d/%d/%d, id st/cnt/st = %d/%d/%d, obj st/cnt/st "
+                "= %d/%d/%d\n",
+                params->thread_id, params->types_start, params->types_count, params->types_stride,
+                params->ids_start, params->ids_count, params->ids_stride, params->objects_start,
+                params->objects_count, params->objects_stride);
     }
 
     memset(&ik, 0, sizeof(id_instance_kernel_t));
 
     /* setup the types assigned array, and register the assigned types in passing.
      *
-     * Cells in this array are set to TRUE if this thread is is responsible for 
-     * registering and de-registring the type managed by the instance of 
+     * Cells in this array are set to TRUE if this thread is is responsible for
+     * registering and de-registring the type managed by the instance of
      * id_type_t at the same index in types_array[].
      */
-    j = 0;
+    j          = 0;
     type_index = params->types_start;
-    for ( i = 0; i < NUM_ID_TYPES; i++ ) {
+    for (i = 0; i < NUM_ID_TYPES; i++) {
 
-        if ( i < type_index ) {
+        if (i < type_index) {
 
             types_assigned[i] = FALSE;
+        }
+        else {
 
-        } else {
-
-            assert( i == type_index );
+            assert(i == type_index);
 
             assert(0 == atomic_load(&(types_array[type_index].successful_registers)));
             assert(0 == atomic_load(&(types_array[type_index].failed_registers)));
 
-            try_register_type(type_index, params->cs, params->ds, params->rpt_failures, 
-                              params->thread_id);
+            try_register_type(type_index, params->cs, params->ds, params->rpt_failures, params->thread_id);
 
             assert(1 == atomic_load(&(types_array[type_index].successful_registers)));
             assert(0 == atomic_load(&(types_array[type_index].failed_registers)));
@@ -11410,270 +11368,273 @@ mt_future_test_fcn_3(void * _params)
 
             j++;
 
-            if ( j < params->types_count ) {
+            if (j < params->types_count) {
 
                 type_index += params->types_stride;
+            }
+            else { /* no more types assigned to this thread */
 
-            } else {  /* no more types assigned to this thread */
-
-                type_index = NUM_ID_TYPES; 
+                type_index = NUM_ID_TYPES;
             }
         }
     }
 
-    H5E_BEGIN_TRY {
+    H5E_BEGIN_TRY
+    {
 
-    assert( j == params->types_count );
+        assert(j == params->types_count);
 
-    /* setup the id progress array, and initialize it to zero */
-    if ( NULL == (id_op_counts = (int *)malloc(((size_t)(NUM_ID_INSTANCES)) * sizeof(int))) ) {
+        /* setup the id progress array, and initialize it to zero */
+        if (NULL == (id_op_counts = (int *)malloc(((size_t)(NUM_ID_INSTANCES)) * sizeof(int)))) {
 
-        proceed = FALSE;
-
-    } else {
-
-        for ( i = 0; i < NUM_ID_INSTANCES; i++ ) {
- 
-            id_op_counts[i] = 0;
+            proceed = FALSE;
         }
-    }
+        else {
 
-    while ( ( proceed ) && ( ids_completed < params->ids_count ) ) {
+            for (i = 0; i < NUM_ID_INSTANCES; i++) {
 
-        /* pick an ID */
-        
-        target_id_index = params->ids_start + ((rand() % params->ids_count) * params->ids_stride);
-        assert(target_id_index >= 0);
-        assert(target_id_index < NUM_ID_INSTANCES);
-
-        /* load the target ID's assigned type index.  Note that this type is not guaranteed to 
-         * have benn registered yet unless it is one of the types assigned to this thread.
-         */
-        target_id_type_index = id_instance_array[target_id_index].type_index;
-        assert( 0 <= target_id_type_index );
-        assert( target_id_type_index < NUM_ID_TYPES );
-
-        /* if id_op_counts[target_id_index] == 0, check to see if the target_id_type_index is one 
-         * of the type indexes assigned to this thread.  If so, register the target future id.  Otherwise, 
-         * increment its reference count.
-         */
-        if ( 0 == id_op_counts[target_id_index] ) {
-
-            if ( types_assigned[target_id_type_index] ) {
-
-                /* the type assigned to target_id_type_index has been registered -- now register the id */
-
-                assert(0 == atomic_load(&(id_instance_array[target_id_index].successful_future_reserves)));
-                assert(0 == atomic_load(&(id_instance_array[target_id_index].failed_future_reserves)));
-
-                /* use the same index for the object as the instance */
-                try_reserve_future_id(target_id_index, NULL, params->cs, params->ds, params->rpt_failures, params->thread_id);
-
-                assert(1 == atomic_load(&(id_instance_array[target_id_index].successful_future_reserves)));
-                assert(0 == atomic_load(&(id_instance_array[target_id_index].failed_future_reserves)));
-                
-            } else {
-
-                /* the target id may or may not be registerd -- just try to increment its ref count */
-                i = try_inc_ref(target_id_index, params->cs, params->ds, 
-                                                 params->rpt_failures, params->thread_id);
-                params->ambig_cnt += i;
-                id_incr_ambig += i;
-
+                id_op_counts[i] = 0;
             }
+        }
 
-            id_op_counts[target_id_index]++;
+        while ((proceed) && (ids_completed < params->ids_count)) {
 
-        } else if ( id_op_counts[target_id_index] >= ops_per_id ) {
+            /* pick an ID */
 
-            ids_completed++;
+            target_id_index = params->ids_start + ((rand() % params->ids_count) * params->ids_stride);
+            assert(target_id_index >= 0);
+            assert(target_id_index < NUM_ID_INSTANCES);
 
-        } else {
+            /* load the target ID's assigned type index.  Note that this type is not guaranteed to
+             * have benn registered yet unless it is one of the types assigned to this thread.
+             */
+            target_id_type_index = id_instance_array[target_id_index].type_index;
+            assert(0 <= target_id_type_index);
+            assert(target_id_type_index < NUM_ID_TYPES);
 
-            operation = rand() % 100;
+            /* if id_op_counts[target_id_index] == 0, check to see if the target_id_type_index is one
+             * of the type indexes assigned to this thread.  If so, register the target future id.  Otherwise,
+             * increment its reference count.
+             */
+            if (0 == id_op_counts[target_id_index]) {
 
-            id_op_counts[target_id_index]++;
+                if (types_assigned[target_id_type_index]) {
 
-            switch ( operation ) {
+                    /* the type assigned to target_id_type_index has been registered -- now register the id */
 
-                case  0:
-                case  1:
-                case  2:
-                case  3: 
-                case  4:
-                case  5:
-                case  6:
-                case  7:
-                case  8:
-                case  9:
-#if 1
-                    i = try_inc_ref(target_id_index, params->cs, params->ds, 
-                                    params->rpt_failures, params->thread_id);
+                    assert(0 ==
+                           atomic_load(&(id_instance_array[target_id_index].successful_future_reserves)));
+                    assert(0 == atomic_load(&(id_instance_array[target_id_index].failed_future_reserves)));
+
+                    /* use the same index for the object as the instance */
+                    try_reserve_future_id(target_id_index, NULL, params->cs, params->ds, params->rpt_failures,
+                                          params->thread_id);
+
+                    assert(1 ==
+                           atomic_load(&(id_instance_array[target_id_index].successful_future_reserves)));
+                    assert(0 == atomic_load(&(id_instance_array[target_id_index].failed_future_reserves)));
+                }
+                else {
+
+                    /* the target id may or may not be registerd -- just try to increment its ref count */
+                    i = try_inc_ref(target_id_index, params->cs, params->ds, params->rpt_failures,
+                                    params->thread_id);
                     params->ambig_cnt += i;
                     id_incr_ambig += i;
-                    break;
-#endif
-                case 10:
-                case 11:
-                case 12:
-                case 13: 
-                case 14:
-                case 15:
-                case 16:
-                case 17:
-                case 18:
-#if 1
-                    i = try_dec_ref(target_id_index, params->cs, params->ds, 
-                                      params->rpt_failures, params->thread_id);
-
-                    params->ambig_cnt += i;
-                    id_decr_ambig += i;
-                    break;
-#endif
-                case 19:
-#if 1
-                    i = try_remove_verify(target_id_index, params->cs, params->ds,
-                                           params->rpt_failures, params->thread_id);
-                    params->ambig_cnt += i;
-                    id_obj_remove_ver_ambig += i;
-                    break;
-#endif
-                case 20:
-                case 21:
-                case 22:
-                case 23: 
-                case 24:
-                case 25:
-                case 26:
-                case 27:
-                case 28:
-                case 29:
-                    i = try_get_ref(target_id_index, params->cs, params->ds,
-                                    params->rpt_failures, params->thread_id);
-                    params->ambig_cnt += i;
-                    id_get_ref_ambig += i;
-                    break;
-
-                case 30:
-                case 31:
-                case 32:
-                case 33: 
-                case 34:
-                case 35:
-                case 36:
-                case 37:
-                case 38:
-                case 39:
-
-                {
-                    ik = atomic_load(&id_instance_array[target_id_index].k);
-                    if (ik.created && ik.future && !ik.realized && !ik.discarded && !ik.in_progress) {
-                        future_progress_queue_push(target_id_index, rand() % 4);
-                    }
-                    break;
                 }
 
+                id_op_counts[target_id_index]++;
+            }
+            else if (id_op_counts[target_id_index] >= ops_per_id) {
 
-                case 40:
-                case 41:
-                case 42:
-                case 43: 
-                case 44:
-                case 45:
-                case 46:
-                case 47:
-                case 48:
-                case 49:
-                    /* Try to look up and define the future ID with stall enabled,
-                     * using the condition variables.
-                     */
-                    ik = atomic_load(&id_instance_array[target_id_index].k);
-                    fid = ik.id;
+                ids_completed++;
+            }
+            else {
 
-                    H5I__find_id(fid, TRUE);
-                    break;
-                case 50:
-                case 51:
-                case 52:
-                case 53: 
-                case 54:
-                case 55:
-                case 56:
-                case 57:
-                case 58:
-                case 59:
-                case 60:
-                case 61:
-                case 62:
-                case 63: 
-                case 64:
-                case 65:
-                case 66:
-                case 67:
-                case 68:
-                case 69:
-                case 70:
-                case 71:
-                case 72:
-                case 73: 
-                case 74:
-                case 75:
-                case 76:
-                case 77:
-                case 78:
-                case 79:
-                case 80:
-                case 81:
-                case 82:
-                case 83: 
-                case 84:
-                case 85:
-                case 86:
-                case 87:
-                case 88:
-                case 89:
-                case 90:
-                case 91:
-                case 92:
-                case 93: 
-                case 94:
-                case 95:
-                case 96:
-                case 97:
-                case 98:
-                case 99:
-                    i = try_object_verify(target_id_index, params->cs, params->ds, 
-                                                           params->rpt_failures, params->thread_id);
-                    params->ambig_cnt += i;
-                    id_obj_ver_ambig += i;
-                    break;
+                operation = rand() % 100;
 
-                default: 
-                    assert(FALSE);
+                id_op_counts[target_id_index]++;
+
+                switch (operation) {
+
+                    case 0:
+                    case 1:
+                    case 2:
+                    case 3:
+                    case 4:
+                    case 5:
+                    case 6:
+                    case 7:
+                    case 8:
+                    case 9:
+#if 1
+                        i = try_inc_ref(target_id_index, params->cs, params->ds, params->rpt_failures,
+                                        params->thread_id);
+                        params->ambig_cnt += i;
+                        id_incr_ambig += i;
+                        break;
+#endif
+                    case 10:
+                    case 11:
+                    case 12:
+                    case 13:
+                    case 14:
+                    case 15:
+                    case 16:
+                    case 17:
+                    case 18:
+#if 1
+                        i = try_dec_ref(target_id_index, params->cs, params->ds, params->rpt_failures,
+                                        params->thread_id);
+
+                        params->ambig_cnt += i;
+                        id_decr_ambig += i;
+                        break;
+#endif
+                    case 19:
+#if 1
+                        i = try_remove_verify(target_id_index, params->cs, params->ds, params->rpt_failures,
+                                              params->thread_id);
+                        params->ambig_cnt += i;
+                        id_obj_remove_ver_ambig += i;
+                        break;
+#endif
+                    case 20:
+                    case 21:
+                    case 22:
+                    case 23:
+                    case 24:
+                    case 25:
+                    case 26:
+                    case 27:
+                    case 28:
+                    case 29:
+                        i = try_get_ref(target_id_index, params->cs, params->ds, params->rpt_failures,
+                                        params->thread_id);
+                        params->ambig_cnt += i;
+                        id_get_ref_ambig += i;
+                        break;
+
+                    case 30:
+                    case 31:
+                    case 32:
+                    case 33:
+                    case 34:
+                    case 35:
+                    case 36:
+                    case 37:
+                    case 38:
+                    case 39:
+
+                    {
+                        ik = atomic_load(&id_instance_array[target_id_index].k);
+                        if (ik.created && ik.future && !ik.realized && !ik.discarded && !ik.in_progress) {
+                            future_progress_queue_push(target_id_index, rand() % 4);
+                        }
+                        break;
+                    }
+
+                    case 40:
+                    case 41:
+                    case 42:
+                    case 43:
+                    case 44:
+                    case 45:
+                    case 46:
+                    case 47:
+                    case 48:
+                    case 49:
+                        /* Try to look up and define the future ID with stall enabled,
+                         * using the condition variables.
+                         */
+                        ik  = atomic_load(&id_instance_array[target_id_index].k);
+                        fid = ik.id;
+
+                        H5I__find_id(fid, TRUE);
+                        break;
+                    case 50:
+                    case 51:
+                    case 52:
+                    case 53:
+                    case 54:
+                    case 55:
+                    case 56:
+                    case 57:
+                    case 58:
+                    case 59:
+                    case 60:
+                    case 61:
+                    case 62:
+                    case 63:
+                    case 64:
+                    case 65:
+                    case 66:
+                    case 67:
+                    case 68:
+                    case 69:
+                    case 70:
+                    case 71:
+                    case 72:
+                    case 73:
+                    case 74:
+                    case 75:
+                    case 76:
+                    case 77:
+                    case 78:
+                    case 79:
+                    case 80:
+                    case 81:
+                    case 82:
+                    case 83:
+                    case 84:
+                    case 85:
+                    case 86:
+                    case 87:
+                    case 88:
+                    case 89:
+                    case 90:
+                    case 91:
+                    case 92:
+                    case 93:
+                    case 94:
+                    case 95:
+                    case 96:
+                    case 97:
+                    case 98:
+                    case 99:
+                        i = try_object_verify(target_id_index, params->cs, params->ds, params->rpt_failures,
+                                              params->thread_id);
+                        params->ambig_cnt += i;
+                        id_obj_ver_ambig += i;
+                        break;
+
+                    default:
+                        assert(FALSE);
+                }
+            }
+        } /* while */
+
+        if (MT_FUTURE_TEST_3__DISPLAY_FINAL_STATS) {
+
+            fprintf(stderr,
+                    "\nref cnt incr / decr / get ambig = %d / %d / %d, obj ver / rmv ver ambig = %d / %d, "
+                    "ambig_cnt = %d\n\n",
+                    id_incr_ambig, id_decr_ambig, id_get_ref_ambig, id_obj_ver_ambig, id_obj_remove_ver_ambig,
+                    params->ambig_cnt);
+        }
+
+        for (i = 0; i < NUM_ID_TYPES; i++) {
+
+            if (types_assigned[i]) {
+
+                params->ambig_cnt +=
+                    try_destroy_type(i, params->cs, params->ds, params->rpt_failures, params->thread_id);
             }
         }
-    } /* while */
-
-    if ( MT_FUTURE_TEST_3__DISPLAY_FINAL_STATS ) {
-
-        fprintf(stderr, 
-          "\nref cnt incr / decr / get ambig = %d / %d / %d, obj ver / rmv ver ambig = %d / %d, ambig_cnt = %d\n\n",
-            id_incr_ambig, id_decr_ambig, id_get_ref_ambig, id_obj_ver_ambig, id_obj_remove_ver_ambig, 
-            params->ambig_cnt);
     }
+    H5E_END_TRY
 
-    for ( i = 0; i < NUM_ID_TYPES; i++ ) {
-
-        if ( types_assigned[i] ) {
-
-            params->ambig_cnt += try_destroy_type(i, params->cs, params->ds, params->rpt_failures, 
-                                                  params->thread_id);
-        }
-    }
-
-    } H5E_END_TRY
-
-    return(NULL);
+    return (NULL);
 
 } /* mt_future_test_fcn_3() */
 
@@ -11690,93 +11651,92 @@ mt_future_test_fcn_3(void * _params)
  *
  *      4) destroy the types created in 2).
  *
- *      
+ *
  *******************************************************************************************/
 
 static herr_t
 mt_test_fcn_1_serial_test(TestParams_t *_params)
 {
-    int err_cnt = 0;
-    mt_test_params_t *params = (mt_test_params_t *)_params->UserParams;
+    int               err_cnt = 0;
+    mt_test_params_t *params  = (mt_test_params_t *)_params->UserParams;
 
     TESTING("mt_test_fcn_1 serial test");
     fflush(stdout);
 
-    if ( H5open() < 0 ) {
+    if (H5open() < 0) {
 
         err_cnt++;
 
-        if ( params->rpt_failures ) {
+        if (params->rpt_failures) {
 
             fprintf(stderr, "mt_test_fcn_1_serial_test():%d: H5open() failed.\n", params->thread_id);
         }
     }
 
-    err_cnt += create_types(params->types_start, params->types_count, params->types_stride,
-                            params->cs, params->ds, params->rpt_failures, params->thread_id);
+    err_cnt += create_types(params->types_start, params->types_count, params->types_stride, params->cs,
+                            params->ds, params->rpt_failures, params->thread_id);
 
     mt_test_fcn_1(params);
     err_cnt += params->err_cnt;
 
-    err_cnt += destroy_types(params->types_start, params->types_count, params->types_stride,
-                             params->cs, params->ds, params->rpt_failures, params->thread_id);
+    err_cnt += destroy_types(params->types_start, params->types_count, params->types_stride, params->cs,
+                             params->ds, params->rpt_failures, params->thread_id);
 
-    if ( MT_TEST_FCN_1_SERIAL_TEST__DISPLAY_FINAL_STATS ) {
+    if (MT_TEST_FCN_1_SERIAL_TEST__DISPLAY_FINAL_STATS) {
 
         H5I_dump_stats(stdout);
     }
 
     /* Sanity checks on the id info and type info free lists. */
 
-    /* verify that the id info and type info free lists balance. 
+    /* verify that the id info and type info free lists balance.
      * This assertion can ignore the initial free list length, since whatever it is
      * on entry, the number of ids created is such that it will be empty by the
-     * time any entries are returned to the free list.  The +1 accounts for the 
+     * time any entries are returned to the free list.  The +1 accounts for the
      * minimum length of the free list
      */
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_id_info_structs_added_to_fl)) -
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_freed)) -
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_alloced_from_fl)) -
-                  atomic_load(&(H5I_mt_g.id_info_fl_len)) + 1) );
+    assert(0 == (atomic_load(&(H5I_mt_g.num_id_info_structs_added_to_fl)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_freed)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_alloced_from_fl)) -
+                 atomic_load(&(H5I_mt_g.id_info_fl_len)) + 1));
 
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_type_info_structs_added_to_fl)) -
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_freed)) -
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_alloced_from_fl)) -
-                  atomic_load(&(H5I_mt_g.type_info_fl_len)) + 1) );
+    assert(0 == (atomic_load(&(H5I_mt_g.num_type_info_structs_added_to_fl)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_freed)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_alloced_from_fl)) -
+                 atomic_load(&(H5I_mt_g.type_info_fl_len)) + 1));
 
     /* Verify that the increments to all the stats for the serial numbers balance correctly.
      */
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_id_next_sn_assigned)) - 
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_added_to_fl))));
+    assert(0 == (atomic_load(&(H5I_mt_g.num_id_next_sn_assigned)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_added_to_fl))));
 
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_id_serial_num_resets)) -
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_alloced_from_fl)) -
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_freed))));
+    assert(0 == (atomic_load(&(H5I_mt_g.num_id_serial_num_resets)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_alloced_from_fl)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_freed))));
 
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_type_next_sn_assigned)) - 
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_added_to_fl))));
+    assert(0 == (atomic_load(&(H5I_mt_g.num_type_next_sn_assigned)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_added_to_fl))));
 
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_type_serial_num_resets)) -
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_alloced_from_fl)) -
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_freed))));
+    assert(0 == (atomic_load(&(H5I_mt_g.num_type_serial_num_resets)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_alloced_from_fl)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_freed))));
 
-
-    if ( H5close() < 0 ) {
+    if (H5close() < 0) {
 
         err_cnt++;
 
-        if ( params->rpt_failures ) {
+        if (params->rpt_failures) {
 
             fprintf(stderr, "mt_test_fcn_1_serial_test():%d: H5close() failed.\n", params->thread_id);
         }
     }
 
-    if ( 0 == err_cnt ) {
+    if (0 == err_cnt) {
 
         PASSED();
         return SUCCEED;
-
-    } else {
+    }
+    else {
 
         IncTestNumErrs();
         H5_FAILED();
@@ -11785,26 +11745,25 @@ mt_test_fcn_1_serial_test(TestParams_t *_params)
 
 } /* mt_test_fcn_1_serial_test() */
 
-
 /*******************************************************************************************
  *
  * mt_test_1()
  *
- *      Initial multi-thread test of H5I.  The objective is to perform an initial smoke 
+ *      Initial multi-thread test of H5I.  The objective is to perform an initial smoke
  *      check with no failed calls.
  *
  *      1) set up the instances of mt_test_params_t for the specified number of threads.
  *
  *      2) Create the types needed in the call to mt_test_fcn_1().
  *
- *      3) Create the specified number of threads and invoke mt_test_fcn_1 with the 
+ *      3) Create the specified number of threads and invoke mt_test_fcn_1 with the
  *         appropriate instance of mt_test_params_t.
  *
  *      4) Wait for all threads to complete.
  *
  *      5) destroy the types created in 2).
  *
- *      
+ *
  *******************************************************************************************/
 
 static herr_t
@@ -11846,54 +11805,54 @@ static void
 mt_test_1_helper(int num_threads)
 {
     char             banner[80];
-    hbool_t          cs = FALSE;
-    hbool_t          ds = FALSE;
+    hbool_t          cs           = FALSE;
+    hbool_t          ds           = FALSE;
     hbool_t          rpt_failures = TRUE;
     int              i;
     int              err_cnt = 0;
     pthread_t        threads[DEFAULT_MAX_NUM_THREADS];
     mt_test_params_t params[DEFAULT_MAX_NUM_THREADS];
 
-    assert( 1 <= num_threads );
-    assert( num_threads <= DEFAULT_MAX_NUM_THREADS );
+    assert(1 <= num_threads);
+    assert(num_threads <= DEFAULT_MAX_NUM_THREADS);
 
     sprintf(banner, "multi-thread test 1 -- %d threads", num_threads);
 
     TESTING(banner);
     fflush(stdout);
 
-    if ( H5open() < 0 ) {
+    if (H5open() < 0) {
 
         err_cnt++;
 
-        if ( rpt_failures ) {
+        if (rpt_failures) {
 
             fprintf(stderr, "mt_test_1():%d: H5open() failed.\n", 0);
         }
     }
 
-    for ( i = 0; i < num_threads; i++ ) {
+    for (i = 0; i < num_threads; i++) {
 
-        params[i].thread_id      = i;
+        params[i].thread_id = i;
 
-        params[i].types_start    = 0;
-        params[i].types_count    = 3;
-        params[i].types_stride   = 3;
+        params[i].types_start  = 0;
+        params[i].types_count  = 3;
+        params[i].types_stride = 3;
 
-        params[i].ids_start      = i * 20000;
-        params[i].ids_count      = 20000;
-        params[i].ids_stride     = 1;
+        params[i].ids_start  = i * 20000;
+        params[i].ids_count  = 20000;
+        params[i].ids_stride = 1;
 
         params[i].objects_start  = i * 20000;
         params[i].objects_count  = 20000;
         params[i].objects_stride = 1;
 
-        params[i].cs             = cs;
-        params[i].ds             = ds;
-        params[i].rpt_failures   = rpt_failures;
+        params[i].cs           = cs;
+        params[i].ds           = ds;
+        params[i].rpt_failures = rpt_failures;
 
-        params[i].err_cnt        = 0;
-        params[i].ambig_cnt      = 0;
+        params[i].err_cnt   = 0;
+        params[i].ambig_cnt = 0;
 #if 0
         fprintf(stderr, 
                 "params[%d] types st/cnt/str = %d/%d/%d, ids st/cnt/str = %d/%d/%d, objs st/cnt/str = %d/%d/%d\n",
@@ -11903,18 +11862,18 @@ mt_test_1_helper(int num_threads)
 #endif
     }
 
-    err_cnt += create_types(params[0].types_start, params[0].types_count, params[0].types_stride, 
-                            cs, ds, rpt_failures, 0);
+    err_cnt += create_types(params[0].types_start, params[0].types_count, params[0].types_stride, cs, ds,
+                            rpt_failures, 0);
 
-    for ( i = 0;  i < num_threads; i++ ) {
+    for (i = 0; i < num_threads; i++) {
 
-        if ( 0 != pthread_create(&(threads[i]), NULL, &mt_test_fcn_1, (void *)(&(params[i])))) {
+        if (0 != pthread_create(&(threads[i]), NULL, &mt_test_fcn_1, (void *)(&(params[i])))) {
 
             assert(FALSE);
 
             err_cnt++;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
                 fprintf(stderr, "mt_test_1(): create of thread %d failed.\n", i);
             }
@@ -11924,82 +11883,81 @@ mt_test_1_helper(int num_threads)
     /* Wait for all the threads to complete */
     for (i = 0; i < num_threads; i++) {
 
-        if ( 0 != pthread_join(threads[i], NULL) ) {
+        if (0 != pthread_join(threads[i], NULL)) {
 
             assert(FALSE);
 
             err_cnt++;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
                 fprintf(stderr, "mt_test_1(): join of thread %d failed.\n", i);
             }
-        } else {
+        }
+        else {
 
             /* collect error count from joined thread */
             err_cnt += params[i].err_cnt;
         }
     }
 
-    err_cnt += destroy_types(params[0].types_start, params[0].types_count, params[0].types_stride, 
+    err_cnt += destroy_types(params[0].types_start, params[0].types_count, params[0].types_stride,
                              params[0].cs, params[0].ds, params[0].rpt_failures, params[0].thread_id);
 
-    if ( MT_TEST_1__DISPLAY_FINAL_STATS ) {
+    if (MT_TEST_1__DISPLAY_FINAL_STATS) {
 
         H5I_dump_stats(stdout);
     }
 
     /* Sanity checks on the id info and type info free lists. */
 
-    /* verify that the id info and type info free lists balance. 
+    /* verify that the id info and type info free lists balance.
      * This assertion can ignore the initial free list length, since whatever it is
      * on entry, the number of ids created is such that it will be empty by the
-     * time any entries are returned to the free list.  The +1 accounts for the 
+     * time any entries are returned to the free list.  The +1 accounts for the
      * minimum length of the free list
      */
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_id_info_structs_added_to_fl)) -
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_freed)) -
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_alloced_from_fl)) -
-                  atomic_load(&(H5I_mt_g.id_info_fl_len)) + 1) );
+    assert(0 == (atomic_load(&(H5I_mt_g.num_id_info_structs_added_to_fl)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_freed)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_alloced_from_fl)) -
+                 atomic_load(&(H5I_mt_g.id_info_fl_len)) + 1));
 
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_type_info_structs_added_to_fl)) -
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_freed)) -
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_alloced_from_fl)) -
-                  atomic_load(&(H5I_mt_g.type_info_fl_len)) + 1) );
-
+    assert(0 == (atomic_load(&(H5I_mt_g.num_type_info_structs_added_to_fl)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_freed)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_alloced_from_fl)) -
+                 atomic_load(&(H5I_mt_g.type_info_fl_len)) + 1));
 
     /* Verify that the increments to all the stats for the serial numbers balance correctly.
      */
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_id_next_sn_assigned)) - 
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_added_to_fl))));
+    assert(0 == (atomic_load(&(H5I_mt_g.num_id_next_sn_assigned)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_added_to_fl))));
 
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_id_serial_num_resets)) -
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_alloced_from_fl)) -
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_freed))));
+    assert(0 == (atomic_load(&(H5I_mt_g.num_id_serial_num_resets)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_alloced_from_fl)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_freed))));
 
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_type_next_sn_assigned)) - 
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_added_to_fl))));
+    assert(0 == (atomic_load(&(H5I_mt_g.num_type_next_sn_assigned)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_added_to_fl))));
 
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_type_serial_num_resets)) -
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_alloced_from_fl)) -
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_freed))));
+    assert(0 == (atomic_load(&(H5I_mt_g.num_type_serial_num_resets)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_alloced_from_fl)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_freed))));
 
-
-    if ( H5close() < 0 ) {
+    if (H5close() < 0) {
 
         err_cnt++;
 
-        if ( rpt_failures ) {
+        if (rpt_failures) {
 
             fprintf(stderr, "mt_test_1():%d: H5close() failed.\n", 0);
         }
     }
 
-    if ( 0 == err_cnt ) {
+    if (0 == err_cnt) {
 
         PASSED();
-
-    } else {
+    }
+    else {
 
         IncTestNumErrs();
         H5_FAILED();
@@ -12009,34 +11967,33 @@ mt_test_1_helper(int num_threads)
 
 } /* mt_test_1() */
 
-
 /*******************************************************************************************
  *
  * mt_test_2()
  *
- *      Initial multi-thread test of H5I.  The objective is to perform an initial smoke 
+ *      Initial multi-thread test of H5I.  The objective is to perform an initial smoke
  *      check with no failed calls.
  *
  *      1) set up the instances of mt_test_params_t for the specified number of threads.
  *
  *      2) Create the types needed in the call to mt_test_fcn_1().
  *
- *      3) Create the specified number of threads and invoke mt_test_fcn_1 with the 
+ *      3) Create the specified number of threads and invoke mt_test_fcn_1 with the
  *         appropriate instance of mt_test_params_t.
  *
  *      4) Wait for all threads to complete.
  *
  *      5) destroy the types created in 2).
- * 
+ *
  * Changes:
- * 
+ *
  *      Altered the amount of IDs for test express level 2 to 1/4 the original amount of IDs
  *      to account for the time the future ID tests take. This can be toggled and is only
  *      an issue in git's build-and-test.
- * 
+ *
  *                                                              AZO - 2/3/2026
  *
- *      
+ *
  *******************************************************************************************/
 
 static herr_t
@@ -12081,93 +12038,93 @@ static void
 mt_test_2_helper(int num_threads)
 {
     char             banner[80];
-    hbool_t          cs = FALSE;
-    hbool_t          ds = FALSE;
+    hbool_t          cs           = FALSE;
+    hbool_t          ds           = FALSE;
     hbool_t          rpt_failures = FALSE;
     int              i;
-    int              err_cnt = 0;
+    int              err_cnt   = 0;
     int              ambig_cnt = 0;
     int              types_per_thread;
-    int              test_express = GetTestExpress();
-    long long int    type_successful_registers = 0;
-    long long int    type_failed_registers = 0;
-    long long int    type_successful_clears = 0;
-    long long int    type_failed_clears = 0;
-    long long int    type_successful_destroys = 0;
-    long long int    type_failed_destroys = 0;
-    long long int    id_successful_registrations = 0;
-    long long int    id_failed_registrations = 0;
-    long long int    id_successful_verifies = 0;
-    long long int    id_failed_verifies = 0;
-    long long int    id_successful_inc_refs = 0;
-    long long int    id_failed_inc_refs = 0;
-    long long int    id_successful_dec_refs = 0;
-    long long int    id_failed_dec_refs = 0;
-    long long int    id_dec_ref_deletes = 0;
-    long long int    id_successful_get_ref_cnts = 0;
-    long long int    id_failed_get_ref_cnts = 0;
+    int              test_express                  = GetTestExpress();
+    long long int    type_successful_registers     = 0;
+    long long int    type_failed_registers         = 0;
+    long long int    type_successful_clears        = 0;
+    long long int    type_failed_clears            = 0;
+    long long int    type_successful_destroys      = 0;
+    long long int    type_failed_destroys          = 0;
+    long long int    id_successful_registrations   = 0;
+    long long int    id_failed_registrations       = 0;
+    long long int    id_successful_verifies        = 0;
+    long long int    id_failed_verifies            = 0;
+    long long int    id_successful_inc_refs        = 0;
+    long long int    id_failed_inc_refs            = 0;
+    long long int    id_successful_dec_refs        = 0;
+    long long int    id_failed_dec_refs            = 0;
+    long long int    id_dec_ref_deletes            = 0;
+    long long int    id_successful_get_ref_cnts    = 0;
+    long long int    id_failed_get_ref_cnts        = 0;
     long long int    id_successful_remove_verifies = 0;
-    long long int    id_failed_remove_verifies = 0;
-    long long int    obj_accesses = 0;
+    long long int    id_failed_remove_verifies     = 0;
+    long long int    obj_accesses                  = 0;
     pthread_t        threads[DEFAULT_MAX_NUM_THREADS];
     mt_test_params_t params[DEFAULT_MAX_NUM_THREADS];
 
-    assert( 1 <= num_threads );
-    assert( num_threads <= DEFAULT_MAX_NUM_THREADS );
+    assert(1 <= num_threads);
+    assert(num_threads <= DEFAULT_MAX_NUM_THREADS);
 
     sprintf(banner, "multi-thread test 2 -- %d threads", num_threads);
 
     TESTING(banner);
     fflush(stdout);
 
-    if ( H5open() < 0 ) {
+    if (H5open() < 0) {
 
         err_cnt++;
 
-        if ( rpt_failures ) {
+        if (rpt_failures) {
 
             fprintf(stderr, "mt_test_1():%d: H5open() failed.\n", 0);
         }
     }
 
-    types_per_thread = ( (int)H5I_MAX_NUM_TYPES - (int)H5I_NTYPES) / num_threads;
+    types_per_thread = ((int)H5I_MAX_NUM_TYPES - (int)H5I_NTYPES) / num_threads;
 
-    if ( types_per_thread > 4 ) {
+    if (types_per_thread > 4) {
 
-        types_per_thread = 4; 
+        types_per_thread = 4;
     }
 
-    for ( i = 0; i < num_threads; i++ ) {
+    for (i = 0; i < num_threads; i++) {
 
-        params[i].thread_id      = i;
+        params[i].thread_id = i;
 
-        params[i].types_start    = i;
-        params[i].types_count    = types_per_thread;
-        params[i].types_stride   = num_threads;
+        params[i].types_start  = i;
+        params[i].types_count  = types_per_thread;
+        params[i].types_stride = num_threads;
 
-        params[i].ids_start      = 0;
+        params[i].ids_start = 0;
 #if 1
-        if ( test_express == 2 ) {
-            params[i].ids_count      = (512 * 512);
+        if (test_express == 2) {
+            params[i].ids_count = (512 * 512);
         }
         else {
-            params[i].ids_count      = NUM_ID_INSTANCES;
+            params[i].ids_count = NUM_ID_INSTANCES;
         }
 #else
-        params[i].ids_count      = NUM_ID_INSTANCES;
+        params[i].ids_count = NUM_ID_INSTANCES;
 #endif
-        params[i].ids_stride     = 1;
+        params[i].ids_stride = 1;
 
         params[i].objects_start  = 0; /* these fields */
         params[i].objects_count  = 0; /* not used in  */
         params[i].objects_stride = 0; /* this test    */
 
-        params[i].cs             = cs;
-        params[i].ds             = ds;
-        params[i].rpt_failures   = rpt_failures;
+        params[i].cs           = cs;
+        params[i].ds           = ds;
+        params[i].rpt_failures = rpt_failures;
 
-        params[i].err_cnt        = 0;
-        params[i].ambig_cnt      = 0;
+        params[i].err_cnt   = 0;
+        params[i].ambig_cnt = 0;
 #if 0
         fprintf(stderr, 
                 "params[%d] types st/cnt/str = %d/%d/%d, ids st/cnt/str = %d/%d/%d, objs st/cnt/str = %d/%d/%d\n",
@@ -12177,7 +12134,7 @@ mt_test_2_helper(int num_threads)
 #endif
     }
 
-    for ( i = 0; i < NUM_ID_INSTANCES; i++ ) {
+    for (i = 0; i < NUM_ID_INSTANCES; i++) {
 
         id_instance_array[i].type_index = i % (types_per_thread * num_threads);
     }
@@ -12185,15 +12142,15 @@ mt_test_2_helper(int num_threads)
     /* setup the closing report function */
     closing_rpt_fcn = &closing_rpt;
 
-    for ( i = 0;  i < num_threads; i++ ) {
+    for (i = 0; i < num_threads; i++) {
 
-        if ( 0 != pthread_create(&(threads[i]), NULL, &mt_test_fcn_2, (void *)(&(params[i])))) {
+        if (0 != pthread_create(&(threads[i]), NULL, &mt_test_fcn_2, (void *)(&(params[i])))) {
 
             assert(FALSE);
 
             err_cnt++;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
                 fprintf(stderr, "mt_test_1(): create of thread %d failed.\n", i);
             }
@@ -12203,17 +12160,18 @@ mt_test_2_helper(int num_threads)
     /* Wait for all the threads to complete */
     for (i = 0; i < num_threads; i++) {
 
-        if ( 0 != pthread_join(threads[i], NULL) ) {
+        if (0 != pthread_join(threads[i], NULL)) {
 
             assert(FALSE);
 
             err_cnt++;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
                 fprintf(stderr, "mt_test_1(): join of thread %d failed.\n", i);
             }
-        } else {
+        }
+        else {
 
             /* collect error count from joined thread */
             err_cnt += params[i].err_cnt;
@@ -12224,61 +12182,60 @@ mt_test_2_helper(int num_threads)
     /* take down the closing report function */
     closing_rpt_fcn = NULL;
 
-    for ( i = 0; i < NUM_ID_TYPES; i++ ) {
+    for (i = 0; i < NUM_ID_TYPES; i++) {
 
         type_successful_registers += atomic_load(&(types_array[i].successful_registers));
-        type_failed_registers     += atomic_load(&(types_array[i].failed_registers));
-        type_successful_clears    += atomic_load(&(types_array[i].successful_clears));
-        type_failed_clears        += atomic_load(&(types_array[i].failed_clears));
-        type_successful_destroys  += atomic_load(&(types_array[i].successful_destroys));
-        type_failed_destroys      += atomic_load(&(types_array[i].failed_destroys));
+        type_failed_registers += atomic_load(&(types_array[i].failed_registers));
+        type_successful_clears += atomic_load(&(types_array[i].successful_clears));
+        type_failed_clears += atomic_load(&(types_array[i].failed_clears));
+        type_successful_destroys += atomic_load(&(types_array[i].successful_destroys));
+        type_failed_destroys += atomic_load(&(types_array[i].failed_destroys));
     }
 
-    for ( i = 0; i < NUM_ID_INSTANCES; i++ ) {
+    for (i = 0; i < NUM_ID_INSTANCES; i++) {
 
-        id_successful_registrations   += atomic_load(&(id_instance_array[i].successful_registrations));
-        id_failed_registrations       += atomic_load(&(id_instance_array[i].failed_registrations));
-        id_successful_verifies        += atomic_load(&(id_instance_array[i].successful_verifies));
-        id_failed_verifies            += atomic_load(&(id_instance_array[i].failed_verifies));
-        id_successful_inc_refs        += atomic_load(&(id_instance_array[i].successful_inc_refs));
-        id_failed_inc_refs            += atomic_load(&(id_instance_array[i].failed_inc_refs));
-        id_successful_dec_refs        += atomic_load(&(id_instance_array[i].successful_dec_refs));
-        id_failed_dec_refs            += atomic_load(&(id_instance_array[i].failed_dec_refs));
-        id_dec_ref_deletes            += atomic_load(&(id_instance_array[i].dec_ref_deletes));
-        id_successful_get_ref_cnts    += atomic_load(&(id_instance_array[i].successful_get_ref_cnts));
-        id_failed_get_ref_cnts        += atomic_load(&(id_instance_array[i].failed_get_ref_cnts));
+        id_successful_registrations += atomic_load(&(id_instance_array[i].successful_registrations));
+        id_failed_registrations += atomic_load(&(id_instance_array[i].failed_registrations));
+        id_successful_verifies += atomic_load(&(id_instance_array[i].successful_verifies));
+        id_failed_verifies += atomic_load(&(id_instance_array[i].failed_verifies));
+        id_successful_inc_refs += atomic_load(&(id_instance_array[i].successful_inc_refs));
+        id_failed_inc_refs += atomic_load(&(id_instance_array[i].failed_inc_refs));
+        id_successful_dec_refs += atomic_load(&(id_instance_array[i].successful_dec_refs));
+        id_failed_dec_refs += atomic_load(&(id_instance_array[i].failed_dec_refs));
+        id_dec_ref_deletes += atomic_load(&(id_instance_array[i].dec_ref_deletes));
+        id_successful_get_ref_cnts += atomic_load(&(id_instance_array[i].successful_get_ref_cnts));
+        id_failed_get_ref_cnts += atomic_load(&(id_instance_array[i].failed_get_ref_cnts));
         id_successful_remove_verifies += atomic_load(&(id_instance_array[i].successful_remove_verifies));
-        id_failed_remove_verifies     += atomic_load(&(id_instance_array[i].failed_remove_verifies));
+        id_failed_remove_verifies += atomic_load(&(id_instance_array[i].failed_remove_verifies));
     }
 
-    for ( i = 0; i < NUM_ID_OBJECTS; i++ ) {
+    for (i = 0; i < NUM_ID_OBJECTS; i++) {
 
         obj_accesses += atomic_load(&(objects_array[i].accesses));
     }
 
-    if ( MT_TEST_2__DISPLAY_FINAL_STATS ) {
+    if (MT_TEST_2__DISPLAY_FINAL_STATS) {
 
         fprintf(stderr, "\nerror count = %d, ambiguous count = %d\n\n", err_cnt, ambig_cnt);
 
-        fprintf(stderr, "type successful / failed registers     = %lld / %lld\n", 
-                type_successful_registers, type_failed_registers);
-        fprintf(stderr, "type successful / failed clears        = %lld / %lld\n",
-                type_successful_clears, type_failed_clears);
-        fprintf(stderr, "type successful / failed destroys      = %lld / %lld\n\n",
-                type_successful_destroys, type_failed_destroys);
+        fprintf(stderr, "type successful / failed registers     = %lld / %lld\n", type_successful_registers,
+                type_failed_registers);
+        fprintf(stderr, "type successful / failed clears        = %lld / %lld\n", type_successful_clears,
+                type_failed_clears);
+        fprintf(stderr, "type successful / failed destroys      = %lld / %lld\n\n", type_successful_destroys,
+                type_failed_destroys);
 
-        fprintf(stderr, "id successful / failed registrations   = %lld / %lld\n",
-                id_successful_registrations, id_failed_registrations);
-        fprintf(stderr, "id successful / failed verifies        = %lld / %lld\n", 
-                id_successful_verifies, id_failed_verifies);
-        fprintf(stderr, "id successful / failed inc refs        = %lld / %lld\n",
-                id_successful_inc_refs, id_failed_inc_refs);
-        fprintf(stderr, "id successful / failed dec refs        = %lld / %lld\n", 
-                id_successful_dec_refs, id_failed_dec_refs);
-        fprintf(stderr, "id dec ref deletes                     = %lld\n", 
-                id_dec_ref_deletes);
-        fprintf(stderr, "id successful / failed get refs        = %lld / %lld\n",
-                id_successful_get_ref_cnts, id_failed_get_ref_cnts);
+        fprintf(stderr, "id successful / failed registrations   = %lld / %lld\n", id_successful_registrations,
+                id_failed_registrations);
+        fprintf(stderr, "id successful / failed verifies        = %lld / %lld\n", id_successful_verifies,
+                id_failed_verifies);
+        fprintf(stderr, "id successful / failed inc refs        = %lld / %lld\n", id_successful_inc_refs,
+                id_failed_inc_refs);
+        fprintf(stderr, "id successful / failed dec refs        = %lld / %lld\n", id_successful_dec_refs,
+                id_failed_dec_refs);
+        fprintf(stderr, "id dec ref deletes                     = %lld\n", id_dec_ref_deletes);
+        fprintf(stderr, "id successful / failed get refs        = %lld / %lld\n", id_successful_get_ref_cnts,
+                id_failed_get_ref_cnts);
         fprintf(stderr, "id successful / failed remove verifies = %lld / %lld\n\n",
                 id_successful_remove_verifies, id_failed_remove_verifies);
 
@@ -12289,55 +12246,54 @@ mt_test_2_helper(int num_threads)
 
     /* Sanity checks on the id info and type info free lists. */
 
-    /* verify that the id info and type info free lists balance. 
+    /* verify that the id info and type info free lists balance.
      * This assertion can ignore the initial free list length, since whatever it is
      * on entry, the number of ids created is such that it will be empty by the
-     * time any entries are returned to the free list.  The +1 accounts for the 
+     * time any entries are returned to the free list.  The +1 accounts for the
      * minimum length of the free list
      */
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_id_info_structs_added_to_fl)) -
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_freed)) -
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_alloced_from_fl)) -
-                  atomic_load(&(H5I_mt_g.id_info_fl_len)) + 1) );
+    assert(0 == (atomic_load(&(H5I_mt_g.num_id_info_structs_added_to_fl)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_freed)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_alloced_from_fl)) -
+                 atomic_load(&(H5I_mt_g.id_info_fl_len)) + 1));
 
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_type_info_structs_added_to_fl)) -
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_freed)) -
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_alloced_from_fl)) -
-                  atomic_load(&(H5I_mt_g.type_info_fl_len)) + 1) );
-
+    assert(0 == (atomic_load(&(H5I_mt_g.num_type_info_structs_added_to_fl)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_freed)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_alloced_from_fl)) -
+                 atomic_load(&(H5I_mt_g.type_info_fl_len)) + 1));
 
     /* Verify that the increments to all the stats for the serial numbers balance correctly.
      */
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_id_next_sn_assigned)) - 
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_added_to_fl))));
+    assert(0 == (atomic_load(&(H5I_mt_g.num_id_next_sn_assigned)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_added_to_fl))));
 
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_id_serial_num_resets)) -
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_alloced_from_fl)) -
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_freed))));
+    assert(0 == (atomic_load(&(H5I_mt_g.num_id_serial_num_resets)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_alloced_from_fl)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_freed))));
 
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_type_next_sn_assigned)) - 
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_added_to_fl))));
+    assert(0 == (atomic_load(&(H5I_mt_g.num_type_next_sn_assigned)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_added_to_fl))));
 
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_type_serial_num_resets)) -
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_alloced_from_fl)) -
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_freed))));
+    assert(0 == (atomic_load(&(H5I_mt_g.num_type_serial_num_resets)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_alloced_from_fl)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_freed))));
 
-    if ( H5close() < 0 ) {
+    if (H5close() < 0) {
 
         err_cnt++;
 
-        if ( rpt_failures ) {
+        if (rpt_failures) {
 
             fprintf(stderr, "mt_test_1():%d: H5close() failed.\n", 0);
         }
     }
 
-    if ( 0 == err_cnt ) {
+    if (0 == err_cnt) {
 
         PASSED();
         fprintf(stdout, "        %3d ambiguous test results.\n", ambig_cnt);
-
-    } else {
+    }
+    else {
 
         IncTestNumErrs();
         H5_FAILED();
@@ -12360,93 +12316,92 @@ mt_test_2_helper(int num_threads)
  *
  *      4) destroy the types created in 2).
  *
- *      
+ *
  *******************************************************************************************/
 
 static herr_t
 mt_future_test_fcn_1_serial_test(TestParams_t *_params)
 {
-    int err_cnt = 0;
-    mt_test_params_t *params = (mt_test_params_t *)_params->UserParams;
+    int               err_cnt = 0;
+    mt_test_params_t *params  = (mt_test_params_t *)_params->UserParams;
 
     TESTING("mt_future_test_fcn_1_serial_test");
     fflush(stdout);
 
-    if ( H5open() < 0 ) {
+    if (H5open() < 0) {
 
         err_cnt++;
 
-        if ( params->rpt_failures ) {
+        if (params->rpt_failures) {
 
             fprintf(stderr, "mt_future_test_fcn_1_serial_test():%d: H5open() failed.\n", params->thread_id);
         }
     }
 
-    err_cnt += create_types(params->types_start, params->types_count, params->types_stride,
-                            params->cs, params->ds, params->rpt_failures, params->thread_id);
+    err_cnt += create_types(params->types_start, params->types_count, params->types_stride, params->cs,
+                            params->ds, params->rpt_failures, params->thread_id);
 
     mt_future_test_fcn_1(params);
     err_cnt += params->err_cnt;
 
-    err_cnt += destroy_types(params->types_start, params->types_count, params->types_stride,
-                             params->cs, params->ds, params->rpt_failures, params->thread_id);
+    err_cnt += destroy_types(params->types_start, params->types_count, params->types_stride, params->cs,
+                             params->ds, params->rpt_failures, params->thread_id);
 
-    if ( MT_TEST_FCN_1_SERIAL_TEST__DISPLAY_FINAL_STATS ) {
+    if (MT_TEST_FCN_1_SERIAL_TEST__DISPLAY_FINAL_STATS) {
 
         H5I_dump_stats(stdout);
     }
 
     /* Sanity checks on the id info and type info free lists. */
 
-    /* verify that the id info and type info free lists balance. 
+    /* verify that the id info and type info free lists balance.
      * This assertion can ignore the initial free list length, since whatever it is
      * on entry, the number of ids created is such that it will be empty by the
-     * time any entries are returned to the free list.  The +1 accounts for the 
+     * time any entries are returned to the free list.  The +1 accounts for the
      * minimum length of the free list
      */
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_id_info_structs_added_to_fl)) -
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_freed)) -
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_alloced_from_fl)) -
-                  atomic_load(&(H5I_mt_g.id_info_fl_len)) + 1) );
+    assert(0 == (atomic_load(&(H5I_mt_g.num_id_info_structs_added_to_fl)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_freed)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_alloced_from_fl)) -
+                 atomic_load(&(H5I_mt_g.id_info_fl_len)) + 1));
 
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_type_info_structs_added_to_fl)) -
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_freed)) -
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_alloced_from_fl)) -
-                  atomic_load(&(H5I_mt_g.type_info_fl_len)) + 1) );
+    assert(0 == (atomic_load(&(H5I_mt_g.num_type_info_structs_added_to_fl)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_freed)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_alloced_from_fl)) -
+                 atomic_load(&(H5I_mt_g.type_info_fl_len)) + 1));
 
     /* Verify that the increments to all the stats for the serial numbers balance correctly.
      */
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_id_next_sn_assigned)) - 
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_added_to_fl))));
+    assert(0 == (atomic_load(&(H5I_mt_g.num_id_next_sn_assigned)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_added_to_fl))));
 
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_id_serial_num_resets)) -
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_alloced_from_fl)) -
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_freed))));
+    assert(0 == (atomic_load(&(H5I_mt_g.num_id_serial_num_resets)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_alloced_from_fl)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_freed))));
 
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_type_next_sn_assigned)) - 
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_added_to_fl))));
+    assert(0 == (atomic_load(&(H5I_mt_g.num_type_next_sn_assigned)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_added_to_fl))));
 
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_type_serial_num_resets)) -
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_alloced_from_fl)) -
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_freed))));
+    assert(0 == (atomic_load(&(H5I_mt_g.num_type_serial_num_resets)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_alloced_from_fl)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_freed))));
 
-
-    if ( H5close() < 0 ) {
+    if (H5close() < 0) {
 
         err_cnt++;
 
-        if ( params->rpt_failures ) {
+        if (params->rpt_failures) {
 
             fprintf(stderr, "mt_future_test_fcn_1_serial_test():%d: H5close() failed.\n", params->thread_id);
         }
     }
 
-    if ( 0 == err_cnt ) {
+    if (0 == err_cnt) {
 
         PASSED();
         return SUCCEED;
-
-    } else {
+    }
+    else {
 
         IncTestNumErrs();
         H5_FAILED();
@@ -12459,21 +12414,21 @@ mt_future_test_fcn_1_serial_test(TestParams_t *_params)
  *
  * mt_future_test_1()
  *
- *      Initial multi-thread test of H5I.  The objective is to perform an initial smoke 
+ *      Initial multi-thread test of H5I.  The objective is to perform an initial smoke
  *      check with no failed calls.
  *
  *      1) set up the instances of mt_test_params_t for the specified number of threads.
  *
  *      2) Create the types needed in the call to mt_test_fcn_1().
  *
- *      3) Create the specified number of threads and invoke mt_test_fcn_1 with the 
+ *      3) Create the specified number of threads and invoke mt_test_fcn_1 with the
  *         appropriate instance of mt_test_params_t.
  *
  *      4) Wait for all threads to complete.
  *
  *      5) destroy the types created in 2).
  *
- *      
+ *
  *******************************************************************************************/
 
 static herr_t
@@ -12515,54 +12470,54 @@ static void
 mt_future_test_1_helper(int num_threads)
 {
     char             banner[80];
-    hbool_t          cs = FALSE;
-    hbool_t          ds = FALSE;
+    hbool_t          cs           = FALSE;
+    hbool_t          ds           = FALSE;
     hbool_t          rpt_failures = TRUE;
     int              i;
     int              err_cnt = 0;
     pthread_t        threads[DEFAULT_MAX_NUM_THREADS];
     mt_test_params_t params[DEFAULT_MAX_NUM_THREADS];
 
-    assert( 1 <= num_threads );
-    assert( num_threads <= DEFAULT_MAX_NUM_THREADS );
+    assert(1 <= num_threads);
+    assert(num_threads <= DEFAULT_MAX_NUM_THREADS);
 
     sprintf(banner, "future multi-thread test 1 -- %d threads", num_threads);
 
     TESTING(banner);
     fflush(stdout);
 
-    if ( H5open() < 0 ) {
+    if (H5open() < 0) {
 
         err_cnt++;
 
-        if ( rpt_failures ) {
+        if (rpt_failures) {
 
             fprintf(stderr, "mt_future_test_1():%d: H5open() failed.\n", 0);
         }
     }
 
-    for ( i = 0; i < num_threads; i++ ) {
+    for (i = 0; i < num_threads; i++) {
 
-        params[i].thread_id      = i;
+        params[i].thread_id = i;
 
-        params[i].types_start    = 0;
-        params[i].types_count    = 3;
-        params[i].types_stride   = 3;
+        params[i].types_start  = 0;
+        params[i].types_count  = 3;
+        params[i].types_stride = 3;
 
-        params[i].ids_start      = i * 20000;
-        params[i].ids_count      = 20000;
-        params[i].ids_stride     = 1;
+        params[i].ids_start  = i * 20000;
+        params[i].ids_count  = 20000;
+        params[i].ids_stride = 1;
 
         params[i].objects_start  = i * 20000;
         params[i].objects_count  = 20000;
         params[i].objects_stride = 1;
 
-        params[i].cs             = cs;
-        params[i].ds             = ds;
-        params[i].rpt_failures   = rpt_failures;
+        params[i].cs           = cs;
+        params[i].ds           = ds;
+        params[i].rpt_failures = rpt_failures;
 
-        params[i].err_cnt        = 0;
-        params[i].ambig_cnt      = 0;
+        params[i].err_cnt   = 0;
+        params[i].ambig_cnt = 0;
 #if 0
         fprintf(stderr, 
                 "params[%d] types st/cnt/str = %d/%d/%d, ids st/cnt/str = %d/%d/%d, objs st/cnt/str = %d/%d/%d\n",
@@ -12572,18 +12527,18 @@ mt_future_test_1_helper(int num_threads)
 #endif
     }
 
-    err_cnt += create_types(params[0].types_start, params[0].types_count, params[0].types_stride, 
-                            cs, ds, rpt_failures, 0);
+    err_cnt += create_types(params[0].types_start, params[0].types_count, params[0].types_stride, cs, ds,
+                            rpt_failures, 0);
 
-    for ( i = 0;  i < num_threads; i++ ) {
+    for (i = 0; i < num_threads; i++) {
 
-        if ( 0 != pthread_create(&(threads[i]), NULL, &mt_future_test_fcn_1, (void *)(&(params[i])))) {
+        if (0 != pthread_create(&(threads[i]), NULL, &mt_future_test_fcn_1, (void *)(&(params[i])))) {
 
             assert(FALSE);
 
             err_cnt++;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
                 fprintf(stderr, "mt_future_test_1(): create of thread %d failed.\n", i);
             }
@@ -12593,82 +12548,81 @@ mt_future_test_1_helper(int num_threads)
     /* Wait for all the threads to complete */
     for (i = 0; i < num_threads; i++) {
 
-        if ( 0 != pthread_join(threads[i], NULL) ) {
+        if (0 != pthread_join(threads[i], NULL)) {
 
             assert(FALSE);
 
             err_cnt++;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
                 fprintf(stderr, "mt_future_test_1(): join of thread %d failed.\n", i);
             }
-        } else {
+        }
+        else {
 
             /* collect error count from joined thread */
             err_cnt += params[i].err_cnt;
         }
     }
 
-    err_cnt += destroy_types(params[0].types_start, params[0].types_count, params[0].types_stride, 
+    err_cnt += destroy_types(params[0].types_start, params[0].types_count, params[0].types_stride,
                              params[0].cs, params[0].ds, params[0].rpt_failures, params[0].thread_id);
 
-    if ( MT_FUTURE_TEST_1__DISPLAY_FINAL_STATS ) {
+    if (MT_FUTURE_TEST_1__DISPLAY_FINAL_STATS) {
 
         H5I_dump_stats(stdout);
     }
 
     /* Sanity checks on the id info and type info free lists. */
 
-    /* verify that the id info and type info free lists balance. 
+    /* verify that the id info and type info free lists balance.
      * This assertion can ignore the initial free list length, since whatever it is
      * on entry, the number of ids created is such that it will be empty by the
-     * time any entries are returned to the free list.  The +1 accounts for the 
+     * time any entries are returned to the free list.  The +1 accounts for the
      * minimum length of the free list
      */
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_id_info_structs_added_to_fl)) -
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_freed)) -
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_alloced_from_fl)) -
-                  atomic_load(&(H5I_mt_g.id_info_fl_len)) + 1) );
+    assert(0 == (atomic_load(&(H5I_mt_g.num_id_info_structs_added_to_fl)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_freed)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_alloced_from_fl)) -
+                 atomic_load(&(H5I_mt_g.id_info_fl_len)) + 1));
 
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_type_info_structs_added_to_fl)) -
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_freed)) -
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_alloced_from_fl)) -
-                  atomic_load(&(H5I_mt_g.type_info_fl_len)) + 1) );
-
+    assert(0 == (atomic_load(&(H5I_mt_g.num_type_info_structs_added_to_fl)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_freed)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_alloced_from_fl)) -
+                 atomic_load(&(H5I_mt_g.type_info_fl_len)) + 1));
 
     /* Verify that the increments to all the stats for the serial numbers balance correctly.
      */
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_id_next_sn_assigned)) - 
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_added_to_fl))));
+    assert(0 == (atomic_load(&(H5I_mt_g.num_id_next_sn_assigned)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_added_to_fl))));
 
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_id_serial_num_resets)) -
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_alloced_from_fl)) -
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_freed))));
+    assert(0 == (atomic_load(&(H5I_mt_g.num_id_serial_num_resets)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_alloced_from_fl)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_freed))));
 
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_type_next_sn_assigned)) - 
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_added_to_fl))));
+    assert(0 == (atomic_load(&(H5I_mt_g.num_type_next_sn_assigned)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_added_to_fl))));
 
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_type_serial_num_resets)) -
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_alloced_from_fl)) -
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_freed))));
+    assert(0 == (atomic_load(&(H5I_mt_g.num_type_serial_num_resets)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_alloced_from_fl)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_freed))));
 
-
-    if ( H5close() < 0 ) {
+    if (H5close() < 0) {
 
         err_cnt++;
 
-        if ( rpt_failures ) {
+        if (rpt_failures) {
 
             fprintf(stderr, "mt_future_test_1():%d: H5close() failed.\n", 0);
         }
     }
 
-    if ( 0 == err_cnt ) {
+    if (0 == err_cnt) {
 
         PASSED();
-
-    } else {
+    }
+    else {
 
         IncTestNumErrs();
         H5_FAILED();
@@ -12682,21 +12636,21 @@ mt_future_test_1_helper(int num_threads)
  *
  * mt_future_test_2()
  *
- *      Second multi-thread test of H5I for future IDs.  The objective is to perform an 
+ *      Second multi-thread test of H5I for future IDs.  The objective is to perform an
  *      initial smoke check with no failed calls.
  *
  *      1) set up the instances of mt_test_params_t for the specified number of threads.
  *
  *      2) Create the types needed in the call to mt_future_test_fcn_2().
  *
- *      3) Create the specified number of threads and invoke mt_future_test_fcn_2 with the 
+ *      3) Create the specified number of threads and invoke mt_future_test_fcn_2 with the
  *         appropriate instance of mt_test_params_t.
  *
  *      4) Wait for all threads to complete.
  *
  *      5) destroy the types created in 2).
  *
- *      
+ *
  *******************************************************************************************/
 
 static herr_t
@@ -12710,7 +12664,7 @@ mt_future_test_2(TestParams_t *params)
         max_num_threads = DEFAULT_MAX_NUM_THREADS;
 
     /* Adjust maximum number of threads based on TestExpress setting */
-       switch (test_express) {
+    switch (test_express) {
         case H5_TEST_EXPRESS_SMOKE_TEST:
             max_num_threads = MIN(2, MIN(max_num_threads, DEFAULT_MAX_NUM_THREADS));
             break;
@@ -12740,35 +12694,35 @@ mt_future_test_2(TestParams_t *params)
 static void
 mt_future_test_2_helper(int num_threads)
 {
-    char             banner[80];
-    hbool_t          cs = FALSE;
-    hbool_t          ds = FALSE;
-    hbool_t          rpt_failures = FALSE;
-    int              i;
-    int              err_cnt = 0;
-    int              ambig_cnt = 0;
-    int              types_per_thread;
-    int              test_express    = GetTestExpress();
-    long long int    type_successful_registers = 0;
-    long long int    type_failed_registers = 0;
-    long long int    type_successful_clears = 0;
-    long long int    type_failed_clears = 0;
-    long long int    type_successful_destroys = 0;
-    long long int    type_failed_destroys = 0;
-    long long int    id_successful_registrations = 0;
-    long long int    id_failed_registrations = 0;
-    long long int    id_successful_verifies = 0;
-    long long int    id_failed_verifies = 0;
-    long long int    id_successful_inc_refs = 0;
-    long long int    id_failed_inc_refs = 0;
-    long long int    id_successful_dec_refs = 0;
-    long long int    id_failed_dec_refs = 0;
-    long long int    id_dec_ref_deletes = 0;
-    long long int    id_successful_get_ref_cnts = 0;
-    long long int    id_failed_get_ref_cnts = 0;
-    long long int    id_successful_remove_verifies = 0;
-    long long int    id_failed_remove_verifies = 0;
-    long long int    obj_accesses = 0;
+    char          banner[80];
+    hbool_t       cs           = FALSE;
+    hbool_t       ds           = FALSE;
+    hbool_t       rpt_failures = FALSE;
+    int           i;
+    int           err_cnt   = 0;
+    int           ambig_cnt = 0;
+    int           types_per_thread;
+    int           test_express                  = GetTestExpress();
+    long long int type_successful_registers     = 0;
+    long long int type_failed_registers         = 0;
+    long long int type_successful_clears        = 0;
+    long long int type_failed_clears            = 0;
+    long long int type_successful_destroys      = 0;
+    long long int type_failed_destroys          = 0;
+    long long int id_successful_registrations   = 0;
+    long long int id_failed_registrations       = 0;
+    long long int id_successful_verifies        = 0;
+    long long int id_failed_verifies            = 0;
+    long long int id_successful_inc_refs        = 0;
+    long long int id_failed_inc_refs            = 0;
+    long long int id_successful_dec_refs        = 0;
+    long long int id_failed_dec_refs            = 0;
+    long long int id_dec_ref_deletes            = 0;
+    long long int id_successful_get_ref_cnts    = 0;
+    long long int id_failed_get_ref_cnts        = 0;
+    long long int id_successful_remove_verifies = 0;
+    long long int id_failed_remove_verifies     = 0;
+    long long int obj_accesses                  = 0;
     /* Future stats */
     long long int    id_successful_future_reserves = 0;
     long long int    id_failed_future_reserves     = 0;
@@ -12777,65 +12731,65 @@ mt_future_test_2_helper(int num_threads)
     pthread_t        threads[DEFAULT_MAX_NUM_THREADS];
     mt_test_params_t params[DEFAULT_MAX_NUM_THREADS];
 
-    assert( 1 <= num_threads );
-    assert( num_threads <= DEFAULT_MAX_NUM_THREADS );
+    assert(1 <= num_threads);
+    assert(num_threads <= DEFAULT_MAX_NUM_THREADS);
 
     sprintf(banner, "future multi-thread test 2 -- %d threads", num_threads);
 
     TESTING(banner);
     fflush(stdout);
 
-    if ( H5open() < 0 ) {
+    if (H5open() < 0) {
 
         err_cnt++;
 
-        if ( rpt_failures ) {
+        if (rpt_failures) {
 
             fprintf(stderr, "mt_future_test_2():%d: H5open() failed.\n", 0);
         }
     }
 
-    types_per_thread = ( (int)H5I_MAX_NUM_TYPES - (int)H5I_NTYPES) / num_threads;
+    types_per_thread = ((int)H5I_MAX_NUM_TYPES - (int)H5I_NTYPES) / num_threads;
 
-    if ( types_per_thread > 4 ) {
+    if (types_per_thread > 4) {
 
-        types_per_thread = 4; 
+        types_per_thread = 4;
     }
 
-    for ( i = 0; i < num_threads; i++ ) {
+    for (i = 0; i < num_threads; i++) {
 
-        params[i].thread_id      = i;
+        params[i].thread_id = i;
 
-        params[i].types_start    = i;
-        params[i].types_count    = types_per_thread;
-        params[i].types_stride   = num_threads;
+        params[i].types_start  = i;
+        params[i].types_count  = types_per_thread;
+        params[i].types_stride = num_threads;
 
-        params[i].ids_start      = 0;
+        params[i].ids_start = 0;
 
         /* Half the amount of ids unless doing a full-extensive test to conform with timing standards */
 #if 1
-        if ( test_express == 2 ) {
-            params[i].ids_count      = (512 * 512);
+        if (test_express == 2) {
+            params[i].ids_count = (512 * 512);
         }
         else {
-            params[i].ids_count      = NUM_ID_INSTANCES;
+            params[i].ids_count = NUM_ID_INSTANCES;
         }
 #else
-        params[i].ids_count      = NUM_ID_INSTANCES;
+        params[i].ids_count = NUM_ID_INSTANCES;
 #endif
 
-        params[i].ids_stride     = 1;
+        params[i].ids_stride = 1;
 
         params[i].objects_start  = 0; /* these fields */
         params[i].objects_count  = 0; /* not used in  */
         params[i].objects_stride = 0; /* this test    */
 
-        params[i].cs             = cs;
-        params[i].ds             = ds;
-        params[i].rpt_failures   = rpt_failures;
+        params[i].cs           = cs;
+        params[i].ds           = ds;
+        params[i].rpt_failures = rpt_failures;
 
-        params[i].err_cnt        = 0;
-        params[i].ambig_cnt      = 0;
+        params[i].err_cnt   = 0;
+        params[i].ambig_cnt = 0;
 #if 0
         fprintf(stderr, 
                 "params[%d] types st/cnt/str = %d/%d/%d, ids st/cnt/str = %d/%d/%d, objs st/cnt/str = %d/%d/%d\n",
@@ -12845,7 +12799,7 @@ mt_future_test_2_helper(int num_threads)
 #endif
     }
 
-    for ( i = 0; i < NUM_ID_INSTANCES; i++ ) {
+    for (i = 0; i < NUM_ID_INSTANCES; i++) {
 
         id_instance_array[i].type_index = i % (types_per_thread * num_threads);
     }
@@ -12855,15 +12809,15 @@ mt_future_test_2_helper(int num_threads)
     /* setup the future free report function */
     future_free_rpt_fcn = &future_free_rpt;
 
-    for ( i = 0;  i < num_threads; i++ ) {
+    for (i = 0; i < num_threads; i++) {
 
-        if ( 0 != pthread_create(&(threads[i]), NULL, &mt_future_test_fcn_2, (void *)(&(params[i])))) {
+        if (0 != pthread_create(&(threads[i]), NULL, &mt_future_test_fcn_2, (void *)(&(params[i])))) {
 
             assert(FALSE);
 
             err_cnt++;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
                 fprintf(stderr, "mt_future_test_2_helper(): create of thread %d failed.\n", i);
             }
@@ -12873,24 +12827,24 @@ mt_future_test_2_helper(int num_threads)
     /* Wait for all the threads to complete */
     for (i = 0; i < num_threads; i++) {
 
-        if ( 0 != pthread_join(threads[i], NULL) ) {
+        if (0 != pthread_join(threads[i], NULL)) {
 
             assert(FALSE);
 
             err_cnt++;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
                 fprintf(stderr, "mt_future_test_2_helper(): join of thread %d failed.\n", i);
             }
-        } else {
+        }
+        else {
 
             /* collect error count from joined thread */
             err_cnt += params[i].err_cnt;
             ambig_cnt += params[i].ambig_cnt;
         }
     }
- 
 
     /* take down the closing report function */
     closing_rpt_fcn = NULL;
@@ -12898,72 +12852,69 @@ mt_future_test_2_helper(int num_threads)
     /* take down the future free report function */
     future_free_rpt_fcn = NULL;
 
-    for ( i = 0; i < NUM_ID_TYPES; i++ ) {
+    for (i = 0; i < NUM_ID_TYPES; i++) {
 
         type_successful_registers += atomic_load(&(types_array[i].successful_registers));
-        type_failed_registers     += atomic_load(&(types_array[i].failed_registers));
-        type_successful_clears    += atomic_load(&(types_array[i].successful_clears));
-        type_failed_clears        += atomic_load(&(types_array[i].failed_clears));
-        type_successful_destroys  += atomic_load(&(types_array[i].successful_destroys));
-        type_failed_destroys      += atomic_load(&(types_array[i].failed_destroys));
+        type_failed_registers += atomic_load(&(types_array[i].failed_registers));
+        type_successful_clears += atomic_load(&(types_array[i].successful_clears));
+        type_failed_clears += atomic_load(&(types_array[i].failed_clears));
+        type_successful_destroys += atomic_load(&(types_array[i].successful_destroys));
+        type_failed_destroys += atomic_load(&(types_array[i].failed_destroys));
     }
 
-    for ( i = 0; i < NUM_ID_INSTANCES; i++ ) {
+    for (i = 0; i < NUM_ID_INSTANCES; i++) {
 
-        id_successful_registrations   += atomic_load(&(id_instance_array[i].successful_registrations));
-        id_failed_registrations       += atomic_load(&(id_instance_array[i].failed_registrations));
-        id_successful_verifies        += atomic_load(&(id_instance_array[i].successful_verifies));
-        id_failed_verifies            += atomic_load(&(id_instance_array[i].failed_verifies));
-        id_successful_inc_refs        += atomic_load(&(id_instance_array[i].successful_inc_refs));
-        id_failed_inc_refs            += atomic_load(&(id_instance_array[i].failed_inc_refs));
-        id_successful_dec_refs        += atomic_load(&(id_instance_array[i].successful_dec_refs));
-        id_failed_dec_refs            += atomic_load(&(id_instance_array[i].failed_dec_refs));
-        id_dec_ref_deletes            += atomic_load(&(id_instance_array[i].dec_ref_deletes));
-        id_successful_get_ref_cnts    += atomic_load(&(id_instance_array[i].successful_get_ref_cnts));
-        id_failed_get_ref_cnts        += atomic_load(&(id_instance_array[i].failed_get_ref_cnts));
+        id_successful_registrations += atomic_load(&(id_instance_array[i].successful_registrations));
+        id_failed_registrations += atomic_load(&(id_instance_array[i].failed_registrations));
+        id_successful_verifies += atomic_load(&(id_instance_array[i].successful_verifies));
+        id_failed_verifies += atomic_load(&(id_instance_array[i].failed_verifies));
+        id_successful_inc_refs += atomic_load(&(id_instance_array[i].successful_inc_refs));
+        id_failed_inc_refs += atomic_load(&(id_instance_array[i].failed_inc_refs));
+        id_successful_dec_refs += atomic_load(&(id_instance_array[i].successful_dec_refs));
+        id_failed_dec_refs += atomic_load(&(id_instance_array[i].failed_dec_refs));
+        id_dec_ref_deletes += atomic_load(&(id_instance_array[i].dec_ref_deletes));
+        id_successful_get_ref_cnts += atomic_load(&(id_instance_array[i].successful_get_ref_cnts));
+        id_failed_get_ref_cnts += atomic_load(&(id_instance_array[i].failed_get_ref_cnts));
         id_successful_remove_verifies += atomic_load(&(id_instance_array[i].successful_remove_verifies));
-        id_failed_remove_verifies     += atomic_load(&(id_instance_array[i].failed_remove_verifies));
+        id_failed_remove_verifies += atomic_load(&(id_instance_array[i].failed_remove_verifies));
 
         id_successful_future_reserves += atomic_load(&id_instance_array[i].successful_future_reserves);
-        id_failed_future_reserves     += atomic_load(&id_instance_array[i].failed_future_reserves);
-        id_successful_future_defines  += atomic_load(&id_instance_array[i].successful_future_defines);
-        id_failed_future_defines      += atomic_load(&id_instance_array[i].failed_future_defines);
-        
+        id_failed_future_reserves += atomic_load(&id_instance_array[i].failed_future_reserves);
+        id_successful_future_defines += atomic_load(&id_instance_array[i].successful_future_defines);
+        id_failed_future_defines += atomic_load(&id_instance_array[i].failed_future_defines);
     }
 
-    for ( i = 0; i < NUM_ID_OBJECTS; i++ ) {
+    for (i = 0; i < NUM_ID_OBJECTS; i++) {
 
         obj_accesses += atomic_load(&(objects_array[i].accesses));
     }
 
-    if ( MT_FUTURE_TEST_2__DISPLAY_FINAL_STATS ) {
+    if (MT_FUTURE_TEST_2__DISPLAY_FINAL_STATS) {
 
         fprintf(stderr, "\nerror count = %d, ambiguous count = %d\n\n", err_cnt, ambig_cnt);
 
-        fprintf(stderr, "type successful / failed registers     = %lld / %lld\n", 
-                type_successful_registers, type_failed_registers);
-        fprintf(stderr, "type successful / failed clears        = %lld / %lld\n",
-                type_successful_clears, type_failed_clears);
-        fprintf(stderr, "type successful / failed destroys      = %lld / %lld\n\n",
-                type_successful_destroys, type_failed_destroys);
+        fprintf(stderr, "type successful / failed registers     = %lld / %lld\n", type_successful_registers,
+                type_failed_registers);
+        fprintf(stderr, "type successful / failed clears        = %lld / %lld\n", type_successful_clears,
+                type_failed_clears);
+        fprintf(stderr, "type successful / failed destroys      = %lld / %lld\n\n", type_successful_destroys,
+                type_failed_destroys);
 
         fprintf(stderr, "future id successful / failed reserves = %lld / %lld\n",
                 id_successful_future_reserves, id_failed_future_reserves);
         fprintf(stderr, "future id successful / failed defines = %lld / %lld\n\n",
                 id_successful_future_defines, id_failed_future_defines);
-        fprintf(stderr, "id successful / failed verifies        = %lld / %lld\n", 
-                id_successful_verifies, id_failed_verifies);
-        fprintf(stderr, "id successful / failed inc refs        = %lld / %lld\n",
-                id_successful_inc_refs, id_failed_inc_refs);
-        fprintf(stderr, "id successful / failed dec refs        = %lld / %lld\n", 
-                id_successful_dec_refs, id_failed_dec_refs);
-        fprintf(stderr, "id dec ref deletes                     = %lld\n", 
-                id_dec_ref_deletes);
-        fprintf(stderr, "id successful / failed get refs        = %lld / %lld\n",
-                id_successful_get_ref_cnts, id_failed_get_ref_cnts);
+        fprintf(stderr, "id successful / failed verifies        = %lld / %lld\n", id_successful_verifies,
+                id_failed_verifies);
+        fprintf(stderr, "id successful / failed inc refs        = %lld / %lld\n", id_successful_inc_refs,
+                id_failed_inc_refs);
+        fprintf(stderr, "id successful / failed dec refs        = %lld / %lld\n", id_successful_dec_refs,
+                id_failed_dec_refs);
+        fprintf(stderr, "id dec ref deletes                     = %lld\n", id_dec_ref_deletes);
+        fprintf(stderr, "id successful / failed get refs        = %lld / %lld\n", id_successful_get_ref_cnts,
+                id_failed_get_ref_cnts);
         fprintf(stderr, "id successful / failed remove verifies = %lld / %lld\n\n",
                 id_successful_remove_verifies, id_failed_remove_verifies);
-
 
         fprintf(stderr, "object accesses                        = %lld\n\n", obj_accesses);
 
@@ -12972,55 +12923,54 @@ mt_future_test_2_helper(int num_threads)
 
     /* Sanity checks on the id info and type info free lists. */
 
-    /* verify that the id info and type info free lists balance. 
+    /* verify that the id info and type info free lists balance.
      * This assertion can ignore the initial free list length, since whatever it is
      * on entry, the number of ids created is such that it will be empty by the
-     * time any entries are returned to the free list.  The +1 accounts for the 
+     * time any entries are returned to the free list.  The +1 accounts for the
      * minimum length of the free list
      */
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_id_info_structs_added_to_fl)) -
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_freed)) -
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_alloced_from_fl)) -
-                  atomic_load(&(H5I_mt_g.id_info_fl_len)) + 1) );
+    assert(0 == (atomic_load(&(H5I_mt_g.num_id_info_structs_added_to_fl)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_freed)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_alloced_from_fl)) -
+                 atomic_load(&(H5I_mt_g.id_info_fl_len)) + 1));
 
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_type_info_structs_added_to_fl)) -
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_freed)) -
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_alloced_from_fl)) -
-                  atomic_load(&(H5I_mt_g.type_info_fl_len)) + 1) );
-
+    assert(0 == (atomic_load(&(H5I_mt_g.num_type_info_structs_added_to_fl)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_freed)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_alloced_from_fl)) -
+                 atomic_load(&(H5I_mt_g.type_info_fl_len)) + 1));
 
     /* Verify that the increments to all the stats for the serial numbers balance correctly.
      */
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_id_next_sn_assigned)) - 
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_added_to_fl))));
+    assert(0 == (atomic_load(&(H5I_mt_g.num_id_next_sn_assigned)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_added_to_fl))));
 
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_id_serial_num_resets)) -
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_alloced_from_fl)) -
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_freed))));
+    assert(0 == (atomic_load(&(H5I_mt_g.num_id_serial_num_resets)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_alloced_from_fl)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_freed))));
 
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_type_next_sn_assigned)) - 
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_added_to_fl))));
+    assert(0 == (atomic_load(&(H5I_mt_g.num_type_next_sn_assigned)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_added_to_fl))));
 
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_type_serial_num_resets)) -
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_alloced_from_fl)) -
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_freed))));
+    assert(0 == (atomic_load(&(H5I_mt_g.num_type_serial_num_resets)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_alloced_from_fl)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_freed))));
 
-    if ( H5close() < 0 ) {
+    if (H5close() < 0) {
 
         err_cnt++;
 
-        if ( rpt_failures ) {
+        if (rpt_failures) {
 
             fprintf(stderr, "mt_future_test_2():%d: H5close() failed.\n", 0);
         }
     }
 
-    if ( 0 == err_cnt ) {
+    if (0 == err_cnt) {
 
         PASSED();
         fprintf(stdout, "        %3d ambiguous test results.\n", ambig_cnt);
-
-    } else {
+    }
+    else {
 
         IncTestNumErrs();
         H5_FAILED();
@@ -13032,44 +12982,44 @@ mt_future_test_2_helper(int num_threads)
 
 /******************************************************************************
  * future_progress_queue_push()
- * 
+ *
  *      Enqueue a delayed future future-ID realization event into the test
  *      progress queue.
- * 
+ *
  *      Simulate the behavior of an ansync producer completing work required to
- *      realize a future ID with the reserve/define system. This event is 
+ *      realize a future ID with the reserve/define system. This event is
  *      recorded with an associated delay that represents real time remaining
- *      before the future may be defined. 
- * 
+ *      before the future may be defined.
+ *
  *      The queue is lock-free and best-effor:
  *          - If the queue is full, the event is dropped silently.
  *          - Dropping events is fine for the test, as unresolved futures
  *            remain valid and may still be realized by other progress paths.
- * 
+ *
  *      This function does NOT perform the realization itself, it instead records
  *      that progress towards realization has begun.
- * 
+ *
  *      Intended usage:
  *          - Called once after a successful future-ID reservation
  *          - May be called sparingly from test paths to model asynchronous work.
- * 
+ *
  *      Note: Best-effort queue.
  *      Head/tail snapshots can race and events may be dropped/reordered.
  *      This is intentional for the test harness: events are advisory only.
- * 
+ *
  *      This function must never block
- * 
+ *
  *                                              AZO -- 12/30/25
- * 
+ *
  *****************************************************************************/
 
 static void
 future_progress_queue_push(int id_index, int delay)
 {
-    long long int next_tail;
-    long long int cur_tail;
-    long long int cur_head;
-    hid_t id;
+    long long int        next_tail;
+    long long int        cur_tail;
+    long long int        cur_head;
+    hid_t                id;
     id_instance_kernel_t id_inst_k;
 
     assert(0 <= id_index && id_index < NUM_ID_INSTANCES);
@@ -13077,7 +13027,7 @@ future_progress_queue_push(int id_index, int delay)
     memset(&id_inst_k, 0, sizeof(id_instance_kernel_t));
 
     id_inst_k = atomic_load(&(id_instance_array[id_index].k));
-    id = id_inst_k.id;
+    id        = id_inst_k.id;
 
     if (id <= 0)
         return;
@@ -13102,23 +13052,23 @@ future_progress_queue_push(int id_index, int delay)
 
 /*****************************************************************************
  * future_progress_queue_pop()
- * 
+ *
  *      Remove and return one pending future-ID progress event from the test
  *      queue. This function pops at most one event from the global future
- *      progress queue. If the queue is empty, the function returns FALSE and 
+ *      progress queue. If the queue is empty, the function returns FALSE and
  *      does not modify output.
- * 
+ *
  *      The caller is responsible for:
  *          - Decrementing the event delay
  *          - Attempting realization if the delay reaches zero
  *          - Re-queueing the event if realization cannot yet proceed.
- * 
+ *
  *      This function must never block.
- * 
+ *
  *      Returns:
  *      TRUE if an event was popped and stored in *out.
  *      FALSE if the queue was empty.
- * 
+ *
  *                                         AZO -- 12/29/25
  ****************************************************************************/
 
@@ -13144,20 +13094,20 @@ future_progress_queue_pop(test_progress_event_t *out)
 
 /*********************************************************************************
  * future_progress_queue_requeue()
- * 
+ *
  *      Reinsert a previously popped future-ID progress event back into the test
  *      queue.
- * 
+ *
  *      Used when a progress event could not yet compile realization, either due
  *      to an unexpired delay or realization conditions were not yet satisfied.
- * 
+ *
  *      Requeueing is best effort:
  *          - If the queue is full, the event is silently dropped
  *          - Dropped events simply result in delayed or missed realization
- *            attempts which is acceptable for testing. 
- * 
+ *            attempts which is acceptable for testing.
+ *
  *      Ordering guarantees are intentionally weak.
- * 
+ *
  *                                      AZO -- 12/29/25
  *******************************************************************************/
 static void
@@ -13167,14 +13117,14 @@ future_progress_queue_requeue(const test_progress_event_t *progress_event)
     long long int cur_tail;
     long long int cur_head;
 
-    if ( ( !progress_event ) || ( !progress_event->active ) )
+    if ((!progress_event) || (!progress_event->active))
         return;
 
     cur_head = atomic_load(&(progress_test_queue->head));
     cur_tail = atomic_load(&progress_test_queue->tail);
 
     next_tail = (cur_tail + 1) % H5I_TEST_Q_CAPACITY;
-    if ( next_tail == cur_head ) {
+    if (next_tail == cur_head) {
         /* full, drop */
         return;
     }
@@ -13184,99 +13134,97 @@ future_progress_queue_requeue(const test_progress_event_t *progress_event)
 
 } /* future_progress_queue_requeue() */
 
-
 /********************************************************************************
  * future_progress_cb()
- * 
+ *
  *      Test-only progress callback used to drive future-ID realization.
- * 
+ *
  *      Simulates a user-provided progress callback in an async execution model
- *      (e.g., ASYNC VOL). It is invoked from lookup paths (H5I__find_id()) when 
+ *      (e.g., ASYNC VOL). It is invoked from lookup paths (H5I__find_id()) when
  *      a future ID is looked up and the progress function is provided.
- * 
- *      Responsible for detecting whether a target ID is still a future, 
+ *
+ *      Responsible for detecting whether a target ID is still a future,
  *      attempting immediate realization when possible, pumping a bounded
  *      number of queued progress events, and requeueing incomplete events for
  *      future progress.
- * 
+ *
  *      Key design constraints:
  *          - Must never block
  *          - must be reentrancy safe
  *          - must tolerate concurrent realization or discard by other threads.
  *          - Must make forward progress without guaranteeing completion.
- * 
+ *
  *      Returns:
  *          SUCCEED - progress made or no progress required
- *          FAIL - test failure detected 
- * 
+ *          FAIL - test failure detected
+ *
  *                                                   AZO -- 12/29/25
  ******************************************************************************/
 
 static herr_t
 future_progress_cb(hid_t id)
 {
-    H5I_mt_type_info_t       *type_info_ptr = NULL;
-    H5I_mt_id_info_t         *info_ptr      = NULL;
-    H5I_mt_id_info_kernel_t   id_info_k;
-    id_object_kernel_t        obj_k;
-    H5I_type_t                type;
-    test_progress_event_t     progress_event;
-    int                       id_index = -1;
+    H5I_mt_type_info_t     *type_info_ptr = NULL;
+    H5I_mt_id_info_t       *info_ptr      = NULL;
+    H5I_mt_id_info_kernel_t id_info_k;
+    id_object_kernel_t      obj_k;
+    H5I_type_t              type;
+    test_progress_event_t   progress_event;
+    int                     id_index = -1;
 
     memset(&obj_k, 0, sizeof(id_object_kernel_t));
 
     /* validate type */
     type = H5I_TYPE(id);
-    if ( ( type <= H5I_BADID ) || ( (int)type >= atomic_load(&(H5I_mt_g.next_type)) ) )
+    if ((type <= H5I_BADID) || ((int)type >= atomic_load(&(H5I_mt_g.next_type))))
         return FAIL;
 
     type_info_ptr = atomic_load(&(H5I_mt_g.type_info_array[type]));
 
-    if ( ( !type_info_ptr ) || ( atomic_load(&(type_info_ptr->init_count))  <= 0 ) )
+    if ((!type_info_ptr) || (atomic_load(&(type_info_ptr->init_count)) <= 0))
         return FAIL;
 
     /* find id node without H5I__find_id() to avoid recursion */
-    if ( !lfht_find(&(type_info_ptr->lfht), (unsigned long long)id, (void **)&info_ptr) || !info_ptr )
+    if (!lfht_find(&(type_info_ptr->lfht), (unsigned long long)id, (void **)&info_ptr) || !info_ptr)
         return FAIL;
 
     id_info_k = atomic_load(&(info_ptr->k));
 
     /* if marked, don't try to realize */
-    if ( id_info_k.marked )
+    if (id_info_k.marked)
         return FAIL;
 
     /* if it's not a future anymore, nothing to do */
-    if ( !id_info_k.is_future )
+    if (!id_info_k.is_future)
         return SUCCEED;
 
     /* map to harness id_index (stored during reserve) */
     id_index = (int)(uintptr_t)atomic_load(&(info_ptr->client_data));
-    if ( ( id_index < 0 ) || ( id_index >= NUM_ID_INSTANCES ) )
+    if ((id_index < 0) || (id_index >= NUM_ID_INSTANCES))
         return FAIL;
 
     /* Fast path: try define now */
-    if ( ( try_define_future_id(id_index, id_index, FALSE, FALSE, FALSE, 0) == 0 ) ) 
+    if ((try_define_future_id(id_index, id_index, FALSE, FALSE, FALSE, 0) == 0))
         return SUCCEED;
-    
 
     /* Pump bounded steps */
-    for ( int step = 0; step < H5I_TEST_PUMP_STEPS; step++ ) {
+    for (int step = 0; step < H5I_TEST_PUMP_STEPS; step++) {
 
-        if ( !future_progress_queue_pop(&progress_event) )
+        if (!future_progress_queue_pop(&progress_event))
             break;
 
-        if ( !progress_event.active)
+        if (!progress_event.active)
             continue;
 
-        if ( progress_event.remaining > 0 )
+        if (progress_event.remaining > 0)
             progress_event.remaining--;
 
-        if ( progress_event.remaining == 0 ) {
+        if (progress_event.remaining == 0) {
 
             /* Only define if this event is for THIS id */
-            if ( progress_event.id == id ) {
+            if (progress_event.id == id) {
                 obj_k = atomic_load(&(objects_array[id_index].k));
-                if ( !obj_k.discarded ) {
+                if (!obj_k.discarded) {
                     (void)try_define_future_id(id_index, id_index, FALSE, FALSE, FALSE, 0);
                 }
                 return SUCCEED;
@@ -13298,21 +13246,21 @@ future_progress_cb(hid_t id)
  *
  * mt_future_test_3()
  *
- *      Third multi-thread test of H5I for future IDs.  The objective is to perform an 
+ *      Third multi-thread test of H5I for future IDs.  The objective is to perform an
  *      initial smoke check with no failed calls.
  *
  *      1) set up the instances of mt_test_params_t for the specified number of threads.
  *
  *      2) Create the types needed in the call to mt_future_test_fcn_3().
  *
- *      3) Create the specified number of threads and invoke mt_future_test_fcn_3 with the 
+ *      3) Create the specified number of threads and invoke mt_future_test_fcn_3 with the
  *         appropriate instance of mt_test_params_t alongside the definer thread.
  *
  *      4) Wait for all threads to complete.
  *
  *      5) destroy the types created in 2).
  *
- *      
+ *
  *******************************************************************************************/
 
 static herr_t
@@ -13356,35 +13304,35 @@ mt_future_test_3(TestParams_t *params)
 static void
 mt_future_test_3_helper(int num_threads)
 {
-    char             banner[80];
-    hbool_t          cs = FALSE;
-    hbool_t          ds = FALSE;
-    hbool_t          rpt_failures = FALSE;
-    int              i;
-    int              err_cnt = 0;
-    int              ambig_cnt = 0;
-    int              types_per_thread;
-    int              test_express = GetTestExpress();
-    long long int    type_successful_registers = 0;
-    long long int    type_failed_registers = 0;
-    long long int    type_successful_clears = 0;
-    long long int    type_failed_clears = 0;
-    long long int    type_successful_destroys = 0;
-    long long int    type_failed_destroys = 0;
-    long long int    id_successful_registrations = 0;
-    long long int    id_failed_registrations = 0;
-    long long int    id_successful_verifies = 0;
-    long long int    id_failed_verifies = 0;
-    long long int    id_successful_inc_refs = 0;
-    long long int    id_failed_inc_refs = 0;
-    long long int    id_successful_dec_refs = 0;
-    long long int    id_failed_dec_refs = 0;
-    long long int    id_dec_ref_deletes = 0;
-    long long int    id_successful_get_ref_cnts = 0;
-    long long int    id_failed_get_ref_cnts = 0;
-    long long int    id_successful_remove_verifies = 0;
-    long long int    id_failed_remove_verifies = 0;
-    long long int    obj_accesses = 0;
+    char          banner[80];
+    hbool_t       cs           = FALSE;
+    hbool_t       ds           = FALSE;
+    hbool_t       rpt_failures = FALSE;
+    int           i;
+    int           err_cnt   = 0;
+    int           ambig_cnt = 0;
+    int           types_per_thread;
+    int           test_express                  = GetTestExpress();
+    long long int type_successful_registers     = 0;
+    long long int type_failed_registers         = 0;
+    long long int type_successful_clears        = 0;
+    long long int type_failed_clears            = 0;
+    long long int type_successful_destroys      = 0;
+    long long int type_failed_destroys          = 0;
+    long long int id_successful_registrations   = 0;
+    long long int id_failed_registrations       = 0;
+    long long int id_successful_verifies        = 0;
+    long long int id_failed_verifies            = 0;
+    long long int id_successful_inc_refs        = 0;
+    long long int id_failed_inc_refs            = 0;
+    long long int id_successful_dec_refs        = 0;
+    long long int id_failed_dec_refs            = 0;
+    long long int id_dec_ref_deletes            = 0;
+    long long int id_successful_get_ref_cnts    = 0;
+    long long int id_failed_get_ref_cnts        = 0;
+    long long int id_successful_remove_verifies = 0;
+    long long int id_failed_remove_verifies     = 0;
+    long long int obj_accesses                  = 0;
     /* Future stats */
     long long int    id_successful_future_reserves = 0;
     long long int    id_failed_future_reserves     = 0;
@@ -13394,65 +13342,65 @@ mt_future_test_3_helper(int num_threads)
     pthread_t        threads[DEFAULT_MAX_NUM_THREADS];
     mt_test_params_t params[DEFAULT_MAX_NUM_THREADS];
 
-    assert( 1 <= num_threads );
-    assert( num_threads <= DEFAULT_MAX_NUM_THREADS );
+    assert(1 <= num_threads);
+    assert(num_threads <= DEFAULT_MAX_NUM_THREADS);
 
     sprintf(banner, "future multi-thread test 3 -- %d threads", num_threads);
 
     TESTING(banner);
     fflush(stdout);
 
-    if ( H5open() < 0 ) {
+    if (H5open() < 0) {
 
         err_cnt++;
 
-        if ( rpt_failures ) {
+        if (rpt_failures) {
 
             fprintf(stderr, "mt_future_test_3():%d: H5open() failed.\n", 0);
         }
     }
 
-    types_per_thread = ( (int)H5I_MAX_NUM_TYPES - (int)H5I_NTYPES) / num_threads;
+    types_per_thread = ((int)H5I_MAX_NUM_TYPES - (int)H5I_NTYPES) / num_threads;
 
-    if ( types_per_thread > 4 ) {
+    if (types_per_thread > 4) {
 
-        types_per_thread = 4; 
+        types_per_thread = 4;
     }
 
-    for ( i = 0; i < num_threads; i++ ) {
+    for (i = 0; i < num_threads; i++) {
 
-        params[i].thread_id      = i;
+        params[i].thread_id = i;
 
-        params[i].types_start    = i;
-        params[i].types_count    = types_per_thread;
-        params[i].types_stride   = num_threads;
+        params[i].types_start  = i;
+        params[i].types_count  = types_per_thread;
+        params[i].types_stride = num_threads;
 
-        params[i].ids_start      = 0;
+        params[i].ids_start = 0;
 
         /* Half the amount of ids unless doing a full-extensive test to conform with timing standards*/
 #if 1
-        if ( test_express == 2 ) {
-            params[i].ids_count      = (512 * 512);
+        if (test_express == 2) {
+            params[i].ids_count = (512 * 512);
         }
         else {
-            params[i].ids_count      = NUM_ID_INSTANCES;
+            params[i].ids_count = NUM_ID_INSTANCES;
         }
 #else
-        params[i].ids_count      = NUM_ID_INSTANCES;
+        params[i].ids_count = NUM_ID_INSTANCES;
 #endif
 
-        params[i].ids_stride     = 1;
+        params[i].ids_stride = 1;
 
         params[i].objects_start  = 0; /* these fields */
         params[i].objects_count  = 0; /* not used in  */
         params[i].objects_stride = 0; /* this test    */
 
-        params[i].cs             = cs;
-        params[i].ds             = ds;
-        params[i].rpt_failures   = rpt_failures;
+        params[i].cs           = cs;
+        params[i].ds           = ds;
+        params[i].rpt_failures = rpt_failures;
 
-        params[i].err_cnt        = 0;
-        params[i].ambig_cnt      = 0;
+        params[i].err_cnt   = 0;
+        params[i].ambig_cnt = 0;
 #if 0
         fprintf(stderr, 
                 "params[%d] types st/cnt/str = %d/%d/%d, ids st/cnt/str = %d/%d/%d, objs st/cnt/str = %d/%d/%d\n",
@@ -13462,7 +13410,7 @@ mt_future_test_3_helper(int num_threads)
 #endif
     }
 
-    for ( i = 0; i < NUM_ID_INSTANCES; i++ ) {
+    for (i = 0; i < NUM_ID_INSTANCES; i++) {
 
         id_instance_array[i].type_index = i % (types_per_thread * num_threads);
     }
@@ -13474,24 +13422,24 @@ mt_future_test_3_helper(int num_threads)
 
     atomic_store(&(test_definer_stop), FALSE);
 
-    if ( 0 != pthread_create(&(pump_thread), NULL, &(future_engine_thread), NULL ) ) {
+    if (0 != pthread_create(&(pump_thread), NULL, &(future_engine_thread), NULL)) {
 
         assert(FALSE);
         err_cnt++;
-        if ( rpt_failures ) {
+        if (rpt_failures) {
             fprintf(stderr, "mt_future_test_3_helper(): create of pump thread failed.\n");
         }
     }
 
-    for ( i = 0;  i < num_threads; i++ ) {
+    for (i = 0; i < num_threads; i++) {
 
-        if ( 0 != pthread_create(&(threads[i]), NULL, &mt_future_test_fcn_3, (void *)(&(params[i])))) {
+        if (0 != pthread_create(&(threads[i]), NULL, &mt_future_test_fcn_3, (void *)(&(params[i])))) {
 
             assert(FALSE);
 
             err_cnt++;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
                 fprintf(stderr, "mt_future_test_3_helper(): create of thread %d failed.\n", i);
             }
@@ -13501,22 +13449,22 @@ mt_future_test_3_helper(int num_threads)
     /* Wait for all the threads to complete */
     for (i = 0; i < num_threads; i++) {
 
-        if ( 0 != pthread_join(threads[i], NULL) ) {
+        if (0 != pthread_join(threads[i], NULL)) {
 
             assert(FALSE);
 
             err_cnt++;
 
-            if ( rpt_failures ) {
+            if (rpt_failures) {
 
                 fprintf(stderr, "mt_future_test_3_helper(): join of thread %d failed.\n", i);
             }
-        } else {
+        }
+        else {
 
             /* collect error count from joined thread */
             err_cnt += params[i].err_cnt;
             ambig_cnt += params[i].ambig_cnt;
-
         }
     }
 
@@ -13530,72 +13478,69 @@ mt_future_test_3_helper(int num_threads)
     /* take down the future free report function */
     future_free_rpt_fcn = NULL;
 
-    for ( i = 0; i < NUM_ID_TYPES; i++ ) {
+    for (i = 0; i < NUM_ID_TYPES; i++) {
 
         type_successful_registers += atomic_load(&(types_array[i].successful_registers));
-        type_failed_registers     += atomic_load(&(types_array[i].failed_registers));
-        type_successful_clears    += atomic_load(&(types_array[i].successful_clears));
-        type_failed_clears        += atomic_load(&(types_array[i].failed_clears));
-        type_successful_destroys  += atomic_load(&(types_array[i].successful_destroys));
-        type_failed_destroys      += atomic_load(&(types_array[i].failed_destroys));
+        type_failed_registers += atomic_load(&(types_array[i].failed_registers));
+        type_successful_clears += atomic_load(&(types_array[i].successful_clears));
+        type_failed_clears += atomic_load(&(types_array[i].failed_clears));
+        type_successful_destroys += atomic_load(&(types_array[i].successful_destroys));
+        type_failed_destroys += atomic_load(&(types_array[i].failed_destroys));
     }
 
-    for ( i = 0; i < NUM_ID_INSTANCES; i++ ) {
+    for (i = 0; i < NUM_ID_INSTANCES; i++) {
 
-        id_successful_registrations   += atomic_load(&(id_instance_array[i].successful_registrations));
-        id_failed_registrations       += atomic_load(&(id_instance_array[i].failed_registrations));
-        id_successful_verifies        += atomic_load(&(id_instance_array[i].successful_verifies));
-        id_failed_verifies            += atomic_load(&(id_instance_array[i].failed_verifies));
-        id_successful_inc_refs        += atomic_load(&(id_instance_array[i].successful_inc_refs));
-        id_failed_inc_refs            += atomic_load(&(id_instance_array[i].failed_inc_refs));
-        id_successful_dec_refs        += atomic_load(&(id_instance_array[i].successful_dec_refs));
-        id_failed_dec_refs            += atomic_load(&(id_instance_array[i].failed_dec_refs));
-        id_dec_ref_deletes            += atomic_load(&(id_instance_array[i].dec_ref_deletes));
-        id_successful_get_ref_cnts    += atomic_load(&(id_instance_array[i].successful_get_ref_cnts));
-        id_failed_get_ref_cnts        += atomic_load(&(id_instance_array[i].failed_get_ref_cnts));
+        id_successful_registrations += atomic_load(&(id_instance_array[i].successful_registrations));
+        id_failed_registrations += atomic_load(&(id_instance_array[i].failed_registrations));
+        id_successful_verifies += atomic_load(&(id_instance_array[i].successful_verifies));
+        id_failed_verifies += atomic_load(&(id_instance_array[i].failed_verifies));
+        id_successful_inc_refs += atomic_load(&(id_instance_array[i].successful_inc_refs));
+        id_failed_inc_refs += atomic_load(&(id_instance_array[i].failed_inc_refs));
+        id_successful_dec_refs += atomic_load(&(id_instance_array[i].successful_dec_refs));
+        id_failed_dec_refs += atomic_load(&(id_instance_array[i].failed_dec_refs));
+        id_dec_ref_deletes += atomic_load(&(id_instance_array[i].dec_ref_deletes));
+        id_successful_get_ref_cnts += atomic_load(&(id_instance_array[i].successful_get_ref_cnts));
+        id_failed_get_ref_cnts += atomic_load(&(id_instance_array[i].failed_get_ref_cnts));
         id_successful_remove_verifies += atomic_load(&(id_instance_array[i].successful_remove_verifies));
-        id_failed_remove_verifies     += atomic_load(&(id_instance_array[i].failed_remove_verifies));
+        id_failed_remove_verifies += atomic_load(&(id_instance_array[i].failed_remove_verifies));
 
         id_successful_future_reserves += atomic_load(&id_instance_array[i].successful_future_reserves);
-        id_failed_future_reserves     += atomic_load(&id_instance_array[i].failed_future_reserves);
-        id_successful_future_defines  += atomic_load(&id_instance_array[i].successful_future_defines);
-        id_failed_future_defines      += atomic_load(&id_instance_array[i].failed_future_defines);
-        
+        id_failed_future_reserves += atomic_load(&id_instance_array[i].failed_future_reserves);
+        id_successful_future_defines += atomic_load(&id_instance_array[i].successful_future_defines);
+        id_failed_future_defines += atomic_load(&id_instance_array[i].failed_future_defines);
     }
 
-    for ( i = 0; i < NUM_ID_OBJECTS; i++ ) {
+    for (i = 0; i < NUM_ID_OBJECTS; i++) {
 
         obj_accesses += atomic_load(&(objects_array[i].accesses));
     }
 
-    if ( MT_FUTURE_TEST_3__DISPLAY_FINAL_STATS ) {
+    if (MT_FUTURE_TEST_3__DISPLAY_FINAL_STATS) {
 
         fprintf(stderr, "\nerror count = %d, ambiguous count = %d\n\n", err_cnt, ambig_cnt);
 
-        fprintf(stderr, "type successful / failed registers     = %lld / %lld\n", 
-                type_successful_registers, type_failed_registers);
-        fprintf(stderr, "type successful / failed clears        = %lld / %lld\n",
-                type_successful_clears, type_failed_clears);
-        fprintf(stderr, "type successful / failed destroys      = %lld / %lld\n\n",
-                type_successful_destroys, type_failed_destroys);
+        fprintf(stderr, "type successful / failed registers     = %lld / %lld\n", type_successful_registers,
+                type_failed_registers);
+        fprintf(stderr, "type successful / failed clears        = %lld / %lld\n", type_successful_clears,
+                type_failed_clears);
+        fprintf(stderr, "type successful / failed destroys      = %lld / %lld\n\n", type_successful_destroys,
+                type_failed_destroys);
 
         fprintf(stderr, "future id successful / failed reserves = %lld / %lld\n",
                 id_successful_future_reserves, id_failed_future_reserves);
         fprintf(stderr, "future id successful / failed defines = %lld / %lld\n\n",
                 id_successful_future_defines, id_failed_future_defines);
-        fprintf(stderr, "id successful / failed verifies        = %lld / %lld\n", 
-                id_successful_verifies, id_failed_verifies);
-        fprintf(stderr, "id successful / failed inc refs        = %lld / %lld\n",
-                id_successful_inc_refs, id_failed_inc_refs);
-        fprintf(stderr, "id successful / failed dec refs        = %lld / %lld\n", 
-                id_successful_dec_refs, id_failed_dec_refs);
-        fprintf(stderr, "id dec ref deletes                     = %lld\n", 
-                id_dec_ref_deletes);
-        fprintf(stderr, "id successful / failed get refs        = %lld / %lld\n",
-                id_successful_get_ref_cnts, id_failed_get_ref_cnts);
+        fprintf(stderr, "id successful / failed verifies        = %lld / %lld\n", id_successful_verifies,
+                id_failed_verifies);
+        fprintf(stderr, "id successful / failed inc refs        = %lld / %lld\n", id_successful_inc_refs,
+                id_failed_inc_refs);
+        fprintf(stderr, "id successful / failed dec refs        = %lld / %lld\n", id_successful_dec_refs,
+                id_failed_dec_refs);
+        fprintf(stderr, "id dec ref deletes                     = %lld\n", id_dec_ref_deletes);
+        fprintf(stderr, "id successful / failed get refs        = %lld / %lld\n", id_successful_get_ref_cnts,
+                id_failed_get_ref_cnts);
         fprintf(stderr, "id successful / failed remove verifies = %lld / %lld\n\n",
                 id_successful_remove_verifies, id_failed_remove_verifies);
-
 
         fprintf(stderr, "object accesses                        = %lld\n\n", obj_accesses);
 
@@ -13604,55 +13549,54 @@ mt_future_test_3_helper(int num_threads)
 
     /* Sanity checks on the id info and type info free lists. */
 
-    /* verify that the id info and type info free lists balance. 
+    /* verify that the id info and type info free lists balance.
      * This assertion can ignore the initial free list length, since whatever it is
      * on entry, the number of ids created is such that it will be empty by the
-     * time any entries are returned to the free list.  The +1 accounts for the 
+     * time any entries are returned to the free list.  The +1 accounts for the
      * minimum length of the free list
      */
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_id_info_structs_added_to_fl)) -
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_freed)) -
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_alloced_from_fl)) -
-                  atomic_load(&(H5I_mt_g.id_info_fl_len)) + 1) );
+    assert(0 == (atomic_load(&(H5I_mt_g.num_id_info_structs_added_to_fl)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_freed)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_alloced_from_fl)) -
+                 atomic_load(&(H5I_mt_g.id_info_fl_len)) + 1));
 
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_type_info_structs_added_to_fl)) -
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_freed)) -
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_alloced_from_fl)) -
-                  atomic_load(&(H5I_mt_g.type_info_fl_len)) + 1) );
-
+    assert(0 == (atomic_load(&(H5I_mt_g.num_type_info_structs_added_to_fl)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_freed)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_alloced_from_fl)) -
+                 atomic_load(&(H5I_mt_g.type_info_fl_len)) + 1));
 
     /* Verify that the increments to all the stats for the serial numbers balance correctly.
      */
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_id_next_sn_assigned)) - 
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_added_to_fl))));
+    assert(0 == (atomic_load(&(H5I_mt_g.num_id_next_sn_assigned)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_added_to_fl))));
 
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_id_serial_num_resets)) -
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_alloced_from_fl)) -
-                  atomic_load(&(H5I_mt_g.num_id_info_structs_freed))));
+    assert(0 == (atomic_load(&(H5I_mt_g.num_id_serial_num_resets)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_alloced_from_fl)) -
+                 atomic_load(&(H5I_mt_g.num_id_info_structs_freed))));
 
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_type_next_sn_assigned)) - 
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_added_to_fl))));
+    assert(0 == (atomic_load(&(H5I_mt_g.num_type_next_sn_assigned)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_added_to_fl))));
 
-    assert( 0 == (atomic_load(&(H5I_mt_g.num_type_serial_num_resets)) -
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_alloced_from_fl)) -
-                  atomic_load(&(H5I_mt_g.num_type_info_structs_freed))));
+    assert(0 == (atomic_load(&(H5I_mt_g.num_type_serial_num_resets)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_alloced_from_fl)) -
+                 atomic_load(&(H5I_mt_g.num_type_info_structs_freed))));
 
-    if ( H5close() < 0 ) {
+    if (H5close() < 0) {
 
         err_cnt++;
 
-        if ( rpt_failures ) {
+        if (rpt_failures) {
 
             fprintf(stderr, "mt_future_test_3():%d: H5close() failed.\n", 0);
         }
     }
 
-    if ( 0 == err_cnt ) {
+    if (0 == err_cnt) {
 
         PASSED();
         fprintf(stdout, "        %3d ambiguous test results.\n", ambig_cnt);
-
-    } else {
+    }
+    else {
 
         IncTestNumErrs();
         H5_FAILED();
@@ -13663,44 +13607,44 @@ mt_future_test_3_helper(int num_threads)
 } /* mt_future_test_3_helper() */
 
 /**************************************************************************************
- * future_engine_thread() 
- * 
- *      Background definer thread for the condvar / blocking path test in 
+ * future_engine_thread()
+ *
+ *      Background definer thread for the condvar / blocking path test in
  *      mt_future_id_test_3().
- * 
+ *
  *      This thread is responsible for driving realization of reserved future IDs in
- *      the absence of a progress_cb. It is intended to simulate an external async 
- *      producer (e.g. an I/O engine) that eventually makes future objects available 
- *      for defining. 
- * 
+ *      the absence of a progress_cb. It is intended to simulate an external async
+ *      producer (e.g. an I/O engine) that eventually makes future objects available
+ *      for defining.
+ *
  *      This thread continuously processes the global future progress queue, attempting
  *      to define future IDs whose simulated delay has expired.
- *  
+ *
  *      If the queue is empty, the thread opportunistically scans the ID realization
  *      directly. All define attempts are best-effort and non-blocking.
- * 
+ *
  *      Runs until the hlobal stop flag is set by the test harness. Must be signaled to
  *      stop after all worker threads have completed.
- * 
- *      This thread is only meant to test and model realistic future-ID usage where 
- *      realization is driven by an external agent rather than the thread waiting 
- *      on the ID. 
- * 
- * 
+ *
+ *      This thread is only meant to test and model realistic future-ID usage where
+ *      realization is driven by an external agent rather than the thread waiting
+ *      on the ID.
+ *
+ *
  *                                              AZO -- 12/28/25
- * 
+ *
  **************************************************************************************/
 
 static void *
 future_engine_thread(void *_params)
 {
-    hbool_t show_progress = FALSE;
-    mt_test_params_t * params = (mt_test_params_t *)_params;
-    int did_work;
-    int id_index;
-    int i;
-    int step;
-    hid_t id;
+    hbool_t               show_progress = FALSE;
+    mt_test_params_t     *params        = (mt_test_params_t *)_params;
+    int                   did_work;
+    int                   id_index;
+    int                   i;
+    int                   step;
+    hid_t                 id;
     id_instance_kernel_t  inst_k;
     id_object_kernel_t    obj_k;
     test_progress_event_t event;
@@ -13708,18 +13652,19 @@ future_engine_thread(void *_params)
     H5I_mt_type_info_t   *type_info_ptr = NULL;
     H5I_mt_id_info_t     *info_ptr      = NULL;
 
-    if ( show_progress ) {
+    if (show_progress) {
 
-        fprintf(stderr, "mt_future_test_fcn_3:%d: -- point (definer thread) -- entering \n", params->thread_id);
-        fprintf(stderr, 
-         "mt_future_test_fcn_3:%d: type st/cnt/st = %d/%d/%d, id st/cnt/st = %d/%d/%d, obj st/cnt/st = %d/%d/%d\n",
-         params->thread_id, 
-         params->types_start, params->types_count, params->types_stride,
-         params->ids_start, params->ids_count, params->ids_stride,
-         params->objects_start, params->objects_count, params->objects_stride);
+        fprintf(stderr, "mt_future_test_fcn_3:%d: -- point (definer thread) -- entering \n",
+                params->thread_id);
+        fprintf(stderr,
+                "mt_future_test_fcn_3:%d: type st/cnt/st = %d/%d/%d, id st/cnt/st = %d/%d/%d, obj st/cnt/st "
+                "= %d/%d/%d\n",
+                params->thread_id, params->types_start, params->types_count, params->types_stride,
+                params->ids_start, params->ids_count, params->ids_stride, params->objects_start,
+                params->objects_count, params->objects_stride);
     }
 
-    while ( ! atomic_load(&(test_definer_stop)) ) {
+    while (!atomic_load(&(test_definer_stop))) {
 
         memset(&inst_k, 0, sizeof(id_instance_kernel_t));
         memset(&obj_k, 0, sizeof(id_object_kernel_t));
@@ -13727,19 +13672,19 @@ future_engine_thread(void *_params)
         did_work = 0;
 
         /* pump the queue */
-        for ( step = 0; step < H5I_TEST_PUMP_STEPS; step++ ) {
+        for (step = 0; step < H5I_TEST_PUMP_STEPS; step++) {
 
             id_index = -1;
 
-            if ( !future_progress_queue_pop(&event) )
+            if (!future_progress_queue_pop(&event))
                 break; /* empty */
 
-            if ( !event.active )
+            if (!event.active)
                 continue;
 
             did_work++;
 
-            if ( event.remaining > 0 ) {
+            if (event.remaining > 0) {
                 event.remaining--;
                 future_progress_queue_requeue(&event);
                 continue;
@@ -13747,28 +13692,28 @@ future_engine_thread(void *_params)
 
             /* map event.id -> id_index inline via lfht_find + client_data */
 
-            id = event.id;
+            id   = event.id;
             type = H5I_TYPE(id);
 
-            if ( ( type <= H5I_BADID ) || ( (int)type >= atomic_load(&(H5I_mt_g.next_type)) ) )
+            if ((type <= H5I_BADID) || ((int)type >= atomic_load(&(H5I_mt_g.next_type))))
                 continue;
 
             type_info_ptr = atomic_load(&(H5I_mt_g.type_info_array[type]));
 
-            if ( ( !type_info_ptr ) || atomic_load(&(type_info_ptr->init_count)) <= 0 )
+            if ((!type_info_ptr) || atomic_load(&(type_info_ptr->init_count)) <= 0)
                 continue;
 
-            if ( !lfht_find(&type_info_ptr->lfht, (unsigned long long)id, (void **)&info_ptr) || !info_ptr )
+            if (!lfht_find(&type_info_ptr->lfht, (unsigned long long)id, (void **)&info_ptr) || !info_ptr)
                 continue;
 
             /* must have been set during reserve */
             id_index = (int)(uintptr_t)atomic_load(&info_ptr->client_data);
 
-            if ( ( id_index < 0 ) || ( id_index >= NUM_ID_INSTANCES ) )
+            if ((id_index < 0) || (id_index >= NUM_ID_INSTANCES))
                 continue;
-        
+
             /* Try define. If can’t define now, requeue w/ small backoff */
-            if ( try_define_future_id(id_index, id_index, FALSE, FALSE, FALSE, /*tid*/0) >= 0 ) {
+            if (try_define_future_id(id_index, id_index, FALSE, FALSE, FALSE, /*tid*/ 0) >= 0) {
                 /* success (or handled) -> drop event */
                 continue;
             }
@@ -13782,32 +13727,31 @@ future_engine_thread(void *_params)
         /* If queue empty/low, self-produce by sampling futures
          * (this is what prevents deadlock when worker stalls)
          */
-        if ( did_work == 0 ) {
+        if (did_work == 0) {
 
-            for ( i = 0; i < H5I_TEST_SCAN_BUDGET; i++ ) {
+            for (i = 0; i < H5I_TEST_SCAN_BUDGET; i++) {
 
-                if ( atomic_load(&(test_definer_stop)) )
+                if (atomic_load(&(test_definer_stop)))
                     break;
 
                 id_index = rand() % NUM_ID_INSTANCES;
-                inst_k = atomic_load(&(id_instance_array[id_index].k));
+                inst_k   = atomic_load(&(id_instance_array[id_index].k));
 
                 /* pick only eligible futures */
-                if ( ( !inst_k.created ) || ( inst_k.discarded ) || ( !inst_k.future ) || 
-                   ( inst_k.realized ) || ( inst_k.closing ) || ( inst_k.in_progress ) )
+                if ((!inst_k.created) || (inst_k.discarded) || (!inst_k.future) || (inst_k.realized) ||
+                    (inst_k.closing) || (inst_k.in_progress))
                     continue;
 
                 /* object side check (avoid defining discarded/busy) */
-                
+
                 obj_k = atomic_load(&(objects_array[id_index].k));
-                if ( ( obj_k.discarded ) || ( obj_k.in_progress ) || ( obj_k.future_id_realized ) || 
-                   ( obj_k.future_id_discarded ) )
+                if ((obj_k.discarded) || (obj_k.in_progress) || (obj_k.future_id_realized) ||
+                    (obj_k.future_id_discarded))
                     continue;
-            
 
                 /* enqueue with delay to simulate async readiness */
-                future_progress_queue_push(id_index, (H5I_TEST_MAX_DELAY > 0) ? (rand() % (H5I_TEST_MAX_DELAY + 1)) : 0);
-
+                future_progress_queue_push(
+                    id_index, (H5I_TEST_MAX_DELAY > 0) ? (rand() % (H5I_TEST_MAX_DELAY + 1)) : 0);
             }
         }
 
@@ -13815,7 +13759,7 @@ future_engine_thread(void *_params)
         sched_yield();
     }
 
-    return(NULL);
+    return (NULL);
 
 } /* future_engine_thread */
 
@@ -13859,33 +13803,31 @@ main(int argc, char **argv)
     AddTest("serial_test_1", serial_test_1, NULL, reset_globals, NULL, 0, 0,
             "smoke check test for various H5I operations on IDs");
 
-    test_params = (mt_test_params_t) {
-        /* thread_id      = */     0,
-        /* types_start    = */     0,
-        /* types_count    = */     32,
-        /* types_stride   = */     1,
-        /* ids_start      = */     0,
-        /* ids_count      = */ NUM_ID_INSTANCES,
-        /* ids_stride     = */     1,
-        /* objects_start  = */     0,
-        /* objects_count  = */     0,
-        /* objects_stride = */     1,
-        /* cs             = */ FALSE,
-        /* ds             = */ FALSE,
-        /* rpt_failures   = */ FALSE,
-        /* err_cnt        = */     0,
-        /* ambig_cnt      = */     0
-    };
+    test_params = (mt_test_params_t){/* thread_id      = */ 0,
+                                     /* types_start    = */ 0,
+                                     /* types_count    = */ 32,
+                                     /* types_stride   = */ 1,
+                                     /* ids_start      = */ 0,
+                                     /* ids_count      = */ NUM_ID_INSTANCES,
+                                     /* ids_stride     = */ 1,
+                                     /* objects_start  = */ 0,
+                                     /* objects_count  = */ 0,
+                                     /* objects_stride = */ 1,
+                                     /* cs             = */ FALSE,
+                                     /* ds             = */ FALSE,
+                                     /* rpt_failures   = */ FALSE,
+                                     /* err_cnt        = */ 0,
+                                     /* ambig_cnt      = */ 0};
 
-    AddTest("serial_test_2", serial_test_2, NULL, reset_globals, &test_params,
-            sizeof(mt_test_params_t), 0, "smoke check test for H5I ID registrations");
+    AddTest("serial_test_2", serial_test_2, NULL, reset_globals, &test_params, sizeof(mt_test_params_t), 0,
+            "smoke check test for H5I ID registrations");
 
     AddTest("serial_test_3", serial_test_3, NULL, reset_globals, NULL, 0, 0,
             "another smoke check test for H5I ID registrations");
 
     AddTest("future_serial_test_1", future_serial_test_1, NULL, reset_globals, NULL, 0, 0,
             "smoke check test for H5I future ID functionality");
-            
+
     AddTest("future_serial_test_2", future_serial_test_2, NULL, reset_globals, NULL, 0, 0,
             "another smoke check test for H5I future ID functionality");
 
@@ -13894,27 +13836,24 @@ main(int argc, char **argv)
             "smoke check test for H5I future ID functionality");
 #endif
 
-    test_params = (mt_test_params_t) {
-        /* thread_id      = */     0,
-        /* types_start    = */     0,
-        /* types_count    = */     3,
-        /* types_stride   = */     3,
-        /* ids_start      = */     0,
-        /* ids_count      = */ 10000,
-        /* ids_stride     = */     1,
-        /* objects_start  = */     0,
-        /* objects_count  = */ 10000,
-        /* objects_stride = */     1,
-        /* cs             = */ FALSE,
-        /* ds             = */ FALSE,
-        /* rpt_failures   = */ FALSE,
-        /* err_cnt        = */     0,
-        /* ambig_cnt      = */     0
-    };
+    test_params = (mt_test_params_t){/* thread_id      = */ 0,
+                                     /* types_start    = */ 0,
+                                     /* types_count    = */ 3,
+                                     /* types_stride   = */ 3,
+                                     /* ids_start      = */ 0,
+                                     /* ids_count      = */ 10000,
+                                     /* ids_stride     = */ 1,
+                                     /* objects_start  = */ 0,
+                                     /* objects_count  = */ 10000,
+                                     /* objects_stride = */ 1,
+                                     /* cs             = */ FALSE,
+                                     /* ds             = */ FALSE,
+                                     /* rpt_failures   = */ FALSE,
+                                     /* err_cnt        = */ 0,
+                                     /* ambig_cnt      = */ 0};
 
-    AddTest("mt_test_fcn_1_serial_test", mt_future_test_fcn_1_serial_test, NULL, reset_globals,
-            &test_params, sizeof(mt_test_params_t), 0,
-            "serial smoke check test for multi-thread helper function");
+    AddTest("mt_test_fcn_1_serial_test", mt_future_test_fcn_1_serial_test, NULL, reset_globals, &test_params,
+            sizeof(mt_test_params_t), 0, "serial smoke check test for multi-thread helper function");
     AddTest("mt_future_test_1", mt_future_test_1, NULL, NULL, NULL, 0, 0,
             "multi-thread H5I smoke check future ID test #2");
 
@@ -13924,15 +13863,12 @@ main(int argc, char **argv)
     AddTest("mt_future_test_3", mt_future_test_3, NULL, NULL, NULL, 0, 0,
             "multi-thread H5I smoke check future ID test #3");
 
-    AddTest("mt_test_fcn_1_serial_test", mt_test_fcn_1_serial_test, NULL, reset_globals,
-            &test_params, sizeof(mt_test_params_t), 0,
-            "serial smoke check test for multi-thread helper function");
+    AddTest("mt_test_fcn_1_serial_test", mt_test_fcn_1_serial_test, NULL, reset_globals, &test_params,
+            sizeof(mt_test_params_t), 0, "serial smoke check test for multi-thread helper function");
 
-    AddTest("mt_test_1", mt_test_1, NULL, NULL, NULL, 0, 0,
-            "multi-thread H5I smoke check test #1");
+    AddTest("mt_test_1", mt_test_1, NULL, NULL, NULL, 0, 0, "multi-thread H5I smoke check test #1");
 
-    AddTest("mt_test_2", mt_test_2, NULL, NULL, NULL, 0, 0,
-            "multi-thread H5I smoke check test #2");
+    AddTest("mt_test_2", mt_test_2, NULL, NULL, NULL, 0, 0, "multi-thread H5I smoke check test #2");
 
     /* Parse command line arguments */
     if (TestParseCmdLine(argc, argv) < 0) {
@@ -13952,11 +13888,13 @@ main(int argc, char **argv)
     /* Display test summary if requested */
     if (GetTestSummary())
         TestSummary(stdout);
+
+exit:
+
 #else
     fprintf(stderr, "Multithread isn't enabled in library configuration -- no tests to run\n");
 #endif
 
-exit:
     /* Retrieve number of testing errors before shutting down test infrastructure */
     num_errs = GetTestNumErrs();
 

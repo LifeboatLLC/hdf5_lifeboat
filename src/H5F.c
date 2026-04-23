@@ -262,7 +262,7 @@ H5Fget_obj_count(hid_t file_id, unsigned types)
      */
     else {
         H5F_trav_obj_cnt_t udata;
-        herr_t iter_result = SUCCEED;
+        herr_t             iter_result = SUCCEED;
 
         /* Set up callback context */
         udata.types     = types | H5F_OBJ_LOCAL;
@@ -387,7 +387,7 @@ H5Fget_obj_ids(hid_t file_id, unsigned types, size_t max_objs, hid_t *oid_list /
      */
     else {
         H5F_trav_obj_ids_t udata;
-        herr_t iter_result = SUCCEED;
+        herr_t             iter_result = SUCCEED;
 
         /* Set up callback context */
         udata.max_objs  = max_objs;
@@ -445,6 +445,13 @@ H5Fget_vfd_handle(hid_t file_id, hid_t fapl_id, void **file_handle /*out*/)
     if (NULL == (vol_obj = (H5VL_object_t *)H5I_object(file_id)))
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "invalid file identifier");
 
+#ifdef H5_HAVE_MULTITHREAD
+    /* Store fapl in the context and set up collective metadata if appropriate */
+    if (H5CX_set_apl(&fapl_id, H5P_CLS_FACC, H5I_INVALID_HID, TRUE) < 0) {
+        HGOTO_ERROR(H5E_FILE, H5E_CANTSET, FAIL, "can't set access property list info");
+    }
+#endif
+
     /* Set up VOL callback arguments */
     file_opt_args.get_vfd_handle.fapl_id     = fapl_id;
     file_opt_args.get_vfd_handle.file_handle = file_handle;
@@ -487,13 +494,20 @@ H5Fis_accessible(const char *filename, hid_t fapl_id)
     if (H5P_DEFAULT == fapl_id)
         fapl_id = H5P_FILE_ACCESS_DEFAULT;
     else {
-        H5_API_LOCK
+        // H5_API_LOCK
         ret_value = H5P_isa_class(fapl_id, H5P_FILE_ACCESS);
-        H5_API_UNLOCK
+        // H5_API_UNLOCK
 
         if (TRUE != ret_value)
             HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not file access property list");
     }
+
+#ifdef H5_HAVE_MULTITHREAD
+    /* Store fapl in the context and set up collective metadata if appropriate */
+    if (H5CX_set_apl(&fapl_id, H5P_CLS_FACC, H5I_INVALID_HID, FALSE) < 0) {
+        HGOTO_ERROR(H5E_FILE, H5E_CANTSET, FAIL, "can't set access property list info");
+    }
+#endif
 
     /* Set up VOL callback arguments */
     vol_cb_args.op_type                       = H5VL_FILE_IS_ACCESSIBLE;
@@ -528,7 +542,7 @@ H5F__post_open_api_common(H5VL_object_t *vol_obj, void **token_ptr)
     herr_t   ret_value = SUCCEED; /* Return value     */
 
     FUNC_ENTER_PACKAGE
-    
+
     /* Check for 'post open' callback */
     supported = 0;
     if (H5VL_introspect_opt_query(vol_obj, H5VL_SUBCLS_FILE, H5VL_NATIVE_FILE_POST_OPEN, &supported) < 0)
@@ -586,28 +600,35 @@ H5F__create_api_common(const char *filename, unsigned flags, hid_t fcpl_id, hid_
     if (H5P_DEFAULT == fcpl_id)
         fcpl_id = H5P_FILE_CREATE_DEFAULT;
     else {
-        H5_API_LOCK
+        // H5_API_LOCK
         ret_value = H5P_isa_class(fcpl_id, H5P_FILE_CREATE);
-        H5_API_UNLOCK
+        // H5_API_UNLOCK
 
         if (TRUE != ret_value)
             HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5I_INVALID_HID, "not file create property list");
     }
 
     /* Verify access property list and set up collective metadata if appropriate */
-    H5_API_LOCK
+    // H5_API_LOCK
     ret_value = H5CX_set_apl(&fapl_id, H5P_CLS_FACC, H5I_INVALID_HID, TRUE);
-    H5_API_UNLOCK
+    // H5_API_UNLOCK
 
     if (ret_value < 0)
         HGOTO_ERROR(H5E_FILE, H5E_CANTSET, H5I_INVALID_HID, "can't set access property list info");
 
+#ifdef H5_HAVE_MULTITHREAD
+    /* Set the property list in the context */
+    if (H5CX_set_plist(fcpl_id, H5P_TYPE_FILE_CREATE) < 0) {
+        HGOTO_ERROR(H5E_ATTR, H5E_CANTSET, H5I_INVALID_HID, "can't set fcpl in context");
+    }
+#endif
+
     /* Get the VOL info from the fapl */
     if (NULL == (plist = (H5P_genplist_t *)H5I_object(fapl_id)))
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5I_INVALID_HID, "not a file access property list");
-    H5_API_LOCK
+    // H5_API_LOCK
     ret_value = H5P_peek(plist, H5F_ACS_VOL_CONN_NAME, &connector_prop);
-    H5_API_UNLOCK
+    // H5_API_UNLOCK
 
     if (ret_value < 0)
         HGOTO_ERROR(H5E_FILE, H5E_CANTGET, H5I_INVALID_HID, "can't get VOL connector info");
@@ -708,11 +729,11 @@ hid_t
 H5Fcreate_async(const char *app_file, const char *app_func, unsigned app_line, const char *filename,
                 unsigned flags, hid_t fcpl_id, hid_t fapl_id, hid_t es_id)
 {
-    H5VL_object_t *vol_obj   = NULL;            /* File object */
-    void          *token     = NULL;            /* Request token for async operation        */
-    void         **token_ptr = H5_REQUEST_NULL; /* Pointer to request token for async operation        */
-    hid_t          ret_value = H5I_INVALID_HID; /* Return value */
-    int dec_ref_ret = 0;                        /* Ref count decrement return value */
+    H5VL_object_t *vol_obj     = NULL;            /* File object */
+    void          *token       = NULL;            /* Request token for async operation        */
+    void         **token_ptr   = H5_REQUEST_NULL; /* Pointer to request token for async operation        */
+    hid_t          ret_value   = H5I_INVALID_HID; /* Return value */
+    int            dec_ref_ret = 0;               /* Ref count decrement return value */
 
     FUNC_ENTER_API_NO_MUTEX(H5I_INVALID_HID)
     H5TRACE8("i", "*s*sIu*sIuiii", app_file, app_func, app_line, filename, flags, fcpl_id, fapl_id, es_id);
@@ -802,9 +823,9 @@ H5F__open_api_common(const char *filename, unsigned flags, hid_t fapl_id, void *
                     "SWMR read access on a file open for read-write access is not allowed");
 
     /* Verify access property list and set up collective metadata if appropriate */
-    H5_API_LOCK
+    // H5_API_LOCK
     ret_value = H5CX_set_apl(&fapl_id, H5P_CLS_FACC, H5I_INVALID_HID, TRUE);
-    H5_API_UNLOCK
+    // H5_API_UNLOCK
 
     if (ret_value < 0)
         HGOTO_ERROR(H5E_FILE, H5E_CANTSET, H5I_INVALID_HID, "can't set access property list info");
@@ -812,9 +833,9 @@ H5F__open_api_common(const char *filename, unsigned flags, hid_t fapl_id, void *
     /* Get the VOL info from the fapl */
     if (NULL == (plist = (H5P_genplist_t *)H5I_object(fapl_id)))
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5I_INVALID_HID, "not a file access property list");
-    H5_API_LOCK
+    // H5_API_LOCK
     ret_value = H5P_peek(plist, H5F_ACS_VOL_CONN_NAME, &connector_prop);
-    H5_API_UNLOCK
+    // H5_API_UNLOCK
 
     if (ret_value < 0)
         HGOTO_ERROR(H5E_FILE, H5E_CANTGET, H5I_INVALID_HID, "can't get VOL connector info");
@@ -902,11 +923,11 @@ hid_t
 H5Fopen_async(const char *app_file, const char *app_func, unsigned app_line, const char *filename,
               unsigned flags, hid_t fapl_id, hid_t es_id)
 {
-    H5VL_object_t *vol_obj   = NULL;            /* File object */
-    void          *token     = NULL;            /* Request token for async operation        */
-    void         **token_ptr = H5_REQUEST_NULL; /* Pointer to request token for async operation        */
-    hid_t          ret_value = H5I_INVALID_HID; /* Return value */
-    int dec_ref_ret = 0;                        /* Ref count decrement return value */
+    H5VL_object_t *vol_obj     = NULL;            /* File object */
+    void          *token       = NULL;            /* Request token for async operation        */
+    void         **token_ptr   = H5_REQUEST_NULL; /* Pointer to request token for async operation        */
+    hid_t          ret_value   = H5I_INVALID_HID; /* Return value */
+    int            dec_ref_ret = 0;               /* Ref count decrement return value */
 
     FUNC_ENTER_API_NO_MUTEX(H5I_INVALID_HID)
     H5TRACE7("i", "*s*sIu*sIuii", app_file, app_func, app_line, filename, flags, fapl_id, es_id);
@@ -1088,8 +1109,8 @@ done:
 herr_t
 H5Fclose(hid_t file_id)
 {
-    herr_t ret_value = SUCCEED; /* Return value */
-    int dec_ref_ret = 0;        /* Ref count decrement return value */
+    herr_t ret_value   = SUCCEED; /* Return value */
+    int    dec_ref_ret = 0;       /* Ref count decrement return value */
 
     FUNC_ENTER_API_NO_MUTEX(FAIL)
     H5TRACE1("e", "i", file_id);
@@ -1123,12 +1144,12 @@ done:
 herr_t
 H5Fclose_async(const char *app_file, const char *app_func, unsigned app_line, hid_t file_id, hid_t es_id)
 {
-    H5VL_object_t *vol_obj   = NULL;            /* Object for loc_id */
-    H5VL_t        *connector = NULL;            /* VOL connector */
-    void          *token     = NULL;            /* Request token for async operation        */
-    void         **token_ptr = H5_REQUEST_NULL; /* Pointer to request token for async operation        */
-    herr_t         ret_value = SUCCEED;         /* Return value */
-    int dec_ref_ret = 0;                        /* Ref count decrement return value */
+    H5VL_object_t *vol_obj     = NULL;            /* Object for loc_id */
+    H5VL_t        *connector   = NULL;            /* VOL connector */
+    void          *token       = NULL;            /* Request token for async operation        */
+    void         **token_ptr   = H5_REQUEST_NULL; /* Pointer to request token for async operation        */
+    herr_t         ret_value   = SUCCEED;         /* Return value */
+    int            dec_ref_ret = 0;               /* Ref count decrement return value */
 
     FUNC_ENTER_API_NO_MUTEX(FAIL)
     H5TRACE5("e", "*s*sIuii", app_file, app_func, app_line, file_id, es_id);
@@ -1202,9 +1223,9 @@ H5Fdelete(const char *filename, hid_t fapl_id)
         HGOTO_ERROR(H5E_ARGS, H5E_BADRANGE, FAIL, "no file name specified");
 
     /* Verify access property list and set up collective metadata if appropriate */
-    H5_API_LOCK
+    // H5_API_LOCK
     ret_value = H5CX_set_apl(&fapl_id, H5P_CLS_FACC, H5I_INVALID_HID, TRUE);
-    H5_API_UNLOCK
+    // H5_API_UNLOCK
 
     if (ret_value < 0)
         HGOTO_ERROR(H5E_FILE, H5E_CANTSET, FAIL, "can't set access property list info");
@@ -1212,9 +1233,9 @@ H5Fdelete(const char *filename, hid_t fapl_id)
     /* Get the VOL info from the fapl */
     if (NULL == (plist = (H5P_genplist_t *)H5I_object_verify(fapl_id, H5I_GENPROP_LST)))
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a property list");
-    H5_API_LOCK
+    // H5_API_LOCK
     ret_value = H5P_peek(plist, H5F_ACS_VOL_CONN_NAME, &connector_prop);
-    H5_API_UNLOCK
+    // H5_API_UNLOCK
 
     if (ret_value < 0)
         HGOTO_ERROR(H5E_FILE, H5E_CANTGET, FAIL, "can't get VOL connector info");
@@ -1274,7 +1295,7 @@ H5Fmount(hid_t loc_id, const char *name, hid_t child_id, hid_t plist_id)
     H5I_type_t                 loc_type;             /* ID type of location  */
     int                        same_connector = 0; /* Whether parent and child files use the same connector */
     herr_t                     ret_value      = SUCCEED; /* Return value         */
-    htri_t                     ret           = FALSE;    /* Returns value from H5P comparisons */
+    htri_t                     ret            = FALSE;   /* Returns value from H5P comparisons */
 
     FUNC_ENTER_API_NO_MUTEX(FAIL)
     H5TRACE4("e", "i*sii", loc_id, name, child_id, plist_id);
@@ -1292,13 +1313,20 @@ H5Fmount(hid_t loc_id, const char *name, hid_t child_id, hid_t plist_id)
     if (H5P_DEFAULT == plist_id)
         plist_id = H5P_FILE_MOUNT_DEFAULT;
     else {
-        H5_API_LOCK
+        // H5_API_LOCK
         ret = H5P_isa_class(plist_id, H5P_FILE_MOUNT);
-        H5_API_UNLOCK
+        // H5_API_UNLOCK
 
         if (TRUE != ret)
             HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "plist_id is not a file mount property list ID");
     }
+
+#ifdef H5_HAVE_MULTITHREAD
+    /* Set the property list in the context */
+    if (H5CX_set_plist(plist_id, H5P_TYPE_FILE_MOUNT) < 0) {
+        HGOTO_ERROR(H5E_ATTR, H5E_CANTSET, H5I_INVALID_HID, "can't set fmpl in context");
+    }
+#endif
 
     /* Set up collective metadata if appropriate */
     H5_API_LOCK
@@ -1583,7 +1611,7 @@ H5Freopen_async(const char *app_file, const char *app_func, unsigned app_line, h
     void          *token     = NULL;            /* Request token for async operation        */
     void         **token_ptr = H5_REQUEST_NULL; /* Pointer to request token for async operation        */
     hid_t          ret_value;                   /* Return value */
-    int dec_ref_ret = 0;                        /* Ref count decrement return value */
+    int            dec_ref_ret = 0;             /* Ref count decrement return value */
 
     FUNC_ENTER_API_NO_MUTEX(H5I_INVALID_HID)
     H5TRACE5("i", "*s*sIuii", app_file, app_func, app_line, file_id, es_id);

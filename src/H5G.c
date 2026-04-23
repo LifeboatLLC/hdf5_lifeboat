@@ -150,7 +150,7 @@ H5G__create_api_common(hid_t loc_id, const char *name, hid_t lcpl_id, hid_t gcpl
         (_vol_obj_ptr ? _vol_obj_ptr : &tmp_vol_obj); /* Ptr to object ptr for loc_id */
     H5VL_loc_params_t loc_params;                     /* Location parameters for object access */
     hid_t             ret_value = H5I_INVALID_HID;    /* Return value */
-    htri_t            ret = FALSE;                    /* Return value from H5P comparisons */
+    htri_t            ret       = FALSE;              /* Return value from H5P comparisons */
     FUNC_ENTER_PACKAGE
 
     /* Check arguments */
@@ -163,13 +163,20 @@ H5G__create_api_common(hid_t loc_id, const char *name, hid_t lcpl_id, hid_t gcpl
     if (H5VL_setup_acc_args(loc_id, H5P_CLS_GACC, TRUE, &gapl_id, vol_obj_ptr, &loc_params) < 0)
         HGOTO_ERROR(H5E_SYM, H5E_CANTSET, H5I_INVALID_HID, "can't set object access arguments");
 
+#ifdef H5_HAVE_MULTITHREAD
+    /* Set the GAPL for the API context */
+    if (H5CX_set_plist(gapl_id, H5P_TYPE_GROUP_ACCESS) < 0) {
+        HGOTO_ERROR(H5E_ATTR, H5E_CANTSET, H5I_INVALID_HID, "can't set gapl in context");
+    }
+#endif
+
     /* Check link creation property list */
     if (H5P_DEFAULT == lcpl_id)
         lcpl_id = H5P_LINK_CREATE_DEFAULT;
     else {
-        H5_API_LOCK
+        // H5_API_LOCK
         ret = H5P_isa_class(lcpl_id, H5P_LINK_CREATE);
-        H5_API_UNLOCK
+        // H5_API_UNLOCK
 
         if (TRUE != ret)
             HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5I_INVALID_HID, "not a link creation property list");
@@ -179,18 +186,25 @@ H5G__create_api_common(hid_t loc_id, const char *name, hid_t lcpl_id, hid_t gcpl
     if (H5P_DEFAULT == gcpl_id)
         gcpl_id = H5P_GROUP_CREATE_DEFAULT;
     else {
-        H5_API_LOCK
+        // H5_API_LOCK
         ret = H5P_isa_class(gcpl_id, H5P_GROUP_CREATE);
-        H5_API_UNLOCK
+        // H5_API_UNLOCK
 
         if (TRUE != ret)
             HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5I_INVALID_HID, "not a group creation property list");
     }
 
     /* Set the LCPL for the API context */
-    H5_API_LOCK
+    // H5_API_LOCK
     H5CX_set_lcpl(lcpl_id);
-    H5_API_UNLOCK
+    // H5_API_UNLOCK
+
+#ifdef H5_HAVE_MULTITHREAD
+    /* Set the GCPL for the API context */
+    if (H5CX_set_plist(gcpl_id, H5P_TYPE_ATTRIBUTE_CREATE) < 0) {
+        HGOTO_ERROR(H5E_ATTR, H5E_CANTSET, H5I_INVALID_HID, "can't set gcpl in context");
+    }
+#endif
 
     /* Create the group */
     if (NULL == (grp = H5VL_group_create(*vol_obj_ptr, &loc_params, name, lcpl_id, gcpl_id, gapl_id,
@@ -262,11 +276,11 @@ hid_t
 H5Gcreate_async(const char *app_file, const char *app_func, unsigned app_line, hid_t loc_id, const char *name,
                 hid_t lcpl_id, hid_t gcpl_id, hid_t gapl_id, hid_t es_id)
 {
-    H5VL_object_t *vol_obj   = NULL;            /* Object for loc_id */
-    void          *token     = NULL;            /* Request token for async operation        */
-    void         **token_ptr = H5_REQUEST_NULL; /* Pointer to request token for async operation        */
-    hid_t          ret_value = H5I_INVALID_HID; /* Return value */
-    int dec_ref_ret = 0;                        /* Ref count decrement return value */
+    H5VL_object_t *vol_obj     = NULL;            /* Object for loc_id */
+    void          *token       = NULL;            /* Request token for async operation        */
+    void         **token_ptr   = H5_REQUEST_NULL; /* Pointer to request token for async operation        */
+    hid_t          ret_value   = H5I_INVALID_HID; /* Return value */
+    int            dec_ref_ret = 0;               /* Ref count decrement return value */
 
     FUNC_ENTER_API_NO_MUTEX(H5I_INVALID_HID)
     H5TRACE9("i", "*s*sIui*siiii", app_file, app_func, app_line, loc_id, name, lcpl_id, gcpl_id, gapl_id,
@@ -289,7 +303,7 @@ H5Gcreate_async(const char *app_file, const char *app_func, unsigned app_line, h
             /* clang-format on */
 
             dec_ref_ret = H5I_dec_app_ref_always_close(ret_value);
-            
+
             if (dec_ref_ret < 0)
                 HDONE_ERROR(H5E_SYM, H5E_CANTDEC, H5I_INVALID_HID, "can't decrement count on group ID");
 
@@ -339,7 +353,7 @@ H5Gcreate_anon(hid_t loc_id, hid_t gcpl_id, hid_t gapl_id)
     H5VL_object_t    *vol_obj = NULL;              /* Object for loc_id */
     H5VL_loc_params_t loc_params;                  /* Location parameters for object access */
     hid_t             ret_value = H5I_INVALID_HID; /* Return value */
-    htri_t            ret = FALSE;                 /* Return value from H5P comparisons */
+    htri_t            ret       = FALSE;           /* Return value from H5P comparisons */
 
     FUNC_ENTER_API_NO_MUTEX(H5I_INVALID_HID)
     H5TRACE3("i", "iii", loc_id, gcpl_id, gapl_id);
@@ -348,9 +362,9 @@ H5Gcreate_anon(hid_t loc_id, hid_t gcpl_id, hid_t gapl_id)
     if (H5P_DEFAULT == gcpl_id)
         gcpl_id = H5P_GROUP_CREATE_DEFAULT;
     else {
-        H5_API_LOCK
+        // H5_API_LOCK
         ret = H5P_isa_class(gcpl_id, H5P_GROUP_CREATE);
-        H5_API_UNLOCK
+        // H5_API_UNLOCK
 
         if (TRUE != ret)
             HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5I_INVALID_HID, "not group create property list");
@@ -359,18 +373,25 @@ H5Gcreate_anon(hid_t loc_id, hid_t gcpl_id, hid_t gapl_id)
     if (H5P_DEFAULT == gapl_id)
         gapl_id = H5P_GROUP_ACCESS_DEFAULT;
     else {
-        H5_API_LOCK
+        // H5_API_LOCK
         ret = H5P_isa_class(gapl_id, H5P_GROUP_ACCESS);
-        H5_API_UNLOCK
+        // H5_API_UNLOCK
 
         if (TRUE != ret)
             HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5I_INVALID_HID, "not group access property list");
     }
 
     /* Verify access property list and set up collective metadata if appropriate */
-    H5_API_LOCK
+    // H5_API_LOCK
     ret_value = H5CX_set_apl(&gapl_id, H5P_CLS_GACC, loc_id, TRUE);
-    H5_API_UNLOCK
+    // H5_API_UNLOCK
+
+#ifdef H5_HAVE_MULTITHREAD
+    /* Set the property list in the context */
+    if (H5CX_set_plist(gcpl_id, H5P_TYPE_ATTRIBUTE_CREATE) < 0) {
+        HGOTO_ERROR(H5E_ATTR, H5E_CANTSET, H5I_INVALID_HID, "can't set gcpl in context");
+    }
+#endif
 
     if (ret_value < 0)
         HGOTO_ERROR(H5E_SYM, H5E_CANTSET, H5I_INVALID_HID, "can't set access property list info");
@@ -495,11 +516,11 @@ hid_t
 H5Gopen_async(const char *app_file, const char *app_func, unsigned app_line, hid_t loc_id, const char *name,
               hid_t gapl_id, hid_t es_id)
 {
-    H5VL_object_t *vol_obj   = NULL;            /* Object for loc_id */
-    void          *token     = NULL;            /* Request token for async operation        */
-    void         **token_ptr = H5_REQUEST_NULL; /* Pointer to request token for async operation        */
-    hid_t          ret_value = H5I_INVALID_HID; /* Return value */
-    int            dec_ref_ret = 0;             /* Ref count decrement return value */
+    H5VL_object_t *vol_obj     = NULL;            /* Object for loc_id */
+    void          *token       = NULL;            /* Request token for async operation        */
+    void         **token_ptr   = H5_REQUEST_NULL; /* Pointer to request token for async operation        */
+    hid_t          ret_value   = H5I_INVALID_HID; /* Return value */
+    int            dec_ref_ret = 0;               /* Ref count decrement return value */
 
     FUNC_ENTER_API_NO_MUTEX(H5I_INVALID_HID)
     H5TRACE7("i", "*s*sIui*sii", app_file, app_func, app_line, loc_id, name, gapl_id, es_id);
@@ -523,7 +544,7 @@ H5Gopen_async(const char *app_file, const char *app_func, unsigned app_line, hid
 
             if (dec_ref_ret < 0)
                 HDONE_ERROR(H5E_SYM, H5E_CANTDEC, H5I_INVALID_HID, "can't decrement count on group ID");
-            
+
             HGOTO_ERROR(H5E_SYM, H5E_CANTINSERT, H5I_INVALID_HID, "can't insert token into event set");
         } /* end if */
 
@@ -918,8 +939,8 @@ done:
 herr_t
 H5Gclose(hid_t group_id)
 {
-    herr_t ret_value = SUCCEED; /* Return value                     */
-    int    dec_ref_ret = 0;         /* Ref count decrement return value */
+    herr_t ret_value   = SUCCEED; /* Return value                     */
+    int    dec_ref_ret = 0;       /* Ref count decrement return value */
 
     FUNC_ENTER_API_NO_MUTEX(FAIL)
     H5TRACE1("e", "i", group_id);
@@ -933,7 +954,7 @@ H5Gclose(hid_t group_id)
      */
 
     dec_ref_ret = H5I_dec_app_ref(group_id);
-    
+
     if (dec_ref_ret < 0)
         HGOTO_ERROR(H5E_SYM, H5E_CANTDEC, FAIL, "decrementing group ID failed");
 
@@ -953,12 +974,12 @@ done:
 herr_t
 H5Gclose_async(const char *app_file, const char *app_func, unsigned app_line, hid_t group_id, hid_t es_id)
 {
-    H5VL_object_t *vol_obj   = NULL;            /* Object for loc_id */
-    H5VL_t        *connector = NULL;            /* VOL connector */
-    void          *token     = NULL;            /* Request token for async operation        */
-    void         **token_ptr = H5_REQUEST_NULL; /* Pointer to request token for async operation        */
-    herr_t         ret_value = SUCCEED;         /* Return value                     */
-    int            dec_ref_ret = 0;                 /* Ref count decrement return value */
+    H5VL_object_t *vol_obj     = NULL;            /* Object for loc_id */
+    H5VL_t        *connector   = NULL;            /* VOL connector */
+    void          *token       = NULL;            /* Request token for async operation        */
+    void         **token_ptr   = H5_REQUEST_NULL; /* Pointer to request token for async operation        */
+    herr_t         ret_value   = SUCCEED;         /* Return value                     */
+    int            dec_ref_ret = 0;               /* Ref count decrement return value */
 
     FUNC_ENTER_API_NO_MUTEX(FAIL)
     H5TRACE5("e", "*s*sIuii", app_file, app_func, app_line, group_id, es_id);

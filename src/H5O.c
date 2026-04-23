@@ -177,11 +177,11 @@ hid_t
 H5Oopen_async(const char *app_file, const char *app_func, unsigned app_line, hid_t loc_id, const char *name,
               hid_t lapl_id, hid_t es_id)
 {
-    H5VL_object_t *vol_obj   = NULL;            /* Object for loc_id */
-    void          *token     = NULL;            /* Request token for async operation        */
-    void         **token_ptr = H5_REQUEST_NULL; /* Pointer to request token for async operation        */
-    hid_t          ret_value = H5I_INVALID_HID; /* Return value */
-    int            dec_ref_ret = 0;             /* Ref count decrement return value */
+    H5VL_object_t *vol_obj     = NULL;            /* Object for loc_id */
+    void          *token       = NULL;            /* Request token for async operation        */
+    void         **token_ptr   = H5_REQUEST_NULL; /* Pointer to request token for async operation        */
+    hid_t          ret_value   = H5I_INVALID_HID; /* Return value */
+    int            dec_ref_ret = 0;               /* Ref count decrement return value */
 
     FUNC_ENTER_API_NO_MUTEX(H5I_INVALID_HID)
     H5TRACE7("i", "*s*sIui*sii", app_file, app_func, app_line, loc_id, name, lapl_id, es_id);
@@ -310,11 +310,11 @@ H5Oopen_by_idx_async(const char *app_file, const char *app_func, unsigned app_li
                      const char *group_name, H5_index_t idx_type, H5_iter_order_t order, hsize_t n,
                      hid_t lapl_id, hid_t es_id)
 {
-    H5VL_object_t *vol_obj   = NULL;            /* Object for loc_id */
-    void          *token     = NULL;            /* Request token for async operation        */
-    void         **token_ptr = H5_REQUEST_NULL; /* Pointer to request token for async operation        */
-    hid_t          ret_value = H5I_INVALID_HID; /* Return value */
-    int            dec_ref_ret = 0;             /* Ref count decrement return value */
+    H5VL_object_t *vol_obj     = NULL;            /* Object for loc_id */
+    void          *token       = NULL;            /* Request token for async operation        */
+    void         **token_ptr   = H5_REQUEST_NULL; /* Pointer to request token for async operation        */
+    hid_t          ret_value   = H5I_INVALID_HID; /* Return value */
+    int            dec_ref_ret = 0;               /* Ref count decrement return value */
 
     FUNC_ENTER_API_NO_MUTEX(H5I_INVALID_HID)
     H5TRACE10("i", "*s*sIui*sIiIohii", app_file, app_func, app_line, loc_id, group_name, idx_type, order, n,
@@ -424,7 +424,7 @@ H5O__copy_api_common(hid_t src_loc_id, const char *src_name, hid_t dst_loc_id, c
     H5VL_loc_params_t loc_params1;
 
     herr_t ret_value = SUCCEED; /* Return value */
-    htri_t ret      = FALSE;   /* Generic return value */
+    htri_t ret       = FALSE;   /* Generic return value */
 
     FUNC_ENTER_PACKAGE
 
@@ -438,9 +438,9 @@ H5O__copy_api_common(hid_t src_loc_id, const char *src_name, hid_t dst_loc_id, c
     if (H5P_DEFAULT == lcpl_id)
         lcpl_id = H5P_LINK_CREATE_DEFAULT;
     else {
-        H5_API_LOCK
+        // H5_API_LOCK
         ret = H5P_isa_class(lcpl_id, H5P_LINK_CREATE);
-        H5_API_UNLOCK
+        // H5_API_UNLOCK
 
         if (TRUE != ret)
             HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not link creation property list");
@@ -450,18 +450,25 @@ H5O__copy_api_common(hid_t src_loc_id, const char *src_name, hid_t dst_loc_id, c
     if (H5P_DEFAULT == ocpypl_id)
         ocpypl_id = H5P_OBJECT_COPY_DEFAULT;
     else {
-        H5_API_LOCK
+        // H5_API_LOCK
         ret = H5P_isa_class(ocpypl_id, H5P_OBJECT_COPY);
-        H5_API_UNLOCK
+        // H5_API_UNLOCK
 
         if (TRUE != ret)
             HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not object copy property list");
     }
 
     /* Set the LCPL for the API context */
-    H5_API_LOCK
+    // H5_API_LOCK
     H5CX_set_lcpl(lcpl_id);
-    H5_API_UNLOCK
+    // H5_API_UNLOCK
+
+#ifdef H5_HAVE_MULTITHREAD
+    /* Set the property list in the context */
+    if (H5CX_set_plist(ocpypl_id, H5P_TYPE_OBJECT_COPY) < 0) {
+        HGOTO_ERROR(H5E_ATTR, H5E_CANTSET, H5I_INVALID_HID, "can't set ocpypl in context");
+    }
+#endif
 
     /* Setup and check args */
     if (H5VL_setup_loc_args(src_loc_id, &vol_obj1, &loc_params1) < 0)
@@ -850,7 +857,7 @@ H5Olink(hid_t obj_id, hid_t new_loc_id, const char *new_name, hid_t lcpl_id, hid
     H5VL_link_create_args_t vol_cb_args;     /* Arguments to VOL callback */
     H5VL_loc_params_t       new_loc_params;
     herr_t                  ret_value = SUCCEED; /* Return value */
-    htri_t                  ret       = FALSE;  /* Generic return value */
+    htri_t                  ret       = FALSE;   /* Generic return value */
 
     FUNC_ENTER_API_NO_MUTEX(FAIL)
     H5TRACE5("e", "ii*sii", obj_id, new_loc_id, new_name, lcpl_id, lapl_id);
@@ -867,9 +874,9 @@ H5Olink(hid_t obj_id, hid_t new_loc_id, const char *new_name, hid_t lcpl_id, hid
         HGOTO_ERROR(H5E_ARGS, H5E_BADRANGE, FAIL, "name too long");
 #endif /* H5_SIZEOF_SIZE_T > H5_SIZEOF_INT32_T */
     if (lcpl_id != H5P_DEFAULT) {
-        H5_API_LOCK
+        // H5_API_LOCK
         ret = H5P_isa_class(lcpl_id, H5P_LINK_CREATE);
-        H5_API_UNLOCK
+        // H5_API_UNLOCK
 
         if (TRUE != ret)
             HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a link creation property list");
@@ -880,14 +887,14 @@ H5Olink(hid_t obj_id, hid_t new_loc_id, const char *new_name, hid_t lcpl_id, hid
         lcpl_id = H5P_LINK_CREATE_DEFAULT;
 
     /* Set the LCPL for the API context */
-    H5_API_LOCK
+    // H5_API_LOCK
     H5CX_set_lcpl(lcpl_id);
-    H5_API_UNLOCK
+    // H5_API_UNLOCK
 
     /* Verify access property list and set up collective metadata if appropriate */
-    H5_API_LOCK
+    // H5_API_LOCK
     ret_value = H5CX_set_apl(&lapl_id, H5P_CLS_LACC, obj_id, TRUE);
-    H5_API_UNLOCK
+    // H5_API_UNLOCK
 
     if (ret_value < 0)
         HGOTO_ERROR(H5E_OHDR, H5E_CANTSET, FAIL, "can't set access property list info");
@@ -1078,9 +1085,9 @@ H5Oexists_by_name(hid_t loc_id, const char *name, hid_t lapl_id)
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "name parameter cannot be an empty string");
 
     /* Verify access property list and set up collective metadata if appropriate */
-    H5_API_LOCK
+    // H5_API_LOCK
     ret_value = H5CX_set_apl(&lapl_id, H5P_CLS_LACC, loc_id, FALSE);
-    H5_API_UNLOCK
+    // H5_API_UNLOCK
 
     if (ret_value < 0)
         HGOTO_ERROR(H5E_OHDR, H5E_CANTSET, FAIL, "can't set access property list info");
@@ -1310,9 +1317,9 @@ H5Oget_info_by_idx3(hid_t loc_id, const char *group_name, H5_index_t idx_type, H
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "invalid fields");
 
     /* Verify access property list and set up collective metadata if appropriate */
-    H5_API_LOCK
+    // H5_API_LOCK
     ret_value = H5CX_set_apl(&lapl_id, H5P_CLS_LACC, loc_id, FALSE);
-    H5_API_UNLOCK
+    // H5_API_UNLOCK
 
     if (ret_value < 0)
         HGOTO_ERROR(H5E_OHDR, H5E_CANTSET, FAIL, "can't set access property list info");
@@ -1426,9 +1433,9 @@ H5Oget_native_info_by_name(hid_t loc_id, const char *name, H5O_native_info_t *oi
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "invalid fields");
 
     /* Verify access property list and set up collective metadata if appropriate */
-    H5_API_LOCK
+    // H5_API_LOCK
     ret_value = H5CX_set_apl(&lapl_id, H5P_CLS_LACC, loc_id, FALSE);
-    H5_API_UNLOCK
+    // H5_API_UNLOCK
 
     if (ret_value < 0)
         HGOTO_ERROR(H5E_OHDR, H5E_CANTSET, FAIL, "can't set access property list info");
@@ -1495,9 +1502,9 @@ H5Oget_native_info_by_idx(hid_t loc_id, const char *group_name, H5_index_t idx_t
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "invalid fields");
 
     /* Verify access property list and set up collective metadata if appropriate */
-    H5_API_LOCK
+    // H5_API_LOCK
     ret_value = H5CX_set_apl(&lapl_id, H5P_CLS_LACC, loc_id, FALSE);
-    H5_API_UNLOCK
+    // H5_API_UNLOCK
 
     if (ret_value < 0)
         HGOTO_ERROR(H5E_OHDR, H5E_CANTSET, FAIL, "can't set access property list info");
@@ -1617,9 +1624,9 @@ H5Oset_comment_by_name(hid_t loc_id, const char *name, const char *comment, hid_
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "no name");
 
     /* Verify access property list and set up collective metadata if appropriate */
-    H5_API_LOCK
+    // H5_API_LOCK
     ret_value = H5CX_set_apl(&lapl_id, H5P_CLS_LACC, loc_id, TRUE);
-    H5_API_UNLOCK
+    // H5_API_UNLOCK
 
     if (ret_value < 0)
         HGOTO_ERROR(H5E_OHDR, H5E_CANTSET, FAIL, "can't set access property list info");
@@ -1732,9 +1739,9 @@ H5Oget_comment_by_name(hid_t loc_id, const char *name, char *comment /*out*/, si
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, (-1), "no name");
 
     /* Verify access property list and set up collective metadata if appropriate */
-    H5_API_LOCK
+    // H5_API_LOCK
     ret_value = H5CX_set_apl(&lapl_id, H5P_CLS_LACC, loc_id, FALSE);
-    H5_API_UNLOCK
+    // H5_API_UNLOCK
 
     if (ret_value < 0)
         HGOTO_ERROR(H5E_OHDR, H5E_CANTSET, (-1), "can't set access property list info");
@@ -1906,9 +1913,9 @@ H5Ovisit_by_name3(hid_t loc_id, const char *obj_name, H5_index_t idx_type, H5_it
         HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "invalid fields");
 
     /* Verify access property list and set up collective metadata if appropriate */
-    H5_API_LOCK
+    // H5_API_LOCK
     ret_value = H5CX_set_apl(&lapl_id, H5P_CLS_LACC, loc_id, FALSE);
-    H5_API_UNLOCK
+    // H5_API_UNLOCK
 
     if (ret_value < 0)
         HGOTO_ERROR(H5E_OHDR, H5E_CANTSET, FAIL, "can't set access property list info");
@@ -2008,7 +2015,7 @@ done:
 herr_t
 H5Oclose(hid_t object_id)
 {
-    herr_t ret_value = SUCCEED;
+    herr_t ret_value   = SUCCEED;
     int    dec_ref_ret = 0;
 
     FUNC_ENTER_API_NO_MUTEX(FAIL)
@@ -2039,12 +2046,12 @@ done:
 herr_t
 H5Oclose_async(const char *app_file, const char *app_func, unsigned app_line, hid_t object_id, hid_t es_id)
 {
-    H5VL_object_t *vol_obj   = NULL;            /* Object for loc_id */
-    H5VL_t        *connector = NULL;            /* VOL connector */
-    void          *token     = NULL;            /* Request token for async operation        */
-    void         **token_ptr = H5_REQUEST_NULL; /* Pointer to request token for async operation        */
-    herr_t         ret_value = SUCCEED;
-    int            dec_ref_ret = 0;             /* Ref count decrement return value */
+    H5VL_object_t *vol_obj     = NULL;            /* Object for loc_id */
+    H5VL_t        *connector   = NULL;            /* VOL connector */
+    void          *token       = NULL;            /* Request token for async operation        */
+    void         **token_ptr   = H5_REQUEST_NULL; /* Pointer to request token for async operation        */
+    herr_t         ret_value   = SUCCEED;
+    int            dec_ref_ret = 0; /* Ref count decrement return value */
 
     FUNC_ENTER_API_NO_MUTEX(FAIL)
     H5TRACE5("e", "*s*sIuii", app_file, app_func, app_line, object_id, es_id);
@@ -2061,7 +2068,7 @@ H5Oclose_async(const char *app_file, const char *app_func, unsigned app_line, hi
 
         /* Increase connector's refcount, so it doesn't get closed if closing
          * this object ID closes the file */
-        H5VL_conn_inc_rc(vol_obj->connector);        
+        H5VL_conn_inc_rc(vol_obj->connector);
         connector = vol_obj->connector;
 
         /* Point at token for operation to set up */

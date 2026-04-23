@@ -1507,11 +1507,11 @@ error:
 static int
 compare_groups(hid_t gid, hid_t gid2, hid_t pid, int depth, unsigned copy_flags)
 {
-    H5G_info_t ginfo;     /* Group info struct */
-    H5G_info_t ginfo2;    /* Group info struct */
-    hsize_t    idx;       /* Index over the objects in group */
-    unsigned   cpy_flags; /* Object copy flags */
-    hid_t      oid = H5I_INVALID_HID; /* IDs of objects within group */
+    H5G_info_t ginfo;                  /* Group info struct */
+    H5G_info_t ginfo2;                 /* Group info struct */
+    hsize_t    idx;                    /* Index over the objects in group */
+    unsigned   cpy_flags;              /* Object copy flags */
+    hid_t      oid  = H5I_INVALID_HID; /* IDs of objects within group */
     hid_t      oid2 = H5I_INVALID_HID;
 
     /* Retrieve the object copy flags from the property list, if it's non-DEFAULT */
@@ -17137,8 +17137,8 @@ main(void)
     hid_t       fcpl_shared, ocpl;
     unsigned    max_compact, min_dense;
     int         configuration; /* Configuration of tests. */
-    const char *env_h5_drvr; /* File Driver value from environment */
-    hbool_t     same_file;   /* Whether to run tests that only use one file */
+    const char *env_h5_drvr;   /* File Driver value from environment */
+    hbool_t     same_file;     /* Whether to run tests that only use one file */
     hbool_t     driver_is_default_compatible;
 
     env_h5_drvr = HDgetenv(HDF5_DRIVER);
