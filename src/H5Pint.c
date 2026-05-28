@@ -1208,12 +1208,11 @@ H5P__mt_term_free_lists(void)
         } while (!done);
 
         /* If we are at the last entry in the free list update the tail */
-        if (fl_list_tail.ptr == fl_list_head.ptr) 
+        if ( ! next_list.ptr )
         {
             done = FALSE;
             do
             {
-
                 assert(next_list.ptr == NULL);
 
                 if (!atomic_compare_exchange_strong(&(H5P_mt_g.list_fl_tail), &fl_list_tail, next_list)) {
@@ -4201,9 +4200,9 @@ H5P_insert(H5P_mt_list_t *list, const char *name, size_t size, void *value, H5P_
     }
 
     /* Create the new property and insert it into the property list */
-    if ((ret_value = H5P__mt_ins_or_mod_prop__list(list, name, value, size, FALSE, FALSE, TRUE, next_version,
+    if ((new_prop = H5P__mt_ins_or_mod_prop__list(list, name, value, size, FALSE, FALSE, TRUE, next_version,
                                                    NULL, prp_set, prp_get, prp_encode, prp_decode, prp_delete,
-                                                   prp_copy, prp_cmp, prp_close)) < 0) {
+                                                   prp_copy, prp_cmp, prp_close)) == NULL) {
         HGOTO_ERROR(H5E_PLIST, H5E_CANTREGISTER, FAIL, "unable to register MT property in MT plist");
     }
 
@@ -4278,7 +4277,7 @@ done:
  *
  ****************************************************************************************
  */
-herr_t
+H5P_mt_prop_t *
 H5P__mt_ins_or_mod_prop__list(H5P_mt_list_t *list, const char *name, void *value, size_t size, bool create,
                               bool copy, bool is_new, uint64_t prop_version, H5P_prp_create_func_t prp_create,
                               H5P_prp_set_func_t prp_set, H5P_prp_get_func_t prp_get,
@@ -4302,7 +4301,7 @@ H5P__mt_ins_or_mod_prop__list(H5P_mt_list_t *list, const char *name, void *value
     bool                       chksum_cols  = FALSE;
     bool                       prop_cleanup = FALSE;
 
-    herr_t ret_value = SUCCEED;
+    H5P_mt_prop_t             *ret_value    = NULL;
 
     FUNC_ENTER_PACKAGE
 
@@ -4318,7 +4317,7 @@ H5P__mt_ins_or_mod_prop__list(H5P_mt_list_t *list, const char *name, void *value
     new_prop = H5P__create_prop(name, value, size, FALSE, prop_version, prp_create, prp_set, prp_get,
                                 prp_encode, prp_decode, prp_del, prp_copy, prp_cmp, prp_close);
     if (new_prop == NULL) {
-        HGOTO_ERROR(H5E_PLIST, H5E_CANTCREATE, FAIL, "Failed to create new property.");
+        HGOTO_ERROR(H5E_PLIST, H5E_CANTCREATE, NULL, "Failed to create new property.");
     }
 
     assert(new_prop);
@@ -4341,7 +4340,7 @@ H5P__mt_ins_or_mod_prop__list(H5P_mt_list_t *list, const char *name, void *value
                 0) {
                 prop_cleanup = TRUE;
                 assert(H5P_MT_ASSERT_FAIL);
-                HGOTO_ERROR(H5E_PLIST, H5E_CANTCOPY, FAIL, "Copy property callback failed");
+                HGOTO_ERROR(H5E_PLIST, H5E_CANTCOPY, NULL, "Copy property callback failed");
             }
         }
     }
@@ -4352,7 +4351,7 @@ H5P__mt_ins_or_mod_prop__list(H5P_mt_list_t *list, const char *name, void *value
                 0) {
                 prop_cleanup = TRUE;
                 assert(H5P_MT_ASSERT_FAIL);
-                HGOTO_ERROR(H5E_PLIST, H5E_CANTCOPY, FAIL, "Create property callback failed");
+                HGOTO_ERROR(H5E_PLIST, H5E_CANTCOPY, NULL, "Create property callback failed");
             }
         }
     }
@@ -4472,10 +4471,12 @@ H5P__mt_ins_or_mod_prop__list(H5P_mt_list_t *list, const char *name, void *value
         atomic_store(&(H5P_mt_g.max_list_num_phys_props), atomic_load(&(list->phys_pl_len)));
     }
 
+    ret_value = new_prop;
+
 done:
 
     /* Cleanup if error occurred */
-    if ((ret_value == FAIL) && (new_prop != NULL) && (prop_cleanup)) {
+    if ((ret_value == NULL) && (new_prop != NULL) && (prop_cleanup)) {
         H5P__mt_close_prop(new_prop);
     }
 
@@ -6286,9 +6287,9 @@ H5P_poke(H5P_mt_list_t *list, const char *name, void *value)
     prop_value = atomic_load(&(prop->value));
 
     /* Create a new version of the property that is a copy of it with the new value */
-    if (0 > H5P__mt_ins_or_mod_prop__list(list, name, value, prop_value.size, FALSE, FALSE, FALSE,
-                                          next_version, prop->create, prop->set, prop->get, prop->encode,
-                                          prop->decode, prop->del, prop->copy, prop->cmp, prop->close)) {
+    if ((prop = H5P__mt_ins_or_mod_prop__list(list, name, value, prop_value.size, FALSE, FALSE, FALSE,
+                                next_version, prop->create, prop->set, prop->get, prop->encode, 
+                                prop->decode, prop->del, prop->copy, prop->cmp, prop->close)) == NULL) {
         HGOTO_ERROR(H5E_PLIST, H5E_CANTOPERATE, FAIL,
                     "can't create new property version for the updated value");
     }
@@ -6406,21 +6407,12 @@ H5P_set(H5P_mt_list_t *list, const char *name, const void *value)
     prop_value = atomic_load(&(old_prop->value));
 
     /* Create a new version of the property that is a copy of it */
-    if (0 > H5P__mt_ins_or_mod_prop__list(list, name, (void *)prop_value.ptr, prop_value.size, FALSE, 
+    if ((prop = H5P__mt_ins_or_mod_prop__list(list, name, (void *)prop_value.ptr, prop_value.size, FALSE, 
                                           FALSE, FALSE, next_version, old_prop->create, old_prop->set, 
-                                          old_prop->get, old_prop->encode, old_prop->decode, 
-                                          old_prop->del, old_prop->copy, old_prop->cmp, old_prop->close)) {
+                                          old_prop->get, old_prop->encode, old_prop->decode, old_prop->del, 
+                                          old_prop->copy, old_prop->cmp, old_prop->close)) == NULL) {
         HGOTO_ERROR(H5E_PLIST, H5E_CANTOPERATE, FAIL, "can't operate on MT plist to set value");
     }
-
-    /**
-     * NOTE: Currently must search the list for new version of the property structure,
-     * because H5P__mt_ins_or_mod_prop__main() returns SUCCESS/FAIL but may update that
-     * so it returns the property and we don't have to search again.
-     */
-    curr_version = atomic_load(&(list->curr_version));
-
-    prop = H5P__mt_search__list(list, name, next_version);
 
     assert(atomic_load(&(prop->create_version)) == next_version);
 
@@ -8796,10 +8788,10 @@ H5P__copy_prop_plist(hid_t dst_id, hid_t src_id, const char *name)
          * call the copy callback,
          * and insert it into the dst_plist
          */
-        if (0 < H5P__mt_ins_or_mod_prop__list(
+        if ((dst_prop = H5P__mt_ins_or_mod_prop__list(
                     dst_plist, src_prop->name, value.ptr, value.size, FALSE, TRUE, TRUE, next_version,
                     src_prop->create, src_prop->set, src_prop->get, src_prop->encode, src_prop->decode,
-                    src_prop->del, src_prop->copy, src_prop->cmp, src_prop->close)) {
+                    src_prop->del, src_prop->copy, src_prop->cmp, src_prop->close)) == NULL) {
             HGOTO_ERROR(H5E_PLIST, H5E_CANTCOPY, FAIL, "Failed copying and inserting MT property");
         }
 
@@ -8813,10 +8805,10 @@ H5P__copy_prop_plist(hid_t dst_id, hid_t src_id, const char *name)
          * call the create callback,
          * and insert it into the dst_plist
          */
-        if (0 < H5P__mt_ins_or_mod_prop__list(
+        if ((dst_prop = H5P__mt_ins_or_mod_prop__list(
                     dst_plist, src_prop->name, value.ptr, value.size, TRUE, FALSE, TRUE, next_version,
                     src_prop->create, src_prop->set, src_prop->get, src_prop->encode, src_prop->decode,
-                    src_prop->del, src_prop->copy, src_prop->cmp, src_prop->close)) {
+                    src_prop->del, src_prop->copy, src_prop->cmp, src_prop->close)) == NULL) {
             HGOTO_ERROR(H5E_PLIST, H5E_CANTCOPY, FAIL, "Failed copying and inserting MT property");
         }
     }
@@ -9032,8 +9024,6 @@ H5P_close(H5P_genplist_t *list)
     H5P_mt_list_t               *fl_list;
     H5P_mt_list_sptr_t           fl_head;
     H5P_mt_list_sptr_t           fl_tail;
-    H5P_mt_list_sptr_t           test_fl_tail;
-    H5P_mt_list_sptr_t           new_fl_tail;
     H5P_mt_list_sptr_t           fl_next;
     H5P_mt_list_sptr_t           fl_update;
     H5P_mt_active_thread_count_t local_thrd;
@@ -9359,55 +9349,84 @@ H5P_close(H5P_genplist_t *list)
 
         fl_next = atomic_load(&(fl_list->fl_next));
 
-        test_fl_tail = atomic_load(&(H5P_mt_g.list_fl_tail));
-
-        if (( test_fl_tail.ptr == fl_list ) && ( test_fl_tail.sn == fl_tail.sn ))
+        while ( fl_next.ptr != NULL )
         {
-            if ( fl_next.ptr == NULL )
-            {
-                /* Atomically update current tail to point to new tail */
-                fl_update.ptr = list;
-                fl_update.sn  = fl_next.sn + 1;
+            fl_list = fl_next.ptr;
+            fl_next = atomic_load(&(fl_list->fl_next));
+        }
 
-                if (!atomic_compare_exchange_strong(&(fl_list->fl_next), &fl_next, fl_update)) {
-                    /* failed, updated stats and try again */
-                    atomic_fetch_add(&(H5P_mt_g.list_fl_next_update_cols), 1);
-                }
-                else {
-                    /* success, update stats and continue */
-                    atomic_fetch_add(&(H5P_mt_g.list_fl_next_update), 1);
+        /* Atomically update current tail to point to new tail */
+        fl_update.ptr = list;
+        fl_update.sn  = fl_next.sn + 1;
 
-                    /* Atomically update global tail pointer to point to new tail */
-                    new_fl_tail.ptr = list;
-                    new_fl_tail.sn  = fl_tail.sn + 1;
+        if (!atomic_compare_exchange_strong(&(fl_list->fl_next), &fl_next, fl_update)) {
+            /* failed, updated stats and try again */
+            atomic_fetch_add(&(H5P_mt_g.list_fl_next_update_cols), 1);
+        }
+        else 
+        {
+            /* success, update stats and continue */
+            atomic_fetch_add(&(H5P_mt_g.list_fl_next_update), 1);
+            atomic_fetch_add(&(H5P_mt_g.num_list_added_to_fl), 1);
 
-                    if (!atomic_compare_exchange_strong(&(H5P_mt_g.list_fl_tail), &fl_tail, new_fl_tail)) {
-                        /* failed, updated stats and try again */
-                        atomic_fetch_add(&(H5P_mt_g.list_fl_tail_update_cols), 1);
-                    }
-                    else 
-                    {
-                        /* success, update stats and continue */
-                        atomic_fetch_add(&(H5P_mt_g.list_fl_tail_update), 1);
-                        atomic_fetch_add(&(H5P_mt_g.num_list_added_to_fl), 1);
+            atomic_fetch_add(&(H5P_mt_g.list_fl_len), 1);
 
-                        atomic_fetch_add(&(H5P_mt_g.list_fl_len), 1);
-
-                        if (atomic_load(&(H5P_mt_g.list_fl_len)) > 
-                            atomic_load(&(H5P_mt_g.list_max_desired_fl_len))) 
-                        {
-                            try_to_free_entry = TRUE;
-                        }
-
-                        done = TRUE;
-                    }
-                }
-
-            } /* end if ( fl_next.ptr == NULL ) */
+            done = TRUE;
+        }
         
-        } /* end if (( test_fl_tail.ptr == fl_list ) && ( test_fl_tail.sn == fl_tail.sn )) */
-
     } while (!done);
+
+    done = FALSE;
+
+    do
+    {
+        fl_tail = atomic_load(&(H5P_mt_g.list_fl_tail));
+        assert(fl_tail.ptr);
+
+        fl_list = fl_tail.ptr;
+
+        fl_next = atomic_load(&(fl_list->fl_next));
+
+        while ( fl_next.ptr != NULL )
+        {
+            fl_list = fl_next.ptr;
+            fl_next = atomic_load(&(fl_list->fl_next));
+        }
+
+        if ( fl_tail.ptr != fl_list )
+        {
+            /* Atomically update current tail to point to new tail */
+            fl_update.ptr = fl_list;
+            fl_update.sn  = fl_tail.sn + 1;
+
+            if (!atomic_compare_exchange_strong(&(H5P_mt_g.list_fl_tail), &fl_tail, fl_update)) {
+                /* failed, updated stats and try again */
+                atomic_fetch_add(&(H5P_mt_g.list_fl_tail_update_cols), 1);
+            }
+            else 
+            {
+                /* success, update stats and continue */
+                atomic_fetch_add(&(H5P_mt_g.list_fl_tail_update), 1);
+
+                done = TRUE;
+            }
+        }
+        else
+        {
+            /* Free list's tail was updated by another thread, update stats */
+            atomic_fetch_add(&(H5P_mt_g.list_fl_tail_already_updated), 1);
+
+            done = TRUE;
+        }
+
+
+    } while ( ! done );
+
+    if (atomic_load(&(H5P_mt_g.list_fl_len)) > 
+        atomic_load(&(H5P_mt_g.list_max_desired_fl_len))) 
+    {
+        try_to_free_entry = TRUE;
+    }
 
     /**
      * If TRUE then the free list has more entries then the desired max.
@@ -9975,8 +9994,6 @@ H5P__close_class(H5P_mt_class_t *class)
     H5P_mt_class_t              *fl_class;
     H5P_mt_class_sptr_t          fl_head;
     H5P_mt_class_sptr_t          fl_tail;
-    H5P_mt_class_sptr_t          test_fl_tail;
-    H5P_mt_class_sptr_t          new_fl_tail;
     H5P_mt_class_sptr_t          fl_next;
     H5P_mt_class_sptr_t          fl_update;
     H5P_mt_active_thread_count_t local_thrd;
@@ -10133,11 +10150,7 @@ H5P__close_class(H5P_mt_class_t *class)
         /* Atomically update the class's tag to invalid */
         atomic_store(&(class->tag), H5P_MT_CLASS_INVALID_TAG);
 
-        /**
-         * Atomically update the current tail of the class free list to point to this class being closed,
-         * and if that succeeds atomically update the class free list tail pointer (H5P_mt_g.class_fl_tail) 
-         * to point to the new tail. If either atomic update fails, loop and try again.
-         */
+
         do 
         {
             fl_tail = atomic_load(&(H5P_mt_g.class_fl_tail));
@@ -10147,56 +10160,84 @@ H5P__close_class(H5P_mt_class_t *class)
 
             fl_next = atomic_load(&(fl_class->fl_next));
 
-            test_fl_tail = atomic_load(&(H5P_mt_g.class_fl_tail));
-
-            if (( test_fl_tail.ptr == fl_class ) && ( test_fl_tail.sn == fl_tail.sn ))
+            while ( fl_next.ptr != NULL )
             {
-                if ( fl_next.ptr == NULL )
-                {
-                    /* Atomically update current tail to point to new tail */
-                    fl_update.ptr = class;
-                    fl_update.sn  = fl_next.sn + 1;
+                fl_class = fl_next.ptr;
+                fl_next = atomic_load(&(fl_class->fl_next));
+            }
 
-                    if (!atomic_compare_exchange_strong(&(fl_class->fl_next), &fl_next, fl_update)) {
-                        /* failed, update stats and try again */
-                        atomic_fetch_add(&(H5P_mt_g.class_fl_next_update_cols), 1);
-                    }
-                    else {
-                        /* success, update stats and continue */
-                        atomic_fetch_add(&(H5P_mt_g.class_fl_next_update), 1);
+            /* Atomically update current tail to point to new tail */
+            fl_update.ptr = class;
+            fl_update.sn  = fl_next.sn + 1;
 
-                        /* Atomically update global tail pointer to point to new tail */
-                        new_fl_tail.ptr = class;
-                        new_fl_tail.sn = fl_tail.sn + 1;
+            if (!atomic_compare_exchange_strong(&(fl_class->fl_next), &fl_next, fl_update)) {
+                /* failed, updated stats and try again */
+                atomic_fetch_add(&(H5P_mt_g.class_fl_next_update_cols), 1);
+            }
+            else 
+            {
+                /* success, update stats and continue */
+                atomic_fetch_add(&(H5P_mt_g.class_fl_next_update), 1);
+                atomic_fetch_add(&(H5P_mt_g.num_class_added_to_fl), 1);
 
-                        if ( ! atomic_compare_exchange_strong(&(H5P_mt_g.class_fl_tail), &fl_tail, new_fl_tail))
-                        {
-                            /* failed, updated stats and try again */
-                            atomic_fetch_add(&(H5P_mt_g.class_fl_tail_update_cols), 1);
-                        }
-                        else
-                        {
-                            /* success, update stats and continue */
-                            atomic_fetch_add(&(H5P_mt_g.class_fl_tail_update), 1);
-                            atomic_fetch_add(&(H5P_mt_g.num_class_added_to_fl), 1);
+                atomic_fetch_add(&(H5P_mt_g.class_fl_len), 1);
 
-                            atomic_fetch_add(&(H5P_mt_g.class_fl_len), 1);
-
-                            if (atomic_load(&(H5P_mt_g.class_fl_len)) >
-                                atomic_load(&(H5P_mt_g.class_max_desired_fl_len))) 
-                            {
-                                try_to_free_entry = TRUE;
-                            }
-
-                            done = TRUE;
-                        }
-                    }
-                
-                } /* end if ( fl_next.ptr == NULL ) */
+                done = TRUE;
+            }
             
-            } /* end if (( test_fl_tail.ptr == fl_class ) && (test_fl_tail.sn == fl_tail.sn)) */
-
         } while (!done);
+
+        done = FALSE;
+
+        do
+        {
+            fl_tail = atomic_load(&(H5P_mt_g.class_fl_tail));
+            assert(fl_tail.ptr);
+
+            fl_class = fl_tail.ptr;
+
+            fl_next = atomic_load(&(fl_class->fl_next));
+
+            while ( fl_next.ptr != NULL )
+            {
+                fl_class = fl_next.ptr;
+                fl_next = atomic_load(&(fl_class->fl_next));
+            }
+
+            if ( fl_tail.ptr != fl_class )
+            {
+                /* Atomically update current tail to point to new tail */
+                fl_update.ptr = fl_class;
+                fl_update.sn  = fl_tail.sn + 1;
+
+                if (!atomic_compare_exchange_strong(&(H5P_mt_g.class_fl_tail), &fl_tail, fl_update)) {
+                    /* failed, updated stats and try again */
+                    atomic_fetch_add(&(H5P_mt_g.class_fl_tail_update_cols), 1);
+                }
+                else 
+                {
+                    /* success, update stats and continue */
+                    atomic_fetch_add(&(H5P_mt_g.class_fl_tail_update), 1);
+
+                    done = TRUE;
+                }
+            }
+            else
+            {
+                /* Free list's tail was updated by another thread, update stats */
+                atomic_fetch_add(&(H5P_mt_g.class_fl_tail_already_updated), 1);
+
+                done = TRUE;
+            }
+
+
+        } while ( ! done );
+
+        if (atomic_load(&(H5P_mt_g.class_fl_len)) > 
+            atomic_load(&(H5P_mt_g.class_max_desired_fl_len))) 
+        {
+            try_to_free_entry = TRUE;
+        }
 
         /**
          * If TRUE then the free list has more entries then the desired max.
@@ -10737,8 +10778,6 @@ H5P__mt_close_prop(H5P_mt_prop_t *prop)
     H5P_mt_prop_t     *fl_prop;
     H5P_mt_prop_aptr_t fl_head;
     H5P_mt_prop_aptr_t fl_tail;
-    H5P_mt_prop_aptr_t test_fl_tail;
-    H5P_mt_prop_aptr_t new_fl_tail;
     H5P_mt_prop_aptr_t fl_next;
     H5P_mt_prop_aptr_t update_next;
     H5P_mt_prop_aptr_t next;
@@ -10793,11 +10832,7 @@ H5P__mt_close_prop(H5P_mt_prop_t *prop)
 
     done = FALSE;
 
-    /**
-     * Atomically update the current tail of the prop free list to point to this prop being closed,
-     * and if that succeeds atomically update the prop free list tail pointer (H5P_mt_g.prop_fl_tail) 
-     * to point to the new tail. If either atomic update fails, loop and try again.
-     */
+
     do 
     {
         fl_tail = atomic_load(&(H5P_mt_g.prop_fl_tail));
@@ -10807,58 +10842,79 @@ H5P__mt_close_prop(H5P_mt_prop_t *prop)
 
         fl_next = atomic_load(&(fl_prop->next));
 
-        test_fl_tail = atomic_load(&(H5P_mt_g.prop_fl_tail));
-
-        if ( test_fl_tail.ptr == fl_prop )
+        while ( fl_next.ptr != NULL )
         {
-            if ( fl_next.ptr == NULL )
-            {
+            fl_prop = fl_next.ptr;
+            fl_next = atomic_load(&(fl_prop->next));
+        }
 
-                update_next.ptr = prop;
+        /* Atomically update current tail to point to new tail */
+        update_next.ptr = prop;
 
-                if (!atomic_compare_exchange_strong(&(fl_prop->next), &fl_next, update_next)) {
-                    /* failed, update stats and try again */
-                    atomic_fetch_add(&(H5P_mt_g.prop_fl_next_update_cols), 1);
-                }
-                else {
-                    /* success, update stats and continue */
-                    atomic_fetch_add(&(H5P_mt_g.prop_fl_next_update), 1);
+        if (!atomic_compare_exchange_strong(&(fl_prop->next), &fl_next, update_next)) {
+            /* failed, updated stats and try again */
+            atomic_fetch_add(&(H5P_mt_g.prop_fl_next_update_cols), 1);
+        }
+        else 
+        {
+            /* success, update stats and continue */
+            atomic_fetch_add(&(H5P_mt_g.prop_fl_next_update), 1);
+            atomic_fetch_add(&(H5P_mt_g.num_props_added_to_fl), 1);
 
-                    new_fl_tail.ptr          = prop;
-                    new_fl_tail.deleted      = FALSE;
-                    new_fl_tail.dummy_bool_1 = FALSE;
-                    new_fl_tail.dummy_bool_2 = FALSE;
-                    new_fl_tail.dummy_bool_3 = FALSE;
-                    
+            atomic_fetch_add(&(H5P_mt_g.prop_fl_len), 1);
 
-                    if (!atomic_compare_exchange_strong(&(H5P_mt_g.prop_fl_tail), &fl_tail, new_fl_tail)) {
-                        /* failed, updated stats and try again */
-                        atomic_fetch_add(&(H5P_mt_g.prop_fl_tail_update_cols), 1);
-                    }
-                    else {
-                        /* success, update stats and continue */
-                        atomic_fetch_add(&(H5P_mt_g.prop_fl_tail_update), 1);
-                        atomic_fetch_add(&(H5P_mt_g.num_props_added_to_fl), 1);
-
-                        atomic_fetch_add(&(H5P_mt_g.prop_fl_len), 1);
-
-                        if (atomic_load(&(H5P_mt_g.prop_fl_len)) > 
-                            atomic_load(&(H5P_mt_g.prop_max_desired_fl_len))) 
-                        {
-                            try_to_free_entry = TRUE;
-                        }
-
-                        done = TRUE;
-                    }
-                }
-
-            } /* end if ( fl_next.ptr == NULL ) */
-
-        } /* end if ( test_fl_tail.ptr == fl_prop ) */
-
+            done = TRUE;
+        }
+        
     } while (!done);
 
     done = FALSE;
+
+    do
+    {
+        fl_tail = atomic_load(&(H5P_mt_g.prop_fl_tail));
+        assert(fl_tail.ptr);
+
+        fl_prop = fl_tail.ptr;
+
+        fl_next = atomic_load(&(fl_prop->next));
+
+        while ( fl_next.ptr != NULL )
+        {
+            fl_prop = fl_next.ptr;
+            fl_next = atomic_load(&(fl_prop->next));
+        }
+
+        if ( fl_tail.ptr != fl_prop )
+        {
+            /* Atomically update current tail to point to new tail */
+            update_next.ptr = fl_prop;
+
+            if (!atomic_compare_exchange_strong(&(H5P_mt_g.prop_fl_tail), &fl_tail, update_next)) {
+                /* failed, updated stats and try again */
+                atomic_fetch_add(&(H5P_mt_g.prop_fl_tail_update_cols), 1);
+            }
+            else 
+            {
+                /* success, update stats and continue */
+                atomic_fetch_add(&(H5P_mt_g.prop_fl_tail_update), 1);
+
+                done = TRUE;
+            }
+        }
+        else
+        {
+            done = TRUE;
+        }
+
+
+    } while ( ! done );
+
+    if (atomic_load(&(H5P_mt_g.prop_fl_len)) > 
+        atomic_load(&(H5P_mt_g.prop_max_desired_fl_len))) 
+    {
+        try_to_free_entry = TRUE;
+    }
 
     /**
      * If TRUE then the free list has more entries then the desired max.
@@ -12349,6 +12405,7 @@ H5P__init_stats_global(void)
     atomic_init(&(H5P_mt_g.class_fl_head_update_cols), 0ULL);
     atomic_init(&(H5P_mt_g.class_fl_tail_update), 0ULL);
     atomic_init(&(H5P_mt_g.class_fl_tail_update_cols), 0ULL);
+    atomic_init(&(H5P_mt_g.class_fl_tail_already_updated), 0ULL);
     atomic_init(&(H5P_mt_g.class_fl_next_update), 0ULL);
     atomic_init(&(H5P_mt_g.class_fl_next_update_cols), 0ULL);
     atomic_init(&(H5P_mt_g.num_class_added_to_fl), 0ULL);
@@ -12361,6 +12418,7 @@ H5P__init_stats_global(void)
     atomic_init(&(H5P_mt_g.list_fl_head_update_cols), 0ULL);
     atomic_init(&(H5P_mt_g.list_fl_tail_update), 0ULL);
     atomic_init(&(H5P_mt_g.list_fl_tail_update_cols), 0ULL);
+    atomic_init(&(H5P_mt_g.list_fl_tail_already_updated), 0ULL);
     atomic_init(&(H5P_mt_g.list_fl_next_update), 0ULL);
     atomic_init(&(H5P_mt_g.list_fl_next_update_cols), 0ULL);
     atomic_init(&(H5P_mt_g.num_list_added_to_fl), 0ULL);
@@ -12519,6 +12577,7 @@ H5P__reset_stats_global(void)
     atomic_store(&(H5P_mt_g.class_fl_head_update_cols), 0ULL);
     atomic_store(&(H5P_mt_g.class_fl_tail_update), 0ULL);
     atomic_store(&(H5P_mt_g.class_fl_tail_update_cols), 0ULL);
+    atomic_store(&(H5P_mt_g.class_fl_tail_already_updated), 0ULL);
     atomic_store(&(H5P_mt_g.class_fl_next_update), 0ULL);
     atomic_store(&(H5P_mt_g.class_fl_next_update_cols), 0ULL);
     atomic_store(&(H5P_mt_g.num_class_added_to_fl), 0ULL);
@@ -12531,6 +12590,7 @@ H5P__reset_stats_global(void)
     atomic_store(&(H5P_mt_g.list_fl_head_update_cols), 0ULL);
     atomic_store(&(H5P_mt_g.list_fl_tail_update), 0ULL);
     atomic_store(&(H5P_mt_g.list_fl_tail_update_cols), 0ULL);
+    atomic_store(&(H5P_mt_g.list_fl_tail_already_updated), 0ULL);
     atomic_store(&(H5P_mt_g.list_fl_next_update), 0ULL);
     atomic_store(&(H5P_mt_g.list_fl_next_update_cols), 0ULL);
     atomic_store(&(H5P_mt_g.num_list_added_to_fl), 0ULL);
@@ -13020,6 +13080,8 @@ H5P__dump_stats_global(FILE *file_ptr)
             (unsigned long long)(atomic_load(&(H5P_mt_g.class_fl_tail_update))));
     fprintf(file_ptr, "H5P_mt_g.class_fl_tail_update_cols                   = %lld\n",
             (unsigned long long)(atomic_load(&(H5P_mt_g.class_fl_tail_update_cols))));
+    fprintf(file_ptr, "H5P_mt_g.class_fl_tail_already_updated               = %lld\n",
+            (unsigned long long)(atomic_load(&(H5P_mt_g.class_fl_tail_already_updated))));
     fprintf(file_ptr, "H5P_mt_g.class_fl_next_update                        = %lld\n",
             (unsigned long long)(atomic_load(&(H5P_mt_g.class_fl_next_update))));
     fprintf(file_ptr, "H5P_mt_g.class_fl_next_update_cols                   = %lld\n",
@@ -13042,6 +13104,8 @@ H5P__dump_stats_global(FILE *file_ptr)
             (unsigned long long)(atomic_load(&(H5P_mt_g.list_fl_tail_update))));
     fprintf(file_ptr, "H5P_mt_g.list_fl_tail_update_cols                    = %lld\n",
             (unsigned long long)(atomic_load(&(H5P_mt_g.list_fl_tail_update_cols))));
+    fprintf(file_ptr, "H5P_mt_g.list_fl_tail_already_updated                = %lld\n",
+            (unsigned long long)(atomic_load(&(H5P_mt_g.list_fl_tail_already_updated))));
     fprintf(file_ptr, "H5P_mt_g.list_fl_next_update                         = %lld\n",
             (unsigned long long)(atomic_load(&(H5P_mt_g.list_fl_next_update))));
     fprintf(file_ptr, "H5P_mt_g.list_fl_next_update_cols                    = %lld\n",

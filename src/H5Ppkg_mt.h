@@ -223,11 +223,11 @@ typedef struct H5P_mt_prop_value_t {
  * 
  * call_del (_Atomic bool):
  *      Boolean flag that is set to TRUE if this property's delete callback needs to be
- *      called when this propert is being added to the property free list. The delete 
- *      callbacks, can't get called when setting the delete_version version, because 
- *      another thread may still need to access this property at that version. Thus they 
- *      must be called when we know there are not any threads that will be accessing this 
- *      version of this property. 
+ *      called when being added to the property free list. The delete callbacks, can't 
+ *      get called when setting the delete_version version, because another thread may 
+ *      still need to access this property at that version. Thus they must be called when
+ *      we know there are not any threads that will be accessing this version of this 
+ *      property. 
  *
  *
  * Property Chksum, Name & Value:
@@ -1811,12 +1811,15 @@ typedef struct H5P_mt_list_table_entry_t {
  * 
  * tmp_closing_id (_Atomic hid_t):
  *      Temporary ID assigned to this property list when closing. After plist_id is 
- *      decremented to zero in the index H5I calls H5P_close() to close the plist. 
- *      However, a new ID is needed to call any property delete callback that needs 
- *      called. Since the property delete callbacks can't be called when a property has
- *      its delete_version set, they must called on list close. 
+ *      decremented to zero in the index, H5I calls H5P_close() to close the plist.  
+ *      Since the property delete callbacks can't be called when a property has its 
+ *      delete_version set since another thread may still need to access that version
+ *      thus that property would still be valid for that thread, the delete callbacks 
+ *      must called on list close. Property delete callbacks require a list ID, so a new
+ *      temporary list ID is retrieved to call the close callbacks on the necessary 
+ *      properties.
  * 
- *      NOTE: this is a temporary solution.
+ *      NOTE: this is a temporary solution that will likely be changed in the future.
  *
  * curr_version (_Atomic uint64_t):
  *      Atomic uint64_t containing the current version of the propety list. This version
@@ -2680,6 +2683,7 @@ typedef struct H5P_mt_t {
     _Atomic uint64_t class_fl_head_update_cols;
     _Atomic uint64_t class_fl_tail_update;
     _Atomic uint64_t class_fl_tail_update_cols;
+    _Atomic uint64_t class_fl_tail_already_updated;
     _Atomic uint64_t class_fl_next_update;
     _Atomic uint64_t class_fl_next_update_cols;
     _Atomic uint64_t num_class_added_to_fl;
@@ -2692,6 +2696,7 @@ typedef struct H5P_mt_t {
     _Atomic uint64_t list_fl_head_update_cols;
     _Atomic uint64_t list_fl_tail_update;
     _Atomic uint64_t list_fl_tail_update_cols;
+    _Atomic uint64_t list_fl_tail_already_updated;
     _Atomic uint64_t list_fl_next_update;
     _Atomic uint64_t list_fl_next_update_cols;
     _Atomic uint64_t num_list_added_to_fl;
@@ -2878,7 +2883,7 @@ herr_t H5P__mt_ins_or_mod_prop__class(H5P_mt_class_t *class, const char *name, v
                                       H5P_prp_encode_func_t prp_encode, H5P_prp_decode_func_t prp_decode,
                                       H5P_prp_delete_func_t prp_del, H5P_prp_copy_func_t prp_copy,
                                       H5P_prp_compare_func_t prp_cmp, H5P_prp_close_func_t prp_close);
-herr_t H5P__mt_ins_or_mod_prop__list(H5P_mt_list_t *list, const char *name, void *value, size_t size,
+H5P_mt_prop_t *H5P__mt_ins_or_mod_prop__list(H5P_mt_list_t *list, const char *name, void *value, size_t size,
                                      bool create, bool copy, bool is_new, uint64_t prop_version,
                                      H5P_prp_create_func_t prp_create, H5P_prp_set_func_t prp_set,
                                      H5P_prp_get_func_t prp_get, H5P_prp_encode_func_t prp_encode,
