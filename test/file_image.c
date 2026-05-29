@@ -404,6 +404,14 @@ test_callbacks(void)
         FAIL_STACK_ERROR;
 
 #ifndef H5_HAVE_MULTITHREAD
+/**
+ * The mulithread safe version of H5P cannot call the property deleted callbacks
+ * after deleting a property, in case another thread needs to access the version
+ * of the plist where that property still exists. Thus the property delete
+ * callbacks have been moved to when the plist is closed. Because of this the
+ * check to ensure the property's delete callback has been called, has been 
+ * moved to after closing the plist.
+ */
     /* Verify that the property's delete callback was called using the correct image callbacks */
     VERIFY(udata->used_callbacks == (UDATA_FREE),
            "Removing a property from a fapl with no image used incorrect callbacks");
